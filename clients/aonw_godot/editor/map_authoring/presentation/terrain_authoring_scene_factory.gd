@@ -10,9 +10,17 @@ func create_scene(
 	map_id: String,
 	compiled_artifact_directory: String,
 	authoring_root: String,
+	existing_scene: PackedScene = null,
 ) -> PackedScene:
-	var root := Node3D.new()
-	root.name = map_id
+	var root := (
+		existing_scene.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE)
+		if existing_scene != null
+		else Node3D.new()
+	) as Node3D
+	if root == null:
+		return null
+	if existing_scene == null:
+		root.name = map_id
 	var surface := AuthoringSurface.new()
 	surface.name = "TerrainAuthoring"
 	surface.configure(map_id, compiled_artifact_directory, authoring_root)

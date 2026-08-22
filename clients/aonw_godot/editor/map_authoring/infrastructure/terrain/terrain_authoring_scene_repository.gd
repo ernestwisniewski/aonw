@@ -44,10 +44,17 @@ func prepare_scene(
 	reference_texture: Texture2D,
 ) -> Dictionary:
 	var scene_path := scene_path_for(map_id)
+	var existing_scene: PackedScene
 	if FileAccess.file_exists(scene_path):
-		var existing_result := _validate_existing_scene(scene_path)
-		if not existing_result["ok"]:
-			return existing_result
+		existing_scene = ResourceLoader.load(
+			scene_path,
+			"PackedScene",
+			ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+		) as PackedScene
+		if existing_scene == null:
+			return _failure("existing map scene cannot be loaded")
+		if _is_authoring_scene(existing_scene):
+			return _preserve_existing_scene(map_id, scene_path, reference_texture)
 	var root_error := DirAccess.make_dir_recursive_absolute(
 		ProjectSettings.globalize_path(_scene_root)
 	)
@@ -57,38 +64,46 @@ func prepare_scene(
 	var texture_error := store.save_reference_texture(reference_texture)
 	if texture_error != OK:
 		return _failure("cannot save terrain reference texture: %s" % error_string(texture_error))
-	if FileAccess.file_exists(scene_path):
-		return {"ok": true, "scene_path": scene_path, "scene_created": false}
-
 	var packed := _scene_factory.create_scene(
 		map_id,
 		compiled_artifact_directory_for(map_id),
 		authoring_root_for(map_id),
+		existing_scene,
 	)
 	if packed == null:
 		return _failure("cannot build Terrain3D authoring scene")
 	var pack_error := _atomic_store.save_scene(packed, scene_path)
 	if pack_error != OK:
 		return _failure("cannot save Terrain3D authoring scene: %s" % error_string(pack_error))
-	return {"ok": true, "scene_path": scene_path, "scene_created": true}
+	return {
+		"ok": true,
+		"scene_path": scene_path,
+		"scene_created": existing_scene == null,
+		"scene_upgraded": existing_scene != null,
+	}
 
-func _validate_existing_scene(scene_path: String) -> Dictionary:
-	var packed := ResourceLoader.load(
-		scene_path,
-		"PackedScene",
-		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
-	) as PackedScene
-	if packed == null:
-		return _failure("existing map scene cannot be loaded")
+func _is_authoring_scene(packed: PackedScene) -> bool:
 	var root := packed.instantiate()
 	var surface := root.find_child("TerrainAuthoring", true, false)
 	var valid := surface != null and surface.get_node_or_null("Terrain3D") is Terrain3D
 	root.free()
-	return (
-		{"ok": true}
-		if valid
-		else _failure("existing map scene is not a Terrain3D authoring scene")
-	)
+	return valid
+
+func _preserve_existing_scene(
+	map_id: String,
+	scene_path: String,
+	reference_texture: Texture2D,
+) -> Dictionary:
+	var store := AuthoringStore.new(authoring_root_for(map_id))
+	var texture_error := store.save_reference_texture(reference_texture)
+	if texture_error != OK:
+		return _failure("cannot save terrain reference texture: %s" % error_string(texture_error))
+	return {
+		"ok": true,
+		"scene_path": scene_path,
+		"scene_created": false,
+		"scene_upgraded": false,
+	}
 
 func _failure(message: String) -> Dictionary:
 	return {"ok": false, "message": message}

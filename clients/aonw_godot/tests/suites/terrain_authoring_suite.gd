@@ -33,19 +33,66 @@ func run(failures: Array[String]) -> void:
 	_camera = Camera3D.new()
 	_camera.position = Vector3(40.0, 100.0, 40.0)
 	Engine.get_main_loop().root.add_child(_camera)
+	_test_legacy_scene_upgrade()
 	var generation := _generate_scene()
 	_check(generation["ok"], "Terrain3D authoring scene is generated")
 	if generation["ok"]:
 		await _test_authoring_session(generation["scene_path"])
 	_camera.free()
 
-func _generate_scene() -> Dictionary:
-	var source := MapSource.new(
-		"aonw2_starter",
-		"res://assets/maps/aonw2_starter/map.json",
-		"res://assets/maps/aonw2_starter",
-		"Godot",
+func _test_legacy_scene_upgrade() -> void:
+	var legacy_root := _test_root.path_join("legacy_scenes")
+	var legacy_composition := CompositionRoot.new(
+		legacy_root,
+		_test_root.path_join("legacy_assets"),
+		"res://.godot/terrain_compiled",
 	)
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(legacy_root))
+	var root := Node3D.new()
+	root.name = "aonw2_starter"
+	var preview := Node3D.new()
+	preview.name = "AonwMap3D"
+	root.add_child(preview)
+	preview.owner = root
+	var legacy_scene := PackedScene.new()
+	var error := legacy_scene.pack(root)
+	if error == OK:
+		error = ResourceSaver.save(
+			legacy_scene,
+			legacy_root.path_join("aonw2_starter.tscn"),
+		)
+	root.free()
+	_check(error == OK, "legacy map scene fixture can be saved")
+	if error != OK:
+		return
+	var result := legacy_composition.generator().execute(_starter_source())
+	_check(
+		result["ok"] and result.get("scene_upgraded", false),
+		"legacy preview scene is upgraded for Terrain3D authoring",
+	)
+	if not result["ok"]:
+		return
+	var upgraded := ResourceLoader.load(
+		result["scene_path"],
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+	) as PackedScene
+	_check(upgraded != null, "upgraded Terrain3D authoring scene can be loaded")
+	if upgraded == null:
+		return
+	var upgraded_root := upgraded.instantiate()
+	_check(
+		upgraded_root.get_node_or_null("AonwMap3D") != null,
+		"legacy preview content is preserved during the authoring upgrade",
+	)
+	_check(
+		upgraded_root.find_child("TerrainAuthoring", true, false) != null,
+		"Terrain3D authoring surface is added during the legacy scene upgrade",
+	)
+	upgraded_root.free()
+
+func _generate_scene() -> Dictionary:
+	var source := _starter_source()
 	var generator := _composition.generator()
 	var result := generator.execute(source)
 	if result["ok"]:
@@ -61,6 +108,14 @@ func _generate_scene() -> Dictionary:
 			"regeneration preserves manually authored children",
 		)
 	return result
+
+func _starter_source() -> AonwMapSource:
+	return MapSource.new(
+		"aonw2_starter",
+		"res://assets/maps/aonw2_starter/map.json",
+		"res://assets/maps/aonw2_starter",
+		"Godot",
+	)
 
 func _add_authored_child(scene_path: String) -> void:
 	var packed := ResourceLoader.load(

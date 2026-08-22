@@ -21,31 +21,43 @@ cleanup() {
 }
 trap cleanup EXIT
 
-profile_count=0
-for profile_path in "${content_root}"/*/terrain_authoring.v1.json; do
-  [[ -f "${profile_path}" ]] || continue
-  map_directory="$(dirname "${profile_path}")"
+map_count=0
+generated_profile_count=0
+for map_path in "${content_root}"/*/map.json; do
+  [[ -f "${map_path}" ]] || continue
+  map_directory="$(dirname "${map_path}")"
   map_id="$(basename "${map_directory}")"
-  map_path="${map_directory}/map.json"
-  if [[ ! -f "${map_path}" ]]; then
-    echo "Terrain profile has no sibling map.json: ${profile_path}" >&2
-    exit 1
+  profile_path="${map_directory}/terrain_authoring.v1.json"
+  if [[ ! -f "${profile_path}" ]]; then
+    profile_path="${staging_root}/${map_id}/terrain_authoring.generated.v1.json"
+    cargo run \
+      --locked \
+      --quiet \
+      --manifest-path "${repo_root}/engine/Cargo.toml" \
+      -p aonw_map_compiler_cli \
+      --bin aonw-map-profile \
+      -- \
+      "${map_path}" \
+      "${profile_path}" \
+      10
+    generated_profile_count=$((generated_profile_count + 1))
   fi
   cargo run \
     --locked \
     --quiet \
     --manifest-path "${repo_root}/engine/Cargo.toml" \
     -p aonw_map_compiler_cli \
+    --bin aonw-map-compiler \
     -- \
     "${map_path}" \
     "${profile_path}" \
     "${staging_root}/${map_id}" \
     10
-  profile_count=$((profile_count + 1))
+  map_count=$((map_count + 1))
 done
 
-if [[ ${profile_count} -eq 0 ]]; then
-  echo "No terrain_authoring.v1.json profiles found under ${content_root}." >&2
+if [[ ${map_count} -eq 0 ]]; then
+  echo "No map.json documents found under ${content_root}." >&2
   exit 1
 fi
 
@@ -63,4 +75,4 @@ rm -rf -- "${previous_root}"
 previous_root=""
 trap - EXIT
 
-echo "Compiled ${profile_count} Terrain3D authoring profile(s)."
+echo "Compiled Terrain3D authoring data for ${map_count} map(s); generated ${generated_profile_count} standard profile(s)."

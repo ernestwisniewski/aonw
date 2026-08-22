@@ -14,6 +14,11 @@ name = "aonw-map-compiler"
 path = "src/main.rs"
 doc = false
 
+[[bin]]
+name = "aonw-map-profile"
+path = "src/profile.rs"
+doc = false
+
 [dependencies]
 aonw_content = { path = "../aonw_content" }
 aonw_map_authoring = { path = "../aonw_map_authoring" }

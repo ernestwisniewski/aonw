@@ -49,7 +49,7 @@ func _refresh_sources() -> void:
 		_set_source_actions_enabled(false)
 		return
 	_set_source_actions_enabled(true)
-	_status.text = "Available maps: %d. Terrain profiles are required." % _sources.size()
+	_status.text = "Available Terrain3D maps: %d." % _sources.size()
 
 func _generate_selected_map() -> void:
 	var source := _selected_source()
@@ -64,11 +64,12 @@ func _generate_selected_map() -> void:
 		_show_error(result["message"])
 		return
 	EditorInterface.get_resource_filesystem().scan()
-	_status.text = (
-		"Terrain3D authoring scene created."
-		if result["scene_created"]
-		else "Existing Terrain3D scene kept; compiled inputs refreshed."
-	)
+	if result["scene_created"]:
+		_status.text = "Terrain3D authoring scene created."
+	elif result.get("scene_upgraded", false):
+		_status.text = "Terrain3D authoring added to the existing map scene."
+	else:
+		_status.text = "Existing Terrain3D scene kept; compiled inputs refreshed."
 	EditorInterface.open_scene_from_path(result["scene_path"])
 
 func _open_selected_scene() -> void:

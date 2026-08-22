@@ -72,6 +72,39 @@ fn cli_writes_reviewable_exr_r16_and_manifest_artifacts() {
     assert_eq!(manifest["authoring"]["cityCoreRadiusMeters"], 4.0);
 }
 
+#[test]
+fn profile_cli_generates_a_deterministic_standard_profile() {
+    let root = repository_root();
+    let temporary = TemporaryDirectory::new();
+    let map_path = root.join("content/maps/aonw2_starter/map.json");
+    let first_path = temporary.path().join("first.json");
+    let second_path = temporary.path().join("second.json");
+    for output_path in [&first_path, &second_path] {
+        let status = Command::new(env!("CARGO_BIN_EXE_aonw-map-profile"))
+            .arg(&map_path)
+            .arg(output_path)
+            .arg("10")
+            .status()
+            .expect("profile CLI must start");
+        assert!(status.success(), "profile CLI must succeed");
+    }
+
+    let first = fs::read(&first_path).expect("first profile must be written");
+    let second = fs::read(&second_path).expect("second profile must be written");
+    assert_eq!(
+        first, second,
+        "standard profile output must be deterministic"
+    );
+    let profile: Value = serde_json::from_slice(&first).expect("profile must decode");
+    assert_eq!(profile["schemaVersion"], 1);
+    assert_eq!(profile["hexRadiusMeters"], 10.0);
+    assert_eq!(profile["hexHeights"].as_array().map(Vec::len), Some(49));
+    assert_eq!(
+        profile["sourceMapContentHash"],
+        "4d5603cc00fa8963a71c23133570f89f43c734598d86579e12e1b1059da8712d",
+    );
+}
+
 struct TemporaryDirectory(PathBuf);
 
 impl TemporaryDirectory {

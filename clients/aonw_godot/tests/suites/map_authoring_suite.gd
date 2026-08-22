@@ -135,6 +135,7 @@ func _test_catalog() -> void:
 func _test_every_catalog_bundle_matches_map() -> void:
 	var map_repository := JsonMapRepository.new()
 	var atlas_repository := TileAtlasRepository.new()
+	var terrain_repository := TerrainArtifactRepository.new()
 	for source in MapAssetCatalog.new().discover():
 		var map_result: Dictionary = map_repository.load_map(source)
 		_check(map_result["ok"], "%s canonical map opens" % source.map_id)
@@ -151,6 +152,12 @@ func _test_every_catalog_bundle_matches_map() -> void:
 		_check(
 			atlas_repository._manifest_error(manifest, map_result["map"]).is_empty(),
 			"%s asset bundle matches its Rust map content hash" % source.map_id,
+		)
+		var terrain_result := terrain_repository.load_terrain(map_result["map"])
+		_check(
+			terrain_result["ok"],
+			"%s has compiled Terrain3D authoring data: %s"
+			% [source.map_id, terrain_result.get("message", "unknown error")],
 		)
 
 func _starter_source() -> AonwMapSource:
