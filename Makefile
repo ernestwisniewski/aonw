@@ -11,12 +11,14 @@ GODOT_CHECK_ONLY_LOG ?= /tmp/aonw-godot-check-only.log
 GODOT_RUNTIME_LOG ?= /tmp/aonw-godot-runtime.log
 GODOT_EDITOR_LOG ?= /tmp/aonw-godot-editor.log
 GODOT_PROBE_LOG ?= /tmp/aonw-godot-map-render-probe.log
+GODOT_VISUAL_EVIDENCE_LOG ?= /tmp/aonw-godot-stage-1-visual-evidence.log
 MAP_RENDER_PROBE_DIR ?= /tmp/aonw-map-render-probes
 MAP_RENDER_PROBE_SCENARIO := $(CURDIR)/aonw_tests/fixtures/render/map_render_probe_scenarios.v1.json
 FLUTTER_MAP_RENDER_PROBE := $(abspath $(MAP_RENDER_PROBE_DIR))/flutter.json
 FLUTTER_MAP_RENDER_DIAGNOSTICS := $(abspath $(MAP_RENDER_PROBE_DIR))/flutter-diagnostics.json
 GODOT_MAP_RENDER_PROBE := $(abspath $(MAP_RENDER_PROBE_DIR))/godot.json
 GODOT_MAP_RENDER_DIAGNOSTICS := $(abspath $(MAP_RENDER_PROBE_DIR))/godot-diagnostics.json
+STAGE_1_EVIDENCE_DIR := $(CURDIR)/docs/acceptance/stage-1
 
 LOCAL_FLUTTER_BIN := $(CURDIR)/.fvm/flutter_sdk/bin
 ifneq ($(wildcard $(LOCAL_FLUTTER_BIN)/flutter),)
@@ -231,7 +233,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-benchmark rust-flutter-test rust-engine-oracle rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs
 
-.PHONY: successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-device-test successor-flutter-run godot-map-bundle-check map-stage-1-check
+.PHONY: successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-device-test successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence
 
 help:
 	@echo "AONW deploy helpers"
@@ -250,6 +252,7 @@ help:
 	@echo "  make successor-flutter-device-test LOCAL: build and exercise the standalone client on macOS"
 	@echo "  make successor-flutter-run LOCAL: run the standalone Rust-backed client on macOS"
 	@echo "  make map-stage-1-check LOCAL: compare Flutter and Godot semantic map probes"
+	@echo "  make stage-1-visual-evidence LOCAL: regenerate the reviewed map screenshots"
 	@echo "  make rust-check   LOCAL: format, lint, test, and document the Rust workspace"
 	@echo "  make rust-benchmark LOCAL: report Rust map and movement baseline timings"
 	@echo "  make rust-flutter-test LOCAL: test Flutter package_ffi stub and Rust adapter"
@@ -536,6 +539,21 @@ map-stage-1-check: successor-flutter-dependencies godot-editor-check
 		"$(MAP_RENDER_PROBE_SCENARIO)" \
 		"$(FLUTTER_MAP_RENDER_DIAGNOSTICS)" \
 		"$(GODOT_MAP_RENDER_DIAGNOSTICS)"
+
+stage-1-visual-evidence: successor-flutter-dependencies godot-editor-check
+	@mkdir -p "$(STAGE_1_EVIDENCE_DIR)"
+	@cd clients/aonw_flutter && flutter test --no-pub \
+		--update-goldens \
+		test/visual/stage_1_visual_evidence.dart \
+		--dart-define=AONW_STAGE_1_EVIDENCE_DIR="$(STAGE_1_EVIDENCE_DIR)"
+	@"$(GODOT_BIN)" --log-file "$(GODOT_VISUAL_EVIDENCE_LOG)" \
+		--path "$(GODOT_PROJECT)" \
+		--resolution 1280x720 \
+		--script res://tests/export_stage_1_visual_evidence.gd -- \
+		"$(STAGE_1_EVIDENCE_DIR)"
+	@tool/check_godot_log.sh \
+		"$(GODOT_VISUAL_EVIDENCE_LOG)" \
+		"Godot stage 1 visual evidence: OK"
 
 successor-flutter-device-test: successor-flutter-dependencies
 	@cd clients/aonw_flutter && flutter test --no-pub integration_test/inspect_map_native_test.dart
