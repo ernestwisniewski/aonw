@@ -6,7 +6,7 @@
 
 ## Context
 
-ADR 0008 establishes Rust as the successor engine while keeping the root Flutter application and `packages/aonw_core` releasable until retirement. Its wording protects the current product, but does not explicitly permit a new Flutter client before that retirement and still names the Godot client `clients/aonw2_godot`.
+ADR 0008 establishes Rust as the successor engine while keeping the root Flutter application and `packages/aonw_core` releasable until retirement. Its wording protects the current product, but does not explicitly permit a new Flutter client before that retirement and still names the Godot client `clients/aonw_godot`.
 
 Waiting for complete Dart retirement would couple UI replacement to the longest part of the engine migration. Continuing feature development in the root Flutter application would also let presentation code and Dart rules grow together while Rust is becoming authoritative.
 

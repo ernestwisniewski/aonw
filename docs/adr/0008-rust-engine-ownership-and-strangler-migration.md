@@ -36,7 +36,7 @@ The binding migration rules are:
 
 - the shipping Flutter app remains at the repository root and stays releasable;
 - `packages/aonw_core` remains the production implementation and compatibility reference until cutover gates pass;
-- Godot lives under `clients/aonw2_godot/` and contains presentation, not gameplay rules;
+- Godot lives under `clients/aonw_godot/` and contains presentation, not gameplay rules;
 - Rust domain and engine crates perform no filesystem, database, network, wall-clock, localization, Flutter, Godot, or Serverpod work;
 - production domain and engine crates forbid unsafe code; unavoidable unsafe code is isolated and audited in adapters;
 - compatibility is ported before gameplay redesign;

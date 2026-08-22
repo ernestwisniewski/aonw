@@ -31,7 +31,7 @@ A Rust engine is being introduced incrementally under `engine/`. It already powe
 | `engine/` | Rust workspace for the successor deterministic engine and native adapters. |
 | `content/` | Versioned logical maps and scenarios shared with Rust and Godot. |
 | `clients/aonw_flutter/` | Reserved final location for Flutter after the Dart engine is retired. The active app remains at the repository root. |
-| `clients/aonw2_godot/` | Godot 3D presentation client and map workbench. Gameplay rules stay in Rust. |
+| `clients/aonw_godot/` | Godot 3D presentation client and map workbench. Gameplay rules stay in Rust. |
 | `docs/` | Architecture, gameplay contracts, quality policy, and runbooks. |
 
 ## Quick start

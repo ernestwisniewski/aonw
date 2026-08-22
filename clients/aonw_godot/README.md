@@ -1,4 +1,4 @@
-# AoNW2 Godot Client
+# AoNW Godot Client
 
 This directory contains the Godot 4.7 presentation client and the AoNW Map
 Workbench. It converts an existing AoNW map into a self-contained Godot 3D
@@ -9,13 +9,17 @@ scene without Terrain3D or Tree3D.
 Open the editor from the repository root:
 
 ```sh
+make bootstrap
 make godot-editor
 ```
+
+Bootstrap downloads the exact Godot build pinned by the repository into the
+ignored `.toolchains/` cache. The editor commands reject any other version.
 
 The **AoNW Map** dock appears on the right. Its map list discovers:
 
 - strict shared maps in `content/maps/`;
-- bundled Godot maps in `clients/aonw2_godot/assets/maps/`.
+- bundled Godot maps in `clients/aonw_godot/assets/maps/`.
 
 For migrated shared maps, the catalog associates the canonical JSON from
 `content/maps/<map_id>/map.json` with the compiled reference atlas described by
@@ -26,7 +30,7 @@ never decode the unversioned Flutter JSON.
 Choose a map and select **Generate / update 3D**. The Workbench writes:
 
 ```text
-clients/aonw2_godot/
+clients/aonw_godot/
 ├── scenes/maps/<map_id>.tscn                 # stable authored scene
 ├── scenes/generated/maps/<map_id>/
 │   └── generation-NNNNNN_surface.tscn
@@ -36,7 +40,7 @@ clients/aonw2_godot/
         ├── map.json                          # full generations
         ├── render_settings.tres
         ├── terrain_texture.res               # full generations
-        ├── reference_texture.res             # full generations
+        ├── reference_texture.res
         ├── terrain_mesh.res
         ├── reference_mesh.res
         └── grid_mesh.res

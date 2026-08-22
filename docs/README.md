@@ -41,7 +41,7 @@ Until the cutover gates pass:
 
 - `packages/aonw_core/` is the production source of gameplay truth;
 - `engine/` is the compatibility port and future owner;
-- `clients/aonw2_godot/` is presentation code and must not implement game rules;
+- `clients/aonw_godot/` is presentation code and must not implement game rules;
 - an active save or match uses one primary engine, never a mix of command families.
 
 ## Where code belongs
@@ -57,7 +57,7 @@ Until the cutover gates pass:
 | `server/lib/src/` | Serverpod endpoints, multiplayer lifecycle, persistence, and maintenance. |
 | `engine/crates/` | Rust domain, content, contracts, engine, runtime, and thin native adapters. |
 | `content/` | Versioned logical maps and scenarios. |
-| `clients/aonw2_godot/` | Godot application, infrastructure, presentation, and editor tooling. |
+| `clients/aonw_godot/` | Godot application, infrastructure, presentation, and editor tooling. |
 
 A presentation widget may calculate layout and animation. It must not decide whether a command is legal, recalculate authoritative movement, or invent a different economy value.
 

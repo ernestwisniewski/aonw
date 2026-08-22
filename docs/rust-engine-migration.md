@@ -163,4 +163,4 @@ Wall-clock numbers are host-local observations. Stable signatures and work count
 - The Rust client/save/replay contracts are current-only. Historical upcasters are deferred until a second schema exists.
 - Rust is not yet the Serverpod production engine or the default Flutter local engine.
 
-Keep this page at milestone level. Detailed crate behavior belongs in `engine/README.md`, Godot authoring behavior in `clients/aonw2_godot/README.md`, and durable decisions in ADRs.
+Keep this page at milestone level. Detailed crate behavior belongs in `engine/README.md`, Godot authoring behavior in `clients/aonw_godot/README.md`, and durable decisions in ADRs.
