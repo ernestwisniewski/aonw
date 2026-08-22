@@ -114,6 +114,7 @@ dependencies = [
  "aonw_map_compiler",
  "exr",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]

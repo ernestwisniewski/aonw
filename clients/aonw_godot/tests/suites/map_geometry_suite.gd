@@ -1,11 +1,11 @@
 extends RefCounted
 
-const MapSource := preload("res://application/map/map_source.gd")
-const OpenMap := preload("res://application/map/open_map.gd")
-const HexGridGeometry := preload("res://presentation/map/geometry/hex_grid_geometry.gd")
-const HexMapProjection := preload("res://presentation/map/hex_map_projection.gd")
-const JsonMapRepository := preload("res://infrastructure/map/json_map_repository.gd")
-const TileAtlasRepository := preload("res://infrastructure/map/tile_atlas_repository.gd")
+const MapSource := preload("res://game/application/map/map_source.gd")
+const OpenMap := preload("res://game/application/map/open_map.gd")
+const HexGridGeometry := preload("res://game/presentation/map/geometry/hex_grid_geometry.gd")
+const HexMapProjection := preload("res://game/presentation/map/hex_map_projection.gd")
+const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
+const TileAtlasRepository := preload("res://game/infrastructure/map/tile_atlas_repository.gd")
 
 var _failures: Array[String]
 

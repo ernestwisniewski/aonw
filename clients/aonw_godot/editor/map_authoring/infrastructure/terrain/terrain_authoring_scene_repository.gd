@@ -1,0 +1,102 @@
+@tool
+class_name AonwTerrainAuthoringSceneRepository
+extends RefCounted
+
+const AtomicResourceStore := preload(
+	"res://editor/map_authoring/infrastructure/atomic_resource_store.gd"
+)
+const AuthoringStore := preload(
+	"res://editor/map_authoring/infrastructure/terrain/terrain_authoring_store.gd"
+)
+const AuthoringSurface := preload(
+	"res://editor/map_authoring/presentation/terrain_authoring_surface.gd"
+)
+const SCENE_ROOT := "res://scenes/maps"
+const AUTHORING_ASSET_ROOT := "res://assets/generated_maps"
+const COMPILED_ARTIFACT_ROOT := "res://.godot/terrain_compiled"
+
+var _scene_root: String
+var _authoring_asset_root: String
+var _compiled_artifact_root: String
+var _atomic_store := AtomicResourceStore.new()
+
+func _init(
+	scene_root: String = SCENE_ROOT,
+	authoring_asset_root: String = AUTHORING_ASSET_ROOT,
+	compiled_artifact_root: String = COMPILED_ARTIFACT_ROOT,
+) -> void:
+	_scene_root = scene_root
+	_authoring_asset_root = authoring_asset_root
+	_compiled_artifact_root = compiled_artifact_root
+
+func scene_path_for(map_id: String) -> String:
+	return _scene_root.path_join("%s.tscn" % map_id)
+
+func authoring_root_for(map_id: String) -> String:
+	return _authoring_asset_root.path_join(map_id).path_join("terrain_authoring")
+
+func compiled_artifact_directory_for(map_id: String) -> String:
+	return _compiled_artifact_root.path_join(map_id)
+
+func prepare_scene(
+	map_id: String,
+	reference_texture: Texture2D,
+) -> Dictionary:
+	var scene_path := scene_path_for(map_id)
+	if FileAccess.file_exists(scene_path):
+		var existing_result := _validate_existing_scene(scene_path)
+		if not existing_result["ok"]:
+			return existing_result
+	var root_error := DirAccess.make_dir_recursive_absolute(
+		ProjectSettings.globalize_path(_scene_root)
+	)
+	if root_error != OK:
+		return _failure("cannot create terrain scene directory: %s" % error_string(root_error))
+	var store := AuthoringStore.new(authoring_root_for(map_id))
+	var texture_error := store.save_reference_texture(reference_texture)
+	if texture_error != OK:
+		return _failure("cannot save terrain reference texture: %s" % error_string(texture_error))
+	if FileAccess.file_exists(scene_path):
+		return {"ok": true, "scene_path": scene_path, "scene_created": false}
+
+	var root := Node3D.new()
+	root.name = map_id
+	var surface := AuthoringSurface.new()
+	surface.name = "TerrainAuthoring"
+	surface.configure(
+		map_id,
+		compiled_artifact_directory_for(map_id),
+		authoring_root_for(map_id),
+	)
+	root.add_child(surface)
+	surface.owner = root
+	surface.assign_generated_owners(root)
+	var packed := PackedScene.new()
+	var pack_error := packed.pack(root)
+	if pack_error == OK:
+		pack_error = _atomic_store.save_scene(packed, scene_path)
+	root.free()
+	if pack_error != OK:
+		return _failure("cannot save Terrain3D authoring scene: %s" % error_string(pack_error))
+	return {"ok": true, "scene_path": scene_path, "scene_created": true}
+
+func _validate_existing_scene(scene_path: String) -> Dictionary:
+	var packed := ResourceLoader.load(
+		scene_path,
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+	) as PackedScene
+	if packed == null:
+		return _failure("existing map scene cannot be loaded")
+	var root := packed.instantiate()
+	var surface := root.find_child("TerrainAuthoring", true, false) as AonwTerrainAuthoringSurface
+	var valid := surface != null and surface.terrain() != null
+	root.free()
+	return (
+		{"ok": true}
+		if valid
+		else _failure("existing map scene is not a Terrain3D authoring scene")
+	)
+
+func _failure(message: String) -> Dictionary:
+	return {"ok": false, "message": message}

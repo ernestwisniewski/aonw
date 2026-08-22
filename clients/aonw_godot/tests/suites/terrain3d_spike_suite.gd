@@ -1,11 +1,9 @@
 extends RefCounted
 
 const SPIKE_DIRECTORY := "res://.godot/terrain3d_spike"
-const HeightEditor := preload("res://infrastructure/terrain/terrain3d_height_editor.gd")
-const SurfaceSampler := preload("res://infrastructure/terrain/terrain3d_surface_sampler.gd")
-const MapSource := preload("res://application/map/map_source.gd")
-const HexMapProjection := preload("res://presentation/map/hex_map_projection.gd")
-const JsonMapRepository := preload("res://infrastructure/map/json_map_repository.gd")
+const MapSource := preload("res://game/application/map/map_source.gd")
+const HexMapProjection := preload("res://game/presentation/map/hex_map_projection.gd")
+const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
 
 var _failures: Array[String]
 var _terrain: Terrain3D
@@ -120,20 +118,18 @@ func _test_region_height_editing_and_undo() -> void:
 			"bounded region owns one height map",
 		)
 
-	var editor := HeightEditor.new(_terrain.data, -10.0, 12.0)
 	var history := UndoRedo.new()
 	var position := Vector3.ZERO
-	var previous_height := editor.height_at(position)
-	_check(
-		editor.change_height(history, position, 100.0),
-		"height edit records an undoable action",
-	)
-	_check_approx(editor.height_at(position), 12.0, "height writes enforce the maximum")
+	var previous_height := _terrain.data.get_height(position)
+	history.create_action("Change Terrain3D spike height")
+	history.add_do_method(Callable(self, "_set_height").bind(position, 12.0))
+	history.add_undo_method(Callable(self, "_set_height").bind(position, previous_height))
+	history.commit_action()
+	_check_approx(_terrain.data.get_height(position), 12.0, "height edit is applied")
 	history.undo()
-	_check_approx(editor.height_at(position), previous_height, "height edit can be undone")
+	_check_approx(_terrain.data.get_height(position), previous_height, "height edit can be undone")
 	history.redo()
-	_check_approx(editor.height_at(position), 12.0, "height edit can be redone")
-	_check_approx(editor.set_height(position, -100.0), -10.0, "height writes enforce the minimum")
+	_check_approx(_terrain.data.get_height(position), 12.0, "height edit can be redone")
 	history.clear_history(false)
 	history.free()
 
@@ -155,17 +151,18 @@ func _test_overlays_and_picking() -> void:
 		0.0,
 		roundf(logical_center.z),
 	)
-	var editor := HeightEditor.new(_terrain.data, -10.0, 12.0)
-	editor.set_height(sample_position, 8.0)
-	var surface := SurfaceSampler.new(_terrain)
-	var reference_position := surface.align(sample_position, 0.02)
-	var grid_position := surface.align(sample_position, 0.04)
+	_terrain.data.set_height(sample_position, 8.0)
+	var reference_position := sample_position
+	reference_position.y = _terrain.data.get_height(sample_position) + 0.02
+	var grid_position := sample_position
+	grid_position.y = _terrain.data.get_height(sample_position) + 0.04
 	_check_approx(reference_position.y, 8.02, "reference overlay follows deformation")
 	_check_approx(grid_position.y, 8.04, "grid overlay follows deformation independently")
 
-	var intersection := surface.intersect(
+	var intersection := _terrain.get_intersection(
 		sample_position + Vector3(0.0, 20.0, 0.0),
 		Vector3.DOWN,
+		false,
 	)
 	_check(intersection.is_finite(), "deformed terrain ray has an intersection")
 	if intersection.is_finite():
@@ -198,6 +195,9 @@ func _test_region_persistence() -> void:
 func _dispose_terrain() -> void:
 	_camera.free()
 	_terrain.free()
+
+func _set_height(position: Vector3, height: float) -> void:
+	_terrain.data.set_height(position, height)
 
 func _check_approx(actual: float, expected: float, message: String) -> void:
 	_check(absf(actual - expected) <= 0.001, "%s (%s != %s)" % [message, actual, expected])

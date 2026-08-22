@@ -33,6 +33,7 @@ fn cli_writes_reviewable_exr_r16_and_manifest_artifacts() {
     let manifest: Value = serde_json::from_slice(&manifest_source).expect("manifest must decode");
     assert_eq!(manifest["schemaVersion"], 1);
     assert_eq!(manifest["generatorVersion"], "aonw-map-compiler/1");
+    assert_eq!(manifest["mapId"], "aonw2_starter");
     assert_eq!(
         manifest["mapContentHash"],
         "4d5603cc00fa8963a71c23133570f89f43c734598d86579e12e1b1059da8712d",
@@ -58,11 +59,17 @@ fn cli_writes_reviewable_exr_r16_and_manifest_artifacts() {
             width * height * 2,
         );
         assert!(manifest["layers"][layer]["hash"].is_string());
+        assert!(manifest["layers"][layer]["openExrSha256"].is_string());
+        assert!(manifest["layers"][layer]["rawR16Sha256"].is_string());
     }
     assert_eq!(
         manifest["generatedBaseHash"],
         manifest["layers"]["base"]["hash"],
     );
+    assert_eq!(manifest["authoring"]["cols"], 7);
+    assert_eq!(manifest["authoring"]["rows"], 7);
+    assert_eq!(manifest["authoring"]["hexRadiusMeters"], 10.0);
+    assert_eq!(manifest["authoring"]["cityCoreRadiusMeters"], 4.0);
 }
 
 struct TemporaryDirectory(PathBuf);

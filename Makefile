@@ -220,7 +220,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: godot-toolchain-check terrain3d-check
+.PHONY: godot-toolchain-check terrain3d-check godot-terrain-compile
 
 .PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-benchmark rust-flutter-test rust-engine-oracle rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs
 
@@ -243,6 +243,7 @@ help:
 	@echo "  make rust-godot-build LOCAL: build the Rust GDExtension for Godot"
 	@echo "  make godot-toolchain-check LOCAL: verify the exact pinned Godot build"
 	@echo "  make terrain3d-check LOCAL: verify the pinned Terrain3D addon"
+	@echo "  make godot-terrain-compile LOCAL: compile versioned terrain profiles for Terrain3D"
 	@echo "  make godot-editor LOCAL: open AoNW with the Map Workbench dock"
 	@echo "  make godot-run    LOCAL: run the AoNW map preview"
 	@echo "  make godot-check  LOCAL: run Godot map tests and an editor/plugin smoke test"
@@ -509,6 +510,9 @@ rust-engine-oracle:
 rust-godot-build:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build -p aonw_godot
 
+godot-terrain-compile:
+	@tool/compile_godot_terrain.sh
+
 godot-toolchain-check:
 	@GODOT_BIN="$(GODOT_BIN)" tool/check_godot_toolchain.sh
 
@@ -521,7 +525,7 @@ godot-native-config: terrain3d-check
 
 godot-check: godot-test
 
-godot-editor-check: godot-toolchain-check terrain3d-check rust-godot-build godot-native-config
+godot-editor-check: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
 	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_EDITOR_LOG)" --editor --path "$(GODOT_PROJECT)" --quit
 	@tool/check_godot_log.sh "$(GODOT_EDITOR_LOG)"
 

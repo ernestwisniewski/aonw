@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-22
-- Implementation: In progress
+- Implementation: Implemented in M1.9
 
 ## Context
 
@@ -28,8 +28,9 @@ Terrain3D is the only terrain backend for the Godot client:
   enabled; Godot editor, runtime, and test targets fail when it is absent or
   does not match the pin;
 - imported maps will persist height and paint data as Terrain3D regions;
-- height writes cross a small infrastructure adapter that applies
-  authoring-profile limits and participates in Godot undo/redo;
+- the authoring application session depends directly on `Terrain3DData`,
+  applies rasterized authoring-profile limits, and participates in Godot
+  undo/redo; there is no generic backend abstraction;
 - reference artwork, hex grid, and picking sample the Terrain3D surface after
   deformation;
 - logical terrain, movement, yields, commands, and every other gameplay rule
@@ -91,9 +92,11 @@ resources must pass the previous-version smoke before the rollback ships.
 
 `make terrain3d-check` verifies the installed version, source archive checksum
 marker, required native extension and license, and that the plugin is enabled.
-`make godot-check` then runs an editor/plugin smoke plus headless tests for EXR,
-R16, bounded region save/load, enforced height limits, undo/redo, overlay
-alignment, and picking on a deformed surface.
+`make godot-check` then compiles the terrain profiles and runs an editor/plugin
+smoke plus headless tests for EXR, R16, bounded region save/load, regional
+clamp, independent publish validation, metadata, undo/redo, overlay alignment,
+base-regeneration safety, final-terrain reopen, and picking on a deformed
+surface.
 
 ## Related Decisions And Documentation
 

@@ -20,6 +20,7 @@ aonw_map_authoring = { path = "../aonw_map_authoring" }
 aonw_map_compiler = { path = "../aonw_map_compiler" }
 exr.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 
 [lints]
 workspace = true

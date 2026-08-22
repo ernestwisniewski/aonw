@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 
-const Dock := preload("res://addons/aonw_map_workbench/presentation/map_workbench_dock.gd")
+const Dock := preload("res://editor/map_authoring/presentation/map_workbench_dock.gd")
 
 var _dock: Control
 

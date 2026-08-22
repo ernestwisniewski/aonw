@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://mtc1ydmw6cri"]
 
-[ext_resource type="Script" uid="uid://d26sfcgy35r2e" path="res://presentation/map/map_preview_screen.gd" id="1_screen"]
-[ext_resource type="Script" uid="uid://pafcr7ftu4rk" path="res://presentation/map/map_surface.gd" id="2_surface"]
-[ext_resource type="Script" uid="uid://bcuodwhfvh8pa" path="res://presentation/camera/orbit_camera_rig.gd" id="3_camera"]
-[ext_resource type="Script" uid="uid://h06ewv82d7yc" path="res://presentation/map/map_overlay_layer.gd" id="4_overlay"]
-[ext_resource type="Script" uid="uid://durtsv7lp0qmt" path="res://presentation/map/map_interaction_controller.gd" id="5_interaction"]
-[ext_resource type="Script" uid="uid://8pgfq46qt7d6" path="res://presentation/map/unit_layer.gd" id="6_units"]
+[ext_resource type="Script" uid="uid://d26sfcgy35r2e" path="res://game/presentation/map/map_preview_screen.gd" id="1_screen"]
+[ext_resource type="Script" uid="uid://pafcr7ftu4rk" path="res://game/presentation/map/map_surface.gd" id="2_surface"]
+[ext_resource type="Script" uid="uid://bcuodwhfvh8pa" path="res://game/presentation/camera/orbit_camera_rig.gd" id="3_camera"]
+[ext_resource type="Script" uid="uid://h06ewv82d7yc" path="res://game/presentation/map/map_overlay_layer.gd" id="4_overlay"]
+[ext_resource type="Script" uid="uid://durtsv7lp0qmt" path="res://game/presentation/map/map_interaction_controller.gd" id="5_interaction"]
+[ext_resource type="Script" uid="uid://8pgfq46qt7d6" path="res://game/presentation/map/unit_layer.gd" id="6_units"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1

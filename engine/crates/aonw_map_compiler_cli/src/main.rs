@@ -11,6 +11,7 @@ use aonw_map_authoring::TerrainAuthoringProfile;
 use aonw_map_compiler::{CompiledTerrain, HeightRaster, RasterConfig, RasterHash, compile_terrain};
 use exr::prelude::write_rgb_file;
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 
 fn main() {
     if let Err(error) = run() {
@@ -46,7 +47,14 @@ fn run() -> Result<(), Box<dyn Error>> {
         );
     }
     let layers = Value::Object(layer_manifest);
-    write_manifest(&arguments.output_directory, &terrain, config, &layers)?;
+    write_manifest(
+        &arguments.output_directory,
+        map.map().map_id(),
+        &profile,
+        &terrain,
+        config,
+        &layers,
+    )?;
     Ok(())
 }
 
@@ -118,12 +126,21 @@ fn write_layer(
         (value, value, value)
     })?;
     let range = write_r16(&output_directory.join(&r16_name), raster.values())?;
+    let exr_sha256 = file_sha256(&output_directory.join(&exr_name))?;
+    let r16_sha256 = file_sha256(&output_directory.join(&r16_name))?;
     Ok(json!({
         "hash": hash.to_string(),
         "openExr": exr_name,
+        "openExrSha256": exr_sha256,
         "rawR16": r16_name,
+        "rawR16Sha256": r16_sha256,
         "r16RangeMeters": {"min": range.minimum, "max": range.maximum}
     }))
+}
+
+fn file_sha256(path: &Path) -> Result<String, io::Error> {
+    let digest = Sha256::digest(fs::read(path)?);
+    Ok(format!("{digest:x}"))
 }
 
 #[derive(Clone, Copy)]
@@ -192,6 +209,8 @@ fn next_down(value: f32) -> f32 {
 
 fn write_manifest(
     output_directory: &Path,
+    map_id: &str,
+    profile: &TerrainAuthoringProfile,
     terrain: &CompiledTerrain,
     config: RasterConfig,
     layers: &Value,
@@ -199,10 +218,29 @@ fn write_manifest(
     let metadata = terrain.metadata();
     let manifest = json!({
         "schemaVersion": 1,
+        "mapId": map_id,
         "generatorVersion": metadata.generator_version(),
         "mapContentHash": metadata.map_content_hash().to_string(),
         "authoringProfileHash": metadata.authoring_profile_hash().to_string(),
         "generatedBaseHash": metadata.base_raster_hash().to_string(),
+        "authoring": {
+            "cols": profile.cols(),
+            "rows": profile.rows(),
+            "hexRadiusMeters": profile.hex_radius_meters(),
+            "worldOriginMeters": vector_json(profile.world_origin_meters()),
+            "referenceTransform": {
+                "translationMeters": vector_json(
+                    profile.reference_transform().translation_meters()
+                ),
+                "rotationDegrees": vector_json(
+                    profile.reference_transform().rotation_degrees()
+                ),
+                "scale": vector_json(profile.reference_transform().scale())
+            },
+            "edgeBlendMeters": profile.edge_blend_meters(),
+            "cityCoreRadiusMeters": profile.city_core_radius_meters(),
+            "maxCitySlope": profile.max_city_slope()
+        },
         "raster": {
             "width": terrain.base().width(),
             "height": terrain.base().height(),
@@ -219,6 +257,10 @@ fn write_manifest(
     bytes.push(b'\n');
     fs::write(output_directory.join("terrain_compile.v1.json"), bytes)?;
     Ok(())
+}
+
+fn vector_json(value: aonw_map_authoring::AuthoringVector3) -> Value {
+    json!({"x": value.x(), "y": value.y(), "z": value.z()})
 }
 
 #[cfg(test)]

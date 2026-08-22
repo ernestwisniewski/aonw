@@ -1,17 +1,17 @@
 extends RefCounted
 
-const MapSource := preload("res://application/map/map_source.gd")
-const JsonMapRepository := preload("res://infrastructure/map/json_map_repository.gd")
-const NativeEngineBridge := preload("res://infrastructure/engine/native_engine_bridge.gd")
+const MapSource := preload("res://game/application/map/map_source.gd")
+const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
+const NativeEngineBridge := preload("res://game/infrastructure/engine/native_engine_bridge.gd")
 const ClientResponseDecoder := preload(
-	"res://infrastructure/engine/client_response_decoder.gd"
+	"res://game/infrastructure/engine/client_response_decoder.gd"
 )
-const ClientReadModels := preload("res://application/session/client_read_models.gd")
+const ClientReadModels := preload("res://game/application/session/client_read_models.gd")
 const ClientReadModelDecoder := preload(
-	"res://application/session/client_read_model_decoder.gd"
+	"res://game/application/session/client_read_model_decoder.gd"
 )
 const LocalMatchSessionController := preload(
-	"res://application/session/local_match_session_controller.gd"
+	"res://game/application/session/local_match_session_controller.gd"
 )
 
 var _failures: Array[String]

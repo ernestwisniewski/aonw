@@ -1,8 +1,8 @@
 # AoNW Godot Client
 
 This directory contains the Godot 4.7 presentation client and the AoNW Map
-Workbench. Terrain3D is the required terrain authoring and rendering backend;
-gameplay rules remain in Rust.
+Workbench. Terrain3D is the required terrain-authoring backend; gameplay rules
+remain in Rust.
 
 ## Map Workbench
 
@@ -28,57 +28,45 @@ For migrated shared maps, the catalog associates the canonical JSON from
 JPG pages directly and never depends on raw per-tile artwork. Rust and Godot
 never decode the unversioned Flutter JSON.
 
-Choose a map and select **Generate / update 3D**. The Workbench writes:
+Every Godot editor or test bootstrap compiles each
+`content/maps/<map_id>/terrain_authoring.v1.json` profile through the pure Rust
+terrain compiler. The reviewed inputs are separate `base`, `min`, and `max`
+32-bit EXR rasters. Their manifest and SHA-256 checksums are placed in the
+ignored `clients/aonw_godot/.godot/terrain_compiled/` cache.
+
+Choose a map and select **Create / open Terrain3D**. Maps without a valid,
+current authoring profile are rejected; there is no mesh terrain fallback. The
+Workbench writes:
 
 ```text
 clients/aonw_godot/
 ├── scenes/maps/<map_id>.tscn                 # stable authored scene
-├── scenes/generated/maps/<map_id>/
-│   └── generation-NNNNNN_surface.tscn
 └── assets/generated_maps/<map_id>/
-	├── manifest.json
-	└── generations/generation-NNNNNN/
-		├── map.json                          # full generations
-		├── render_settings.tres
-		├── terrain_texture.res               # full generations
+	└── terrain_authoring/
 		├── reference_texture.res
-		├── terrain_mesh.res
-		├── reference_mesh.res
-		└── grid_mesh.res
+		├── terrain_authoring_state.v1.json
+		├── published_terrain.v1.json         # only after successful validation
+		└── final/terrain3d_*.res             # manual Terrain3D regions
 ```
 
-The authored scene contains the generated surface plus models and other nodes
-added in Godot. Regeneration refreshes `AonwMap3D` while preserving authored
-sibling nodes and custom children attached to the surface. The generated
-surface contains three independent layers:
+The authored scene contains one `Terrain3D` node plus reference, grid,
+min/max-debug, and city-scale overlays. `ArrayMesh` is used only for those
+overlays; it never represents editable terrain. Select the `Terrain3D` child to
+use Terrain3D's sculpting and texture-painting tools.
 
-- `BaseTerrain` is an elevated hex surface colored from logical terrain data;
-- `ReferenceTexture` projects the compiled runtime atlas and has
-  configurable visibility and opacity;
-- `HexGrid` is a separately configurable grid overlay.
+The dock controls reference visibility and opacity, the terrain-sampled hex
+grid, the min/max debug envelopes, and a city-core footprint marker whose
+radius cannot exceed one authoring hex. Terrain3D's `maps_edited` signal is
+translated to the affected raster rectangle and only that rectangle is
+clamped. **Validate & publish** always performs a separate full-raster check
+and refuses to publish any non-finite or out-of-envelope height.
 
-This generated `ArrayMesh` terrain is transitional migration output, not a
-supported alternative backend. The Terrain3D authoring slice replaces it;
-reference and grid geometry may remain separate overlays but must sample the
-edited Terrain3D surface.
-
-In the **AoNW Map** dock, use **Show hex outlines** to toggle the overlay.
-**Outline opacity** controls its opacity, while **Texture opacity** controls the
-original reference artwork. These controls update the open generated scene and
-are synchronized when another map scene is opened. **Outline width** changes
-the geometry width so the grid remains readable over detailed artwork.
-
-`Hex height` controls how logical tile heights shape the mesh. Geometry changes
-are debounced, participate in editor undo/redo, and are persisted by **Save
-current scene**. The Workbench writes settings and meshes to a new immutable
-generation, saves the authored scene, and only then publishes that generation
-in the manifest. A failed save therefore cannot leave a scene referring to a
-partially overwritten mesh set. Generated textures and meshes are Godot resources, so
-reopening the scene does not load the compiled JPG pages again. The reference
-atlas preserves the dimensions declared by the runtime texture manifest.
-Regenerate the scene after changing the source map or its runtime artwork. The
-generated-scene manifest records the source identity, content hash, source tile
-size, active generation, and render settings.
+**Save draft** persists manual Terrain3D regions and records
+`mapContentHash`, `authoringProfileHash`, `generatedBaseHash`,
+`generatorVersion`, and `terrainRevision`. **Reload compiled base /
+constraints** updates generated inputs but never imports `base` over an
+existing manual `final`. Closing and reopening the scene reloads the final
+Terrain3D regions from disk.
 
 ## Runtime preview
 
@@ -109,17 +97,16 @@ contain no movement legality rules.
 
 ## Boundaries
 
-- `application/map/read_model/` owns the immutable recipient renderer view;
-- `application/map/` orchestrates loading and Godot scene generation;
-- `application/session/` owns local-match lifecycle, revision tracking, and
+- `game/application/map/read_model/` owns the immutable recipient renderer view;
+- `game/application/map/` orchestrates runtime map loading;
+- `game/application/session/` owns local-match lifecycle, revision tracking, and
   client command/query construction;
-- `infrastructure/map/` discovers files, decodes JSON, assembles textures, and
-  persists Godot resources; authored scenes, manifests, and atomic file writes
-  are separate stores coordinated by the scene repository;
-- `infrastructure/engine/` adapts JSON at the GDExtension boundary;
-- `presentation/map/geometry/` owns odd-q render and texture projection math;
-- `presentation/` owns meshes, camera, runtime UI, and editor controls;
-- `addons/aonw_map_workbench/` is the editor composition root.
+- `game/infrastructure/map/` decodes runtime map data and assembles textures;
+- `game/infrastructure/engine/` adapts JSON at the GDExtension boundary;
+- `game/presentation/map/geometry/` owns odd-q render and texture projection math;
+- `game/presentation/` owns runtime meshes, camera, and UI;
+- `editor/map_authoring/` owns Workbench application, infrastructure, and UI;
+- `addons/aonw_map_workbench/` is only the editor plugin composition root.
 
 The Workbench dock separates its control view from editor orchestration. This
 keeps widget construction independent from generation, undo/redo, and scene
@@ -171,11 +158,11 @@ make godot-test
 make godot-check
 ```
 
-The runner delegates to focused authoring, geometry, native-session, and
-Terrain3D suites.
-They cover strict Rust validation, scenario bootstrap, native
+The runner delegates to focused runtime-map, geometry, native-session,
+Terrain3D-spike, and terrain-authoring suites. They cover strict Rust
+validation, scenario bootstrap, native
 snapshot/reachable/route/move and persistence calls, asset discovery, immutable
-map views, projection/picking round trips, texture assembly, mesh generation,
-regeneration safety, preserving authored nodes, verified heightmap import,
-region persistence, terrain undo/redo, and picking after deformation.
-`GODOT_BIN` can override the editor executable.
+map views, projection/picking round trips, texture assembly, verified EXR
+import, regional clamp, independent publish validation, metadata identities,
+overlay alignment, undo/redo, base-regeneration safety, and final-terrain
+save/reopen persistence. `GODOT_BIN` can override the editor executable.
