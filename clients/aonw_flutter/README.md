@@ -34,6 +34,13 @@ copy. English is the canonical ARB catalog and Polish is a fully generated
 locale. Widgets consume typed placeholder methods, while `AonwApp` registers
 the generated delegates and follows the platform locale by default.
 
+Map input converges on one presentation command model. Pointer picking,
+keyboard arrows/WASD with Enter/Escape, and normalized gamepad D-pad with
+A/B/Y all drive the same local cursor, selection and reference actions. The
+production composition root owns the gamepad adapter and closes it with the
+retained Rust-backed map repository. Linux uses the repository's hardened
+gamepads adapter; no input path evaluates game rules.
+
 The map feature opens the starter map and scenario on one retained Rust
 backend. Its `MapScene` keeps the shared static `MapView` separate from the
 recipient-safe player snapshot, so fog-filtered units never become authored

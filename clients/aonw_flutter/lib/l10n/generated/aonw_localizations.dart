@@ -134,6 +134,12 @@ abstract class AonwLocalizations {
   /// **'Map {mapId}, {cols} by {rows} hexes'**
   String mapSemanticsLabel(String mapId, int cols, int rows);
 
+  /// No description provided for @mapInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the arrow keys or D-pad to move the map cursor and Enter or A to select.'**
+  String get mapInputHint;
+
   /// No description provided for @noHexSelected.
   ///
   /// In en, this message translates to:

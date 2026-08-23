@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../read_model/map_view.dart';
 import '../camera/map_viewport_projection.dart';
 import '../geometry/odd_q_flat_top_geometry.dart';
+import '../input/map_input.dart';
 import '../layers/map_painters.dart';
 import '../map_render_snapshot.dart';
+
+void _ignoreMapInput(MapInputCommand _) {}
 
 final class MapCanvas extends StatelessWidget {
   const MapCanvas({
     required this.snapshot,
     required this.onHover,
     required this.onSelect,
+    this.onInput = _ignoreMapInput,
     super.key,
   });
 
   final MapRenderSnapshot snapshot;
   final ValueChanged<MapHexCoordinate?> onHover;
   final ValueChanged<MapHexCoordinate?> onSelect;
+  final ValueChanged<MapInputCommand> onInput;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +39,7 @@ final class MapCanvas extends StatelessWidget {
     final l10n = context.aonwL10n;
     return Semantics(
       label: l10n.mapSemanticsLabel(map.mapId, map.cols, map.rows),
+      hint: l10n.mapInputHint,
       value: selection == null
           ? l10n.noHexSelected
           : l10n.selectedHex(selection.col, selection.row),
@@ -40,6 +47,7 @@ final class MapCanvas extends StatelessWidget {
         projection: projection,
         onHover: onHover,
         onSelect: onSelect,
+        onInput: onInput,
         child: _MapLayers(
           snapshot: snapshot,
           geometry: geometry,
@@ -50,32 +58,83 @@ final class MapCanvas extends StatelessWidget {
   }
 }
 
-final class _MapInputRegion extends StatelessWidget {
+final class _MapInputRegion extends StatefulWidget {
   const _MapInputRegion({
     required this.projection,
     required this.onHover,
     required this.onSelect,
+    required this.onInput,
     required this.child,
   });
 
   final MapViewportProjection projection;
   final ValueChanged<MapHexCoordinate?> onHover;
   final ValueChanged<MapHexCoordinate?> onSelect;
+  final ValueChanged<MapInputCommand> onInput;
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => MouseRegion(
-    onExit: (_) => onHover(null),
-    onHover: (event) => onHover(_hexAt(event.localPosition)),
-    child: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapUp: (details) => onSelect(_hexAt(details.localPosition)),
-      child: child,
+  State<_MapInputRegion> createState() => _MapInputRegionState();
+}
+
+final class _MapInputRegionState extends State<_MapInputRegion> {
+  static final _commandsByKey = <LogicalKeyboardKey, MapInputCommand>{
+    LogicalKeyboardKey.arrowUp: MapInputCommand.cursorUp,
+    LogicalKeyboardKey.keyW: MapInputCommand.cursorUp,
+    LogicalKeyboardKey.arrowDown: MapInputCommand.cursorDown,
+    LogicalKeyboardKey.keyS: MapInputCommand.cursorDown,
+    LogicalKeyboardKey.arrowLeft: MapInputCommand.cursorLeft,
+    LogicalKeyboardKey.keyA: MapInputCommand.cursorLeft,
+    LogicalKeyboardKey.arrowRight: MapInputCommand.cursorRight,
+    LogicalKeyboardKey.keyD: MapInputCommand.cursorRight,
+    LogicalKeyboardKey.enter: MapInputCommand.activate,
+    LogicalKeyboardKey.space: MapInputCommand.activate,
+    LogicalKeyboardKey.escape: MapInputCommand.cancel,
+    LogicalKeyboardKey.keyR: MapInputCommand.toggleReference,
+  };
+
+  final _focusNode = FocusNode(debugLabel: 'AoNW map input');
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Focus(
+    focusNode: _focusNode,
+    autofocus: true,
+    onKeyEvent: _onKeyEvent,
+    child: Listener(
+      onPointerDown: (_) => _focusNode.requestFocus(),
+      child: MouseRegion(
+        onExit: (_) => widget.onHover(null),
+        onHover: (event) => widget.onHover(_hexAt(event.localPosition)),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) => widget.onSelect(_hexAt(details.localPosition)),
+          child: widget.child,
+        ),
+      ),
     ),
   );
 
+  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final command = _commandForKey(event.logicalKey);
+    if (command == null) return KeyEventResult.ignored;
+    widget.onInput(command);
+    return KeyEventResult.handled;
+  }
+
+  MapInputCommand? _commandForKey(LogicalKeyboardKey key) =>
+      _commandsByKey[key];
+
   MapHexCoordinate? _hexAt(Offset point) =>
-      projection.hexAt((x: point.dx, y: point.dy));
+      widget.projection.hexAt((x: point.dx, y: point.dy));
 }
 
 final class _MapLayers extends StatelessWidget {

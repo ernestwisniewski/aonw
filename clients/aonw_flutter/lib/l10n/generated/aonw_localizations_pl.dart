@@ -31,6 +31,10 @@ class AonwLocalizationsPl extends AonwLocalizations {
   }
 
   @override
+  String get mapInputHint =>
+      'Użyj strzałek lub krzyżaka, aby przesunąć kursor mapy, oraz Enter lub A, aby wybrać.';
+
+  @override
   String get noHexSelected => 'Nie wybrano heksa';
 
   @override

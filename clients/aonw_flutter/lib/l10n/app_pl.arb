@@ -6,6 +6,7 @@
   "unknownRouteMessage": "Nieznana trasa: {location}",
   "missingRouteLocation": "(brak)",
   "mapSemanticsLabel": "Mapa {mapId}, {cols} na {rows} heksów",
+  "mapInputHint": "Użyj strzałek lub krzyżaka, aby przesunąć kursor mapy, oraz Enter lub A, aby wybrać.",
   "noHexSelected": "Nie wybrano heksa",
   "selectedHex": "Wybrany heks {col}, {row}",
   "hideReferenceLayer": "Ukryj warstwę referencyjną",

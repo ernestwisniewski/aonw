@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/widgets/aonw_panel.dart';
 import '../../features/map/application/map_controller.dart';
+import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
 import '../../l10n/l10n.dart';
 
@@ -21,9 +22,10 @@ enum AonwRoute {
 }
 
 final class AonwRouter {
-  const AonwRouter({required this.mapController});
+  const AonwRouter({required this.mapController, this.mapInputSource});
 
   final MapController mapController;
+  final MapInputSource? mapInputSource;
 
   Route<void> onGenerateRoute(RouteSettings settings) {
     final route = AonwRoute.fromLocation(settings.name);
@@ -31,7 +33,12 @@ final class AonwRouter {
       settings: settings,
       builder: switch (route) {
         AonwRoute.map => (_) => Scaffold(
-          body: SafeArea(child: MapScreen(controller: mapController)),
+          body: SafeArea(
+            child: MapScreen(
+              controller: mapController,
+              inputSource: mapInputSource,
+            ),
+          ),
         ),
         null => (_) => _UnknownRoute(location: settings.name),
       },

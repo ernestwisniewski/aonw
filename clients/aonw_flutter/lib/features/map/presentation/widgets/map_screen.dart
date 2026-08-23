@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -13,6 +14,7 @@ import '../../read_model/map_scene.dart';
 import '../../read_model/map_view.dart';
 import '../camera/map_initial_camera.dart';
 import '../geometry/odd_q_flat_top_geometry.dart';
+import '../input/map_input.dart';
 import '../map_render_snapshot.dart';
 import 'map_canvas.dart';
 
@@ -20,12 +22,14 @@ final class MapScreen extends StatefulWidget {
   const MapScreen({
     required this.controller,
     this.transformationController,
+    this.inputSource,
     this.autoLoad = true,
     super.key,
   });
 
   final MapController controller;
   final TransformationController? transformationController;
+  final MapInputSource? inputSource;
   final bool autoLoad;
 
   @override
@@ -35,12 +39,14 @@ final class MapScreen extends StatefulWidget {
 final class _MapScreenState extends State<MapScreen> {
   late TransformationController _camera;
   late bool _ownsCamera;
+  StreamSubscription<MapInputCommand>? _inputSubscription;
 
   @override
   void initState() {
     super.initState();
     _ownsCamera = widget.transformationController == null;
     _camera = widget.transformationController ?? TransformationController();
+    _listenToInput(widget.inputSource);
     if (widget.autoLoad) widget.controller.load();
   }
 
@@ -52,6 +58,9 @@ final class _MapScreenState extends State<MapScreen> {
       _ownsCamera = widget.transformationController == null;
       _camera = widget.transformationController ?? TransformationController();
     }
+    if (oldWidget.inputSource != widget.inputSource) {
+      _listenToInput(widget.inputSource);
+    }
     if (widget.autoLoad &&
         (oldWidget.controller != widget.controller || !oldWidget.autoLoad)) {
       widget.controller.load();
@@ -60,6 +69,7 @@ final class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
+    unawaited(_inputSubscription?.cancel());
     if (_ownsCamera) _camera.dispose();
     super.dispose();
   }
@@ -82,8 +92,43 @@ final class _MapScreenState extends State<MapScreen> {
         interaction: interaction,
         controller: widget.controller,
         camera: _camera,
+        onInput: _handleInput,
       ),
     };
+  }
+
+  void _listenToInput(MapInputSource? source) {
+    unawaited(_inputSubscription?.cancel());
+    _inputSubscription = source?.commands.listen(_handleInput);
+  }
+
+  void _handleInput(MapInputCommand command) {
+    final state = widget.controller.state;
+    if (state is! MapReadyState) return;
+    switch (command) {
+      case MapInputCommand.activate:
+        widget.controller.select(
+          state.interaction.hovered ??
+              state.interaction.selected ??
+              MapInputCursor.initial(state.scene.map),
+        );
+      case MapInputCommand.cancel:
+        widget.controller.hover(null);
+        widget.controller.select(null);
+      case MapInputCommand.toggleReference:
+        widget.controller.toggleReference();
+      case MapInputCommand.cursorUp:
+      case MapInputCommand.cursorDown:
+      case MapInputCommand.cursorLeft:
+      case MapInputCommand.cursorRight:
+        final current =
+            state.interaction.hovered ??
+            state.interaction.selected ??
+            MapInputCursor.initial(state.scene.map);
+        widget.controller.hover(
+          MapInputCursor.move(state.scene.map, current, command),
+        );
+    }
   }
 }
 
@@ -93,12 +138,14 @@ final class _ReadyMap extends StatelessWidget {
     required this.interaction,
     required this.controller,
     required this.camera,
+    required this.onInput,
   });
 
   final MapScene scene;
   final MapInteractionState interaction;
   final MapController controller;
   final TransformationController camera;
+  final ValueChanged<MapInputCommand> onInput;
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -109,6 +156,7 @@ final class _ReadyMap extends StatelessWidget {
           interaction: interaction,
           controller: controller,
           camera: camera,
+          onInput: onInput,
         ),
       ),
       Positioned(
@@ -139,12 +187,14 @@ final class _MapViewport extends StatefulWidget {
     required this.interaction,
     required this.controller,
     required this.camera,
+    required this.onInput,
   });
 
   final MapScene scene;
   final MapInteractionState interaction;
   final MapController controller;
   final TransformationController camera;
+  final ValueChanged<MapInputCommand> onInput;
 
   @override
   State<_MapViewport> createState() => _MapViewportState();
@@ -203,6 +253,7 @@ final class _MapViewportState extends State<_MapViewport> {
           ),
           onHover: widget.controller.hover,
           onSelect: widget.controller.select,
+          onInput: widget.onInput,
         ),
       ),
     );

@@ -31,6 +31,10 @@ class AonwLocalizationsEn extends AonwLocalizations {
   }
 
   @override
+  String get mapInputHint =>
+      'Use the arrow keys or D-pad to move the map cursor and Enter or A to select.';
+
+  @override
   String get noHexSelected => 'No hex selected';
 
   @override

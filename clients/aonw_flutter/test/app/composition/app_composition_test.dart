@@ -1,5 +1,6 @@
 import 'package:aonw_flutter/app/composition/app_composition.dart';
 import 'package:aonw_flutter/features/map/application/map_repository.dart';
+import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
@@ -14,21 +15,42 @@ void main() {
   ) async {
     final first = _LifecycleMapRepository();
     final second = _LifecycleMapRepository();
+    final firstInput = _LifecycleMapInputSource();
+    final secondInput = _LifecycleMapInputSource();
 
-    await tester.pumpWidget(AppComposition(mapRepository: first).root);
+    await tester.pumpWidget(
+      AppComposition(mapRepository: first, mapInputSource: firstInput).root,
+    );
     await tester.pump();
     expect(first.loadCalls, 1);
     expect(first.closeCalls, 0);
+    expect(firstInput.closeCalls, 0);
 
-    await tester.pumpWidget(AppComposition(mapRepository: second).root);
+    await tester.pumpWidget(
+      AppComposition(mapRepository: second, mapInputSource: secondInput).root,
+    );
     await tester.pump();
     expect(first.closeCalls, 1);
+    expect(firstInput.closeCalls, 1);
     expect(second.loadCalls, 1);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
     expect(second.closeCalls, 1);
+    expect(secondInput.closeCalls, 1);
   });
+}
+
+final class _LifecycleMapInputSource implements MapInputSource {
+  var closeCalls = 0;
+
+  @override
+  Stream<MapInputCommand> get commands => const Stream.empty();
+
+  @override
+  Future<void> close() async {
+    closeCalls += 1;
+  }
 }
 
 final class _LifecycleMapRepository implements MapRepository {

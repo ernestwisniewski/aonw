@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:aonw_flutter/features/map/application/map_controller.dart';
 import 'package:aonw_flutter/features/map/application/map_repository.dart';
 import 'package:aonw_flutter/features/map/presentation/camera/map_viewport_projection.dart';
 import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
+import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_screen.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/localized_test_app.dart';
@@ -269,4 +273,63 @@ void main() {
     expect(MediaQuery.disableAnimationsOf(canvasContext), isTrue);
     semantics.dispose();
   });
+
+  testWidgets('keyboard and gamepad share the map cursor workflow', (
+    tester,
+  ) async {
+    final input = _TestMapInputSource();
+    final controller = MapController(
+      repository: FakeMapRepository.success(testMapScene(cols: 3, rows: 3)),
+    );
+    addTearDown(input.close);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      LocalizedTestApp(
+        home: MapScreen(controller: controller, inputSource: input),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    expect((controller.state as MapReadyState).interaction.hovered, (
+      col: 0,
+      row: 1,
+    ));
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect((controller.state as MapReadyState).interaction.selected, (
+      col: 0,
+      row: 1,
+    ));
+
+    input.add(MapInputCommand.cancel);
+    await tester.pump();
+    input.add(MapInputCommand.cursorUp);
+    input.add(MapInputCommand.activate);
+    await tester.pumpAndSettle();
+    final interaction = (controller.state as MapReadyState).interaction;
+    expect(interaction.hovered, (col: 1, row: 0));
+    expect(interaction.selected, (col: 1, row: 0));
+
+    input.add(MapInputCommand.toggleReference);
+    await tester.pump();
+    expect(
+      (controller.state as MapReadyState).interaction.referenceVisible,
+      isFalse,
+    );
+  });
+}
+
+final class _TestMapInputSource implements MapInputSource {
+  final _commands = StreamController<MapInputCommand>.broadcast(sync: true);
+
+  @override
+  Stream<MapInputCommand> get commands => _commands.stream;
+
+  void add(MapInputCommand command) => _commands.add(command);
+
+  @override
+  Future<void> close() => _commands.close();
 }
