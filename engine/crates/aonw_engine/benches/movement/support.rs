@@ -47,7 +47,7 @@ pub(crate) fn map(cols: u16, rows: u16) -> MapDefinition {
     let tiles = (0..rows)
         .flat_map(|row| {
             (0..cols).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(i32::from(col), i32::from(row)),
                     vec![TerrainType::Grassland],
                     Vec::new(),

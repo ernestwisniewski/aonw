@@ -85,6 +85,38 @@ final class AonwUnitMovementEvidence extends AonwClientEvidence {
   final List<AonwMovementStep> steps;
 }
 
+enum AonwCommandRejectionCode {
+  staleRevision('stale_revision'),
+  unitNotFound('unit_not_found'),
+  unitNotControlled('unit_not_controlled'),
+  unitUnavailable('unit_unavailable'),
+  unitUsesTradeRoutes('unit_uses_trade_routes'),
+  unitOutOfBounds('unit_out_of_bounds'),
+  moveTargetOutOfBounds('move_target_out_of_bounds'),
+  moveTargetIsCurrentTile('move_target_is_current_tile'),
+  moveTargetIsForeignCityCenter('move_target_is_foreign_city_center'),
+  moveTargetOccupied('move_target_occupied'),
+  unitMovementCapacityInsufficient('unit_movement_capacity_insufficient'),
+  movePathNotFound('move_path_not_found'),
+  unitBusy('unit_busy'),
+  unitDefinitionMissing('unit_definition_missing'),
+  stateRevisionOverflow('state_revision_overflow'),
+  invalidQueuedMovementPath('invalid_queued_movement_path'),
+  invalidUnit('invalid_unit'),
+  movementUnitUpdateFailed('movement_unit_update_failed');
+
+  const AonwCommandRejectionCode(this.wireCode);
+
+  final String wireCode;
+
+  static AonwCommandRejectionCode fromWire(String source) {
+    for (final value in values) {
+      if (value.wireCode == source) return value;
+    }
+    throw FormatException('Unknown AoNW command rejection code $source.');
+  }
+}
+
 sealed class AonwCommandOutcome {
   const AonwCommandOutcome();
 
@@ -107,7 +139,9 @@ sealed class AonwCommandOutcome {
   static AonwCommandOutcome _rejected(Map<String, Object?> value) {
     requireKeys(value, const {'status', 'code'}, 'rejected command outcome');
     return AonwCommandRejected(
-      readString(value['code'], 'command rejection code'),
+      AonwCommandRejectionCode.fromWire(
+        readString(value['code'], 'command rejection code'),
+      ),
     );
   }
 }
@@ -119,7 +153,7 @@ final class AonwCommandAccepted extends AonwCommandOutcome {
 final class AonwCommandRejected extends AonwCommandOutcome {
   const AonwCommandRejected(this.code);
 
-  final String code;
+  final AonwCommandRejectionCode code;
 }
 
 final class AonwCommandResult {
@@ -163,7 +197,7 @@ final class AonwCommandResult {
 
   bool get accepted => outcome is AonwCommandAccepted;
 
-  String? get rejection => switch (outcome) {
+  AonwCommandRejectionCode? get rejection => switch (outcome) {
     AonwCommandRejected(:final code) => code,
     AonwCommandAccepted() => null,
   };

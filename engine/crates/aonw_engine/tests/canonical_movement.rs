@@ -15,7 +15,7 @@ fn map() -> MapDefinition {
     let tiles = (0..5)
         .flat_map(|row| {
             (0..5).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(col, row),
                     vec![TerrainType::Plains],
                     Vec::new(),
@@ -144,7 +144,7 @@ fn canonical_rejection_preserves_revision_and_digest() {
 
     assert!(!transition.is_accepted());
     assert_eq!(
-        transition.rejection().expect("rejection").code(),
+        transition.rejection().expect("rejection").code().as_str(),
         "stale_revision"
     );
     assert_eq!(transition.state(), &state);
@@ -274,7 +274,11 @@ fn hidden_foreign_city_is_an_accepted_no_op_but_discovered_city_is_rejected() {
     )
     .expect("transition");
     assert_eq!(
-        discovered_result.rejection().expect("rejection").code(),
+        discovered_result
+            .rejection()
+            .expect("rejection")
+            .code()
+            .as_str(),
         "move_target_is_foreign_city_center"
     );
 }

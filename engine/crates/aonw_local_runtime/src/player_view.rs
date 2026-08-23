@@ -115,8 +115,9 @@ pub(crate) fn visible_units(state: &GameState, actor: &PlayerId) -> Vec<PlayerUn
 #[cfg(test)]
 mod tests {
     use aonw_domain::{
-        GameState, HexCoord, HexGridBounds, MovementUnits, PlayerId, StateRevision, Unit, UnitId,
-        UnitKind, UnitOccupancyPolicy,
+        Diplomacy, FogOfWar, GameState, HexCoord, HexGridBounds, InteractionState, MovementUnits,
+        PlayerFog, PlayerId, StateRevision, TransportNetwork, Unit, UnitId, UnitKind,
+        UnitOccupancyPolicy,
     };
 
     use super::visible_units;
@@ -142,6 +143,44 @@ mod tests {
             .collect::<Vec<_>>();
 
         assert_eq!(identifiers, ["unit-a", "unit-z"]);
+    }
+
+    #[test]
+    fn visible_units_never_leak_foreign_units_through_fog() {
+        let actor = PlayerId::new("player-1").expect("actor id");
+        let foreign = PlayerId::new("player-2").expect("foreign id");
+        let visible = HexCoord::new(2, 1);
+        let discovered = HexCoord::new(3, 1);
+        let owned_hidden = HexCoord::new(4, 1);
+        let foreign_hidden = HexCoord::new(5, 1);
+        let fog = FogOfWar::try_new([PlayerFog::new(actor.clone(), [discovered], [visible])])
+            .expect("fog");
+        let state = GameState::try_new_with_world(
+            StateRevision::INITIAL,
+            0,
+            HexGridBounds::new(6, 4).expect("bounds"),
+            UnitOccupancyPolicy::Exclusive,
+            [
+                unit("owned-hidden", &actor, owned_hidden),
+                unit("foreign-visible", &foreign, visible),
+                unit("foreign-discovered", &foreign, discovered),
+                unit("foreign-hidden", &foreign, foreign_hidden),
+            ],
+            [],
+            [],
+            InteractionState::default(),
+            fog,
+            Diplomacy::default(),
+            TransportNetwork::default(),
+        )
+        .expect("state");
+
+        let identifiers = visible_units(&state, &actor)
+            .into_iter()
+            .map(|unit| unit.id().as_str().to_owned())
+            .collect::<Vec<_>>();
+
+        assert_eq!(identifiers, ["foreign-visible", "owned-hidden"]);
     }
 
     fn unit(id: &str, actor: &PlayerId, position: HexCoord) -> Unit {

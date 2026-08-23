@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "floatTolerance": 0.0001,
+  "maps": [
+    {
+      "mapId": "aonw2_starter",
+      "document": "content/maps/aonw2_starter/map.json"
+    },
+    {
+      "mapId": "dravonia",
+      "document": "content/maps/dravonia/map.json"
+    }
+  ],
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "compact",
+      "width": 800,
+      "height": 600
+    }
+  ],
+  "cases": [
+    {
+      "name": "center",
+      "kind": "center",
+      "hex": [2, 2],
+      "expectedHex": [2, 2]
+    },
+    {
+      "name": "outerEdge",
+      "kind": "edge",
+      "hex": [0, 0],
+      "corners": [2, 3],
+      "expectedHex": null
+    },
+    {
+      "name": "corner",
+      "kind": "corner",
+      "hex": [2, 2],
+      "corner": 0,
+      "expectedHex": [2, 2]
+    },
+    {
+      "name": "outsideMap",
+      "kind": "normalized",
+      "point": [-0.05, -0.05],
+      "expectedHex": null
+    },
+    {
+      "name": "hexBoundary",
+      "kind": "centerMidpoint",
+      "hexes": [
+        [0, 0],
+        [1, 0]
+      ],
+      "expectedHex": [0, 0]
+    }
+  ],
+  "largeMapDiagnosticBudget": {
+    "mapId": "dravonia",
+    "maxDurationMicros": 5000000,
+    "maxResidentMemoryDeltaBytes": 536870912
+  }
+}

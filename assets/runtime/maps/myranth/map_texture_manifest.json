@@ -1,79 +1,99 @@
 {
   "version": 1,
   "mapId": "myranth",
+  "mapContentHash": "1743616d03d54d04f53fc699c2a6ec2e1ba30f59665ddaa8776419fe06626571",
+  "gridLayout": "oddQFlatTop",
   "cols": 25,
   "rows": 19,
   "worldWidth": 2280.0,
-  "worldHeight": 1974.53792062852,
-  "compiledScale": 1.8852104067079685,
+  "worldHeight": 2026.4994448555863,
+  "compiledScale": 1.8608840919779053,
   "filterQuality": "medium",
   "pageSizeLimit": 2048,
   "gutter": 2,
   "pages": [
     {
+      "file": "page_00.jpg",
       "asset": "assets/runtime/maps/myranth/page_00.jpg",
+      "format": "jpeg",
+      "sha256": "3e6dc80ecccd623b8e54d83a89b8c1882b34d1cf48bde37f5cdd121ed8382ed9",
       "pixelWidth": 2048,
       "pixelHeight": 2048,
       "destination": [
-        -1.0608895393763935,
-        -1.0608895393763935,
-        1086.350888321427,
-        1086.350888321427
+        -1.0747579651101378,
+        -1.0747579651101378,
+        1100.552156272781,
+        1100.552156272781
       ]
     },
     {
+      "file": "page_01.jpg",
       "asset": "assets/runtime/maps/myranth/page_01.jpg",
+      "format": "jpeg",
+      "sha256": "b06c214bcc2bad03332470874f0e81b753317d4e41f89541d16a82548d4a5989",
       "pixelWidth": 2048,
       "pixelHeight": 2048,
       "destination": [
-        1083.1682197032976,
-        -1.0608895393763935,
-        1086.350888321427,
-        1086.350888321427
+        1097.3278823774508,
+        -1.0747579651101378,
+        1100.552156272781,
+        1100.552156272781
       ]
     },
     {
+      "file": "page_02.jpg",
       "asset": "assets/runtime/maps/myranth/page_02.jpg",
-      "pixelWidth": 215,
+      "format": "jpeg",
+      "sha256": "743ccaab318136c47205be73e9be156ee0c71669c3ea9560f5c653fd313569b2",
+      "pixelWidth": 159,
       "pixelHeight": 2048,
       "destination": [
-        2167.397328945972,
-        -1.0608895393763935,
-        114.0456254829623,
-        1086.350888321427
+        2195.7305227200113,
+        -1.0747579651101378,
+        85.44325822625595,
+        1100.552156272781
       ]
     },
     {
+      "file": "page_03.jpg",
       "asset": "assets/runtime/maps/myranth/page_03.jpg",
+      "format": "jpeg",
+      "sha256": "5fbf4b8349310222989418df74b95ca22c8eb8d9ef36c1ff020191a151e36735",
       "pixelWidth": 2048,
-      "pixelHeight": 1683,
+      "pixelHeight": 1732,
       "destination": [
-        -1.0608895393763935,
-        1083.1682197032976,
-        1086.350888321427,
-        892.738547385235
+        -1.0747579651101378,
+        1097.3278823774508,
+        1100.552156272781,
+        930.7403977853794
       ]
     },
     {
+      "file": "page_04.jpg",
       "asset": "assets/runtime/maps/myranth/page_04.jpg",
+      "format": "jpeg",
+      "sha256": "841ec48ca73d77acb3b3f6af62264089e0f91963917d54f00a7523a78933cea2",
       "pixelWidth": 2048,
-      "pixelHeight": 1683,
+      "pixelHeight": 1732,
       "destination": [
-        1083.1682197032976,
-        1083.1682197032976,
-        1086.350888321427,
-        892.738547385235
+        1097.3278823774508,
+        1097.3278823774508,
+        1100.552156272781,
+        930.7403977853794
       ]
     },
     {
+      "file": "page_05.jpg",
       "asset": "assets/runtime/maps/myranth/page_05.jpg",
-      "pixelWidth": 215,
-      "pixelHeight": 1683,
+      "format": "jpeg",
+      "sha256": "9765681dbe5bf6f62fb7e24ef53ae2782f9a5537e2dd1948dc1f816f72fdd644",
+      "pixelWidth": 159,
+      "pixelHeight": 1732,
       "destination": [
-        2167.397328945972,
-        1083.1682197032976,
-        114.0456254829623,
-        892.738547385235
+        2195.7305227200113,
+        1097.3278823774508,
+        85.44325822625595,
+        930.7403977853794
       ]
     }
   ],

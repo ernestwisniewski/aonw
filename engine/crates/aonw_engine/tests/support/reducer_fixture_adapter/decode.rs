@@ -44,7 +44,7 @@ pub(super) fn decode_map(raw: &JsonObject) -> Result<MapDefinition, AdapterError
             if terrains.first().is_some_and(|terrain| terrain.is_feature()) {
                 terrains.insert(0, TerrainType::Grassland);
             }
-            TileDefinition::try_new(
+            TileDefinition::try_new_for_simulation(
                 coordinate_fields(tile, &path)?,
                 terrains,
                 Vec::new(),

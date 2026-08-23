@@ -4,7 +4,7 @@ use godot::classes::{IRefCounted, RefCounted};
 use godot::prelude::*;
 
 #[derive(GodotClass)]
-#[class(base=RefCounted)]
+#[class(tool, base=RefCounted)]
 struct AonwLocalSession {
     runtime: LocalRuntime,
     base: Base<RefCounted>,

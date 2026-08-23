@@ -57,15 +57,17 @@ extension GameAiTurnAutoPilotRuntime on GameAiTurnAutoPilotContext {
       runScheduler: runScheduler,
       precomputeCoordinator: precomputeCoordinator,
       throttler: runtimeThrottler,
-      executionRunner: aiTurnExecutionRunner,
-      precomputeRunner: aiTurnPrecomputeRunner,
+      // Keep extension calls inside closures. Passing extension method tear-offs
+      // across post-frame, timer, or await boundaries traps optimized dart2wasm.
+      executionRunner: () => aiTurnExecutionRunner(),
+      precomputeRunner: () => aiTurnPrecomputeRunner(),
       schedulePostFrame: (callback) {
         WidgetsBinding.instance.addPostFrameCallback((_) => callback());
       },
       canContinue: canContinue,
       notifyStateChanged: notifyStateChanged,
       interCommandDelay: interCommandDelayReader,
-      now: nowUtc,
+      now: () => nowUtc(),
     );
   }
 

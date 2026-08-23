@@ -5,6 +5,12 @@ packages. Dependency names and versions are recorded in `pubspec.yaml`,
 `pubspec.lock`, package-level `pubspec.yaml` files, and package-level lockfiles.
 Each dependency remains under its upstream license.
 
+## Native Editor And Runtime Dependencies
+
+- Terrain3D 1.0.2 is downloaded from the official `v1.0.2-stable` release by
+  `tool/bootstrap_terrain3d.sh` and verified by SHA-256. Terrain3D is licensed
+  under the MIT License; its downloaded addon includes `LICENSE.txt`.
+
 ## Fonts
 
 - Cinzel font files under `assets/fonts/`.

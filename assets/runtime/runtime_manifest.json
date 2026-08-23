@@ -1,7 +1,7 @@
 {
   "version": 1,
   "assetRoot": "assets/runtime",
-  "sourceManifestSha256": "102b0cbeb6c1febae30bfe0e581b4850609f69a059f455ddce0b73392d738c36",
+  "sourceManifestSha256": "d1edc8aa2466085f0ab09cf2115a5ca09f9006e28adcd675157fb2daa9e3c224",
   "externalSource": {
     "repository": "https://github.com/ernestwisniewski/aonw-assets.git",
     "revision": "00b572f5137feb38d68b50684001ee24383a8369"
@@ -12,8 +12,8 @@
   },
   "files": {
     "maps/dravonia/map_texture_manifest.json": {
-      "bytes": 31182,
-      "sha256": "3ef34246e04491626f4572607a77fe948edd1f77ba99373ae3a4940b43a9920a"
+      "bytes": 32123,
+      "sha256": "e1ae492a9d5c750854a53cee2fa9ece3c18b807e0d8a711e2063e1b9b7faec1e"
     },
     "maps/dravonia/page_00.jpg": {
       "bytes": 2544551,
@@ -40,36 +40,36 @@
       "sha256": "1f1fb1f685806aa099bc486ef0f9339895c9c138a53ce2446880a23853660737"
     },
     "maps/myranth/map_texture_manifest.json": {
-      "bytes": 13295,
-      "sha256": "04964d10337b677caa7d056cb8f0e12ff3deaf81b50be2027867c7240175c8cc"
+      "bytes": 14243,
+      "sha256": "e13d080a7b5a6f8c45330328a04a44a151d1453baa0165785c46c590508ac30a"
     },
     "maps/myranth/page_00.jpg": {
-      "bytes": 1643558,
-      "sha256": "6322568d166cb65e3e12c67b4f83917b6facff50734f3d8a1967b4476e85000c"
+      "bytes": 1657006,
+      "sha256": "3e6dc80ecccd623b8e54d83a89b8c1882b34d1cf48bde37f5cdd121ed8382ed9"
     },
     "maps/myranth/page_01.jpg": {
-      "bytes": 1811908,
-      "sha256": "2e1feb748dc51385c0013cfcc1b16d7b7da9b2b6c9879f59396799e52ac85223"
+      "bytes": 1802335,
+      "sha256": "b06c214bcc2bad03332470874f0e81b753317d4e41f89541d16a82548d4a5989"
     },
     "maps/myranth/page_02.jpg": {
-      "bytes": 89947,
-      "sha256": "7aa3e4faf39298ce283f5ae18e1949f17786ce8a5be6330255888c71d4b735de"
+      "bytes": 58981,
+      "sha256": "743ccaab318136c47205be73e9be156ee0c71669c3ea9560f5c653fd313569b2"
     },
     "maps/myranth/page_03.jpg": {
-      "bytes": 1159588,
-      "sha256": "5078ffdbd9cbec373adf9d20a59cb832fca005a61f5dfe0ee167763299061d54"
+      "bytes": 1158390,
+      "sha256": "5fbf4b8349310222989418df74b95ca22c8eb8d9ef36c1ff020191a151e36735"
     },
     "maps/myranth/page_04.jpg": {
-      "bytes": 1282513,
-      "sha256": "e49af50d8efb88feb4d15dd00e66ef04d446e0d6c9a4bd1919fd368119676480"
+      "bytes": 1254443,
+      "sha256": "841ec48ca73d77acb3b3f6af62264089e0f91963917d54f00a7523a78933cea2"
     },
     "maps/myranth/page_05.jpg": {
-      "bytes": 52633,
-      "sha256": "e58208a2a096cf448f12aa38ad8b64f6fb7e2d18e81f96bd64d0ae9b60d6ac05"
+      "bytes": 38220,
+      "sha256": "9765681dbe5bf6f62fb7e24ef53ae2782f9a5537e2dd1948dc1f816f72fdd644"
     },
     "maps/terenos/map_texture_manifest.json": {
-      "bytes": 8274,
-      "sha256": "e108603ea080ec9b8b19345efcd96914fa7179b983f92ef5f6fb2ee5c788d1e0"
+      "bytes": 8941,
+      "sha256": "71b1189d304ed4e32e87cf44ce6dfb590869afea222737e59bd46cc806174cc7"
     },
     "maps/terenos/page_00.jpg": {
       "bytes": 1626163,
@@ -88,8 +88,8 @@
       "sha256": "7b8ade1c413f0aabe41cfbc89c075fffab1de9cd05a34ade3109fc3e4b2c8d47"
     },
     "maps/verdantia/map_texture_manifest.json": {
-      "bytes": 16379,
-      "sha256": "cebb7142d608a1f7c64a2ad59f09bd4033df67f060441201dac4d5478d975150"
+      "bytes": 17320,
+      "sha256": "b9dc16606a92bae8a936015c70a66f6b7a49249a0c4fecbf45c260659264107a"
     },
     "maps/verdantia/page_00.jpg": {
       "bytes": 1873240,
@@ -205,7 +205,7 @@
     },
     "sprites/sprite_manifest.json": {
       "bytes": 162142,
-      "sha256": "611ac84692a63376a8c9562b2311d51611b49d9ab10a99019c0fbcd013655227"
+      "sha256": "274d9e19360d9e61a319d3da0c061b99f7127a0b99fdd3b09296c6cf6417746c"
     },
     "sprites/technologies/technologies.atlas": {
       "bytes": 4119,

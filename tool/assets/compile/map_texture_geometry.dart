@@ -13,7 +13,7 @@ double mapWorldHeight(int columns, int rows) {
   final halfHeight = math.sqrt(3) / 2 * mapHexRadius;
   return halfHeight +
       (rows - 1) * math.sqrt(3) * mapHexRadius +
-      ((columns - 1).isOdd ? halfHeight : 0) +
+      (columns > 1 ? halfHeight : 0) +
       halfHeight;
 }
 

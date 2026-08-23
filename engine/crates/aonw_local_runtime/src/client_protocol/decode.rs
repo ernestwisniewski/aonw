@@ -32,8 +32,11 @@ pub(super) fn open_session(
 }
 
 pub(super) fn map(document: &str) -> Result<MapDefinition, ClientDecodeError> {
+    map_document(document).map(|document| document.map().clone())
+}
+
+pub(super) fn map_document(document: &str) -> Result<MapDocument, ClientDecodeError> {
     MapDocument::from_json(document.as_bytes())
-        .map(|document| document.map().clone())
         .map_err(|error| ClientDecodeError::new("invalid_map", error))
 }
 

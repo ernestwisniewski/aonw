@@ -176,7 +176,7 @@ mod tests {
         let tiles = (0..3)
             .flat_map(|row| {
                 (0..3).map(move |col| {
-                    TileDefinition::try_new(
+                    TileDefinition::try_new_for_simulation(
                         HexCoord::new(col, row),
                         vec![TerrainType::Grassland],
                         Vec::new(),

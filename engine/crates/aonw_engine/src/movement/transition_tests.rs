@@ -18,7 +18,8 @@ fn map(cols: u16, rows: u16, rough: &[HexCoord]) -> MapDefinition {
                 vec![TerrainType::Plains]
             };
             tiles.push(
-                TileDefinition::try_new(coordinate, terrains, Vec::new(), 0).expect("valid tile"),
+                TileDefinition::try_new_for_simulation(coordinate, terrains, Vec::new(), 0)
+                    .expect("valid tile"),
             );
         }
     }

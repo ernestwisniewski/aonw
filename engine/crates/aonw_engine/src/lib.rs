@@ -14,8 +14,9 @@ mod unit_action;
 use aonw_domain::GameState;
 
 pub use application::{
-    CanonicalEngineError, CanonicalQueryError, DomainCommand, DomainEvent, DomainRejection,
-    DomainTransition, DomainTransitionParts, ExecutionEvidence, GameQuery, QueryResult,
+    CanonicalEngineError, CanonicalQueryError, CommandRejectionCode, DomainCommand, DomainEvent,
+    DomainRejection, DomainTransition, DomainTransitionParts, ExecutionEvidence, GameQuery,
+    QueryResult,
 };
 pub use context::EngineContext;
 pub use movement::{
@@ -31,7 +32,7 @@ pub use unit_action::{UnitActionCommand, UnitActionError};
 /// Engine behavior version implemented by this workspace.
 ///
 /// This axis is independent of save, wire, and native ABI versions.
-pub const ENGINE_BEHAVIOR_VERSION: u16 = 2;
+pub const ENGINE_BEHAVIOR_VERSION: u16 = 3;
 
 /// Stateless deterministic engine facade.
 #[derive(Clone, Copy, Debug, Default)]

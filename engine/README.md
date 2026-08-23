@@ -17,6 +17,9 @@ platform, shadow, canary, and rollback gates in the
 | --- | --- |
 | `aonw_domain` | `GameState`, complete unit entities, validated identifiers, odd-q topology, and fixed-point values. |
 | `aonw_content` | Strict maps, immutable rulesets and scenarios, catalogs, validation, and separate deterministic content hashes. |
+| `aonw_map_authoring` | Metric terrain-authoring profiles bound to, but excluded from, logical map identity. |
+| `aonw_map_compiler` | Pure deterministic compilation of authoring profiles into bounded base/min/max height rasters. |
+| `aonw_map_compiler_cli` | Thin filesystem adapter that writes compiled terrain as OpenEXR, raw R16, and a versioned manifest. |
 | `aonw_contracts` | Current-only shared client API plus strict bounded canonical state, save, and replay codecs. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
 | `aonw_engine` | Authoritative movement queries/transitions and revision-bound cancel, skip, and fortify unit actions. |
@@ -26,9 +29,11 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_testkit` | Bounded fixture/corpus loader, duplicate-key rejection, structural state/event/execution diff, and engine-neutral runner for the shared reducer-parity corpus. |
 
 The split enforces an inward dependency direction: contracts and domain do not
-depend on one another, content depends only on domain coordinates, mapping
-depends on contracts and domain, and the engine depends on domain plus validated
-content. The testkit remains independent of every concrete engine backend.
+depend on one another, content depends only on domain coordinates, map
+authoring depends on validated content, the pure map compiler depends on
+authoring, its CLI owns terrain artifact I/O, mapping depends on contracts and
+domain, and the engine depends on domain plus validated content. The testkit
+remains independent of every concrete engine backend.
 Recipient state has no conversion into canonical domain state.
 
 Large responsibilities are organized as modules instead of monolithic crate
@@ -39,6 +44,23 @@ the engine separates application commands, queries, transitions, context, and
 state-digest writing; the Godot adapter separates request parsing, response
 mapping, and bindings. Reducer-parity support separates input decoding, JSON
 helpers, and output projection from fixture execution.
+
+## Terrain compilation
+
+Run the thin artifact writer from `engine/` with an explicit logical map,
+authoring profile, output directory, and optional samples-per-hex density:
+
+```sh
+cargo run --locked -p aonw_map_compiler_cli --bin aonw-map-compiler -- \
+  ../content/maps/aonw2_starter/map.json \
+  ../content/maps/aonw2_starter/terrain_authoring.v1.json \
+  ../build/terrain/aonw2_starter 8
+```
+
+The output contains independent `base`, `min`, and `max` OpenEXR and raw R16
+rasters plus `terrain_compile.v1.json`. Regeneration creates no `final` raster;
+manual terrain remains caller-owned and can only be constrained through the
+explicit region-clamp API.
 
 ## Quality gates
 
@@ -165,20 +187,26 @@ linear patch generation, independently from canonical contract order. Event
 offset capacity is checked before an owned-state dispatch can begin.
 
 `aonw_contracts::client` owns the single client protocol shared by Godot and
-Flutter native adapters. `ClientRequestDto` contains tagged lifecycle,
-command, and query operations. `ClientResponseDto` contains only recipient-safe
-snapshots, patches, events, evidence, persistence documents, and stable errors;
-canonical `GameStateDto` never crosses this boundary. The protocol accepts only
-`CLIENT_API_VERSION` and has no historical readers or upcasters. Rust in-process
-runtime types deliberately have no version suffix.
+Flutter native adapters. `ClientRequestDto` contains tagged stateless map
+inspection, lifecycle, command, and query operations. `ClientResponseDto`
+contains framework-neutral map views, recipient-safe snapshots, patches,
+events, evidence, persistence documents, and stable errors; canonical
+`GameStateDto` never crosses this boundary. The protocol accepts only
+`CLIENT_API_VERSION` and has no historical readers or upcasters. Rust
+in-process runtime types deliberately have no version suffix.
 Command results use a tagged accepted/rejected outcome, so an incoherent
-acceptance flag and rejection code cannot be represented on the wire.
+acceptance flag and rejection code cannot be represented on the wire. Rejection
+codes are closed enums in both the engine and client DTO; their current wire
+values are pinned by `command_rejection_codes.v1.json` and unknown values fail
+closed in every adapter. Engine behavior version 3 unifies stale command
+rejections as `stale_revision`.
 
 The shared golden documents in `test/fixtures/client_protocol` are consumed by
 Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; each
 client owns the same supported constant and rejects an incompatible adapter or
-response before inspecting its payload. Map authoring output comes from `MapDocument::to_versioned_json`
-so the Godot bridge does not maintain a second map serializer.
+response before inspecting its payload. The stateless `inspectMap` operation
+validates a strict `MapDocument` and projects the same content hash and
+`MapViewDto` for both clients. Godot has no separate map validator or serializer.
 
 The runtime prepares `CompiledMovementMap` once per map/ruleset, keeps
 tile-indexed visibility, builds occupancy as a compact bitset, reuses reachable
@@ -195,7 +223,7 @@ used because the measured 1200-tile workload does not justify them.
 
 `aonw_godot::AonwLocalSession` exposes one `request_json` transport operation.
 It decodes and encodes `aonw_contracts::client` documents and delegates every
-lifecycle, query, command, save, and replay operation to `ClientProtocol` in
+map inspection, lifecycle, query, command, save, and replay operation to `ClientProtocol` in
 `aonw_local_runtime`. Godot obtains units from the recipient snapshot and never
 constructs a synthetic canonical unit. Build it with `make rust-godot-build`.
 

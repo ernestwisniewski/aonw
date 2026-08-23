@@ -153,15 +153,23 @@
         "col": { "type": "integer", "minimum": 0 },
         "row": { "type": "integer", "minimum": 0 },
         "terrains": {
+          "description": "Compatibility projection: normalized movement profile derived from terrainTags.",
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
           "prefixItems": [{ "$ref": "#/$defs/primaryTerrain" }],
           "items": { "$ref": "#/$defs/terrainFeature" }
         },
-        "displayTerrain": { "$ref": "#/$defs/terrainTag" },
-        "yieldTerrain": { "$ref": "#/$defs/yieldTerrain" },
+        "displayTerrain": {
+          "description": "Compatibility projection: first terrainTags value.",
+          "$ref": "#/$defs/terrainTag"
+        },
+        "yieldTerrain": {
+          "description": "Compatibility projection: first non-river terrainTags value.",
+          "$ref": "#/$defs/yieldTerrain"
+        },
         "terrainTags": {
+          "description": "Ordered terrain source of truth; order expresses authored precedence.",
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,

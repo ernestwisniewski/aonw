@@ -2,7 +2,7 @@
 
 use aonw_content::{
     GridLayout, MapDefinition, MapDocument, MapLoadError, MapObjective, MapObjectiveType,
-    ResourceType, TerrainType, TileDefinition,
+    ResourceType, TerrainProfile, TerrainType, TileDefinition,
 };
 use aonw_domain::{HexCoord, HexTileIndex};
 use serde_json::{Value, json};
@@ -17,6 +17,9 @@ fn document() -> Value {
                     "col": col,
                     "row": row,
                     "terrains": ["plains"],
+                    "displayTerrain": "plains",
+                    "yieldTerrain": "plains",
+                    "terrainTags": ["plains"],
                     "resources": if col == 0 && row == 0 {
                         json!(["iron", "wheat"])
                     } else {
@@ -54,7 +57,7 @@ fn logical_map(cols: u16, rows: u16) -> MapDefinition {
     let tiles = (0..rows)
         .flat_map(|row| {
             (0..cols).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(i32::from(col), i32::from(row)),
                     vec![TerrainType::Grassland],
                     Vec::new(),
@@ -77,10 +80,22 @@ fn logical_map(cols: u16, rows: u16) -> MapDefinition {
 
 #[test]
 fn versioned_map_normalizes_lookup_and_resource_order() {
-    let document = decode(&document()).expect("valid map");
+    let mut source = document();
+    source["tiles"][0]["terrains"] = json!(["mountain"]);
+    source["tiles"][0]["displayTerrain"] = json!("ocean");
+    source["tiles"][0]["yieldTerrain"] = json!("ocean");
+    source["tiles"][0]["terrainTags"] = json!(["ocean", "mountain"]);
+    let document = decode(&source).expect("valid map");
     let tile = document.map().tile_at(HexCoord::new(0, 0)).expect("tile");
 
     assert_eq!(tile.resources(), &[ResourceType::Wheat, ResourceType::Iron]);
+    assert_eq!(tile.movement_terrains(), &[TerrainType::Mountain]);
+    assert_eq!(tile.display_terrain(), TerrainType::Ocean);
+    assert_eq!(tile.yield_terrain(), TerrainType::Ocean);
+    assert_eq!(
+        tile.terrain_tags(),
+        &[TerrainType::Ocean, TerrainType::Mountain],
+    );
     assert!(document.map().tile_at(HexCoord::new(-1, 0)).is_none());
 }
 
@@ -101,6 +116,18 @@ fn strict_document_requires_every_schema_field() {
         .expect("objective")
         .remove("victoryPoints");
     assert!(matches!(decode(&value), Err(MapLoadError::Json(_))));
+
+    for field in ["terrains", "displayTerrain", "yieldTerrain", "terrainTags"] {
+        let mut value = document();
+        value["tiles"][0]
+            .as_object_mut()
+            .expect("tile")
+            .remove(field);
+        assert!(
+            matches!(decode(&value), Err(MapLoadError::Json(_))),
+            "{field}"
+        );
+    }
 }
 
 #[test]
@@ -137,7 +164,7 @@ fn duplicate_json_keys_are_rejected() {
 
 #[test]
 fn invalid_tiles_fail_closed() {
-    let cases: [Mutation; 5] = [
+    let cases: [Mutation; 12] = [
         (
             "duplicate coordinate",
             Box::new(|value| value["tiles"][1]["col"] = json!(0)),
@@ -155,8 +182,64 @@ fn invalid_tiles_fail_closed() {
             Box::new(|value| value["tiles"][0]["terrains"] = json!(["volcano"])),
         ),
         (
+            "unknown display terrain",
+            Box::new(|value| value["tiles"][0]["displayTerrain"] = json!("volcano")),
+        ),
+        (
+            "unknown yield terrain",
+            Box::new(|value| value["tiles"][0]["yieldTerrain"] = json!("volcano")),
+        ),
+        (
+            "river yield terrain",
+            Box::new(|value| value["tiles"][0]["yieldTerrain"] = json!("river")),
+        ),
+        (
+            "empty terrain tags",
+            Box::new(|value| value["tiles"][0]["terrainTags"] = json!([])),
+        ),
+        (
+            "duplicate terrain tag",
+            Box::new(|value| value["tiles"][0]["terrainTags"] = json!(["plains", "plains"])),
+        ),
+        (
+            "unknown terrain tag",
+            Box::new(|value| value["tiles"][0]["terrainTags"] = json!(["volcano"])),
+        ),
+        (
+            "terrain tags without yield terrain",
+            Box::new(|value| value["tiles"][0]["terrainTags"] = json!(["river"])),
+        ),
+        (
             "height out of range",
             Box::new(|value| value["tiles"][0]["height"] = json!(6)),
+        ),
+    ];
+
+    for (name, mutate) in cases {
+        let mut value = document();
+        mutate(&mut value);
+        assert!(decode(&value).is_err(), "{name}");
+    }
+}
+
+#[test]
+fn version_one_terrain_fields_must_match_the_profile() {
+    let cases: [Mutation; 4] = [
+        (
+            "movement compatibility field",
+            Box::new(|value| value["tiles"][0]["terrains"] = json!(["grassland"])),
+        ),
+        (
+            "display compatibility field",
+            Box::new(|value| value["tiles"][0]["displayTerrain"] = json!("grassland")),
+        ),
+        (
+            "yield compatibility field",
+            Box::new(|value| value["tiles"][0]["yieldTerrain"] = json!("grassland")),
+        ),
+        (
+            "canonical terrain profile",
+            Box::new(|value| value["tiles"][0]["terrainTags"] = json!(["grassland"])),
         ),
     ];
 
@@ -217,11 +300,16 @@ fn invalid_map_and_objective_invariants_fail_closed() {
 }
 
 #[test]
-fn canonical_hash_ignores_input_order_and_camera_zoom() {
-    let original = document();
+fn canonical_hash_ignores_non_semantic_order_and_camera_zoom() {
+    let mut original = document();
+    original["tiles"][0]["terrains"] = json!(["plains", "forest", "river"]);
+    original["tiles"][0]["displayTerrain"] = json!("river");
+    original["tiles"][0]["yieldTerrain"] = json!("forest");
+    original["tiles"][0]["terrainTags"] = json!(["river", "forest", "plains"]);
     let mut reordered = original.clone();
     reordered["tiles"].as_array_mut().expect("tiles").reverse();
     reordered["tiles"][24]["resources"] = json!(["wheat", "iron"]);
+    reordered["tiles"][24]["terrains"] = json!(["plains", "river", "forest"]);
     reordered["defaultZoom"] = json!(2.5);
 
     let original = decode(&original).expect("original");
@@ -238,12 +326,94 @@ fn canonical_hash_ignores_input_order_and_camera_zoom() {
 }
 
 #[test]
+fn canonical_hash_preserves_terrain_precedence() {
+    let mut river_first = document();
+    river_first["tiles"][0]["terrains"] = json!(["plains", "forest", "river"]);
+    river_first["tiles"][0]["displayTerrain"] = json!("river");
+    river_first["tiles"][0]["yieldTerrain"] = json!("forest");
+    river_first["tiles"][0]["terrainTags"] = json!(["river", "forest", "plains"]);
+    let mut forest_first = river_first.clone();
+    forest_first["tiles"][0]["displayTerrain"] = json!("forest");
+    forest_first["tiles"][0]["terrainTags"] = json!(["forest", "river", "plains"]);
+
+    assert_ne!(
+        decode(&river_first)
+            .expect("river-first profile")
+            .map()
+            .content_hash()
+            .expect("hash"),
+        decode(&forest_first)
+            .expect("forest-first profile")
+            .map()
+            .content_hash()
+            .expect("hash"),
+    );
+}
+
+#[test]
+fn canonical_hash_includes_the_terrain_profile_resources_and_height() {
+    let source = document();
+    let original = decode(&source)
+        .expect("original")
+        .map()
+        .content_hash()
+        .expect("hash");
+    let cases: [Mutation; 3] = [
+        (
+            "terrain profile",
+            Box::new(|value| {
+                value["tiles"][0]["terrains"] = json!(["grassland"]);
+                value["tiles"][0]["displayTerrain"] = json!("grassland");
+                value["tiles"][0]["yieldTerrain"] = json!("grassland");
+                value["tiles"][0]["terrainTags"] = json!(["grassland"]);
+            }),
+        ),
+        (
+            "resources",
+            Box::new(|value| value["tiles"][1]["resources"] = json!(["wheat"])),
+        ),
+        (
+            "height",
+            Box::new(|value| value["tiles"][0]["height"] = json!(1)),
+        ),
+    ];
+
+    for (name, mutate) in cases {
+        let mut changed = source.clone();
+        mutate(&mut changed);
+        assert_ne!(
+            decode(&changed)
+                .expect("changed map")
+                .map()
+                .content_hash()
+                .expect("hash"),
+            original,
+            "{name} must participate in contentHash"
+        );
+    }
+}
+
+#[test]
+fn canonical_hash_uses_one_terrain_source_of_truth() {
+    let decoded = decode(&document()).expect("valid map");
+    let canonical: Value =
+        serde_json::from_slice(&decoded.map().canonical_bytes().expect("canonical bytes"))
+            .expect("canonical JSON");
+    let tile = &canonical["tiles"][0];
+
+    assert!(tile.get("terrainTags").is_some());
+    assert!(tile.get("terrains").is_none());
+    assert!(tile.get("displayTerrain").is_none());
+    assert!(tile.get("yieldTerrain").is_none());
+}
+
+#[test]
 fn canonical_hash_matches_golden_digest() {
     let document = decode(&document()).expect("valid map");
 
     assert_eq!(
         document.map().content_hash().expect("hash").to_string(),
-        "9339e56f9d97fc06e6e6c81e44076987229b74d9e000594911ee39d3370fe5d4"
+        "7bbe6a1bf5fbe7da1ec74f9f6a24b7287302f4327ece2019bd753156f207aa45"
     );
 }
 
@@ -254,7 +424,8 @@ fn domain_content_can_be_constructed_without_a_json_adapter() {
             (0..5).map(move |col| {
                 TileDefinition::try_new(
                     HexCoord::new(col, row),
-                    vec![TerrainType::Plains],
+                    TerrainProfile::try_new(vec![TerrainType::Plains])
+                        .expect("valid terrain profile"),
                     Vec::new(),
                     0,
                 )
@@ -285,7 +456,7 @@ fn domain_content_can_be_constructed_without_a_json_adapter() {
     assert_eq!(document.map().map_id(), "constructed_map");
     assert!((document.default_zoom() - 1.5).abs() < f64::EPSILON);
     assert!(
-        TileDefinition::try_new(
+        TileDefinition::try_new_for_simulation(
             HexCoord::new(0, 0),
             vec![TerrainType::Plains, TerrainType::Plains],
             Vec::new(),
@@ -296,11 +467,53 @@ fn domain_content_can_be_constructed_without_a_json_adapter() {
 }
 
 #[test]
+fn terrain_profile_derives_bounded_context_views_from_ordered_tags() {
+    let terrain = TerrainProfile::try_new(vec![
+        TerrainType::River,
+        TerrainType::Forest,
+        TerrainType::Plains,
+        TerrainType::Hills,
+    ])
+    .expect("valid terrain profile");
+
+    assert_eq!(terrain.display_terrain(), TerrainType::River);
+    assert_eq!(terrain.yield_terrain(), TerrainType::Forest);
+    assert_eq!(
+        terrain.movement_terrains(),
+        &[
+            TerrainType::Plains,
+            TerrainType::Hills,
+            TerrainType::Forest,
+            TerrainType::River,
+        ],
+    );
+}
+
+#[test]
+fn versioned_serializer_emits_derived_terrain_compatibility_fields() {
+    let mut source = document();
+    source["tiles"][0]["terrains"] = json!(["plains", "forest", "river"]);
+    source["tiles"][0]["displayTerrain"] = json!("river");
+    source["tiles"][0]["yieldTerrain"] = json!("forest");
+    source["tiles"][0]["terrainTags"] = json!(["river", "forest", "plains"]);
+    let document = decode(&source).expect("valid version-one profile");
+    let encoded: Value =
+        serde_json::from_str(&document.to_versioned_json().expect("versioned JSON"))
+            .expect("valid JSON");
+    let tile = &encoded["tiles"][0];
+
+    assert_eq!(tile["terrainTags"], json!(["river", "forest", "plains"]));
+    assert_eq!(tile["terrains"], json!(["plains", "forest", "river"]));
+    assert_eq!(tile["displayTerrain"], json!("river"));
+    assert_eq!(tile["yieldTerrain"], json!("forest"));
+}
+
+#[test]
 fn simulation_maps_allow_small_fixture_grids_but_authored_documents_do_not() {
     let tiles = (0..3)
         .flat_map(|row| {
             (0..3).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(col, row),
                     vec![TerrainType::Plains],
                     Vec::new(),
@@ -325,7 +538,7 @@ fn simulation_maps_allow_small_fixture_grids_but_authored_documents_do_not() {
 
 #[test]
 fn tile_requires_one_explicit_primary_terrain() {
-    let feature_first = TileDefinition::try_new(
+    let feature_first = TileDefinition::try_new_for_simulation(
         HexCoord::new(0, 0),
         vec![TerrainType::Forest, TerrainType::Plains],
         Vec::new(),
@@ -334,7 +547,7 @@ fn tile_requires_one_explicit_primary_terrain() {
     .expect_err("feature-first terrain must fail closed");
     assert_eq!(feature_first.path(), "$.terrains[0]");
 
-    let second_primary = TileDefinition::try_new(
+    let second_primary = TileDefinition::try_new_for_simulation(
         HexCoord::new(0, 0),
         vec![TerrainType::Plains, TerrainType::Grassland],
         Vec::new(),

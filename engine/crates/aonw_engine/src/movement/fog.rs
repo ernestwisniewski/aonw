@@ -136,7 +136,7 @@ fn visible_from_source(
             let Some(tile) = map.tile_at(neighbor) else {
                 continue;
             };
-            let (sight_cost, blocks) = sight_cost(tile.terrains());
+            let (sight_cost, blocks) = sight_cost(tile.movement_terrains());
             let Some(next_cost) = current.cost.checked_add(sight_cost) else {
                 continue;
             };
@@ -212,7 +212,7 @@ mod tests {
         let tiles = (0..5)
             .flat_map(|row| {
                 (0..5).map(move |col| {
-                    TileDefinition::try_new(
+                    TileDefinition::try_new_for_simulation(
                         HexCoord::new(col, row),
                         vec![TerrainType::Plains],
                         Vec::new(),

@@ -9,7 +9,7 @@ fn map() -> MapDefinition {
     let tiles = (0..2)
         .flat_map(|row| {
             (0..2).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(col, row),
                     vec![TerrainType::Plains],
                     Vec::new(),
@@ -71,7 +71,7 @@ fn scenario_bootstraps_full_state_from_map_and_ruleset() {
     assert_ne!(scenario.ruleset_hash(), scenario.map_hash());
     assert_eq!(
         scenario.content_hash().expect("hash").to_string(),
-        "d3f37241a2c47f183891761c1409d0e1107b0c31cf486b8260e45ea6b06031ba"
+        "a105b1527926a7ff90cb9b1f15d8c863266600600d3a6574358dd24ad448c092"
     );
 }
 

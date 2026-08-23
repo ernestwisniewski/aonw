@@ -202,6 +202,24 @@
       "defaultRole": "test",
       "roleAssignments": {}
     },
+    "successor_flutter_integration_test": {
+      "sourceRoot": "clients/aonw_flutter/integration_test",
+      "generatedPrefixes": [],
+      "defaultRole": "test",
+      "roleAssignments": {}
+    },
+    "successor_flutter_lib": {
+      "sourceRoot": "clients/aonw_flutter/lib",
+      "generatedPrefixes": [],
+      "defaultRole": "production",
+      "roleAssignments": {}
+    },
+    "successor_flutter_test": {
+      "sourceRoot": "clients/aonw_flutter/test",
+      "generatedPrefixes": [],
+      "defaultRole": "test",
+      "roleAssignments": {}
+    },
     "vendor_sign_in_with_apple": {
       "sourceRoot": "third_party/sign_in_with_apple/lib",
       "generatedPrefixes": [],

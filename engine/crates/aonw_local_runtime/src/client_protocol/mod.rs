@@ -2,8 +2,8 @@ mod decode;
 mod encode;
 
 use aonw_contracts::client::{
-    CLIENT_API_VERSION, ClientErrorDto, ClientOutcomeDto, ClientRequestBodyDto, ClientRequestDto,
-    ClientResponseBodyDto, ClientResponseDto,
+    CLIENT_API_VERSION, ClientCodecError, ClientErrorDto, ClientOutcomeDto, ClientRequestBodyDto,
+    ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
 };
 
 use crate::{LocalRuntime, RuntimeError};
@@ -19,6 +19,9 @@ impl ClientProtocol {
     pub fn dispatch_json(runtime: &mut LocalRuntime, input: &str) -> String {
         let response = match ClientRequestDto::from_json(input) {
             Ok(request) => Self::dispatch(runtime, request),
+            Err(error @ ClientCodecError::UnsupportedVersion { .. }) => {
+                failure("unsupported_client_api_version", error)
+            }
             Err(error) => failure("invalid_client_request", error),
         };
         response
@@ -41,6 +44,15 @@ impl ClientProtocol {
 
         match request.request {
             ClientRequestBodyDto::Capabilities => success(encode::capabilities()),
+            ClientRequestBodyDto::InspectMap { map_document } => {
+                match decode::map_document(&map_document) {
+                    Ok(document) => match encode::map(&document) {
+                        Ok(map) => success(ClientResponseBodyDto::MapInspected { map }),
+                        Err(error) => failure("map_hash_failed", error),
+                    },
+                    Err(error) => error.into_response(),
+                }
+            }
             ClientRequestBodyDto::OpenSession {
                 map_document,
                 scenario_document,

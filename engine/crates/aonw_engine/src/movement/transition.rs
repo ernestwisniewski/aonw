@@ -4,7 +4,7 @@ use aonw_domain::{
 };
 
 use super::{TerrainMovementQuery, TerrainMovementQueryError};
-use crate::{EngineContext, GameEngine};
+use crate::{CommandRejectionCode, EngineContext, GameEngine};
 
 /// Revision-bound manual movement command.
 #[derive(Clone, Copy, Debug)]
@@ -148,13 +148,13 @@ pub enum MoveUnitError {
 impl MoveUnitError {
     /// Returns the stable language-neutral rejection code.
     #[must_use]
-    pub const fn code(&self) -> &'static str {
+    pub const fn code(&self) -> CommandRejectionCode {
         match self {
             Self::Query(error) => error.code(),
-            Self::RevisionOverflow => "state_revision_overflow",
-            Self::InvalidQueuedPath(_) => "invalid_queued_movement_path",
-            Self::InvalidUnit(_) => "invalid_unit",
-            Self::UnitUpdateFailed => "movement_unit_update_failed",
+            Self::RevisionOverflow => CommandRejectionCode::StateRevisionOverflow,
+            Self::InvalidQueuedPath(_) => CommandRejectionCode::InvalidQueuedMovementPath,
+            Self::InvalidUnit(_) => CommandRejectionCode::InvalidUnit,
+            Self::UnitUpdateFailed => CommandRejectionCode::MovementUnitUpdateFailed,
         }
     }
 }

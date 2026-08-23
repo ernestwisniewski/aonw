@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:test/test.dart';
@@ -25,6 +26,32 @@ void main() {
     });
 
     expect(() => AonwClientResponse.parse(source), throwsFormatException);
+  });
+
+  test('map response rejects unknown nested fields and terrain values', () {
+    final fixture =
+        jsonDecode(
+              File(
+                _fixturePath('map_inspected_response.json'),
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final outcome = fixture['outcome'] as Map<String, dynamic>;
+    final response = outcome['response'] as Map<String, dynamic>;
+    final map = response['map'] as Map<String, dynamic>;
+    final tile = (map['tiles'] as List).single as Map<String, dynamic>;
+    tile['unknown'] = true;
+    expect(
+      () => AonwClientResponse.parse(jsonEncode(fixture)),
+      throwsFormatException,
+    );
+
+    tile.remove('unknown');
+    tile['displayTerrain'] = 'volcano';
+    expect(
+      () => AonwClientResponse.parse(jsonEncode(fixture)),
+      throwsFormatException,
+    );
   });
 
   test('typed parser covers lifecycle and persistence responses', () {
@@ -117,13 +144,38 @@ void main() {
     expect(accepted.accepted, isTrue);
     expect(accepted.rejection, isNull);
     expect(rejected.accepted, isFalse);
-    expect(rejected.rejection, 'stale_revision');
+    expect(rejected.rejection, AonwCommandRejectionCode.staleRevision);
     expect(
       () => AonwCommandResult.fromJson({
         ..._commandResult(const {'status': 'accepted'}),
         'accepted': true,
       }),
       throwsFormatException,
+    );
+    expect(
+      () => AonwCommandResult.fromJson(
+        _commandResult(const {
+          'status': 'rejected',
+          'code': 'future_rejection',
+        }),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('command rejection codes match the shared fixture', () {
+    final fixture =
+        jsonDecode(
+              File(
+                _fixturePath('command_rejection_codes.v1.json'),
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+
+    expect(fixture['schemaVersion'], 1);
+    expect(
+      AonwCommandRejectionCode.values.map((value) => value.wireCode),
+      fixture['codes'],
     );
   });
 
@@ -141,6 +193,17 @@ void main() {
     expect(response.error?.code, 'invalid_request');
     expect(response.require<AonwSessionClosedResponse>, throwsStateError);
   });
+}
+
+String _fixturePath(String name) {
+  for (final root in [
+    'test/fixtures/client_protocol',
+    '../../test/fixtures/client_protocol',
+  ]) {
+    final path = '$root/$name';
+    if (File(path).existsSync()) return path;
+  }
+  throw StateError('Shared client fixture not found: $name');
 }
 
 const _stamp = {

@@ -35,7 +35,7 @@ impl CanonicalQueryError {
     #[must_use]
     pub const fn code(&self) -> &'static str {
         match self {
-            Self::Rejected(rejection) => rejection.code(),
+            Self::Rejected(rejection) => rejection.code().as_str(),
         }
     }
 }

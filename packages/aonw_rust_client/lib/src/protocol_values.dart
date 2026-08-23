@@ -1,6 +1,7 @@
 import 'package:aonw_rust_client/src/protocol_json.dart';
 
 enum AonwClientFeature {
+  inspectMap,
   snapshot,
   reachable,
   routePlan,
