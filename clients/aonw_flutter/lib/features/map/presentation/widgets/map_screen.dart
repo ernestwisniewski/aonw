@@ -17,6 +17,7 @@ import '../../application/map_controller.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_scene.dart';
 import '../../read_model/map_view.dart';
+import '../../read_model/movement_view.dart';
 import '../camera/map_initial_camera.dart';
 import '../geometry/odd_q_flat_top_geometry.dart';
 import '../input/map_input.dart';
@@ -90,9 +91,8 @@ final class _MapScreenState extends State<MapScreen> {
     final settings = ClientSettingsScope.settingsOf(context);
     return switch (state) {
       GameSessionLoading() => const _LoadingMap(),
-      GameSessionFailure(:final code, :final message) => _MapFailure(
+      GameSessionFailure(:final code) => _MapFailure(
         code: code,
-        message: message,
         retry: widget.controller.load,
       ),
       GameSessionReady(
@@ -395,7 +395,7 @@ final class _MapSelectionPanel extends StatelessWidget {
           if (interaction.movementError case final message?) ...[
             const SizedBox(height: AonwSpacing.sm),
             Text(
-              message,
+              _movementFailureMessage(l10n, message),
               key: const ValueKey('movement-error'),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
@@ -416,14 +416,9 @@ final class _LoadingMap extends StatelessWidget {
 }
 
 final class _MapFailure extends StatelessWidget {
-  const _MapFailure({
-    required this.code,
-    required this.message,
-    required this.retry,
-  });
+  const _MapFailure({required this.code, required this.retry});
 
-  final String code;
-  final String message;
+  final MapLoadFailureViewCode code;
   final AsyncCallback retry;
 
   @override
@@ -433,11 +428,62 @@ final class _MapFailure extends StatelessWidget {
       child: AonwMessagePanel(
         semanticLabel: l10n.mapLoadingFailed,
         title: l10n.mapUnavailable,
-        message: message,
-        detail: code,
+        message: _mapFailureMessage(l10n, code),
         actionLabel: l10n.retry,
         onAction: retry,
       ),
     );
   }
 }
+
+String _mapFailureMessage(
+  AonwLocalizations l10n,
+  MapLoadFailureViewCode code,
+) => switch (code) {
+  MapLoadFailureViewCode.adapterUnavailable => l10n.mapAdapterUnavailable,
+  MapLoadFailureViewCode.incompatibleClient => l10n.mapClientIncompatible,
+  MapLoadFailureViewCode.loadSuperseded => l10n.mapLoadSuperseded,
+  MapLoadFailureViewCode.mapUnavailable => l10n.mapLoadFailure,
+};
+
+String _movementFailureMessage(
+  AonwLocalizations l10n,
+  MapMovementFailure failure,
+) => switch (failure.code) {
+  MapMovementFailureViewCode.requestFailed => l10n.movementRequestFailed,
+  MapMovementFailureViewCode.responseIncompatible =>
+    l10n.movementResponseIncompatible,
+  MapMovementFailureViewCode.sessionUnavailable =>
+    l10n.movementSessionUnavailable,
+  MapMovementFailureViewCode.moveRejected => _moveRejectionMessage(
+    l10n,
+    failure.rejectionCode!,
+  ),
+};
+
+String _moveRejectionMessage(
+  AonwLocalizations l10n,
+  CommandRejectionCodeView code,
+) => switch (code) {
+  CommandRejectionCodeView.staleRevision => l10n.moveRejectedStale,
+  CommandRejectionCodeView.unitNotFound ||
+  CommandRejectionCodeView.unitNotControlled ||
+  CommandRejectionCodeView.unitUnavailable ||
+  CommandRejectionCodeView.unitOutOfBounds => l10n.moveRejectedUnitUnavailable,
+  CommandRejectionCodeView.unitUsesTradeRoutes ||
+  CommandRejectionCodeView.unitBusy => l10n.moveRejectedUnitBusy,
+  CommandRejectionCodeView.moveTargetOutOfBounds ||
+  CommandRejectionCodeView.moveTargetIsCurrentTile ||
+  CommandRejectionCodeView.moveTargetIsForeignCityCenter ||
+  CommandRejectionCodeView.moveTargetOccupied =>
+    l10n.moveRejectedTargetUnavailable,
+  CommandRejectionCodeView.unitMovementCapacityInsufficient =>
+    l10n.moveRejectedMovementInsufficient,
+  CommandRejectionCodeView.movePathNotFound => l10n.moveRejectedPathUnavailable,
+  CommandRejectionCodeView.unitDefinitionMissing ||
+  CommandRejectionCodeView.stateRevisionOverflow ||
+  CommandRejectionCodeView.invalidQueuedMovementPath ||
+  CommandRejectionCodeView.invalidUnit ||
+  CommandRejectionCodeView.movementUnitUpdateFailed =>
+    l10n.moveRejectedInternal,
+};

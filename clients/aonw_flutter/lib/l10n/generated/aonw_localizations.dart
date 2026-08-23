@@ -224,6 +224,90 @@ abstract class AonwLocalizations {
   /// **'Map unavailable'**
   String get mapUnavailable;
 
+  /// No description provided for @mapAdapterUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The native game adapter is unavailable on this platform.'**
+  String get mapAdapterUnavailable;
+
+  /// No description provided for @mapClientIncompatible.
+  ///
+  /// In en, this message translates to:
+  /// **'The native game adapter is incompatible with this client.'**
+  String get mapClientIncompatible;
+
+  /// No description provided for @mapLoadSuperseded.
+  ///
+  /// In en, this message translates to:
+  /// **'A newer map request replaced this one.'**
+  String get mapLoadSuperseded;
+
+  /// No description provided for @mapLoadFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'The map could not be loaded.'**
+  String get mapLoadFailure;
+
+  /// No description provided for @movementRequestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The movement request could not be completed.'**
+  String get movementRequestFailed;
+
+  /// No description provided for @movementResponseIncompatible.
+  ///
+  /// In en, this message translates to:
+  /// **'The movement response is incompatible with this client.'**
+  String get movementResponseIncompatible;
+
+  /// No description provided for @movementSessionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The local game session is unavailable.'**
+  String get movementSessionUnavailable;
+
+  /// No description provided for @moveRejectedStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The game state changed. Review the latest position and try again.'**
+  String get moveRejectedStale;
+
+  /// No description provided for @moveRejectedUnitUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'That unit is no longer available to move.'**
+  String get moveRejectedUnitUnavailable;
+
+  /// No description provided for @moveRejectedUnitBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'That unit is busy and cannot move now.'**
+  String get moveRejectedUnitBusy;
+
+  /// No description provided for @moveRejectedTargetUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'That destination is not available.'**
+  String get moveRejectedTargetUnavailable;
+
+  /// No description provided for @moveRejectedMovementInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'The unit does not have enough movement remaining.'**
+  String get moveRejectedMovementInsufficient;
+
+  /// No description provided for @moveRejectedPathUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No valid route to that destination is available.'**
+  String get moveRejectedPathUnavailable;
+
+  /// No description provided for @moveRejectedInternal.
+  ///
+  /// In en, this message translates to:
+  /// **'The move could not be applied. Try again.'**
+  String get moveRejectedInternal;
+
   /// No description provided for @retry.
   ///
   /// In en, this message translates to:

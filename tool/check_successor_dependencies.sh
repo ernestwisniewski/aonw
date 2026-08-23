@@ -87,6 +87,12 @@ while IFS= read -r -d '' source_file; do
       ;;
   esac
   case "${source_file}" in
+    */lib/game/*)
+      grep -nHE "^import .*infrastructure/" "${source_file}" \
+        >>"${violations}" || true
+      ;;
+  esac
+  case "${source_file}" in
     */presentation/*)
       grep -nHE "^import .*infrastructure/" "${source_file}" \
         >>"${violations}" || true

@@ -53,8 +53,7 @@ void main() {
     await controller.load();
 
     final failure = controller.state as GameSessionFailure;
-    expect(failure.code, 'invalid_map');
-    expect(failure.message, 'Bad map');
+    expect(failure.code, MapLoadFailureViewCode.mapUnavailable);
   });
 
   test('a slower old load cannot replace a newer result', () async {
@@ -96,7 +95,7 @@ void main() {
       await controller.load();
 
       final failure = controller.state as GameSessionFailure;
-      expect(failure.message, 'The map could not be opened.');
+      expect(failure.code, MapLoadFailureViewCode.mapUnavailable);
       expect(diagnostics.single.code, 'invalid_map');
       expect(diagnostics.single.error, same(cause));
     },
@@ -176,8 +175,8 @@ void main() {
       final ready = controller.state as GameSessionReady;
       expect(ready.scene.player, same(scene.player));
       expect(
-        ready.interaction.movementError,
-        'Move rejected: move_target_occupied',
+        ready.interaction.movementError?.rejectionCode,
+        CommandRejectionCodeView.moveTargetOccupied,
       );
       expect(ready.interaction.route, isNotNull);
     },

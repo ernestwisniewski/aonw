@@ -42,6 +42,31 @@ void main() {
 
     expect(controller.settings, changed);
   });
+
+  test('serializes concurrent writes and preserves their order', () async {
+    final store = _ControlledSettingsStore();
+    final controller = ClientSettingsController(store: store);
+    addTearDown(controller.dispose);
+    final first = ClientSettings.defaults.copyWith(masterVolume: 0.4);
+    final second = ClientSettings.defaults.copyWith(masterVolume: 0.8);
+
+    final firstWrite = controller.update(first);
+    await store.firstStarted.future;
+    final secondWrite = controller.update(second);
+    await pumpEventQueue();
+
+    expect(store.started, [first]);
+    expect(controller.settings, second);
+
+    store.firstCompleted.complete();
+    await firstWrite;
+    await store.secondStarted.future;
+    expect(store.started, [first, second]);
+
+    store.secondCompleted.complete();
+    await secondWrite;
+    expect(store.persisted, [first, second]);
+  });
 }
 
 final class _MemorySettingsStore implements ClientSettingsStore {
@@ -68,4 +93,30 @@ final class _DelayedSettingsStore implements ClientSettingsStore {
 
   @override
   Future<void> save(ClientSettings settings) async {}
+}
+
+final class _ControlledSettingsStore implements ClientSettingsStore {
+  final firstStarted = Completer<void>();
+  final firstCompleted = Completer<void>();
+  final secondStarted = Completer<void>();
+  final secondCompleted = Completer<void>();
+  final started = <ClientSettings>[];
+  final persisted = <ClientSettings>[];
+
+  @override
+  Future<ClientSettings> load() async => ClientSettings.defaults;
+
+  @override
+  Future<void> save(ClientSettings settings) async {
+    started.add(settings);
+    final index = started.length;
+    if (index == 1) {
+      firstStarted.complete();
+      await firstCompleted.future;
+    } else {
+      secondStarted.complete();
+      await secondCompleted.future;
+    }
+    persisted.add(settings);
+  }
 }

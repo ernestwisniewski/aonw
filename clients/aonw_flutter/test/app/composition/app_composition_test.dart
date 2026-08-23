@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:aonw_flutter/app/composition/app_composition.dart';
 import 'package:aonw_flutter/app/telemetry/client_telemetry.dart';
 import 'package:aonw_flutter/features/map/application/map_repository.dart';
@@ -11,6 +14,8 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/map_test_fixture.dart';
 
 void main() {
+  final lifecycle = _lifecycleOracle();
+
   testWidgets('composition owns one controller and closes its repository', (
     tester,
   ) async {
@@ -31,9 +36,10 @@ void main() {
       AppComposition(mapRepository: second, mapInputSource: secondInput).root,
     );
     await tester.pump();
-    expect(first.closeCalls, 1);
-    expect(firstInput.closeCalls, 1);
-    expect(second.loadCalls, 1);
+    final expected = lifecycle['routeReplace'] as Map<String, dynamic>;
+    expect(first.closeCalls, expected['oldRepositoryCloseCalls']);
+    expect(firstInput.closeCalls, expected['oldInputCloseCalls']);
+    expect(second.loadCalls, expected['newRepositoryLoadCalls']);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -69,18 +75,33 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(input.activeStates.last, isTrue);
-    expect(repository.closeCalls, 0);
-    expect(telemetry.events.map((event) => event.code), [
-      'app_started',
-      'app_suspended',
-      'app_resumed',
-    ]);
+    final expected = lifecycle['pauseResume'] as Map<String, dynamic>;
+    expect(
+      repository.closeCalls,
+      expected['repositoryCloseCallsBeforeUnmount'],
+    );
+    expect(input.activeStates, expected['inputActiveStates']);
+    expect(telemetry.events.map((event) => event.code), expected['telemetry']);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
     expect(input.activeStates.last, isFalse);
     expect(repository.closeCalls, 1);
   });
+}
+
+Map<String, dynamic> _lifecycleOracle() {
+  for (final path in [
+    '../../aonw_tests/fixtures/input/flutter_viewport_oracle.json',
+    'aonw_tests/fixtures/input/flutter_viewport_oracle.json',
+  ]) {
+    final file = File(path);
+    if (file.existsSync()) {
+      final value = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      return value['lifecycle'] as Map<String, dynamic>;
+    }
+  }
+  throw StateError('Flutter viewport oracle fixture not found.');
 }
 
 final class _RecordingClientTelemetry implements ClientTelemetry {

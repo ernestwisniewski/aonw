@@ -53,9 +53,14 @@ void main() {
   });
 
   test('native availability and session creation stay coherent', () async {
+    expect(aonwRustClientIdentity.isCompatible, aonwRustClientAvailable);
     final session = await createAonwRustSession();
     expect(session != null, aonwRustClientAvailable);
     if (session == null) return;
+    expect(
+      aonwRustClientIdentity.buildIdentity,
+      aonwExpectedNativeBuildIdentity,
+    );
     addTearDown(session.close);
 
     final rawResponse = await session.requestJson(

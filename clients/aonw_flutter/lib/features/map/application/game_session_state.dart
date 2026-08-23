@@ -51,9 +51,15 @@ final class GameSessionReady extends GameSessionState {
       );
 }
 
-final class GameSessionFailure extends GameSessionState {
-  const GameSessionFailure({required this.code, required this.message});
+enum MapLoadFailureViewCode {
+  adapterUnavailable,
+  incompatibleClient,
+  loadSuperseded,
+  mapUnavailable,
+}
 
-  final String code;
-  final String message;
+final class GameSessionFailure extends GameSessionState {
+  const GameSessionFailure({required this.code});
+
+  final MapLoadFailureViewCode code;
 }

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
 import 'game_session_state.dart';
+import 'map_interaction_state.dart';
 import 'map_repository.dart';
 
 typedef MapDiagnosticReporter =
@@ -54,15 +55,12 @@ final class MapController extends ChangeNotifier {
           error.diagnosticStackTrace ?? stackTrace,
         );
       }
-      _setState(GameSessionFailure(code: error.code, message: error.message));
+      _setState(GameSessionFailure(code: _loadFailureCode(error.code)));
     } on Object catch (error, stackTrace) {
       if (!_isCurrent(generation)) return;
       _diagnosticReporter('unexpected_map_failure', error, stackTrace);
       _setState(
-        const GameSessionFailure(
-          code: 'unexpected_map_failure',
-          message: 'The map could not be loaded.',
-        ),
+        const GameSessionFailure(code: MapLoadFailureViewCode.mapUnavailable),
       );
     }
   }
@@ -316,7 +314,7 @@ final class MapController extends ChangeNotifier {
       ready.withInteraction(
         ready.interaction.copyWith(
           movementPending: false,
-          movementError: error.message,
+          movementError: MapMovementFailure(_movementFailureCode(error.code)),
         ),
       ),
     );
@@ -334,7 +332,9 @@ final class MapController extends ChangeNotifier {
       ready.withInteraction(
         ready.interaction.copyWith(
           movementPending: false,
-          movementError: 'The movement request failed.',
+          movementError: const MapMovementFailure(
+            MapMovementFailureViewCode.requestFailed,
+          ),
         ),
       ),
     );
@@ -357,7 +357,7 @@ GameSessionReady _moveResultState(
     return current.withInteraction(
       current.interaction.copyWith(
         movementPending: false,
-        movementError: 'Move rejected: ${result.rejectionCode!.wireCode}',
+        movementError: MapMovementFailure.rejected(result.rejectionCode!),
       ),
     );
   }
@@ -379,3 +379,18 @@ GameSessionReady _moveResultState(
         ),
       );
 }
+
+MapLoadFailureViewCode _loadFailureCode(String code) => switch (code) {
+  'rust_adapter_unavailable' ||
+  'rust_unavailable' => MapLoadFailureViewCode.adapterUnavailable,
+  'rust_capability_mismatch' ||
+  'invalid_map_protocol' => MapLoadFailureViewCode.incompatibleClient,
+  'map_load_superseded' => MapLoadFailureViewCode.loadSuperseded,
+  _ => MapLoadFailureViewCode.mapUnavailable,
+};
+
+MapMovementFailureViewCode _movementFailureCode(String code) => switch (code) {
+  'session_not_open' => MapMovementFailureViewCode.sessionUnavailable,
+  'invalid_session_protocol' => MapMovementFailureViewCode.responseIncompatible,
+  _ => MapMovementFailureViewCode.requestFailed,
+};

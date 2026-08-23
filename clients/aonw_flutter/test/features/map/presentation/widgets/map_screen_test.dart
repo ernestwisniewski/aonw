@@ -249,7 +249,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Map unavailable'), findsOneWidget);
-    expect(find.text('rust_unavailable'), findsOneWidget);
+    expect(
+      find.text('The native game adapter is unavailable on this platform.'),
+      findsOneWidget,
+    );
+    expect(find.text('rust_unavailable'), findsNothing);
     expect(find.text('Retry'), findsOneWidget);
   });
 

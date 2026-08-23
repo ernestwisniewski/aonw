@@ -20,6 +20,8 @@ void main(List<String> arguments) {
   final tolerance = _double(scenario['floatTolerance'], r'$.floatTolerance');
   final differences = <String>[];
   _compare(flutter, godot, r'$', tolerance, differences);
+  _validateExpectedMaps('Flutter', flutter, scenario, differences);
+  _validateExpectedMaps('Godot', godot, scenario, differences);
   _validateExpectedSelections('Flutter', flutter, scenario, differences);
   _validateExpectedSelections('Godot', godot, scenario, differences);
 
@@ -49,6 +51,40 @@ void main(List<String> arguments) {
   }
 
   stdout.writeln('MapRenderProbe parity: OK (float tolerance $tolerance)');
+}
+
+void _validateExpectedMaps(
+  String client,
+  Object? probeValue,
+  Map<String, dynamic> scenario,
+  List<String> differences,
+) {
+  final expectedValue = scenario['maps'];
+  if (expectedValue == null) return;
+  final probe = _object(probeValue, '$client probe');
+  final maps = _list(probe['maps'], '$client.maps');
+  final expectedMaps = _list(expectedValue, r'$.maps');
+  if (maps.length != expectedMaps.length) {
+    differences.add(
+      '$client.maps.length: actual=${maps.length}, '
+      'expected=${expectedMaps.length}',
+    );
+    return;
+  }
+  const fields = ['mapId', 'contentHash', 'cols', 'rows'];
+  for (var mapIndex = 0; mapIndex < maps.length; mapIndex++) {
+    final actual = _object(maps[mapIndex], '$client.maps[$mapIndex]');
+    final expected = _object(expectedMaps[mapIndex], r'$.maps[]');
+    for (final field in fields) {
+      _compare(
+        expected[field],
+        actual[field],
+        '$client.maps[$mapIndex].$field(expected)',
+        0,
+        differences,
+      );
+    }
+  }
 }
 
 void _validateExpectedSelections(

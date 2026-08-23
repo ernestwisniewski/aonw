@@ -11,6 +11,14 @@ The first vertical slice renders the canonical `aonw2_starter` map with
 pan, and zoom. `GameSessionState` exposes loading, ready, and typed failure
 states. Its ready state composes the recipient-safe Rust view with local map
 interaction while keeping both distinct.
+
+Flame `1.38.0` is the pinned target for the viewport migration and
+`flame_test 2.3.0` is the matching component-test toolchain. Until the existing
+gamepad plugin provides a qualified Swift Package Manager integration, macOS
+intentionally stays on the committed CocoaPods path. `Podfile.lock` pins
+`gamepads_darwin 0.1.1`, and the architecture guard rejects accidental removal
+of that integration; an upgrade requires a device smoke test with real gamepad
+input.
 Composition lives under `lib/app/`; widgets do not construct FFI sessions or
 repositories. `AppComposition.production()` is the only production composition
 root: it creates one `RustMapRepository`, one owning `MapController`, and one
@@ -108,6 +116,7 @@ Run from the repository root:
     make successor-flutter-check
     make map-stage-1-check
     make successor-flutter-device-test
+    make successor-flutter-fm0-baseline
     make successor-flutter-run
 
 `map-stage-1-check` exports the Rust-backed semantic map probe to a temporary

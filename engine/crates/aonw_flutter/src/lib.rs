@@ -7,6 +7,8 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use aonw_contracts::client::CLIENT_API_VERSION;
 use aonw_local_runtime::{ClientProtocol, LocalRuntime};
 
+static BUILD_IDENTITY: &[u8] = concat!("aonw_flutter/", env!("CARGO_PKG_VERSION")).as_bytes();
+
 struct FlutterSession(LocalRuntime);
 
 struct FlutterResponse(Box<[u8]>);
@@ -23,6 +25,20 @@ pub extern "C" fn aonw_flutter_is_available() -> u8 {
 #[unsafe(no_mangle)]
 pub extern "C" fn aonw_flutter_client_api_version() -> u16 {
     CLIENT_API_VERSION
+}
+
+/// Returns the byte length of the immutable adapter build identity.
+#[allow(unsafe_code)]
+#[unsafe(no_mangle)]
+pub extern "C" fn aonw_flutter_build_identity_len() -> usize {
+    BUILD_IDENTITY.len()
+}
+
+/// Returns immutable UTF-8 build identity bytes for the lifetime of the library.
+#[allow(unsafe_code)]
+#[unsafe(no_mangle)]
+pub extern "C" fn aonw_flutter_build_identity_data() -> *const u8 {
+    BUILD_IDENTITY.as_ptr()
 }
 
 /// Allocates an independent local session.
@@ -144,9 +160,23 @@ mod tests {
     };
 
     use super::{
+        aonw_flutter_build_identity_data, aonw_flutter_build_identity_len,
         aonw_flutter_response_data, aonw_flutter_response_free, aonw_flutter_response_len,
         aonw_flutter_session_free, aonw_flutter_session_new, aonw_flutter_session_request,
     };
+
+    #[test]
+    #[allow(unsafe_code)]
+    fn c_abi_exposes_the_adapter_build_identity() {
+        // SAFETY: The adapter returns immutable bytes with static lifetime.
+        let identity = unsafe {
+            core::slice::from_raw_parts(
+                aonw_flutter_build_identity_data(),
+                aonw_flutter_build_identity_len(),
+            )
+        };
+        assert_eq!(identity, b"aonw_flutter/0.1.0");
+    }
 
     #[test]
     #[allow(unsafe_code)]

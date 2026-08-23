@@ -88,6 +88,59 @@ class AonwLocalizationsPl extends AonwLocalizations {
   String get mapUnavailable => 'Mapa jest niedostępna';
 
   @override
+  String get mapAdapterUnavailable =>
+      'Natywny adapter gry jest niedostępny na tej platformie.';
+
+  @override
+  String get mapClientIncompatible =>
+      'Natywny adapter gry jest niezgodny z tym klientem.';
+
+  @override
+  String get mapLoadSuperseded => 'Nowsze żądanie mapy zastąpiło to żądanie.';
+
+  @override
+  String get mapLoadFailure => 'Nie udało się wczytać mapy.';
+
+  @override
+  String get movementRequestFailed => 'Nie udało się wykonać żądania ruchu.';
+
+  @override
+  String get movementResponseIncompatible =>
+      'Odpowiedź ruchu jest niezgodna z tym klientem.';
+
+  @override
+  String get movementSessionUnavailable =>
+      'Lokalna sesja gry jest niedostępna.';
+
+  @override
+  String get moveRejectedStale =>
+      'Stan gry uległ zmianie. Sprawdź aktualną pozycję i spróbuj ponownie.';
+
+  @override
+  String get moveRejectedUnitUnavailable =>
+      'Ta jednostka nie jest już dostępna do ruchu.';
+
+  @override
+  String get moveRejectedUnitBusy =>
+      'Ta jednostka jest zajęta i nie może się teraz ruszyć.';
+
+  @override
+  String get moveRejectedTargetUnavailable =>
+      'To pole docelowe jest niedostępne.';
+
+  @override
+  String get moveRejectedMovementInsufficient =>
+      'Jednostka nie ma wystarczającej liczby punktów ruchu.';
+
+  @override
+  String get moveRejectedPathUnavailable =>
+      'Brak dostępnej prawidłowej trasy do tego celu.';
+
+  @override
+  String get moveRejectedInternal =>
+      'Nie udało się zastosować ruchu. Spróbuj ponownie.';
+
+  @override
   String get retry => 'Spróbuj ponownie';
 
   @override

@@ -110,6 +110,7 @@ void main() {
     expect(rejected.rejectionCode, CommandRejectionCodeView.staleRevision);
     expect(backendCreations, 1);
     expect(backend.requestTypes, [
+      'capabilities',
       'inspectMap',
       'openSession',
       'snapshot',

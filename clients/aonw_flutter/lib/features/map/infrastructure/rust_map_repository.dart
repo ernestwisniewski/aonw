@@ -73,6 +73,7 @@ final class RustMapRepository implements MapRepository {
     AonwRustSession candidate,
     MapAssetPaths assets,
   ) async {
+    await _verifyCapabilities(candidate);
     final document = await _assets.loadString(assets.document);
     final scenario = await _assets.loadString(assets.scenarioDocument);
     final map = await _inspectMap(candidate, document);
@@ -88,6 +89,33 @@ final class RustMapRepository implements MapRepository {
       map: map,
     );
     return MapScene(map: map, reference: reference, player: player);
+  }
+
+  Future<void> _verifyCapabilities(AonwRustSession candidate) async {
+    final response = await candidate.send(AonwClientRequest.capabilities());
+    if (!response.isSuccess) {
+      final error = response.error!;
+      throw MapLoadException(
+        code: 'rust_capability_mismatch',
+        message: 'The native game adapter is incompatible with this client.',
+        diagnosticCause: error,
+        diagnosticStackTrace: StackTrace.current,
+      );
+    }
+    final capabilities = response.require<AonwCapabilitiesResponse>();
+    final missing = _requiredClientFeatures.difference(
+      capabilities.features.toSet(),
+    );
+    if (missing.isEmpty) return;
+    throw MapLoadException(
+      code: 'rust_capability_mismatch',
+      message: 'The native game adapter is incompatible with this client.',
+      diagnosticCause: StateError(
+        'Missing Rust client capabilities: '
+        '${missing.map((feature) => feature.name).join(', ')}',
+      ),
+      diagnosticStackTrace: StackTrace.current,
+    );
   }
 
   Future<MapView> _inspectMap(
@@ -363,6 +391,15 @@ final class RustMapRepository implements MapRepository {
     diagnosticStackTrace: stackTrace,
   );
 }
+
+const _requiredClientFeatures = <AonwClientFeature>{
+  AonwClientFeature.inspectMap,
+  AonwClientFeature.snapshot,
+  AonwClientFeature.reachable,
+  AonwClientFeature.routePlan,
+  AonwClientFeature.moveUnit,
+  AonwClientFeature.unitActions,
+};
 
 VisibleUnitView _controlledUnit(
   ({

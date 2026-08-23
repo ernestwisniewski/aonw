@@ -10,6 +10,7 @@ dependencies:
   aonw_rust_client:
     path: ../../packages/aonw_rust_client
   crypto: 3.0.7
+  flame: 1.38.0
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -19,11 +20,13 @@ dependencies:
   shared_preferences: 2.5.5
 
 dev_dependencies:
+  flame_test: 2.3.0
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   integration_test:
     sdk: flutter
+  vm_service: 15.3.0
 
 dependency_overrides:
   gamepads_linux:

@@ -113,6 +113,16 @@ if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>
 fi
 echo "Dependency checker rejected Rust transport in presentation."
 
+mkdir -p "${dependency_fixture}/clients/aonw_flutter/lib/game/rendering"
+printf "import '../../features/map/infrastructure/rust_map_repository.dart';\n" \
+  >"${dependency_fixture}/clients/aonw_flutter/lib/game/rendering/map_layer.dart"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted infrastructure in a Flame game layer." >&2
+  exit 1
+fi
+echo "Dependency checker rejected infrastructure in a Flame game layer."
+rm "${dependency_fixture}/clients/aonw_flutter/lib/game/rendering/map_layer.dart"
+
 printf 'void main() {}\n' \
   >"${dependency_fixture}/clients/aonw_flutter/lib/features/map/presentation/map.dart"
 mkdir -p "${dependency_fixture}/clients/aonw_godot/game/presentation/map"

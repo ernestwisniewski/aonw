@@ -88,6 +88,59 @@ class AonwLocalizationsEn extends AonwLocalizations {
   String get mapUnavailable => 'Map unavailable';
 
   @override
+  String get mapAdapterUnavailable =>
+      'The native game adapter is unavailable on this platform.';
+
+  @override
+  String get mapClientIncompatible =>
+      'The native game adapter is incompatible with this client.';
+
+  @override
+  String get mapLoadSuperseded => 'A newer map request replaced this one.';
+
+  @override
+  String get mapLoadFailure => 'The map could not be loaded.';
+
+  @override
+  String get movementRequestFailed =>
+      'The movement request could not be completed.';
+
+  @override
+  String get movementResponseIncompatible =>
+      'The movement response is incompatible with this client.';
+
+  @override
+  String get movementSessionUnavailable =>
+      'The local game session is unavailable.';
+
+  @override
+  String get moveRejectedStale =>
+      'The game state changed. Review the latest position and try again.';
+
+  @override
+  String get moveRejectedUnitUnavailable =>
+      'That unit is no longer available to move.';
+
+  @override
+  String get moveRejectedUnitBusy => 'That unit is busy and cannot move now.';
+
+  @override
+  String get moveRejectedTargetUnavailable =>
+      'That destination is not available.';
+
+  @override
+  String get moveRejectedMovementInsufficient =>
+      'The unit does not have enough movement remaining.';
+
+  @override
+  String get moveRejectedPathUnavailable =>
+      'No valid route to that destination is available.';
+
+  @override
+  String get moveRejectedInternal =>
+      'The move could not be applied. Try again.';
+
+  @override
   String get retry => 'Retry';
 
   @override

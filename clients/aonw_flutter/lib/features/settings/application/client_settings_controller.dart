@@ -12,6 +12,7 @@ final class ClientSettingsController extends ChangeNotifier {
 
   final ClientSettingsStore _store;
   ClientSettings _settings = ClientSettings.defaults;
+  Future<void> _writeTail = Future<void>.value();
   int _generation = 0;
   bool _disposed = false;
 
@@ -30,7 +31,9 @@ final class ClientSettingsController extends ChangeNotifier {
     _generation += 1;
     _settings = settings;
     notifyListeners();
-    await _store.save(settings);
+    final write = _writeTail.then((_) => _store.save(settings));
+    _writeTail = write.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    await write;
   }
 
   Future<void> reset() => update(ClientSettings.defaults);

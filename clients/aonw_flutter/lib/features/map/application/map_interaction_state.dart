@@ -1,6 +1,23 @@
 import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
 
+enum MapMovementFailureViewCode {
+  requestFailed,
+  responseIncompatible,
+  sessionUnavailable,
+  moveRejected,
+}
+
+final class MapMovementFailure {
+  const MapMovementFailure(this.code) : rejectionCode = null;
+
+  const MapMovementFailure.rejected(this.rejectionCode)
+    : code = MapMovementFailureViewCode.moveRejected;
+
+  final MapMovementFailureViewCode code;
+  final CommandRejectionCodeView? rejectionCode;
+}
+
 final class MapInteractionState {
   const MapInteractionState({
     this.hovered,
@@ -19,7 +36,7 @@ final class MapInteractionState {
   final ReachableView? reachable;
   final RoutePlanView? route;
   final bool movementPending;
-  final String? movementError;
+  final MapMovementFailure? movementError;
   final bool referenceVisible;
 
   MapInteractionState copyWith({
@@ -34,7 +51,7 @@ final class MapInteractionState {
     RoutePlanView? route,
     bool clearRoute = false,
     bool? movementPending,
-    String? movementError,
+    MapMovementFailure? movementError,
     bool clearMovementError = false,
     bool? referenceVisible,
   }) => MapInteractionState(
