@@ -40,6 +40,7 @@ class UnitMovedEvent:
 class SnapshotView:
 	extends RefCounted
 	var stamp: Stamp
+	var turn: int
 	var units: Array[UnitView]
 
 class ReachableView:

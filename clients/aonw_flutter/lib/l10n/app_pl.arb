@@ -17,6 +17,7 @@
   "confirmMove": "Potwierdź ruch",
   "chooseHighlightedDestination": "Wybierz podświetlone pole docelowe.",
   "movingUnit": "Przemieszczanie jednostki",
+  "turnLabel": "TURA {turn}",
   "loadingMap": "Wczytywanie mapy",
   "mapLoadingFailed": "Nie udało się wczytać mapy",
   "mapUnavailable": "Mapa jest niedostępna",

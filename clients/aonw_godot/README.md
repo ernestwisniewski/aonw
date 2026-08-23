@@ -221,6 +221,10 @@ controller and infrastructure boundary. Command rejection values are validated
 against the same closed fixture used by Rust and Flutter; unknown codes are
 rejected before presentation.
 
+Client API version 4 adds the positive authoritative turn number to every
+recipient snapshot. Godot validates and retains it in `SnapshotView`; it does
+not increment, infer, or otherwise reduce turn state locally.
+
 Selection is presentation-only; canonical state, visibility, paths, costs,
 revisions, events, and persistence remain owned by Rust. The local runtime
 prepares topology and terrain costs once, reuses search storage, and caches

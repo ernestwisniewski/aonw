@@ -70,6 +70,7 @@ fn local_session_supports_snapshot_queries_and_dispatch() {
     assert_eq!(opened.revision, StateRevision::INITIAL);
 
     let snapshot = runtime.snapshot().expect("snapshot");
+    assert_eq!(snapshot.turn(), 1);
     assert_eq!(snapshot.units().len(), 1);
     assert_eq!(snapshot.units()[0].id().as_str(), "unit-1");
 

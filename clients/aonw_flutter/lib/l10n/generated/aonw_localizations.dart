@@ -200,6 +200,12 @@ abstract class AonwLocalizations {
   /// **'Moving unit'**
   String get movingUnit;
 
+  /// No description provided for @turnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TURN {turn}'**
+  String turnLabel(int turn);
+
   /// No description provided for @loadingMap.
   ///
   /// In en, this message translates to:

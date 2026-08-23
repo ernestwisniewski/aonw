@@ -27,6 +27,7 @@ container or service locator is needed.
 | `lib/design_system` | Brand tokens and accessible shared widgets. | Has no feature or Rust transport dependency. Feature-specific visuals stay in the feature. |
 | `lib/features/map` | Map/session ports, `GameSessionState`, client read models, Rust adapter, interaction controller and rendering. Enter through `application/map_controller.dart`; the state contract lives beside it in `application/game_session_state.dart`. | Application owns use cases, infrastructure maps the Rust protocol, presentation never evaluates game rules. Session status is represented by closed state variants; recipient data and local interaction remain separate. |
 | `lib/features/settings` | Client-only preferences and their persistence. | Settings contain no gameplay state and do not depend on the map feature. |
+| `lib/features/turns` | Immutable turn-presentation queue and the accessible turn banner. Start at `application/turn_presentation_queue.dart`; presentation is in `presentation/turn_banner.dart`. | Consumes only authoritative turn numbers from recipient snapshots. It may order and animate presentations, but never advances or reduces a turn. |
 | `lib/l10n` | ARB catalogs, generated typed strings and locale helpers. | Edit ARB sources; never edit generated localization files manually. |
 
 When adding a module, extend this table with its owner, entry point and allowed
@@ -79,6 +80,12 @@ recipient-safe player snapshot, so fog-filtered units never become authored
 map content. Closing the controller closes that backend session; later queries
 and commands reuse the same session instead of selecting a transport per
 operation.
+
+Recipient snapshots carry the authoritative positive turn number. The client
+shows it through an immutable presentation queue that ignores duplicate or
+older snapshots and serializes newer banners. Completing an animation only
+advances that local queue; it never changes the game turn. Reduced-motion mode
+removes the transition while preserving the live-region announcement.
 
 Selecting a controlled unit requests its reachable tiles from Rust. Selecting
 a highlighted destination requests the versioned route plan, and the client

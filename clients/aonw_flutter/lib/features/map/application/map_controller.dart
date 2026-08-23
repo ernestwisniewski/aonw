@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
 import 'game_session_state.dart';
-import 'map_interaction_state.dart';
 import 'map_repository.dart';
 
 typedef MapDiagnosticReporter =
@@ -44,12 +43,7 @@ final class MapController extends ChangeNotifier {
     try {
       final scene = await _repository.load(assets);
       if (!_isCurrent(generation)) return;
-      _setState(
-        GameSessionReady(
-          scene: scene,
-          interaction: const MapInteractionState(),
-        ),
-      );
+      _setState(GameSessionReady.initial(scene));
     } on MapLoadException catch (error, stackTrace) {
       if (!_isCurrent(generation)) return;
       final cause = error.diagnosticCause;
@@ -273,6 +267,14 @@ final class MapController extends ChangeNotifier {
           referenceVisible: !current.interaction.referenceVisible,
         ),
       ),
+    );
+  }
+
+  void completeTurnPresentation() {
+    final current = _state;
+    if (current is! GameSessionReady) return;
+    _setState(
+      current.withTurnPresentations(current.turnPresentations.completeActive()),
     );
   }
 

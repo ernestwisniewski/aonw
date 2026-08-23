@@ -158,13 +158,18 @@ final class AonwPlayerUnitView {
 }
 
 final class AonwPlayerViewSnapshot {
-  const AonwPlayerViewSnapshot({required this.stamp, required this.units});
+  const AonwPlayerViewSnapshot({
+    required this.stamp,
+    required this.turn,
+    required this.units,
+  });
 
   factory AonwPlayerViewSnapshot.fromJson(Object? source) {
     final value = readObject(source, 'player snapshot');
-    requireKeys(value, const {'stamp', 'units'}, 'player snapshot');
+    requireKeys(value, const {'stamp', 'turn', 'units'}, 'player snapshot');
     return AonwPlayerViewSnapshot(
       stamp: AonwSessionStamp.fromJson(value['stamp']),
+      turn: readUnsigned(value['turn'], 'snapshot turn'),
       units: readList(
         value['units'],
         'snapshot units',
@@ -174,6 +179,7 @@ final class AonwPlayerViewSnapshot {
   }
 
   final AonwSessionStamp stamp;
+  final int turn;
   final List<AonwPlayerUnitView> units;
 }
 

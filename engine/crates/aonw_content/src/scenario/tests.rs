@@ -56,6 +56,7 @@ fn scenario_bootstraps_full_state_from_map_and_ruleset() {
     .expect("scenario");
 
     let state = scenario.bootstrap(&map, ruleset).expect("state");
+    assert_eq!(state.turn(), 1);
     assert_eq!(state.units().len(), 2);
     assert_eq!(
         state.units()[0].movement_units(),

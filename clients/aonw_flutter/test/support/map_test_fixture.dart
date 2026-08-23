@@ -58,6 +58,7 @@ MapScene testMapScene({
         mapHash: contentHash ?? 'a' * 64,
         rulesetHash: 'c' * 64,
       ),
+      turn: 1,
       units: units,
     ),
   );

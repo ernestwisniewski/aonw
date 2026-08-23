@@ -170,6 +170,7 @@ pub(super) fn stamp(value: SessionStamp) -> ClientSessionStampDto {
 pub(super) fn snapshot(value: &PlayerViewSnapshot) -> PlayerViewSnapshotDto {
     PlayerViewSnapshotDto {
         stamp: stamp(*value.stamp()),
+        turn: value.turn(),
         units: value.units().iter().map(unit).collect(),
     }
 }

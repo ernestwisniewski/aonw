@@ -10,6 +10,8 @@ import '../../../../design_system/widgets/aonw_progress_indicator.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../settings/application/client_settings.dart';
 import '../../../settings/presentation/client_settings_scope.dart';
+import '../../../turns/application/turn_presentation_queue.dart';
+import '../../../turns/presentation/turn_banner.dart';
 import '../../application/game_session_state.dart';
 import '../../application/map_controller.dart';
 import '../../application/map_interaction_state.dart';
@@ -93,15 +95,21 @@ final class _MapScreenState extends State<MapScreen> {
         message: message,
         retry: widget.controller.load,
       ),
-      GameSessionReady(:final scene, :final interaction) => _ReadyMap(
-        scene: scene,
-        interaction: interaction,
-        controller: widget.controller,
-        camera: _camera,
-        onInput: _handleInput,
-        settings: settings,
-        onOpenSettings: widget.onOpenSettings,
-      ),
+      GameSessionReady(
+        :final scene,
+        :final interaction,
+        :final turnPresentations,
+      ) =>
+        _ReadyMap(
+          scene: scene,
+          interaction: interaction,
+          turnPresentations: turnPresentations,
+          controller: widget.controller,
+          camera: _camera,
+          onInput: _handleInput,
+          settings: settings,
+          onOpenSettings: widget.onOpenSettings,
+        ),
     };
   }
 
@@ -144,6 +152,7 @@ final class _ReadyMap extends StatelessWidget {
   const _ReadyMap({
     required this.scene,
     required this.interaction,
+    required this.turnPresentations,
     required this.controller,
     required this.camera,
     required this.onInput,
@@ -153,6 +162,7 @@ final class _ReadyMap extends StatelessWidget {
 
   final MapScene scene;
   final MapInteractionState interaction;
+  final TurnPresentationQueue turnPresentations;
   final MapController controller;
   final TransformationController camera;
   final ValueChanged<MapInputCommand> onInput;
@@ -171,6 +181,10 @@ final class _ReadyMap extends StatelessWidget {
           onInput: onInput,
           settings: settings,
         ),
+      ),
+      TurnBanner(
+        presentation: turnPresentations.active,
+        onFinished: controller.completeTurnPresentation,
       ),
       if (onOpenSettings case final openSettings?)
         Positioned(

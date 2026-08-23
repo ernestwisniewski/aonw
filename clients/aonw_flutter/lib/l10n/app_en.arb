@@ -52,6 +52,12 @@
   "confirmMove": "Confirm move",
   "chooseHighlightedDestination": "Choose a highlighted destination.",
   "movingUnit": "Moving unit",
+  "turnLabel": "TURN {turn}",
+  "@turnLabel": {
+    "placeholders": {
+      "turn": {"type": "int"}
+    }
+  },
   "loadingMap": "Loading map",
   "mapLoadingFailed": "Map loading failed",
   "mapUnavailable": "Map unavailable",

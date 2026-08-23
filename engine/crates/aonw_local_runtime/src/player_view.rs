@@ -75,6 +75,7 @@ impl PlayerUnitView {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlayerViewSnapshot {
     stamp: SessionStamp,
+    turn: u32,
     units: Box<[PlayerUnitView]>,
 }
 
@@ -82,6 +83,7 @@ impl PlayerViewSnapshot {
     pub(crate) fn new(stamp: SessionStamp, state: &GameState, actor: &PlayerId) -> Self {
         Self {
             stamp,
+            turn: state.turn(),
             units: visible_units(state, actor).into_boxed_slice(),
         }
     }
@@ -90,6 +92,11 @@ impl PlayerViewSnapshot {
     #[must_use]
     pub const fn stamp(&self) -> &SessionStamp {
         &self.stamp
+    }
+    /// Returns the authoritative turn number.
+    #[must_use]
+    pub const fn turn(&self) -> u32 {
+        self.turn
     }
     /// Returns all units visible to this local player.
     #[must_use]

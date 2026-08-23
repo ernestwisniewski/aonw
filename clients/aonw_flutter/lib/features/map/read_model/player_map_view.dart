@@ -62,11 +62,13 @@ final class PlayerMapView {
   PlayerMapView({
     required this.actorPlayerId,
     required this.stamp,
+    required this.turn,
     required List<VisibleUnitView> units,
   }) : units = List.unmodifiable(units);
 
   final String actorPlayerId;
   final SessionStampView stamp;
+  final int turn;
   final List<VisibleUnitView> units;
 
   Iterable<VisibleUnitView> unitsAt(MapHexCoordinate coordinate) =>

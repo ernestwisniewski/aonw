@@ -10,6 +10,7 @@ void main() {
       'type': 'snapshot',
       'snapshot': {
         'stamp': _stamp,
+        'turn': 7,
         'units': [
           {
             'id': 'unit-1',
@@ -167,12 +168,11 @@ void main() {
     final fixture =
         jsonDecode(
               File(
-                _fixturePath('command_rejection_codes.v1.json'),
+                _fixturePath('command_rejection_codes.json'),
               ).readAsStringSync(),
             )
             as Map<String, dynamic>;
 
-    expect(fixture['schemaVersion'], 1);
     expect(
       AonwCommandRejectionCode.values.map((value) => value.wireCode),
       fixture['codes'],

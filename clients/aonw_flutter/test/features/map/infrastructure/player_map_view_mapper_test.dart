@@ -21,6 +21,7 @@ void main() {
 
     expect(player.stamp.mapHash, map.contentHash);
     expect(player.stamp.revision, 7);
+    expect(player.turn, 7);
     expect(player.units.map((unit) => unit.id), ['unit-a', 'unit-b']);
     expect(player.units.first.kind, VisibleUnitKind.commander);
     expect(player.units.first.posture, VisibleUnitPosture.active);
@@ -36,6 +37,21 @@ void main() {
         map: map.map,
         actorPlayerId: 'player-1',
       ),
+      throwsFormatException,
+    );
+  });
+
+  test('rejects a non-positive authoritative turn', () {
+    final map = testMapScene().map;
+    final snapshot = _snapshot([]);
+    final invalid = AonwPlayerViewSnapshot(
+      stamp: snapshot.stamp,
+      turn: 0,
+      units: snapshot.units,
+    );
+
+    expect(
+      () => mapper.fromWire(invalid, map: map, actorPlayerId: 'player-1'),
       throwsFormatException,
     );
   });
@@ -81,6 +97,7 @@ AonwPlayerViewSnapshot _snapshot(
     mapHash: mapHash ?? 'a' * 64,
     rulesetHash: 'c' * 64,
   ),
+  turn: 7,
   units: units,
 );
 

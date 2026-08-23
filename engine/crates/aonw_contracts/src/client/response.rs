@@ -144,6 +144,8 @@ pub struct ClientSessionStampDto {
 pub struct PlayerViewSnapshotDto {
     /// Identity of the represented state.
     pub stamp: ClientSessionStampDto,
+    /// Authoritative turn number.
+    pub turn: u32,
     /// Units currently visible to the recipient.
     pub units: Vec<PlayerUnitViewDto>,
 }

@@ -27,9 +27,16 @@ void main() {
 
     final ready = controller.state as GameSessionReady;
     expect(ready.recipient, same(ready.scene.player));
+    expect(ready.turnPresentations.active?.turn, 1);
     expect(ready.interaction.hovered, (col: 1, row: 1));
     expect(ready.interaction.selected, (col: 2, row: 1));
     expect(ready.interaction.referenceVisible, isFalse);
+
+    controller.completeTurnPresentation();
+    expect(
+      (controller.state as GameSessionReady).turnPresentations.active,
+      isNull,
+    );
 
     controller.select((col: 9, row: 9));
     expect((controller.state as GameSessionReady).interaction.selected, isNull);
@@ -103,6 +110,7 @@ void main() {
       final movedPlayer = PlayerMapView(
         actorPlayerId: 'preview-player',
         stamp: testSessionStamp(revision: 1),
+        turn: 1,
         units: [
           testVisibleUnit(coordinate: (col: 1, row: 0), movementUnits: 8),
         ],

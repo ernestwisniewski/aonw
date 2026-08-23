@@ -74,6 +74,11 @@ class AonwLocalizationsEn extends AonwLocalizations {
   String get movingUnit => 'Moving unit';
 
   @override
+  String turnLabel(int turn) {
+    return 'TURN $turn';
+  }
+
+  @override
   String get loadingMap => 'Loading map';
 
   @override

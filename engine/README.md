@@ -162,7 +162,8 @@ is derived from them; it is not a client-supplied canonical boolean.
 `RulesetDefinition` owns all 17 unit movement allowances, movement domains,
 capabilities, artifact allowance, and occupancy policy. `ScenarioDefinition`
 links exact map and ruleset hashes to validated starting placements and can
-bootstrap a revision-zero `GameState`. Map, ruleset, and scenario identities
+bootstrap a revision-zero, turn-one `GameState`, matching the established game
+semantics. Map, ruleset, and scenario identities
 are separate SHA-256 hashes with golden vectors.
 
 Movement planning borrows `GameState` and canonical `Unit` entities directly.
@@ -188,7 +189,8 @@ unit. These actions emit no synthetic movement events or evidence.
 `aonw_local_runtime::LocalRuntime` owns one validated local session. Opening is
 transactional, closing is idempotent, and every snapshot, query, and dispatch
 response carries behavior version, revision, state digest, map hash, and ruleset
-hash. It exposes full recipient-safe snapshots, reachable and route queries,
+hash. Full recipient-safe snapshots also carry the authoritative turn number.
+The runtime exposes reachable and route queries,
 revision-bound commands, ordered events, exact execution evidence, and view
 patches including unit posture.
 Recipient unit views are sorted by stable unit identifier before snapshots and
@@ -207,8 +209,10 @@ Command results use a tagged accepted/rejected outcome, so an incoherent
 acceptance flag and rejection code cannot be represented on the wire. Rejection
 codes are closed enums in both the engine and client DTO; their current wire
 values are pinned by `command_rejection_codes.json` and unknown values fail
-closed in every adapter. Engine behavior version 3 unifies stale command
-rejections as `stale_revision`.
+closed in every adapter. Client API version 4 adds the authoritative turn to
+player snapshots. Engine behavior version 4 preserves turn-one scenario
+bootstrap semantics and retains unified stale command rejections as
+`stale_revision`.
 
 The shared golden documents in `test/fixtures/client_protocol` are consumed by
 Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; each

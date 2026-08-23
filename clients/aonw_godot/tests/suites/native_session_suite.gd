@@ -47,7 +47,7 @@ class UnsupportedClientTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 4
+		return 5
 
 	func request(_body: Dictionary) -> Dictionary:
 		requested = true
@@ -60,19 +60,19 @@ class MalformedSnapshotTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 3
+		return 4
 
 	func request(body: Dictionary) -> Dictionary:
 		if body.get("type", "") == "openSession":
 			return _success({"type": "sessionOpened", "stamp": _stamp(7)})
 		return _success({
 			"type": "snapshot",
-			"snapshot": {"stamp": _stamp(99), "units": "invalid"},
+			"snapshot": {"stamp": _stamp(99), "turn": 1, "units": "invalid"},
 		})
 
 	func _success(response: Dictionary) -> Dictionary:
 		return {
-			"apiVersion": 3,
+			"apiVersion": 4,
 			"outcome": {"status": "success", "response": response},
 		}
 
@@ -357,8 +357,9 @@ func _test_native_engine_boundary() -> void:
 	_check(opened["ok"], "native local scenario session opens")
 	var snapshot: Dictionary = session.snapshot()
 	_check(
-		snapshot["ok"]
-		and snapshot["value"].units.size() == 1
+			snapshot["ok"]
+			and snapshot["value"].turn == 1
+			and snapshot["value"].units.size() == 1
 		and snapshot["value"].units[0].id == "preview-commander"
 		and snapshot["value"].units[0].coordinate == Vector2i(2, 1)
 		and snapshot["value"].stamp.map_hash == map_view.get("contentHash", ""),
@@ -471,7 +472,7 @@ func _test_shared_client_contract() -> void:
 		var inspect_request: Variant = JSON.parse_string(inspect_request_file.get_as_text())
 		_check(
 			inspect_request is Dictionary
-			and inspect_request["apiVersion"] == 3
+			and inspect_request["apiVersion"] == 4
 			and inspect_request["request"]["type"] == "inspectMap",
 			"Godot consumes the shared inspectMap request contract",
 		)
@@ -485,7 +486,7 @@ func _test_shared_client_contract() -> void:
 		var request: Variant = JSON.parse_string(request_file.get_as_text())
 		_check(
 			request is Dictionary
-			and request["apiVersion"] == 3
+			and request["apiVersion"] == 4
 			and request["request"]["command"]["type"] == "moveUnit",
 			"Godot consumes the shared move request contract",
 		)
@@ -496,7 +497,7 @@ func _test_shared_client_contract() -> void:
 	)
 	_check(response_file != null, "shared client response golden opens in Godot")
 	if response_file != null:
-		var decoder := ClientResponseDecoder.new(3)
+		var decoder := ClientResponseDecoder.new(4)
 		var decoded := decoder.decode(response_file.get_as_text())
 		_check(
 			decoded.get("outcome", {}).get("status", "") == "success",
@@ -527,7 +528,7 @@ func _test_shared_client_contract() -> void:
 			"Godot rejects an unknown command rejection code",
 		)
 		var invalid_version := decoder.decode(
-			'{"apiVersion":"3","outcome":{"status":"success","response":{}}}'
+			'{"apiVersion":"4","outcome":{"status":"success","response":{}}}'
 		)
 		_check(
 			invalid_version.get("outcome", {}).get("status", "") == "failure",
@@ -553,7 +554,7 @@ func _test_shared_client_contract() -> void:
 	)
 	_check(map_response_file != null, "shared map response golden opens in Godot")
 	if map_response_file != null:
-		var decoded_map := ClientResponseDecoder.new(3).decode(map_response_file.get_as_text())
+		var decoded_map := ClientResponseDecoder.new(4).decode(map_response_file.get_as_text())
 		var map_body: Dictionary = decoded_map.get("outcome", {}).get("response", {})
 		var mapped := MapViewMapper.new().from_wire(map_body.get("map"))
 		_check(
@@ -607,17 +608,29 @@ func _test_shared_client_contract() -> void:
 	}
 	var decoded_snapshot := ClientReadModelDecoder.decode_snapshot({
 		"stamp": snapshot_stamp,
+		"turn": 7,
 		"units": [unit],
 	})
 	_check(
-		decoded_snapshot != null and decoded_snapshot.units[0].kind == "commander",
+		decoded_snapshot != null
+		and decoded_snapshot.turn == 7
+		and decoded_snapshot.units[0].kind == "commander",
 		"Godot maps the complete recipient-safe unit snapshot",
+	)
+	_check(
+		ClientReadModelDecoder.decode_snapshot({
+			"stamp": snapshot_stamp,
+			"turn": 0,
+			"units": [unit],
+		}) == null,
+		"Godot rejects a non-positive authoritative turn",
 	)
 	var unknown_unit: Dictionary = unit.duplicate(true)
 	unknown_unit["kind"] = "futureUnit"
 	_check(
 		ClientReadModelDecoder.decode_snapshot({
 			"stamp": snapshot_stamp,
+			"turn": 7,
 			"units": [unknown_unit],
 		}) == null,
 		"Godot rejects unknown unit enum values",
@@ -627,6 +640,7 @@ func _test_shared_client_contract() -> void:
 	_check(
 		ClientReadModelDecoder.decode_snapshot({
 			"stamp": snapshot_stamp,
+			"turn": 7,
 			"units": [second_unit, unit],
 		}) == null,
 		"Godot rejects an unstable snapshot unit order",

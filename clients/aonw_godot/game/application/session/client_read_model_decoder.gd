@@ -47,7 +47,9 @@ static func decode_stamp(raw: Variant) -> AonwClientReadModels.Stamp:
 	return result
 
 static func decode_snapshot(raw: Variant) -> AonwClientReadModels.SnapshotView:
-	if not _has_exact_fields(raw, ["stamp", "units"]) or not raw["units"] is Array:
+	if not _has_exact_fields(raw, ["stamp", "turn", "units"]) or not raw["units"] is Array:
+		return null
+	if not _integers(raw, ["turn"], true) or int(raw["turn"]) < 1:
 		return null
 	var stamp := decode_stamp(raw["stamp"])
 	if stamp == null:
@@ -63,6 +65,7 @@ static func decode_snapshot(raw: Variant) -> AonwClientReadModels.SnapshotView:
 	units.make_read_only()
 	var result := ReadModels.SnapshotView.new()
 	result.stamp = stamp
+	result.turn = int(raw["turn"])
 	result.units = units
 	return result
 

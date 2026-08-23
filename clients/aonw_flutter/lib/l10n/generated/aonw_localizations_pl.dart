@@ -74,6 +74,11 @@ class AonwLocalizationsPl extends AonwLocalizations {
   String get movingUnit => 'Przemieszczanie jednostki';
 
   @override
+  String turnLabel(int turn) {
+    return 'TURA $turn';
+  }
+
+  @override
   String get loadingMap => 'Wczytywanie mapy';
 
   @override

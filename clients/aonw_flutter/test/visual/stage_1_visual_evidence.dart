@@ -84,6 +84,7 @@ Future<void> _captureEvidence(
                   mapHash: loadedMap.contentHash,
                   rulesetHash: 'c' * 64,
                 ),
+                turn: 1,
                 units: const [],
               ),
             ),

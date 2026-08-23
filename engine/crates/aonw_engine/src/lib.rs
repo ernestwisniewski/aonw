@@ -32,7 +32,7 @@ pub use unit_action::{UnitActionCommand, UnitActionError};
 /// Engine behavior version implemented by this workspace.
 ///
 /// This axis is independent of save, wire, and native ABI versions.
-pub const ENGINE_BEHAVIOR_VERSION: u16 = 3;
+pub const ENGINE_BEHAVIOR_VERSION: u16 = 4;
 
 /// Stateless deterministic engine facade.
 #[derive(Clone, Copy, Debug, Default)]
