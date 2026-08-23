@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../design_system/aonw_tokens.dart';
+import '../../../../design_system/widgets/aonw_panel.dart';
+import '../../../../design_system/widgets/aonw_progress_indicator.dart';
 import '../../application/map_controller.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_scene.dart';
@@ -108,8 +111,8 @@ final class _ReadyMap extends StatelessWidget {
         ),
       ),
       Positioned(
-        top: 12,
-        right: 12,
+        top: AonwSpacing.md,
+        right: AonwSpacing.md,
         child: _ReferenceToggle(
           visible: interaction.referenceVisible,
           onPressed: controller.toggleReference,
@@ -117,8 +120,8 @@ final class _ReadyMap extends StatelessWidget {
       ),
       if (interaction.selected case final selected?)
         Positioned(
-          left: 12,
-          bottom: 12,
+          left: AonwSpacing.md,
+          bottom: AonwSpacing.md,
           child: _MapSelectionPanel(
             coordinate: selected,
             interaction: interaction,
@@ -252,57 +255,52 @@ final class _MapSelectionPanel extends StatelessWidget {
   final VoidCallback onConfirmMove;
 
   @override
-  Widget build(BuildContext context) => Semantics(
+  Widget build(BuildContext context) => AonwPanel(
     liveRegion: true,
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 320),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Hex ${coordinate.col}, ${coordinate.row}'),
-              if (interaction.selectedUnitId case final unitId?) ...[
-                const SizedBox(height: 4),
-                Text('Unit $unitId'),
-                if (interaction.route case final route?) ...[
-                  Text(
-                    'Route: ${route.totalCostUnits} movement units · '
-                    '${route.remainingMovementUnits} remaining',
-                  ),
-                  const SizedBox(height: 8),
-                  FilledButton.icon(
-                    key: const ValueKey('confirm-move'),
-                    onPressed: interaction.movementPending
-                        ? null
-                        : onConfirmMove,
-                    icon: const Icon(Icons.directions_walk),
-                    label: const Text('Confirm move'),
-                  ),
-                ] else if (!interaction.movementPending)
-                  const Text('Choose a highlighted destination.'),
-              ],
-              if (interaction.movementPending) ...[
-                const SizedBox(height: 8),
-                const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ],
-              if (interaction.movementError case final message?) ...[
-                const SizedBox(height: 6),
-                Text(
-                  message,
-                  key: const ValueKey('movement-error'),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ],
-            ],
+    maxWidth: 320,
+    padding: const EdgeInsets.symmetric(
+      horizontal: AonwSpacing.md,
+      vertical: AonwSpacing.sm,
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Hex ${coordinate.col}, ${coordinate.row}'),
+        if (interaction.selectedUnitId case final unitId?) ...[
+          const SizedBox(height: AonwSpacing.xs),
+          Text('Unit $unitId'),
+          if (interaction.route case final route?) ...[
+            Text(
+              'Route: ${route.totalCostUnits} movement units · '
+              '${route.remainingMovementUnits} remaining',
+            ),
+            const SizedBox(height: AonwSpacing.sm),
+            FilledButton.icon(
+              key: const ValueKey('confirm-move'),
+              onPressed: interaction.movementPending ? null : onConfirmMove,
+              icon: const Icon(Icons.directions_walk),
+              label: const Text('Confirm move'),
+            ),
+          ] else if (!interaction.movementPending)
+            const Text('Choose a highlighted destination.'),
+        ],
+        if (interaction.movementPending) ...[
+          const SizedBox(height: AonwSpacing.sm),
+          const AonwProgressIndicator(
+            semanticLabel: 'Moving unit',
+            compact: true,
           ),
-        ),
-      ),
+        ],
+        if (interaction.movementError case final message?) ...[
+          const SizedBox(height: AonwSpacing.sm),
+          Text(
+            message,
+            key: const ValueKey('movement-error'),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ],
+      ],
     ),
   );
 }
@@ -311,12 +309,8 @@ final class _LoadingMap extends StatelessWidget {
   const _LoadingMap();
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Semantics(
-      label: 'Loading map',
-      child: const CircularProgressIndicator(),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      const Center(child: AonwProgressIndicator(semanticLabel: 'Loading map'));
 }
 
 final class _MapFailure extends StatelessWidget {
@@ -332,31 +326,13 @@ final class _MapFailure extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 420),
-      child: Semantics(
-        label: 'Map loading failed',
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Map unavailable',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Text(message, textAlign: TextAlign.center),
-                const SizedBox(height: 4),
-                Text(code, style: Theme.of(context).textTheme.labelSmall),
-                const SizedBox(height: 16),
-                FilledButton(onPressed: retry, child: const Text('Retry')),
-              ],
-            ),
-          ),
-        ),
-      ),
+    child: AonwMessagePanel(
+      semanticLabel: 'Map loading failed',
+      title: 'Map unavailable',
+      message: message,
+      detail: code,
+      actionLabel: 'Retry',
+      onAction: retry,
     ),
   );
 }

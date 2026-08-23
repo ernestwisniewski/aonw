@@ -23,6 +23,12 @@ an accessible diagnostic page. `AonwApp` owns theme and lifecycle but does not
 construct feature pages directly. New screens extend the route enum and router
 without adding navigation decisions to feature widgets.
 
+The design system keeps brand color, spacing, radii and minimum interaction
+sizes in small framework-level token groups. Shared panel, message and progress
+components provide consistent theming and explicit semantics while remaining
+independent of game features. Feature-specific colors stay with the map
+presentation layer in `MapPalette`.
+
 The map feature opens the starter map and scenario on one retained Rust
 backend. Its `MapScene` keeps the shared static `MapView` separate from the
 recipient-safe player snapshot, so fog-filtered units never become authored

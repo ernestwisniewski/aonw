@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../features/map/read_model/map_view.dart';
+import '../read_model/map_view.dart';
 
 abstract final class MapPalette {
   static const grid = Color(0xA61A242C);

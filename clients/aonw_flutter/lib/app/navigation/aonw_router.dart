@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../design_system/widgets/aonw_panel.dart';
 import '../../features/map/application/map_controller.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
 
@@ -46,12 +47,11 @@ final class _UnknownRoute extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     body: SafeArea(
       child: Center(
-        child: Semantics(
-          liveRegion: true,
-          child: Text(
-            'Unknown route: ${location ?? '(missing)'}',
-            key: const ValueKey('unknown-route'),
-          ),
+        child: AonwMessagePanel(
+          key: const ValueKey('unknown-route'),
+          semanticLabel: 'Unknown route',
+          title: 'Page unavailable',
+          message: 'Unknown route: ${location ?? '(missing)'}',
         ),
       ),
     ),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/map_palette.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_view.dart';
 import '../geometry/odd_q_flat_top_geometry.dart';
+import '../map_palette.dart';
 import '../map_render_snapshot.dart';
 
 final class MapTerrainPainter extends CustomPainter {
