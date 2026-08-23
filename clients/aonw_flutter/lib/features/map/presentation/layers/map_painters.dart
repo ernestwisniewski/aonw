@@ -5,6 +5,7 @@ import '../../read_model/map_view.dart';
 import '../geometry/odd_q_flat_top_geometry.dart';
 import '../map_palette.dart';
 import '../map_render_snapshot.dart';
+import 'map_canvas_paths.dart';
 
 final class MapTerrainPainter extends CustomPainter {
   MapTerrainPainter({required this.snapshot, required this.geometry});
@@ -17,7 +18,7 @@ final class MapTerrainPainter extends CustomPainter {
     final bounds = geometry.bounds;
     canvas.translate(-bounds.x, -bounds.y);
     for (final tile in snapshot.map.tiles) {
-      final path = _hexPath(geometry, tile.coordinate);
+      final path = aonwHexPath(geometry, tile.coordinate);
       canvas.drawPath(
         path,
         Paint()..color = MapPalette.terrain(tile.displayTerrain),
@@ -45,7 +46,7 @@ final class MapGridPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
     for (final tile in map.tiles) {
-      canvas.drawPath(_hexPath(geometry, tile.coordinate), grid);
+      canvas.drawPath(aonwHexPath(geometry, tile.coordinate), grid);
     }
   }
 
@@ -85,7 +86,7 @@ final class MapInteractionPainter extends CustomPainter {
   }) {
     if (coordinate == null) return;
     canvas.drawPath(
-      _hexPath(geometry, coordinate),
+      aonwHexPath(geometry, coordinate),
       Paint()
         ..color = color
         ..style = PaintingStyle.stroke
@@ -114,7 +115,7 @@ final class MapMovementPainter extends CustomPainter {
         ..color = MapPalette.reachable
         ..style = PaintingStyle.fill;
       for (final tile in reachable.tiles) {
-        canvas.drawPath(_hexPath(geometry, tile.coordinate), paint);
+        canvas.drawPath(aonwHexPath(geometry, tile.coordinate), paint);
       }
     }
     final route = snapshot.interaction.route;
@@ -204,25 +205,9 @@ final class MapHexClipper extends CustomClipper<Path> {
 
   @override
   Path getClip(Size size) {
-    final bounds = geometry.bounds;
-    final path = Path();
-    for (final tile in map.tiles) {
-      final hex = _hexPath(geometry, tile.coordinate);
-      path.addPath(hex, Offset(-bounds.x, -bounds.y));
-    }
-    return path;
+    return aonwMapClipPath(map, geometry, translateToOrigin: true);
   }
 
   @override
   bool shouldReclip(MapHexClipper oldClipper) => oldClipper.map != map;
-}
-
-Path _hexPath(AonwOddQFlatTopGeometry geometry, MapHexCoordinate coordinate) {
-  final first = geometry.corner(coordinate, 0);
-  final path = Path()..moveTo(first.x, first.y);
-  for (var corner = 1; corner < 6; corner++) {
-    final point = geometry.corner(coordinate, corner);
-    path.lineTo(point.x, point.y);
-  }
-  return path..close();
 }

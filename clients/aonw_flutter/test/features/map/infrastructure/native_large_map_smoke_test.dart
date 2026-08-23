@@ -12,6 +12,7 @@ import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -145,6 +146,9 @@ void main() {
       ),
       player: _emptyPlayer(map.contentHash),
     );
+    final flameGame = AonwFlameGame();
+    addTearDown(flameGame.onDispose);
+    flameGame.sceneSink.replaceScene(snapshot);
 
     await tester.pumpWidget(
       LocalizedTestApp(
@@ -163,6 +167,12 @@ void main() {
     expect(map.cols, 40);
     expect(map.rows, 30);
     expect(map.tiles, hasLength(1200));
+    expect(flameGame.world.terrainLayer.debugIdentity?.mapId, 'dravonia');
+    expect(flameGame.world.terrainLayer.debugIdentity?.cols, 40);
+    expect(flameGame.world.terrainLayer.debugIdentity?.rows, 30);
+    expect(flameGame.world.terrainLayer.debugCacheUpdateCount, 1);
+    expect(flameGame.world.referenceLayer.debugCacheUpdateCount, 1);
+    expect(flameGame.world.gridLayer.debugCacheUpdateCount, 1);
     expect(find.byKey(const ValueKey('map-canvas')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

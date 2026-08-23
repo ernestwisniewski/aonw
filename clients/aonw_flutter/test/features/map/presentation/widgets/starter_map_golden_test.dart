@@ -1,46 +1,21 @@
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
-import 'package:aonw_flutter/features/map/infrastructure/map_reference_bundle_loader.dart';
-import 'package:aonw_flutter/features/map/infrastructure/map_view_mapper.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_canvas.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
-import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/localized_test_app.dart';
+import 'starter_map_golden_support.dart';
 
 void main() {
   testWidgets('freezes every current map rendering layer', (tester) async {
-    final loadedMap = await tester.runAsync(() async {
-      final session = await createAonwRustSession();
-      if (session == null) return null;
-      try {
-        final response = await session.send(
-          AonwClientRequest.inspectMap(
-            mapDocument: await rootBundle.loadString(
-              'assets/maps/aonw2_starter/map.json',
-            ),
-          ),
-        );
-        return const MapViewMapper().fromWire(
-          response.require<AonwMapInspectedResponse>().map,
-        );
-      } finally {
-        await session.close();
-      }
-    });
-    expect(loadedMap, isNotNull);
-    final map = loadedMap!;
-    final reference = await MapReferenceBundleLoader(rootBundle).load(
-      manifestAsset: 'assets/maps/aonw2_starter/map_texture_manifest.json',
-      map: map,
-    );
-    expect(reference.pages, hasLength(1));
+    final loaded = await loadStarterMapGoldenFixture(tester);
+    final map = loaded.map;
+    final reference = loaded.reference;
     await tester.binding.setSurfaceSize(const Size(660, 728));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -60,7 +35,7 @@ void main() {
       file: 'goldens/starter_map_reference.png',
       referenceVisible: true,
     );
-    final stamp = _stamp(map.contentHash);
+    final stamp = starterMapGoldenStamp(map.contentHash);
     await _expectGolden(
       tester,
       snapshot: _snapshot(
@@ -129,6 +104,8 @@ void main() {
       file: 'goldens/starter_map_interaction.png',
       referenceVisible: true,
     );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 }
 
@@ -175,16 +152,9 @@ MapRenderSnapshot _snapshot(
   reference: reference,
   player: PlayerMapView(
     actorPlayerId: 'preview-player',
-    stamp: _stamp(map.contentHash),
+    stamp: starterMapGoldenStamp(map.contentHash),
     turn: 1,
     pendingAction: null,
     units: units,
   ),
-);
-
-SessionStampView _stamp(String mapHash) => SessionStampView(
-  revision: 0,
-  stateDigest: 'b' * 64,
-  mapHash: mapHash,
-  rulesetHash: 'c' * 64,
 );

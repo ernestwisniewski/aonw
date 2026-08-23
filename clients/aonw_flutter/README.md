@@ -60,6 +60,15 @@ not close the Rust session. Removing the application viewport disposes Flame
 caches and its presentation snapshot; the application controller independently
 closes the session when its owner is torn down.
 
+FM2 keeps three coarse Flame components in fixed priority order: batched
+terrain, decoded reference pages and one combined grid path. Their shared cache
+is keyed by map id, content hash and dimensions; interaction-only snapshots and
+reference visibility changes reuse the terrain/grid paths. Reference images are
+owned by Flame's image cache and released with the world. The temporary
+`renderStaticLayers` constructor switch is enabled only by migration goldens;
+the shipped viewport still displays the Canvas oracle until FM5 removes both
+the switch and the old renderer in one cutover.
+
 Bootstrap installs one typed process error boundary. Flutter framework errors
 and unhandled asynchronous platform errors are classified separately and sent
 to an `AppErrorReporter`; the default reporter writes developer diagnostics

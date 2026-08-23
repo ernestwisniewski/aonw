@@ -5,12 +5,28 @@ import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 
 import '../features/map/presentation/map_render_snapshot.dart';
+import 'map/static_map_layers.dart';
 import 'presentation/flame_scene_sink.dart';
 
 typedef AonwFlameGameFactory = AonwFlameGame Function();
 
 final class AonwWorld extends World implements FlameSceneSink {
+  AonwWorld({bool renderStaticLayers = false})
+    : terrainLayer = MapTerrainLayerComponent(
+        renderEnabled: renderStaticLayers,
+      ),
+      referenceLayer = MapReferenceLayerComponent(
+        renderEnabled: renderStaticLayers,
+      ),
+      gridLayer = MapGridLayerComponent(renderEnabled: renderStaticLayers) {
+    addAll([terrainLayer, referenceLayer, gridLayer]);
+  }
+
+  final MapTerrainLayerComponent terrainLayer;
+  final MapReferenceLayerComponent referenceLayer;
+  final MapGridLayerComponent gridLayer;
   MapRenderSnapshot? _scene;
+  MapStaticRenderCache? _staticCache;
   var _sceneWriteCount = 0;
 
   @visibleForTesting
@@ -24,13 +40,34 @@ final class AonwWorld extends World implements FlameSceneSink {
     if (identical(_scene, snapshot)) return;
     _scene = snapshot;
     _sceneWriteCount += 1;
+    final identity = (
+      mapId: snapshot.map.mapId,
+      contentHash: snapshot.map.contentHash,
+      cols: snapshot.map.cols,
+      rows: snapshot.map.rows,
+    );
+    final cache = _staticCache?.identity == identity
+        ? _staticCache!
+        : MapStaticRenderCache.build(snapshot.map);
+    _staticCache = cache;
+    terrainLayer.applyCache(cache);
+    referenceLayer.applyReference(
+      cache: cache,
+      reference: snapshot.reference,
+      visible: snapshot.interaction.referenceVisible,
+    );
+    gridLayer.applyCache(cache);
   }
 
   @override
   void clearScene() {
     if (_scene == null) return;
     _scene = null;
+    _staticCache = null;
     _sceneWriteCount += 1;
+    terrainLayer.clearCache();
+    referenceLayer.clearCache();
+    gridLayer.clearCache();
   }
 
   @override
@@ -41,8 +78,14 @@ final class AonwWorld extends World implements FlameSceneSink {
 }
 
 base class AonwFlameGame extends FlameGame<AonwWorld> {
-  AonwFlameGame({AonwWorld? world, CameraComponent? camera})
-    : super(world: world ?? AonwWorld(), camera: camera ?? CameraComponent()) {
+  AonwFlameGame({
+    AonwWorld? world,
+    CameraComponent? camera,
+    bool renderStaticLayers = false,
+  }) : super(
+         world: world ?? AonwWorld(renderStaticLayers: renderStaticLayers),
+         camera: camera ?? CameraComponent(),
+       ) {
     // Route and application visibility are coordinated by the Flutter owner.
     pauseWhenBackgrounded = false;
     pauseEngine();
@@ -86,6 +129,12 @@ base class AonwFlameGame extends FlameGame<AonwWorld> {
     } else {
       pauseEngine();
     }
+  }
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    camera.viewfinder.anchor = Anchor.topLeft;
   }
 
   @override
