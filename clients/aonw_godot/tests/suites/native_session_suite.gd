@@ -85,6 +85,25 @@ class MalformedSnapshotTransport:
 			"rulesetHash": "ruleset",
 		}
 
+class TrackingTransport:
+	extends RefCounted
+
+	var delegate: RefCounted
+	var request_types: Array[String] = []
+
+	func _init(value: RefCounted) -> void:
+		delegate = value
+
+	func is_available() -> bool:
+		return bool(delegate.call("is_available"))
+
+	func client_api_version() -> int:
+		return int(delegate.call("client_api_version"))
+
+	func request(body: Dictionary) -> Dictionary:
+		request_types.append(str(body.get("type", "")))
+		return delegate.call("request", body)
+
 func run(failures: Array[String]) -> void:
 	_failures = failures
 	_test_strict_document_boundary()
@@ -319,7 +338,8 @@ func _test_native_engine_boundary() -> void:
 		"Rust returns the shared logical content hash",
 	)
 
-	var session := LocalMatchSessionController.new()
+	var transport := TrackingTransport.new(NativeLocalSession.new())
+	var session := LocalMatchSessionController.new(transport)
 	_check(session.is_available(), "native local session is registered")
 	if not session.is_available():
 		return
@@ -403,6 +423,25 @@ func _test_native_engine_boundary() -> void:
 	_check(
 		restored["ok"] and restored["value"]["revision"] == 4,
 		"native session restores a canonical save",
+	)
+	_check(
+		session.get("_transport") == transport
+		and transport.request_types == [
+			"openSession",
+			"snapshot",
+			"query",
+			"query",
+			"dispatch",
+			"dispatch",
+			"dispatch",
+			"dispatch",
+			"exportSave",
+			"exportReplay",
+			"verifyReplay",
+			"closeSession",
+			"openSave",
+		],
+		"one Godot session keeps one Rust transport for its complete lifecycle",
 	)
 
 func _test_shared_client_contract() -> void:

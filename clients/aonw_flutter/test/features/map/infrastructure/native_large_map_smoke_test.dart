@@ -40,7 +40,18 @@ void main() {
   testWidgets('runs the recipient-safe starter movement session', (
     tester,
   ) async {
-    final repository = RustMapRepository(assets: _FileAssetBundle());
+    var backendCreations = 0;
+    late _TrackingRustSession backend;
+    final repository = RustMapRepository(
+      assets: _FileAssetBundle(),
+      sessionFactory: () async {
+        backendCreations += 1;
+        final native = await createAonwRustSession();
+        if (native == null) return null;
+        backend = _TrackingRustSession(native);
+        return backend;
+      },
+    );
     addTearDown(repository.close);
 
     final scene = await tester.runAsync(
@@ -84,6 +95,18 @@ void main() {
     expect(moved!.accepted, isTrue);
     expect(moved.player!.stamp.revision, 1);
     expect(moved.player!.units.single.coordinate, (col: 2, row: 2));
+    expect(backendCreations, 1);
+    expect(backend.requestTypes, [
+      'inspectMap',
+      'openSession',
+      'snapshot',
+      'query',
+      'query',
+      'dispatch',
+      'snapshot',
+    ]);
+    await tester.runAsync(repository.close);
+    expect(backend.closeCalls, 1);
   });
 
   testWidgets('renders the Rust-backed 40 by 30 Dravonia map', (tester) async {
@@ -170,5 +193,27 @@ final class _FileAssetBundle extends CachingAssetBundle {
   Future<ByteData> load(String key) async {
     final bytes = await File(key).readAsBytes();
     return ByteData.sublistView(Uint8List.fromList(bytes));
+  }
+}
+
+final class _TrackingRustSession implements AonwRustSession {
+  _TrackingRustSession(this._delegate);
+
+  final AonwRustSession _delegate;
+  final requestTypes = <String>[];
+  var closeCalls = 0;
+
+  @override
+  Future<String> requestJson(String request) {
+    final envelope = jsonDecode(request) as Map<String, dynamic>;
+    final body = envelope['request'] as Map<String, dynamic>;
+    requestTypes.add(body['type'] as String);
+    return _delegate.requestJson(request);
+  }
+
+  @override
+  Future<void> close() async {
+    closeCalls += 1;
+    await _delegate.close();
   }
 }

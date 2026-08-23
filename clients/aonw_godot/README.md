@@ -209,6 +209,9 @@ request and response goldens are stored in `test/fixtures/client_protocol` and
 are exercised by Rust, Dart, and Godot tests.
 Strict maps and scenarios, snapshots, reachable and route queries, movement,
 unit actions, saves, and replays all pass through this boundary.
+One controller retains one native Rust transport for that entire session
+lifecycle. No query or command may select, recreate, or fall back to another
+backend.
 
 Snapshots, reachable tiles, routes, command results, events, evidence, and view
 patches are decoded into application-layer read models before they reach the
