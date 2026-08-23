@@ -19,6 +19,7 @@ intentionally stays on the committed CocoaPods path. `Podfile.lock` pins
 `gamepads_darwin 0.1.1`, and the architecture guard rejects accidental removal
 of that integration; an upgrade requires a device smoke test with real gamepad
 input.
+
 Composition lives under `lib/app/`; widgets do not construct FFI sessions or
 repositories. `AppComposition.production()` is the only production composition
 root: it creates one `RustMapRepository`, one owning `MapController`, and one
@@ -36,6 +37,7 @@ container or service locator is needed.
 | `lib/features/map` | Map/session ports, `GameSessionState`, recipient and pending-action read models, Rust adapter, interaction controller and rendering. Enter through `application/map_controller.dart`; the state contract lives beside it in `application/game_session_state.dart`. | Application owns use cases, infrastructure maps the Rust protocol, presentation never evaluates game rules. Session status is represented by closed state variants; recipient data and local interaction remain separate. |
 | `lib/features/settings` | Client-only preferences and their persistence. | Settings contain no gameplay state and do not depend on the map feature. |
 | `lib/features/turns` | Immutable turn-presentation queue and the accessible turn banner. Start at `application/turn_presentation_queue.dart`; presentation is in `presentation/turn_banner.dart`. | Consumes only authoritative turn numbers from recipient snapshots. It may order and animate presentations, but never advances or reduces a turn. |
+| `lib/game` | Flame-only viewport composition: `AonwFlameGame`, one `AonwWorld`, one camera and the typed `FlameSceneSink`. | Receives immutable presentation snapshots only. It cannot import repositories, infrastructure, FFI or wire DTOs. |
 | `lib/l10n` | ARB catalogs, generated typed strings and locale helpers. | Edit ARB sources; never edit generated localization files manually. |
 
 When adding a module, extend this table with its owner, entry point and allowed
@@ -47,6 +49,16 @@ The current `/` route builds the map feature; unknown locations fail closed to
 an accessible diagnostic page. `AonwApp` owns theme and lifecycle but does not
 construct feature pages directly. New screens extend the route enum and router
 without adding navigation decisions to feature widgets.
+
+The map route owns exactly one `AonwFlameGame` instance for its lifetime. FM1
+mounts its transparent, clipped `GameWidget` above the unchanged Canvas oracle;
+terrain and input do not move to Flame before their later checkpoints. Flutter
+keeps loading/error recovery, focus and semantics. Route and application
+visibility are combined before changing the Flame lifecycle, while the empty
+turn-based world keeps its continuous loop paused. Covering the map route does
+not close the Rust session. Removing the application viewport disposes Flame
+caches and its presentation snapshot; the application controller independently
+closes the session when its owner is torn down.
 
 Bootstrap installs one typed process error boundary. Flutter framework errors
 and unhandled asynchronous platform errors are classified separately and sent

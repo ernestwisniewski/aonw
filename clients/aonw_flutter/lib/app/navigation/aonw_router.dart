@@ -6,6 +6,7 @@ import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
 import '../../features/settings/application/client_settings_controller.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../game/aonw_flame_game.dart';
 import '../../l10n/l10n.dart';
 
 enum AonwRoute {
@@ -28,11 +29,15 @@ final class AonwRouter {
   const AonwRouter({
     required this.mapController,
     required this.settingsController,
+    required this.flameGameFactory,
+    required this.routeObserver,
     this.mapInputSource,
   });
 
   final MapController mapController;
   final ClientSettingsController settingsController;
+  final AonwFlameGameFactory flameGameFactory;
+  final RouteObserver<ModalRoute<void>> routeObserver;
   final MapInputSource? mapInputSource;
 
   Route<void> onGenerateRoute(RouteSettings settings) {
@@ -45,6 +50,8 @@ final class AonwRouter {
             child: MapScreen(
               controller: mapController,
               inputSource: mapInputSource,
+              flameGameFactory: flameGameFactory,
+              routeObserver: routeObserver,
               onOpenSettings: () =>
                   Navigator.of(context).pushNamed(AonwRoute.settings.location),
             ),

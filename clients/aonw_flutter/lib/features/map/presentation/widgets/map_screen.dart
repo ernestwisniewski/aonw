@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/aonw_tokens.dart';
 import '../../../../design_system/widgets/aonw_panel.dart';
 import '../../../../design_system/widgets/aonw_progress_indicator.dart';
+import '../../../../game/aonw_flame_game.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../settings/application/client_settings.dart';
 import '../../../settings/presentation/client_settings_scope.dart';
@@ -30,6 +32,8 @@ final class MapScreen extends StatefulWidget {
     this.transformationController,
     this.inputSource,
     this.onOpenSettings,
+    this.flameGameFactory = AonwFlameGame.new,
+    this.routeObserver,
     this.autoLoad = true,
     super.key,
   });
@@ -38,29 +42,59 @@ final class MapScreen extends StatefulWidget {
   final TransformationController? transformationController;
   final MapInputSource? inputSource;
   final VoidCallback? onOpenSettings;
+  final AonwFlameGameFactory flameGameFactory;
+  final RouteObserver<ModalRoute<void>>? routeObserver;
   final bool autoLoad;
 
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
 
-final class _MapScreenState extends State<MapScreen> {
+final class _MapScreenState extends State<MapScreen>
+    with WidgetsBindingObserver, RouteAware {
   late TransformationController _camera;
   late bool _ownsCamera;
+  late AonwFlameGame _flameGame;
+  late FocusNode _flameFocusNode;
+  late AppLifecycleState _lifecycleState;
+  ModalRoute<void>? _subscribedRoute;
+  var _routeVisible = true;
+  var _flameGeneration = 0;
   StreamSubscription<MapInputCommand>? _inputSubscription;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _lifecycleState =
+        WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
     _ownsCamera = widget.transformationController == null;
     _camera = widget.transformationController ?? TransformationController();
+    _flameFocusNode = FocusNode(
+      debugLabel: 'AoNW Flame viewport',
+      canRequestFocus: false,
+    );
+    _flameGame = widget.flameGameFactory();
+    widget.controller.addListener(_synchronizeFlameScene);
     _listenToInput(widget.inputSource);
     if (widget.autoLoad) widget.controller.load();
+    _synchronizeFlameScene();
+    _synchronizeFlameLifecycle();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _subscribeToRoute();
   }
 
   @override
   void didUpdateWidget(MapScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_synchronizeFlameScene);
+      widget.controller.addListener(_synchronizeFlameScene);
+    }
     if (oldWidget.transformationController != widget.transformationController) {
       if (_ownsCamera) _camera.dispose();
       _ownsCamera = widget.transformationController == null;
@@ -69,18 +103,50 @@ final class _MapScreenState extends State<MapScreen> {
     if (oldWidget.inputSource != widget.inputSource) {
       _listenToInput(widget.inputSource);
     }
+    if (oldWidget.flameGameFactory != widget.flameGameFactory) {
+      _installFreshFlameGame();
+    }
+    if (oldWidget.routeObserver != widget.routeObserver) {
+      oldWidget.routeObserver?.unsubscribe(this);
+      _subscribedRoute = null;
+      _subscribeToRoute();
+    }
     if (widget.autoLoad &&
         (oldWidget.controller != widget.controller || !oldWidget.autoLoad)) {
       widget.controller.load();
     }
+    _synchronizeFlameScene();
+    _synchronizeFlameLifecycle();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.routeObserver?.unsubscribe(this);
+    widget.controller.removeListener(_synchronizeFlameScene);
     unawaited(_inputSubscription?.cancel());
     if (_ownsCamera) _camera.dispose();
+    _flameFocusNode.dispose();
     super.dispose();
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycleState = state;
+    _synchronizeFlameLifecycle();
+  }
+
+  @override
+  void didPush() => _setRouteVisible(true);
+
+  @override
+  void didPopNext() => _setRouteVisible(true);
+
+  @override
+  void didPushNext() => _setRouteVisible(false);
+
+  @override
+  void didPop() => _setRouteVisible(false);
 
   @override
   Widget build(BuildContext context) =>
@@ -109,6 +175,10 @@ final class _MapScreenState extends State<MapScreen> {
           onInput: _handleInput,
           settings: settings,
           onOpenSettings: widget.onOpenSettings,
+          flameGame: _flameGame,
+          flameGeneration: _flameGeneration,
+          flameFocusNode: _flameFocusNode,
+          onRetryFlame: _retryFlame,
         ),
     };
   }
@@ -116,6 +186,53 @@ final class _MapScreenState extends State<MapScreen> {
   void _listenToInput(MapInputSource? source) {
     unawaited(_inputSubscription?.cancel());
     _inputSubscription = source?.commands.listen(_handleInput);
+  }
+
+  void _subscribeToRoute() {
+    final route = ModalRoute.of(context);
+    if (route is! ModalRoute<void> || route == _subscribedRoute) return;
+    widget.routeObserver?.unsubscribe(this);
+    _subscribedRoute = route;
+    widget.routeObserver?.subscribe(this, route);
+  }
+
+  void _setRouteVisible(bool visible) {
+    if (_routeVisible == visible) return;
+    _routeVisible = visible;
+    _synchronizeFlameLifecycle();
+  }
+
+  void _synchronizeFlameLifecycle() {
+    _flameGame.setViewportActive(
+      _routeVisible && _lifecycleState == AppLifecycleState.resumed,
+    );
+  }
+
+  void _synchronizeFlameScene() {
+    switch (widget.controller.state) {
+      case GameSessionReady(:final scene, :final interaction):
+        _flameGame.sceneSink.replaceScene(
+          MapRenderSnapshot(
+            map: scene.map,
+            interaction: interaction,
+            reference: scene.reference,
+            player: scene.player,
+          ),
+        );
+      case GameSessionLoading() || GameSessionFailure():
+        _flameGame.sceneSink.clearScene();
+    }
+  }
+
+  void _installFreshFlameGame() {
+    _flameGame = widget.flameGameFactory();
+    _flameGeneration += 1;
+  }
+
+  void _retryFlame() {
+    setState(_installFreshFlameGame);
+    _synchronizeFlameScene();
+    _synchronizeFlameLifecycle();
   }
 
   void _handleInput(MapInputCommand command) {
@@ -158,6 +275,10 @@ final class _ReadyMap extends StatelessWidget {
     required this.onInput,
     required this.settings,
     required this.onOpenSettings,
+    required this.flameGame,
+    required this.flameGeneration,
+    required this.flameFocusNode,
+    required this.onRetryFlame,
   });
 
   final MapScene scene;
@@ -168,6 +289,10 @@ final class _ReadyMap extends StatelessWidget {
   final ValueChanged<MapInputCommand> onInput;
   final ClientSettings settings;
   final VoidCallback? onOpenSettings;
+  final AonwFlameGame flameGame;
+  final int flameGeneration;
+  final FocusNode flameFocusNode;
+  final VoidCallback onRetryFlame;
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -180,6 +305,14 @@ final class _ReadyMap extends StatelessWidget {
           camera: camera,
           onInput: onInput,
           settings: settings,
+        ),
+      ),
+      Positioned.fill(
+        child: _FlameViewport(
+          game: flameGame,
+          generation: flameGeneration,
+          focusNode: flameFocusNode,
+          onRetry: onRetryFlame,
         ),
       ),
       TurnBanner(
@@ -216,6 +349,51 @@ final class _ReadyMap extends StatelessWidget {
           ),
         ),
     ],
+  );
+}
+
+final class _FlameViewport extends StatelessWidget {
+  const _FlameViewport({
+    required this.game,
+    required this.generation,
+    required this.focusNode,
+    required this.onRetry,
+  });
+
+  final AonwFlameGame game;
+  final int generation;
+  final FocusNode focusNode;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => ClipRect(
+    key: const ValueKey('flame-viewport-clip'),
+    child: RepaintBoundary(
+      key: const ValueKey('flame-viewport-repaint-boundary'),
+      child: GameWidget<AonwFlameGame>(
+        key: ValueKey(('flame-viewport', generation)),
+        game: game,
+        focusNode: focusNode,
+        autofocus: false,
+        addRepaintBoundary: false,
+        behavior: HitTestBehavior.deferToChild,
+        loadingBuilder: (_) =>
+            const SizedBox.expand(key: ValueKey('flame-viewport-loading')),
+        errorBuilder: (context, error) {
+          final l10n = context.aonwL10n;
+          return Center(
+            child: AonwMessagePanel(
+              key: const ValueKey('flame-load-error'),
+              semanticLabel: l10n.mapLoadingFailed,
+              title: l10n.mapUnavailable,
+              message: l10n.mapLoadFailure,
+              actionLabel: l10n.retry,
+              onAction: onRetry,
+            ),
+          );
+        },
+      ),
+    ),
   );
 }
 

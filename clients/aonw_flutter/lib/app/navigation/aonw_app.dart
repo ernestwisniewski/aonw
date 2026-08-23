@@ -7,6 +7,7 @@ import '../../features/map/application/map_controller.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/settings/application/client_settings_controller.dart';
 import '../../features/settings/presentation/client_settings_scope.dart';
+import '../../game/aonw_flame_game.dart';
 import '../../l10n/l10n.dart';
 import '../telemetry/client_telemetry.dart';
 import 'aonw_router.dart';
@@ -15,6 +16,7 @@ final class AonwApp extends StatefulWidget {
   const AonwApp({
     required this.mapController,
     this.mapInputSource,
+    this.flameGameFactory = AonwFlameGame.new,
     this.settingsController,
     this.telemetry = const NoOpClientTelemetry(),
     this.locale,
@@ -23,6 +25,7 @@ final class AonwApp extends StatefulWidget {
 
   final MapController mapController;
   final MapInputSource? mapInputSource;
+  final AonwFlameGameFactory flameGameFactory;
   final ClientSettingsController? settingsController;
   final ClientTelemetry telemetry;
   final Locale? locale;
@@ -34,6 +37,7 @@ final class AonwApp extends StatefulWidget {
 final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
   late ClientSettingsController _settingsController;
   late AppLifecycleState _lifecycleState;
+  final _routeObserver = RouteObserver<ModalRoute<void>>();
 
   @override
   void initState() {
@@ -93,6 +97,8 @@ final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
     final router = AonwRouter(
       mapController: widget.mapController,
       mapInputSource: widget.mapInputSource,
+      flameGameFactory: widget.flameGameFactory,
+      routeObserver: _routeObserver,
       settingsController: _settingsController,
     );
     return ClientSettingsScope(
@@ -111,6 +117,7 @@ final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
           supportedLocales: AonwLocalizations.supportedLocales,
           initialRoute: AonwRoute.map.location,
           onGenerateRoute: router.onGenerateRoute,
+          navigatorObservers: [_routeObserver],
           builder: (context, child) {
             final media = MediaQuery.of(context);
             return MediaQuery(
