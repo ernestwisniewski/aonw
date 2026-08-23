@@ -5,16 +5,16 @@ use std::collections::BTreeMap;
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
-    CityDto, CityProductionQueueDto, CityProductionTargetDto, CityProjectTypeDto,
-    CitySpecializationTypeDto, CoordinateDto, EconomyStateDto, FieldImprovementDto,
-    FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto, GameStateDto,
-    InitialResourceDistributionDto, InitialResourcePlacementDto, InteractionStateDto,
-    MatchIdentityDto, MatchRulesDto, MovementStepDto, PaceProfileDto, ParticipantDto,
-    PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
-    PlayerResearchStateDto, PlayerTurnStateDto, QueuedMovePathDto, ResearchStateDto,
-    ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto, TechnologyIdDto,
-    TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto, TroopKindDto,
-    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
+    CityConquestActionDto, CityDto, CityProductionQueueDto, CityProductionTargetDto,
+    CityProjectTypeDto, CitySpecializationTypeDto, CoordinateDto, EconomyStateDto,
+    FieldImprovementDto, FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto,
+    GameModeDto, GameStateDto, InitialResourceDistributionDto, InitialResourcePlacementDto,
+    IntendedAttackDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto,
+    PaceProfileDto, ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto,
+    PlayerKindDto, PlayerPairDto, PlayerResearchStateDto, PlayerTurnStateDto, QueuedMovePathDto,
+    ResearchStateDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
+    TechnologyIdDto, TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto,
+    TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
     UnitPostureDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto,
     WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
@@ -29,6 +29,7 @@ fn contract() -> GameStateDto {
         economy: economy(),
         research: research(),
         wonder_registry: wonder_registry(),
+        intended_attacks: intended_attacks(),
         cols: 5,
         rows: 5,
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
@@ -152,6 +153,17 @@ fn wonder_registry() -> WonderRegistryDto {
         WonderTypeDto::CentralBank,
         "player-2".to_owned(),
     )]))
+}
+
+fn intended_attacks() -> Vec<IntendedAttackDto> {
+    vec![IntendedAttackDto {
+        attacker_unit_id: "unit-1".to_owned(),
+        defender_col: 2,
+        defender_row: 1,
+        declared_at_tick: 41,
+        declaring_player_id: "player-1".to_owned(),
+        city_conquest_action: CityConquestActionDto::Destroy,
+    }]
 }
 
 fn field_improvements() -> Vec<FieldImprovementDto> {
@@ -797,5 +809,55 @@ fn research_and_wonders_reject_unknown_players_and_noncanonical_progress_with_pa
             .expect_err("unknown wonder owner")
             .path(),
         "$.wonderRegistry.greatWall"
+    );
+}
+
+#[test]
+fn intended_attacks_reject_invalid_references_with_paths() {
+    let mut outside = contract();
+    outside.intended_attacks[0].defender_col = 99;
+    assert_eq!(
+        decode_game_state(outside)
+            .expect_err("outside attack target")
+            .path(),
+        "$.intendedAttacks[0].defenderCol"
+    );
+
+    let mut unknown_player = contract();
+    unknown_player.intended_attacks[0].declaring_player_id = "player-3".to_owned();
+    assert_eq!(
+        decode_game_state(unknown_player)
+            .expect_err("unknown declaring player")
+            .path(),
+        "$.intendedAttacks[0].declaringPlayerId"
+    );
+
+    let mut missing_attacker = contract();
+    missing_attacker.intended_attacks[0].attacker_unit_id = "unit-404".to_owned();
+    assert_eq!(
+        decode_game_state(missing_attacker)
+            .expect_err("missing attacker")
+            .path(),
+        "$.intendedAttacks[0].attackerUnitId"
+    );
+
+    let mut wrong_owner = contract();
+    wrong_owner.intended_attacks[0].declaring_player_id = "player-2".to_owned();
+    assert_eq!(
+        decode_game_state(wrong_owner)
+            .expect_err("wrong attacker owner")
+            .path(),
+        "$.intendedAttacks[0].declaringPlayerId"
+    );
+
+    let mut duplicate = contract();
+    duplicate
+        .intended_attacks
+        .push(duplicate.intended_attacks[0].clone());
+    assert_eq!(
+        decode_game_state(duplicate)
+            .expect_err("duplicate attacker declaration")
+            .path(),
+        "$.intendedAttacks"
     );
 }

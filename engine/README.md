@@ -210,6 +210,15 @@ already unlocked, non-positive progress, negative overflow, and unknown player
 references with field paths. Every field contributes to the state digest and
 is preserved by current transitions, save, and replay.
 
+Pending simultaneous combat is a typed `CombatState` rather than opaque
+lifecycle JSON. Each intended attack preserves its attacker, bounded target,
+host-provided declaration tick, declaring participant, and explicit city
+capture/destroy choice. Construction rejects duplicate declarations per
+attacker, absent or foreign-owned attackers, unknown players, and targets
+outside the logical map. Unit HP/XP/army and city HP/founding ownership remain
+owned by their complete entity sections; all of these combat-relevant fields
+are preserved by current transitions, save, replay, and the state digest.
+
 ## Movement foundation
 
 `GameState` is the canonical aggregate root for the implemented simulation

@@ -1,14 +1,15 @@
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
-    CityBuildingTypeDto, CityDto, CityProductionQueueDto, CitySpecializationTypeDto, CoordinateDto,
-    EconomyStateDto, FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto,
-    InitialResourceDistributionDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
-    MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
-    QueuedMovePathDto, ResearchStateDto, StrategicResourceStockpileDto, TransportConditionDto,
-    TransportSegmentDto, TransportSegmentKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto,
-    UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WonderRegistryDto, WonderTypeDto,
-    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    CityBuildingTypeDto, CityConquestActionDto, CityDto, CityProductionQueueDto,
+    CitySpecializationTypeDto, CoordinateDto, EconomyStateDto, FieldImprovementDto,
+    FieldImprovementKindDto, GameModeDto, GameStateDto, InitialResourceDistributionDto,
+    IntendedAttackDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto,
+    ParticipantDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto,
+    ResearchStateDto, StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
+    TransportSegmentKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
+    UnitOccupancyPolicyDto, UnitPostureDto, WonderRegistryDto, WonderTypeDto, WorldArtifactDto,
+    WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{HexCoord, HexGridBounds, MovementUnits, UnitId};
 use aonw_testkit::{FixtureInput, JsonObject};
@@ -123,6 +124,7 @@ pub(super) fn decode_state(
         economy: decode_economy(input.state())?,
         research: decode_research(input.state())?,
         wonder_registry: decode_wonder_registry(input.state())?,
+        intended_attacks: decode_intended_attacks(input.state(), bounds)?,
         cols: bounds.cols(),
         rows: bounds.rows(),
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
@@ -203,6 +205,62 @@ fn decode_wonder_registry(state: &JsonObject) -> Result<WonderRegistryDto, Adapt
         .transpose()
         .map(Option::unwrap_or_default)
         .map_err(display_error)
+}
+
+fn decode_intended_attacks(
+    state: &JsonObject,
+    bounds: HexGridBounds,
+) -> Result<Vec<IntendedAttackDto>, AdapterError> {
+    let Some(values) = state
+        .get("lifecycle")
+        .and_then(Value::as_object)
+        .and_then(|lifecycle| lifecycle.get("intendedAttacks"))
+        .and_then(Value::as_array)
+    else {
+        return Ok(Vec::new());
+    };
+    values
+        .iter()
+        .enumerate()
+        .filter_map(|(index, value)| {
+            let path = format!("input.state.lifecycle.intendedAttacks[{index}]");
+            let decoded = (|| {
+                let object = object_at(value, &path)?;
+                let defender = HexCoord::new(
+                    required_i32_at(object, "defenderCol", &path)?,
+                    required_i32_at(object, "defenderRow", &path)?,
+                );
+                if !bounds.contains(defender) {
+                    return Ok(None);
+                }
+                let city_conquest_action = match object
+                    .get("cityConquestAction")
+                    .and_then(Value::as_str)
+                    .unwrap_or("capture")
+                {
+                    "capture" => CityConquestActionDto::Capture,
+                    "destroy" => CityConquestActionDto::Destroy,
+                    value => return Err(error(format!("unknown city conquest action: {value}"))),
+                };
+                Ok(Some(IntendedAttackDto {
+                    attacker_unit_id: required_string_at(object, "attackerUnitId", &path)?
+                        .to_owned(),
+                    defender_col: defender.col(),
+                    defender_row: defender.row(),
+                    declared_at_tick: u64::try_from(required_i64_at(
+                        object,
+                        "declaredAtTick",
+                        &path,
+                    )?)
+                    .map_err(display_error)?,
+                    declaring_player_id: required_string_at(object, "declaringPlayerId", &path)?
+                        .to_owned(),
+                    city_conquest_action,
+                }))
+            })();
+            decoded.transpose()
+        })
+        .collect()
 }
 
 fn decode_field_improvements(
@@ -818,14 +876,54 @@ fn decode_transport(value: &Value, path: &str) -> Result<TransportSegmentDto, Ad
 #[cfg(test)]
 mod tests {
     use aonw_contracts::{
-        FieldImprovementKindDto, ResourceTypeDto, TechnologyIdDto, WonderTypeDto,
+        CityConquestActionDto, FieldImprovementKindDto, ResourceTypeDto, TechnologyIdDto,
+        WonderTypeDto,
     };
     use aonw_domain::HexGridBounds;
     use serde_json::json;
 
     use super::{
-        decode_economy, decode_field_improvements, decode_research, decode_wonder_registry,
+        decode_economy, decode_field_improvements, decode_intended_attacks, decode_research,
+        decode_wonder_registry,
     };
+
+    #[test]
+    fn legacy_combat_adapter_preserves_in_bounds_intents_and_filters_fixture_sentinels() {
+        let source = json!({
+            "lifecycle": {
+                "intendedAttacks": [
+                    {
+                        "attackerUnitId": "unit-1",
+                        "defenderCol": 1,
+                        "defenderRow": 0,
+                        "declaredAtTick": 41,
+                        "declaringPlayerId": "player-1",
+                        "cityConquestAction": "destroy"
+                    },
+                    {
+                        "attackerUnitId": "sentinel",
+                        "defenderCol": 30,
+                        "defenderRow": 30,
+                        "declaredAtTick": 42,
+                        "declaringPlayerId": "player-2"
+                    }
+                ]
+            }
+        });
+        let attacks = decode_intended_attacks(
+            source.as_object().expect("state object"),
+            HexGridBounds::new(2, 1).expect("bounds"),
+        )
+        .expect("decode attacks");
+
+        assert_eq!(attacks.len(), 1);
+        assert_eq!(attacks[0].attacker_unit_id, "unit-1");
+        assert_eq!(attacks[0].declared_at_tick, 41);
+        assert_eq!(
+            attacks[0].city_conquest_action,
+            CityConquestActionDto::Destroy
+        );
+    }
 
     #[test]
     fn legacy_knowledge_adapter_preserves_research_and_wonder_ownership() {

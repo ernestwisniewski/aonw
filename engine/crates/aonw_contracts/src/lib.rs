@@ -14,18 +14,18 @@ mod persistence;
 
 pub use canonical::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
-    CityDto, CityFoundingDraftDto, CityFoundingJobDto, CityProductionQueueDto,
-    CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto, CoordinateDto,
-    EconomyStateDto, FieldImprovementDto, FieldImprovementKindDto, GameLengthConfigDto,
-    GameLengthKindDto, GameModeDto, GameStateCodecError, GameStateDto,
-    InitialResourceDistributionDto, InitialResourcePlacementDto, InteractionStateDto,
-    MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto, PaceProfileDto, ParticipantDto,
-    PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
-    PlayerResearchStateDto, PlayerTurnStateDto, ResearchStateDto, ResourceTypeDto, RuleValueDto,
-    StrategicResourceStockpileDto, TechnologyIdDto, TransportConditionDto, TransportSegmentDto,
-    TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto,
-    UnitOccupancyPolicyDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto,
-    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    CityConquestActionDto, CityDto, CityFoundingDraftDto, CityFoundingJobDto,
+    CityProductionQueueDto, CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto,
+    CoordinateDto, EconomyStateDto, FieldImprovementDto, FieldImprovementKindDto,
+    GameLengthConfigDto, GameLengthKindDto, GameModeDto, GameStateCodecError, GameStateDto,
+    InitialResourceDistributionDto, InitialResourcePlacementDto, IntendedAttackDto,
+    InteractionStateDto, MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto, PaceProfileDto,
+    ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto,
+    PlayerPairDto, PlayerResearchStateDto, PlayerTurnStateDto, ResearchStateDto, ResourceTypeDto,
+    RuleValueDto, StrategicResourceStockpileDto, TechnologyIdDto, TransportConditionDto,
+    TransportSegmentDto, TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto,
+    UnitDto, UnitOccupancyPolicyDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto,
+    WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 pub use limits::{

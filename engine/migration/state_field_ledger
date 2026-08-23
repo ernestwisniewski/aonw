@@ -32,7 +32,7 @@
 
 expected-fixture-count 120
 expected-envelope-count 10
-expected-envelope-field-count 71
+expected-envelope-field-count 72
 expected-domain-field-count 30
 expected-state-json-key-count 16
 expected-lifecycle-json-key-count 13
@@ -85,6 +85,7 @@ envelope-field rust-canonical-state turnLifecycle canonical-rule-state
 envelope-field rust-canonical-state economy canonical-rule-state
 envelope-field rust-canonical-state research canonical-rule-state
 envelope-field rust-canonical-state wonderRegistry canonical-rule-state
+envelope-field rust-canonical-state intendedAttacks canonical-rule-state
 envelope-field rust-canonical-state cols immutable-map-derived
 envelope-field rust-canonical-state rows immutable-map-derived
 envelope-field rust-canonical-state occupancyPolicy canonical-rule-state
@@ -161,7 +162,7 @@ domain-field transportNetwork infrastructure characterized transportNetwork
 domain-field fogOfWar fog characterized fogOfWar
 domain-field research research characterized research
 domain-field wonderRegistry wonders characterized wonderRegistry
-domain-field intendedAttacks combat reference-only -
+domain-field intendedAttacks combat characterized intendedAttacks
 domain-field diplomacy diplomacy characterized diplomaticContacts
 domain-field resourceTradeAgreements diplomacy reference-only -
 domain-field dominationHoldTurnsByPlayerId victory reference-only -

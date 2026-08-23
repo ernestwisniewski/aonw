@@ -4,6 +4,7 @@ use aonw_domain::{
     WorldArtifactLocation, WorldArtifactType,
 };
 mod city;
+mod combat;
 mod economy;
 mod infrastructure;
 mod match_lifecycle;
@@ -11,6 +12,7 @@ mod research;
 mod writer;
 
 use city::hash_city;
+use combat::hash_combat;
 use economy::hash_economy;
 use infrastructure::hash_infrastructure;
 use match_lifecycle::hash_match_lifecycle;
@@ -46,6 +48,7 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
     hash_match_lifecycle(&mut writer, state.match_lifecycle());
     hash_economy(&mut writer, state.economy());
     hash_knowledge(&mut writer, state.knowledge());
+    hash_combat(&mut writer, state.combat());
     writer.u16(state.bounds().cols());
     writer.u16(state.bounds().rows());
     writer.u8(match state.occupancy_policy() {

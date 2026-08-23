@@ -8,6 +8,7 @@ use aonw_domain::{
 
 use super::artifact::{decode_artifact, encode_artifact};
 use super::city::{decode_city, encode_city};
+use super::combat::{decode_combat, encode_combat};
 use super::economy::{decode_economy, encode_economy};
 use super::error::GameStateMappingError;
 use super::infrastructure::{
@@ -41,6 +42,12 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         .enumerate()
         .map(|(index, unit)| decode_unit(index, unit))
         .collect::<Result<Vec<_>, _>>()?;
+    let combat = decode_combat(
+        match_lifecycle.identity(),
+        bounds,
+        &units,
+        dto.intended_attacks,
+    )?;
     let cities = dto
         .cities
         .into_iter()
@@ -104,6 +111,7 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         match_lifecycle,
         economy,
         knowledge,
+        combat,
         bounds,
         match dto.occupancy_policy {
             UnitOccupancyPolicyDto::Exclusive => UnitOccupancyPolicy::Exclusive,
@@ -145,6 +153,7 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
         economy: encode_economy(state.economy()),
         research: encode_research(state.research()),
         wonder_registry: encode_wonder_registry(state.wonder_registry()),
+        intended_attacks: encode_combat(state.combat()),
         cols: state.bounds().cols(),
         rows: state.bounds().rows(),
         occupancy_policy: match state.occupancy_policy() {

@@ -8,6 +8,7 @@
 
 mod artifact;
 mod city;
+mod combat;
 mod diplomacy;
 mod economy;
 mod fog;
@@ -32,6 +33,7 @@ pub use city::{
     City, CityBuildError, CityBuilder, CityBuildingType, CityProductionQueue, CityProductionTarget,
     CityProjectType, CitySpecializationType, WonderType,
 };
+pub use combat::{CityConquestAction, CombatState, CombatStateValidationError, IntendedAttack};
 pub use diplomacy::{Diplomacy, PlayerPair};
 pub use economy::{
     EconomyState, EconomyStateBuildError, InitialResourceDistribution, InitialResourcePlacement,

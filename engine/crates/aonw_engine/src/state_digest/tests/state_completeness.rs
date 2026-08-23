@@ -1,10 +1,10 @@
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
-    CityBuildingTypeDto, CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto,
-    FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto, PaceProfileDto,
-    PendingInteractionDto, PlayerCountryDto, PlayerTurnStateDto, ResourceTypeDto, RuleValueDto,
-    TechnologyIdDto, TransportConditionDto, UnitOccupancyPolicyDto, WonderTypeDto,
-    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    CityBuildingTypeDto, CityConquestActionDto, CityProductionTargetDto, CityProjectTypeDto,
+    CitySpecializationTypeDto, FieldImprovementDto, FieldImprovementKindDto, GameModeDto,
+    GameStateDto, PaceProfileDto, PendingInteractionDto, PlayerCountryDto, PlayerTurnStateDto,
+    ResourceTypeDto, RuleValueDto, TechnologyIdDto, TransportConditionDto, UnitOccupancyPolicyDto,
+    WonderTypeDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 use super::fixture::{complete_state_contract, coordinate};
@@ -52,6 +52,7 @@ fn digest_changes_with_every_canonical_state_section() {
             ResourceTypeDto::Fish;
     });
     assert_knowledge_digest_changes(&source);
+    assert_combat_digest_changes(&source);
     assert_digest_change(&source, "bounds", |candidate| {
         candidate.cols += 1;
     });
@@ -108,6 +109,18 @@ fn digest_changes_with_every_canonical_state_section() {
     });
     assert_digest_change(&source, "transport builder", |candidate| {
         candidate.transport_network[0].built_by_city_id = None;
+    });
+}
+
+fn assert_combat_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "attack target", |candidate| {
+        candidate.intended_attacks[0].defender_col += 1;
+    });
+    assert_digest_change(source, "attack declaration tick", |candidate| {
+        candidate.intended_attacks[0].declared_at_tick += 1;
+    });
+    assert_digest_change(source, "city conquest action", |candidate| {
+        candidate.intended_attacks[0].city_conquest_action = CityConquestActionDto::Capture;
     });
 }
 

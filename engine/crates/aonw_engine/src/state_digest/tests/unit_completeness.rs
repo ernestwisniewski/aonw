@@ -16,7 +16,7 @@ fn digest_changes_with_unit_identity_and_movement() {
         rename_unit(candidate, "unit-2");
     });
     assert_unit_digest_change(&source, baseline, "owner", |candidate| {
-        rename_owner(candidate, "player-3");
+        rename_owner(candidate, "player-2");
     });
     assert_unit_digest_change(&source, baseline, "kind", |candidate| {
         candidate.units[0].kind = UnitKindDto::Settler;
@@ -176,6 +176,7 @@ fn first_unit_digest(contract: &GameStateDto) -> [u8; 32] {
 
 fn rename_unit(contract: &mut GameStateDto, id: &str) {
     contract.units[0].id = id.to_owned();
+    contract.intended_attacks[0].attacker_unit_id = id.to_owned();
     for artifact in &mut contract.artifacts {
         match &mut artifact.location {
             WorldArtifactLocationDto::Carried { unit_id }
@@ -198,6 +199,7 @@ fn rename_unit(contract: &mut GameStateDto, id: &str) {
 
 fn rename_owner(contract: &mut GameStateDto, id: &str) {
     contract.units[0].owner_player_id = id.to_owned();
+    contract.intended_attacks[0].declaring_player_id = id.to_owned();
     contract
         .interaction
         .city_founding_draft
