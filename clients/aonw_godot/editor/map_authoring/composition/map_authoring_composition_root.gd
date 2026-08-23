@@ -50,6 +50,9 @@ const FilesystemGeneratedMapStore := preload(
 const TerrainCompiler := preload(
 	"res://editor/map_authoring/infrastructure/terrain/terrain_compiler.gd"
 )
+const GeneratedDecorationPlanRepository := preload(
+	"res://editor/map_authoring/infrastructure/generated_decoration_plan_repository.gd"
+)
 
 var _catalog: AonwMapSourceCatalog
 var _map_reader: AonwMapViewReader
@@ -61,6 +64,7 @@ var _logical_map_workbench: AonwLogicalMapWorkbench
 var _logical_map_editor: AonwLogicalMapEditor
 var _create_logical_map: AonwCreateLogicalMap
 var _terrain_profile_editor: AonwTerrainProfileEditor
+var _generated_decoration_reader: AonwGeneratedDecorationPlanReader
 
 func _init(
 	scene_root: String = AonwTerrainAuthoringSceneRepository.SCENE_ROOT,
@@ -89,6 +93,7 @@ func _init(
 	)
 	_logical_map_editor = FilesystemLogicalMapEditor.new(_logical_map_workbench)
 	_terrain_profile_editor = FilesystemTerrainProfileEditor.new(_logical_map_workbench)
+	_generated_decoration_reader = GeneratedDecorationPlanRepository.new()
 
 func create_dock() -> Control:
 	var dock := WorkbenchDock.new()
@@ -159,6 +164,13 @@ func open_surface(surface: AonwTerrainAuthoringSurface) -> Dictionary:
 	var artifact: AonwTerrainCompiledArtifact = terrain_result["artifact"]
 	var session := AuthoringSession.new(terrain.data, artifact, store)
 	var result := surface.open_session(session, artifact, reference_texture, _artifact_reader)
+	if result["ok"]:
+		var decorations := _generated_decoration_reader.load_plan(source, artifact)
+		if decorations["ok"]:
+			surface.present_generated_decorations(decorations["placements"])
+		else:
+			surface.clear_generated_decorations()
+			result["generated_warning"] = decorations["message"]
 	if result["ok"] and not atlas_result["ok"]:
 		result["reference_warning"] = atlas_result["message"]
 	return result

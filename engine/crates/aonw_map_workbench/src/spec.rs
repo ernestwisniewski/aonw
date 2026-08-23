@@ -14,7 +14,17 @@ pub const CURRENT_MAP_GENERATION_SCHEMA_VERSION: u64 = 1;
 pub const BLANK_GENERATOR_ID: &str = "blank";
 /// Current behavior version of the empty-map generator.
 pub const BLANK_GENERATOR_VERSION: u16 = 1;
+/// Stable identifier of the first procedural landscape generator.
+pub const CONTINENTAL_GENERATOR_ID: &str = "continental";
+/// Current behavior version of the procedural landscape generator.
+pub const CONTINENTAL_GENERATOR_VERSION: u16 = 1;
 const MAX_GENERATION_SPEC_BYTES: usize = 64 * 1024;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Generator {
+    BlankV1,
+    ContinentalV1,
+}
 
 /// SHA-256 identity of one complete generation specification.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -32,6 +42,7 @@ impl fmt::Display for GenerationSpecHash {
 /// Validated deterministic input for creating a logical map package.
 #[derive(Clone, Debug, PartialEq)]
 pub struct MapGenerationSpec {
+    generator: Generator,
     map_id: Box<str>,
     cols: u16,
     rows: u16,
@@ -50,6 +61,55 @@ impl MapGenerationSpec {
     /// Returns [`MapWorkbenchError`] when the authored dimensions, identifier,
     /// zoom, or metric scale are outside the canonical limits.
     pub fn try_new(
+        map_id: impl Into<Box<str>>,
+        cols: u16,
+        rows: u16,
+        default_zoom: f64,
+        hex_radius_meters: f64,
+        max_terrain_height_meters: f64,
+        seed: u64,
+    ) -> Result<Self, MapWorkbenchError> {
+        Self::try_new_for_generator(
+            Generator::BlankV1,
+            map_id,
+            cols,
+            rows,
+            default_zoom,
+            hex_radius_meters,
+            max_terrain_height_meters,
+            seed,
+        )
+    }
+
+    /// Constructs a current `continental` generation specification.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapWorkbenchError`] when any common map or metric input is invalid.
+    pub fn try_new_continental(
+        map_id: impl Into<Box<str>>,
+        cols: u16,
+        rows: u16,
+        default_zoom: f64,
+        hex_radius_meters: f64,
+        max_terrain_height_meters: f64,
+        seed: u64,
+    ) -> Result<Self, MapWorkbenchError> {
+        Self::try_new_for_generator(
+            Generator::ContinentalV1,
+            map_id,
+            cols,
+            rows,
+            default_zoom,
+            hex_radius_meters,
+            max_terrain_height_meters,
+            seed,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn try_new_for_generator(
+        generator: Generator,
         map_id: impl Into<Box<str>>,
         cols: u16,
         rows: u16,
@@ -91,6 +151,7 @@ impl MapGenerationSpec {
             ));
         }
         Ok(Self {
+            generator,
             map_id,
             cols,
             rows,
@@ -121,19 +182,22 @@ impl MapGenerationSpec {
                 supported: CURRENT_MAP_GENERATION_SCHEMA_VERSION,
             });
         }
-        if raw.generator_id.as_ref() != BLANK_GENERATOR_ID
-            || raw.generator_version != BLANK_GENERATOR_VERSION
-        {
-            return Err(MapWorkbenchError::UnsupportedGenerator {
-                generator_id: raw.generator_id,
-                generator_version: raw.generator_version,
-            });
-        }
+        let generator = match (raw.generator_id.as_ref(), raw.generator_version) {
+            (BLANK_GENERATOR_ID, BLANK_GENERATOR_VERSION) => Generator::BlankV1,
+            (CONTINENTAL_GENERATOR_ID, CONTINENTAL_GENERATOR_VERSION) => Generator::ContinentalV1,
+            _ => {
+                return Err(MapWorkbenchError::UnsupportedGenerator {
+                    generator_id: raw.generator_id,
+                    generator_version: raw.generator_version,
+                });
+            }
+        };
         let seed = raw
             .seed
             .parse::<u64>()
             .map_err(|_| MapWorkbenchError::invalid("$.seed", "must be a decimal u64 string"))?;
-        Self::try_new(
+        Self::try_new_for_generator(
+            generator,
             raw.map_id,
             raw.cols,
             raw.rows,
@@ -181,12 +245,18 @@ impl MapGenerationSpec {
 
     #[must_use]
     pub const fn generator_id(&self) -> &'static str {
-        BLANK_GENERATOR_ID
+        match self.generator {
+            Generator::BlankV1 => BLANK_GENERATOR_ID,
+            Generator::ContinentalV1 => CONTINENTAL_GENERATOR_ID,
+        }
     }
 
     #[must_use]
     pub const fn generator_version(&self) -> u16 {
-        BLANK_GENERATOR_VERSION
+        match self.generator {
+            Generator::BlankV1 => BLANK_GENERATOR_VERSION,
+            Generator::ContinentalV1 => CONTINENTAL_GENERATOR_VERSION,
+        }
     }
 
     /// Computes the identity of every generation input, including the seed.

@@ -35,6 +35,7 @@ func run(failures: Array[String]) -> void:
 	_test_root = "res://.godot/new_map_creation_test/%s" % OS.get_process_id()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_test_root))
 	_test_successful_creation_is_complete_and_immutable()
+	_test_procedural_creation_persists_rust_output()
 	_test_compile_failure_removes_the_new_map()
 
 func _test_successful_creation_is_complete_and_immutable() -> void:
@@ -89,6 +90,37 @@ func _test_compile_failure_removes_the_new_map() -> void:
 		for directory_name in directory.get_directories():
 			has_staging = has_staging or directory_name.begins_with(".aonw-new-")
 	_check(not has_staging, "failed New Map cleans its hidden staging directory")
+
+func _test_procedural_creation_persists_rust_output() -> void:
+	var compiler := FakeTerrainCompiler.new(true)
+	var result := _creator(compiler).execute(
+		"procedural_world",
+		40,
+		30,
+		1.0,
+		100.0,
+		240.0,
+		"42",
+		&"continental",
+	)
+	_check(result["ok"], "New Map persists the selected Rust procedural generator")
+	if not result["ok"]:
+		return
+	var map_root := _test_root.path_join("content/procedural_world")
+	var map: Dictionary = JSON.parse_string(_read_text(map_root.path_join("map.json")))
+	var plan: Dictionary = JSON.parse_string(
+		_read_text(map_root.path_join("generated_decorations.v1.json"))
+	)
+	var terrains := {}
+	var resource_tiles := 0
+	for tile in map["tiles"]:
+		terrains[tile["displayTerrain"]] = true
+		resource_tiles += 1 if not tile["resources"].is_empty() else 0
+	_check(
+		terrains.size() >= 5 and resource_tiles >= 20 and plan["placements"].size() >= 100,
+		"procedural package retains varied terrain, resources, and generated objects",
+	)
+	_check(compiler.calls == 1, "procedural map compiles Terrain3D exactly once")
 
 func _creator(compiler: AonwTerrainCompiler) -> AonwCreateLogicalMap:
 	var store := FilesystemGeneratedMapStore.new(

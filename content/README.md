@@ -44,10 +44,12 @@ construct these documents themselves.
 
 Maps created by the Godot Workbench additionally retain
 `map_generation.v1.json` and `generated_decorations.v1.json`. The former binds
-the exact `blankV1` generation specification and seed to the hashes of the
-generated documents. The latter is an initially empty, versioned presentation
-plan that future procedural generators may populate without mixing generated
-objects with manual Godot authoring.
+the exact versioned generation specification and seed to the hashes of the
+generated documents. `blankV1` emits an empty presentation plan;
+`continentalV1` deterministically generates logical terrain, resources,
+height, and concrete tree, rock, water, and detail placements. Godot batches
+those placements under `GeneratedWorld`, independently of `ManualWorld` and
+the manually sculpted Terrain3D final.
 
 `content/scenarios/` contains strict starting placements bound to one map ID
 and one immutable ruleset ID. Rust validates both content identities before it

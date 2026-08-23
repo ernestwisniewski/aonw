@@ -80,9 +80,30 @@ func generate_blank_map(
 	max_terrain_height_meters: float,
 	seed: String,
 ) -> Dictionary:
+	return generate_new_map(
+		&"blank",
+		map_id,
+		cols,
+		rows,
+		default_zoom,
+		hex_radius_meters,
+		max_terrain_height_meters,
+		seed,
+	)
+
+func generate_new_map(
+	generator_id: StringName,
+	map_id: String,
+	cols: int,
+	rows: int,
+	default_zoom: float,
+	hex_radius_meters: float,
+	max_terrain_height_meters: float,
+	seed: String,
+) -> Dictionary:
 	return generate_map(JSON.stringify({
 		"schemaVersion": 1,
-		"generatorId": "blank",
+		"generatorId": str(generator_id),
 		"generatorVersion": 1,
 		"mapId": map_id,
 		"cols": cols,

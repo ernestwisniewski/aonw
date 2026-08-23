@@ -77,6 +77,7 @@ func _create_new_map(
 	hex_radius_meters: float,
 	max_terrain_height_meters: float,
 	seed: String,
+	generator_id: StringName,
 ) -> void:
 	_set_busy(true)
 	_status.text = "Creating canonical map %s through Rust…" % map_id
@@ -89,6 +90,7 @@ func _create_new_map(
 		hex_radius_meters,
 		max_terrain_height_meters,
 		seed,
+		generator_id,
 	)
 	if not created["ok"]:
 		_set_busy(false)
@@ -107,7 +109,10 @@ func _create_new_map(
 			% [source.map_id, terrain_result["message"]]
 		)
 		return
-	_status.text = "Blank map %s created and opened for Terrain3D authoring." % source.map_id
+	_status.text = "%s map %s created and opened for Terrain3D authoring." % [
+		str(generator_id).capitalize(),
+		source.map_id,
+	]
 	EditorInterface.open_scene_from_path(terrain_result["scene_path"])
 
 func _refresh_sources() -> void:
@@ -155,6 +160,7 @@ func _logical_edit_persisted(
 	if not migration["ok"]:
 		_show_error(migration["message"])
 		return
+	surface.clear_generated_decorations()
 	surface.invalidate_reference_texture()
 	var saved := surface.save_draft()
 	if not saved["ok"]:

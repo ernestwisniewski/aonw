@@ -19,6 +19,18 @@ func generate_blank_map(
 ) -> Dictionary:
 	return _not_configured()
 
+func generate_new_map(
+	_generator_id: StringName,
+	_map_id: String,
+	_cols: int,
+	_rows: int,
+	_default_zoom: float,
+	_hex_radius_meters: float,
+	_max_terrain_height_meters: float,
+	_seed: String,
+) -> Dictionary:
+	return _not_configured()
+
 func reconfigure_terrain_height(
 	_map_document: String,
 	_terrain_authoring_document: String,

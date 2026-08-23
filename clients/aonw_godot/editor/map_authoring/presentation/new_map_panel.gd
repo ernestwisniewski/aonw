@@ -10,8 +10,10 @@ signal create_requested(
 	hex_radius_meters: float,
 	max_terrain_height_meters: float,
 	seed: String,
+	generator_id: StringName,
 )
 
+var _generator := OptionButton.new()
 var _map_id := LineEdit.new()
 var _cols := SpinBox.new()
 var _rows := SpinBox.new()
@@ -24,10 +26,12 @@ var _create := Button.new()
 func _ready() -> void:
 	_build_interface()
 	_create.pressed.connect(_request_creation)
+	_generator.item_selected.connect(_generator_selected)
 
 func set_busy(busy: bool) -> void:
 	_map_id.editable = not busy
 	_seed.editable = not busy
+	_generator.disabled = busy
 	for value in [_cols, _rows, _default_zoom, _hex_radius, _max_height]:
 		value.editable = not busy
 	_create.disabled = busy
@@ -36,11 +40,13 @@ func _build_interface() -> void:
 	if get_child_count() > 0:
 		return
 	var help := Label.new()
-	help.text = (
-		"Creates a canonical blank map through Rust, compiles it, and opens Terrain3D."
-	)
+	help.text = "Rust creates the canonical map, terrain profile, and generated world plan."
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(help)
+	_add_generator("Blank authoring canvas", &"blank")
+	_add_generator("Procedural continent", &"continental")
+	_generator.select(0)
+	add_child(_labeled_control("Generator", _generator))
 	_map_id.placeholder_text = "new_europe"
 	_map_id.max_length = 64
 	_map_id.tooltip_text = "Lowercase map identifier, for example new_europe"
@@ -73,7 +79,7 @@ func _build_interface() -> void:
 	_seed.text = "0"
 	_seed.tooltip_text = "Decimal unsigned 64-bit seed retained for procedural generation"
 	add_child(_labeled_control("Generation seed", _seed))
-	_create.text = "Create blank Terrain3D map"
+	_update_create_label()
 	add_child(_create)
 
 func _request_creation() -> void:
@@ -85,6 +91,22 @@ func _request_creation() -> void:
 		_hex_radius.value,
 		_max_height.value,
 		_seed.text.strip_edges(),
+		StringName(_generator.get_item_metadata(_generator.selected)),
+	)
+
+func _add_generator(label: String, generator_id: StringName) -> void:
+	_generator.add_item(label)
+	_generator.set_item_metadata(_generator.item_count - 1, generator_id)
+
+func _generator_selected(_index: int) -> void:
+	_update_create_label()
+
+func _update_create_label() -> void:
+	var generator_id := str(_generator.get_item_metadata(_generator.selected))
+	_create.text = (
+		"Generate procedural Terrain3D map"
+		if generator_id == "continental"
+		else "Create blank Terrain3D map"
 	)
 
 func _configure_integer(control: SpinBox, minimum: float, maximum: float, value: float) -> void:

@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-22
-- Implementation: In progress
+- Implementation: Complete
 
 ## Context
 
@@ -30,9 +30,10 @@ flowchart LR
   TerrainProfile --> Terrain3D["Terrain3D authoring"]
 ```
 
-The first slice provides `blankV1`. A strict `MapGenerationSpec` contains the
-map identifier, odd-q dimensions, default zoom, metric hex radius, seed,
-generator identifier and generator version. Rust produces four documents:
+The workbench provides `blankV1` and `continentalV1`. A strict
+`MapGenerationSpec` contains the map identifier, odd-q dimensions, default
+zoom, metric hex radius, seed, generator identifier and generator version.
+Rust produces four documents:
 
 ```text
 map.json
@@ -43,9 +44,10 @@ generated_decorations.v1.json
 
 `map_generation.v1.json` records the complete spec and hashes of the spec,
 logical map, terrain profile and generated-decoration plan. The blank generator
-emits an empty decoration plan; later generators may add versioned visual tree,
-rock, water and detail placements without putting presentation instances into
-the logical map.
+emits an empty decoration plan. `continentalV1` uses fixed-point coherent noise
+and a versioned seed to generate logical elevation, biomes and resources plus
+visual tree, rock, water and detail placements, without putting presentation
+instances into the logical map.
 
 Godot receives exact document strings from Rust. The filesystem adapter writes
 the returned `map.json` and `terrain_authoring.v1.json` replacements with
@@ -76,17 +78,17 @@ radius.
 
 ## Consequences
 
-The current UI opens existing maps, exposes a coordinate-based logical tile
-editor for terrain, resources and logical height, and creates complete blank
-maps through a `New Map` form. New directories are staged and published as a
+The current UI opens existing maps, exposes direct 3D viewport brushes for
+terrain, resources and logical height, and creates complete blank or
+procedural maps through a `New Map` form. New directories are staged and published as a
 complete set, existing maps are never overwritten, and failed Terrain3D
 compilation rolls the new directory back. A successful creation immediately
 prepares and opens its Terrain3D authoring scene without requiring a 2D atlas.
 
-Direct viewport brush painting and procedural population of terrain, resources,
-trees, rocks, water and details remain later vertical slices. They reuse the
-same Rust generation/editing boundary and the separate generated/manual world
-lifecycles rather than adding another canonical writer.
+Procedural placements are loaded only when bound to the current map hash and
+rendered as one `MultiMesh` per decoration kind. Rebuilding or invalidating the
+plan clears only `GeneratedWorld`; `ManualWorld` and manual Terrain3D data are
+left untouched.
 
 A seed participates in generation provenance even when `blankV1` produces the
 same empty logical map for different seeds. Procedural generator versions may

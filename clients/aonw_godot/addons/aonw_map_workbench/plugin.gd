@@ -45,5 +45,10 @@ func _compose_scene(scene_root: Node) -> void:
 			"AoNW Terrain Workbench: 2D reference disabled: %s"
 			% result["reference_warning"]
 		)
+	if result.has("generated_warning"):
+		push_warning(
+			"AoNW Terrain Workbench: generated world disabled: %s"
+			% result["generated_warning"]
+		)
 	if _dock != null:
 		_dock.sync_from_edited_scene()

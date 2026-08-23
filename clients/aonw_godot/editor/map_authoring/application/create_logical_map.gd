@@ -22,8 +22,10 @@ func execute(
 	hex_radius_meters: float,
 	max_terrain_height_meters: float,
 	seed: String,
+	generator_id: StringName = &"blank",
 ) -> Dictionary:
-	var generated := _workbench.generate_blank_map(
+	var generated := _workbench.generate_new_map(
+		generator_id,
 		map_id,
 		cols,
 		rows,

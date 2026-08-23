@@ -20,25 +20,28 @@ The desktop-only client uses Godot's Forward+ rendering method for maximum
 desktop visual quality. On macOS this keeps Terrain3D on Metal and off the
 OpenGL compatibility shader path that can crash inside Apple's shader compiler.
 
-The **New map** section creates a validated `blankV1` map directly from the
-Godot dock. The form collects the map ID, odd-q dimensions, default zoom,
+The **New map** section creates either a validated `blankV1` authoring canvas
+or a deterministic `continentalV1` landscape directly from the Godot dock.
+The form collects the generator, map ID, odd-q dimensions, default zoom,
 metric hex radius, map-specific level-5 height, and deterministic seed. The
 framework-neutral Rust `aonw_map_workbench` boundary returns canonical
 `map.json`, `terrain_authoring.v1.json`, generation provenance, and a
 generated-decoration plan. The filesystem adapter publishes the complete
 directory without overwriting an existing map, compiles Terrain3D, and opens
-the new authoring scene. A new blank map intentionally has no 2D reference
-atlas.
+the new authoring scene. `continentalV1` generates coherent logical elevation,
+biomes, compatible resources, and batched tree, rock, water, and detail
+placements. A newly generated map intentionally has no 2D reference atlas.
 
-The **Logical tile authoring** section edits an existing map by coordinate.
-Terrain, the complete resource selection and logical height `0..=5` are sent as
-separate commands to Rust. Rust returns complete canonical replacements and
-new map/profile hashes; the filesystem adapter never assembles map fields.
-Open the selected map's Terrain3D scene before applying an edit so its manual
-final terrain can be migrated and saved under the new logical identity.
+The **Logical Map** section edits the open map directly in the 3D viewport.
+Choose a terrain, resource, or logical-height brush and click or drag over
+hexes. One stroke is persisted and compiled once through Rust. Rust returns
+complete canonical replacements and new map/profile hashes; the filesystem
+adapter never assembles map fields. The manual Terrain3D final is migrated and
+saved under the new logical identity.
 
 Generated visual objects and manual objects have separate `GeneratedWorld` and
-`ManualWorld` scene containers. Future biome/tree/rock generators may replace
+`ManualWorld` scene containers. The versioned plan is rendered as one
+`MultiMesh` per decoration kind, and refreshing or invalidating it replaces
 only the generated container. Gameplay-relevant terrain, resources and logical
 height remain Rust content; concrete visual placements remain versioned
 presentation artifacts. See [ADR 0011](../../docs/adr/0011-logical-map-workbench-and-generation.md).

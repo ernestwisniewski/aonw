@@ -22,6 +22,9 @@ const MemoryPersistence := preload(
 const MapWorkbenchView := preload(
 	"res://editor/map_authoring/presentation/map_workbench_view.gd"
 )
+const GeneratedDecorationPlanRepository := preload(
+	"res://editor/map_authoring/infrastructure/generated_decoration_plan_repository.gd"
+)
 
 var _failures: Array[String]
 var _test_root: String
@@ -258,6 +261,7 @@ func _test_authoring_session(scene_path: String) -> void:
 	var surface: AonwTerrainAuthoringSurface = opened["surface"]
 	var artifact := surface.artifact()
 	await _test_persistence_port(artifact)
+	_test_generated_decoration_repository(artifact)
 	_check(surface.terrain() is Terrain3D, "authoring backend is Terrain3D")
 	_check(
 		surface.generated_world().name == "GeneratedWorld"
@@ -293,6 +297,7 @@ func _test_authoring_session(scene_path: String) -> void:
 		"Terrain3D imports the generated base raster",
 	)
 	_test_logical_map_cursor(surface, artifact)
+	_test_generated_world_lifecycle(surface, artifact)
 	_test_overlay_alignment(surface, artifact)
 	_check(
 		surface.get_node_or_null("MinimumHeightDebug") == null
@@ -410,6 +415,110 @@ func _test_logical_map_cursor(
 	)
 	surface.set_logical_paint_active(false)
 	_check(not cursor.visible and cursor.mesh == null, "Terrain3D mode clears the logical cursor")
+
+func _test_generated_world_lifecycle(
+	surface: AonwTerrainAuthoringSurface,
+	artifact: AonwTerrainCompiledArtifact,
+) -> void:
+	var manual_landmark := Node3D.new()
+	manual_landmark.name = "ManualLifecycleLandmark"
+	surface.manual_world().add_child(manual_landmark)
+	var terrain_sample := Vector2i(20, 20)
+	var terrain_height := surface.height_at(terrain_sample)
+	var geometry := AonwHexGridGeometry.new(
+		artifact.cols,
+		artifact.rows,
+		artifact.hex_radius_meters,
+	)
+	var tree_center := geometry.tile_center(Vector2i(2, 2))
+	var rock_center := geometry.tile_center(Vector2i(3, 2))
+	surface.present_generated_decorations([
+		_decoration_fixture("tree_2_2_0", "tree", Vector2i(2, 2), tree_center),
+		_decoration_fixture("rock_3_2_0", "rock", Vector2i(3, 2), rock_center),
+	])
+	_check(
+		surface.generated_world().get_child_count() == 2
+		and surface.generated_world().get_child(0) is MultiMeshInstance3D,
+		"generated decoration plan builds batched 3D world objects",
+	)
+	var water_center := geometry.tile_center(Vector2i(1, 1))
+	surface.present_generated_decorations([
+		_decoration_fixture("water_1_1_0", "water", Vector2i(1, 1), water_center),
+	])
+	_check(
+		surface.generated_world().get_child_count() == 1
+		and surface.manual_world().get_node_or_null("ManualLifecycleLandmark") == manual_landmark
+		and is_equal_approx(surface.height_at(terrain_sample), terrain_height),
+		"refreshing GeneratedWorld never replaces ManualWorld",
+	)
+	surface.clear_generated_decorations()
+	_check(
+		surface.generated_world().get_child_count() == 0
+		and surface.manual_world().get_node_or_null("ManualLifecycleLandmark") == manual_landmark
+		and is_equal_approx(surface.height_at(terrain_sample), terrain_height),
+		"clearing stale generated objects preserves manual authoring and Terrain3D",
+	)
+	manual_landmark.free()
+
+func _test_generated_decoration_repository(
+	artifact: AonwTerrainCompiledArtifact,
+) -> void:
+	var plan_root := _test_root.path_join("generated_plan")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(plan_root))
+	var source := MapSource.new(
+		artifact.map_id,
+		plan_root.path_join("map.json"),
+		"",
+		"content",
+	)
+	var plan := {
+		"schemaVersion": 1,
+		"sourceMapContentHash": artifact.map_content_hash,
+		"generationSpecHash": "0".repeat(64),
+		"generatorId": "continental",
+		"generatorVersion": 1,
+		"seed": "42",
+		"placements": [
+			_decoration_fixture("tree_0_0_0", "tree", Vector2i.ZERO, Vector2.ZERO),
+		],
+	}
+	var plan_path := plan_root.path_join("generated_decorations.v1.json")
+	var file := FileAccess.open(plan_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(plan))
+	file = null
+	var repository := GeneratedDecorationPlanRepository.new()
+	var loaded := repository.load_plan(source, artifact)
+	_check(
+		loaded["ok"] and loaded["placements"].size() == 1,
+		"generated decoration adapter accepts a plan bound to the current map artifact: %s"
+		% loaded.get("message", ""),
+	)
+	plan["sourceMapContentHash"] = "f".repeat(64)
+	file = FileAccess.open(plan_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(plan))
+	file = null
+	_check(
+		not repository.load_plan(source, artifact)["ok"],
+		"generated decoration adapter rejects a stale map identity",
+	)
+
+func _decoration_fixture(
+	identifier: String,
+	kind: String,
+	coordinate: Vector2i,
+	logical_position: Vector2,
+) -> Dictionary:
+	return {
+		"placementId": identifier,
+		"kind": kind,
+		"sourceCol": coordinate.x,
+		"sourceRow": coordinate.y,
+		"xMeters": logical_position.x,
+		"yMeters": 0.0,
+		"zMeters": logical_position.y,
+		"rotationDegreesY": 0.0,
+		"scale": 1.0,
+	}
 
 func _test_persistence_port(artifact: AonwTerrainCompiledArtifact) -> void:
 	var terrain := Terrain3D.new()

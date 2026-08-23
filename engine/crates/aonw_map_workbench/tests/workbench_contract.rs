@@ -7,6 +7,7 @@ use aonw_map_workbench::{
     UpdatedTerrainProfile,
 };
 use serde_json::{Value, json};
+use std::collections::BTreeSet;
 
 fn spec(seed: u64) -> MapGenerationSpec {
     MapGenerationSpec::try_new("generated_world", 40, 30, 1.25, 100.0, 240.0, seed)
@@ -58,6 +59,84 @@ fn blank_v1_is_deterministic_and_passes_authoritative_validators() {
         first.map_content_hash()
     );
     assert_eq!(decorations["placements"], json!([]));
+}
+
+#[test]
+fn continental_v1_generates_deterministic_terrain_resources_and_decorations() {
+    let spec =
+        MapGenerationSpec::try_new_continental("procedural_world", 40, 30, 1.25, 100.0, 240.0, 42)
+            .expect("valid continental spec");
+    let first = GeneratedMapPackage::generate(&spec).expect("first package");
+    let second = GeneratedMapPackage::generate(&spec).expect("second package");
+    assert_eq!(first, second);
+
+    let map = MapDocument::from_json(first.map_document().as_bytes()).expect("generated map");
+    TerrainAuthoringProfile::from_json(first.terrain_authoring_document().as_bytes(), map.map())
+        .expect("generated terrain profile");
+    let document: Value = serde_json::from_str(first.map_document()).expect("map JSON");
+    let tiles = document["tiles"].as_array().expect("tiles");
+    let terrains: BTreeSet<&str> = tiles
+        .iter()
+        .filter_map(|tile| tile["displayTerrain"].as_str())
+        .collect();
+    let resource_tiles = tiles
+        .iter()
+        .filter(|tile| {
+            tile["resources"]
+                .as_array()
+                .is_some_and(|values| !values.is_empty())
+        })
+        .count();
+    let raised_tiles = tiles
+        .iter()
+        .filter(|tile| tile["height"].as_u64().is_some_and(|height| height > 0))
+        .count();
+    assert!(terrains.contains("ocean"));
+    assert!(
+        terrains
+            .iter()
+            .any(|terrain| *terrain != "ocean" && *terrain != "coast")
+    );
+    assert!(
+        terrains.len() >= 5,
+        "generated terrain palette: {terrains:?}"
+    );
+    assert!(resource_tiles >= 20, "resource tiles: {resource_tiles}");
+    assert!(raised_tiles >= 100, "raised tiles: {raised_tiles}");
+
+    let decorations: Value =
+        serde_json::from_str(first.generated_decoration_plan_document()).expect("decorations");
+    let placements = decorations["placements"].as_array().expect("placements");
+    let kinds: BTreeSet<&str> = placements
+        .iter()
+        .filter_map(|placement| placement["kind"].as_str())
+        .collect();
+    assert!(placements.len() >= 100, "placements: {}", placements.len());
+    assert!(kinds.contains("tree"));
+    assert!(kinds.contains("rock"));
+    assert!(kinds.contains("water"));
+    assert!(kinds.contains("detail"));
+    assert_eq!(
+        decorations["sourceMapContentHash"],
+        first.map_content_hash()
+    );
+}
+
+#[test]
+fn continental_v1_seed_changes_generated_content() {
+    let first_spec =
+        MapGenerationSpec::try_new_continental("procedural_world", 40, 30, 1.0, 100.0, 240.0, 1)
+            .expect("first spec");
+    let second_spec =
+        MapGenerationSpec::try_new_continental("procedural_world", 40, 30, 1.0, 100.0, 240.0, 2)
+            .expect("second spec");
+    let first = GeneratedMapPackage::generate(&first_spec).expect("first package");
+    let second = GeneratedMapPackage::generate(&second_spec).expect("second package");
+    assert_ne!(first.map_content_hash(), second.map_content_hash());
+    assert_ne!(
+        first.generated_decoration_plan_hash(),
+        second.generated_decoration_plan_hash()
+    );
 }
 
 #[test]

@@ -11,6 +11,9 @@ const HexGridGeometry := preload(
 const TerrainSpaceTransform := preload(
 	"res://game/application/terrain/terrain_space_transform.gd"
 )
+const GeneratedWorldBuilder := preload(
+	"res://editor/map_authoring/presentation/generated_world_builder.gd"
+)
 
 const INVALID_HEX := Vector2i(-1, -1)
 
@@ -34,6 +37,7 @@ const INVALID_HEX := Vector2i(-1, -1)
 @export var terrain_assets: Terrain3DAssets
 
 var _overlay_builder := OverlayBuilder.new()
+var _generated_world_builder := GeneratedWorldBuilder.new()
 var _artifact_reader: AonwTerrainCompiledArtifactReader
 var _artifact: AonwTerrainCompiledArtifact
 var _session: AonwTerrainAuthoringSession
@@ -53,6 +57,7 @@ var _logical_geometry: AonwHexGridGeometry
 var _logical_space: AonwTerrainSpaceTransform
 var _logical_cursor_coordinate := INVALID_HEX
 var _logical_paint_active := false
+var _generated_placements: Array = []
 
 func _ready() -> void:
 	_ensure_nodes()
@@ -89,6 +94,14 @@ func manual_world() -> Node3D:
 	_ensure_nodes()
 	return _manual_world
 
+func present_generated_decorations(placements: Array) -> void:
+	_generated_placements = placements.duplicate(true)
+	_refresh_generated_world()
+
+func clear_generated_decorations() -> void:
+	_generated_placements.clear()
+	_refresh_generated_world()
+
 func is_session_open() -> bool:
 	return _session != null
 
@@ -120,6 +133,7 @@ func open_session(
 	_configure_logical_interaction()
 	_sync_metadata()
 	refresh_overlays()
+	_refresh_generated_world()
 	return {"ok": true}
 
 func set_reference_visible(value: bool) -> void:
@@ -252,6 +266,7 @@ func refresh_generated_artifact() -> Dictionary:
 	_configure_logical_interaction()
 	_sync_metadata()
 	refresh_overlays()
+	_refresh_generated_world()
 	return result
 
 func rescale_generated_artifact() -> Dictionary:
@@ -270,6 +285,7 @@ func rescale_generated_artifact() -> Dictionary:
 	_configure_logical_interaction()
 	_sync_metadata()
 	refresh_overlays()
+	_refresh_generated_world()
 	return result
 
 func migrate_logical_map_artifact() -> Dictionary:
@@ -288,6 +304,7 @@ func migrate_logical_map_artifact() -> Dictionary:
 	_configure_logical_interaction()
 	_sync_metadata()
 	refresh_overlays()
+	_refresh_generated_world()
 	return result
 
 func invalidate_reference_texture() -> void:
@@ -429,6 +446,17 @@ func _refresh_logical_cursor() -> void:
 		else null
 	)
 	_logical_cursor.visible = _logical_paint_active and _logical_cursor.mesh != null
+
+func _refresh_generated_world() -> void:
+	_ensure_nodes()
+	if _artifact == null or _terrain == null or _terrain.data == null:
+		return
+	_generated_world_builder.rebuild(
+		_generated_world,
+		_artifact,
+		_terrain.data,
+		_generated_placements,
+	)
 
 func _ensure_constraint_meshes() -> void:
 	if _artifact == null:

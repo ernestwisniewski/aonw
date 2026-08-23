@@ -17,7 +17,8 @@ pub use generation::GeneratedMapPackage;
 pub use map_edit::{LogicalMapTileEditorSnapshot, UpdatedLogicalMap};
 pub use protocol::{MAP_WORKBENCH_API_VERSION, MapWorkbenchProtocol};
 pub use spec::{
-    BLANK_GENERATOR_ID, BLANK_GENERATOR_VERSION, CURRENT_MAP_GENERATION_SCHEMA_VERSION,
-    GenerationSpecHash, MapGenerationSpec,
+    BLANK_GENERATOR_ID, BLANK_GENERATOR_VERSION, CONTINENTAL_GENERATOR_ID,
+    CONTINENTAL_GENERATOR_VERSION, CURRENT_MAP_GENERATION_SCHEMA_VERSION, GenerationSpecHash,
+    MapGenerationSpec,
 };
 pub use terrain_profile::UpdatedTerrainProfile;

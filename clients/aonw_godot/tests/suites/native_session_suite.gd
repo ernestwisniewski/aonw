@@ -125,6 +125,35 @@ func _test_logical_map_workbench_boundary() -> void:
 		direct["ok"] and direct["package"] == first["package"],
 		"Godot New Map fields are encoded as the same strict Rust generation spec",
 	)
+	var procedural := workbench.generate_new_map(
+		&"continental",
+		"godot_continent",
+		40,
+		30,
+		1.0,
+		100.0,
+		240.0,
+		"42",
+	)
+	_check(procedural["ok"], "Godot can select the versioned Rust procedural generator")
+	if procedural["ok"]:
+		var procedural_map: Dictionary = JSON.parse_string(
+			procedural["package"]["mapDocument"]
+		)
+		var procedural_decorations: Dictionary = JSON.parse_string(
+			procedural["package"]["generatedDecorationPlanDocument"]
+		)
+		var terrain_names := {}
+		var resource_tiles := 0
+		for procedural_tile in procedural_map["tiles"]:
+			terrain_names[procedural_tile["displayTerrain"]] = true
+			resource_tiles += 1 if not procedural_tile["resources"].is_empty() else 0
+		_check(
+			terrain_names.size() >= 5
+			and resource_tiles >= 20
+			and procedural_decorations["placements"].size() >= 100,
+			"procedural Rust output contains varied terrain, resources, and decorations",
+		)
 	var map: Dictionary = JSON.parse_string(first["package"]["mapDocument"])
 	var authoring: Dictionary = JSON.parse_string(
 		first["package"]["terrainAuthoringDocument"]
