@@ -4,7 +4,7 @@ extends AonwTerrainCompiledArtifactReader
 const Artifact := preload(
 	"res://game/application/terrain/terrain_compiled_artifact.gd"
 )
-const MANIFEST_NAME := "terrain_compile.v1.json"
+const MANIFEST_NAME := "terrain_compile.json"
 const COMPILED_ROOT := "res://.godot/terrain_compiled"
 
 var _compiled_root: String
@@ -33,13 +33,11 @@ func load_artifact(directory: String, expected_map_id: String = "") -> Dictionar
 		return _failure("compiled terrain manifest is not valid JSON")
 	var manifest: Dictionary = parsed
 	for field in [
-		"schemaVersion", "mapId", "mapContentHash", "authoringProfileHash",
+		"mapId", "mapContentHash", "authoringProfileHash",
 		"generatedBaseHash", "generatorVersion", "raster", "authoring", "layers",
 	]:
 		if not manifest.has(field):
 			return _failure("compiled terrain manifest is missing %s" % field)
-	if int(manifest["schemaVersion"]) != 1:
-		return _failure("compiled terrain manifest schemaVersion is unsupported")
 	var map_id := str(manifest["mapId"])
 	if not expected_map_id.is_empty() and map_id != expected_map_id:
 		return _failure("compiled terrain mapId does not match %s" % expected_map_id)

@@ -95,7 +95,7 @@ final class MapReferenceBundleLoader {
   }
 
   static void _verifyIdentity(Map<String, Object?> root, MapView map) {
-    if (root['version'] != 1 || root['gridLayout'] != 'oddQFlatTop') {
+    if (root['gridLayout'] != 'oddQFlatTop') {
       throw const FormatException('Unsupported map bundle contract.');
     }
     if (root['mapId'] != map.mapId ||
@@ -132,18 +132,18 @@ final class MapReferenceBundleLoader {
     required int height,
     required String file,
   }) async {
-    final codec = await ui.instantiateImageCodec(bytes);
+    final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
     try {
-      final frame = await codec.getNextFrame();
+      final descriptor = await ui.ImageDescriptor.encoded(buffer);
       try {
-        if (frame.image.width != width || frame.image.height != height) {
+        if (descriptor.width != width || descriptor.height != height) {
           throw FormatException('Map bundle page size does not match: $file');
         }
       } finally {
-        frame.image.dispose();
+        descriptor.dispose();
       }
     } finally {
-      codec.dispose();
+      buffer.dispose();
     }
   }
 }
@@ -168,7 +168,6 @@ typedef _PageDescriptor = ({
 _BundleDescriptor _decodeBundle(String source, MapView map) {
   final root = _object(jsonDecode(source), 'map asset bundle');
   _expectKeys(root, const {
-    'version',
     'mapId',
     'mapContentHash',
     'gridLayout',

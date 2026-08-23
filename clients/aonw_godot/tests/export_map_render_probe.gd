@@ -60,15 +60,9 @@ func _run() -> void:
 			"serializedProbeBytes": JSON.stringify(probe).to_utf8_buffer().size(),
 		})
 
-	if not _write_json(arguments[1], {
-		"schemaVersion": int(scenario["schemaVersion"]),
-		"maps": probes,
-	}):
+	if not _write_json(arguments[1], {"maps": probes}):
 		return
-	if not _write_json(arguments[2], {
-		"schemaVersion": int(scenario["schemaVersion"]),
-		"maps": diagnostics,
-	}):
+	if not _write_json(arguments[2], {"maps": diagnostics}):
 		return
 	print("Godot map render probe: OK")
 	quit(0)

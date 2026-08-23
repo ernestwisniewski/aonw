@@ -40,22 +40,6 @@ impl core::fmt::Display for CanonicalEngineError {
 impl std::error::Error for CanonicalEngineError {}
 
 impl GameEngine {
-    /// Applies one authoritative command to canonical state.
-    ///
-    /// Rejections return the identical state value, revision, and digest.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error only when canonical state or an engine-produced update
-    /// violates internal invariants.
-    pub fn apply(
-        state: &GameState,
-        context: EngineContext<'_>,
-        command: DomainCommand<'_>,
-    ) -> Result<DomainTransition, CanonicalEngineError> {
-        Self::apply_owned(state.clone(), context, command)
-    }
-
     /// Applies a command while reusing owned canonical-state storage.
     ///
     /// # Errors

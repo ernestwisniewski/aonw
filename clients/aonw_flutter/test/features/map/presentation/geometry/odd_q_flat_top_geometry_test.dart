@@ -56,7 +56,7 @@ void main() {
 Map<String, dynamic> _fixture() =>
     jsonDecode(
           File(
-            '../../aonw_tests/fixtures/geometry/odd_q_flat_top.v1.json',
+            '../../aonw_tests/fixtures/geometry/odd_q_flat_top.json',
           ).readAsStringSync(),
         )
         as Map<String, dynamic>;

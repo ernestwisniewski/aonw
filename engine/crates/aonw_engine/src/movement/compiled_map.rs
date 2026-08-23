@@ -31,18 +31,6 @@ impl core::fmt::Display for CompiledMovementMapError {
 impl std::error::Error for CompiledMovementMapError {}
 
 impl CompiledMovementMap {
-    /// Precomputes row-major neighbors and terrain costs.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when either immutable content identity cannot be serialized.
-    pub fn compile(
-        map: &MapDefinition,
-        ruleset: &RulesetDefinition,
-    ) -> Result<Self, CompiledMovementMapError> {
-        Self::compile_owned(map.clone(), ruleset.clone())
-    }
-
     /// Precomputes movement data while taking ownership of validated content.
     ///
     /// # Errors
@@ -196,7 +184,8 @@ mod tests {
         )
         .expect("map");
         let ruleset = RulesetDefinition::standard();
-        let compiled = CompiledMovementMap::compile(&map, ruleset).expect("compiled map");
+        let compiled =
+            CompiledMovementMap::compile_owned(map.clone(), ruleset.clone()).expect("compiled map");
 
         assert_eq!(compiled.neighbors(4).len(), 6);
         assert_eq!(compiled.map_hash(), map.content_hash().expect("map hash"));

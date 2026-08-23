@@ -109,7 +109,7 @@ fn golden_command_response_is_stable_and_strict() {
 #[test]
 fn command_rejection_codes_match_the_shared_fixture() {
     let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../test/fixtures/client_protocol/command_rejection_codes.v1.json"
+        "../../../../test/fixtures/client_protocol/command_rejection_codes.json"
     ))
     .expect("rejection code fixture");
     let fixture_codes = fixture["codes"]
@@ -121,7 +121,6 @@ fn command_rejection_codes_match_the_shared_fixture() {
     let contract_codes =
         ClientCommandRejectionCodeDto::ALL.map(ClientCommandRejectionCodeDto::as_str);
 
-    assert_eq!(fixture["schemaVersion"], 1);
     assert_eq!(fixture_codes, contract_codes);
     for code in ClientCommandRejectionCodeDto::ALL {
         assert_eq!(

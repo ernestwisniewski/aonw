@@ -114,7 +114,6 @@ func run(failures: Array[String]) -> void:
 func _test_logical_map_workbench_boundary() -> void:
 	var workbench := RustLogicalMapWorkbench.new()
 	var spec := JSON.stringify({
-		"schemaVersion": 1,
 		"generatorId": "blank",
 		"generatorVersion": 1,
 		"mapId": "godot_generated",
@@ -154,7 +153,7 @@ func _test_logical_map_workbench_boundary() -> void:
 		240.0,
 		"42",
 	)
-	_check(procedural["ok"], "Godot can select the versioned Rust procedural generator")
+	_check(procedural["ok"], "Godot can select the deterministic Rust procedural generator")
 	if procedural["ok"]:
 		var procedural_map: Dictionary = JSON.parse_string(
 			procedural["package"]["mapDocument"]
@@ -165,7 +164,7 @@ func _test_logical_map_workbench_boundary() -> void:
 		var terrain_names := {}
 		var resource_tiles := 0
 		for procedural_tile in procedural_map["tiles"]:
-			terrain_names[procedural_tile["displayTerrain"]] = true
+			terrain_names[procedural_tile["terrainTags"][0]] = true
 			resource_tiles += 1 if not procedural_tile["resources"].is_empty() else 0
 		_check(
 			terrain_names.size() >= 5
@@ -282,11 +281,11 @@ func _test_strict_document_boundary() -> void:
 				"invalid content identifiers are rejected",
 			)
 		var feature_first := fixture.duplicate(true)
-		feature_first["tiles"][0]["terrains"] = ["forest"]
+		feature_first["tiles"][0]["terrainTags"] = []
 		_check(
 			_inspect_map(JSON.stringify(feature_first)).get("outcome", {}).get("status", "")
 			== "failure",
-			"tiles require an explicit primary terrain",
+			"tiles require authored terrain tags",
 		)
 		var mismatched_source := MapSource.new(
 			"wrong_map_id",
@@ -536,15 +535,14 @@ func _test_shared_client_contract() -> void:
 		)
 
 	var rejection_codes_file := FileAccess.open(
-		"res://../../test/fixtures/client_protocol/command_rejection_codes.v1.json",
+		"res://../../test/fixtures/client_protocol/command_rejection_codes.json",
 		FileAccess.READ,
 	)
 	_check(rejection_codes_file != null, "shared command rejection-code fixture opens in Godot")
 	if rejection_codes_file != null:
 		var rejection_codes: Dictionary = JSON.parse_string(rejection_codes_file.get_as_text())
 		_check(
-			rejection_codes.get("schemaVersion") == 1
-			and rejection_codes.get("codes")
+			rejection_codes.get("codes")
 			== Array(ClientReadModelDecoder.COMMAND_REJECTION_CODES),
 			"Godot command rejection codes match the shared contract fixture",
 		)

@@ -31,7 +31,7 @@ func run(failures: Array[String]) -> void:
 	_test_root = "res://.godot/logical_map_painting_test/%s" % OS.get_process_id()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_test_root))
 	_copy_fixture("map.json")
-	_copy_fixture("terrain_authoring.v1.json")
+	_copy_fixture("terrain_authoring.json")
 	_source = MapSource.new(
 		"paint_fixture",
 		_test_root.path_join("map.json"),

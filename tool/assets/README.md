@@ -30,7 +30,7 @@ Commands:
   `aonw_tests/fixtures/maps/`; `make godot-map-bundle-check` reproduces it twice
   and compares every byte with the committed Godot bundle.
 
-Each map output is a strict `MapAssetBundleManifest v1`. It binds the visual
+Each map output is a strict `MapAssetBundleManifest`. It binds the visual
 pages to Rust's reviewed `mapContentHash` and records a bundle-relative file,
 format, pixel dimensions, destination rectangle, and SHA-256 for every page.
 Clients reject a bundle whose logical map identity or page bytes differ.

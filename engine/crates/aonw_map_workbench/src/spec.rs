@@ -8,8 +8,6 @@ use sha2::{Digest, Sha256};
 
 use crate::MapWorkbenchError;
 
-/// Current schema of a persisted map-generation specification.
-pub const CURRENT_MAP_GENERATION_SCHEMA_VERSION: u64 = 1;
 /// Stable identifier of the first deterministic empty-map generator.
 pub const BLANK_GENERATOR_ID: &str = "blank";
 /// Current behavior version of the empty-map generator.
@@ -22,8 +20,8 @@ const MAX_GENERATION_SPEC_BYTES: usize = 64 * 1024;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Generator {
-    BlankV1,
-    ContinentalV1,
+    Blank,
+    Continental,
 }
 
 /// SHA-256 identity of one complete generation specification.
@@ -70,7 +68,7 @@ impl MapGenerationSpec {
         seed: u64,
     ) -> Result<Self, MapWorkbenchError> {
         Self::try_new_for_generator(
-            Generator::BlankV1,
+            Generator::Blank,
             map_id,
             cols,
             rows,
@@ -96,7 +94,7 @@ impl MapGenerationSpec {
         seed: u64,
     ) -> Result<Self, MapWorkbenchError> {
         Self::try_new_for_generator(
-            Generator::ContinentalV1,
+            Generator::Continental,
             map_id,
             cols,
             rows,
@@ -176,15 +174,9 @@ impl MapGenerationSpec {
             ));
         }
         let raw: RawGenerationSpec = serde_json::from_slice(source)?;
-        if raw.schema_version != CURRENT_MAP_GENERATION_SCHEMA_VERSION {
-            return Err(MapWorkbenchError::UnsupportedSchemaVersion {
-                found: raw.schema_version,
-                supported: CURRENT_MAP_GENERATION_SCHEMA_VERSION,
-            });
-        }
         let generator = match (raw.generator_id.as_ref(), raw.generator_version) {
-            (BLANK_GENERATOR_ID, BLANK_GENERATOR_VERSION) => Generator::BlankV1,
-            (CONTINENTAL_GENERATOR_ID, CONTINENTAL_GENERATOR_VERSION) => Generator::ContinentalV1,
+            (BLANK_GENERATOR_ID, BLANK_GENERATOR_VERSION) => Generator::Blank,
+            (CONTINENTAL_GENERATOR_ID, CONTINENTAL_GENERATOR_VERSION) => Generator::Continental,
             _ => {
                 return Err(MapWorkbenchError::UnsupportedGenerator {
                     generator_id: raw.generator_id,
@@ -246,16 +238,16 @@ impl MapGenerationSpec {
     #[must_use]
     pub const fn generator_id(&self) -> &'static str {
         match self.generator {
-            Generator::BlankV1 => BLANK_GENERATOR_ID,
-            Generator::ContinentalV1 => CONTINENTAL_GENERATOR_ID,
+            Generator::Blank => BLANK_GENERATOR_ID,
+            Generator::Continental => CONTINENTAL_GENERATOR_ID,
         }
     }
 
     #[must_use]
     pub const fn generator_version(&self) -> u16 {
         match self.generator {
-            Generator::BlankV1 => BLANK_GENERATOR_VERSION,
-            Generator::ContinentalV1 => CONTINENTAL_GENERATOR_VERSION,
+            Generator::Blank => BLANK_GENERATOR_VERSION,
+            Generator::Continental => CONTINENTAL_GENERATOR_VERSION,
         }
     }
 
@@ -284,7 +276,7 @@ impl MapGenerationSpec {
     /// # Errors
     ///
     /// Returns an error only if JSON serialization fails.
-    pub fn to_versioned_json(&self) -> Result<String, serde_json::Error> {
+    pub fn to_json(&self) -> Result<String, serde_json::Error> {
         pretty_json(&PersistedGenerationSpec::from(self))
     }
 }
@@ -292,7 +284,6 @@ impl MapGenerationSpec {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct RawGenerationSpec {
-    schema_version: u64,
     generator_id: Box<str>,
     generator_version: u16,
     map_id: Box<str>,
@@ -307,7 +298,6 @@ struct RawGenerationSpec {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct PersistedGenerationSpec<'a> {
-    schema_version: u64,
     generator_id: &'a str,
     generator_version: u16,
     map_id: &'a str,
@@ -322,7 +312,6 @@ pub(crate) struct PersistedGenerationSpec<'a> {
 impl<'a> From<&'a MapGenerationSpec> for PersistedGenerationSpec<'a> {
     fn from(spec: &'a MapGenerationSpec) -> Self {
         Self {
-            schema_version: CURRENT_MAP_GENERATION_SCHEMA_VERSION,
             generator_id: spec.generator_id(),
             generator_version: spec.generator_version(),
             map_id: spec.map_id(),

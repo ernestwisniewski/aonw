@@ -27,7 +27,7 @@ void main() {
         jsonDecode(
               File(
                 '../../aonw_tests/fixtures/maps/aonw2_starter/'
-                'map_view_identity.v1.json',
+                'map_view_identity.json',
               ).readAsStringSync(),
             )
             as Map<String, dynamic>;

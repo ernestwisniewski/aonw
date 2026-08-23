@@ -19,7 +19,7 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_content` | Strict maps, immutable rulesets and scenarios, catalogs, validation, and separate deterministic content hashes. |
 | `aonw_map_authoring` | Metric terrain-authoring profiles bound to, but excluded from, logical map identity. |
 | `aonw_map_compiler` | Pure deterministic compilation of authoring profiles into bounded base/min/max height rasters. |
-| `aonw_map_compiler_cli` | Thin filesystem adapter that writes compiled terrain as OpenEXR, raw R16, and a versioned manifest. |
+| `aonw_map_compiler_cli` | Thin filesystem adapter that writes compiled terrain as OpenEXR, raw R16, and a strict manifest. |
 | `aonw_contracts` | Current-only shared client API plus strict bounded canonical state, save, and replay codecs. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
 | `aonw_engine` | Authoritative movement queries/transitions and revision-bound cancel, skip, and fortify unit actions. |
@@ -53,12 +53,12 @@ authoring profile, output directory, and optional samples-per-hex density:
 ```sh
 cargo run --locked -p aonw_map_compiler_cli --bin aonw-map-compiler -- \
   ../content/maps/aonw2_starter/map.json \
-  ../content/maps/aonw2_starter/terrain_authoring.v1.json \
+  ../content/maps/aonw2_starter/terrain_authoring.json \
   ../build/terrain/aonw2_starter 8
 ```
 
 The output contains independent `base`, `min`, and `max` OpenEXR and raw R16
-rasters plus `terrain_compile.v1.json`. Regeneration creates no `final` raster;
+rasters plus `terrain_compile.json`. Regeneration creates no `final` raster;
 manual terrain remains caller-owned and can only be constrained through the
 explicit region-clamp API.
 
@@ -73,6 +73,15 @@ make rust-check
 The component targets are `rust-format-check`, `rust-clippy`, `rust-test`, and
 `rust-doc`. They are intentionally independent of the existing Dart/Flutter
 `make ci` target during this migration phase.
+
+## Versioning policy
+
+The greenfield engine and successor clients version only durable authored or
+persisted data, deterministic generator behavior, and APIs crossing an
+independently built native boundary. Internal snapshots, test fixtures,
+preference keys, and stable artifact filenames do not receive speculative
+`v1` suffixes. A migration layer is introduced only when a second format must
+actually be supported; current-only codecs continue to fail closed.
 
 Run the diagnostic release baseline separately:
 
@@ -197,7 +206,7 @@ in-process runtime types deliberately have no version suffix.
 Command results use a tagged accepted/rejected outcome, so an incoherent
 acceptance flag and rejection code cannot be represented on the wire. Rejection
 codes are closed enums in both the engine and client DTO; their current wire
-values are pinned by `command_rejection_codes.v1.json` and unknown values fail
+values are pinned by `command_rejection_codes.json` and unknown values fail
 closed in every adapter. Engine behavior version 3 unifies stale command
 rejections as `stale_revision`.
 
@@ -216,10 +225,11 @@ multi-target search. Batch queries reuse the same cache and buffers.
 
 The hot dispatch path consumes owned `GameState`, reuses its entity allocation,
 and consumes `DomainTransition::into_parts`; it does not clone the complete
-state for a normal local apply. Borrowed `GameEngine::apply` remains available
-for compatibility and tests. Prepared and raw paths have deterministic parity
-tests. Rayon, ECS, SIMD, GPU pathfinding, custom allocators, and `unsafe` are not
-used because the measured 1200-tile workload does not justify them.
+state for a normal local apply. `GameEngine` exposes only this owned command
+path, preventing an accidental full-state clone behind a convenience API.
+Prepared and raw contexts have deterministic parity tests. Rayon, ECS, SIMD,
+GPU pathfinding, custom allocators, and `unsafe` are not used because the
+measured 1200-tile workload does not justify them.
 
 `aonw_godot::AonwLocalSession` exposes one `request_json` transport operation.
 It decodes and encodes `aonw_contracts::client` documents and delegates every

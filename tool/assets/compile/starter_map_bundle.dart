@@ -8,7 +8,7 @@ import 'map_asset_bundle_manifest.dart';
 import 'map_atlas_builder.dart';
 
 const _fixturePath =
-    'aonw_tests/fixtures/maps/aonw2_starter/reference_tiles.v1.json';
+    'aonw_tests/fixtures/maps/aonw2_starter/reference_tiles.json';
 const _mapPath = 'content/maps/aonw2_starter/map.json';
 const _committedOutputs = [
   'clients/aonw_flutter/assets/maps/aonw2_starter',
@@ -193,7 +193,6 @@ Map<String, dynamic> _fixtureRoot(Object? value) {
     throw const FormatException('Starter reference fixture must be an object');
   }
   _expectKeys(value, const {
-    'version',
     'mapId',
     'mapContentHash',
     'cols',
@@ -202,9 +201,6 @@ Map<String, dynamic> _fixtureRoot(Object? value) {
     'palette',
     'tileRows',
   }, 'starter reference fixture');
-  if (value['version'] != 1) {
-    throw const FormatException('Unsupported starter reference fixture');
-  }
   return value;
 }
 

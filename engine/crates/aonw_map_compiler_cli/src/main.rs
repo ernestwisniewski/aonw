@@ -69,7 +69,7 @@ impl Arguments {
     fn parse() -> Result<Self, io::Error> {
         let mut values = env::args_os().skip(1);
         let map_path = required_argument(&mut values, "map.json")?;
-        let profile_path = required_argument(&mut values, "terrain_authoring.v1.json")?;
+        let profile_path = required_argument(&mut values, "terrain_authoring.json")?;
         let output_directory = required_argument(&mut values, "output directory")?;
         let samples_per_hex = values
             .next()
@@ -84,7 +84,7 @@ impl Arguments {
             .unwrap_or(8);
         if values.next().is_some() {
             return Err(invalid_input(
-                "usage: aonw-map-compiler <map.json> <terrain_authoring.v1.json> <output-dir> [samples-per-hex]",
+                "usage: aonw-map-compiler <map.json> <terrain_authoring.json> <output-dir> [samples-per-hex]",
             ));
         }
         Ok(Self {
@@ -217,7 +217,6 @@ fn write_manifest(
 ) -> Result<(), Box<dyn Error>> {
     let metadata = terrain.metadata();
     let manifest = json!({
-        "schemaVersion": 1,
         "mapId": map_id,
         "generatorVersion": metadata.generator_version(),
         "mapContentHash": metadata.map_content_hash().to_string(),
@@ -256,7 +255,7 @@ fn write_manifest(
     });
     let mut bytes = serde_json::to_vec_pretty(&manifest)?;
     bytes.push(b'\n');
-    fs::write(output_directory.join("terrain_compile.v1.json"), bytes)?;
+    fs::write(output_directory.join("terrain_compile.json"), bytes)?;
     Ok(())
 }
 

@@ -48,9 +48,9 @@ func _test_successful_creation_is_complete_and_immutable() -> void:
 	var map_root := _test_root.path_join("content/new_world")
 	for file_name in [
 		"map.json",
-		"terrain_authoring.v1.json",
-		"map_generation.v1.json",
-		"generated_decorations.v1.json",
+		"terrain_authoring.json",
+		"map_generation.json",
+		"generated_decorations.json",
 	]:
 		_check(
 			FileAccess.file_exists(map_root.path_join(file_name)),
@@ -109,12 +109,12 @@ func _test_procedural_creation_persists_rust_output() -> void:
 	var map_root := _test_root.path_join("content/procedural_world")
 	var map: Dictionary = JSON.parse_string(_read_text(map_root.path_join("map.json")))
 	var plan: Dictionary = JSON.parse_string(
-		_read_text(map_root.path_join("generated_decorations.v1.json"))
+		_read_text(map_root.path_join("generated_decorations.json"))
 	)
 	var terrains := {}
 	var resource_tiles := 0
 	for tile in map["tiles"]:
-		terrains[tile["displayTerrain"]] = true
+		terrains[tile["terrainTags"][0]] = true
 		resource_tiles += 1 if not tile["resources"].is_empty() else 0
 	_check(
 		terrains.size() >= 5 and resource_tiles >= 20 and plan["placements"].size() >= 100,

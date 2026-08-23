@@ -8,10 +8,10 @@ final class SharedPreferencesClientSettingsStore
   SharedPreferencesClientSettingsStore({SharedPreferencesAsync? preferences})
     : _preferences = preferences ?? SharedPreferencesAsync();
 
-  static const _masterVolumeKey = 'aonw.settings.masterVolume.v1';
-  static const _cameraSensitivityKey = 'aonw.settings.cameraSensitivity.v1';
-  static const _reducedMotionKey = 'aonw.settings.reducedMotion.v1';
-  static const _highContrastKey = 'aonw.settings.highContrast.v1';
+  static const _masterVolumeKey = 'aonw.settings.masterVolume';
+  static const _cameraSensitivityKey = 'aonw.settings.cameraSensitivity';
+  static const _reducedMotionKey = 'aonw.settings.reducedMotion';
+  static const _highContrastKey = 'aonw.settings.highContrast';
 
   final SharedPreferencesAsync _preferences;
 

@@ -35,7 +35,8 @@ fn compiled_context_uses_the_content_it_was_compiled_from() {
     let map = single_tile_map("source");
     let other_map = single_tile_map("other");
     let compiled =
-        CompiledMovementMap::compile(&map, RulesetDefinition::standard()).expect("compiled");
+        CompiledMovementMap::compile_owned(map.clone(), RulesetDefinition::standard().clone())
+            .expect("compiled");
 
     let context = EngineContext::new(&actor, &other_map, MovementPlanningView::fog_disabled())
         .with_compiled_movement_map(&compiled);

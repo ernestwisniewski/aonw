@@ -28,11 +28,6 @@ pub(super) struct RawTile {
     pub(super) col: i64,
     #[serde(deserialize_with = "deserialize_i64")]
     pub(super) row: i64,
-    pub(super) terrains: Vec<Box<str>>,
-    #[serde(rename = "displayTerrain")]
-    pub(super) display_terrain: Box<str>,
-    #[serde(rename = "yieldTerrain")]
-    pub(super) yield_terrain: Box<str>,
     #[serde(rename = "terrainTags")]
     pub(super) terrain_tags: Vec<Box<str>>,
     pub(super) resources: Vec<Box<str>>,

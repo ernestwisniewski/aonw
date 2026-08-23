@@ -1,10 +1,9 @@
 class_name AonwGeneratedDecorationPlanRepository
 extends AonwGeneratedDecorationPlanReader
 
-const FILE_NAME := "generated_decorations.v1.json"
+const FILE_NAME := "generated_decorations.json"
 const MAX_DOCUMENT_BYTES := 16 * 1024 * 1024
 const PLAN_FIELDS := [
-	"schemaVersion",
 	"sourceMapContentHash",
 	"generationSpecHash",
 	"generatorId",
@@ -58,8 +57,6 @@ func _identity_error(
 	document: Dictionary,
 	artifact: AonwTerrainCompiledArtifact,
 ) -> String:
-	if document["schemaVersion"] != 1:
-		return "generated decoration schema version is unsupported"
 	if document["sourceMapContentHash"] != artifact.map_content_hash:
 		return "generated decoration plan belongs to a different map revision"
 	if not _is_sha256(document["generationSpecHash"]):

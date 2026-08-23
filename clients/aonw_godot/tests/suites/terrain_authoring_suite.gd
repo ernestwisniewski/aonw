@@ -472,7 +472,6 @@ func _test_generated_decoration_repository(
 		"content",
 	)
 	var plan := {
-		"schemaVersion": 1,
 		"sourceMapContentHash": artifact.map_content_hash,
 		"generationSpecHash": "0".repeat(64),
 		"generatorId": "continental",
@@ -482,7 +481,7 @@ func _test_generated_decoration_repository(
 			_decoration_fixture("tree_0_0_0", "tree", Vector2i.ZERO, Vector2.ZERO),
 		],
 	}
-	var plan_path := plan_root.path_join("generated_decorations.v1.json")
+	var plan_path := plan_root.path_join("generated_decorations.json")
 	var file := FileAccess.open(plan_path, FileAccess.WRITE)
 	file.store_string(JSON.stringify(plan))
 	file = null
@@ -895,15 +894,6 @@ func _test_artifact_identity(
 		store,
 		_with_identity(artifact.identity(), "mapContentHash", "f".repeat(64)),
 		"belongsToDifferentMap",
-	)
-	var legacy_root := _test_root.path_join("legacy_terrain_authoring")
-	DirAccess.make_dir_recursive_absolute(
-		ProjectSettings.globalize_path(legacy_root.path_join("final"))
-	)
-	_assert_compatibility(
-		AuthoringStore.new(legacy_root),
-		artifact.identity(),
-		"requiresMigration",
 	)
 
 func _assert_compatibility(

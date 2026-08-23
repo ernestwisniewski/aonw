@@ -26,7 +26,7 @@ for map_path in "${content_root}"/*/map.json; do
   [[ -f "${map_path}" ]] || continue
   map_directory="$(dirname "${map_path}")"
   map_id="$(basename "${map_directory}")"
-  profile_path="${map_directory}/terrain_authoring.v1.json"
+  profile_path="${map_directory}/terrain_authoring.json"
   if [[ ! -f "${profile_path}" ]]; then
     echo "Missing required terrain profile: ${profile_path}" >&2
     exit 1

@@ -85,13 +85,11 @@ func _manifest_error(
 		return "root must be an object"
 	var manifest: Dictionary = value
 	if not _has_exact_fields(manifest, [
-		"version", "mapId", "mapContentHash", "gridLayout", "cols", "rows",
+		"mapId", "mapContentHash", "gridLayout", "cols", "rows",
 		"worldWidth", "worldHeight", "compiledScale", "filterQuality",
 		"pageSizeLimit", "gutter", "pages", "averageColors",
 	]):
-		return "fields do not match MapAssetBundleManifest v1"
-	if manifest.get("version") != 1:
-		return "unsupported version"
+		return "fields do not match the map asset bundle contract"
 	if manifest.get("mapId") != map.map_id():
 		return "map identity does not match"
 	if manifest.get("mapContentHash") != map.content_hash():
@@ -151,7 +149,7 @@ func _manifest_error(
 			"file", "asset", "format", "sha256", "pixelWidth", "pixelHeight",
 			"destination",
 		]):
-			return "page fields do not match MapAssetBundleManifest v1"
+			return "page fields do not match the map asset bundle contract"
 		var asset: Variant = page.get("asset")
 		var page_name: Variant = page.get("file")
 		if asset is not String or page_name is not String:

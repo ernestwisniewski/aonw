@@ -88,8 +88,8 @@ fn canonical_move_preserves_unit_fields_and_updates_fog_and_contact() {
         TransportNetwork::default(),
     );
     let unit_id = UnitId::new("unit-1").expect("unit id");
-    let transition = GameEngine::apply(
-        &state,
+    let transition = GameEngine::apply_owned(
+        state,
         EngineContext::canonical(&actor, &map, RulesetDefinition::standard()),
         DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(2, 1))),
     )
@@ -135,8 +135,8 @@ fn canonical_rejection_preserves_revision_and_digest() {
         TransportNetwork::default(),
     );
     let unit_id = UnitId::new("unit-1").expect("unit id");
-    let transition = GameEngine::apply(
-        &state,
+    let transition = GameEngine::apply_owned(
+        state.clone(),
         EngineContext::canonical(&actor, &map, RulesetDefinition::standard()),
         DomainCommand::MoveUnit(MoveUnitCommand::new(3, &unit_id, HexCoord::new(2, 1))),
     )
@@ -152,7 +152,7 @@ fn canonical_rejection_preserves_revision_and_digest() {
 }
 
 #[test]
-fn owned_apply_matches_borrowed_apply_and_exposes_owned_parts() {
+fn prepared_apply_matches_raw_apply_and_exposes_owned_parts() {
     let map = map();
     let actor = PlayerId::new("player-1").expect("actor");
     let state = world(
@@ -165,9 +165,10 @@ fn owned_apply_matches_borrowed_apply_and_exposes_owned_parts() {
     let command =
         || DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(1, 0)));
     let context = EngineContext::canonical(&actor, &map, RulesetDefinition::standard());
-    let borrowed = GameEngine::apply(&state, context, command()).expect("borrowed apply");
+    let raw = GameEngine::apply_owned(state.clone(), context, command()).expect("raw apply");
     let compiled =
-        CompiledMovementMap::compile(&map, RulesetDefinition::standard()).expect("compiled map");
+        CompiledMovementMap::compile_owned(map.clone(), RulesetDefinition::standard().clone())
+            .expect("compiled map");
     let owned = GameEngine::apply_owned(
         state,
         context.with_compiled_movement_map(&compiled),
@@ -176,10 +177,10 @@ fn owned_apply_matches_borrowed_apply_and_exposes_owned_parts() {
     .expect("owned apply")
     .into_parts();
 
-    assert_eq!(owned.state, *borrowed.state());
-    assert_eq!(owned.digest, borrowed.digest());
-    assert_eq!(&*owned.events, borrowed.events());
-    assert_eq!(owned.evidence.as_ref(), borrowed.evidence());
+    assert_eq!(owned.state, *raw.state());
+    assert_eq!(owned.digest, raw.digest());
+    assert_eq!(&*owned.events, raw.events());
+    assert_eq!(owned.evidence.as_ref(), raw.evidence());
     assert_eq!(owned.map_hash, compiled.map_hash());
     assert_eq!(owned.ruleset_hash, compiled.ruleset_hash());
 }
@@ -239,8 +240,8 @@ fn hidden_foreign_city_is_an_accepted_no_op_but_discovered_city_is_rejected() {
         FogOfWar::try_new([PlayerFog::new(actor.clone(), [], [HexCoord::new(1, 1)])]).expect("fog"),
         TransportNetwork::default(),
     );
-    let hidden_result = GameEngine::apply(
-        &hidden,
+    let hidden_result = GameEngine::apply_owned(
+        hidden,
         EngineContext::canonical(&actor, &map, RulesetDefinition::standard()),
         DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(2, 1))),
     )
@@ -267,8 +268,8 @@ fn hidden_foreign_city_is_an_accepted_no_op_but_discovered_city_is_rejected() {
         .expect("fog"),
         TransportNetwork::default(),
     );
-    let discovered_result = GameEngine::apply(
-        &discovered,
+    let discovered_result = GameEngine::apply_owned(
+        discovered,
         EngineContext::canonical(&actor, &map, RulesetDefinition::standard()),
         DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(2, 1))),
     )

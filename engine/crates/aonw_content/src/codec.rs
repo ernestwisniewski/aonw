@@ -1,7 +1,6 @@
 use aonw_domain::HexCoord;
 
 use crate::error::MapLoadError;
-use crate::model::normalize_movement_terrains;
 use crate::raw::{RawMap, RawMapDocument, RawObjective, RawTile};
 use crate::{
     GridLayout, MapDefinition, MapDocument, MapObjective, MapObjectiveType, ResourceType,
@@ -72,60 +71,14 @@ fn build_tile(raw: RawTile, index: usize) -> Result<TileDefinition, MapLoadError
     let height = u8::try_from(raw.height).map_err(|_| {
         MapLoadError::invalid(format!("{path}.height"), "must be a non-negative u8")
     })?;
-    let mut movement_terrains =
-        parse_values(raw.terrains, &format!("{path}.terrains"), parse_terrain)?;
-    normalize_movement_terrains(&path, &mut movement_terrains)?;
-    let display_terrain = parse_terrain(&raw.display_terrain, &format!("{path}.displayTerrain"))?;
-    let yield_terrain = parse_terrain(&raw.yield_terrain, &format!("{path}.yieldTerrain"))?;
     let terrain_tags = parse_values(
         raw.terrain_tags,
         &format!("{path}.terrainTags"),
         parse_terrain,
     )?;
     let terrain = TerrainProfile::try_new_at(&path, terrain_tags)?;
-    validate_terrain_compatibility(
-        &path,
-        &terrain,
-        &movement_terrains,
-        display_terrain,
-        yield_terrain,
-    )?;
     let resources = parse_values(raw.resources, &format!("{path}.resources"), parse_resource)?;
     TileDefinition::try_new_at(&path, coordinate, terrain, resources, height).map_err(Into::into)
-}
-
-fn validate_terrain_compatibility(
-    path: &str,
-    terrain: &TerrainProfile,
-    movement_terrains: &[TerrainType],
-    display_terrain: TerrainType,
-    yield_terrain: TerrainType,
-) -> Result<(), MapLoadError> {
-    if movement_terrains != terrain.movement_terrains() {
-        return Err(MapLoadError::invalid(
-            format!("{path}.terrains"),
-            "must match the movement profile derived from terrainTags",
-        ));
-    }
-    if display_terrain != terrain.display_terrain() {
-        return Err(MapLoadError::invalid(
-            format!("{path}.displayTerrain"),
-            "must match the first terrainTags value",
-        ));
-    }
-    if !yield_terrain.is_yield_terrain() {
-        return Err(MapLoadError::invalid(
-            format!("{path}.yieldTerrain"),
-            "river cannot be used as yield terrain",
-        ));
-    }
-    if yield_terrain != terrain.yield_terrain() {
-        return Err(MapLoadError::invalid(
-            format!("{path}.yieldTerrain"),
-            "must match the first non-river terrainTags value",
-        ));
-    }
-    Ok(())
 }
 
 fn build_objective(raw: RawObjective, index: usize) -> Result<MapObjective, MapLoadError> {

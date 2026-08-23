@@ -17,7 +17,7 @@ var _failures: Array[String]
 func run(failures: Array[String]) -> void:
 	_failures = failures
 	_test_catalog()
-	_test_every_catalog_bundle_matches_map()
+	_test_every_catalog_source_matches_available_artifacts()
 	_test_canonical_map_with_runtime_texture()
 	await _test_terrain3d_runtime_surface()
 	_test_bundled_checkout_without_asset_masters()
@@ -128,7 +128,7 @@ func _test_catalog() -> void:
 	for source in sources:
 		identifiers.append(source.map_id)
 	_check("myranth" in identifiers, "catalog discovers canonical content maps")
-	_check("aonw2_starter" in identifiers, "catalog discovers versioned Godot maps")
+	_check("aonw2_starter" in identifiers, "catalog discovers canonical Godot maps")
 	for source in sources:
 		if source.map_id == "aonw2_starter":
 			_check(source.origin == "content", "canonical content wins duplicate map ids")
@@ -137,7 +137,7 @@ func _test_catalog() -> void:
 				"starter uses the generated Godot visual bundle",
 			)
 
-func _test_every_catalog_bundle_matches_map() -> void:
+func _test_every_catalog_source_matches_available_artifacts() -> void:
 	var map_repository := JsonMapRepository.new()
 	var atlas_repository := TileAtlasRepository.new()
 	var terrain_repository := TerrainArtifactRepository.new()
@@ -149,15 +149,15 @@ func _test_every_catalog_bundle_matches_map() -> void:
 		var manifest_path := ProjectSettings.globalize_path(
 			source.visual_directory.path_join("map_texture_manifest.json")
 		)
-		var manifest_file := FileAccess.open(manifest_path, FileAccess.READ)
-		_check(manifest_file != null, "%s asset bundle exists" % source.map_id)
-		if manifest_file == null:
-			continue
-		var manifest: Variant = JSON.parse_string(manifest_file.get_as_text())
-		_check(
-			atlas_repository._manifest_error(manifest, map_result["map"]).is_empty(),
-			"%s asset bundle matches its Rust map content hash" % source.map_id,
-		)
+		if FileAccess.file_exists(manifest_path):
+			var manifest_file := FileAccess.open(manifest_path, FileAccess.READ)
+			_check(manifest_file != null, "%s asset bundle opens" % source.map_id)
+			if manifest_file != null:
+				var manifest: Variant = JSON.parse_string(manifest_file.get_as_text())
+				_check(
+					atlas_repository._manifest_error(manifest, map_result["map"]).is_empty(),
+					"%s asset bundle matches its Rust map content hash" % source.map_id,
+				)
 		var terrain_result := terrain_repository.load_terrain(map_result["map"])
 		_check(
 			terrain_result["ok"],

@@ -4,10 +4,9 @@ extends RefCounted
 const AtomicResourceStore := preload(
 	"res://editor/map_authoring/infrastructure/atomic_resource_store.gd"
 )
-const SNAPSHOT_MANIFEST_FILE := "terrain_snapshot.v1.json"
+const SNAPSHOT_MANIFEST_FILE := "terrain_snapshot.json"
 const WORKSPACE_DIRECTORY := "workspace"
 const SNAPSHOT_FIELDS := [
-	"schemaVersion",
 	"mapId",
 	"mapContentHash",
 	"authoringProfileHash",
@@ -21,7 +20,6 @@ const SNAPSHOT_FIELDS := [
 	"terrainFiles",
 ]
 const POINTER_FIELDS := [
-	"schemaVersion",
 	"mapId",
 	"mapContentHash",
 	"authoringProfileHash",
@@ -327,7 +325,6 @@ func _same_file_record(actual: Dictionary, expected: Dictionary) -> bool:
 
 func _snapshot_hash(manifest: Dictionary) -> String:
 	var parts: Array[String] = [
-		str(int(manifest.get("schemaVersion", 0))),
 		str(manifest.get("mapId", "")),
 		str(manifest.get("mapContentHash", "")),
 		str(manifest.get("authoringProfileHash", "")),
@@ -361,8 +358,7 @@ func _valid_snapshot_metadata(value: Dictionary) -> bool:
 		if not _is_sha256(value.get(field)):
 			return false
 	return (
-		int(value.get("schemaVersion", 0)) == 1
-		and int(value.get("terrainRevision", -1)) >= 0
+		int(value.get("terrainRevision", -1)) >= 0
 		and _is_sha256(value.get("snapshotHash"))
 		and not str(value.get("generatorVersion", "")).is_empty()
 		and int(value.get("rasterWidth", 0)) > 0

@@ -8,7 +8,7 @@ pin_file="${repo_root}/.terrain3d-version"
 checksum_file="${repo_root}/tool/terrain3d_checksums.txt"
 addon_directory="${repo_root}/clients/aonw_godot/addons/terrain_3d"
 compatibility_patch="${repo_root}/tool/patches/terrain3d-1.0.2-headless-display-scale.patch"
-compatibility_patch_id="terrain3d-1.0.2-headless-display-scale-v1"
+compatibility_patch_id="terrain3d-1.0.2-headless-display-scale"
 
 if [[ ! -f "${pin_file}" || ! -f "${checksum_file}" || ! -f "${compatibility_patch}" ]]; then
   echo "Terrain3D pin, checksum manifest, or compatibility patch is missing." >&2

@@ -25,7 +25,6 @@ final class MapAssetBundleManifest {
       throw const FormatException('Map asset bundle root must be an object');
     }
     _expectKeys(value, const {
-      'version',
       'mapId',
       'mapContentHash',
       'gridLayout',
@@ -40,9 +39,6 @@ final class MapAssetBundleManifest {
       'pages',
       'averageColors',
     }, 'map asset bundle');
-    if (value['version'] != 1) {
-      throw const FormatException('Unsupported map asset bundle version');
-    }
     if (value['gridLayout'] != mapAssetBundleGridLayout) {
       throw const FormatException('Unsupported map asset bundle grid layout');
     }
@@ -106,7 +102,6 @@ final class MapAssetBundleManifest {
   }
 
   Map<String, Object> toJson() => {
-    'version': 1,
     'mapId': mapId,
     'mapContentHash': mapContentHash,
     'gridLayout': mapAssetBundleGridLayout,

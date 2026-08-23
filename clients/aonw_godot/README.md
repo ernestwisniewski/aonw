@@ -20,15 +20,15 @@ The desktop-only client uses Godot's Forward+ rendering method for maximum
 desktop visual quality. On macOS this keeps Terrain3D on Metal and off the
 OpenGL compatibility shader path that can crash inside Apple's shader compiler.
 
-The **New map** section creates either a validated `blankV1` authoring canvas
-or a deterministic `continentalV1` landscape directly from the Godot dock.
+The **New map** section creates either a validated `blank` authoring canvas
+or a deterministic `continental` landscape directly from the Godot dock.
 The form collects the generator, map ID, odd-q dimensions, default zoom,
 metric hex radius, map-specific level-5 height, and deterministic seed. The
 framework-neutral Rust `aonw_map_workbench` boundary returns canonical
-`map.json`, `terrain_authoring.v1.json`, generation provenance, and a
+`map.json`, `terrain_authoring.json`, generation provenance, and a
 generated-decoration plan. The filesystem adapter publishes the complete
 directory without overwriting an existing map, compiles Terrain3D, and opens
-the new authoring scene. `continentalV1` generates coherent logical elevation,
+the new authoring scene. `continental` generates coherent logical elevation,
 biomes, compatible resources, and batched tree, rock, water, and detail
 placements. A newly generated map intentionally has no 2D reference atlas.
 
@@ -40,10 +40,10 @@ adapter never assembles map fields. The manual Terrain3D final is migrated and
 saved under the new logical identity.
 
 Generated visual objects and manual objects have separate `GeneratedWorld` and
-`ManualWorld` scene containers. The versioned plan is rendered as one
+`ManualWorld` scene containers. The generated plan is rendered as one
 `MultiMesh` per decoration kind, and refreshing or invalidating it replaces
 only the generated container. Gameplay-relevant terrain, resources and logical
-height remain Rust content; concrete visual placements remain versioned
+height remain Rust content; concrete visual placements remain reproducible
 presentation artifacts. See [ADR 0011](../../docs/adr/0011-logical-map-workbench-and-generation.md).
 
 The **AoNW Map** dock appears on the right. Its map list discovers:
@@ -62,7 +62,7 @@ a false content hash. Godot never depends on raw per-tile artwork or a
 procedural texture fallback.
 
 Every Godot editor or test bootstrap compiles each
-`content/maps/<map_id>/terrain_authoring.v1.json` profile through the pure Rust
+`content/maps/<map_id>/terrain_authoring.json` profile through the pure Rust
 terrain compiler. The reviewed inputs are separate `base`, `min`, and `max`
 32-bit EXR rasters. Their manifest and SHA-256 checksums are placed in the
 ignored `clients/aonw_godot/.godot/terrain_compiled/` cache.
@@ -76,8 +76,8 @@ clients/aonw_godot/
 ├── scenes/terrain_authoring/<map_id>.tscn    # clean Terrain3D authoring scene
 └── assets/generated_maps/<map_id>/
 	└── terrain_authoring/
-		├── current_draft.v1.json             # atomic pointer
-		├── current_published.v1.json         # only after successful validation
+		├── current_draft.json             # atomic pointer
+		├── current_published.json         # only after successful validation
 		├── workspace/terrain3d_*.res         # mutable Terrain3D working data
 		├── draft/<snapshot_hash>/            # immutable verified snapshots
 		└── published/<snapshot_hash>/        # immutable published snapshots

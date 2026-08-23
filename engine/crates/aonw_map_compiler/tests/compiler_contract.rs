@@ -22,15 +22,14 @@ fn starter_profile() -> TerrainAuthoringProfile {
     let map_source = fs::read(root.join("content/maps/aonw2_starter/map.json"))
         .expect("starter map must be readable");
     let map = MapDocument::from_json(&map_source).expect("starter map must validate");
-    let profile_source =
-        fs::read(root.join("content/maps/aonw2_starter/terrain_authoring.v1.json"))
-            .expect("starter profile must be readable");
+    let profile_source = fs::read(root.join("content/maps/aonw2_starter/terrain_authoring.json"))
+        .expect("starter profile must be readable");
     TerrainAuthoringProfile::from_json(&profile_source, map.map())
         .expect("starter profile must validate")
 }
 
 #[test]
-fn starter_compilation_is_deterministic_bounded_and_versioned() {
+fn starter_compilation_is_deterministic_bounded_and_traceable() {
     let profile = starter_profile();
     let config = RasterConfig::try_new(10).expect("valid density");
     let first = compile_terrain(&profile, config).expect("starter must compile");

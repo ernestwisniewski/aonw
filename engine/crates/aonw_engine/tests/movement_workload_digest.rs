@@ -48,8 +48,8 @@ fn reference_workload_outputs_are_deterministic() {
             )
         });
 
-    let transition = GameEngine::apply(
-        &state,
+    let transition = GameEngine::apply_owned(
+        state.clone(),
         context,
         DomainCommand::MoveUnit(MoveUnitCommand::new(
             state.revision().get(),
@@ -137,7 +137,8 @@ fn prepared_and_reused_searches_preserve_reference_results() {
     let state = state(&actor);
     let context = EngineContext::canonical(&actor, &map, RulesetDefinition::standard());
     let compiled =
-        CompiledMovementMap::compile(&map, RulesetDefinition::standard()).expect("compiled map");
+        CompiledMovementMap::compile_owned(map.clone(), RulesetDefinition::standard().clone())
+            .expect("compiled map");
     let prepared = context.with_compiled_movement_map(&compiled);
     let query = ReachableMovementQuery::new(state.revision().get(), &mover_id);
     let expected =

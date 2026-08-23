@@ -11,12 +11,12 @@ right="${fixture_directory}/godot.json"
 output="${fixture_directory}/output.log"
 
 printf '%s\n' '{"floatTolerance":0.000001,"cases":[]}' >"${scenario}"
-printf '%s\n' '{"schemaVersion":1,"maps":[],"point":[1.0,2]}' >"${left}"
-printf '%s\n' '{"schemaVersion":1,"maps":[],"point":[1.0000005,2]}' >"${right}"
+printf '%s\n' '{"maps":[],"point":[1.0,2]}' >"${left}"
+printf '%s\n' '{"maps":[],"point":[1.0000005,2]}' >"${right}"
 dart "${repo_root}/tool/compare_map_render_probes.dart" \
   "${left}" "${right}" "${scenario}" >/dev/null
 
-printf '%s\n' '{"schemaVersion":1,"maps":[],"point":[1.01,3]}' >"${right}"
+printf '%s\n' '{"maps":[],"point":[1.01,3]}' >"${right}"
 if dart "${repo_root}/tool/compare_map_render_probes.dart" \
   "${left}" "${right}" "${scenario}" >"${output}" 2>&1; then
   echo "expected semantic probe mismatch" >&2

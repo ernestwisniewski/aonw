@@ -23,7 +23,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let arguments = Arguments::parse()?;
     let map_source = fs::read(&arguments.map_path)?;
     let map = MapDocument::from_json(&map_source)?;
-    let profile = TerrainAuthoringProfile::standard_v1(
+    let profile = TerrainAuthoringProfile::standard(
         map.map(),
         arguments.hex_radius_meters,
         arguments.max_terrain_height_meters,

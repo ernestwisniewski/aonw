@@ -72,24 +72,24 @@ impl FixtureExecutor for RustEngineFixtureExecutor {
                     required_i32(input.command(), "targetCol")?,
                     required_i32(input.command(), "targetRow")?,
                 );
-                GameEngine::apply(
-                    &state,
+                GameEngine::apply_owned(
+                    *state,
                     context,
                     DomainCommand::MoveUnit(MoveUnitCommand::new(input.tick(), &unit_id, target)),
                 )
             }
-            "CancelUnitAction" => GameEngine::apply(
-                &state,
+            "CancelUnitAction" => GameEngine::apply_owned(
+                *state,
                 context,
                 DomainCommand::CancelUnitAction(UnitActionCommand::new(input.tick(), &unit_id)),
             ),
-            "SkipUnitTurn" => GameEngine::apply(
-                &state,
+            "SkipUnitTurn" => GameEngine::apply_owned(
+                *state,
                 context,
                 DomainCommand::SkipUnitTurn(UnitActionCommand::new(input.tick(), &unit_id)),
             ),
-            "FortifyUnit" => GameEngine::apply(
-                &state,
+            "FortifyUnit" => GameEngine::apply_owned(
+                *state,
                 context,
                 DomainCommand::FortifyUnit(UnitActionCommand::new(input.tick(), &unit_id)),
             ),

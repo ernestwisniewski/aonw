@@ -22,17 +22,17 @@ fn cli_writes_reviewable_exr_r16_and_manifest_artifacts() {
     let temporary = TemporaryDirectory::new();
     let status = Command::new(env!("CARGO_BIN_EXE_aonw-map-compiler"))
         .arg(root.join("content/maps/aonw2_starter/map.json"))
-        .arg(root.join("content/maps/aonw2_starter/terrain_authoring.v1.json"))
+        .arg(root.join("content/maps/aonw2_starter/terrain_authoring.json"))
         .arg(temporary.path())
         .arg("4")
         .status()
         .expect("compiler CLI must start");
     assert!(status.success(), "compiler CLI must succeed");
 
-    let manifest_source = fs::read(temporary.path().join("terrain_compile.v1.json"))
-        .expect("manifest must be written");
+    let manifest_source =
+        fs::read(temporary.path().join("terrain_compile.json")).expect("manifest must be written");
     let manifest: Value = serde_json::from_slice(&manifest_source).expect("manifest must decode");
-    assert_eq!(manifest["schemaVersion"], 1);
+    assert!(manifest.get("schemaVersion").is_none());
     assert_eq!(manifest["generatorVersion"], "aonw-map-compiler/1");
     assert_eq!(manifest["mapId"], "aonw2_starter");
     assert_eq!(

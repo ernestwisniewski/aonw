@@ -6,7 +6,6 @@ use super::dispatch_json;
 #[test]
 fn native_workbench_bridge_returns_rust_generated_documents() {
     let spec = json!({
-        "schemaVersion": 1,
         "generatorId": "blank",
         "generatorVersion": 1,
         "mapId": "native_generated",
@@ -41,7 +40,6 @@ fn native_workbench_bridge_returns_rust_generated_documents() {
 #[test]
 fn native_workbench_bridge_reconfigures_metric_height() {
     let spec = json!({
-        "schemaVersion": 1,
         "generatorId": "blank",
         "generatorVersion": 1,
         "mapId": "native_generated",
@@ -84,7 +82,6 @@ fn native_workbench_bridge_reconfigures_metric_height() {
 #[test]
 fn native_workbench_bridge_edits_logical_tiles_through_rust() {
     let spec = json!({
-        "schemaVersion": 1,
         "generatorId": "blank",
         "generatorVersion": 1,
         "mapId": "native_edited",

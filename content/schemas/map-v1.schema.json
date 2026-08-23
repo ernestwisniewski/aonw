@@ -46,28 +46,6 @@
         "row": { "type": "integer", "minimum": 0 }
       }
     },
-    "primaryTerrain": {
-      "enum": [
-        "ocean",
-        "coast",
-        "lake",
-        "plains",
-        "grassland",
-        "desert",
-        "tundra",
-        "snow",
-        "mountain"
-      ]
-    },
-    "terrainFeature": {
-      "enum": [
-        "hills",
-        "wetlands",
-        "jungle",
-        "forest",
-        "river"
-      ]
-    },
     "terrainTag": {
       "enum": [
         "ocean",
@@ -84,23 +62,6 @@
         "jungle",
         "forest",
         "river"
-      ]
-    },
-    "yieldTerrain": {
-      "enum": [
-        "ocean",
-        "coast",
-        "lake",
-        "plains",
-        "grassland",
-        "desert",
-        "tundra",
-        "snow",
-        "mountain",
-        "hills",
-        "wetlands",
-        "jungle",
-        "forest"
       ]
     },
     "resource": {
@@ -142,9 +103,6 @@
       "required": [
         "col",
         "row",
-        "terrains",
-        "displayTerrain",
-        "yieldTerrain",
         "terrainTags",
         "resources",
         "height"
@@ -152,22 +110,6 @@
       "properties": {
         "col": { "type": "integer", "minimum": 0 },
         "row": { "type": "integer", "minimum": 0 },
-        "terrains": {
-          "description": "Compatibility projection: normalized movement profile derived from terrainTags.",
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "prefixItems": [{ "$ref": "#/$defs/primaryTerrain" }],
-          "items": { "$ref": "#/$defs/terrainFeature" }
-        },
-        "displayTerrain": {
-          "description": "Compatibility projection: first terrainTags value.",
-          "$ref": "#/$defs/terrainTag"
-        },
-        "yieldTerrain": {
-          "description": "Compatibility projection: first non-river terrainTags value.",
-          "$ref": "#/$defs/yieldTerrain"
-        },
         "terrainTags": {
           "description": "Ordered terrain source of truth; order expresses authored precedence.",
           "type": "array",

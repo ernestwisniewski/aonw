@@ -15,7 +15,7 @@ fn spec(seed: u64) -> MapGenerationSpec {
 }
 
 #[test]
-fn blank_v1_is_deterministic_and_passes_authoritative_validators() {
+fn blank_generator_is_deterministic_and_passes_authoritative_validators() {
     let first = GeneratedMapPackage::generate(&spec(42)).expect("first package");
     let second = GeneratedMapPackage::generate(&spec(42)).expect("second package");
     assert_eq!(first, second);
@@ -62,7 +62,7 @@ fn blank_v1_is_deterministic_and_passes_authoritative_validators() {
 }
 
 #[test]
-fn continental_v1_generates_deterministic_terrain_resources_and_decorations() {
+fn continental_generator_creates_deterministic_terrain_resources_and_decorations() {
     let spec =
         MapGenerationSpec::try_new_continental("procedural_world", 40, 30, 1.25, 100.0, 240.0, 42)
             .expect("valid continental spec");
@@ -73,23 +73,23 @@ fn continental_v1_generates_deterministic_terrain_resources_and_decorations() {
     let map = MapDocument::from_json(first.map_document().as_bytes()).expect("generated map");
     TerrainAuthoringProfile::from_json(first.terrain_authoring_document().as_bytes(), map.map())
         .expect("generated terrain profile");
-    let document: Value = serde_json::from_str(first.map_document()).expect("map JSON");
-    let tiles = document["tiles"].as_array().expect("tiles");
-    let terrains: BTreeSet<&str> = tiles
+    let terrains: BTreeSet<&str> = map
+        .map()
+        .tiles()
         .iter()
-        .filter_map(|tile| tile["displayTerrain"].as_str())
+        .map(|tile| tile.display_terrain().as_str())
         .collect();
-    let resource_tiles = tiles
+    let resource_tiles = map
+        .map()
+        .tiles()
         .iter()
-        .filter(|tile| {
-            tile["resources"]
-                .as_array()
-                .is_some_and(|values| !values.is_empty())
-        })
+        .filter(|tile| !tile.resources().is_empty())
         .count();
-    let raised_tiles = tiles
+    let raised_tiles = map
+        .map()
+        .tiles()
         .iter()
-        .filter(|tile| tile["height"].as_u64().is_some_and(|height| height > 0))
+        .filter(|tile| tile.height() > 0)
         .count();
     assert!(terrains.contains("ocean"));
     assert!(
@@ -123,7 +123,7 @@ fn continental_v1_generates_deterministic_terrain_resources_and_decorations() {
 }
 
 #[test]
-fn continental_v1_seed_changes_generated_content() {
+fn continental_generator_seed_changes_generated_content() {
     let first_spec =
         MapGenerationSpec::try_new_continental("procedural_world", 40, 30, 1.0, 100.0, 240.0, 1)
             .expect("first spec");
@@ -157,7 +157,7 @@ fn strict_protocol_returns_documents_without_filesystem_ownership() {
         "apiVersion": MAP_WORKBENCH_API_VERSION,
         "request": {
             "type": "generateMap",
-            "specDocument": spec(7).to_versioned_json().expect("spec JSON"),
+            "specDocument": spec(7).to_json().expect("spec JSON"),
         },
     });
     let response: Value =
@@ -175,7 +175,6 @@ fn strict_protocol_returns_documents_without_filesystem_ownership() {
 #[test]
 fn invalid_specs_are_rejected_before_generation() {
     let invalid = json!({
-        "schemaVersion": 1,
         "generatorId": "blank",
         "generatorVersion": 1,
         "mapId": "Generated World",

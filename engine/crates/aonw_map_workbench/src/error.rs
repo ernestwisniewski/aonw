@@ -6,13 +6,6 @@ use aonw_map_authoring::TerrainAuthoringLoadError;
 pub enum MapWorkbenchError {
     /// A strict JSON document could not be decoded or encoded.
     Json(serde_json::Error),
-    /// A versioned generation document is not supported.
-    UnsupportedSchemaVersion {
-        /// Version found in the document.
-        found: u64,
-        /// Only version accepted by this build.
-        supported: u64,
-    },
     /// The requested generator identity is not implemented.
     UnsupportedGenerator {
         /// Stable requested generator identifier.
@@ -65,7 +58,6 @@ impl MapWorkbenchError {
         match self {
             Self::Json(_) | Self::InvalidSpec { .. } => "invalid_generation_spec",
             Self::InvalidEdit { .. } | Self::EditedMap(_) => "invalid_map_edit",
-            Self::UnsupportedSchemaVersion { .. } => "unsupported_generation_schema",
             Self::UnsupportedGenerator { .. } => "unsupported_map_generator",
             Self::SourceMap(_) => "source_map_invalid",
             Self::Map(_) => "generated_map_invalid",
@@ -90,10 +82,6 @@ impl core::fmt::Display for MapWorkbenchError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Json(source) => write!(formatter, "invalid generation JSON: {source}"),
-            Self::UnsupportedSchemaVersion { found, supported } => write!(
-                formatter,
-                "unsupported map-generation schema {found}; expected {supported}"
-            ),
             Self::UnsupportedGenerator {
                 generator_id,
                 generator_version,

@@ -8,9 +8,9 @@ const DEFAULT_CONTENT_ROOT := "res://../../content/maps"
 const DEFAULT_VISUAL_ROOT := "res://../../assets/runtime/maps"
 const DOCUMENT_FIELDS := {
 	"map.json": "mapDocument",
-	"terrain_authoring.v1.json": "terrainAuthoringDocument",
-	"map_generation.v1.json": "generationDocument",
-	"generated_decorations.v1.json": "generatedDecorationPlanDocument",
+	"terrain_authoring.json": "terrainAuthoringDocument",
+	"map_generation.json": "generationDocument",
+	"generated_decorations.json": "generatedDecorationPlanDocument",
 }
 
 var _compiler: AonwTerrainCompiler

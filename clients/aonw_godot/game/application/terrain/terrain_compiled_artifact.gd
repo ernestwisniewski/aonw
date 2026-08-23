@@ -48,7 +48,6 @@ func clamp_height(pixel: Vector2i, requested_height: float) -> float:
 
 func metadata(terrain_revision: int) -> Dictionary:
 	var result := identity().to_dictionary()
-	result["schemaVersion"] = 1
 	result["terrainRevision"] = terrain_revision
 	return result
 

@@ -12,8 +12,6 @@ use sha2::{Digest, Sha256};
 use crate::spec::{PersistedGenerationSpec, pretty_json};
 use crate::{MapGenerationSpec, MapWorkbenchError};
 
-const GENERATION_PROVENANCE_SCHEMA_VERSION: u64 = 1;
-const GENERATED_DECORATION_PLAN_SCHEMA_VERSION: u64 = 1;
 const SQRT_3: f64 = 1.732_050_807_568_877_2;
 
 /// Complete deterministic document package returned to a persistence adapter.
@@ -41,7 +39,7 @@ impl GeneratedMapPackage {
     pub fn generate(spec: &MapGenerationSpec) -> Result<Self, MapWorkbenchError> {
         let map_document = logical_map(spec)?;
         let map = map_document.map();
-        let terrain_profile = TerrainAuthoringProfile::standard_v1(
+        let terrain_profile = TerrainAuthoringProfile::standard(
             map,
             spec.hex_radius_meters(),
             spec.max_terrain_height_meters(),
@@ -50,7 +48,6 @@ impl GeneratedMapPackage {
         let authoring_profile_hash = terrain_profile.authoring_profile_hash()?.to_string();
         let generation_spec_hash = spec.spec_hash()?.to_string();
         let decoration_plan = GeneratedDecorationPlan {
-            schema_version: GENERATED_DECORATION_PLAN_SCHEMA_VERSION,
             source_map_content_hash: &map_content_hash,
             generation_spec_hash: &generation_spec_hash,
             generator_id: spec.generator_id(),
@@ -61,7 +58,6 @@ impl GeneratedMapPackage {
         let decoration_bytes = serde_json::to_vec(&decoration_plan)?;
         let generated_decoration_plan_hash = sha256_hex(&decoration_bytes);
         let generation_document = pretty_json(&GenerationProvenance {
-            schema_version: GENERATION_PROVENANCE_SCHEMA_VERSION,
             spec: PersistedGenerationSpec::from(spec),
             generation_spec_hash: &generation_spec_hash,
             map_content_hash: &map_content_hash,
@@ -418,7 +414,6 @@ fn mixed(seed: u64, col: u64, row: u64, salt: u64) -> u64 {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct GenerationProvenance<'a> {
-    schema_version: u64,
     spec: PersistedGenerationSpec<'a>,
     generation_spec_hash: &'a str,
     map_content_hash: &'a str,
@@ -429,7 +424,6 @@ struct GenerationProvenance<'a> {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct GeneratedDecorationPlan<'a> {
-    schema_version: u64,
     source_map_content_hash: &'a str,
     generation_spec_hash: &'a str,
     generator_id: &'a str,

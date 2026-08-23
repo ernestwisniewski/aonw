@@ -102,7 +102,6 @@ func generate_new_map(
 	seed: String,
 ) -> Dictionary:
 	return generate_map(JSON.stringify({
-		"schemaVersion": 1,
 		"generatorId": str(generator_id),
 		"generatorVersion": 1,
 		"mapId": map_id,

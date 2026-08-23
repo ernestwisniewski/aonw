@@ -4,20 +4,15 @@ extends AonwTerrainAuthoringPersistence
 const SnapshotStore := preload(
 	"res://editor/map_authoring/infrastructure/terrain/terrain_snapshot_store.gd"
 )
-const DRAFT_POINTER_FILE := "current_draft.v1.json"
-const PUBLISHED_POINTER_FILE := "current_published.v1.json"
+const DRAFT_POINTER_FILE := "current_draft.json"
+const PUBLISHED_POINTER_FILE := "current_published.json"
 const DRAFT_DIRECTORY := "draft"
 const PUBLISHED_DIRECTORY := "published"
-const LEGACY_STATE_FILE := "terrain_authoring_state.v1.json"
-const LEGACY_PUBLISH_FILE := "published_terrain.v1.json"
-const LEGACY_DATA_DIRECTORY := "final"
 
-var _root: String
 var _snapshots: AonwTerrainSnapshotStore
 
 func _init(root: String) -> void:
 	assert(not root.is_empty(), "Terrain authoring root is required")
-	_root = root
 	_snapshots = SnapshotStore.new(root)
 
 func load_revision(expected_identity: AonwTerrainArtifactIdentity) -> Dictionary:
@@ -100,11 +95,6 @@ func publish(
 	}
 
 func _load_empty_revision() -> Dictionary:
-	if _has_legacy_state():
-		return _compatibility_failure(
-			"requiresMigration",
-			"legacy Terrain3D authoring data requires an explicit migration",
-		)
 	var workspace := _snapshots.prepare_empty_workspace()
 	if not workspace["ok"]:
 		return workspace
@@ -114,15 +104,6 @@ func _load_empty_revision() -> Dictionary:
 		"has_draft": false,
 		"revision": 0,
 	}
-
-func _has_legacy_state() -> bool:
-	return (
-		FileAccess.file_exists(_root.path_join(LEGACY_STATE_FILE))
-		or FileAccess.file_exists(_root.path_join(LEGACY_PUBLISH_FILE))
-		or DirAccess.dir_exists_absolute(
-			ProjectSettings.globalize_path(_root.path_join(LEGACY_DATA_DIRECTORY))
-		)
-	)
 
 func _compatibility_failure(compatibility: String, message: String) -> Dictionary:
 	return {"ok": false, "compatibility": compatibility, "message": message}

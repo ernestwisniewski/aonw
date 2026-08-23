@@ -49,14 +49,8 @@ Future<void> main(List<String> arguments) async {
     await session.close();
   }
 
-  _writeJson(File(arguments[1]), {
-    'schemaVersion': scenario['schemaVersion']! as int,
-    'maps': probes,
-  });
-  _writeJson(File(arguments[2]), {
-    'schemaVersion': scenario['schemaVersion']! as int,
-    'maps': diagnostics,
-  });
+  _writeJson(File(arguments[1]), {'maps': probes});
+  _writeJson(File(arguments[2]), {'maps': diagnostics});
   stdout.writeln('Flutter map render probe: OK');
 }
 

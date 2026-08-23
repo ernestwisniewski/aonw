@@ -223,7 +223,7 @@ impl TerrainAuthoringProfile {
     ///
     /// Returns [`TerrainAuthoringLoadError`] when the map cannot be hashed or
     /// the metric scale is invalid.
-    pub fn standard_v1(
+    pub fn standard(
         map: &MapDefinition,
         hex_radius_meters: f64,
         max_terrain_height_meters: f64,

@@ -40,7 +40,7 @@ impl UpdatedTerrainProfile {
         })
     }
 
-    /// Canonical replacement for `terrain_authoring.v1.json`.
+    /// Canonical replacement for `terrain_authoring.json`.
     #[must_use]
     pub fn terrain_authoring_document(&self) -> &str {
         &self.terrain_authoring_document

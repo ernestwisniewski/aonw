@@ -71,7 +71,7 @@ func update_maximum(source: AonwMapSource, maximum: float) -> Dictionary:
 	return compile_result
 
 func _profile_path(source: AonwMapSource) -> String:
-	return source.map_path.get_base_dir().path_join("terrain_authoring.v1.json")
+	return source.map_path.get_base_dir().path_join("terrain_authoring.json")
 
 func _read_text(path: String) -> Dictionary:
 	var file := FileAccess.open(ProjectSettings.globalize_path(path), FileAccess.READ)

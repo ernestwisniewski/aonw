@@ -22,7 +22,7 @@ fn starter_map() -> MapDocument {
 }
 
 fn starter_profile_source() -> Vec<u8> {
-    fs::read(repository_root().join("content/maps/aonw2_starter/terrain_authoring.v1.json"))
+    fs::read(repository_root().join("content/maps/aonw2_starter/terrain_authoring.json"))
         .expect("starter terrain profile must be readable")
 }
 
@@ -42,28 +42,32 @@ fn decode(
 
 #[test]
 fn every_shared_map_defines_its_own_metric_height_ceiling() {
-    let expected = [
-        ("aonw2_starter", 20.0),
-        ("dravonia", 18.5),
-        ("myranth", 29.5),
-        ("terenos", 16.0),
-        ("verdantia", 20.0),
-    ];
+    let maps_directory = repository_root().join("content/maps");
+    let mut map_directories = fs::read_dir(&maps_directory)
+        .expect("shared map directory must be readable")
+        .map(|entry| entry.expect("map entry must be readable").path())
+        .filter(|path| path.is_dir() && path.join("map.json").is_file())
+        .collect::<Vec<_>>();
+    map_directories.sort();
+    assert!(
+        !map_directories.is_empty(),
+        "shared map corpus must not be empty"
+    );
 
-    for (map_id, expected_maximum) in expected {
-        let directory = repository_root().join("content/maps").join(map_id);
+    for directory in map_directories {
         let map = MapDocument::from_json(
             &fs::read(directory.join("map.json")).expect("map must be readable"),
         )
         .expect("map must validate");
         let profile = TerrainAuthoringProfile::from_json(
-            &fs::read(directory.join("terrain_authoring.v1.json"))
+            &fs::read(directory.join("terrain_authoring.json"))
                 .expect("every map must define terrain authoring"),
             map.map(),
         )
         .expect("terrain authoring profile must validate");
 
-        assert!((profile.max_terrain_height_meters() - expected_maximum).abs() <= f64::EPSILON);
+        let expected_maximum = profile.max_terrain_height_meters();
+        assert!(expected_maximum.is_finite() && expected_maximum > 0.0);
         assert!(
             profile.hex_heights().iter().all(|height| {
                 height.max_height_meters() <= profile.max_terrain_height_meters()

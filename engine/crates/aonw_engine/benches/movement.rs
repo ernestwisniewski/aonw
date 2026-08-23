@@ -78,8 +78,11 @@ fn benchmark_movement(map: &MapDefinition, cols: u16, rows: u16, unit_count: usi
     let state = movement_state(cols, rows, unit_count, &actor);
     let context =
         EngineContext::canonical(&actor, map, aonw_content::RulesetDefinition::standard());
-    let compiled = CompiledMovementMap::compile(map, aonw_content::RulesetDefinition::standard())
-        .expect("compiled movement map");
+    let compiled = CompiledMovementMap::compile_owned(
+        map.clone(),
+        aonw_content::RulesetDefinition::standard().clone(),
+    )
+    .expect("compiled movement map");
     let prepared_context = context.with_compiled_movement_map(&compiled);
     let target = HexCoord::new(i32::from(cols) - 1, i32::from(rows) - 1);
     let (reachable_metrics, route_metrics, apply_metrics) =
@@ -222,8 +225,8 @@ fn benchmark_apply(
 ) {
     let (cols, rows, units) = dimensions;
     report("apply", cols, rows, units, metrics, || {
-        GameEngine::apply(
-            black_box(state),
+        GameEngine::apply_owned(
+            black_box(state.clone()),
             context,
             DomainCommand::MoveUnit(MoveUnitCommand::new(
                 state.revision().get(),
@@ -236,7 +239,7 @@ fn benchmark_apply(
             |result| transition_signature(&result, mover_id),
         )
     });
-    report("prepared_apply_owned", cols, rows, units, metrics, || {
+    report("prepared_apply", cols, rows, units, metrics, || {
         GameEngine::apply_owned(
             black_box(state.clone()),
             prepared_context,
