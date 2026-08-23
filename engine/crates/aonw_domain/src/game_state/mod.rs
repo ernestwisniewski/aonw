@@ -3,8 +3,8 @@ mod validation;
 use crate::{
     ArtifactId, City, CityId, Diplomacy, EconomyState, EconomyStateBuildError, FieldImprovement,
     FogOfWar, HexCoord, HexGridBounds, InfrastructureState, InfrastructureValidationError,
-    InteractionState, MatchLifecycle, PlayerId, StateRevision, TransportNetwork, Unit, UnitId,
-    WorldArtifact,
+    InteractionState, KnowledgeState, KnowledgeStateValidationError, MatchLifecycle, PlayerId,
+    ResearchState, StateRevision, TransportNetwork, Unit, UnitId, WonderRegistry, WorldArtifact,
 };
 use validation::{
     artifact_indices, city_indices, unit_indices, validate_artifacts, validate_environment,
@@ -113,6 +113,8 @@ pub enum GameStateBuildError {
     InvalidEconomy(EconomyStateBuildError),
     /// Infrastructure data violates map or entity references.
     InvalidInfrastructure(InfrastructureValidationError),
+    /// Research or wonder data references an identity outside the match.
+    InvalidKnowledge(KnowledgeStateValidationError),
 }
 
 #[cfg(test)]
@@ -209,6 +211,7 @@ impl core::fmt::Display for GameStateBuildError {
             }
             Self::InvalidEconomy(error) => error.fmt(formatter),
             Self::InvalidInfrastructure(error) => error.fmt(formatter),
+            Self::InvalidKnowledge(error) => error.fmt(formatter),
         }
     }
 }
@@ -222,6 +225,7 @@ pub struct GameState {
     turn: u32,
     match_lifecycle: MatchLifecycle,
     economy: EconomyState,
+    knowledge: KnowledgeState,
     bounds: HexGridBounds,
     occupancy_policy: UnitOccupancyPolicy,
     units: Box<[Unit]>,
@@ -288,6 +292,7 @@ impl GameState {
             turn,
             MatchLifecycle::default(),
             EconomyState::default(),
+            KnowledgeState::default(),
             bounds,
             occupancy_policy,
             units,
@@ -311,6 +316,7 @@ impl GameState {
         turn: u32,
         match_lifecycle: MatchLifecycle,
         economy: EconomyState,
+        knowledge: KnowledgeState,
         bounds: HexGridBounds,
         occupancy_policy: UnitOccupancyPolicy,
         units: impl IntoIterator<Item = Unit>,
@@ -339,11 +345,15 @@ impl GameState {
         economy
             .validate_for(match_lifecycle.identity(), bounds)
             .map_err(GameStateBuildError::InvalidEconomy)?;
+        knowledge
+            .validate_for(match_lifecycle.identity())
+            .map_err(GameStateBuildError::InvalidKnowledge)?;
         Ok(Self {
             revision,
             turn,
             match_lifecycle,
             economy,
+            knowledge,
             bounds,
             occupancy_policy,
             units: units.into_boxed_slice(),
@@ -378,6 +388,21 @@ impl GameState {
     #[must_use]
     pub const fn economy(&self) -> &EconomyState {
         &self.economy
+    }
+    /// Returns canonical research and global wonder state.
+    #[must_use]
+    pub const fn knowledge(&self) -> &KnowledgeState {
+        &self.knowledge
+    }
+    /// Returns canonical per-player research.
+    #[must_use]
+    pub const fn research(&self) -> &ResearchState {
+        self.knowledge.research()
+    }
+    /// Returns the global completed-wonder registry.
+    #[must_use]
+    pub const fn wonder_registry(&self) -> &WonderRegistry {
+        self.knowledge.wonder_registry()
     }
     /// Returns logical map bounds.
     #[must_use]
@@ -505,6 +530,7 @@ impl GameState {
             self.turn,
             self.match_lifecycle,
             self.economy,
+            self.knowledge,
             self.bounds,
             self.occupancy_policy,
             units,
@@ -550,6 +576,7 @@ impl GameState {
             self.turn,
             self.match_lifecycle,
             self.economy,
+            self.knowledge,
             self.bounds,
             self.occupancy_policy,
             units,

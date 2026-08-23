@@ -11,10 +11,11 @@ use aonw_contracts::{
     InitialResourceDistributionDto, InitialResourcePlacementDto, InteractionStateDto,
     MatchIdentityDto, MatchRulesDto, MovementStepDto, PaceProfileDto, ParticipantDto,
     PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
-    PlayerTurnStateDto, QueuedMovePathDto, ResourceTypeDto, RuleValueDto,
-    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
-    TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
-    UnitOccupancyPolicyDto, UnitPostureDto, VictoryRulesDto, WonderTypeDto, WorkerJobDto,
+    PlayerResearchStateDto, PlayerTurnStateDto, QueuedMovePathDto, ResearchStateDto,
+    ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto, TechnologyIdDto,
+    TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto, TroopKindDto,
+    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
+    UnitPostureDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto,
     WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{FogVisibility, HexCoord, UnitId};
@@ -26,6 +27,8 @@ fn contract() -> GameStateDto {
         match_identity: match_identity(),
         turn_lifecycle: turn_lifecycle(),
         economy: economy(),
+        research: research(),
+        wonder_registry: wonder_registry(),
         cols: 5,
         rows: 5,
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
@@ -117,6 +120,38 @@ fn contract() -> GameStateDto {
             built_by_city_id: Some("city-1".to_owned()),
         }],
     }
+}
+
+fn research() -> ResearchStateDto {
+    ResearchStateDto {
+        players: BTreeMap::from([
+            (
+                "player-1".to_owned(),
+                PlayerResearchStateDto {
+                    unlocked_technology_ids: vec![TechnologyIdDto::Logistics],
+                    active_technology_id: Some(TechnologyIdDto::Agriculture),
+                    progress_by_technology_id: BTreeMap::from([(TechnologyIdDto::Agriculture, 4)]),
+                    science_overflow: 3,
+                },
+            ),
+            (
+                "player-2".to_owned(),
+                PlayerResearchStateDto {
+                    unlocked_technology_ids: vec![TechnologyIdDto::Writing],
+                    active_technology_id: None,
+                    progress_by_technology_id: BTreeMap::new(),
+                    science_overflow: 11,
+                },
+            ),
+        ]),
+    }
+}
+
+fn wonder_registry() -> WonderRegistryDto {
+    WonderRegistryDto(BTreeMap::from([(
+        WonderTypeDto::CentralBank,
+        "player-2".to_owned(),
+    )]))
 }
 
 fn field_improvements() -> Vec<FieldImprovementDto> {
@@ -672,5 +707,95 @@ fn infrastructure_rejects_invalid_coordinates_references_and_duplicates_with_pat
             .expect_err("missing transport city")
             .path(),
         "$.transportNetwork[0].builtByCityId"
+    );
+}
+
+#[test]
+fn research_and_wonders_reject_unknown_players_and_noncanonical_progress_with_paths() {
+    let mut unknown = contract();
+    let research = unknown
+        .research
+        .players
+        .remove("player-1")
+        .expect("research player");
+    unknown
+        .research
+        .players
+        .insert("player-3".to_owned(), research);
+    assert_eq!(
+        decode_game_state(unknown)
+            .expect_err("unknown research player")
+            .path(),
+        "$.research.players.player-3"
+    );
+
+    let mut duplicate = contract();
+    duplicate
+        .research
+        .players
+        .get_mut("player-1")
+        .expect("research player")
+        .unlocked_technology_ids
+        .push(TechnologyIdDto::Logistics);
+    assert_eq!(
+        decode_game_state(duplicate)
+            .expect_err("duplicate unlocked technology")
+            .path(),
+        "$.research.players.player-1.unlockedTechnologyIds"
+    );
+
+    let mut active_unlocked = contract();
+    active_unlocked
+        .research
+        .players
+        .get_mut("player-1")
+        .expect("research player")
+        .active_technology_id = Some(TechnologyIdDto::Logistics);
+    assert_eq!(
+        decode_game_state(active_unlocked)
+            .expect_err("active unlocked technology")
+            .path(),
+        "$.research.players.player-1.activeTechnologyId"
+    );
+
+    let mut zero_progress = contract();
+    zero_progress
+        .research
+        .players
+        .get_mut("player-1")
+        .expect("research player")
+        .progress_by_technology_id
+        .insert(TechnologyIdDto::Agriculture, 0);
+    assert_eq!(
+        decode_game_state(zero_progress)
+            .expect_err("zero research progress")
+            .path(),
+        "$.research.players.player-1.progressByTechnologyId"
+    );
+
+    let mut negative_overflow = contract();
+    negative_overflow
+        .research
+        .players
+        .get_mut("player-1")
+        .expect("research player")
+        .science_overflow = -1;
+    assert_eq!(
+        decode_game_state(negative_overflow)
+            .expect_err("negative science overflow")
+            .path(),
+        "$.research.players.player-1.scienceOverflow"
+    );
+
+    let mut unknown_wonder_owner = contract();
+    unknown_wonder_owner
+        .wonder_registry
+        .0
+        .insert(WonderTypeDto::GreatWall, "player-3".to_owned());
+    assert_eq!(
+        decode_game_state(unknown_wonder_owner)
+            .expect_err("unknown wonder owner")
+            .path(),
+        "$.wonderRegistry.greatWall"
     );
 }

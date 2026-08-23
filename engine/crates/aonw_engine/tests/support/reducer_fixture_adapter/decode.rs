@@ -5,10 +5,10 @@ use aonw_contracts::{
     EconomyStateDto, FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto,
     InitialResourceDistributionDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
     MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
-    QueuedMovePathDto, StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
-    TransportSegmentKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
-    UnitOccupancyPolicyDto, UnitPostureDto, WonderTypeDto, WorldArtifactDto,
-    WorldArtifactLocationDto, WorldArtifactTypeDto,
+    QueuedMovePathDto, ResearchStateDto, StrategicResourceStockpileDto, TransportConditionDto,
+    TransportSegmentDto, TransportSegmentKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto,
+    UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WonderRegistryDto, WonderTypeDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{HexCoord, HexGridBounds, MovementUnits, UnitId};
 use aonw_testkit::{FixtureInput, JsonObject};
@@ -121,6 +121,8 @@ pub(super) fn decode_state(
         match_identity: decode_match_identity(input.save())?,
         turn_lifecycle: decode_turn_lifecycle(input.save(), input.state())?,
         economy: decode_economy(input.state())?,
+        research: decode_research(input.state())?,
+        wonder_registry: decode_wonder_registry(input.state())?,
         cols: bounds.cols(),
         rows: bounds.rows(),
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
@@ -136,6 +138,70 @@ pub(super) fn decode_state(
     decode_game_state(dto)
         .map(Box::new)
         .map(DecodedState::Valid)
+        .map_err(display_error)
+}
+
+fn decode_research(state: &JsonObject) -> Result<ResearchStateDto, AdapterError> {
+    let path = "input.state.research";
+    let research = object_at(
+        state
+            .get("research")
+            .ok_or_else(|| error(format!("{path} is required")))?,
+        path,
+    )?;
+    let players_path = format!("{path}.players");
+    let players = object_at(
+        research
+            .get("players")
+            .ok_or_else(|| error(format!("{players_path} is required")))?,
+        &players_path,
+    )?;
+    let mut normalized_players = Map::new();
+    for (player, value) in players {
+        let player_path = format!("{players_path}.{player}");
+        let source = object_at(value, &player_path)?;
+        normalized_players.insert(
+            player.clone(),
+            Value::Object(Map::from_iter([
+                (
+                    "unlockedTechnologyIds".to_owned(),
+                    json_field(source, "unlockedTechnologyIds", &player_path)?,
+                ),
+                (
+                    "activeTechnologyId".to_owned(),
+                    source
+                        .get("activeTechnologyId")
+                        .cloned()
+                        .unwrap_or(Value::Null),
+                ),
+                (
+                    "progressByTechnologyId".to_owned(),
+                    json_field(source, "progressByTechnologyId", &player_path)?,
+                ),
+                (
+                    "scienceOverflow".to_owned(),
+                    source
+                        .get("scienceOverflow")
+                        .cloned()
+                        .unwrap_or(Value::from(0)),
+                ),
+            ])),
+        );
+    }
+    serde_json::from_value(Value::Object(Map::from_iter([(
+        "players".to_owned(),
+        Value::Object(normalized_players),
+    )])))
+    .map_err(display_error)
+}
+
+fn decode_wonder_registry(state: &JsonObject) -> Result<WonderRegistryDto, AdapterError> {
+    state
+        .get("wonderRegistry")
+        .cloned()
+        .map(serde_json::from_value)
+        .transpose()
+        .map(Option::unwrap_or_default)
         .map_err(display_error)
 }
 
@@ -751,11 +817,48 @@ fn decode_transport(value: &Value, path: &str) -> Result<TransportSegmentDto, Ad
 
 #[cfg(test)]
 mod tests {
-    use aonw_contracts::{FieldImprovementKindDto, ResourceTypeDto};
+    use aonw_contracts::{
+        FieldImprovementKindDto, ResourceTypeDto, TechnologyIdDto, WonderTypeDto,
+    };
     use aonw_domain::HexGridBounds;
     use serde_json::json;
 
-    use super::{decode_economy, decode_field_improvements};
+    use super::{
+        decode_economy, decode_field_improvements, decode_research, decode_wonder_registry,
+    };
+
+    #[test]
+    fn legacy_knowledge_adapter_preserves_research_and_wonder_ownership() {
+        let source = json!({
+            "research": {
+                "players": {
+                    "player-1": {
+                        "unlockedTechnologyIds": ["logistics"],
+                        "activeTechnologyId": "agriculture",
+                        "progressByTechnologyId": {"agriculture": 4},
+                        "scienceOverflow": 3
+                    }
+                }
+            },
+            "wonderRegistry": {"centralBank": "player-2"}
+        });
+        let state = source.as_object().expect("state object");
+        let research = decode_research(state).expect("decode research");
+        let wonders = decode_wonder_registry(state).expect("decode wonder registry");
+        let player = &research.players["player-1"];
+
+        assert_eq!(player.unlocked_technology_ids, [TechnologyIdDto::Logistics]);
+        assert_eq!(
+            player.active_technology_id,
+            Some(TechnologyIdDto::Agriculture)
+        );
+        assert_eq!(
+            player.progress_by_technology_id[&TechnologyIdDto::Agriculture],
+            4
+        );
+        assert_eq!(player.science_overflow, 3);
+        assert_eq!(wonders.0[&WonderTypeDto::CentralBank], "player-2");
+    }
 
     #[test]
     fn legacy_economy_adapter_uses_placements_without_internal_generator_version() {

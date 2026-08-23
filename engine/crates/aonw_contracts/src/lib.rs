@@ -21,10 +21,11 @@ pub use canonical::{
     InitialResourceDistributionDto, InitialResourcePlacementDto, InteractionStateDto,
     MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto, PaceProfileDto, ParticipantDto,
     PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
-    PlayerTurnStateDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
-    TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto, TroopKindDto,
-    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitOccupancyPolicyDto, VictoryRulesDto,
-    WonderTypeDto, WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    PlayerResearchStateDto, PlayerTurnStateDto, ResearchStateDto, ResourceTypeDto, RuleValueDto,
+    StrategicResourceStockpileDto, TechnologyIdDto, TransportConditionDto, TransportSegmentDto,
+    TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto,
+    UnitOccupancyPolicyDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 pub use limits::{

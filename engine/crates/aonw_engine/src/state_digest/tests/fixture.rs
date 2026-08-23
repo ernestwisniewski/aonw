@@ -8,10 +8,11 @@ use aonw_contracts::{
     InitialResourceDistributionDto, InitialResourcePlacementDto, InteractionStateDto,
     MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto, MovementStepDto, ParticipantDto,
     PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
-    PlayerTurnStateDto, QueuedMovePathDto, ResourceTypeDto, RuleValueDto,
-    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
-    TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
-    UnitOccupancyPolicyDto, UnitPostureDto, WonderTypeDto, WorkerJobDto, WorldArtifactDto,
+    PlayerResearchStateDto, PlayerTurnStateDto, QueuedMovePathDto, ResearchStateDto,
+    ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto, TechnologyIdDto,
+    TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto, TroopKindDto,
+    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
+    UnitPostureDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto, WorldArtifactDto,
     WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
@@ -22,6 +23,21 @@ pub(super) fn complete_state_contract() -> GameStateDto {
         match_identity: complete_match_identity(),
         turn_lifecycle: complete_turn_lifecycle(),
         economy: complete_economy(),
+        research: ResearchStateDto {
+            players: BTreeMap::from([(
+                "player-1".to_owned(),
+                PlayerResearchStateDto {
+                    unlocked_technology_ids: vec![TechnologyIdDto::Logistics],
+                    active_technology_id: Some(TechnologyIdDto::Agriculture),
+                    progress_by_technology_id: BTreeMap::from([(TechnologyIdDto::Agriculture, 4)]),
+                    science_overflow: 3,
+                },
+            )]),
+        },
+        wonder_registry: WonderRegistryDto(BTreeMap::from([(
+            WonderTypeDto::CentralBank,
+            "player-2".to_owned(),
+        )])),
         cols: 5,
         rows: 5,
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,

@@ -76,7 +76,7 @@ pub(super) fn hash_city(writer: &mut DigestWriter, city: &City) {
     writer.optional_i64(city.hit_points());
 }
 
-const fn wonder_tag(value: WonderType) -> u8 {
+pub(super) const fn wonder_tag(value: WonderType) -> u8 {
     match value {
         WonderType::GreatLibrary => 0,
         WonderType::HangingGardens => 1,

@@ -20,6 +20,7 @@ mod interaction;
 mod match_lifecycle;
 mod movement_path;
 mod movement_units;
+mod research;
 mod shared;
 mod transport;
 mod unit;
@@ -54,6 +55,10 @@ pub use match_lifecycle::{
 };
 pub use movement_path::{MovementPathError, MovementStep, QueuedMovePath};
 pub use movement_units::MovementUnits;
+pub use research::{
+    KnowledgeState, KnowledgeStateValidationError, PlayerResearchState,
+    PlayerResearchStateBuildError, ResearchState, TechnologyId, WonderRegistry,
+};
 pub use shared::StateRevision;
 pub use transport::{TransportCondition, TransportKind, TransportNetwork, TransportSegment};
 pub use unit::{

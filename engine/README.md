@@ -200,6 +200,16 @@ Mapping rejects coordinates outside the map and missing participant/city
 references with field paths. Digest ordering is coordinate-canonical, and both
 current transition families preserve the complete component unchanged.
 
+Research and completed wonders form a validated knowledge-state component.
+Research uses the full 54-value technology identity set, deterministic player
+maps and technology sets/maps, optional active selection, positive progress,
+and non-negative science overflow. The wonder registry maps each of the 11
+global wonders to a match participant. Mapping rejects duplicate unlocks,
+progress retained for unlocked technologies, active selections that are
+already unlocked, non-positive progress, negative overflow, and unknown player
+references with field paths. Every field contributes to the state digest and
+is preserved by current transitions, save, and replay.
+
 ## Movement foundation
 
 `GameState` is the canonical aggregate root for the implemented simulation

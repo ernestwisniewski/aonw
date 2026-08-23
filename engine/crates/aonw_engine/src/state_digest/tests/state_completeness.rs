@@ -3,8 +3,8 @@ use aonw_contracts::{
     CityBuildingTypeDto, CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto,
     FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto, PaceProfileDto,
     PendingInteractionDto, PlayerCountryDto, PlayerTurnStateDto, ResourceTypeDto, RuleValueDto,
-    TransportConditionDto, UnitOccupancyPolicyDto, WonderTypeDto, WorldArtifactDto,
-    WorldArtifactLocationDto, WorldArtifactTypeDto,
+    TechnologyIdDto, TransportConditionDto, UnitOccupancyPolicyDto, WonderTypeDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 use super::fixture::{complete_state_contract, coordinate};
@@ -51,6 +51,7 @@ fn digest_changes_with_every_canonical_state_section() {
         candidate.economy.initial_resource_distribution.placements[0].resource =
             ResourceTypeDto::Fish;
     });
+    assert_knowledge_digest_changes(&source);
     assert_digest_change(&source, "bounds", |candidate| {
         candidate.cols += 1;
     });
@@ -107,6 +108,49 @@ fn digest_changes_with_every_canonical_state_section() {
     });
     assert_digest_change(&source, "transport builder", |candidate| {
         candidate.transport_network[0].built_by_city_id = None;
+    });
+}
+
+fn assert_knowledge_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "unlocked technology", |candidate| {
+        candidate
+            .research
+            .players
+            .get_mut("player-1")
+            .expect("research player")
+            .unlocked_technology_ids
+            .push(TechnologyIdDto::Mining);
+    });
+    assert_digest_change(source, "active technology", |candidate| {
+        candidate
+            .research
+            .players
+            .get_mut("player-1")
+            .expect("research player")
+            .active_technology_id = Some(TechnologyIdDto::Mining);
+    });
+    assert_digest_change(source, "technology progress", |candidate| {
+        candidate
+            .research
+            .players
+            .get_mut("player-1")
+            .expect("research player")
+            .progress_by_technology_id
+            .insert(TechnologyIdDto::Mining, 2);
+    });
+    assert_digest_change(source, "science overflow", |candidate| {
+        candidate
+            .research
+            .players
+            .get_mut("player-1")
+            .expect("research player")
+            .science_overflow += 1;
+    });
+    assert_digest_change(source, "wonder registry", |candidate| {
+        candidate
+            .wonder_registry
+            .0
+            .insert(WonderTypeDto::CentralBank, "player-1".to_owned());
     });
 }
 

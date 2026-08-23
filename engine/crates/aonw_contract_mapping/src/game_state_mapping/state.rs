@@ -15,6 +15,7 @@ use super::infrastructure::{
 };
 use super::interaction::{decode_interaction, encode_interaction};
 use super::match_lifecycle::{decode_match_lifecycle, encode_match_lifecycle};
+use super::research::{decode_knowledge, encode_research, encode_wonder_registry};
 use super::unit::{decode_unit, encode_unit};
 use super::world::{decode_fog, decode_pair, encode_fog};
 
@@ -24,19 +25,16 @@ use super::world::{decode_fog, decode_pair, encode_fog};
 ///
 /// Returns a path-aware error for violated invariants.
 pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappingError> {
-    if dto.units.len() > MAX_GAME_STATE_UNIT_COUNT {
-        return Err(GameStateMappingError::new(
-            "$.units",
-            format!(
-                "contains {} units; maximum is {MAX_GAME_STATE_UNIT_COUNT}",
-                dto.units.len()
-            ),
-        ));
-    }
+    validate_unit_count(&dto)?;
     let match_lifecycle = decode_match_lifecycle(dto.match_identity, dto.turn_lifecycle)?;
     let bounds = HexGridBounds::new(dto.cols, dto.rows)
         .ok_or_else(|| GameStateMappingError::new("$", "map bounds must be non-empty"))?;
     let economy = decode_economy(match_lifecycle.identity(), bounds, dto.economy)?;
+    let knowledge = decode_knowledge(
+        match_lifecycle.identity(),
+        dto.research,
+        dto.wonder_registry,
+    )?;
     let units = dto
         .units
         .into_iter()
@@ -105,6 +103,7 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         dto.turn,
         match_lifecycle,
         economy,
+        knowledge,
         bounds,
         match dto.occupancy_policy {
             UnitOccupancyPolicyDto::Exclusive => UnitOccupancyPolicy::Exclusive,
@@ -121,6 +120,19 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
     .map_err(|error| GameStateMappingError::new("$", error.to_string()))
 }
 
+fn validate_unit_count(dto: &GameStateDto) -> Result<(), GameStateMappingError> {
+    if dto.units.len() > MAX_GAME_STATE_UNIT_COUNT {
+        return Err(GameStateMappingError::new(
+            "$.units",
+            format!(
+                "contains {} units; maximum is {MAX_GAME_STATE_UNIT_COUNT}",
+                dto.units.len()
+            ),
+        ));
+    }
+    Ok(())
+}
+
 /// Encodes the movement-complete canonical state.
 #[must_use]
 pub fn encode_game_state(state: &GameState) -> GameStateDto {
@@ -131,6 +143,8 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
         match_identity,
         turn_lifecycle,
         economy: encode_economy(state.economy()),
+        research: encode_research(state.research()),
+        wonder_registry: encode_wonder_registry(state.wonder_registry()),
         cols: state.bounds().cols(),
         rows: state.bounds().rows(),
         occupancy_policy: match state.occupancy_policy() {

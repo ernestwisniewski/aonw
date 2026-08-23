@@ -7,12 +7,14 @@ mod city;
 mod economy;
 mod infrastructure;
 mod match_lifecycle;
+mod research;
 mod writer;
 
 use city::hash_city;
 use economy::hash_economy;
 use infrastructure::hash_infrastructure;
 use match_lifecycle::hash_match_lifecycle;
+use research::hash_knowledge;
 use writer::DigestWriter;
 
 /// SHA-256 identity of canonical simulation state.
@@ -43,6 +45,7 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
     writer.u32(state.turn());
     hash_match_lifecycle(&mut writer, state.match_lifecycle());
     hash_economy(&mut writer, state.economy());
+    hash_knowledge(&mut writer, state.knowledge());
     writer.u16(state.bounds().cols());
     writer.u16(state.bounds().rows());
     writer.u8(match state.occupancy_policy() {
