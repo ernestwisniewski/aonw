@@ -1,6 +1,8 @@
 @tool
 extends "res://editor/map_authoring/presentation/map_workbench_view.gd"
 
+const LOGICAL_MAP_TAB := 1
+
 var _catalog: AonwMapSourceCatalog
 var _scene_writer: AonwTerrainAuthoringSceneWriter
 var _generator: AonwGenerateTerrainAuthoringMap
@@ -10,6 +12,7 @@ var _terrain_profile_editor: AonwTerrainProfileEditor
 var _sources: Array[AonwMapSource] = []
 var _height_slider_dragging := false
 var _busy := false
+var _logical_drag_active := false
 
 func configure(
 	catalog: AonwMapSourceCatalog,
@@ -44,6 +47,7 @@ func _connect_interface() -> void:
 	_generate_button.pressed.connect(_generate_selected_map)
 	_open_button.pressed.connect(_open_selected_scene)
 	_map_picker.item_selected.connect(_selected_map_changed)
+	_sections.tab_changed.connect(_workbench_tab_changed)
 	_logical_map_panel.edit_persisted.connect(_logical_edit_persisted)
 	_logical_map_panel.error_raised.connect(_show_error)
 	_logical_map_panel.status_changed.connect(func(message: String) -> void:
@@ -125,18 +129,23 @@ func _refresh_sources() -> void:
 	_status.text = "Available Terrain3D maps: %d." % _sources.size()
 	_sync_selected_height_scale()
 	_sync_logical_panel()
+	_sync_logical_mode()
 
 func _selected_map_changed(_index: int) -> void:
 	_height_scale_timer.stop()
 	_sync_selected_height_scale()
 	_sync_logical_panel()
+	_sync_logical_mode()
 
 func _sync_logical_panel() -> void:
 	var source := _selected_source()
 	if source != null:
 		_logical_map_panel.show_source(source, _has_editable_surface(source))
 
-func _logical_edit_persisted(source: AonwMapSource, coordinate: Vector2i) -> void:
+func _logical_edit_persisted(
+	source: AonwMapSource,
+	coordinates: Array[Vector2i],
+) -> void:
 	EditorInterface.get_resource_filesystem().scan()
 	var surface := _current_surface()
 	if surface == null or surface.source_map_id != source.map_id:
@@ -156,9 +165,68 @@ func _logical_edit_persisted(source: AonwMapSource, coordinate: Vector2i) -> voi
 		_show_error("logical map changed, but the authoring scene could not be saved")
 		return
 	_status.text = (
-		"Logical tile (%d, %d) updated by Rust; Terrain3D final preserved. "
+		"%d logical tile(s) updated by Rust; Terrain3D final preserved. "
 		+ "The stale 2D reference was disabled."
-	) % [coordinate.x, coordinate.y]
+	) % coordinates.size()
+
+func handle_3d_gui_input(camera: Camera3D, event: InputEvent) -> int:
+	var surface := _current_surface()
+	if not _logical_mode_available(surface):
+		_finish_logical_drag()
+		return EditorPlugin.AFTER_GUI_INPUT_PASS
+	if event is InputEventMouseMotion:
+		var coordinate := surface.pick_logical_hex(camera, event.position)
+		surface.set_logical_paint_cursor(coordinate)
+		_logical_map_panel.preview_coordinate(coordinate)
+		if _logical_drag_active and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+			_logical_map_panel.append_paint_coordinate(coordinate)
+			return EditorPlugin.AFTER_GUI_INPUT_STOP
+		if event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+			return EditorPlugin.AFTER_GUI_INPUT_STOP
+		return EditorPlugin.AFTER_GUI_INPUT_PASS
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			var coordinate := surface.pick_logical_hex(camera, event.position)
+			surface.set_logical_paint_cursor(coordinate)
+			_logical_map_panel.preview_coordinate(coordinate)
+			if coordinate == AonwTerrainAuthoringSurface.INVALID_HEX:
+				return EditorPlugin.AFTER_GUI_INPUT_STOP
+			if _logical_map_panel.is_inspect_tool():
+				_logical_map_panel.inspect_coordinate(coordinate)
+			else:
+				_logical_drag_active = _logical_map_panel.begin_paint_stroke()
+				if _logical_drag_active:
+					_logical_map_panel.append_paint_coordinate(coordinate)
+		else:
+			_finish_logical_drag()
+		return EditorPlugin.AFTER_GUI_INPUT_STOP
+	return EditorPlugin.AFTER_GUI_INPUT_PASS
+
+func _workbench_tab_changed(_tab: int) -> void:
+	_finish_logical_drag()
+	_sync_logical_mode()
+
+func _finish_logical_drag() -> void:
+	if not _logical_drag_active:
+		return
+	_logical_drag_active = false
+	_logical_map_panel.end_paint_stroke()
+
+func _logical_mode_available(surface: AonwTerrainAuthoringSurface) -> bool:
+	var source := _selected_source()
+	return (
+		not _busy
+		and _sections.current_tab == LOGICAL_MAP_TAB
+		and surface != null
+		and source != null
+		and surface.source_map_id == source.map_id
+		and surface.is_session_open()
+	)
+
+func _sync_logical_mode() -> void:
+	var surface := _current_surface()
+	if surface != null:
+		surface.set_logical_paint_active(_logical_mode_available(surface))
 
 func _has_editable_surface(source: AonwMapSource) -> bool:
 	var surface := _current_surface()
@@ -419,6 +487,7 @@ func sync_from_edited_scene() -> void:
 	_update_opacity_labels()
 	_sync_selected_height_scale()
 	_sync_logical_panel()
+	_sync_logical_mode()
 
 func _commit_change(
 	action_name: String,
@@ -463,6 +532,7 @@ func _select_source(map_id: String, sync_panels: bool = true) -> void:
 	if sync_panels:
 		_sync_selected_height_scale()
 		_sync_logical_panel()
+		_sync_logical_mode()
 
 func _source_index(map_id: String) -> int:
 	for index in _sources.size():
@@ -487,6 +557,7 @@ func _set_busy(busy: bool) -> void:
 		not busy and source != null and _has_editable_surface(source)
 	)
 	_logical_map_panel.set_editable(not busy and source != null and _has_editable_surface(source))
+	_sync_logical_mode()
 
 func _set_source_actions_enabled(enabled: bool) -> void:
 	_generate_button.disabled = not enabled

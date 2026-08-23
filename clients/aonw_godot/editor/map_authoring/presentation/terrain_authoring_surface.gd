@@ -5,6 +5,14 @@ extends Node3D
 const OverlayBuilder := preload(
 	"res://game/presentation/map/terrain_overlay_mesh_builder.gd"
 )
+const HexGridGeometry := preload(
+	"res://game/presentation/map/geometry/hex_grid_geometry.gd"
+)
+const TerrainSpaceTransform := preload(
+	"res://game/application/terrain/terrain_space_transform.gd"
+)
+
+const INVALID_HEX := Vector2i(-1, -1)
 
 @export var source_map_id := ""
 @export_dir var compiled_artifact_directory := ""
@@ -35,11 +43,16 @@ var _grid: MeshInstance3D
 var _minimum_debug: MeshInstance3D
 var _maximum_debug: MeshInstance3D
 var _city_marker: MeshInstance3D
+var _logical_cursor: MeshInstance3D
 var _generated_world: Node3D
 var _manual_world: Node3D
 var _reference_texture: Texture2D
 var _overlay_refresh_queued := false
 var _pending_changed_pixels := Rect2i()
+var _logical_geometry: AonwHexGridGeometry
+var _logical_space: AonwTerrainSpaceTransform
+var _logical_cursor_coordinate := INVALID_HEX
+var _logical_paint_active := false
 
 func _ready() -> void:
 	_ensure_nodes()
@@ -104,6 +117,7 @@ func open_session(
 		_session.terrain_changed.connect(_on_terrain_changed)
 	if city_marker_coordinate.x < 0 or city_marker_coordinate.y < 0:
 		city_marker_coordinate = Vector2i(_artifact.cols / 2, _artifact.rows / 2)
+	_configure_logical_interaction()
 	_sync_metadata()
 	refresh_overlays()
 	return {"ok": true}
@@ -144,6 +158,46 @@ func set_city_marker_visible(value: bool) -> void:
 func set_city_marker_coordinate(value: Vector2i) -> void:
 	city_marker_coordinate = value
 	_refresh_city_marker()
+
+func set_logical_paint_active(value: bool) -> void:
+	_logical_paint_active = value
+	_ensure_nodes()
+	_logical_cursor.visible = value and _logical_cursor.mesh != null
+	if not value:
+		_logical_cursor_coordinate = INVALID_HEX
+		_logical_cursor.mesh = null
+
+func set_logical_paint_cursor(coordinate: Vector2i) -> void:
+	_logical_cursor_coordinate = coordinate
+	_refresh_logical_cursor()
+
+func pick_logical_hex(camera: Camera3D, screen_position: Vector2) -> Vector2i:
+	if (
+		camera == null
+		or _session == null
+		or _logical_geometry == null
+		or _logical_space == null
+	):
+		return INVALID_HEX
+	var inverse := global_transform.affine_inverse()
+	var local_origin := inverse * camera.project_ray_origin(screen_position)
+	var local_direction := (
+		inverse.basis * camera.project_ray_normal(screen_position)
+	).normalized()
+	if local_direction.is_zero_approx():
+		return INVALID_HEX
+	var intersection := _terrain.get_intersection(local_origin, local_direction, false)
+	if not intersection.is_finite():
+		return INVALID_HEX
+	return logical_hex_at_local_position(intersection)
+
+func logical_hex_at_local_position(local_position: Vector3) -> Vector2i:
+	if _logical_geometry == null or _logical_space == null:
+		return INVALID_HEX
+	var coordinate := _logical_geometry.tile_at_point(
+		_logical_space.terrain_local_to_logical(local_position)
+	)
+	return coordinate if _logical_geometry.contains(coordinate) else INVALID_HEX
 
 func change_height(history: UndoRedo, pixel: Vector2i, requested_height: float) -> bool:
 	if _session == null:
@@ -195,6 +249,7 @@ func refresh_generated_artifact() -> Dictionary:
 	if not result["ok"]:
 		return result
 	_artifact = artifact_result["artifact"]
+	_configure_logical_interaction()
 	_sync_metadata()
 	refresh_overlays()
 	return result
@@ -212,6 +267,7 @@ func rescale_generated_artifact() -> Dictionary:
 	if not result["ok"]:
 		return result
 	_artifact = artifact_result["artifact"]
+	_configure_logical_interaction()
 	_sync_metadata()
 	refresh_overlays()
 	return result
@@ -229,6 +285,7 @@ func migrate_logical_map_artifact() -> Dictionary:
 	if not result["ok"]:
 		return result
 	_artifact = artifact_result["artifact"]
+	_configure_logical_interaction()
 	_sync_metadata()
 	refresh_overlays()
 	return result
@@ -270,6 +327,7 @@ func refresh_overlays() -> void:
 	if constraints_visible:
 		_ensure_constraint_meshes()
 	_refresh_city_marker()
+	_refresh_logical_cursor()
 	_apply_visibility()
 
 func _ensure_nodes() -> void:
@@ -291,6 +349,8 @@ func _ensure_nodes() -> void:
 	_minimum_debug = _existing_constraint_node("MinimumHeightDebug")
 	_maximum_debug = _existing_constraint_node("MaximumHeightDebug")
 	_city_marker = _mesh_node("CityCoreMarker")
+	_logical_cursor = _mesh_node("LogicalMapCursor")
+	_logical_cursor.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_generated_world = _world_node("GeneratedWorld")
 	_manual_world = _world_node("ManualWorld")
 	_apply_visibility()
@@ -338,6 +398,37 @@ func _refresh_city_marker() -> void:
 	_city_marker.mesh = marker["mesh"]
 	_city_marker.position = marker["position"]
 	_city_marker.visible = city_marker_visible
+
+func _configure_logical_interaction() -> void:
+	if _artifact == null:
+		_logical_geometry = null
+		_logical_space = null
+		return
+	_logical_geometry = HexGridGeometry.new(
+		_artifact.cols,
+		_artifact.rows,
+		_artifact.hex_radius_meters,
+	)
+	_logical_space = TerrainSpaceTransform.new(_artifact)
+
+func _refresh_logical_cursor() -> void:
+	if _logical_cursor == null:
+		return
+	_logical_cursor.mesh = (
+		_overlay_builder.logical_cursor_mesh(
+			_artifact,
+			_terrain.data,
+			_logical_cursor_coordinate,
+		)
+		if (
+			_logical_paint_active
+			and _artifact != null
+			and _terrain != null
+			and _terrain.data != null
+		)
+		else null
+	)
+	_logical_cursor.visible = _logical_paint_active and _logical_cursor.mesh != null
 
 func _ensure_constraint_meshes() -> void:
 	if _artifact == null:
@@ -393,6 +484,7 @@ func _refresh_overlays_deferred() -> void:
 	)
 	if _city_marker_intersects(changed_pixels):
 		_refresh_city_marker()
+	_refresh_logical_cursor()
 
 func _city_marker_intersects(changed_pixels: Rect2i) -> bool:
 	if _city_marker == null or _city_marker.mesh == null:
@@ -419,6 +511,8 @@ func _apply_visibility() -> void:
 		_minimum_debug.visible = constraints_visible
 	if _maximum_debug != null:
 		_maximum_debug.visible = constraints_visible
+	if _logical_cursor != null:
+		_logical_cursor.visible = _logical_paint_active and _logical_cursor.mesh != null
 	if _city_marker != null:
 		_city_marker.visible = city_marker_visible
 

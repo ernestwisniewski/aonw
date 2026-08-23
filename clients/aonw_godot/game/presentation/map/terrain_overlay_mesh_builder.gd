@@ -10,6 +10,7 @@ const TerrainSpaceTransform := preload(
 const REFERENCE_OFFSET := 0.012
 const GRID_OFFSET := 0.035
 const CONSTRAINT_OFFSET := 0.06
+const LOGICAL_CURSOR_OFFSET := 0.075
 const MINIMUM_GRID_WIDTH_RATIO := 0.035
 
 func reference_mesh(
@@ -190,6 +191,44 @@ func city_marker(
 	mesh.radial_segments = 48
 	mesh.material = _material(Color(0.95, 0.62, 0.12, 0.45))
 	return {"mesh": mesh, "position": center}
+
+func logical_cursor_mesh(
+	artifact: AonwTerrainCompiledArtifact,
+	data: Terrain3DData,
+	coordinate: Vector2i,
+) -> ArrayMesh:
+	var geometry := HexGridGeometry.new(
+		artifact.cols,
+		artifact.rows,
+		artifact.hex_radius_meters,
+	)
+	if not geometry.contains(coordinate):
+		return null
+	var space := TerrainSpaceTransform.new(artifact)
+	var vertices := PackedVector3Array()
+	var indices := PackedInt32Array()
+	vertices.append(_terrain_point(
+		space,
+		data,
+		geometry.tile_center(coordinate),
+		LOGICAL_CURSOR_OFFSET,
+	))
+	for corner in 6:
+		vertices.append(_terrain_point(
+			space,
+			data,
+			geometry.corner_position(coordinate, corner),
+			LOGICAL_CURSOR_OFFSET,
+		))
+	for corner in 6:
+		indices.append_array(PackedInt32Array([
+			0,
+			corner + 1,
+			(corner + 1) % 6 + 1,
+		]))
+	var mesh := _mesh(vertices, PackedVector2Array(), indices)
+	mesh.surface_set_material(0, _material(Color(1.0, 0.72, 0.05, 0.42)))
+	return mesh
 
 func _raster_mesh(
 	artifact: AonwTerrainCompiledArtifact,

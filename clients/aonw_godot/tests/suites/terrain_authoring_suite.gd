@@ -292,6 +292,7 @@ func _test_authoring_session(scene_path: String) -> void:
 		artifact.base_image.get_pixelv(sample).r,
 		"Terrain3D imports the generated base raster",
 	)
+	_test_logical_map_cursor(surface, artifact)
 	_test_overlay_alignment(surface, artifact)
 	_check(
 		surface.get_node_or_null("MinimumHeightDebug") == null
@@ -378,6 +379,37 @@ func _test_authoring_session(scene_path: String) -> void:
 		)
 		reopened["root"].queue_free()
 		await Engine.get_main_loop().process_frame
+
+func _test_logical_map_cursor(
+	surface: AonwTerrainAuthoringSurface,
+	artifact: AonwTerrainCompiledArtifact,
+) -> void:
+	var geometry := AonwHexGridGeometry.new(
+		artifact.cols,
+		artifact.rows,
+		artifact.hex_radius_meters,
+	)
+	var space := TerrainSpaceTransform.new(artifact)
+	var coordinate := Vector2i(2, 3)
+	var local := space.logical_to_terrain_local(geometry.tile_center(coordinate))
+	_check(
+		surface.logical_hex_at_local_position(local) == coordinate,
+		"logical authoring maps a Terrain3D position to the selected odd-q hex",
+	)
+	_check(
+		surface.logical_hex_at_local_position(Vector3(-10000.0, 0.0, -10000.0))
+		== AonwTerrainAuthoringSurface.INVALID_HEX,
+		"logical authoring rejects a Terrain3D position outside the map",
+	)
+	surface.set_logical_paint_active(true)
+	surface.set_logical_paint_cursor(coordinate)
+	var cursor := surface.get_node("LogicalMapCursor") as MeshInstance3D
+	_check(
+		cursor.visible and cursor.mesh is ArrayMesh,
+		"logical authoring displays a terrain-following hex cursor",
+	)
+	surface.set_logical_paint_active(false)
+	_check(not cursor.visible and cursor.mesh == null, "Terrain3D mode clears the logical cursor")
 
 func _test_persistence_port(artifact: AonwTerrainCompiledArtifact) -> void:
 	var terrain := Terrain3D.new()

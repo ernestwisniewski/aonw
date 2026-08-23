@@ -25,6 +25,27 @@ func set_tile_height(
 ) -> Dictionary:
 	return _not_configured()
 
+func paint_tiles_terrain(
+	_source: AonwMapSource,
+	_coordinates: Array[Vector2i],
+	_terrain: StringName,
+) -> Dictionary:
+	return _not_configured()
+
+func paint_tiles_resources(
+	_source: AonwMapSource,
+	_coordinates: Array[Vector2i],
+	_resources: Array[StringName],
+) -> Dictionary:
+	return _not_configured()
+
+func paint_tiles_height(
+	_source: AonwMapSource,
+	_coordinates: Array[Vector2i],
+	_height: int,
+) -> Dictionary:
+	return _not_configured()
+
 func _not_configured() -> Dictionary:
 	return {
 		"ok": false,

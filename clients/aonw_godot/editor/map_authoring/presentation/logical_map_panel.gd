@@ -2,30 +2,41 @@
 class_name AonwLogicalMapPanel
 extends VBoxContainer
 
-signal edit_persisted(source: AonwMapSource, coordinate: Vector2i)
+signal edit_persisted(source: AonwMapSource, coordinates: Array[Vector2i])
 signal error_raised(message: String)
 signal status_changed(message: String)
+
+enum Brush {
+	INSPECT,
+	TERRAIN,
+	RESOURCES,
+	HEIGHT,
+}
+
+const INVALID_HEX := Vector2i(-1, -1)
 
 var _editor: AonwLogicalMapEditor
 var _source: AonwMapSource
 var _editable := false
 var _busy := false
-var _col := SpinBox.new()
-var _row := SpinBox.new()
+var _selected_coordinate := Vector2i.ZERO
+var _stroke_active := false
+var _stroke_coordinates: Array[Vector2i] = []
+var _stroke_seen := {}
+var _stroke_brush := Brush.INSPECT
+var _stroke_value: Variant
+var _stroke_source: AonwMapSource
+var _cursor_label := Label.new()
+var _selected_label := Label.new()
+var _brush := OptionButton.new()
 var _terrain := OptionButton.new()
 var _resources := ItemList.new()
 var _height := SpinBox.new()
 var _reload := Button.new()
-var _set_terrain := Button.new()
-var _set_resources := Button.new()
-var _set_height := Button.new()
 
 func _ready() -> void:
 	_build_interface()
 	_reload.pressed.connect(refresh)
-	_set_terrain.pressed.connect(_apply_terrain)
-	_set_resources.pressed.connect(_apply_resources)
-	_set_height.pressed.connect(_apply_height)
 	_apply_enabled()
 
 func configure(editor: AonwLogicalMapEditor) -> void:
@@ -35,17 +46,81 @@ func configure(editor: AonwLogicalMapEditor) -> void:
 func show_source(source: AonwMapSource, editable: bool) -> void:
 	_source = source
 	_editable = editable
+	_selected_coordinate = Vector2i.ZERO
+	cancel_paint_stroke()
 	_apply_enabled()
 	refresh()
 
 func set_editable(value: bool) -> void:
 	_editable = value
+	if not value:
+		cancel_paint_stroke()
 	_apply_enabled()
+
+func can_interact() -> bool:
+	return _can_edit() and not _busy
+
+func is_inspect_tool() -> bool:
+	return _brush.selected == Brush.INSPECT
+
+func preview_coordinate(coordinate: Vector2i) -> void:
+	_cursor_label.text = (
+		"Cursor: outside map"
+		if coordinate == INVALID_HEX
+		else "Cursor: (%d, %d)" % [coordinate.x, coordinate.y]
+	)
+
+func inspect_coordinate(coordinate: Vector2i) -> void:
+	if not can_interact() or coordinate == INVALID_HEX:
+		return
+	_selected_coordinate = coordinate
+	refresh()
+
+func begin_paint_stroke() -> bool:
+	if not can_interact() or is_inspect_tool():
+		return false
+	var value_result := _current_brush_value()
+	if not value_result["ok"]:
+		error_raised.emit(value_result["message"])
+		return false
+	_stroke_active = true
+	_stroke_coordinates.clear()
+	_stroke_seen.clear()
+	_stroke_brush = _brush.selected
+	_stroke_value = value_result["value"]
+	_stroke_source = _source
+	return true
+
+func append_paint_coordinate(coordinate: Vector2i) -> void:
+	if not _stroke_active or coordinate == INVALID_HEX or _stroke_seen.has(coordinate):
+		return
+	_stroke_seen[coordinate] = true
+	_stroke_coordinates.append(coordinate)
+
+func end_paint_stroke() -> void:
+	if not _stroke_active:
+		return
+	_stroke_active = false
+	if _stroke_coordinates.is_empty():
+		_clear_stroke()
+		return
+	_set_busy(true)
+	status_changed.emit(
+		"Applying %d logical tile edit(s) through Rust and recompiling Terrain3D…"
+		% _stroke_coordinates.size()
+	)
+	_apply_stroke.call_deferred()
+
+func cancel_paint_stroke() -> void:
+	if _busy:
+		return
+	_stroke_active = false
+	_clear_stroke()
 
 func refresh() -> void:
 	if _editor == null or _source == null:
 		return
-	var result := _editor.inspect_tile(_source, _coordinate())
+	var result := _editor.inspect_tile(_source, _selected_coordinate)
 	if not result["ok"]:
 		error_raised.emit(result["message"])
 		return
@@ -55,71 +130,95 @@ func _build_interface() -> void:
 	if get_child_count() > 0:
 		return
 	var help := Label.new()
-	help.text = "Rust edits canonical map.json. Open this map's Terrain3D scene before applying."
+	help.text = (
+		"Choose a brush, then click or drag over hexes in the 3D viewport. "
+		+ "Rust remains the canonical map writer."
+	)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(help)
-	var coordinates := HBoxContainer.new()
-	_configure_coordinate(_col, "Logical tile column")
-	_configure_coordinate(_row, "Logical tile row")
-	coordinates.add_child(_labeled_control("Col", _col))
-	coordinates.add_child(_labeled_control("Row", _row))
-	add_child(coordinates)
-	_reload.text = "Load logical tile"
+	_cursor_label.text = "Cursor: outside map"
+	add_child(_cursor_label)
+	_selected_label.text = "Selected hex: (0, 0)"
+	add_child(_selected_label)
+	_configure_brushes()
+	add_child(_labeled_control("Viewport tool", _brush))
+	_reload.text = "Reload selected hex"
 	add_child(_reload)
-	add_child(_labeled_control("Terrain", _terrain))
-	_set_terrain.text = "Set tile terrain"
-	add_child(_set_terrain)
+	add_child(HSeparator.new())
+	add_child(_labeled_control("Terrain brush", _terrain))
 	_resources.select_mode = ItemList.SELECT_MULTI
 	_resources.allow_reselect = true
 	_resources.custom_minimum_size.y = 112.0
-	add_child(_labeled_control("Resources", _resources))
-	_set_resources.text = "Set tile resources"
-	add_child(_set_resources)
+	add_child(_labeled_control("Resource brush", _resources))
 	_height.min_value = 0.0
 	_height.max_value = 5.0
 	_height.step = 1.0
-	add_child(_labeled_control("Logical height", _height))
-	_set_height.text = "Set tile height"
-	add_child(_set_height)
+	add_child(_labeled_control("Logical height brush", _height))
 
-func _apply_terrain() -> void:
-	if not _can_edit() or _terrain.selected < 0:
-		return
-	var value := StringName(_terrain.get_item_metadata(_terrain.selected))
-	await _begin_edit()
-	_complete_edit(_editor.set_tile_terrain(_source, _coordinate(), value))
+func _configure_brushes() -> void:
+	for label in ["Select / inspect", "Paint terrain", "Paint resources", "Paint height"]:
+		_brush.add_item(label)
+	_brush.select(Brush.INSPECT)
 
-func _apply_resources() -> void:
-	if not _can_edit():
-		return
-	var values: Array[StringName] = []
-	for index in _resources.get_selected_items():
-		values.append(StringName(_resources.get_item_metadata(index)))
-	await _begin_edit()
-	_complete_edit(_editor.set_tile_resources(_source, _coordinate(), values))
-
-func _apply_height() -> void:
-	if not _can_edit():
-		return
-	await _begin_edit()
-	_complete_edit(_editor.set_tile_height(_source, _coordinate(), roundi(_height.value)))
-
-func _begin_edit() -> void:
-	_set_busy(true)
-	status_changed.emit("Applying canonical logical map edit and recompiling Terrain3D…")
+func _apply_stroke() -> void:
 	await get_tree().process_frame
+	var coordinates: Array[Vector2i] = _stroke_coordinates.duplicate()
+	var source := _stroke_source
+	var result: Dictionary
+	match _stroke_brush:
+		Brush.TERRAIN:
+			result = _editor.paint_tiles_terrain(
+				source,
+				coordinates,
+				StringName(_stroke_value),
+			)
+		Brush.RESOURCES:
+			var resources: Array[StringName] = []
+			for resource in _stroke_value:
+				resources.append(StringName(resource))
+			result = _editor.paint_tiles_resources(source, coordinates, resources)
+		Brush.HEIGHT:
+			result = _editor.paint_tiles_height(source, coordinates, int(_stroke_value))
+		_:
+			result = {"ok": false, "message": "logical paint brush is unsupported"}
+	_complete_stroke(result, source, coordinates)
 
-func _complete_edit(result: Dictionary) -> void:
+func _complete_stroke(
+	result: Dictionary,
+	source: AonwMapSource,
+	coordinates: Array[Vector2i],
+) -> void:
 	_set_busy(false)
 	if not result["ok"]:
+		_clear_stroke()
 		error_raised.emit(result["message"])
 		return
-	_apply_snapshot(result["update"]["snapshot"])
-	edit_persisted.emit(_source, _coordinate())
+	if _source == source:
+		_apply_snapshot(result["update"]["snapshot"])
+	_clear_stroke()
+	edit_persisted.emit(source, coordinates)
+
+func _current_brush_value() -> Dictionary:
+	match _brush.selected:
+		Brush.TERRAIN:
+			if _terrain.selected < 0:
+				return _failure("select a terrain brush")
+			return {"ok": true, "value": _terrain.get_item_metadata(_terrain.selected)}
+		Brush.RESOURCES:
+			var values: Array[StringName] = []
+			for index in _resources.get_selected_items():
+				values.append(StringName(_resources.get_item_metadata(index)))
+			return {"ok": true, "value": values}
+		Brush.HEIGHT:
+			return {"ok": true, "value": roundi(_height.value)}
+	return _failure("select a paint brush")
 
 func _apply_snapshot(snapshot: Dictionary) -> void:
-	_col.max_value = maxf(0.0, float(snapshot["cols"] - 1))
-	_row.max_value = maxf(0.0, float(snapshot["rows"] - 1))
+	_selected_coordinate = Vector2i(snapshot["tile"]["col"], snapshot["tile"]["row"])
+	_selected_label.text = "Selected hex: (%d, %d)" % [
+		_selected_coordinate.x,
+		_selected_coordinate.y,
+	]
 	_terrain.clear()
 	var selected_terrain := 0
 	for terrain_name in snapshot["terrainOptions"]:
@@ -147,24 +246,19 @@ func _set_busy(busy: bool) -> void:
 
 func _apply_enabled() -> void:
 	var enabled := _can_edit() and not _busy
-	_col.editable = enabled
-	_row.editable = enabled
+	_brush.disabled = not enabled
 	_height.editable = enabled
 	_terrain.disabled = not enabled
 	_resources.mouse_filter = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
 	_resources.modulate = Color.WHITE if enabled else Color(1.0, 1.0, 1.0, 0.5)
-	for button in [_reload, _set_terrain, _set_resources, _set_height]:
-		button.disabled = not enabled
+	_reload.disabled = not enabled
 
-func _coordinate() -> Vector2i:
-	return Vector2i(roundi(_col.value), roundi(_row.value))
-
-func _configure_coordinate(spin_box: SpinBox, tooltip: String) -> void:
-	spin_box.min_value = 0.0
-	spin_box.max_value = 0.0
-	spin_box.step = 1.0
-	spin_box.tooltip_text = tooltip
-	spin_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+func _clear_stroke() -> void:
+	_stroke_coordinates.clear()
+	_stroke_seen.clear()
+	_stroke_brush = Brush.INSPECT
+	_stroke_value = null
+	_stroke_source = null
 
 func _labeled_control(text: String, control: Control) -> VBoxContainer:
 	var container := VBoxContainer.new()
@@ -174,3 +268,6 @@ func _labeled_control(text: String, control: Control) -> VBoxContainer:
 	container.add_child(label)
 	container.add_child(control)
 	return container
+
+func _failure(message: String) -> Dictionary:
+	return {"ok": false, "message": message}

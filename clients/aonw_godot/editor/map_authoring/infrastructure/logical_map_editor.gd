@@ -2,6 +2,12 @@
 class_name AonwFilesystemLogicalMapEditor
 extends AonwLogicalMapEditor
 
+enum PaintOperation {
+	TERRAIN,
+	RESOURCES,
+	HEIGHT,
+}
+
 const AtomicResourceStore := preload(
 	"res://editor/map_authoring/infrastructure/atomic_resource_store.gd"
 )
@@ -11,11 +17,15 @@ const TerrainCompiler := preload(
 
 var _workbench: AonwLogicalMapWorkbench
 var _atomic_store := AtomicResourceStore.new()
-var _compiler := TerrainCompiler.new()
+var _compiler: AonwTerrainCompiler
 
-func _init(workbench: AonwLogicalMapWorkbench) -> void:
+func _init(
+	workbench: AonwLogicalMapWorkbench,
+	compiler: AonwTerrainCompiler = null,
+) -> void:
 	assert(workbench != null, "Logical map workbench is required")
 	_workbench = workbench
+	_compiler = compiler if compiler != null else TerrainCompiler.new()
 
 func inspect_tile(source: AonwMapSource, coordinate: Vector2i) -> Dictionary:
 	var map_result := _read_text(source.map_path)
@@ -28,45 +38,107 @@ func set_tile_terrain(
 	coordinate: Vector2i,
 	terrain: StringName,
 ) -> Dictionary:
-	var documents := _documents(source)
-	if not documents["ok"]:
-		return documents
-	return _persist_update(source, documents, _workbench.set_tile_terrain(
-		documents["map"],
-		documents["profile"],
-		coordinate,
-		terrain,
-	))
+	var coordinates: Array[Vector2i] = [coordinate]
+	return paint_tiles_terrain(source, coordinates, terrain)
 
 func set_tile_resources(
 	source: AonwMapSource,
 	coordinate: Vector2i,
 	resources: Array[StringName],
 ) -> Dictionary:
-	var documents := _documents(source)
-	if not documents["ok"]:
-		return documents
-	return _persist_update(source, documents, _workbench.set_tile_resources(
-		documents["map"],
-		documents["profile"],
-		coordinate,
-		resources,
-	))
+	var coordinates: Array[Vector2i] = [coordinate]
+	return paint_tiles_resources(source, coordinates, resources)
 
 func set_tile_height(
 	source: AonwMapSource,
 	coordinate: Vector2i,
 	height: int,
 ) -> Dictionary:
+	var coordinates: Array[Vector2i] = [coordinate]
+	return paint_tiles_height(source, coordinates, height)
+
+func paint_tiles_terrain(
+	source: AonwMapSource,
+	coordinates: Array[Vector2i],
+	terrain: StringName,
+) -> Dictionary:
+	return _paint_tiles(source, coordinates, PaintOperation.TERRAIN, terrain)
+
+func paint_tiles_resources(
+	source: AonwMapSource,
+	coordinates: Array[Vector2i],
+	resources: Array[StringName],
+) -> Dictionary:
+	return _paint_tiles(source, coordinates, PaintOperation.RESOURCES, resources)
+
+func paint_tiles_height(
+	source: AonwMapSource,
+	coordinates: Array[Vector2i],
+	height: int,
+) -> Dictionary:
+	return _paint_tiles(source, coordinates, PaintOperation.HEIGHT, height)
+
+func _paint_tiles(
+	source: AonwMapSource,
+	coordinates: Array[Vector2i],
+	operation: int,
+	value: Variant,
+) -> Dictionary:
+	if coordinates.is_empty():
+		return _failure("logical paint stroke has no tiles")
 	var documents := _documents(source)
 	if not documents["ok"]:
 		return documents
-	return _persist_update(source, documents, _workbench.set_tile_height(
-		documents["map"],
-		documents["profile"],
-		coordinate,
-		height,
-	))
+	var map_document: String = documents["map"]
+	var profile_document: String = documents["profile"]
+	var final_result: Dictionary
+	for coordinate in coordinates:
+		final_result = _apply_operation(
+			map_document,
+			profile_document,
+			coordinate,
+			operation,
+			value,
+		)
+		if not final_result["ok"]:
+			return final_result
+		map_document = final_result["update"]["mapDocument"]
+		profile_document = final_result["update"]["terrainAuthoringDocument"]
+	return _persist_update(source, documents, final_result)
+
+func _apply_operation(
+	map_document: String,
+	profile_document: String,
+	coordinate: Vector2i,
+	operation: int,
+	value: Variant,
+) -> Dictionary:
+	match operation:
+		PaintOperation.TERRAIN:
+			return _workbench.set_tile_terrain(
+				map_document,
+				profile_document,
+				coordinate,
+				StringName(value),
+			)
+		PaintOperation.RESOURCES:
+			var resources: Array[StringName] = []
+			for resource in value:
+				resources.append(StringName(resource))
+			return _workbench.set_tile_resources(
+				map_document,
+				profile_document,
+				coordinate,
+				resources,
+			)
+		PaintOperation.HEIGHT:
+			return _workbench.set_tile_height(
+				map_document,
+				profile_document,
+				coordinate,
+				int(value),
+			)
+	return _failure("logical paint operation is unsupported")
 
 func _documents(source: AonwMapSource) -> Dictionary:
 	if source.origin != "content":

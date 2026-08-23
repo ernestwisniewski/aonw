@@ -12,6 +12,7 @@ func _enter_tree() -> void:
 	_composition = CompositionRoot.new()
 	_dock = _composition.create_dock()
 	add_control_to_dock(DOCK_SLOT_RIGHT_UL, _dock)
+	set_input_event_forwarding_always_enabled()
 	scene_changed.connect(_on_scene_changed)
 	_compose_scene.call_deferred(EditorInterface.get_edited_scene_root())
 
@@ -27,6 +28,11 @@ func _exit_tree() -> void:
 
 func _on_scene_changed(scene_root: Node) -> void:
 	_compose_scene(scene_root)
+
+func _forward_3d_gui_input(camera: Camera3D, event: InputEvent) -> int:
+	if _dock == null:
+		return EditorPlugin.AFTER_GUI_INPUT_PASS
+	return _dock.handle_3d_gui_input(camera, event)
 
 func _compose_scene(scene_root: Node) -> void:
 	if _composition == null:
