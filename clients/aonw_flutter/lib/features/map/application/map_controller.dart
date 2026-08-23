@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../read_model/map_scene.dart';
@@ -137,6 +139,7 @@ final class MapController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _loadGeneration += 1;
+    unawaited(_repository.close());
     super.dispose();
   }
 

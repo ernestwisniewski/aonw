@@ -138,6 +138,15 @@ func _refresh_session_snapshot() -> bool:
 		_present_empty_unit_layer()
 		return false
 	var value: AonwClientReadModels.SnapshotView = snapshot["value"]
+	if value.stamp.map_hash != _current_map.content_hash():
+		_status.text += " · Rust snapshot belongs to another map"
+		_present_empty_unit_layer()
+		return false
+	for unit in value.units:
+		if not _current_map.contains(unit.coordinate):
+			_status.text += " · Rust snapshot contains an out-of-map unit"
+			_present_empty_unit_layer()
+			return false
 	_unit_layer.present(_interaction.projection(), value.units)
 	return true
 

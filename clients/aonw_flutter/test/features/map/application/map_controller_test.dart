@@ -100,4 +100,7 @@ final class _CompletingMapRepository implements MapRepository {
     requests.add(request);
     return request.future;
   }
+
+  @override
+  Future<void> close() async {}
 }

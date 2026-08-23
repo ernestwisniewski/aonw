@@ -24,6 +24,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/maps/aonw2_starter/
+    - assets/scenarios/
 
 hooks:
   user_defines:

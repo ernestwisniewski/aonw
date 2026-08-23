@@ -338,7 +338,11 @@ func _test_native_engine_boundary() -> void:
 	_check(opened["ok"], "native local scenario session opens")
 	var snapshot: Dictionary = session.snapshot()
 	_check(
-		snapshot["ok"] and snapshot["value"].units.size() == 1,
+		snapshot["ok"]
+		and snapshot["value"].units.size() == 1
+		and snapshot["value"].units[0].id == "preview-commander"
+		and snapshot["value"].units[0].coordinate == Vector2i(2, 1)
+		and snapshot["value"].stamp.map_hash == map_view.get("contentHash", ""),
 		"native snapshot owns the scenario unit view",
 	)
 	var reachable: Dictionary = session.reachable("preview-commander")
@@ -501,6 +505,49 @@ func _test_shared_client_contract() -> void:
 			not MapViewMapper.new().from_wire(outside_objective)["ok"],
 			"Godot rejects objectives outside the validated tile coverage",
 		)
+
+	var snapshot_stamp := {
+		"behaviorVersion": 1,
+		"revision": 0,
+		"stateDigest": "b".repeat(64),
+		"mapHash": "a".repeat(64),
+		"rulesetHash": "c".repeat(64),
+	}
+	var unit := {
+		"id": "unit-a",
+		"ownerPlayerId": "player-1",
+		"kind": "commander",
+		"name": "Commander",
+		"coordinate": {"col": 0, "row": 0},
+		"movementUnits": 12,
+		"posture": "active",
+	}
+	var decoded_snapshot := ClientReadModelDecoder.decode_snapshot({
+		"stamp": snapshot_stamp,
+		"units": [unit],
+	})
+	_check(
+		decoded_snapshot != null and decoded_snapshot.units[0].kind == "commander",
+		"Godot maps the complete recipient-safe unit snapshot",
+	)
+	var unknown_unit: Dictionary = unit.duplicate(true)
+	unknown_unit["kind"] = "futureUnit"
+	_check(
+		ClientReadModelDecoder.decode_snapshot({
+			"stamp": snapshot_stamp,
+			"units": [unknown_unit],
+		}) == null,
+		"Godot rejects unknown unit enum values",
+	)
+	var second_unit: Dictionary = unit.duplicate(true)
+	second_unit["id"] = "unit-b"
+	_check(
+		ClientReadModelDecoder.decode_snapshot({
+			"stamp": snapshot_stamp,
+			"units": [second_unit, unit],
+		}) == null,
+		"Godot rejects an unstable snapshot unit order",
+	)
 
 	var foreign := LocalMatchSessionController.new(ForeignVersionTransport.new()).capabilities()
 	_check(

@@ -2,6 +2,12 @@ class_name AonwClientReadModelDecoder
 extends RefCounted
 
 const ReadModels := preload("res://game/application/session/client_read_models.gd")
+const UNIT_KINDS := [
+	"commander", "warrior", "archer", "settler", "worker", "merchant", "scout",
+	"spearman", "cavalry", "catapult", "heavyInfantry", "fieldCannon", "rifleman",
+	"tank", "scoutShip", "warship", "reconPlane",
+]
+const UNIT_POSTURES := ["active", "fortified", "autoExploring", "autoWorking"]
 
 static func decode_stamp(raw: Variant) -> AonwClientReadModels.Stamp:
 	if not _has_exact_fields(raw, [
@@ -27,11 +33,13 @@ static func decode_snapshot(raw: Variant) -> AonwClientReadModels.SnapshotView:
 	if stamp == null:
 		return null
 	var units: Array[AonwClientReadModels.UnitView] = []
+	var previous_id := ""
 	for value in raw["units"]:
 		var unit := _decode_unit(value)
-		if unit == null:
+		if unit == null or (not previous_id.is_empty() and unit.id <= previous_id):
 			return null
 		units.append(unit)
+		previous_id = unit.id
 	units.make_read_only()
 	var result := ReadModels.SnapshotView.new()
 	result.stamp = stamp
@@ -154,6 +162,14 @@ static func _decode_unit(raw: Variant) -> AonwClientReadModels.UnitView:
 	]):
 		return null
 	if not _strings(raw, ["id", "ownerPlayerId", "kind", "name", "posture"]):
+		return null
+	if (
+		raw["id"].is_empty()
+		or raw["ownerPlayerId"].is_empty()
+		or raw["name"].is_empty()
+		or not UNIT_KINDS.has(raw["kind"])
+		or not UNIT_POSTURES.has(raw["posture"])
+	):
 		return null
 	if not _integers(raw, ["movementUnits"], true):
 		return null

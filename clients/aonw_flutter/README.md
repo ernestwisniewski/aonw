@@ -12,6 +12,13 @@ pan, and zoom. The application exposes loading, ready, and typed failure states.
 Composition lives under `lib/app/`; widgets do not construct FFI sessions or
 repositories.
 
+The map feature opens the starter map and scenario on one retained Rust
+backend. Its `MapScene` keeps the shared static `MapView` separate from the
+recipient-safe player snapshot, so fog-filtered units never become authored
+map content. Closing the controller closes that backend session; later queries
+and commands reuse the same session instead of selecting a transport per
+operation.
+
 Run from the repository root:
 
     make successor-flutter-check
