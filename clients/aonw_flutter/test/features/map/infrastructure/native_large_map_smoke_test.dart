@@ -10,6 +10,7 @@ import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart'
 import 'package:aonw_flutter/features/map/presentation/widgets/map_canvas.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
+import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,7 +37,7 @@ void main() {
     expect(map.gridLayout.name, identity['gridLayout']);
   });
 
-  testWidgets('opens the recipient-safe starter session snapshot', (
+  testWidgets('runs the recipient-safe starter movement session', (
     tester,
   ) async {
     final repository = RustMapRepository(assets: _FileAssetBundle());
@@ -53,6 +54,36 @@ void main() {
     expect(scene.player.units.single.id, 'preview-commander');
     expect(scene.player.units.single.ownerPlayerId, 'preview-player');
     expect(scene.player.units.single.coordinate, (col: 2, row: 1));
+
+    final reachable = await tester.runAsync(
+      () => repository.reachable(
+        expectedRevision: scene.player.stamp.revision,
+        unitId: 'preview-commander',
+      ),
+    );
+    expect(reachable, isNotNull);
+    expect(reachable!.tiles, isNotEmpty);
+    final route = await tester.runAsync(
+      () => repository.routePlan(
+        expectedRevision: scene.player.stamp.revision,
+        unitId: 'preview-commander',
+        target: (col: 2, row: 2),
+      ),
+    );
+    expect(route, isNotNull);
+    expect(route!.steps.first.coordinate, (col: 2, row: 1));
+    expect(route.steps.last.coordinate, (col: 2, row: 2));
+    final moved = await tester.runAsync(
+      () => repository.moveUnit(
+        expectedRevision: scene.player.stamp.revision,
+        unitId: 'preview-commander',
+        target: route.target,
+      ),
+    );
+    expect(moved, isNotNull);
+    expect(moved!.accepted, isTrue);
+    expect(moved.player!.stamp.revision, 1);
+    expect(moved.player!.units.single.coordinate, (col: 2, row: 2));
   });
 
   testWidgets('renders the Rust-backed 40 by 30 Dravonia map', (tester) async {
@@ -74,6 +105,7 @@ void main() {
         worldHeight: bounds.height,
         pages: const [],
       ),
+      player: _emptyPlayer(map.contentHash),
     );
 
     await tester.pumpWidget(
@@ -120,6 +152,18 @@ Future<MapView?> _loadMap(String path) async {
     await session.close();
   }
 }
+
+PlayerMapView _emptyPlayer(String mapHash) => PlayerMapView(
+  actorPlayerId: 'preview-player',
+  stamp: SessionStampView(
+    behaviorVersion: 1,
+    revision: 0,
+    stateDigest: 'b' * 64,
+    mapHash: mapHash,
+    rulesetHash: 'c' * 64,
+  ),
+  units: const [],
+);
 
 final class _FileAssetBundle extends CachingAssetBundle {
   @override

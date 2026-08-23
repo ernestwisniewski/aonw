@@ -59,12 +59,23 @@ final class VisibleUnitView {
 }
 
 final class PlayerMapView {
-  PlayerMapView({required this.stamp, required List<VisibleUnitView> units})
-    : units = List.unmodifiable(units);
+  PlayerMapView({
+    required this.actorPlayerId,
+    required this.stamp,
+    required List<VisibleUnitView> units,
+  }) : units = List.unmodifiable(units);
 
+  final String actorPlayerId;
   final SessionStampView stamp;
   final List<VisibleUnitView> units;
 
   Iterable<VisibleUnitView> unitsAt(MapHexCoordinate coordinate) =>
       units.where((unit) => unit.coordinate == coordinate);
+
+  VisibleUnitView? controlledUnitAt(MapHexCoordinate coordinate) {
+    for (final unit in unitsAt(coordinate)) {
+      if (unit.ownerPlayerId == actorPlayerId) return unit;
+    }
+    return null;
+  }
 }

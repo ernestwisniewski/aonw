@@ -3,6 +3,8 @@ import 'package:aonw_flutter/features/map/application/map_repository.dart';
 import 'package:aonw_flutter/features/map/presentation/camera/map_viewport_projection.dart';
 import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_screen.dart';
+import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
+import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -86,6 +88,59 @@ void main() {
 
     expect(find.byKey(const ValueKey('map-canvas')), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('renders reachable and route workflow with explicit confirm', (
+    tester,
+  ) async {
+    final movedPlayer = PlayerMapView(
+      actorPlayerId: 'preview-player',
+      stamp: testSessionStamp(revision: 1),
+      units: [testVisibleUnit(coordinate: (col: 1, row: 0), movementUnits: 8)],
+    );
+    final controller = MapController(
+      repository: FakeMapRepository.success(
+        testMapScene(units: [testVisibleUnit()]),
+        reachableResult: testReachableView(),
+        routeResult: testRoutePlanView(),
+        moveResult: MoveUnitResultView.accepted(player: movedPlayer),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await tester.binding.setSurfaceSize(const Size(900, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: MapScreen(controller: controller)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    const projection = MapViewportProjection(
+      AonwOddQFlatTopGeometry(cols: 3, rows: 2, radius: 60),
+    );
+    final canvas = find.byKey(const ValueKey('map-canvas'));
+    final origin = projection.hexCenter((col: 0, row: 0));
+    await tester.tapAt(tester.getTopLeft(canvas) + Offset(origin.x, origin.y));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unit preview-commander'), findsOneWidget);
+    expect(find.byKey(const ValueKey('movement-layer')), findsOneWidget);
+    expect(find.byKey(const ValueKey('unit-layer')), findsOneWidget);
+
+    controller.select((col: 1, row: 0));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('confirm-move')), findsOneWidget);
+    expect(find.textContaining('Route: 4 movement units'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('confirm-move')));
+    await tester.pumpAndSettle();
+
+    final ready = controller.state as MapReadyState;
+    expect(ready.scene.player.units.single.coordinate, (col: 1, row: 0));
+    expect(find.byKey(const ValueKey('confirm-move')), findsNothing);
   });
 
   testWidgets(

@@ -6,7 +6,14 @@ import '../read_model/player_map_view.dart';
 final class PlayerMapViewMapper {
   const PlayerMapViewMapper();
 
-  PlayerMapView fromWire(AonwPlayerViewSnapshot wire, {required MapView map}) {
+  PlayerMapView fromWire(
+    AonwPlayerViewSnapshot wire, {
+    required MapView map,
+    required String actorPlayerId,
+  }) {
+    if (actorPlayerId.isEmpty) {
+      throw const FormatException('Session actor player id is empty.');
+    }
     _validateHash(wire.stamp.stateDigest, 'state digest');
     _validateHash(wire.stamp.mapHash, 'map hash');
     _validateHash(wire.stamp.rulesetHash, 'ruleset hash');
@@ -48,6 +55,7 @@ final class PlayerMapViewMapper {
     }
 
     return PlayerMapView(
+      actorPlayerId: actorPlayerId,
       stamp: SessionStampView(
         behaviorVersion: wire.stamp.behaviorVersion,
         revision: wire.stamp.revision,
@@ -65,30 +73,9 @@ final class PlayerMapViewMapper {
     }
   }
 
-  static VisibleUnitKind _kind(AonwUnitKind value) => switch (value) {
-    AonwUnitKind.commander => VisibleUnitKind.commander,
-    AonwUnitKind.warrior => VisibleUnitKind.warrior,
-    AonwUnitKind.archer => VisibleUnitKind.archer,
-    AonwUnitKind.settler => VisibleUnitKind.settler,
-    AonwUnitKind.worker => VisibleUnitKind.worker,
-    AonwUnitKind.merchant => VisibleUnitKind.merchant,
-    AonwUnitKind.scout => VisibleUnitKind.scout,
-    AonwUnitKind.spearman => VisibleUnitKind.spearman,
-    AonwUnitKind.cavalry => VisibleUnitKind.cavalry,
-    AonwUnitKind.catapult => VisibleUnitKind.catapult,
-    AonwUnitKind.heavyInfantry => VisibleUnitKind.heavyInfantry,
-    AonwUnitKind.fieldCannon => VisibleUnitKind.fieldCannon,
-    AonwUnitKind.rifleman => VisibleUnitKind.rifleman,
-    AonwUnitKind.tank => VisibleUnitKind.tank,
-    AonwUnitKind.scoutShip => VisibleUnitKind.scoutShip,
-    AonwUnitKind.warship => VisibleUnitKind.warship,
-    AonwUnitKind.reconPlane => VisibleUnitKind.reconPlane,
-  };
+  static VisibleUnitKind _kind(AonwUnitKind value) =>
+      VisibleUnitKind.values.byName(value.name);
 
-  static VisibleUnitPosture _posture(AonwUnitPosture value) => switch (value) {
-    AonwUnitPosture.active => VisibleUnitPosture.active,
-    AonwUnitPosture.fortified => VisibleUnitPosture.fortified,
-    AonwUnitPosture.autoExploring => VisibleUnitPosture.autoExploring,
-    AonwUnitPosture.autoWorking => VisibleUnitPosture.autoWorking,
-  };
+  static VisibleUnitPosture _posture(AonwUnitPosture value) =>
+      VisibleUnitPosture.values.byName(value.name);
 }

@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:aonw_flutter/features/map/application/map_controller.dart';
 import 'package:aonw_flutter/features/map/application/map_repository.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
+import 'package:aonw_flutter/features/map/read_model/map_view.dart';
+import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
+import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/map_test_fixture.dart';
@@ -89,6 +92,80 @@ void main() {
       expect(diagnostics.single.error, same(cause));
     },
   );
+
+  test(
+    'selects a unit, previews a Rust route, and confirms movement',
+    () async {
+      final unit = testVisibleUnit();
+      final scene = testMapScene(units: [unit]);
+      final movedPlayer = PlayerMapView(
+        actorPlayerId: 'preview-player',
+        stamp: testSessionStamp(revision: 1),
+        units: [
+          testVisibleUnit(coordinate: (col: 1, row: 0), movementUnits: 8),
+        ],
+      );
+      final repository = FakeMapRepository.success(
+        scene,
+        reachableResult: testReachableView(),
+        routeResult: testRoutePlanView(),
+        moveResult: MoveUnitResultView.accepted(player: movedPlayer),
+      );
+      final controller = MapController(repository: repository);
+      addTearDown(controller.dispose);
+
+      await controller.load();
+      controller.select((col: 0, row: 0));
+      await pumpEventQueue();
+
+      var ready = controller.state as MapReadyState;
+      expect(ready.interaction.selectedUnitId, unit.id);
+      expect(ready.interaction.reachable?.tileAt((col: 1, row: 0)), isNotNull);
+
+      controller.select((col: 1, row: 0));
+      await pumpEventQueue();
+      ready = controller.state as MapReadyState;
+      expect(ready.interaction.route?.destination, (col: 1, row: 0));
+
+      controller.confirmMove();
+      await pumpEventQueue();
+      ready = controller.state as MapReadyState;
+      expect(ready.scene.player.stamp.revision, 1);
+      expect(ready.scene.player.units.single.coordinate, (col: 1, row: 0));
+      expect(ready.interaction.selected, (col: 1, row: 0));
+      expect(ready.interaction.selectedUnitId, isNull);
+      expect(ready.interaction.route, isNull);
+    },
+  );
+
+  test(
+    'keeps a rejected move typed and leaves the snapshot unchanged',
+    () async {
+      final scene = testMapScene(units: [testVisibleUnit()]);
+      final controller = MapController(
+        repository: FakeMapRepository.success(
+          scene,
+          reachableResult: testReachableView(),
+          routeResult: testRoutePlanView(),
+          moveResult: const MoveUnitResultView.rejected(code: 'target_blocked'),
+        ),
+      );
+      addTearDown(controller.dispose);
+
+      await controller.load();
+      controller.select((col: 0, row: 0));
+      await pumpEventQueue();
+      controller.select((col: 1, row: 0));
+      await pumpEventQueue();
+      controller.confirmMove();
+      await pumpEventQueue();
+
+      final ready = controller.state as MapReadyState;
+      expect(ready.scene.player, same(scene.player));
+      expect(ready.interaction.movementError, 'Move rejected: target_blocked');
+      expect(ready.interaction.route, isNotNull);
+    },
+  );
 }
 
 final class _CompletingMapRepository implements MapRepository {
@@ -100,6 +177,26 @@ final class _CompletingMapRepository implements MapRepository {
     requests.add(request);
     return request.future;
   }
+
+  @override
+  Future<ReachableView> reachable({
+    required int expectedRevision,
+    required String unitId,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<RoutePlanView> routePlan({
+    required int expectedRevision,
+    required String unitId,
+    required MapHexCoordinate target,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<MoveUnitResultView> moveUnit({
+    required int expectedRevision,
+    required String unitId,
+    required MapHexCoordinate target,
+  }) => throw UnimplementedError();
 
   @override
   Future<void> close() async {}

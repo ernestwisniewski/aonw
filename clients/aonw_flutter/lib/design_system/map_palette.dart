@@ -6,6 +6,11 @@ abstract final class MapPalette {
   static const grid = Color(0xA61A242C);
   static const hover = Color(0xFFE7F1F6);
   static const selection = Color(0xFFFFC857);
+  static const reachable = Color(0x5534D6C7);
+  static const route = Color(0xFFFFD166);
+  static const controlledUnit = Color(0xFF38BDF8);
+  static const foreignUnit = Color(0xFFE76F51);
+  static const unitOutline = Color(0xFF102A3A);
 
   static const _terrain = {
     MapTerrain.ocean: Color(0xFF245B91),

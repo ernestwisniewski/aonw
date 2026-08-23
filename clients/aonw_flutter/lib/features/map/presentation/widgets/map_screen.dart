@@ -119,7 +119,11 @@ final class _ReadyMap extends StatelessWidget {
         Positioned(
           left: 12,
           bottom: 12,
-          child: _SelectedHex(coordinate: selected),
+          child: _MapSelectionPanel(
+            coordinate: selected,
+            interaction: interaction,
+            onConfirmMove: controller.confirmMove,
+          ),
         ),
     ],
   );
@@ -191,6 +195,7 @@ final class _MapViewportState extends State<_MapViewport> {
             map: widget.scene.map,
             interaction: widget.interaction,
             reference: widget.scene.reference,
+            player: widget.scene.player,
           ),
           onHover: widget.controller.hover,
           onSelect: widget.controller.select,
@@ -235,10 +240,16 @@ final class _ReferenceToggle extends StatelessWidget {
   );
 }
 
-final class _SelectedHex extends StatelessWidget {
-  const _SelectedHex({required this.coordinate});
+final class _MapSelectionPanel extends StatelessWidget {
+  const _MapSelectionPanel({
+    required this.coordinate,
+    required this.interaction,
+    required this.onConfirmMove,
+  });
 
   final MapHexCoordinate coordinate;
+  final MapInteractionState interaction;
+  final VoidCallback onConfirmMove;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -246,7 +257,51 @@ final class _SelectedHex extends StatelessWidget {
     child: Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Text('Hex ${coordinate.col}, ${coordinate.row}'),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Hex ${coordinate.col}, ${coordinate.row}'),
+              if (interaction.selectedUnitId case final unitId?) ...[
+                const SizedBox(height: 4),
+                Text('Unit $unitId'),
+                if (interaction.route case final route?) ...[
+                  Text(
+                    'Route: ${route.totalCostUnits} movement units · '
+                    '${route.remainingMovementUnits} remaining',
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.icon(
+                    key: const ValueKey('confirm-move'),
+                    onPressed: interaction.movementPending
+                        ? null
+                        : onConfirmMove,
+                    icon: const Icon(Icons.directions_walk),
+                    label: const Text('Confirm move'),
+                  ),
+                ] else if (!interaction.movementPending)
+                  const Text('Choose a highlighted destination.'),
+              ],
+              if (interaction.movementPending) ...[
+                const SizedBox(height: 8),
+                const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ],
+              if (interaction.movementError case final message?) ...[
+                const SizedBox(height: 6),
+                Text(
+                  message,
+                  key: const ValueKey('movement-error'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     ),
   );

@@ -16,6 +16,7 @@ void main() {
         _unit('unit-b', col: 2, row: 1),
       ]),
       map: map,
+      actorPlayerId: 'player-1',
     );
 
     expect(player.stamp.mapHash, map.contentHash);
@@ -30,7 +31,11 @@ void main() {
     final map = testMapScene();
 
     expect(
-      () => mapper.fromWire(_snapshot([], mapHash: 'd' * 64), map: map.map),
+      () => mapper.fromWire(
+        _snapshot([], mapHash: 'd' * 64),
+        map: map.map,
+        actorPlayerId: 'player-1',
+      ),
       throwsFormatException,
     );
   });
@@ -42,6 +47,7 @@ void main() {
       () => mapper.fromWire(
         _snapshot([_unit('unit-b'), _unit('unit-a')]),
         map: map,
+        actorPlayerId: 'player-1',
       ),
       throwsFormatException,
     );
@@ -49,11 +55,16 @@ void main() {
       () => mapper.fromWire(
         _snapshot([_unit('unit-a'), _unit('unit-a')]),
         map: map,
+        actorPlayerId: 'player-1',
       ),
       throwsFormatException,
     );
     expect(
-      () => mapper.fromWire(_snapshot([_unit('unit-a', col: 99)]), map: map),
+      () => mapper.fromWire(
+        _snapshot([_unit('unit-a', col: 99)]),
+        map: map,
+        actorPlayerId: 'player-1',
+      ),
       throwsFormatException,
     );
   });

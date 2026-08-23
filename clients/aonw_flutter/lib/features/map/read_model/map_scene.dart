@@ -12,4 +12,7 @@ final class MapScene {
   final MapView map;
   final MapReferenceBundle reference;
   final PlayerMapView player;
+
+  MapScene withPlayer(PlayerMapView value) =>
+      MapScene(map: map, reference: reference, player: value);
 }

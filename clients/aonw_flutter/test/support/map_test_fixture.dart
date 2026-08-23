@@ -2,6 +2,7 @@ import 'package:aonw_flutter/features/map/application/map_repository.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
+import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 
 MapScene testMapScene({
@@ -49,6 +50,7 @@ MapScene testMapScene({
       pages: const [],
     ),
     player: PlayerMapView(
+      actorPlayerId: 'preview-player',
       stamp: SessionStampView(
         behaviorVersion: 1,
         revision: 0,
@@ -61,12 +63,89 @@ MapScene testMapScene({
   );
 }
 
+VisibleUnitView testVisibleUnit({
+  String id = 'preview-commander',
+  String ownerPlayerId = 'preview-player',
+  MapHexCoordinate coordinate = (col: 0, row: 0),
+  int movementUnits = 12,
+}) => VisibleUnitView(
+  id: id,
+  ownerPlayerId: ownerPlayerId,
+  kind: VisibleUnitKind.commander,
+  name: 'Commander',
+  coordinate: coordinate,
+  movementUnits: movementUnits,
+  posture: VisibleUnitPosture.active,
+);
+
+SessionStampView testSessionStamp({int revision = 0}) => SessionStampView(
+  behaviorVersion: 1,
+  revision: revision,
+  stateDigest: 'b' * 64,
+  mapHash: 'a' * 64,
+  rulesetHash: 'c' * 64,
+);
+
+ReachableView testReachableView({
+  String unitId = 'preview-commander',
+  List<ReachableTileView> tiles = const [
+    ReachableTileView(
+      coordinate: (col: 1, row: 0),
+      costUnits: 4,
+      exhaustsMovement: false,
+    ),
+  ],
+}) => ReachableView(
+  stamp: testSessionStamp(),
+  unitId: unitId,
+  availableMovementUnits: 12,
+  tiles: tiles,
+);
+
+RoutePlanView testRoutePlanView({
+  String unitId = 'preview-commander',
+  MapHexCoordinate origin = (col: 0, row: 0),
+  MapHexCoordinate target = (col: 1, row: 0),
+}) => RoutePlanView(
+  stamp: testSessionStamp(),
+  unitId: unitId,
+  target: target,
+  destination: target,
+  totalCostUnits: 4,
+  availableMovementUnits: 12,
+  remainingMovementUnits: 8,
+  steps: [
+    MovementStepView(
+      coordinate: origin,
+      enterCostUnits: 0,
+      cumulativeCostUnits: 0,
+    ),
+    MovementStepView(
+      coordinate: target,
+      enterCostUnits: 4,
+      cumulativeCostUnits: 4,
+    ),
+  ],
+);
+
 final class FakeMapRepository implements MapRepository {
-  FakeMapRepository.success(this.scene) : failure = null;
-  FakeMapRepository.failure(this.failure) : scene = null;
+  FakeMapRepository.success(
+    this.scene, {
+    this.reachableResult,
+    this.routeResult,
+    this.moveResult,
+  }) : failure = null;
+  FakeMapRepository.failure(this.failure)
+    : scene = null,
+      reachableResult = null,
+      routeResult = null,
+      moveResult = null;
 
   final MapScene? scene;
   final MapLoadException? failure;
+  final ReachableView? reachableResult;
+  final RoutePlanView? routeResult;
+  final MoveUnitResultView? moveResult;
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
@@ -74,6 +153,26 @@ final class FakeMapRepository implements MapRepository {
     if (error != null) throw error;
     return scene!;
   }
+
+  @override
+  Future<ReachableView> reachable({
+    required int expectedRevision,
+    required String unitId,
+  }) async => reachableResult ?? (throw StateError('No reachable fixture.'));
+
+  @override
+  Future<RoutePlanView> routePlan({
+    required int expectedRevision,
+    required String unitId,
+    required MapHexCoordinate target,
+  }) async => routeResult ?? (throw StateError('No route fixture.'));
+
+  @override
+  Future<MoveUnitResultView> moveUnit({
+    required int expectedRevision,
+    required String unitId,
+    required MapHexCoordinate target,
+  }) async => moveResult ?? (throw StateError('No move fixture.'));
 
   @override
   Future<void> close() async {}

@@ -19,6 +19,13 @@ map content. Closing the controller closes that backend session; later queries
 and commands reuse the same session instead of selecting a transport per
 operation.
 
+Selecting a controlled unit requests its reachable tiles from Rust. Selecting
+a highlighted destination requests the versioned route plan, and the client
+dispatches `moveUnit` only after an explicit confirmation. The overlay and
+panel display returned costs; they do not calculate movement legality. After
+an accepted command the repository fetches a fresh recipient snapshot instead
+of reducing authoritative state in Dart.
+
 Run from the repository root:
 
     make successor-flutter-check

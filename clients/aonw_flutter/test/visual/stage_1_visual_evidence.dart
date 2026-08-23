@@ -5,6 +5,7 @@ import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart'
 import 'package:aonw_flutter/features/map/presentation/widgets/map_canvas.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
+import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -71,6 +72,17 @@ Future<void> _captureEvidence(
                 worldWidth: bounds.width,
                 worldHeight: bounds.height,
                 pages: const [],
+              ),
+              player: PlayerMapView(
+                actorPlayerId: 'preview-player',
+                stamp: SessionStampView(
+                  behaviorVersion: 1,
+                  revision: 0,
+                  stateDigest: 'b' * 64,
+                  mapHash: loadedMap.contentHash,
+                  rulesetHash: 'c' * 64,
+                ),
+                units: const [],
               ),
             ),
             onHover: (_) {},

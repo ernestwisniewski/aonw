@@ -98,6 +98,104 @@ final class MapInteractionPainter extends CustomPainter {
       oldDelegate.interaction != interaction;
 }
 
+final class MapMovementPainter extends CustomPainter {
+  MapMovementPainter({required this.snapshot, required this.geometry});
+
+  final MapRenderSnapshot snapshot;
+  final AonwOddQFlatTopGeometry geometry;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = geometry.bounds;
+    canvas.translate(-bounds.x, -bounds.y);
+    final reachable = snapshot.interaction.reachable;
+    if (reachable != null) {
+      final paint = Paint()
+        ..color = MapPalette.reachable
+        ..style = PaintingStyle.fill;
+      for (final tile in reachable.tiles) {
+        canvas.drawPath(_hexPath(geometry, tile.coordinate), paint);
+      }
+    }
+    final route = snapshot.interaction.route;
+    if (route == null || route.steps.isEmpty) return;
+    final path = Path();
+    for (var index = 0; index < route.steps.length; index++) {
+      final center = geometry.center(route.steps[index].coordinate);
+      if (index == 0) {
+        path.moveTo(center.x, center.y);
+      } else {
+        path.lineTo(center.x, center.y);
+      }
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = MapPalette.route
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 7
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(MapMovementPainter oldDelegate) =>
+      oldDelegate.snapshot.interaction.reachable !=
+          snapshot.interaction.reachable ||
+      oldDelegate.snapshot.interaction.route != snapshot.interaction.route;
+}
+
+final class MapUnitPainter extends CustomPainter {
+  MapUnitPainter({required this.snapshot, required this.geometry});
+
+  final MapRenderSnapshot snapshot;
+  final AonwOddQFlatTopGeometry geometry;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = geometry.bounds;
+    canvas.translate(-bounds.x, -bounds.y);
+    for (final unit in snapshot.player.units) {
+      final center = geometry.center(unit.coordinate);
+      final point = Offset(center.x, center.y);
+      final controlled = unit.ownerPlayerId == snapshot.player.actorPlayerId;
+      canvas.drawCircle(
+        point,
+        17,
+        Paint()
+          ..color = controlled
+              ? MapPalette.controlledUnit
+              : MapPalette.foreignUnit,
+      );
+      canvas.drawCircle(
+        point,
+        17,
+        Paint()
+          ..color = MapPalette.unitOutline
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3,
+      );
+      if (unit.id == snapshot.interaction.selectedUnitId) {
+        canvas.drawCircle(
+          point,
+          23,
+          Paint()
+            ..color = MapPalette.selection
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 4,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(MapUnitPainter oldDelegate) =>
+      oldDelegate.snapshot.player != snapshot.player ||
+      oldDelegate.snapshot.interaction.selectedUnitId !=
+          snapshot.interaction.selectedUnitId;
+}
+
 final class MapHexClipper extends CustomClipper<Path> {
   const MapHexClipper({required this.map, required this.geometry});
 

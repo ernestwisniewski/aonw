@@ -114,12 +114,31 @@ final class _MapLayers extends StatelessWidget {
         ),
         IgnorePointer(
           child: RepaintBoundary(
+            key: const ValueKey('movement-layer'),
+            child: CustomPaint(
+              painter: MapMovementPainter(
+                snapshot: snapshot,
+                geometry: geometry,
+              ),
+            ),
+          ),
+        ),
+        IgnorePointer(
+          child: RepaintBoundary(
             key: const ValueKey('interaction-layer'),
             child: CustomPaint(
               painter: MapInteractionPainter(
                 interaction: snapshot.interaction,
                 geometry: geometry,
               ),
+            ),
+          ),
+        ),
+        IgnorePointer(
+          child: RepaintBoundary(
+            key: const ValueKey('unit-layer'),
+            child: CustomPaint(
+              painter: MapUnitPainter(snapshot: snapshot, geometry: geometry),
             ),
           ),
         ),
