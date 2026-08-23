@@ -44,7 +44,7 @@ fn hash_accounts(
     }
 }
 
-const fn resource_tag(resource: ResourceType) -> u8 {
+pub(super) const fn resource_tag(resource: ResourceType) -> u8 {
     match resource {
         ResourceType::Wheat => 0,
         ResourceType::Fish => 1,

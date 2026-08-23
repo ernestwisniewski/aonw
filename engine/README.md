@@ -136,9 +136,14 @@ current fixture contract. Rust and Godot boundaries use strict, current-only
 codecs.
 
 The characterization covers terrain bases and features, roads, partial and
-queued movement, occupancy and hidden information, cities, fog, diplomatic
-contact, posture, artifact capacity, rejection precedence, and exact movement
-evidence. Both Dart reducers and Rust execute the same reviewed outcomes. Run
+queued movement, occupancy and hidden information, cities, fog, complete
+diplomacy and resource-trade state, posture, artifact capacity, rejection
+precedence, and exact movement evidence. Diplomacy persists normalized contacts
+and relations, proposals, messages and responses, score history, war status,
+and active resource agreements. The domain rejects unknown participants,
+self-relations, missing contacts, duplicate records, invalid score/turn ranges,
+and incoherent message or trade fields before constructing state. Both Dart
+reducers and Rust execute the same reviewed outcomes. Run
 `make rust-engine-oracle` only to regenerate review candidates; generation
 never blesses a changed oracle.
 

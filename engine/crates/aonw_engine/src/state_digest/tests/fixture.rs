@@ -4,14 +4,18 @@ use aonw_contracts::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
     CityConquestActionDto, CityDto, CityFoundingDraftDto, CityFoundingJobDto,
     CityProductionQueueDto, CityProductionTargetDto, CitySpecializationTypeDto, CoordinateDto,
+    DiplomacyStateDto, DiplomaticMessageCategoryDto, DiplomaticMessageDto,
+    DiplomaticMessageResponseDto, DiplomaticMessageTopicDto, DiplomaticProposalDto,
+    DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationDto,
+    DiplomaticRelationStatusDto, DiplomaticScoreChangeReasonDto, DiplomaticScoreEntryDto,
     EconomyStateDto, FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto,
     InitialResourceDistributionDto, InitialResourcePlacementDto, IntendedAttackDto,
     InteractionStateDto, MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto, MovementStepDto,
     ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto,
     PlayerPairDto, PlayerResearchStateDto, PlayerTurnStateDto, QueuedMovePathDto, ResearchStateDto,
-    ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto, TechnologyIdDto,
-    TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto, TroopKindDto,
-    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
+    ResourceTradeAgreementDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
+    TechnologyIdDto, TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto,
+    TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
     UnitPostureDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto, WorldArtifactDto,
     WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
@@ -92,10 +96,8 @@ pub(super) fn complete_state_contract() -> GameStateDto {
             discovered_hexes: vec![coordinate(0, 0), coordinate(1, 1)],
             visible_hexes: vec![coordinate(1, 1)],
         }],
-        diplomatic_contacts: vec![PlayerPairDto {
-            first_player_id: "player-1".to_owned(),
-            second_player_id: "player-2".to_owned(),
-        }],
+        diplomacy: complete_diplomacy(),
+        resource_trade_agreements: complete_resource_trades(),
         transport_network: vec![TransportSegmentDto {
             coordinate: coordinate(1, 1),
             kind: TransportSegmentKindDto::Road,
@@ -104,6 +106,70 @@ pub(super) fn complete_state_contract() -> GameStateDto {
             built_by_city_id: Some("city-1".to_owned()),
         }],
     }
+}
+
+fn complete_diplomacy() -> DiplomacyStateDto {
+    DiplomacyStateDto {
+        contacts: vec![PlayerPairDto {
+            first_player_id: "player-1".to_owned(),
+            second_player_id: "player-2".to_owned(),
+        }],
+        relations: vec![DiplomaticRelationDto {
+            player_a_id: "player-1".to_owned(),
+            player_b_id: "player-2".to_owned(),
+            status: DiplomaticRelationStatusDto::Truce,
+            relation_score: 12,
+            status_expires_on_turn: Some(20),
+            last_changed_turn: Some(3),
+            last_change_reason: Some(DiplomaticRelationChangeReasonDto::ProposalAccepted),
+        }],
+        pending_proposals: vec![DiplomaticProposalDto {
+            id: "proposal-1".to_owned(),
+            from_player_id: "player-1".to_owned(),
+            to_player_id: "player-2".to_owned(),
+            kind: DiplomaticProposalKindDto::Friendship,
+            created_turn: 3,
+            expires_on_turn: 8,
+            gold_payment: 0,
+        }],
+        messages: vec![DiplomaticMessageDto {
+            id: "message-1".to_owned(),
+            from_player_id: "player-2".to_owned(),
+            to_player_id: "player-1".to_owned(),
+            topic: DiplomaticMessageTopicDto::BlockedRoutes,
+            category: DiplomaticMessageCategoryDto::Request,
+            created_turn: 3,
+            expires_on_turn: 8,
+            response: Some(DiplomaticMessageResponseDto::Conciliatory),
+            responded_turn: Some(4),
+            relation_score_delta: 12,
+            relation_score_after: Some(24),
+            promise_due_turn: Some(7),
+            promise_broken: false,
+        }],
+        score_history: vec![DiplomaticScoreEntryDto {
+            player_a_id: "player-1".to_owned(),
+            player_b_id: "player-2".to_owned(),
+            turn: 4,
+            delta: 12,
+            score_after: 24,
+            reason: DiplomaticScoreChangeReasonDto::MessageResponse,
+            source_id: Some("message-1".to_owned()),
+        }],
+    }
+}
+
+fn complete_resource_trades() -> Vec<ResourceTradeAgreementDto> {
+    vec![ResourceTradeAgreementDto {
+        id: "trade-1".to_owned(),
+        exporter_player_id: "player-2".to_owned(),
+        importer_player_id: "player-1".to_owned(),
+        resource: ResourceTypeDto::Horses,
+        gold_per_turn: 3,
+        remaining_turns: 5,
+        amount_per_turn: 2,
+        exchange_group_id: Some("exchange-1".to_owned()),
+    }]
 }
 
 fn complete_city() -> CityDto {

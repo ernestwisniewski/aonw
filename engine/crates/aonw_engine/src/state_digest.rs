@@ -5,6 +5,7 @@ use aonw_domain::{
 };
 mod city;
 mod combat;
+mod diplomacy;
 mod economy;
 mod infrastructure;
 mod match_lifecycle;
@@ -13,6 +14,7 @@ mod writer;
 
 use city::hash_city;
 use combat::hash_combat;
+use diplomacy::hash_diplomacy;
 use economy::hash_economy;
 use infrastructure::hash_infrastructure;
 use match_lifecycle::hash_match_lifecycle;
@@ -85,11 +87,7 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
         writer.coordinates(fog.visible_hexes());
     }
 
-    writer.usize(state.diplomacy().contacts().len());
-    for pair in state.diplomacy().contacts() {
-        writer.text(pair.first().as_str());
-        writer.text(pair.second().as_str());
-    }
+    hash_diplomacy(&mut writer, state.diplomacy());
 
     hash_infrastructure(&mut writer, state.infrastructure());
     StateDigest(writer.finish())

@@ -2,11 +2,12 @@ use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
     CityBuildingTypeDto, CityConquestActionDto, CityDto, CityProductionQueueDto,
-    CitySpecializationTypeDto, CoordinateDto, EconomyStateDto, FieldImprovementDto,
-    FieldImprovementKindDto, GameModeDto, GameStateDto, InitialResourceDistributionDto,
-    IntendedAttackDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto,
-    ParticipantDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto,
-    ResearchStateDto, StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
+    CitySpecializationTypeDto, CoordinateDto, DiplomacyStateDto, EconomyStateDto,
+    FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto,
+    InitialResourceDistributionDto, IntendedAttackDto, InteractionStateDto, MatchIdentityDto,
+    MatchRulesDto, MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto,
+    PlayerPairDto, QueuedMovePathDto, ResearchStateDto, ResourceTradeAgreementDto,
+    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
     TransportSegmentKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
     UnitOccupancyPolicyDto, UnitPostureDto, WonderRegistryDto, WonderTypeDto, WorldArtifactDto,
     WorldArtifactLocationDto, WorldArtifactTypeDto,
@@ -108,7 +109,8 @@ pub(super) fn decode_state(
         .enumerate()
         .map(|(index, value)| decode_fog(value, &format!("input.state.fogOfWar[{index}]")))
         .collect::<Result<Vec<_>, _>>()?;
-    let diplomatic_contacts = decode_contacts(input.state())?;
+    let diplomacy = decode_diplomacy_state(input.state())?;
+    let resource_trade_agreements = decode_resource_trade_agreements(input.state())?;
     let transport_network = required_array(input.state(), "transportNetwork")?
         .iter()
         .enumerate()
@@ -134,7 +136,8 @@ pub(super) fn decode_state(
         field_improvements,
         interaction,
         fog_of_war,
-        diplomatic_contacts,
+        diplomacy,
+        resource_trade_agreements,
         transport_network,
     };
     decode_game_state(dto)
@@ -854,6 +857,105 @@ fn decode_contacts(state: &JsonObject) -> Result<Vec<PlayerPairDto>, AdapterErro
         .collect()
 }
 
+fn decode_diplomacy_state(state: &JsonObject) -> Result<DiplomacyStateDto, AdapterError> {
+    let source = state
+        .get("lifecycle")
+        .and_then(Value::as_object)
+        .and_then(|lifecycle| lifecycle.get("diplomacy"))
+        .and_then(Value::as_object);
+    let contacts = serde_json::to_value(decode_contacts(state)?).map_err(display_error)?;
+    let relations = normalize_records(
+        source.and_then(|value| value.get("relations")),
+        "input.state.lifecycle.diplomacy.relations",
+        &[
+            ("relationScore", Value::from(0)),
+            ("statusExpiresOnTurn", Value::Null),
+            ("lastChangedTurn", Value::Null),
+            ("lastChangeReason", Value::Null),
+        ],
+    )?;
+    let proposals = normalize_records(
+        source.and_then(|value| value.get("pendingProposals")),
+        "input.state.lifecycle.diplomacy.pendingProposals",
+        &[("goldPayment", Value::from(0))],
+    )?;
+    let messages = normalize_records(
+        source.and_then(|value| value.get("messages")),
+        "input.state.lifecycle.diplomacy.messages",
+        &[
+            ("response", Value::Null),
+            ("respondedTurn", Value::Null),
+            ("relationScoreDelta", Value::from(0)),
+            ("relationScoreAfter", Value::Null),
+            ("promiseDueTurn", Value::Null),
+            ("promiseBroken", Value::Bool(false)),
+        ],
+    )?;
+    let history = normalize_records(
+        source.and_then(|value| value.get("scoreHistory")),
+        "input.state.lifecycle.diplomacy.scoreHistory",
+        &[
+            ("delta", Value::from(0)),
+            ("scoreAfter", Value::from(0)),
+            ("sourceId", Value::Null),
+        ],
+    )?;
+    serde_json::from_value(Value::Object(Map::from_iter([
+        ("contacts".to_owned(), contacts),
+        ("relations".to_owned(), Value::Array(relations)),
+        ("pendingProposals".to_owned(), Value::Array(proposals)),
+        ("messages".to_owned(), Value::Array(messages)),
+        ("scoreHistory".to_owned(), Value::Array(history)),
+    ])))
+    .map_err(display_error)
+}
+
+fn decode_resource_trade_agreements(
+    state: &JsonObject,
+) -> Result<Vec<ResourceTradeAgreementDto>, AdapterError> {
+    let value = state
+        .get("lifecycle")
+        .and_then(Value::as_object)
+        .and_then(|lifecycle| lifecycle.get("resourceTradeAgreements"));
+    serde_json::from_value(Value::Array(normalize_records(
+        value,
+        "input.state.lifecycle.resourceTradeAgreements",
+        &[
+            ("goldPerTurn", Value::from(0)),
+            ("amountPerTurn", Value::from(1)),
+            ("exchangeGroupId", Value::Null),
+        ],
+    )?))
+    .map_err(display_error)
+}
+
+fn normalize_records(
+    value: Option<&Value>,
+    path: &str,
+    defaults: &[(&str, Value)],
+) -> Result<Vec<Value>, AdapterError> {
+    let Some(value) = value else {
+        return Ok(Vec::new());
+    };
+    let values = value
+        .as_array()
+        .ok_or_else(|| error(format!("{path} must be an array")))?;
+    values
+        .iter()
+        .enumerate()
+        .map(|(index, value)| {
+            let item_path = format!("{path}[{index}]");
+            let mut object = object_at(value, &item_path)?.clone();
+            for (field, default) in defaults {
+                object
+                    .entry((*field).to_owned())
+                    .or_insert_with(|| default.clone());
+            }
+            Ok(Value::Object(object))
+        })
+        .collect()
+}
+
 fn decode_transport(value: &Value, path: &str) -> Result<TransportSegmentDto, AdapterError> {
     let object = object_at(value, path)?;
     if required_string_at(object, "kind", path)? != "road" {
@@ -876,15 +978,16 @@ fn decode_transport(value: &Value, path: &str) -> Result<TransportSegmentDto, Ad
 #[cfg(test)]
 mod tests {
     use aonw_contracts::{
-        CityConquestActionDto, FieldImprovementKindDto, ResourceTypeDto, TechnologyIdDto,
-        WonderTypeDto,
+        CityConquestActionDto, DiplomaticMessageCategoryDto, DiplomaticMessageTopicDto,
+        DiplomaticProposalKindDto, DiplomaticRelationStatusDto, DiplomaticScoreChangeReasonDto,
+        FieldImprovementKindDto, ResourceTypeDto, TechnologyIdDto, WonderTypeDto,
     };
     use aonw_domain::HexGridBounds;
     use serde_json::json;
 
     use super::{
-        decode_economy, decode_field_improvements, decode_intended_attacks, decode_research,
-        decode_wonder_registry,
+        decode_diplomacy_state, decode_economy, decode_field_improvements, decode_intended_attacks,
+        decode_research, decode_resource_trade_agreements, decode_wonder_registry,
     };
 
     #[test]
@@ -1010,5 +1113,85 @@ mod tests {
         assert_eq!(improvements.len(), 1);
         assert_eq!(improvements[0].kind, FieldImprovementKindDto::OilWell);
         assert_eq!(improvements[0].built_by_city_id.as_deref(), Some("city-1"));
+    }
+
+    #[test]
+    fn legacy_diplomacy_adapter_preserves_records_and_supplies_legacy_defaults() {
+        let source = json!({
+            "lifecycle": {
+                "diplomacy": {
+                    "contacts": ["player-1|player-2"],
+                    "relations": [{
+                        "playerAId": "player-1",
+                        "playerBId": "player-2",
+                        "status": "war"
+                    }],
+                    "pendingProposals": [{
+                        "id": "proposal-1",
+                        "fromPlayerId": "player-1",
+                        "toPlayerId": "player-2",
+                        "kind": "truce",
+                        "createdTurn": 4,
+                        "expiresOnTurn": 6
+                    }],
+                    "messages": [{
+                        "id": "message-1",
+                        "fromPlayerId": "player-2",
+                        "toPlayerId": "player-1",
+                        "topic": "blockedRoutes",
+                        "category": "request",
+                        "createdTurn": 4,
+                        "expiresOnTurn": 6
+                    }],
+                    "scoreHistory": [{
+                        "playerAId": "player-1",
+                        "playerBId": "player-2",
+                        "turn": 4,
+                        "reason": "manual"
+                    }]
+                },
+                "resourceTradeAgreements": [{
+                    "id": "trade-1",
+                    "exporterPlayerId": "player-1",
+                    "importerPlayerId": "player-2",
+                    "resource": "coal",
+                    "remainingTurns": 3
+                }]
+            }
+        });
+        let state = source.as_object().expect("state object");
+        let diplomacy = decode_diplomacy_state(state).expect("decode diplomacy");
+        let trades = decode_resource_trade_agreements(state).expect("decode trades");
+
+        assert_eq!(diplomacy.contacts.len(), 1);
+        assert_eq!(
+            diplomacy.relations[0].status,
+            DiplomaticRelationStatusDto::War
+        );
+        assert_eq!(diplomacy.relations[0].relation_score, 0);
+        assert_eq!(
+            diplomacy.pending_proposals[0].kind,
+            DiplomaticProposalKindDto::Truce
+        );
+        assert_eq!(diplomacy.pending_proposals[0].gold_payment, 0);
+        assert_eq!(
+            diplomacy.messages[0].topic,
+            DiplomaticMessageTopicDto::BlockedRoutes
+        );
+        assert_eq!(
+            diplomacy.messages[0].category,
+            DiplomaticMessageCategoryDto::Request
+        );
+        assert_eq!(diplomacy.messages[0].response, None);
+        assert_eq!(diplomacy.messages[0].relation_score_delta, 0);
+        assert_eq!(
+            diplomacy.score_history[0].reason,
+            DiplomaticScoreChangeReasonDto::Manual
+        );
+        assert_eq!(diplomacy.score_history[0].score_after, 0);
+        assert_eq!(trades[0].resource, ResourceTypeDto::Coal);
+        assert_eq!(trades[0].gold_per_turn, 0);
+        assert_eq!(trades[0].amount_per_turn, 1);
+        assert_eq!(trades[0].exchange_group_id, None);
     }
 }

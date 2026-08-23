@@ -1,6 +1,7 @@
 mod artifact;
 mod city;
 mod combat;
+mod diplomacy;
 mod economy;
 mod error;
 mod infrastructure;

@@ -195,7 +195,7 @@ macro_rules! resource_mapping {
     };
 }
 
-const fn decode_resource(value: ResourceTypeDto) -> ResourceType {
+pub(super) const fn decode_resource(value: ResourceTypeDto) -> ResourceType {
     resource_mapping!(
         value,
         ResourceTypeDto::Wheat => ResourceType::Wheat,
@@ -230,7 +230,7 @@ const fn decode_resource(value: ResourceTypeDto) -> ResourceType {
     )
 }
 
-const fn encode_resource(value: ResourceType) -> ResourceTypeDto {
+pub(super) const fn encode_resource(value: ResourceType) -> ResourceTypeDto {
     resource_mapping!(
         value,
         ResourceType::Wheat => ResourceTypeDto::Wheat,

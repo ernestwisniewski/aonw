@@ -1,14 +1,13 @@
-use aonw_contracts::{
-    GameStateDto, MAX_GAME_STATE_UNIT_COUNT, PlayerPairDto, UnitOccupancyPolicyDto,
-};
+use aonw_contracts::{GameStateDto, MAX_GAME_STATE_UNIT_COUNT, UnitOccupancyPolicyDto};
 use aonw_domain::{
-    Diplomacy, FogOfWar, GameState, HexGridBounds, InfrastructureState, StateRevision,
-    TransportNetwork, UnitOccupancyPolicy,
+    FogOfWar, GameState, HexGridBounds, InfrastructureState, StateRevision, TransportNetwork,
+    UnitOccupancyPolicy,
 };
 
 use super::artifact::{decode_artifact, encode_artifact};
 use super::city::{decode_city, encode_city};
 use super::combat::{decode_combat, encode_combat};
+use super::diplomacy::{decode_diplomacy, encode_diplomacy};
 use super::economy::{decode_economy, encode_economy};
 use super::error::GameStateMappingError;
 use super::infrastructure::{
@@ -18,7 +17,7 @@ use super::interaction::{decode_interaction, encode_interaction};
 use super::match_lifecycle::{decode_match_lifecycle, encode_match_lifecycle};
 use super::research::{decode_knowledge, encode_research, encode_wonder_registry};
 use super::unit::{decode_unit, encode_unit};
-use super::world::{decode_fog, decode_pair, encode_fog};
+use super::world::{decode_fog, encode_fog};
 
 /// Validates and maps a complete game-state DTO.
 ///
@@ -77,13 +76,11 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
     .map_err(|player| {
         GameStateMappingError::new("$.fogOfWar", format!("duplicate player: {player}"))
     })?;
-    let diplomacy = Diplomacy::new(
-        dto.diplomatic_contacts
-            .into_iter()
-            .enumerate()
-            .map(|(index, pair)| decode_pair(index, pair))
-            .collect::<Result<Vec<_>, _>>()?,
-    );
+    let diplomacy = decode_diplomacy(
+        match_lifecycle.identity(),
+        dto.diplomacy,
+        dto.resource_trade_agreements,
+    )?;
     let transport = TransportNetwork::try_new(
         dto.transport_network
             .into_iter()
@@ -145,6 +142,7 @@ fn validate_unit_count(dto: &GameStateDto) -> Result<(), GameStateMappingError> 
 #[must_use]
 pub fn encode_game_state(state: &GameState) -> GameStateDto {
     let (match_identity, turn_lifecycle) = encode_match_lifecycle(state.match_lifecycle());
+    let (diplomacy, resource_trade_agreements) = encode_diplomacy(state.diplomacy());
     GameStateDto {
         revision: state.revision().get(),
         turn: state.turn(),
@@ -175,15 +173,8 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
             .iter()
             .map(encode_fog)
             .collect(),
-        diplomatic_contacts: state
-            .diplomacy()
-            .contacts()
-            .iter()
-            .map(|pair| PlayerPairDto {
-                first_player_id: pair.first().as_str().to_owned(),
-                second_player_id: pair.second().as_str().to_owned(),
-            })
-            .collect(),
+        diplomacy,
+        resource_trade_agreements,
         transport_network: state
             .transport_network()
             .segments()

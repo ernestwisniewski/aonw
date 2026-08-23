@@ -6,19 +6,23 @@ use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
     CityConquestActionDto, CityDto, CityProductionQueueDto, CityProductionTargetDto,
-    CityProjectTypeDto, CitySpecializationTypeDto, CoordinateDto, EconomyStateDto,
-    FieldImprovementDto, FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto,
-    GameModeDto, GameStateDto, InitialResourceDistributionDto, InitialResourcePlacementDto,
-    IntendedAttackDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto,
-    PaceProfileDto, ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto,
-    PlayerKindDto, PlayerPairDto, PlayerResearchStateDto, PlayerTurnStateDto, QueuedMovePathDto,
-    ResearchStateDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
+    CityProjectTypeDto, CitySpecializationTypeDto, CoordinateDto, DiplomacyStateDto,
+    DiplomaticMessageCategoryDto, DiplomaticMessageDto, DiplomaticMessageResponseDto,
+    DiplomaticMessageTopicDto, DiplomaticProposalDto, DiplomaticProposalKindDto,
+    DiplomaticRelationChangeReasonDto, DiplomaticRelationDto, DiplomaticRelationStatusDto,
+    DiplomaticScoreChangeReasonDto, DiplomaticScoreEntryDto, EconomyStateDto, FieldImprovementDto,
+    FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto, GameStateDto,
+    InitialResourceDistributionDto, InitialResourcePlacementDto, IntendedAttackDto,
+    InteractionStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto, PaceProfileDto,
+    ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto,
+    PlayerPairDto, PlayerResearchStateDto, PlayerTurnStateDto, QueuedMovePathDto, ResearchStateDto,
+    ResourceTradeAgreementDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
     TechnologyIdDto, TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto,
     TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
     UnitPostureDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto,
     WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
-use aonw_domain::{FogVisibility, HexCoord, UnitId};
+use aonw_domain::{FogVisibility, HexCoord, PlayerId, PlayerPair, UnitId};
 
 fn contract() -> GameStateDto {
     GameStateDto {
@@ -109,10 +113,8 @@ fn contract() -> GameStateDto {
             ],
             visible_hexes: vec![CoordinateDto { col: 1, row: 1 }],
         }],
-        diplomatic_contacts: vec![PlayerPairDto {
-            first_player_id: "player-1".to_owned(),
-            second_player_id: "player-2".to_owned(),
-        }],
+        diplomacy: diplomacy(),
+        resource_trade_agreements: resource_trade_agreements(),
         transport_network: vec![TransportSegmentDto {
             coordinate: CoordinateDto { col: 1, row: 1 },
             kind: TransportSegmentKindDto::Road,
@@ -163,6 +165,70 @@ fn intended_attacks() -> Vec<IntendedAttackDto> {
         declared_at_tick: 41,
         declaring_player_id: "player-1".to_owned(),
         city_conquest_action: CityConquestActionDto::Destroy,
+    }]
+}
+
+fn diplomacy() -> DiplomacyStateDto {
+    DiplomacyStateDto {
+        contacts: vec![PlayerPairDto {
+            first_player_id: "player-1".to_owned(),
+            second_player_id: "player-2".to_owned(),
+        }],
+        relations: vec![DiplomaticRelationDto {
+            player_a_id: "player-1".to_owned(),
+            player_b_id: "player-2".to_owned(),
+            status: DiplomaticRelationStatusDto::Truce,
+            relation_score: 12,
+            status_expires_on_turn: Some(20),
+            last_changed_turn: Some(3),
+            last_change_reason: Some(DiplomaticRelationChangeReasonDto::ProposalAccepted),
+        }],
+        pending_proposals: vec![DiplomaticProposalDto {
+            id: "proposal-1".to_owned(),
+            from_player_id: "player-1".to_owned(),
+            to_player_id: "player-2".to_owned(),
+            kind: DiplomaticProposalKindDto::Friendship,
+            created_turn: 3,
+            expires_on_turn: 8,
+            gold_payment: 0,
+        }],
+        messages: vec![DiplomaticMessageDto {
+            id: "message-1".to_owned(),
+            from_player_id: "player-2".to_owned(),
+            to_player_id: "player-1".to_owned(),
+            topic: DiplomaticMessageTopicDto::BlockedRoutes,
+            category: DiplomaticMessageCategoryDto::Request,
+            created_turn: 3,
+            expires_on_turn: 8,
+            response: Some(DiplomaticMessageResponseDto::Conciliatory),
+            responded_turn: Some(4),
+            relation_score_delta: 12,
+            relation_score_after: Some(24),
+            promise_due_turn: Some(7),
+            promise_broken: false,
+        }],
+        score_history: vec![DiplomaticScoreEntryDto {
+            player_a_id: "player-1".to_owned(),
+            player_b_id: "player-2".to_owned(),
+            turn: 4,
+            delta: 12,
+            score_after: 24,
+            reason: DiplomaticScoreChangeReasonDto::MessageResponse,
+            source_id: Some("message-1".to_owned()),
+        }],
+    }
+}
+
+fn resource_trade_agreements() -> Vec<ResourceTradeAgreementDto> {
+    vec![ResourceTradeAgreementDto {
+        id: "trade-1".to_owned(),
+        exporter_player_id: "player-2".to_owned(),
+        importer_player_id: "player-1".to_owned(),
+        resource: ResourceTypeDto::Horses,
+        gold_per_turn: 3,
+        remaining_turns: 5,
+        amount_per_turn: 2,
+        exchange_group_id: Some("exchange-1".to_owned()),
     }]
 }
 
@@ -482,6 +548,21 @@ fn json_round_trip_remains_strict_and_domain_validated() {
 }
 
 #[test]
+fn merging_contacts_preserves_complete_diplomacy_state() {
+    let state = decode_game_state(contract()).expect("decode complete diplomacy");
+    let existing_contact = PlayerPair::new(
+        PlayerId::new("player-1").expect("player id"),
+        PlayerId::new("player-2").expect("player id"),
+    )
+    .expect("contact pair");
+
+    assert_eq!(
+        &state.diplomacy().merging([existing_contact]),
+        state.diplomacy()
+    );
+}
+
+#[test]
 fn current_turn_skip_round_trip_preserves_restore_balance() {
     let mut source = contract();
     let unit = &mut source.units[0];
@@ -541,6 +622,182 @@ fn lifecycle_rejects_unknown_duplicates_and_non_utc_time_with_paths() {
             .expect_err("non-UTC time")
             .path(),
         "$.turnLifecycle.turnStartedAt"
+    );
+}
+
+#[test]
+fn diplomacy_rejects_invalid_contacts_and_relationships_with_paths() {
+    let mut unknown = contract();
+    unknown.diplomacy.contacts[0].second_player_id = "player-3".to_owned();
+    assert_eq!(
+        decode_game_state(unknown)
+            .expect_err("unknown contact player")
+            .path(),
+        "$.diplomacy.contacts[0].secondPlayerId"
+    );
+
+    let mut self_contact = contract();
+    self_contact.diplomacy.contacts[0].second_player_id = "player-1".to_owned();
+    assert_eq!(
+        decode_game_state(self_contact)
+            .expect_err("self contact")
+            .path(),
+        "$.diplomacy.contacts[0]"
+    );
+
+    let mut duplicate_contact = contract();
+    duplicate_contact
+        .diplomacy
+        .contacts
+        .push(duplicate_contact.diplomacy.contacts[0].clone());
+    assert_eq!(
+        decode_game_state(duplicate_contact)
+            .expect_err("duplicate contact")
+            .path(),
+        "$.diplomacy.contacts"
+    );
+
+    let mut score = contract();
+    score.diplomacy.relations[0].relation_score = 101;
+    assert_eq!(
+        decode_game_state(score)
+            .expect_err("relation score outside bounds")
+            .path(),
+        "$.diplomacy.relations[0].relationScore"
+    );
+
+    let mut no_contact = contract();
+    no_contact.diplomacy.contacts.clear();
+    assert_eq!(
+        decode_game_state(no_contact)
+            .expect_err("relation without contact")
+            .path(),
+        "$.diplomacy"
+    );
+}
+
+#[test]
+fn diplomacy_rejects_invalid_proposals_messages_and_history_with_paths() {
+    let mut duplicate_proposal = contract();
+    duplicate_proposal
+        .diplomacy
+        .pending_proposals
+        .push(duplicate_proposal.diplomacy.pending_proposals[0].clone());
+    assert_eq!(
+        decode_game_state(duplicate_proposal)
+            .expect_err("duplicate proposal")
+            .path(),
+        "$.diplomacy.pendingProposals[1].id"
+    );
+
+    let mut invalid_proposal_turn = contract();
+    invalid_proposal_turn.diplomacy.pending_proposals[0].expires_on_turn = 3;
+    assert_eq!(
+        decode_game_state(invalid_proposal_turn)
+            .expect_err("invalid proposal turn range")
+            .path(),
+        "$.diplomacy.pendingProposals[0].expiresOnTurn"
+    );
+
+    let mut negative_payment = contract();
+    negative_payment.diplomacy.pending_proposals[0].gold_payment = -1;
+    assert_eq!(
+        decode_game_state(negative_payment)
+            .expect_err("negative proposal payment")
+            .path(),
+        "$.diplomacy.pendingProposals[0].goldPayment"
+    );
+
+    let mut category = contract();
+    category.diplomacy.messages[0].category = DiplomaticMessageCategoryDto::Threat;
+    assert_eq!(
+        decode_game_state(category)
+            .expect_err("message category mismatch")
+            .path(),
+        "$.diplomacy.messages[0].category"
+    );
+
+    let mut response = contract();
+    response.diplomacy.messages[0].responded_turn = None;
+    assert_eq!(
+        decode_game_state(response)
+            .expect_err("message response mismatch")
+            .path(),
+        "$.diplomacy.messages[0].respondedTurn"
+    );
+
+    let mut duplicate_message = contract();
+    duplicate_message
+        .diplomacy
+        .messages
+        .push(duplicate_message.diplomacy.messages[0].clone());
+    assert_eq!(
+        decode_game_state(duplicate_message)
+            .expect_err("duplicate message")
+            .path(),
+        "$.diplomacy.messages[1].id"
+    );
+
+    let mut duplicate_history = contract();
+    duplicate_history
+        .diplomacy
+        .score_history
+        .push(duplicate_history.diplomacy.score_history[0].clone());
+    assert_eq!(
+        decode_game_state(duplicate_history)
+            .expect_err("duplicate score history")
+            .path(),
+        "$.diplomacy.scoreHistory"
+    );
+}
+
+#[test]
+fn diplomacy_rejects_invalid_resource_trades_with_paths() {
+    let mut duplicate = contract();
+    duplicate
+        .resource_trade_agreements
+        .push(duplicate.resource_trade_agreements[0].clone());
+    assert_eq!(
+        decode_game_state(duplicate)
+            .expect_err("duplicate trade")
+            .path(),
+        "$.resourceTradeAgreements[1].id"
+    );
+
+    let mut negative_gold = contract();
+    negative_gold.resource_trade_agreements[0].gold_per_turn = -1;
+    assert_eq!(
+        decode_game_state(negative_gold)
+            .expect_err("negative trade gold")
+            .path(),
+        "$.resourceTradeAgreements[0].goldPerTurn"
+    );
+
+    let mut zero_duration = contract();
+    zero_duration.resource_trade_agreements[0].remaining_turns = 0;
+    assert_eq!(
+        decode_game_state(zero_duration)
+            .expect_err("zero trade duration")
+            .path(),
+        "$.resourceTradeAgreements[0].remainingTurns"
+    );
+
+    let mut zero_amount = contract();
+    zero_amount.resource_trade_agreements[0].amount_per_turn = 0;
+    assert_eq!(
+        decode_game_state(zero_amount)
+            .expect_err("zero trade amount")
+            .path(),
+        "$.resourceTradeAgreements[0].amountPerTurn"
+    );
+
+    let mut empty_group = contract();
+    empty_group.resource_trade_agreements[0].exchange_group_id = Some(String::new());
+    assert_eq!(
+        decode_game_state(empty_group)
+            .expect_err("empty exchange group")
+            .path(),
+        "$.resourceTradeAgreements[0].exchangeGroupId"
     );
 }
 

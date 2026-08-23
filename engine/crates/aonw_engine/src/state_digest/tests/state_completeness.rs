@@ -1,10 +1,13 @@
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
     CityBuildingTypeDto, CityConquestActionDto, CityProductionTargetDto, CityProjectTypeDto,
-    CitySpecializationTypeDto, FieldImprovementDto, FieldImprovementKindDto, GameModeDto,
-    GameStateDto, PaceProfileDto, PendingInteractionDto, PlayerCountryDto, PlayerTurnStateDto,
-    ResourceTypeDto, RuleValueDto, TechnologyIdDto, TransportConditionDto, UnitOccupancyPolicyDto,
-    WonderTypeDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    CitySpecializationTypeDto, DiplomaticMessageCategoryDto, DiplomaticMessageResponseDto,
+    DiplomaticMessageTopicDto, DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto,
+    DiplomaticRelationStatusDto, DiplomaticScoreChangeReasonDto, FieldImprovementDto,
+    FieldImprovementKindDto, GameModeDto, GameStateDto, PaceProfileDto, PendingInteractionDto,
+    PlayerCountryDto, PlayerTurnStateDto, ResourceTypeDto, RuleValueDto, TechnologyIdDto,
+    TransportConditionDto, UnitOccupancyPolicyDto, WonderTypeDto, WorldArtifactDto,
+    WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 use super::fixture::{complete_state_contract, coordinate};
@@ -53,6 +56,7 @@ fn digest_changes_with_every_canonical_state_section() {
     });
     assert_knowledge_digest_changes(&source);
     assert_combat_digest_changes(&source);
+    assert_diplomacy_digest_changes(&source);
     assert_digest_change(&source, "bounds", |candidate| {
         candidate.cols += 1;
     });
@@ -92,9 +96,6 @@ fn digest_changes_with_every_canonical_state_section() {
     assert_digest_change(&source, "fog", |candidate| {
         candidate.fog_of_war[0].visible_hexes.push(coordinate(0, 0));
     });
-    assert_digest_change(&source, "diplomacy", |candidate| {
-        candidate.diplomatic_contacts.clear();
-    });
     assert_digest_change(&source, "field improvement coordinate", |candidate| {
         candidate.field_improvements[0].coordinate = coordinate(1, 0);
     });
@@ -109,6 +110,136 @@ fn digest_changes_with_every_canonical_state_section() {
     });
     assert_digest_change(&source, "transport builder", |candidate| {
         candidate.transport_network[0].built_by_city_id = None;
+    });
+}
+
+fn assert_diplomacy_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "diplomacy empty", |candidate| {
+        candidate.diplomacy.contacts.clear();
+        candidate.diplomacy.relations.clear();
+        candidate.diplomacy.pending_proposals.clear();
+        candidate.diplomacy.messages.clear();
+        candidate.diplomacy.score_history.clear();
+        candidate.resource_trade_agreements.clear();
+    });
+    assert_relation_and_proposal_digest_changes(source);
+    assert_message_digest_changes(source);
+    assert_score_and_trade_digest_changes(source);
+}
+
+fn assert_relation_and_proposal_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "relation status", |candidate| {
+        candidate.diplomacy.relations[0].status = DiplomaticRelationStatusDto::War;
+    });
+    assert_digest_change(source, "relation score", |candidate| {
+        candidate.diplomacy.relations[0].relation_score += 1;
+    });
+    assert_digest_change(source, "relation expiry", |candidate| {
+        candidate.diplomacy.relations[0].status_expires_on_turn = Some(21);
+    });
+    assert_digest_change(source, "relation changed turn", |candidate| {
+        candidate.diplomacy.relations[0].last_changed_turn = Some(4);
+    });
+    assert_digest_change(source, "relation reason", |candidate| {
+        candidate.diplomacy.relations[0].last_change_reason =
+            Some(DiplomaticRelationChangeReasonDto::Manual);
+    });
+    assert_digest_change(source, "proposal id", |candidate| {
+        candidate.diplomacy.pending_proposals[0].id = "proposal-2".to_owned();
+    });
+    assert_digest_change(source, "proposal kind", |candidate| {
+        candidate.diplomacy.pending_proposals[0].kind = DiplomaticProposalKindDto::Truce;
+    });
+    assert_digest_change(source, "proposal created turn", |candidate| {
+        candidate.diplomacy.pending_proposals[0].created_turn = 2;
+    });
+    assert_digest_change(source, "proposal expiry", |candidate| {
+        candidate.diplomacy.pending_proposals[0].expires_on_turn = 9;
+    });
+    assert_digest_change(source, "proposal gold", |candidate| {
+        candidate.diplomacy.pending_proposals[0].gold_payment = 1;
+    });
+}
+
+fn assert_message_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "message id", |candidate| {
+        candidate.diplomacy.messages[0].id = "message-2".to_owned();
+    });
+    assert_digest_change(source, "message direction", |candidate| {
+        let message = &mut candidate.diplomacy.messages[0];
+        (message.from_player_id, message.to_player_id) =
+            (message.to_player_id.clone(), message.from_player_id.clone());
+    });
+    assert_digest_change(source, "message topic and category", |candidate| {
+        candidate.diplomacy.messages[0].topic = DiplomaticMessageTopicDto::PeacefulPraise;
+        candidate.diplomacy.messages[0].category = DiplomaticMessageCategoryDto::Praise;
+    });
+    assert_digest_change(source, "message creation", |candidate| {
+        candidate.diplomacy.messages[0].created_turn = 2;
+    });
+    assert_digest_change(source, "message expiry", |candidate| {
+        candidate.diplomacy.messages[0].expires_on_turn = 9;
+    });
+    assert_digest_change(source, "message response", |candidate| {
+        candidate.diplomacy.messages[0].response = Some(DiplomaticMessageResponseDto::Neutral);
+    });
+    assert_digest_change(source, "message response turn", |candidate| {
+        candidate.diplomacy.messages[0].responded_turn = Some(5);
+    });
+    assert_digest_change(source, "message score delta", |candidate| {
+        candidate.diplomacy.messages[0].relation_score_delta += 1;
+    });
+    assert_digest_change(source, "message score after", |candidate| {
+        candidate.diplomacy.messages[0].relation_score_after = Some(25);
+    });
+    assert_digest_change(source, "message promise due", |candidate| {
+        candidate.diplomacy.messages[0].promise_due_turn = Some(8);
+    });
+    assert_digest_change(source, "message promise broken", |candidate| {
+        candidate.diplomacy.messages[0].promise_broken = true;
+    });
+}
+
+fn assert_score_and_trade_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "score turn", |candidate| {
+        candidate.diplomacy.score_history[0].turn += 1;
+    });
+    assert_digest_change(source, "score delta", |candidate| {
+        candidate.diplomacy.score_history[0].delta += 1;
+    });
+    assert_digest_change(source, "score after", |candidate| {
+        candidate.diplomacy.score_history[0].score_after += 1;
+    });
+    assert_digest_change(source, "score reason", |candidate| {
+        candidate.diplomacy.score_history[0].reason = DiplomaticScoreChangeReasonDto::Manual;
+    });
+    assert_digest_change(source, "score source", |candidate| {
+        candidate.diplomacy.score_history[0].source_id = Some("manual-1".to_owned());
+    });
+    assert_digest_change(source, "trade id", |candidate| {
+        candidate.resource_trade_agreements[0].id = "trade-2".to_owned();
+    });
+    assert_digest_change(source, "trade direction", |candidate| {
+        let trade = &mut candidate.resource_trade_agreements[0];
+        (trade.exporter_player_id, trade.importer_player_id) = (
+            trade.importer_player_id.clone(),
+            trade.exporter_player_id.clone(),
+        );
+    });
+    assert_digest_change(source, "trade resource", |candidate| {
+        candidate.resource_trade_agreements[0].resource = ResourceTypeDto::Iron;
+    });
+    assert_digest_change(source, "trade gold", |candidate| {
+        candidate.resource_trade_agreements[0].gold_per_turn += 1;
+    });
+    assert_digest_change(source, "trade duration", |candidate| {
+        candidate.resource_trade_agreements[0].remaining_turns += 1;
+    });
+    assert_digest_change(source, "trade amount", |candidate| {
+        candidate.resource_trade_agreements[0].amount_per_turn += 1;
+    });
+    assert_digest_change(source, "trade group", |candidate| {
+        candidate.resource_trade_agreements[0].exchange_group_id = Some("exchange-2".to_owned());
     });
 }
 

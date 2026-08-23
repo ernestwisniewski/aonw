@@ -1,5 +1,5 @@
-use aonw_contracts::{PlayerFogDto, PlayerPairDto};
-use aonw_domain::{PlayerFog, PlayerId, PlayerPair};
+use aonw_contracts::PlayerFogDto;
+use aonw_domain::{PlayerFog, PlayerId};
 
 use super::error::GameStateMappingError;
 use super::value::{decode_coordinate, encode_coordinate};
@@ -34,28 +34,4 @@ pub(super) fn encode_fog(fog: &PlayerFog) -> PlayerFogDto {
             .map(encode_coordinate)
             .collect(),
     }
-}
-
-pub(super) fn decode_pair(
-    index: usize,
-    dto: PlayerPairDto,
-) -> Result<PlayerPair, GameStateMappingError> {
-    let first = PlayerId::new(dto.first_player_id).map_err(|error| {
-        GameStateMappingError::new(
-            format!("$.diplomaticContacts[{index}].firstPlayerId"),
-            error.to_string(),
-        )
-    })?;
-    let second = PlayerId::new(dto.second_player_id).map_err(|error| {
-        GameStateMappingError::new(
-            format!("$.diplomaticContacts[{index}].secondPlayerId"),
-            error.to_string(),
-        )
-    })?;
-    PlayerPair::new(first, second).ok_or_else(|| {
-        GameStateMappingError::new(
-            format!("$.diplomaticContacts[{index}]"),
-            "self-contact is invalid",
-        )
-    })
 }

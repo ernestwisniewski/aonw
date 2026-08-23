@@ -34,7 +34,12 @@ pub use city::{
     CityProjectType, CitySpecializationType, WonderType,
 };
 pub use combat::{CityConquestAction, CombatState, CombatStateValidationError, IntendedAttack};
-pub use diplomacy::{Diplomacy, PlayerPair};
+pub use diplomacy::{
+    Diplomacy, DiplomacyStateBuildError, DiplomaticMessage, DiplomaticMessageCategory,
+    DiplomaticMessageResponse, DiplomaticMessageTopic, DiplomaticProposal, DiplomaticProposalKind,
+    DiplomaticRelation, DiplomaticRelationChangeReason, DiplomaticRelationStatus,
+    DiplomaticScoreChangeReason, DiplomaticScoreEntry, PlayerPair, ResourceTradeAgreement,
+};
 pub use economy::{
     EconomyState, EconomyStateBuildError, InitialResourceDistribution, InitialResourcePlacement,
     ResourceType, StrategicResourceStockpile,
