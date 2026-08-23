@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aonw_flutter/features/map/application/game_session_state.dart';
 import 'package:aonw_flutter/features/map/application/map_controller.dart';
 import 'package:aonw_flutter/features/map/application/map_repository.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
@@ -18,19 +19,20 @@ void main() {
     addTearDown(controller.dispose);
 
     await controller.load();
-    expect(controller.state, isA<MapReadyState>());
+    expect(controller.state, isA<GameSessionReady>());
 
     controller.hover((col: 1, row: 1));
     controller.select((col: 2, row: 1));
     controller.toggleReference();
 
-    final ready = controller.state as MapReadyState;
+    final ready = controller.state as GameSessionReady;
+    expect(ready.recipient, same(ready.scene.player));
     expect(ready.interaction.hovered, (col: 1, row: 1));
     expect(ready.interaction.selected, (col: 2, row: 1));
     expect(ready.interaction.referenceVisible, isFalse);
 
     controller.select((col: 9, row: 9));
-    expect((controller.state as MapReadyState).interaction.selected, isNull);
+    expect((controller.state as GameSessionReady).interaction.selected, isNull);
   });
 
   test('exposes typed repository failure', () async {
@@ -43,7 +45,7 @@ void main() {
 
     await controller.load();
 
-    final failure = controller.state as MapFailureState;
+    final failure = controller.state as GameSessionFailure;
     expect(failure.code, 'invalid_map');
     expect(failure.message, 'Bad map');
   });
@@ -60,7 +62,7 @@ void main() {
     repository.requests[0].complete(testMapScene(mapId: 'old-map'));
     await firstLoad;
 
-    final ready = controller.state as MapReadyState;
+    final ready = controller.state as GameSessionReady;
     expect(ready.scene.map.mapId, 'new-map');
   });
 
@@ -86,7 +88,7 @@ void main() {
 
       await controller.load();
 
-      final failure = controller.state as MapFailureState;
+      final failure = controller.state as GameSessionFailure;
       expect(failure.message, 'The map could not be opened.');
       expect(diagnostics.single.code, 'invalid_map');
       expect(diagnostics.single.error, same(cause));
@@ -118,18 +120,18 @@ void main() {
       controller.select((col: 0, row: 0));
       await pumpEventQueue();
 
-      var ready = controller.state as MapReadyState;
+      var ready = controller.state as GameSessionReady;
       expect(ready.interaction.selectedUnitId, unit.id);
       expect(ready.interaction.reachable?.tileAt((col: 1, row: 0)), isNotNull);
 
       controller.select((col: 1, row: 0));
       await pumpEventQueue();
-      ready = controller.state as MapReadyState;
+      ready = controller.state as GameSessionReady;
       expect(ready.interaction.route?.destination, (col: 1, row: 0));
 
       controller.confirmMove();
       await pumpEventQueue();
-      ready = controller.state as MapReadyState;
+      ready = controller.state as GameSessionReady;
       expect(ready.scene.player.stamp.revision, 1);
       expect(ready.scene.player.units.single.coordinate, (col: 1, row: 0));
       expect(ready.interaction.selected, (col: 1, row: 0));
@@ -162,7 +164,7 @@ void main() {
       controller.confirmMove();
       await pumpEventQueue();
 
-      final ready = controller.state as MapReadyState;
+      final ready = controller.state as GameSessionReady;
       expect(ready.scene.player, same(scene.player));
       expect(
         ready.interaction.movementError,

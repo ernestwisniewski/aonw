@@ -2,36 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../read_model/map_scene.dart';
 import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
+import 'game_session_state.dart';
 import 'map_interaction_state.dart';
 import 'map_repository.dart';
-
-sealed class MapScreenState {
-  const MapScreenState();
-}
-
-final class MapLoadingState extends MapScreenState {
-  const MapLoadingState();
-}
-
-final class MapReadyState extends MapScreenState {
-  const MapReadyState({required this.scene, required this.interaction});
-
-  final MapScene scene;
-  final MapInteractionState interaction;
-
-  MapReadyState withInteraction(MapInteractionState value) =>
-      MapReadyState(scene: scene, interaction: value);
-}
-
-final class MapFailureState extends MapScreenState {
-  const MapFailureState({required this.code, required this.message});
-
-  final String code;
-  final String message;
-}
 
 typedef MapDiagnosticReporter =
     void Function(String code, Object error, StackTrace stackTrace);
@@ -54,23 +29,26 @@ final class MapController extends ChangeNotifier {
   final MapRepository _repository;
   final MapDiagnosticReporter _diagnosticReporter;
   final MapAssetPaths assets;
-  MapScreenState _state = const MapLoadingState();
+  GameSessionState _state = const GameSessionLoading();
   var _disposed = false;
   var _loadGeneration = 0;
   var _interactionGeneration = 0;
 
-  MapScreenState get state => _state;
+  GameSessionState get state => _state;
 
   Future<void> load() async {
     if (_disposed) return;
     final generation = ++_loadGeneration;
     _interactionGeneration += 1;
-    _setState(const MapLoadingState());
+    _setState(const GameSessionLoading());
     try {
       final scene = await _repository.load(assets);
       if (!_isCurrent(generation)) return;
       _setState(
-        MapReadyState(scene: scene, interaction: const MapInteractionState()),
+        GameSessionReady(
+          scene: scene,
+          interaction: const MapInteractionState(),
+        ),
       );
     } on MapLoadException catch (error, stackTrace) {
       if (!_isCurrent(generation)) return;
@@ -82,12 +60,12 @@ final class MapController extends ChangeNotifier {
           error.diagnosticStackTrace ?? stackTrace,
         );
       }
-      _setState(MapFailureState(code: error.code, message: error.message));
+      _setState(GameSessionFailure(code: error.code, message: error.message));
     } on Object catch (error, stackTrace) {
       if (!_isCurrent(generation)) return;
       _diagnosticReporter('unexpected_map_failure', error, stackTrace);
       _setState(
-        const MapFailureState(
+        const GameSessionFailure(
           code: 'unexpected_map_failure',
           message: 'The map could not be loaded.',
         ),
@@ -97,7 +75,7 @@ final class MapController extends ChangeNotifier {
 
   void hover(MapHexCoordinate? coordinate) {
     final current = _state;
-    if (current is! MapReadyState) return;
+    if (current is! GameSessionReady) return;
     final next = coordinate != null && current.scene.map.contains(coordinate)
         ? coordinate
         : null;
@@ -115,7 +93,7 @@ final class MapController extends ChangeNotifier {
 
   Future<void> _select(MapHexCoordinate? coordinate) async {
     final current = _state;
-    if (current is! MapReadyState || current.interaction.movementPending) {
+    if (current is! GameSessionReady || current.interaction.movementPending) {
       return;
     }
     final next = coordinate != null && current.scene.map.contains(coordinate)
@@ -127,7 +105,7 @@ final class MapController extends ChangeNotifier {
       return;
     }
 
-    final unit = current.scene.player.controlledUnitAt(next);
+    final unit = current.recipient.controlledUnitAt(next);
     if (unit != null) {
       await _selectControlledUnit(current, next, unit.id, generation);
       return;
@@ -143,7 +121,7 @@ final class MapController extends ChangeNotifier {
     _selectPlainHex(current, next);
   }
 
-  void _clearSelection(MapReadyState current) {
+  void _clearSelection(GameSessionReady current) {
     _setState(
       current.withInteraction(
         current.interaction.copyWith(
@@ -158,7 +136,7 @@ final class MapController extends ChangeNotifier {
     );
   }
 
-  void _selectPlainHex(MapReadyState current, MapHexCoordinate coordinate) {
+  void _selectPlainHex(GameSessionReady current, MapHexCoordinate coordinate) {
     _setState(
       current.withInteraction(
         current.interaction.copyWith(
@@ -174,7 +152,7 @@ final class MapController extends ChangeNotifier {
   }
 
   Future<void> _selectControlledUnit(
-    MapReadyState current,
+    GameSessionReady current,
     MapHexCoordinate coordinate,
     String unitId,
     int generation,
@@ -193,7 +171,7 @@ final class MapController extends ChangeNotifier {
     );
     try {
       final reachable = await _repository.reachable(
-        expectedRevision: current.scene.player.stamp.revision,
+        expectedRevision: current.recipient.stamp.revision,
         unitId: unitId,
       );
       final ready = _currentInteraction(generation);
@@ -214,7 +192,7 @@ final class MapController extends ChangeNotifier {
   }
 
   Future<void> _previewRoute(
-    MapReadyState current,
+    GameSessionReady current,
     MapHexCoordinate target,
     String unitId,
     int generation,
@@ -231,7 +209,7 @@ final class MapController extends ChangeNotifier {
     );
     try {
       final route = await _repository.routePlan(
-        expectedRevision: current.scene.player.stamp.revision,
+        expectedRevision: current.recipient.stamp.revision,
         unitId: unitId,
         target: target,
       );
@@ -255,7 +233,7 @@ final class MapController extends ChangeNotifier {
 
   Future<void> _confirmMove() async {
     final current = _state;
-    if (current is! MapReadyState || current.interaction.movementPending) {
+    if (current is! GameSessionReady || current.interaction.movementPending) {
       return;
     }
     final route = current.interaction.route;
@@ -272,7 +250,7 @@ final class MapController extends ChangeNotifier {
     );
     try {
       final result = await _repository.moveUnit(
-        expectedRevision: current.scene.player.stamp.revision,
+        expectedRevision: current.recipient.stamp.revision,
         unitId: unitId,
         target: route.target,
       );
@@ -288,7 +266,7 @@ final class MapController extends ChangeNotifier {
 
   void toggleReference() {
     final current = _state;
-    if (current is! MapReadyState) return;
+    if (current is! GameSessionReady) return;
     _setState(
       current.withInteraction(
         current.interaction.copyWith(
@@ -311,10 +289,10 @@ final class MapController extends ChangeNotifier {
   bool _isCurrent(int generation) =>
       !_disposed && generation == _loadGeneration;
 
-  MapReadyState? _currentInteraction(int generation) {
+  GameSessionReady? _currentInteraction(int generation) {
     if (_disposed || generation != _interactionGeneration) return null;
     final current = _state;
-    return current is MapReadyState ? current : null;
+    return current is GameSessionReady ? current : null;
   }
 
   void _handleMovementFailure(
@@ -360,15 +338,15 @@ final class MapController extends ChangeNotifier {
     );
   }
 
-  void _setState(MapScreenState value) {
+  void _setState(GameSessionState value) {
     if (_disposed) return;
     _state = value;
     notifyListeners();
   }
 }
 
-MapReadyState _moveResultState(
-  MapReadyState current,
+GameSessionReady _moveResultState(
+  GameSessionReady current,
   MoveUnitResultView result,
   String unitId,
   MapHexCoordinate routeDestination,
@@ -386,15 +364,16 @@ MapReadyState _moveResultState(
   for (final unit in player.units) {
     if (unit.id == unitId) movedCoordinate = unit.coordinate;
   }
-  return MapReadyState(
-    scene: current.scene.withPlayer(player),
-    interaction: current.interaction.copyWith(
-      selected: movedCoordinate,
-      clearSelectedUnit: true,
-      clearReachable: true,
-      clearRoute: true,
-      movementPending: false,
-      clearMovementError: true,
-    ),
-  );
+  return current
+      .withRecipient(player)
+      .withInteraction(
+        current.interaction.copyWith(
+          selected: movedCoordinate,
+          clearSelectedUnit: true,
+          clearReachable: true,
+          clearRoute: true,
+          movementPending: false,
+          clearMovementError: true,
+        ),
+      );
 }

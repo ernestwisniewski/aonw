@@ -8,7 +8,9 @@ fallback.
 
 The first vertical slice renders the canonical `aonw2_starter` map with
 `CustomPainter`/Canvas, the generated reference bundle, grid, hover, selection,
-pan, and zoom. The application exposes loading, ready, and typed failure states.
+pan, and zoom. `GameSessionState` exposes loading, ready, and typed failure
+states. Its ready state composes the recipient-safe Rust view with local map
+interaction while keeping both distinct.
 Composition lives under `lib/app/`; widgets do not construct FFI sessions or
 repositories. `AppComposition.production()` is the only production composition
 root: it creates one `RustMapRepository`, one owning `MapController`, and one
@@ -23,7 +25,7 @@ container or service locator is needed.
 | --- | --- | --- |
 | `lib/app` | Bootstrap, production composition, routing, lifecycle and process errors. Start at `bootstrap/run_aonw_app.dart`; wire adapters only in `composition/app_composition.dart`. | May compose features and infrastructure. Features never import `app`. |
 | `lib/design_system` | Brand tokens and accessible shared widgets. | Has no feature or Rust transport dependency. Feature-specific visuals stay in the feature. |
-| `lib/features/map` | Map/session ports, client read models, Rust adapter, interaction controller and rendering. | Application owns use cases, infrastructure maps the Rust protocol, presentation never evaluates game rules. |
+| `lib/features/map` | Map/session ports, `GameSessionState`, client read models, Rust adapter, interaction controller and rendering. Enter through `application/map_controller.dart`; the state contract lives beside it in `application/game_session_state.dart`. | Application owns use cases, infrastructure maps the Rust protocol, presentation never evaluates game rules. Session status is represented by closed state variants; recipient data and local interaction remain separate. |
 | `lib/features/settings` | Client-only preferences and their persistence. | Settings contain no gameplay state and do not depend on the map feature. |
 | `lib/l10n` | ARB catalogs, generated typed strings and locale helpers. | Edit ARB sources; never edit generated localization files manually. |
 

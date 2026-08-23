@@ -10,6 +10,7 @@ import '../../../../design_system/widgets/aonw_progress_indicator.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../settings/application/client_settings.dart';
 import '../../../settings/presentation/client_settings_scope.dart';
+import '../../application/game_session_state.dart';
 import '../../application/map_controller.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_scene.dart';
@@ -86,13 +87,13 @@ final class _MapScreenState extends State<MapScreen> {
     final state = widget.controller.state;
     final settings = ClientSettingsScope.settingsOf(context);
     return switch (state) {
-      MapLoadingState() => const _LoadingMap(),
-      MapFailureState(:final code, :final message) => _MapFailure(
+      GameSessionLoading() => const _LoadingMap(),
+      GameSessionFailure(:final code, :final message) => _MapFailure(
         code: code,
         message: message,
         retry: widget.controller.load,
       ),
-      MapReadyState(:final scene, :final interaction) => _ReadyMap(
+      GameSessionReady(:final scene, :final interaction) => _ReadyMap(
         scene: scene,
         interaction: interaction,
         controller: widget.controller,
@@ -111,7 +112,7 @@ final class _MapScreenState extends State<MapScreen> {
 
   void _handleInput(MapInputCommand command) {
     final state = widget.controller.state;
-    if (state is! MapReadyState) return;
+    if (state is! GameSessionReady) return;
     switch (command) {
       case MapInputCommand.activate:
         widget.controller.select(

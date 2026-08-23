@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aonw_flutter/features/map/application/game_session_state.dart';
 import 'package:aonw_flutter/features/map/application/map_controller.dart';
 import 'package:aonw_flutter/features/map/application/map_repository.dart';
 import 'package:aonw_flutter/features/map/presentation/camera/map_viewport_projection.dart';
@@ -78,7 +79,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('reference-toggle')));
     await tester.pump();
     expect(
-      (controller.state as MapReadyState).interaction.referenceVisible,
+      (controller.state as GameSessionReady).interaction.referenceVisible,
       isFalse,
     );
   });
@@ -146,7 +147,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('confirm-move')));
     await tester.pumpAndSettle();
 
-    final ready = controller.state as MapReadyState;
+    final ready = controller.state as GameSessionReady;
     expect(ready.scene.player.units.single.coordinate, (col: 1, row: 0));
     expect(find.byKey(const ValueKey('confirm-move')), findsNothing);
   });
@@ -296,13 +297,13 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.pump();
-    expect((controller.state as MapReadyState).interaction.hovered, (
+    expect((controller.state as GameSessionReady).interaction.hovered, (
       col: 0,
       row: 1,
     ));
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
-    expect((controller.state as MapReadyState).interaction.selected, (
+    expect((controller.state as GameSessionReady).interaction.selected, (
       col: 0,
       row: 1,
     ));
@@ -312,14 +313,14 @@ void main() {
     input.add(MapInputCommand.cursorUp);
     input.add(MapInputCommand.activate);
     await tester.pumpAndSettle();
-    final interaction = (controller.state as MapReadyState).interaction;
+    final interaction = (controller.state as GameSessionReady).interaction;
     expect(interaction.hovered, (col: 1, row: 0));
     expect(interaction.selected, (col: 1, row: 0));
 
     input.add(MapInputCommand.toggleReference);
     await tester.pump();
     expect(
-      (controller.state as MapReadyState).interaction.referenceVisible,
+      (controller.state as GameSessionReady).interaction.referenceVisible,
       isFalse,
     );
   });
