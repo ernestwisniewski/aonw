@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-22
-- Implementation: Complete
+- Implementation: Implemented
 
 ## Context
 
@@ -113,7 +113,7 @@ use it while retaining deterministic replayability and explicit migrations.
 
 - [ADR 0008: Rust engine ownership and strangler migration](0008-rust-engine-ownership-and-strangler-migration.md)
 - [ADR 0010: Terrain backend for Godot authoring](0010-terrain-backend-for-godot-authoring.md)
-- [Successor refactor plan](../../.codex/aonw-successor-refactor-plan.md)
+- [Rust engine migration](../rust-engine-migration.md)
 - [Godot Map Workbench](../../clients/aonw_godot/README.md)
 
 ## Rejected Alternatives

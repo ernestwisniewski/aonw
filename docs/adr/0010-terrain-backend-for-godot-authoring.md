@@ -129,7 +129,7 @@ translated/rotated/scaled reference draping, and picking on a deformed surface.
 - [ADR 0008: Rust engine ownership and strangler migration](0008-rust-engine-ownership-and-strangler-migration.md)
 - [ADR 0011: Logical map workbench and generation](0011-logical-map-workbench-and-generation.md)
 - [Godot client](../../clients/aonw_godot/README.md)
-- [Successor refactor plan](../../.codex/aonw-successor-refactor-plan.md)
+- [Rust engine migration](../rust-engine-migration.md)
 - [Terrain3D v1.0.2-stable](https://github.com/TokisanGames/Terrain3D/releases/tag/v1.0.2-stable)
 
 ## Rejected Alternatives

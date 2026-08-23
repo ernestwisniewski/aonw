@@ -48,7 +48,7 @@ Every successor checkpoint reports both current tree OIDs. A freeze exception up
 ## Related Decisions And Documentation
 
 - [ADR 0008: Rust engine ownership and strangler migration](0008-rust-engine-ownership-and-strangler-migration.md)
-- [Successor refactor plan](../../.codex/aonw-successor-refactor-plan.md)
+- [Rust engine migration](../rust-engine-migration.md)
 
 ## Rejected Alternatives
 
