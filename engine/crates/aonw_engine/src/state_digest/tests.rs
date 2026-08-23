@@ -51,7 +51,7 @@ fn digest_is_independent_of_entity_input_order() {
     assert_eq!(digest_state(&left), digest_state(&right));
     assert_eq!(
         digest_state(&left).to_string(),
-        "daec139cdfe2dd4d0b37e87ad346a7c6c6fb7c86919c0d78784e8a8e3f2f842f"
+        "9c130fc4fd2c19e7f1fd879a1c98e94ba24005a4da8e165d30f2fd92afdaee50"
     );
 }
 

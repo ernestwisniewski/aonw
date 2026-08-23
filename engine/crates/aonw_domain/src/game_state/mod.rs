@@ -1,9 +1,10 @@
 mod validation;
 
 use crate::{
-    ArtifactId, City, CityId, Diplomacy, EconomyState, EconomyStateBuildError, FogOfWar, HexCoord,
-    HexGridBounds, InteractionState, MatchLifecycle, PlayerId, StateRevision, TransportNetwork,
-    Unit, UnitId, WorldArtifact,
+    ArtifactId, City, CityId, Diplomacy, EconomyState, EconomyStateBuildError, FieldImprovement,
+    FogOfWar, HexCoord, HexGridBounds, InfrastructureState, InfrastructureValidationError,
+    InteractionState, MatchLifecycle, PlayerId, StateRevision, TransportNetwork, Unit, UnitId,
+    WorldArtifact,
 };
 use validation::{
     artifact_indices, city_indices, unit_indices, validate_artifacts, validate_environment,
@@ -63,8 +64,6 @@ pub enum GameStateBuildError {
         /// Coordinate outside aggregate bounds.
         position: HexCoord,
     },
-    /// A transport segment is outside the map.
-    TransportOutOfBounds(HexCoord),
     /// An artifact map coordinate is outside the map.
     ArtifactOutOfBounds {
         /// Artifact carrying the coordinate.
@@ -112,6 +111,8 @@ pub enum GameStateBuildError {
     InvalidTurnSkipState(UnitId),
     /// Economy data violates participant ownership or map topology.
     InvalidEconomy(EconomyStateBuildError),
+    /// Infrastructure data violates map or entity references.
+    InvalidInfrastructure(InfrastructureValidationError),
 }
 
 #[cfg(test)]
@@ -148,12 +149,6 @@ impl core::fmt::Display for GameStateBuildError {
             } => write!(
                 formatter,
                 "fog for {player_id} references ({}, {}) outside the map",
-                position.col(),
-                position.row()
-            ),
-            Self::TransportOutOfBounds(position) => write!(
-                formatter,
-                "transport segment at ({}, {}) is outside the map",
                 position.col(),
                 position.row()
             ),
@@ -213,6 +208,7 @@ impl core::fmt::Display for GameStateBuildError {
                 write!(formatter, "pending turn skip does not match unit {id}")
             }
             Self::InvalidEconomy(error) => error.fmt(formatter),
+            Self::InvalidInfrastructure(error) => error.fmt(formatter),
         }
     }
 }
@@ -237,7 +233,7 @@ pub struct GameState {
     interaction: InteractionState,
     fog_of_war: FogOfWar,
     diplomacy: Diplomacy,
-    transport_network: TransportNetwork,
+    infrastructure: InfrastructureState,
 }
 
 impl GameState {
@@ -300,7 +296,7 @@ impl GameState {
             interaction,
             fog_of_war,
             diplomacy,
-            transport_network,
+            InfrastructureState::from_transport(transport_network),
         )
     }
 
@@ -323,7 +319,7 @@ impl GameState {
         interaction: InteractionState,
         fog_of_war: FogOfWar,
         diplomacy: Diplomacy,
-        transport_network: TransportNetwork,
+        infrastructure: InfrastructureState,
     ) -> Result<Self, GameStateBuildError> {
         let units = units.into_iter().collect::<Vec<_>>();
         let unit_indices_by_id = unit_indices(bounds, occupancy_policy, &units)?;
@@ -333,7 +329,13 @@ impl GameState {
         let artifact_indices_by_id = artifact_indices(&artifacts)?;
         validate_artifacts(bounds, &units, &cities, &artifacts)?;
         validate_interaction(bounds, &units, &cities, &interaction)?;
-        validate_environment(bounds, &fog_of_war, &transport_network)?;
+        validate_environment(
+            bounds,
+            match_lifecycle.identity(),
+            &cities,
+            &fog_of_war,
+            &infrastructure,
+        )?;
         economy
             .validate_for(match_lifecycle.identity(), bounds)
             .map_err(GameStateBuildError::InvalidEconomy)?;
@@ -353,7 +355,7 @@ impl GameState {
             interaction,
             fog_of_war,
             diplomacy,
-            transport_network,
+            infrastructure,
         })
     }
 
@@ -420,7 +422,17 @@ impl GameState {
     /// Returns canonical transport infrastructure.
     #[must_use]
     pub const fn transport_network(&self) -> &TransportNetwork {
-        &self.transport_network
+        self.infrastructure.transport_network()
+    }
+    /// Returns complete economic and transport infrastructure.
+    #[must_use]
+    pub const fn infrastructure(&self) -> &InfrastructureState {
+        &self.infrastructure
+    }
+    /// Returns economic field improvements in contract order.
+    #[must_use]
+    pub const fn field_improvements(&self) -> &[FieldImprovement] {
+        self.infrastructure.field_improvements()
     }
     /// Finds a unit through the deterministic secondary index.
     #[must_use]
@@ -501,7 +513,7 @@ impl GameState {
             self.interaction,
             fog_of_war,
             diplomacy,
-            self.transport_network,
+            self.infrastructure,
         )
     }
 
@@ -546,7 +558,7 @@ impl GameState {
             interaction,
             self.fog_of_war,
             self.diplomacy,
-            self.transport_network,
+            self.infrastructure,
         )
     }
 }

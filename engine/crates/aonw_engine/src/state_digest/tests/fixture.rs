@@ -4,14 +4,15 @@ use aonw_contracts::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
     CityDto, CityFoundingDraftDto, CityFoundingJobDto, CityProductionQueueDto,
     CityProductionTargetDto, CitySpecializationTypeDto, CoordinateDto, EconomyStateDto,
-    FieldImprovementKindDto, GameModeDto, GameStateDto, InitialResourceDistributionDto,
-    InitialResourcePlacementDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
-    MerchantTradeRouteDto, MovementStepDto, ParticipantDto, PendingInteractionDto,
-    PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto, PlayerTurnStateDto,
-    QueuedMovePathDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
-    TransportConditionDto, TransportSegmentDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto,
-    UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WonderTypeDto, WorkerJobDto,
-    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto,
+    InitialResourceDistributionDto, InitialResourcePlacementDto, InteractionStateDto,
+    MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto, MovementStepDto, ParticipantDto,
+    PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
+    PlayerTurnStateDto, QueuedMovePathDto, ResourceTypeDto, RuleValueDto,
+    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
+    TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
+    UnitOccupancyPolicyDto, UnitPostureDto, WonderTypeDto, WorkerJobDto, WorldArtifactDto,
+    WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 pub(super) fn complete_state_contract() -> GameStateDto {
@@ -44,6 +45,11 @@ pub(super) fn complete_state_contract() -> GameStateDto {
                 },
             },
         ],
+        field_improvements: vec![FieldImprovementDto {
+            coordinate: coordinate(0, 1),
+            kind: FieldImprovementKindDto::Farm,
+            built_by_city_id: Some("city-1".to_owned()),
+        }],
         interaction: InteractionStateDto {
             city_founding_draft: Some(CityFoundingDraftDto {
                 unit_id: "unit-1".to_owned(),
@@ -68,6 +74,7 @@ pub(super) fn complete_state_contract() -> GameStateDto {
         }],
         transport_network: vec![TransportSegmentDto {
             coordinate: coordinate(1, 1),
+            kind: TransportSegmentKindDto::Road,
             condition: TransportConditionDto::Operational,
             built_by_player_id: "player-1".to_owned(),
             built_by_city_id: Some("city-1".to_owned()),

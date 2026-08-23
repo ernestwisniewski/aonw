@@ -15,6 +15,7 @@ mod game_state;
 mod hex_coord;
 mod hex_grid;
 mod identifier;
+mod infrastructure;
 mod interaction;
 mod match_lifecycle;
 mod movement_path;
@@ -40,6 +41,10 @@ pub use game_state::{GameState, GameStateBuildError, UnitOccupancyPolicy};
 pub use hex_coord::HexCoord;
 pub use hex_grid::{HexGridBounds, HexTileIndex};
 pub use identifier::{ArtifactId, CityId, IdentifierError, PlayerId, UnitId};
+pub use infrastructure::{
+    FieldImprovement, InfrastructureState, InfrastructureStateBuildError,
+    InfrastructureValidationError,
+};
 pub use interaction::{CityFoundingDraft, InteractionState, PendingInteraction};
 pub use match_lifecycle::{
     AiDifficulty, AiPersona, AiPlayer, AiStrategyId, GameLengthConfig, GameLengthKind, GameMode,
@@ -50,7 +55,7 @@ pub use match_lifecycle::{
 pub use movement_path::{MovementPathError, MovementStep, QueuedMovePath};
 pub use movement_units::MovementUnits;
 pub use shared::StateRevision;
-pub use transport::{TransportCondition, TransportNetwork, TransportSegment};
+pub use transport::{TransportCondition, TransportKind, TransportNetwork, TransportSegment};
 pub use unit::{
     ArmyTroop, CityFoundingJob, FieldImprovementKind, MerchantTradeRoute, TroopKind, Unit,
     UnitActivity, UnitBuildError, UnitBuilder, WorkerJob,

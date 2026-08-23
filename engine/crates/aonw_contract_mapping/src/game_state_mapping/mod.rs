@@ -2,6 +2,7 @@ mod artifact;
 mod city;
 mod economy;
 mod error;
+mod infrastructure;
 mod interaction;
 mod match_lifecycle;
 mod state;

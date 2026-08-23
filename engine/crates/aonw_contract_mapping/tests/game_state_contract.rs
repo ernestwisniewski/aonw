@@ -6,13 +6,14 @@ use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
     CityDto, CityProductionQueueDto, CityProductionTargetDto, CityProjectTypeDto,
-    CitySpecializationTypeDto, CoordinateDto, EconomyStateDto, GameLengthConfigDto,
-    GameLengthKindDto, GameModeDto, GameStateDto, InitialResourceDistributionDto,
-    InitialResourcePlacementDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
-    MovementStepDto, PaceProfileDto, ParticipantDto, PendingInteractionDto, PlayerCountryDto,
-    PlayerFogDto, PlayerKindDto, PlayerPairDto, PlayerTurnStateDto, QueuedMovePathDto,
-    ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto, TransportConditionDto,
-    TransportSegmentDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
+    CitySpecializationTypeDto, CoordinateDto, EconomyStateDto, FieldImprovementDto,
+    FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto, GameStateDto,
+    InitialResourceDistributionDto, InitialResourcePlacementDto, InteractionStateDto,
+    MatchIdentityDto, MatchRulesDto, MovementStepDto, PaceProfileDto, ParticipantDto,
+    PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
+    PlayerTurnStateDto, QueuedMovePathDto, ResourceTypeDto, RuleValueDto,
+    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
+    TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
     UnitOccupancyPolicyDto, UnitPostureDto, VictoryRulesDto, WonderTypeDto, WorkerJobDto,
     WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
@@ -94,6 +95,7 @@ fn contract() -> GameStateDto {
                 },
             },
         ],
+        field_improvements: field_improvements(),
         interaction: InteractionStateDto::default(),
         fog_of_war: vec![PlayerFogDto {
             player_id: "player-1".to_owned(),
@@ -109,11 +111,20 @@ fn contract() -> GameStateDto {
         }],
         transport_network: vec![TransportSegmentDto {
             coordinate: CoordinateDto { col: 1, row: 1 },
+            kind: TransportSegmentKindDto::Road,
             condition: TransportConditionDto::Operational,
             built_by_player_id: "player-1".to_owned(),
             built_by_city_id: Some("city-1".to_owned()),
         }],
     }
+}
+
+fn field_improvements() -> Vec<FieldImprovementDto> {
+    vec![FieldImprovementDto {
+        coordinate: CoordinateDto { col: 0, row: 1 },
+        kind: FieldImprovementKindDto::Farm,
+        built_by_city_id: Some("city-1".to_owned()),
+    }]
 }
 
 fn city() -> CityDto {
@@ -373,6 +384,37 @@ fn every_city_production_target_round_trips() {
 }
 
 #[test]
+fn every_field_improvement_kind_round_trips() {
+    let kinds = [
+        FieldImprovementKindDto::Farm,
+        FieldImprovementKindDto::RiverFarm,
+        FieldImprovementKindDto::Mine,
+        FieldImprovementKindDto::LumberMill,
+        FieldImprovementKindDto::Pasture,
+        FieldImprovementKindDto::Camp,
+        FieldImprovementKindDto::Quarry,
+        FieldImprovementKindDto::FishingBoats,
+        FieldImprovementKindDto::Orchard,
+        FieldImprovementKindDto::Plantation,
+        FieldImprovementKindDto::Vineyard,
+        FieldImprovementKindDto::TradingPost,
+        FieldImprovementKindDto::ProspectorCamp,
+        FieldImprovementKindDto::HorseRanch,
+        FieldImprovementKindDto::PearlDivers,
+        FieldImprovementKindDto::CoalShaft,
+        FieldImprovementKindDto::OilWell,
+        FieldImprovementKindDto::BauxiteMine,
+        FieldImprovementKindDto::UraniumMine,
+    ];
+    for kind in kinds {
+        let mut source = contract();
+        source.field_improvements[0].kind = kind;
+        let state = decode_game_state(source.clone()).expect("decode improvement kind");
+        assert_eq!(encode_game_state(&state), source);
+    }
+}
+
+#[test]
 fn json_round_trip_remains_strict_and_domain_validated() {
     let source = contract();
     let json = source.to_json().expect("encode json");
@@ -580,5 +622,55 @@ fn city_rejects_unknown_owners_duplicates_and_invalid_resource_allocations_with_
             .expect_err("out-of-bounds preferred expansion")
             .path(),
         "$.cities[0].preferredExpansionHex"
+    );
+}
+
+#[test]
+fn infrastructure_rejects_invalid_coordinates_references_and_duplicates_with_paths() {
+    let mut outside = contract();
+    outside.field_improvements[0].coordinate.col = 5;
+    assert_eq!(
+        decode_game_state(outside)
+            .expect_err("out-of-bounds improvement")
+            .path(),
+        "$.fieldImprovements[0].coordinate"
+    );
+
+    let mut missing_city = contract();
+    missing_city.field_improvements[0].built_by_city_id = Some("city-missing".to_owned());
+    assert_eq!(
+        decode_game_state(missing_city)
+            .expect_err("missing improvement city")
+            .path(),
+        "$.fieldImprovements[0].builtByCityId"
+    );
+
+    let mut duplicate = contract();
+    duplicate
+        .field_improvements
+        .push(duplicate.field_improvements[0].clone());
+    assert_eq!(
+        decode_game_state(duplicate)
+            .expect_err("duplicate improvement")
+            .path(),
+        "$.fieldImprovements"
+    );
+
+    let mut unknown_builder = contract();
+    unknown_builder.transport_network[0].built_by_player_id = "player-3".to_owned();
+    assert_eq!(
+        decode_game_state(unknown_builder)
+            .expect_err("unknown transport builder")
+            .path(),
+        "$.transportNetwork[0].builtByPlayerId"
+    );
+
+    let mut missing_transport_city = contract();
+    missing_transport_city.transport_network[0].built_by_city_id = Some("city-missing".to_owned());
+    assert_eq!(
+        decode_game_state(missing_transport_city)
+            .expect_err("missing transport city")
+            .path(),
+        "$.transportNetwork[0].builtByCityId"
     );
 }

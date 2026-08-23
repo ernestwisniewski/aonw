@@ -191,6 +191,15 @@ duplicate collections, worked-territory consistency, and resource-allocation
 invariants with field paths. All persisted city fields contribute to the state
 digest; current movement and unit-action transitions preserve them unchanged.
 
+Infrastructure is one validated domain component containing economic field
+improvements and the transport network. Field improvements preserve their
+contract order while a private coordinate index rejects duplicates and serves
+lookups; all 19 current improvement kinds, optional builder-city attribution,
+road identity, condition, builder player, and optional builder city round-trip.
+Mapping rejects coordinates outside the map and missing participant/city
+references with field paths. Digest ordering is coordinate-canonical, and both
+current transition families preserve the complete component unchanged.
+
 ## Movement foundation
 
 `GameState` is the canonical aggregate root for the implemented simulation

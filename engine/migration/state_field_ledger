@@ -32,7 +32,7 @@
 
 expected-fixture-count 120
 expected-envelope-count 10
-expected-envelope-field-count 68
+expected-envelope-field-count 69
 expected-domain-field-count 30
 expected-state-json-key-count 16
 expected-lifecycle-json-key-count 13
@@ -89,6 +89,7 @@ envelope-field rust-canonical-state occupancyPolicy canonical-rule-state
 envelope-field rust-canonical-state units canonical-rule-state
 envelope-field rust-canonical-state cities canonical-rule-state
 envelope-field rust-canonical-state artifacts canonical-rule-state
+envelope-field rust-canonical-state fieldImprovements canonical-rule-state
 envelope-field rust-canonical-state interaction canonical-rule-state
 envelope-field rust-canonical-state fogOfWar canonical-rule-state
 envelope-field rust-canonical-state diplomaticContacts canonical-rule-state-partial
@@ -153,7 +154,7 @@ domain-field initialResourceDistribution economy characterized economy
 domain-field units units characterized units
 domain-field cities cities characterized cities
 domain-field artifacts artifacts characterized artifacts
-domain-field fieldImprovements infrastructure reference-only -
+domain-field fieldImprovements infrastructure characterized fieldImprovements
 domain-field transportNetwork infrastructure characterized transportNetwork
 domain-field fogOfWar fog characterized fogOfWar
 domain-field research research reference-only -

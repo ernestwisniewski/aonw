@@ -1,6 +1,6 @@
 use crate::{
-    City, FogOfWar, HexGridBounds, InteractionState, PendingInteraction, TransportNetwork, Unit,
-    UnitPosture, WorldArtifact, WorldArtifactLocation,
+    City, FogOfWar, HexGridBounds, InfrastructureState, InteractionState, MatchIdentity,
+    PendingInteraction, Unit, UnitPosture, WorldArtifact, WorldArtifactLocation,
 };
 
 use super::{GameStateBuildError, UnitOccupancyPolicy};
@@ -255,8 +255,10 @@ pub(super) fn validate_interaction(
 
 pub(super) fn validate_environment(
     bounds: HexGridBounds,
+    identity: &MatchIdentity,
+    cities: &[City],
     fog_of_war: &FogOfWar,
-    transport_network: &TransportNetwork,
+    infrastructure: &InfrastructureState,
 ) -> Result<(), GameStateBuildError> {
     for player_fog in fog_of_war.players() {
         if let Some(position) = player_fog
@@ -270,15 +272,9 @@ pub(super) fn validate_environment(
             });
         }
     }
-    if let Some(segment) = transport_network
-        .segments()
-        .iter()
-        .find(|segment| !bounds.contains(segment.coordinate()))
-    {
-        return Err(GameStateBuildError::TransportOutOfBounds(
-            segment.coordinate(),
-        ));
-    }
+    infrastructure
+        .validate_for(bounds, identity, cities)
+        .map_err(GameStateBuildError::InvalidInfrastructure)?;
     Ok(())
 }
 

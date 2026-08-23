@@ -1,5 +1,12 @@
 use crate::{CityId, HexCoord, PlayerId};
 
+/// Persisted transport segment identity.
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TransportKind {
+    Road,
+}
+
 /// Current condition of a road.
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -12,6 +19,7 @@ pub enum TransportCondition {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TransportSegment {
     coordinate: HexCoord,
+    kind: TransportKind,
     condition: TransportCondition,
     built_by_player_id: PlayerId,
     built_by_city_id: Option<CityId>,
@@ -28,6 +36,7 @@ impl TransportSegment {
     ) -> Self {
         Self {
             coordinate,
+            kind: TransportKind::Road,
             condition,
             built_by_player_id,
             built_by_city_id,
@@ -38,6 +47,12 @@ impl TransportSegment {
     #[must_use]
     pub const fn coordinate(&self) -> HexCoord {
         self.coordinate
+    }
+
+    /// Returns the persisted transport segment identity.
+    #[must_use]
+    pub const fn kind(&self) -> TransportKind {
+        self.kind
     }
 
     /// Returns whether the road can reduce movement cost.

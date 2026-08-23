@@ -2,12 +2,13 @@ use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
     CityBuildingTypeDto, CityDto, CityProductionQueueDto, CitySpecializationTypeDto, CoordinateDto,
-    EconomyStateDto, GameModeDto, GameStateDto, InitialResourceDistributionDto,
-    InteractionStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto, ParticipantDto,
-    PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto,
-    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto, TurnLifecycleDto,
-    UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WonderTypeDto,
-    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    EconomyStateDto, FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto,
+    InitialResourceDistributionDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
+    MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
+    QueuedMovePathDto, StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
+    TransportSegmentKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
+    UnitOccupancyPolicyDto, UnitPostureDto, WonderTypeDto, WorldArtifactDto,
+    WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{HexCoord, HexGridBounds, MovementUnits, UnitId};
 use aonw_testkit::{FixtureInput, JsonObject};
@@ -99,6 +100,7 @@ pub(super) fn decode_state(
     }
     let cities = decode_cities(input.state(), bounds)?;
     let artifacts = decode_referenced_artifacts(input.state(), &units)?;
+    let field_improvements = decode_field_improvements(input.state(), bounds)?;
     let interaction = decode_interaction(input.state())?;
     let fog_of_war = required_array(input.state(), "fogOfWar")?
         .iter()
@@ -125,6 +127,7 @@ pub(super) fn decode_state(
         units,
         cities,
         artifacts,
+        field_improvements,
         interaction,
         fog_of_war,
         diplomatic_contacts,
@@ -134,6 +137,41 @@ pub(super) fn decode_state(
         .map(Box::new)
         .map(DecodedState::Valid)
         .map_err(display_error)
+}
+
+fn decode_field_improvements(
+    state: &JsonObject,
+    bounds: HexGridBounds,
+) -> Result<Vec<FieldImprovementDto>, AdapterError> {
+    required_array(state, "fieldImprovements")?
+        .iter()
+        .enumerate()
+        .filter_map(|(index, value)| {
+            let path = format!("input.state.fieldImprovements[{index}]");
+            let decoded = (|| {
+                let object = object_at(value, &path)?;
+                let hex_path = format!("{path}.hex");
+                let coordinate = object
+                    .get("hex")
+                    .ok_or_else(|| error(format!("{hex_path} is required")))
+                    .and_then(|value| object_at(value, &hex_path))
+                    .and_then(|value| coordinate_fields(value, &hex_path))?;
+                if !bounds.contains(coordinate) {
+                    return Ok(None);
+                }
+                let kind = serde_json::from_value::<FieldImprovementKindDto>(Value::String(
+                    required_string_at(object, "type", &path)?.to_owned(),
+                ))
+                .map_err(display_error)?;
+                Ok(Some(FieldImprovementDto {
+                    coordinate: coordinate_dto(coordinate),
+                    kind,
+                    built_by_city_id: optional_string(object, "builtByCityId")?,
+                }))
+            })();
+            decoded.transpose()
+        })
+        .collect()
 }
 
 fn decode_economy(state: &JsonObject) -> Result<EconomyStateDto, AdapterError> {
@@ -704,6 +742,7 @@ fn decode_transport(value: &Value, path: &str) -> Result<TransportSegmentDto, Ad
     };
     Ok(TransportSegmentDto {
         coordinate: coordinate_dto(coordinate_fields(object, path)?),
+        kind: TransportSegmentKindDto::Road,
         condition,
         built_by_player_id: required_string_at(object, "builtByPlayerId", path)?.to_owned(),
         built_by_city_id: optional_string(object, "builtByCityId")?,
@@ -712,10 +751,11 @@ fn decode_transport(value: &Value, path: &str) -> Result<TransportSegmentDto, Ad
 
 #[cfg(test)]
 mod tests {
-    use aonw_contracts::ResourceTypeDto;
+    use aonw_contracts::{FieldImprovementKindDto, ResourceTypeDto};
+    use aonw_domain::HexGridBounds;
     use serde_json::json;
 
-    use super::decode_economy;
+    use super::{decode_economy, decode_field_improvements};
 
     #[test]
     fn legacy_economy_adapter_uses_placements_without_internal_generator_version() {
@@ -743,5 +783,31 @@ mod tests {
             economy.initial_resource_distribution.placements[0].resource,
             ResourceTypeDto::Wheat
         );
+    }
+
+    #[test]
+    fn legacy_infrastructure_adapter_reads_complete_in_bounds_improvements() {
+        let source = json!({
+            "fieldImprovements": [
+                {
+                    "hex": {"col": 1, "row": 2},
+                    "type": "oilWell",
+                    "builtByCityId": "city-1"
+                },
+                {
+                    "hex": {"col": 99, "row": 99},
+                    "type": "farm"
+                }
+            ]
+        });
+        let improvements = decode_field_improvements(
+            source.as_object().expect("state object"),
+            HexGridBounds::new(3, 3).expect("bounds"),
+        )
+        .expect("decode improvements");
+
+        assert_eq!(improvements.len(), 1);
+        assert_eq!(improvements[0].kind, FieldImprovementKindDto::OilWell);
+        assert_eq!(improvements[0].built_by_city_id.as_deref(), Some("city-1"));
     }
 }

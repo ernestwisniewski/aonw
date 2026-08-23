@@ -1,10 +1,10 @@
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
     CityBuildingTypeDto, CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto,
-    GameModeDto, GameStateDto, PaceProfileDto, PendingInteractionDto, PlayerCountryDto,
-    PlayerTurnStateDto, ResourceTypeDto, RuleValueDto, TransportConditionDto,
-    UnitOccupancyPolicyDto, WonderTypeDto, WorldArtifactDto, WorldArtifactLocationDto,
-    WorldArtifactTypeDto,
+    FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto, PaceProfileDto,
+    PendingInteractionDto, PlayerCountryDto, PlayerTurnStateDto, ResourceTypeDto, RuleValueDto,
+    TransportConditionDto, UnitOccupancyPolicyDto, WonderTypeDto, WorldArtifactDto,
+    WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 use super::fixture::{complete_state_contract, coordinate};
@@ -93,12 +93,35 @@ fn digest_changes_with_every_canonical_state_section() {
     assert_digest_change(&source, "diplomacy", |candidate| {
         candidate.diplomatic_contacts.clear();
     });
+    assert_digest_change(&source, "field improvement coordinate", |candidate| {
+        candidate.field_improvements[0].coordinate = coordinate(1, 0);
+    });
+    assert_digest_change(&source, "field improvement kind", |candidate| {
+        candidate.field_improvements[0].kind = FieldImprovementKindDto::Mine;
+    });
+    assert_digest_change(&source, "field improvement builder", |candidate| {
+        candidate.field_improvements[0].built_by_city_id = None;
+    });
     assert_digest_change(&source, "transport condition", |candidate| {
         candidate.transport_network[0].condition = TransportConditionDto::Pillaged;
     });
     assert_digest_change(&source, "transport builder", |candidate| {
         candidate.transport_network[0].built_by_city_id = None;
     });
+}
+
+#[test]
+fn field_improvement_digest_uses_coordinate_canonical_order() {
+    let mut left = complete_state_contract();
+    left.field_improvements.push(FieldImprovementDto {
+        coordinate: coordinate(2, 2),
+        kind: FieldImprovementKindDto::Mine,
+        built_by_city_id: None,
+    });
+    let mut right = left.clone();
+    right.field_improvements.reverse();
+
+    assert_eq!(contract_digest(&left), contract_digest(&right));
 }
 
 #[test]

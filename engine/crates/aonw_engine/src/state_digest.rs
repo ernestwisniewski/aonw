@@ -1,15 +1,17 @@
 use aonw_domain::{
-    FieldImprovementKind, GameState, InteractionState, PendingInteraction, TransportCondition,
-    TroopKind, Unit, UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob,
-    WorldArtifact, WorldArtifactLocation, WorldArtifactType,
+    FieldImprovementKind, GameState, InteractionState, PendingInteraction, TroopKind, Unit,
+    UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob, WorldArtifact,
+    WorldArtifactLocation, WorldArtifactType,
 };
 mod city;
 mod economy;
+mod infrastructure;
 mod match_lifecycle;
 mod writer;
 
 use city::hash_city;
 use economy::hash_economy;
+use infrastructure::hash_infrastructure;
 use match_lifecycle::hash_match_lifecycle;
 use writer::DigestWriter;
 
@@ -83,16 +85,7 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
         writer.text(pair.second().as_str());
     }
 
-    writer.usize(state.transport_network().segments().len());
-    for segment in state.transport_network().segments() {
-        writer.coordinate(segment.coordinate());
-        writer.u8(match segment.condition() {
-            TransportCondition::Operational => 0,
-            TransportCondition::Pillaged => 1,
-        });
-        writer.text(segment.built_by_player_id().as_str());
-        writer.optional_text(segment.built_by_city_id().map(aonw_domain::CityId::as_str));
-    }
+    hash_infrastructure(&mut writer, state.infrastructure());
     StateDigest(writer.finish())
 }
 

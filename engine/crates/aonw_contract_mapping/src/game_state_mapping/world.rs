@@ -1,5 +1,5 @@
-use aonw_contracts::{PlayerFogDto, PlayerPairDto, TransportConditionDto, TransportSegmentDto};
-use aonw_domain::{CityId, PlayerFog, PlayerId, PlayerPair, TransportCondition, TransportSegment};
+use aonw_contracts::{PlayerFogDto, PlayerPairDto};
+use aonw_domain::{PlayerFog, PlayerId, PlayerPair};
 
 use super::error::GameStateMappingError;
 use super::value::{decode_coordinate, encode_coordinate};
@@ -58,39 +58,4 @@ pub(super) fn decode_pair(
             "self-contact is invalid",
         )
     })
-}
-
-pub(super) fn decode_transport(
-    index: usize,
-    dto: TransportSegmentDto,
-) -> Result<TransportSegment, GameStateMappingError> {
-    let path = format!("$.transportNetwork[{index}]");
-    Ok(TransportSegment::road(
-        decode_coordinate(dto.coordinate),
-        match dto.condition {
-            TransportConditionDto::Operational => TransportCondition::Operational,
-            TransportConditionDto::Pillaged => TransportCondition::Pillaged,
-        },
-        PlayerId::new(dto.built_by_player_id).map_err(|error| {
-            GameStateMappingError::new(format!("{path}.builtByPlayerId"), error.to_string())
-        })?,
-        dto.built_by_city_id
-            .map(CityId::new)
-            .transpose()
-            .map_err(|error| {
-                GameStateMappingError::new(format!("{path}.builtByCityId"), error.to_string())
-            })?,
-    ))
-}
-
-pub(super) fn encode_transport(segment: &TransportSegment) -> TransportSegmentDto {
-    TransportSegmentDto {
-        coordinate: encode_coordinate(segment.coordinate()),
-        condition: match segment.condition() {
-            TransportCondition::Operational => TransportConditionDto::Operational,
-            TransportCondition::Pillaged => TransportConditionDto::Pillaged,
-        },
-        built_by_player_id: segment.built_by_player_id().as_str().to_owned(),
-        built_by_city_id: segment.built_by_city_id().map(|id| id.as_str().to_owned()),
-    }
 }

@@ -2,18 +2,21 @@ use aonw_contracts::{
     GameStateDto, MAX_GAME_STATE_UNIT_COUNT, PlayerPairDto, UnitOccupancyPolicyDto,
 };
 use aonw_domain::{
-    Diplomacy, FogOfWar, GameState, HexGridBounds, StateRevision, TransportNetwork,
-    UnitOccupancyPolicy,
+    Diplomacy, FogOfWar, GameState, HexGridBounds, InfrastructureState, StateRevision,
+    TransportNetwork, UnitOccupancyPolicy,
 };
 
 use super::artifact::{decode_artifact, encode_artifact};
 use super::city::{decode_city, encode_city};
 use super::economy::{decode_economy, encode_economy};
 use super::error::GameStateMappingError;
+use super::infrastructure::{
+    decode_field_improvement, decode_transport, encode_field_improvement, encode_transport,
+};
 use super::interaction::{decode_interaction, encode_interaction};
 use super::match_lifecycle::{decode_match_lifecycle, encode_match_lifecycle};
 use super::unit::{decode_unit, encode_unit};
-use super::world::{decode_fog, decode_pair, decode_transport, encode_fog, encode_transport};
+use super::world::{decode_fog, decode_pair, encode_fog};
 
 /// Validates and maps a complete game-state DTO.
 ///
@@ -52,6 +55,12 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         .enumerate()
         .map(|(index, artifact)| decode_artifact(index, artifact))
         .collect::<Result<Vec<_>, _>>()?;
+    let field_improvements = dto
+        .field_improvements
+        .into_iter()
+        .enumerate()
+        .map(|(index, improvement)| decode_field_improvement(index, bounds, &cities, improvement))
+        .collect::<Result<Vec<_>, _>>()?;
     let interaction = decode_interaction(dto.interaction)?;
     let fog = FogOfWar::try_new(
         dto.fog_of_war
@@ -74,7 +83,9 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         dto.transport_network
             .into_iter()
             .enumerate()
-            .map(|(index, segment)| decode_transport(index, segment))
+            .map(|(index, segment)| {
+                decode_transport(index, match_lifecycle.identity(), bounds, &cities, segment)
+            })
             .collect::<Result<Vec<_>, _>>()?,
     )
     .map_err(|coordinate| {
@@ -87,6 +98,8 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
             ),
         )
     })?;
+    let infrastructure = InfrastructureState::try_new(field_improvements, transport)
+        .map_err(|error| GameStateMappingError::new("$.fieldImprovements", error.to_string()))?;
     GameState::try_new_with_world_and_state_sections(
         StateRevision::new(dto.revision),
         dto.turn,
@@ -103,7 +116,7 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         interaction,
         fog,
         diplomacy,
-        transport,
+        infrastructure,
     )
     .map_err(|error| GameStateMappingError::new("$", error.to_string()))
 }
@@ -127,6 +140,11 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
         units: state.units().iter().map(encode_unit).collect(),
         cities: state.cities().iter().map(encode_city).collect(),
         artifacts: state.artifacts().iter().map(encode_artifact).collect(),
+        field_improvements: state
+            .field_improvements()
+            .iter()
+            .map(encode_field_improvement)
+            .collect(),
         interaction: encode_interaction(state.interaction()),
         fog_of_war: state
             .fog_of_war()
