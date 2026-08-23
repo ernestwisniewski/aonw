@@ -145,6 +145,40 @@ func refresh_generated_artifact(next_artifact: AonwTerrainCompiledArtifact) -> D
 	_space = TerrainSpaceTransform.new(next_artifact)
 	return {"ok": true, "manual_final_preserved": true}
 
+func rescale_generated_artifact(next_artifact: AonwTerrainCompiledArtifact) -> Dictionary:
+	if next_artifact.map_content_hash != _artifact.map_content_hash:
+		return _failure("generated terrain belongs to a different logical map revision")
+	if not _has_same_raster(next_artifact):
+		return _failure(
+			"generated terrain grid changed; migrate final terrain explicitly before rescale"
+		)
+	var changed := 0
+	_internal_edit = true
+	for y in _artifact.height:
+		for x in _artifact.width:
+			var pixel := Vector2i(x, y)
+			var previous := height_at(pixel)
+			var manual_delta := previous - _artifact.base_image.get_pixelv(pixel).r
+			var next := next_artifact.clamp_height(
+				pixel,
+				next_artifact.base_image.get_pixelv(pixel).r + manual_delta,
+			)
+			if is_equal_approx(previous, next):
+				continue
+			_data.set_height(_space.raster_pixel_to_terrain_local(pixel), next)
+			changed += 1
+	_internal_edit = false
+	_artifact = next_artifact
+	_space = TerrainSpaceTransform.new(next_artifact)
+	if changed > 0:
+		_terrain_revision += 1
+		terrain_changed.emit(next_artifact.raster_rect())
+	return {
+		"ok": true,
+		"manual_delta_preserved": true,
+		"rescaled_pixels": changed,
+	}
+
 func migrate_logical_map_artifact(next_artifact: AonwTerrainCompiledArtifact) -> Dictionary:
 	if next_artifact.map_id != _artifact.map_id:
 		return _failure("generated terrain belongs to a different map")

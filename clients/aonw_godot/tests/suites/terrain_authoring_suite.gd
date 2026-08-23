@@ -7,6 +7,9 @@ const AuthoringStore := preload(
 const CompositionRoot := preload(
 	"res://editor/map_authoring/composition/map_authoring_composition_root.gd"
 )
+const MapAssetCatalog := preload(
+	"res://editor/map_authoring/infrastructure/map_asset_catalog.gd"
+)
 const TerrainSpaceTransform := preload(
 	"res://game/application/terrain/terrain_space_transform.gd"
 )
@@ -15,6 +18,9 @@ const AuthoringSession := preload(
 )
 const MemoryPersistence := preload(
 	"res://tests/doubles/memory_terrain_authoring_persistence.gd"
+)
+const MapWorkbenchView := preload(
+	"res://editor/map_authoring/presentation/map_workbench_view.gd"
 )
 
 var _failures: Array[String]
@@ -33,12 +39,84 @@ func run(failures: Array[String]) -> void:
 	_camera = Camera3D.new()
 	_camera.position = Vector3(40.0, 100.0, 40.0)
 	Engine.get_main_loop().root.add_child(_camera)
+	_camera.current = true
+	await _test_workbench_sections_are_scrollable()
+	await _test_every_content_map_opens_its_own_terrain()
 	_test_authoring_scene_is_isolated_from_runtime_preview()
 	var generation := _generate_scene()
 	_check(generation["ok"], "Terrain3D authoring scene is generated")
 	if generation["ok"]:
 		await _test_authoring_session(generation["scene_path"])
 	_camera.free()
+
+func _test_workbench_sections_are_scrollable() -> void:
+	var view := MapWorkbenchView.new()
+	view._build_interface()
+	Engine.get_main_loop().root.add_child(view)
+	await Engine.get_main_loop().process_frame
+	_check(view._sections.get_tab_count() == 3, "map workbench separates its three workflows")
+	var tab_names: Array[String] = []
+	var all_scrollable := true
+	for child in view._sections.get_children():
+		tab_names.append(child.name)
+		all_scrollable = all_scrollable and child is ScrollContainer
+	_check(
+		all_scrollable
+		and tab_names == ["New Map", "Logical Map", "Terrain3D"],
+		"New Map, Logical Map and Terrain3D use independent scrollable sections",
+	)
+	view.queue_free()
+	await Engine.get_main_loop().process_frame
+
+func _test_every_content_map_opens_its_own_terrain() -> void:
+	var composition := CompositionRoot.new(
+		_test_root.path_join("all_maps/scenes"),
+		_test_root.path_join("all_maps/assets"),
+		"res://.godot/terrain_compiled",
+	)
+	var opened: Array[String] = []
+	var content_map_count := 0
+	for source in MapAssetCatalog.new().discover():
+		if source.origin != "content":
+			continue
+		content_map_count += 1
+		var generated := composition.generator().execute(source)
+		_check(generated["ok"], "%s Terrain3D scene can be prepared" % source.map_id)
+		if not generated["ok"]:
+			continue
+		var packed := ResourceLoader.load(
+			generated["scene_path"],
+			"PackedScene",
+			ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+		) as PackedScene
+		_check(packed != null, "%s Terrain3D scene can be loaded" % source.map_id)
+		if packed == null:
+			continue
+		var root := packed.instantiate()
+		var surface := root.find_child(
+			"TerrainAuthoring", true, false
+		) as AonwTerrainAuthoringSurface
+		_check(surface != null, "%s has a Terrain3D authoring surface" % source.map_id)
+		if surface == null:
+			root.free()
+			continue
+		Engine.get_main_loop().root.add_child(root)
+		surface.terrain().set_camera(_camera)
+		var result: Dictionary = await composition.open_surface(surface)
+		_check(
+			result["ok"]
+			and surface.source_map_id == source.map_id
+			and surface.artifact().map_id == source.map_id,
+			"%s opens only its own logical map and Terrain3D artifact" % source.map_id,
+		)
+		if result["ok"]:
+			opened.append(source.map_id)
+		root.queue_free()
+		await Engine.get_main_loop().process_frame
+	_check(
+		content_map_count >= 5 and opened.size() == content_map_count,
+		"every canonical map opens for Terrain3D authoring",
+	)
 
 func _test_authoring_scene_is_isolated_from_runtime_preview() -> void:
 	var runtime_root := _test_root.path_join("runtime_scenes")
@@ -326,9 +404,43 @@ func _test_persistence_port(artifact: AonwTerrainCompiledArtifact) -> void:
 			and persistence.last_revision == session.terrain_revision(),
 			"persistence adapter receives the current artifact and revision",
 		)
-		var sample := Vector2i(20, 20)
+		var sample := _scaled_height_sample(artifact)
+		_check(sample.x >= 0, "compiled terrain has a raised sample for height rescaling")
+		if sample.x < 0:
+			terrain.queue_free()
+			await Engine.get_main_loop().process_frame
+			return
+		var manual_height := minf(
+			artifact.base_image.get_pixelv(sample).r + 0.25,
+			artifact.maximum_at(sample),
+		)
+		session.set_height(sample, manual_height)
 		var previous_height := session.height_at(sample)
-		var next_artifact := _artifact_for_logical_revision(artifact)
+		var previous_revision := session.terrain_revision()
+		var scaled_artifact := _scaled_height_artifact(artifact, 1.5)
+		var expected_height := scaled_artifact.clamp_height(
+			sample,
+			scaled_artifact.base_image.get_pixelv(sample).r
+			+ previous_height - artifact.base_image.get_pixelv(sample).r,
+		)
+		var rescale := session.rescale_generated_artifact(scaled_artifact)
+		_check(
+			rescale["ok"]
+			and rescale["manual_delta_preserved"]
+			and session.artifact() == scaled_artifact,
+			"map height scale replaces the compiled artifact through Terrain3D",
+		)
+		_check_approx(
+			session.height_at(sample),
+			expected_height,
+			"map height scale preserves the manual sculpting delta",
+		)
+		_check(
+			session.terrain_revision() == previous_revision + 1,
+			"map height scale records one terrain revision for the complete raster",
+		)
+		previous_height = session.height_at(sample)
+		var next_artifact := _artifact_for_logical_revision(scaled_artifact)
 		var migration := session.migrate_logical_map_artifact(next_artifact)
 		_check(
 			migration["ok"]
@@ -343,6 +455,45 @@ func _test_persistence_port(artifact: AonwTerrainCompiledArtifact) -> void:
 		)
 	terrain.queue_free()
 	await Engine.get_main_loop().process_frame
+
+func _scaled_height_sample(artifact: AonwTerrainCompiledArtifact) -> Vector2i:
+	for y in artifact.height:
+		for x in artifact.width:
+			var pixel := Vector2i(x, y)
+			var base := artifact.base_image.get_pixelv(pixel).r
+			if base > 0.01 and artifact.maximum_at(pixel) - base > 0.25:
+				return pixel
+	return Vector2i(-1, -1)
+
+func _scaled_height_artifact(
+	artifact: AonwTerrainCompiledArtifact,
+	scale: float,
+) -> AonwTerrainCompiledArtifact:
+	var result := AonwTerrainCompiledArtifact.new()
+	for field in [
+		"directory", "map_id", "map_content_hash", "authoring_profile_hash",
+		"generated_base_hash", "generator_version", "width", "height",
+		"sample_spacing_meters", "world_min_meters", "world_origin_meters", "cols",
+		"rows", "hex_radius_meters", "max_terrain_height_meters",
+		"reference_translation_meters", "reference_rotation_degrees", "reference_scale",
+		"city_core_radius_meters", "max_city_slope",
+	]:
+		result.set(field, artifact.get(field))
+	result.authoring_profile_hash = "d".repeat(64)
+	result.generated_base_hash = "e".repeat(64)
+	result.max_terrain_height_meters *= scale
+	result.base_image = _scaled_height_image(artifact.base_image, scale)
+	result.minimum_image = _scaled_height_image(artifact.minimum_image, scale)
+	result.maximum_image = _scaled_height_image(artifact.maximum_image, scale)
+	return result
+
+func _scaled_height_image(source: Image, scale: float) -> Image:
+	var result: Image = source.duplicate()
+	for y in result.get_height():
+		for x in result.get_width():
+			var value: float = result.get_pixel(x, y).r * scale
+			result.set_pixel(x, y, Color(value, 0.0, 0.0, 1.0))
+	return result
 
 func _artifact_for_logical_revision(
 	artifact: AonwTerrainCompiledArtifact,

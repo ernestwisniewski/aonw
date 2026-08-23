@@ -30,6 +30,7 @@ clients/aonw_godot/scenes/generated/
 clients/aonw_godot/addons/terrain_3d/
 clients/aonw_godot/assets/generated_maps/*
 !clients/aonw_godot/assets/generated_maps/README.md
+!clients/aonw_godot/assets/generated_maps/.gdignore
 clients/aonw_godot/assets/maps/**/*.import
 
 # Local environment files

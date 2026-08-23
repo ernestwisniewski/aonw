@@ -8,6 +8,8 @@ var _create_logical_map: AonwCreateLogicalMap
 var _logical_map_editor: AonwLogicalMapEditor
 var _terrain_profile_editor: AonwTerrainProfileEditor
 var _sources: Array[AonwMapSource] = []
+var _height_slider_dragging := false
+var _busy := false
 
 func configure(
 	catalog: AonwMapSourceCatalog,
@@ -47,7 +49,10 @@ func _connect_interface() -> void:
 	_logical_map_panel.status_changed.connect(func(message: String) -> void:
 		_status.text = message
 	)
-	_apply_max_terrain_height.pressed.connect(_apply_selected_height_scale)
+	_max_terrain_height.value_changed.connect(_max_height_value_changed)
+	_max_terrain_height.drag_started.connect(_max_height_drag_started)
+	_max_terrain_height.drag_ended.connect(_max_height_drag_ended)
+	_height_scale_timer.timeout.connect(_apply_selected_height_scale)
 	_reference_toggle.toggled.connect(_set_reference_visible)
 	_reference_opacity.value_changed.connect(_set_reference_opacity)
 	_grid_toggle.toggled.connect(_set_grid_visible)
@@ -102,6 +107,10 @@ func _create_new_map(
 	EditorInterface.open_scene_from_path(terrain_result["scene_path"])
 
 func _refresh_sources() -> void:
+	var preferred_map_id := _selected_map_id()
+	var surface := _current_surface()
+	if surface != null:
+		preferred_map_id = surface.source_map_id
 	_sources = _catalog.discover()
 	_map_picker.clear()
 	for source in _sources:
@@ -110,12 +119,15 @@ func _refresh_sources() -> void:
 		_status.text = "No maps found."
 		_set_source_actions_enabled(false)
 		return
+	var preferred_index := _source_index(preferred_map_id)
+	_map_picker.select(preferred_index if preferred_index >= 0 else 0)
 	_set_source_actions_enabled(true)
 	_status.text = "Available Terrain3D maps: %d." % _sources.size()
 	_sync_selected_height_scale()
 	_sync_logical_panel()
 
 func _selected_map_changed(_index: int) -> void:
+	_height_scale_timer.stop()
 	_sync_selected_height_scale()
 	_sync_logical_panel()
 
@@ -157,47 +169,79 @@ func _has_editable_surface(source: AonwMapSource) -> bool:
 	)
 
 func _sync_selected_height_scale() -> void:
+	_height_scale_timer.stop()
 	var source := _selected_source()
 	if source == null:
 		_max_terrain_height.editable = false
-		_apply_max_terrain_height.disabled = true
 		return
 	var result := _terrain_profile_editor.current_maximum(source)
 	if not result["ok"]:
 		_max_terrain_height.editable = false
-		_apply_max_terrain_height.disabled = true
 		_status.text = "Error: %s" % result["message"]
 		return
 	_max_terrain_height.set_value_no_signal(result["max_terrain_height_meters"])
-	_max_terrain_height.editable = true
-	_apply_max_terrain_height.disabled = false
+	_update_max_height_label()
+	_max_terrain_height.editable = not _busy and _has_editable_surface(source)
+
+func _max_height_value_changed(_value: float) -> void:
+	_update_max_height_label()
+	if not _height_slider_dragging and _max_terrain_height.editable:
+		_height_scale_timer.start()
+
+func _max_height_drag_started() -> void:
+	_height_slider_dragging = true
+	_height_scale_timer.stop()
+
+func _max_height_drag_ended(value_changed: bool) -> void:
+	_height_slider_dragging = false
+	if value_changed and _max_terrain_height.editable:
+		_height_scale_timer.start(0.05)
 
 func _apply_selected_height_scale() -> void:
 	var source := _selected_source()
-	if source == null:
+	if source == null or not _has_editable_surface(source):
+		_status.text = "Open this map's Terrain3D authoring scene before changing its height."
+		return
+	var surface := _current_surface()
+	var current_artifact := surface.artifact()
+	if (
+		current_artifact != null
+		and is_equal_approx(
+			current_artifact.max_terrain_height_meters,
+			_max_terrain_height.value,
+		)
+	):
 		return
 	_set_busy(true)
-	_status.text = "Rebuilding %s height scale and Terrain3D constraints…" % source.map_id
+	_status.text = "Rescaling %s Terrain3D height and constraints…" % source.map_id
 	await get_tree().process_frame
 	var result := _terrain_profile_editor.update_maximum(
 		source,
 		_max_terrain_height.value,
 	)
-	_set_busy(false)
 	if not result["ok"]:
+		_set_busy(false)
 		_show_error(result["message"])
 		_sync_selected_height_scale()
 		return
 	EditorInterface.get_resource_filesystem().scan()
-	var surface := _current_surface()
-	if surface != null and surface.source_map_id == source.map_id:
-		var refresh_result := surface.refresh_generated_artifact()
-		if not refresh_result["ok"]:
-			_show_error(refresh_result["message"])
-			return
-	_status.text = "Maximum Terrain3D height set to %.1f m for %s." % [
+	var refresh_result := surface.rescale_generated_artifact()
+	if not refresh_result["ok"]:
+		_set_busy(false)
+		_show_error(refresh_result["message"])
+		return
+	var save_result := surface.save_draft()
+	if not save_result["ok"]:
+		_set_busy(false)
+		_show_error(save_result["message"])
+		return
+	var scene_error := EditorInterface.save_scene()
+	_set_busy(false)
+	_status.text = "Maximum Terrain3D height set to %.1f m for %s; %d samples rescaled.%s" % [
 		result["max_terrain_height_meters"],
 		source.map_id,
+		int(refresh_result["rescaled_pixels"]),
+		"" if scene_error == OK else " Scene save failed.",
 	]
 
 func _generate_selected_map() -> void:
@@ -341,6 +385,8 @@ func _publish() -> void:
 
 func sync_from_edited_scene() -> void:
 	var surface := _current_surface()
+	if surface != null:
+		_select_source(surface.source_map_id, false)
 	var enabled := surface != null
 	for control in [
 		_reference_toggle, _reference_opacity, _grid_toggle, _grid_opacity,
@@ -352,6 +398,8 @@ func sync_from_edited_scene() -> void:
 		else:
 			control.editable = enabled
 	if surface == null:
+		_sync_selected_height_scale()
+		_sync_logical_panel()
 		return
 	var reference_available := surface.has_reference_texture()
 	_reference_toggle.disabled = not reference_available
@@ -369,9 +417,8 @@ func sync_from_edited_scene() -> void:
 	_city_col.set_value_no_signal(surface.city_marker_coordinate.x)
 	_city_row.set_value_no_signal(surface.city_marker_coordinate.y)
 	_update_opacity_labels()
-	var source := _selected_source()
-	if source != null:
-		_logical_map_panel.set_editable(_has_editable_surface(source))
+	_sync_selected_height_scale()
+	_sync_logical_panel()
 
 func _commit_change(
 	action_name: String,
@@ -408,31 +455,47 @@ func _selected_source() -> AonwMapSource:
 		return null
 	return _sources[index]
 
-func _select_source(map_id: String) -> void:
-	for index in _sources.size():
-		if _sources[index].map_id != map_id:
-			continue
-		_map_picker.select(index)
+func _select_source(map_id: String, sync_panels: bool = true) -> void:
+	var index := _source_index(map_id)
+	if index < 0:
+		return
+	_map_picker.select(index)
+	if sync_panels:
 		_sync_selected_height_scale()
 		_sync_logical_panel()
-		return
+
+func _source_index(map_id: String) -> int:
+	for index in _sources.size():
+		if _sources[index].map_id == map_id:
+			return index
+	return -1
+
+func _selected_map_id() -> String:
+	var index := _map_picker.selected
+	return _sources[index].map_id if index >= 0 and index < _sources.size() else ""
 
 func _set_busy(busy: bool) -> void:
+	_busy = busy
+	if busy:
+		_height_scale_timer.stop()
 	_new_map_panel.set_busy(busy)
 	_generate_button.disabled = busy
 	_open_button.disabled = busy
 	_map_picker.disabled = busy
-	_apply_max_terrain_height.disabled = busy
-	_max_terrain_height.editable = not busy
 	var source := _selected_source()
+	_max_terrain_height.editable = (
+		not busy and source != null and _has_editable_surface(source)
+	)
 	_logical_map_panel.set_editable(not busy and source != null and _has_editable_surface(source))
 
 func _set_source_actions_enabled(enabled: bool) -> void:
 	_generate_button.disabled = not enabled
 	_open_button.disabled = not enabled
 	_map_picker.disabled = not enabled
-	_apply_max_terrain_height.disabled = not enabled
-	_max_terrain_height.editable = enabled
+	var source := _selected_source() if enabled else null
+	_max_terrain_height.editable = (
+		enabled and not _busy and source != null and _has_editable_surface(source)
+	)
 	if not enabled:
 		_logical_map_panel.set_editable(false)
 

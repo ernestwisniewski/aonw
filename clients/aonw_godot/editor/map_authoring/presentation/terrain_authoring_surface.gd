@@ -199,6 +199,23 @@ func refresh_generated_artifact() -> Dictionary:
 	refresh_overlays()
 	return result
 
+func rescale_generated_artifact() -> Dictionary:
+	if _session == null:
+		return _failure("terrain authoring session is not open")
+	var artifact_result := _artifact_reader.load_artifact(
+		compiled_artifact_directory,
+		source_map_id,
+	)
+	if not artifact_result["ok"]:
+		return artifact_result
+	var result := _session.rescale_generated_artifact(artifact_result["artifact"])
+	if not result["ok"]:
+		return result
+	_artifact = artifact_result["artifact"]
+	_sync_metadata()
+	refresh_overlays()
+	return result
+
 func migrate_logical_map_artifact() -> Dictionary:
 	if _session == null:
 		return _failure("terrain authoring session is not open")
