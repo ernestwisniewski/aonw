@@ -1,7 +1,7 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum GridLayout {
     OddQFlatTop,
@@ -18,7 +18,7 @@ impl GridLayout {
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TerrainType {
     Ocean,
@@ -39,6 +39,24 @@ pub enum TerrainType {
 
 #[allow(missing_docs)]
 impl TerrainType {
+    /// Complete stable palette exposed to framework-neutral authoring clients.
+    pub const ALL: [Self; 14] = [
+        Self::Ocean,
+        Self::Coast,
+        Self::Lake,
+        Self::Plains,
+        Self::Grassland,
+        Self::Desert,
+        Self::Tundra,
+        Self::Snow,
+        Self::Mountain,
+        Self::Hills,
+        Self::Wetlands,
+        Self::Jungle,
+        Self::Forest,
+        Self::River,
+    ];
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -109,7 +127,7 @@ impl TerrainType {
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ResourceType {
     Wheat,
@@ -145,6 +163,39 @@ pub enum ResourceType {
 
 #[allow(missing_docs)]
 impl ResourceType {
+    /// Complete stable palette exposed to framework-neutral authoring clients.
+    pub const ALL: [Self; 29] = [
+        Self::Wheat,
+        Self::Fish,
+        Self::Deer,
+        Self::Sheep,
+        Self::Rice,
+        Self::Cow,
+        Self::Apple,
+        Self::Banana,
+        Self::Citrus,
+        Self::Gold,
+        Self::Silver,
+        Self::Gems,
+        Self::Silk,
+        Self::Spices,
+        Self::Cotton,
+        Self::Grapes,
+        Self::Ivory,
+        Self::Pearls,
+        Self::Coffee,
+        Self::Cocoa,
+        Self::Tobacco,
+        Self::Sugar,
+        Self::Iron,
+        Self::Coal,
+        Self::Oil,
+        Self::Aluminium,
+        Self::Uranium,
+        Self::Horses,
+        Self::Marble,
+    ];
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {

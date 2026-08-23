@@ -137,20 +137,34 @@ func publish() -> Dictionary:
 func refresh_generated_artifact(next_artifact: AonwTerrainCompiledArtifact) -> Dictionary:
 	if next_artifact.map_content_hash != _artifact.map_content_hash:
 		return _failure("generated terrain belongs to a different logical map revision")
-	if (
-		next_artifact.width != _artifact.width
-		or next_artifact.height != _artifact.height
-		or not is_equal_approx(
-			next_artifact.sample_spacing_meters,
-			_artifact.sample_spacing_meters,
-		)
-	):
+	if not _has_same_raster(next_artifact):
 		return _failure(
 			"generated terrain grid changed; migrate final terrain explicitly before refresh"
 		)
 	_artifact = next_artifact
 	_space = TerrainSpaceTransform.new(next_artifact)
 	return {"ok": true, "manual_final_preserved": true}
+
+func migrate_logical_map_artifact(next_artifact: AonwTerrainCompiledArtifact) -> Dictionary:
+	if next_artifact.map_id != _artifact.map_id:
+		return _failure("generated terrain belongs to a different map")
+	if not _has_same_raster(next_artifact):
+		return _failure(
+			"logical map edit changed the terrain grid; migrate final terrain explicitly"
+		)
+	_artifact = next_artifact
+	_space = TerrainSpaceTransform.new(next_artifact)
+	return {"ok": true, "manual_final_preserved": true}
+
+func _has_same_raster(next_artifact: AonwTerrainCompiledArtifact) -> bool:
+	return (
+		next_artifact.width == _artifact.width
+		and next_artifact.height == _artifact.height
+		and is_equal_approx(
+			next_artifact.sample_spacing_meters,
+			_artifact.sample_spacing_meters,
+		)
+	)
 
 func _apply_height(pixel: Vector2i, height: float) -> void:
 	_internal_edit = true

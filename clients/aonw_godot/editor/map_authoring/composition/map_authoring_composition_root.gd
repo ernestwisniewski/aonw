@@ -14,7 +14,6 @@ const TileAtlasRepository := preload(
 const ArtifactRepository := preload(
 	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
 )
-const OpenMap := preload("res://game/application/map/open_map.gd")
 const AuthoringStore := preload(
 	"res://editor/map_authoring/infrastructure/terrain/terrain_authoring_store.gd"
 )
@@ -39,13 +38,18 @@ const RustLogicalMapWorkbench := preload(
 const FilesystemTerrainProfileEditor := preload(
 	"res://editor/map_authoring/infrastructure/terrain/terrain_profile_editor.gd"
 )
+const FilesystemLogicalMapEditor := preload(
+	"res://editor/map_authoring/infrastructure/logical_map_editor.gd"
+)
 
 var _catalog: AonwMapSourceCatalog
-var _open_map: AonwOpenMap
+var _map_reader: AonwMapViewReader
+var _atlas_reader: AonwMapTextureAssembler
 var _artifact_reader: AonwTerrainCompiledArtifactRepository
 var _scene_writer: AonwTerrainAuthoringSceneRepository
 var _generator: AonwGenerateTerrainAuthoringMap
 var _logical_map_workbench: AonwLogicalMapWorkbench
+var _logical_map_editor: AonwLogicalMapEditor
 var _terrain_profile_editor: AonwTerrainProfileEditor
 
 func _init(
@@ -55,11 +59,8 @@ func _init(
 ) -> void:
 	_catalog = MapAssetCatalog.new()
 	_artifact_reader = ArtifactRepository.new(compiled_artifact_root)
-	_open_map = OpenMap.new(
-		JsonMapRepository.new(),
-		TileAtlasRepository.new(),
-		_artifact_reader,
-	)
+	_map_reader = JsonMapRepository.new()
+	_atlas_reader = TileAtlasRepository.new()
 	_scene_writer = SceneRepository.new(
 		SceneFactory.new(),
 		scene_root,
@@ -67,15 +68,23 @@ func _init(
 		compiled_artifact_root,
 	)
 	_generator = GenerateTerrainAuthoringMap.new(
-		_open_map,
+		_map_reader,
+		_artifact_reader,
 		_scene_writer,
 	)
 	_logical_map_workbench = RustLogicalMapWorkbench.new()
+	_logical_map_editor = FilesystemLogicalMapEditor.new(_logical_map_workbench)
 	_terrain_profile_editor = FilesystemTerrainProfileEditor.new(_logical_map_workbench)
 
 func create_dock() -> Control:
 	var dock := WorkbenchDock.new()
-	dock.configure(_catalog, _generator, _scene_writer, _terrain_profile_editor)
+	dock.configure(
+		_catalog,
+		_generator,
+		_scene_writer,
+		_logical_map_editor,
+		_terrain_profile_editor,
+	)
 	return dock
 
 func generator() -> AonwGenerateTerrainAuthoringMap:
@@ -118,14 +127,26 @@ func open_surface(surface: AonwTerrainAuthoringSurface) -> Dictionary:
 	var source := _source_for_map(surface.source_map_id)
 	if source == null:
 		return _failure("logical source map is missing: %s" % surface.source_map_id)
-	var opened := _open_map.execute(source)
-	if not opened["ok"]:
-		return opened
+	var map_result := _map_reader.load_map(source)
+	if not map_result["ok"]:
+		return map_result
+	var terrain_result := _artifact_reader.load_terrain(map_result["map"])
+	if not terrain_result["ok"]:
+		return terrain_result
+	var atlas_result := _atlas_reader.load_atlas(
+		map_result["map"],
+		map_result["visual_directory"],
+	)
 	var store := AuthoringStore.new(surface.authoring_root)
-	var reference_texture: Texture2D = opened["reference_texture"]
-	var artifact: AonwTerrainCompiledArtifact = opened["terrain_artifact"]
+	var reference_texture: Texture2D = (
+		atlas_result["reference_texture"] if atlas_result["ok"] else null
+	)
+	var artifact: AonwTerrainCompiledArtifact = terrain_result["artifact"]
 	var session := AuthoringSession.new(terrain.data, artifact, store)
-	return surface.open_session(session, artifact, reference_texture, _artifact_reader)
+	var result := surface.open_session(session, artifact, reference_texture, _artifact_reader)
+	if result["ok"] and not atlas_result["ok"]:
+		result["reference_warning"] = atlas_result["message"]
+	return result
 
 func _source_for_map(map_id: String) -> AonwMapSource:
 	for source in _catalog.discover():

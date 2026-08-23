@@ -155,3 +155,201 @@ fn terrain_height_reconfiguration_is_canonical_and_rust_owned() {
         175.0
     );
 }
+
+#[test]
+fn tile_edits_are_canonical_and_refresh_the_bound_terrain_profile() {
+    let generated = GeneratedMapPackage::generate(&spec(11)).expect("generated package");
+    let inspect = workbench_request(&json!({
+        "type": "inspectMapTile",
+        "mapDocument": generated.map_document(),
+        "col": 2,
+        "row": 3,
+    }));
+    let snapshot = &inspect["outcome"]["response"]["snapshot"];
+    assert_eq!(snapshot["tile"]["displayTerrain"], "grassland");
+    assert_eq!(
+        snapshot["terrainOptions"].as_array().map(Vec::len),
+        Some(14)
+    );
+    assert_eq!(
+        snapshot["resourceOptions"].as_array().map(Vec::len),
+        Some(29)
+    );
+
+    let terrain_edit = workbench_request(&json!({
+        "type": "setTileTerrain",
+        "mapDocument": generated.map_document(),
+        "terrainAuthoringDocument": generated.terrain_authoring_document(),
+        "col": 2,
+        "row": 3,
+        "terrain": "forest",
+    }));
+    let terrain_update = &terrain_edit["outcome"]["response"]["update"];
+    assert_eq!(
+        terrain_update["snapshot"]["tile"]["displayTerrain"],
+        "forest"
+    );
+    assert_ne!(
+        terrain_update["mapContentHash"],
+        generated.map_content_hash()
+    );
+    assert_updated_documents_match_hashes(terrain_update);
+
+    let resources_edit = workbench_request(&json!({
+        "type": "setTileResources",
+        "mapDocument": terrain_update["mapDocument"],
+        "terrainAuthoringDocument": terrain_update["terrainAuthoringDocument"],
+        "col": 2,
+        "row": 3,
+        "resources": ["iron", "wheat"],
+    }));
+    let resources_update = &resources_edit["outcome"]["response"]["update"];
+    assert_eq!(
+        resources_update["snapshot"]["tile"]["resources"],
+        json!(["wheat", "iron"])
+    );
+    assert_updated_documents_match_hashes(resources_update);
+
+    let height_edit = workbench_request(&json!({
+        "type": "setTileHeight",
+        "mapDocument": resources_update["mapDocument"],
+        "terrainAuthoringDocument": resources_update["terrainAuthoringDocument"],
+        "col": 2,
+        "row": 3,
+        "height": 5,
+    }));
+    let height_update = &height_edit["outcome"]["response"]["update"];
+    assert_eq!(height_update["snapshot"]["tile"]["height"], 5);
+    assert_updated_documents_match_hashes(height_update);
+    let map = MapDocument::from_json(
+        height_update["mapDocument"]
+            .as_str()
+            .expect("map document")
+            .as_bytes(),
+    )
+    .expect("updated map");
+    let profile = TerrainAuthoringProfile::from_json(
+        height_update["terrainAuthoringDocument"]
+            .as_str()
+            .expect("terrain document")
+            .as_bytes(),
+        map.map(),
+    )
+    .expect("updated profile");
+    let envelope = profile
+        .hex_heights()
+        .iter()
+        .find(|value| value.coordinate().col() == 2 && value.coordinate().row() == 3)
+        .expect("edited envelope");
+    assert!(
+        (envelope.base_height_meters() - profile.max_terrain_height_meters()).abs() <= f64::EPSILON
+    );
+}
+
+#[test]
+fn tile_edits_reject_invalid_coordinates_values_and_unknown_wire_fields() {
+    let generated = GeneratedMapPackage::generate(&spec(12)).expect("generated package");
+    for request in [
+        json!({
+            "type": "setTileTerrain",
+            "mapDocument": generated.map_document(),
+            "terrainAuthoringDocument": generated.terrain_authoring_document(),
+            "col": 50,
+            "row": 3,
+            "terrain": "forest",
+        }),
+        json!({
+            "type": "setTileTerrain",
+            "mapDocument": generated.map_document(),
+            "terrainAuthoringDocument": generated.terrain_authoring_document(),
+            "col": 2,
+            "row": 3,
+            "terrain": "river",
+        }),
+        json!({
+            "type": "setTileHeight",
+            "mapDocument": generated.map_document(),
+            "terrainAuthoringDocument": generated.terrain_authoring_document(),
+            "col": 2,
+            "row": 3,
+            "height": 6,
+        }),
+        json!({
+            "type": "setTileResources",
+            "mapDocument": generated.map_document(),
+            "terrainAuthoringDocument": generated.terrain_authoring_document(),
+            "col": 2,
+            "row": 3,
+            "resources": ["iron", "iron"],
+        }),
+    ] {
+        let envelope = json!({
+            "apiVersion": MAP_WORKBENCH_API_VERSION,
+            "request": request,
+        });
+        let response: Value =
+            serde_json::from_str(&MapWorkbenchProtocol::dispatch_json(&envelope.to_string()))
+                .expect("protocol response");
+        assert_eq!(response["outcome"]["status"], "failure");
+    }
+
+    let unknown = json!({
+        "apiVersion": MAP_WORKBENCH_API_VERSION,
+        "request": {
+            "type": "inspectMapTile",
+            "mapDocument": generated.map_document(),
+            "col": 2,
+            "row": 3,
+            "unexpected": true,
+        },
+    });
+    let response: Value =
+        serde_json::from_str(&MapWorkbenchProtocol::dispatch_json(&unknown.to_string()))
+            .expect("protocol response");
+    assert_eq!(response["outcome"]["status"], "failure");
+    assert_eq!(
+        response["outcome"]["error"]["code"],
+        "invalid_workbench_request"
+    );
+}
+
+fn workbench_request(request: &Value) -> Value {
+    let envelope = json!({
+        "apiVersion": MAP_WORKBENCH_API_VERSION,
+        "request": request,
+    });
+    let response: Value =
+        serde_json::from_str(&MapWorkbenchProtocol::dispatch_json(&envelope.to_string()))
+            .expect("protocol response");
+    assert_eq!(response["outcome"]["status"], "success", "{response}");
+    response
+}
+
+fn assert_updated_documents_match_hashes(update: &Value) {
+    let map = MapDocument::from_json(
+        update["mapDocument"]
+            .as_str()
+            .expect("map document")
+            .as_bytes(),
+    )
+    .expect("updated map");
+    let profile = TerrainAuthoringProfile::from_json(
+        update["terrainAuthoringDocument"]
+            .as_str()
+            .expect("terrain document")
+            .as_bytes(),
+        map.map(),
+    )
+    .expect("updated profile");
+    assert_eq!(
+        update["mapContentHash"],
+        map.map().content_hash().expect("map hash").to_string()
+    );
+    assert_eq!(
+        update["authoringProfileHash"],
+        profile
+            .authoring_profile_hash()
+            .expect("profile hash")
+            .to_string()
+    );
+}

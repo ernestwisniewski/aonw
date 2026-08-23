@@ -2,10 +2,15 @@
 class_name AonwMapWorkbenchView
 extends VBoxContainer
 
+const LogicalMapPanel := preload(
+	"res://editor/map_authoring/presentation/logical_map_panel.gd"
+)
+
 var _map_picker := OptionButton.new()
 var _generate_button := Button.new()
 var _open_button := Button.new()
 var _refresh_button := Button.new()
+var _logical_map_panel := LogicalMapPanel.new()
 var _max_terrain_height := SpinBox.new()
 var _apply_max_terrain_height := Button.new()
 var _save_draft_button := Button.new()
@@ -49,6 +54,10 @@ func _build_interface() -> void:
 	add_child(source_actions)
 	_open_button.text = "Open saved scene"
 	add_child(_open_button)
+
+	add_child(_section_label("Logical tile authoring"))
+	add_child(_logical_map_panel)
+	add_child(HSeparator.new())
 
 	add_child(_section_label("Map height scale"))
 	_max_terrain_height.min_value = 0.5

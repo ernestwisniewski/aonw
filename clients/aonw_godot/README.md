@@ -25,7 +25,14 @@ framework-neutral Rust `aonw_map_workbench` boundary accepts a versioned
 generation specification and deterministically returns canonical `map.json`,
 `terrain_authoring.v1.json`, generation provenance, and a generated-decoration
 plan. The initial `blankV1` generator creates a validated empty grassland map;
-the dock does not expose the creation form or logical paint tools yet.
+the dock does not expose the creation form yet.
+
+The **Logical tile authoring** section edits an existing map by coordinate.
+Terrain, the complete resource selection and logical height `0..=5` are sent as
+separate commands to Rust. Rust returns complete canonical replacements and
+new map/profile hashes; the filesystem adapter never assembles map fields.
+Open the selected map's Terrain3D scene before applying an edit so its manual
+final terrain can be migrated and saved under the new logical identity.
 
 Generated visual objects and manual objects have separate `GeneratedWorld` and
 `ManualWorld` scene containers. Future biome/tree/rock generators may replace
@@ -42,8 +49,11 @@ For migrated shared maps, the catalog associates the canonical JSON from
 `content/maps/<map_id>/map.json` with the compiled reference atlas described by
 `assets/runtime/maps/<map_id>/map_texture_manifest.json`. Godot assembles its
 JPG pages directly and verifies the map content hash, dimensions, format, and
-SHA-256 of every page. A missing or stale bundle is rejected; Godot never
-depends on raw per-tile artwork or a procedural texture fallback.
+SHA-256 of every page. A missing or stale bundle is rejected by runtime.
+Terrain authoring can still open without the optional reference overlay after
+a logical edit; the stale reference is visibly disabled rather than rebound to
+a false content hash. Godot never depends on raw per-tile artwork or a
+procedural texture fallback.
 
 Every Godot editor or test bootstrap compiles each
 `content/maps/<map_id>/terrain_authoring.v1.json` profile through the pure Rust

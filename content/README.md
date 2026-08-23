@@ -37,6 +37,10 @@ runtime inputs. All shared maps must use the schema in
 Every map directory also owns a required `terrain_authoring.v1.json`. Its
 `maxTerrainHeightMeters` maps logical height `5` to a map-specific metric
 ceiling without changing gameplay rules or the logical map content hash.
+Logical tile authoring is performed through Rust workbench commands. Each edit
+replaces the canonical map/profile pair from validated Rust output, changes
+`contentHash`, and refreshes the authoring profile identity; clients do not
+construct these documents themselves.
 
 `content/scenarios/` contains strict starting placements bound to one map ID
 and one immutable ruleset ID. Rust validates both content identities before it

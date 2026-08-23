@@ -47,11 +47,23 @@ emits an empty decoration plan; later generators may add versioned visual tree,
 rock, water and detail placements without putting presentation instances into
 the logical map.
 
-Godot receives exact document strings from Rust. A future filesystem adapter
-may persist them atomically, but GDScript may not construct canonical map
-fields or decide whether a logical terrain/resource/height edit is legal.
-Future commands such as `SetTileTerrain`, `SetTileResources` and
-`SetTileHeight` extend this workbench boundary.
+Godot receives exact document strings from Rust. The filesystem adapter writes
+the returned `map.json` and `terrain_authoring.v1.json` replacements with
+rollback on a failed write or terrain compilation. GDScript may not construct
+canonical map fields or decide whether a logical terrain/resource/height edit
+is legal. `InspectMapTile`, `SetTileTerrain`, `SetTileResources` and
+`SetTileHeight` are strict operations on this workbench boundary.
+
+Every edit reconstructs the validated Rust aggregate, produces a new
+`contentHash`, and rebuilds the metric authoring profile against that exact map
+revision. An open Terrain3D authoring session may migrate to the new identity
+only when its raster geometry is unchanged. Its manual final data is then
+saved unchanged under the new identity; publication still validates it against
+the new constraints.
+
+A reference atlas bound to the previous map hash is stale by definition. The
+authoring scene remains usable without it, disables the overlay explicitly,
+and never rewrites the atlas manifest to claim a false identity.
 
 Authored scenes contain separate `GeneratedWorld` and `ManualWorld` nodes.
 Regeneration may replace only `GeneratedWorld`. Manual nodes and the manual
@@ -64,9 +76,11 @@ radius.
 
 ## Consequences
 
-The current UI still opens existing maps; a complete `New Map` dialog and
-logical paint mode are later vertical slices. Their backend boundary is now
-executable and tested instead of being a speculative UI abstraction.
+The current UI still opens existing maps and exposes a coordinate-based logical
+tile editor for terrain, resources and logical height. Direct viewport brush
+painting and a complete `New Map` dialog remain later vertical slices. Their
+backend boundary is executable and tested instead of being a speculative UI
+abstraction.
 
 A seed participates in generation provenance even when `blankV1` produces the
 same empty logical map for different seeds. Procedural generator versions may
@@ -78,6 +92,10 @@ use it while retaining deterministic replayability and explicit migrations.
 - Generated map and terrain documents pass their authoritative Rust decoders.
 - A 40x30 generated map respects the existing content limits.
 - Godot obtains all documents through the native Rust workbench bridge.
+- Tile edits change the map hash, refresh the terrain profile hash and reject
+  invalid coordinates, values, duplicates and unknown wire fields.
+- A logical revision migration preserves manual Terrain3D samples when raster
+  geometry is unchanged.
 - Dependency checks reject canonical map-field writers in GDScript authoring.
 - Godot scene tests require distinct generated and manual world containers.
 

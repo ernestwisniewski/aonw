@@ -27,10 +27,19 @@ pub enum MapWorkbenchError {
         /// Stable diagnostic description.
         message: Box<str>,
     },
+    /// A logical tile edit targets an invalid coordinate or value.
+    InvalidEdit {
+        /// Logical request path that failed validation.
+        path: Box<str>,
+        /// Stable diagnostic description.
+        message: Box<str>,
+    },
     /// An existing logical map document could not be loaded for editing.
     SourceMap(MapLoadError),
     /// Generated logical content failed its canonical domain validation.
     Map(MapValidationError),
+    /// Edited logical content failed canonical domain validation.
+    EditedMap(MapValidationError),
     /// The generated metric authoring profile is invalid.
     TerrainAuthoring(TerrainAuthoringLoadError),
 }
@@ -43,11 +52,19 @@ impl MapWorkbenchError {
         }
     }
 
+    pub(crate) fn invalid_edit(path: impl Into<Box<str>>, message: impl Into<Box<str>>) -> Self {
+        Self::InvalidEdit {
+            path: path.into(),
+            message: message.into(),
+        }
+    }
+
     /// Stable machine code exposed by the workbench protocol.
     #[must_use]
     pub const fn code(&self) -> &'static str {
         match self {
             Self::Json(_) | Self::InvalidSpec { .. } => "invalid_generation_spec",
+            Self::InvalidEdit { .. } | Self::EditedMap(_) => "invalid_map_edit",
             Self::UnsupportedSchemaVersion { .. } => "unsupported_generation_schema",
             Self::UnsupportedGenerator { .. } => "unsupported_map_generator",
             Self::SourceMap(_) => "source_map_invalid",
@@ -60,9 +77,9 @@ impl MapWorkbenchError {
     #[must_use]
     pub fn path(&self) -> Option<&str> {
         match self {
-            Self::InvalidSpec { path, .. } => Some(path),
+            Self::InvalidSpec { path, .. } | Self::InvalidEdit { path, .. } => Some(path),
             Self::SourceMap(error) => error.path(),
-            Self::Map(error) => Some(error.path()),
+            Self::Map(error) | Self::EditedMap(error) => Some(error.path()),
             Self::TerrainAuthoring(error) => error.path(),
             _ => None,
         }
@@ -84,9 +101,12 @@ impl core::fmt::Display for MapWorkbenchError {
                 formatter,
                 "unsupported map generator {generator_id} version {generator_version}"
             ),
-            Self::InvalidSpec { path, message } => write!(formatter, "{path}: {message}"),
+            Self::InvalidSpec { path, message } | Self::InvalidEdit { path, message } => {
+                write!(formatter, "{path}: {message}")
+            }
             Self::SourceMap(source) => write!(formatter, "source map is invalid: {source}"),
             Self::Map(source) => write!(formatter, "generated map is invalid: {source}"),
+            Self::EditedMap(source) => write!(formatter, "edited map is invalid: {source}"),
             Self::TerrainAuthoring(source) => {
                 write!(formatter, "generated terrain profile is invalid: {source}")
             }
@@ -99,7 +119,7 @@ impl std::error::Error for MapWorkbenchError {
         match self {
             Self::Json(source) => Some(source),
             Self::SourceMap(source) => Some(source),
-            Self::Map(source) => Some(source),
+            Self::Map(source) | Self::EditedMap(source) => Some(source),
             Self::TerrainAuthoring(source) => Some(source),
             _ => None,
         }

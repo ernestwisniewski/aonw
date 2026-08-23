@@ -518,6 +518,36 @@ impl MapDefinition {
             .get(index.get())
             .filter(|tile| tile.coordinate == coordinate)
     }
+
+    /// Returns a new validated aggregate with exactly one tile replaced.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapValidationError`] when the replacement coordinate is
+    /// outside this map or the rebuilt aggregate violates an invariant.
+    pub fn replacing_tile(&self, replacement: TileDefinition) -> Result<Self, MapValidationError> {
+        let coordinate = replacement.coordinate();
+        let index = self.tile_index(coordinate).ok_or_else(|| {
+            MapValidationError::new(
+                "$.tile",
+                format!(
+                    "coordinate ({}, {}) is outside map bounds",
+                    coordinate.col(),
+                    coordinate.row()
+                ),
+            )
+        })?;
+        let mut tiles = self.tiles.to_vec();
+        tiles[index.get()] = replacement;
+        Self::try_new(
+            self.map_id.clone(),
+            self.grid_layout,
+            self.cols,
+            self.rows,
+            tiles,
+            self.objectives.to_vec(),
+        )
+    }
 }
 
 fn validate_tiles(

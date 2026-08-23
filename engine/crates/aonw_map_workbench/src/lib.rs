@@ -7,12 +7,14 @@
 
 mod error;
 mod generation;
+mod map_edit;
 mod protocol;
 mod spec;
 mod terrain_profile;
 
 pub use error::MapWorkbenchError;
 pub use generation::GeneratedMapPackage;
+pub use map_edit::{LogicalMapTileEditorSnapshot, UpdatedLogicalMap};
 pub use protocol::{MAP_WORKBENCH_API_VERSION, MapWorkbenchProtocol};
 pub use spec::{
     BLANK_GENERATOR_ID, BLANK_GENERATOR_VERSION, CURRENT_MAP_GENERATION_SCHEMA_VERSION,

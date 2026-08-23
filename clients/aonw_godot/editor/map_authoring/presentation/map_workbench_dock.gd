@@ -4,6 +4,7 @@ extends "res://editor/map_authoring/presentation/map_workbench_view.gd"
 var _catalog: AonwMapSourceCatalog
 var _scene_writer: AonwTerrainAuthoringSceneWriter
 var _generator: AonwGenerateTerrainAuthoringMap
+var _logical_map_editor: AonwLogicalMapEditor
 var _terrain_profile_editor: AonwTerrainProfileEditor
 var _sources: Array[AonwMapSource] = []
 
@@ -11,17 +12,21 @@ func configure(
 	catalog: AonwMapSourceCatalog,
 	generator: AonwGenerateTerrainAuthoringMap,
 	scene_writer: AonwTerrainAuthoringSceneWriter,
+	logical_map_editor: AonwLogicalMapEditor,
 	terrain_profile_editor: AonwTerrainProfileEditor,
 ) -> void:
 	_catalog = catalog
 	_generator = generator
 	_scene_writer = scene_writer
+	_logical_map_editor = logical_map_editor
 	_terrain_profile_editor = terrain_profile_editor
+	_logical_map_panel.configure(logical_map_editor)
 
 func _ready() -> void:
 	assert(_catalog != null, "Map source catalog is required")
 	assert(_generator != null, "Terrain authoring generator is required")
 	assert(_scene_writer != null, "Terrain authoring scene writer is required")
+	assert(_logical_map_editor != null, "Logical map editor is required")
 	assert(_terrain_profile_editor != null, "Terrain profile editor is required")
 	_build_interface()
 	_connect_interface()
@@ -32,6 +37,11 @@ func _connect_interface() -> void:
 	_generate_button.pressed.connect(_generate_selected_map)
 	_open_button.pressed.connect(_open_selected_scene)
 	_map_picker.item_selected.connect(_selected_map_changed)
+	_logical_map_panel.edit_persisted.connect(_logical_edit_persisted)
+	_logical_map_panel.error_raised.connect(_show_error)
+	_logical_map_panel.status_changed.connect(func(message: String) -> void:
+		_status.text = message
+	)
 	_apply_max_terrain_height.pressed.connect(_apply_selected_height_scale)
 	_reference_toggle.toggled.connect(_set_reference_visible)
 	_reference_opacity.value_changed.connect(_set_reference_opacity)
@@ -57,9 +67,48 @@ func _refresh_sources() -> void:
 	_set_source_actions_enabled(true)
 	_status.text = "Available Terrain3D maps: %d." % _sources.size()
 	_sync_selected_height_scale()
+	_sync_logical_panel()
 
 func _selected_map_changed(_index: int) -> void:
 	_sync_selected_height_scale()
+	_sync_logical_panel()
+
+func _sync_logical_panel() -> void:
+	var source := _selected_source()
+	if source != null:
+		_logical_map_panel.show_source(source, _has_editable_surface(source))
+
+func _logical_edit_persisted(source: AonwMapSource, coordinate: Vector2i) -> void:
+	EditorInterface.get_resource_filesystem().scan()
+	var surface := _current_surface()
+	if surface == null or surface.source_map_id != source.map_id:
+		_show_error("logical map changed without its Terrain3D authoring scene open")
+		return
+	var migration := surface.migrate_logical_map_artifact()
+	if not migration["ok"]:
+		_show_error(migration["message"])
+		return
+	surface.invalidate_reference_texture()
+	var saved := surface.save_draft()
+	if not saved["ok"]:
+		_show_error(saved["message"])
+		return
+	var scene_error := EditorInterface.save_scene()
+	if scene_error != OK:
+		_show_error("logical map changed, but the authoring scene could not be saved")
+		return
+	_status.text = (
+		"Logical tile (%d, %d) updated by Rust; Terrain3D final preserved. "
+		+ "The stale 2D reference was disabled."
+	) % [coordinate.x, coordinate.y]
+
+func _has_editable_surface(source: AonwMapSource) -> bool:
+	var surface := _current_surface()
+	return (
+		surface != null
+		and surface.source_map_id == source.map_id
+		and surface.is_session_open()
+	)
 
 func _sync_selected_height_scale() -> void:
 	var source := _selected_source()
@@ -258,6 +307,9 @@ func sync_from_edited_scene() -> void:
 			control.editable = enabled
 	if surface == null:
 		return
+	var reference_available := surface.has_reference_texture()
+	_reference_toggle.disabled = not reference_available
+	_reference_opacity.editable = reference_available
 	_reference_toggle.set_pressed_no_signal(surface.reference_visible)
 	_reference_opacity.set_value_no_signal(surface.reference_opacity)
 	_grid_toggle.set_pressed_no_signal(surface.grid_visible)
@@ -271,6 +323,9 @@ func sync_from_edited_scene() -> void:
 	_city_col.set_value_no_signal(surface.city_marker_coordinate.x)
 	_city_row.set_value_no_signal(surface.city_marker_coordinate.y)
 	_update_opacity_labels()
+	var source := _selected_source()
+	if source != null:
+		_logical_map_panel.set_editable(_has_editable_surface(source))
 
 func _commit_change(
 	action_name: String,
@@ -313,6 +368,8 @@ func _set_busy(busy: bool) -> void:
 	_map_picker.disabled = busy
 	_apply_max_terrain_height.disabled = busy
 	_max_terrain_height.editable = not busy
+	var source := _selected_source()
+	_logical_map_panel.set_editable(not busy and source != null and _has_editable_surface(source))
 
 func _set_source_actions_enabled(enabled: bool) -> void:
 	_generate_button.disabled = not enabled
@@ -320,6 +377,8 @@ func _set_source_actions_enabled(enabled: bool) -> void:
 	_map_picker.disabled = not enabled
 	_apply_max_terrain_height.disabled = not enabled
 	_max_terrain_height.editable = enabled
+	if not enabled:
+		_logical_map_panel.set_editable(false)
 
 func _show_error(message: String) -> void:
 	_status.text = "Error: %s" % message

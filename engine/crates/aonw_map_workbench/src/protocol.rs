@@ -1,6 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{GeneratedMapPackage, MapGenerationSpec, UpdatedTerrainProfile};
+use aonw_content::{ResourceType, TerrainType};
+use aonw_domain::HexCoord;
+
+use crate::{
+    GeneratedMapPackage, LogicalMapTileEditorSnapshot, MapGenerationSpec, UpdatedLogicalMap,
+    UpdatedTerrainProfile,
+};
 
 /// Current framework-neutral logical-map workbench protocol version.
 pub const MAP_WORKBENCH_API_VERSION: u16 = 1;
@@ -77,6 +83,67 @@ fn dispatch(request: WorkbenchRequest) -> WorkbenchResponse {
             },
             Err(error) => failure(error.code(), &error, error.path()),
         },
+        WorkbenchRequestBody::InspectMapTile {
+            map_document,
+            col,
+            row,
+        } => match LogicalMapTileEditorSnapshot::inspect(&map_document, HexCoord::new(col, row)) {
+            Ok(snapshot) => WorkbenchResponse {
+                api_version: MAP_WORKBENCH_API_VERSION,
+                outcome: WorkbenchOutcome::Success {
+                    response: WorkbenchResponseBody::MapTileInspected { snapshot },
+                },
+            },
+            Err(error) => failure(error.code(), &error, error.path()),
+        },
+        WorkbenchRequestBody::SetTileTerrain {
+            map_document,
+            terrain_authoring_document,
+            col,
+            row,
+            terrain,
+        } => dispatch_edit(UpdatedLogicalMap::set_tile_terrain(
+            &map_document,
+            &terrain_authoring_document,
+            HexCoord::new(col, row),
+            terrain,
+        )),
+        WorkbenchRequestBody::SetTileResources {
+            map_document,
+            terrain_authoring_document,
+            col,
+            row,
+            resources,
+        } => dispatch_edit(UpdatedLogicalMap::set_tile_resources(
+            &map_document,
+            &terrain_authoring_document,
+            HexCoord::new(col, row),
+            resources,
+        )),
+        WorkbenchRequestBody::SetTileHeight {
+            map_document,
+            terrain_authoring_document,
+            col,
+            row,
+            height,
+        } => dispatch_edit(UpdatedLogicalMap::set_tile_height(
+            &map_document,
+            &terrain_authoring_document,
+            HexCoord::new(col, row),
+            height,
+        )),
+    }
+}
+
+fn dispatch_edit(result: Result<UpdatedLogicalMap, crate::MapWorkbenchError>) -> WorkbenchResponse {
+    match result {
+        Ok(update) => WorkbenchResponse {
+            api_version: MAP_WORKBENCH_API_VERSION,
+            outcome: WorkbenchOutcome::Success {
+                response: WorkbenchResponseBody::MapTileEdited { update },
+            },
+        },
+        Err(error) => failure(error.code(), &error, error.path()),
     }
 }
 
@@ -116,6 +183,32 @@ enum WorkbenchRequestBody {
         terrain_authoring_document: String,
         max_terrain_height_meters: f64,
     },
+    InspectMapTile {
+        map_document: String,
+        col: i32,
+        row: i32,
+    },
+    SetTileTerrain {
+        map_document: String,
+        terrain_authoring_document: String,
+        col: i32,
+        row: i32,
+        terrain: TerrainType,
+    },
+    SetTileResources {
+        map_document: String,
+        terrain_authoring_document: String,
+        col: i32,
+        row: i32,
+        resources: Vec<ResourceType>,
+    },
+    SetTileHeight {
+        map_document: String,
+        terrain_authoring_document: String,
+        col: i32,
+        row: i32,
+        height: u8,
+    },
 }
 
 #[derive(Serialize)]
@@ -143,8 +236,18 @@ enum WorkbenchOutcome {
     rename_all_fields = "camelCase"
 )]
 enum WorkbenchResponseBody {
-    MapGenerated { package: GeneratedMapPackage },
-    TerrainHeightReconfigured { update: UpdatedTerrainProfile },
+    MapGenerated {
+        package: GeneratedMapPackage,
+    },
+    TerrainHeightReconfigured {
+        update: UpdatedTerrainProfile,
+    },
+    MapTileInspected {
+        snapshot: LogicalMapTileEditorSnapshot,
+    },
+    MapTileEdited {
+        update: UpdatedLogicalMap,
+    },
 }
 
 #[derive(Serialize)]

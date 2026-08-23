@@ -270,9 +270,12 @@ impl TerrainAuthoringProfile {
         max_terrain_height_meters: f64,
     ) -> Result<Self, TerrainAuthoringLoadError> {
         validate_positive("$.maxTerrainHeightMeters", max_terrain_height_meters)?;
+        let source_map_content_hash = map
+            .content_hash()
+            .map_err(TerrainAuthoringLoadError::MapHash)?;
         Self::try_new(
             map,
-            self.source_map_content_hash,
+            source_map_content_hash,
             ProfileComponents {
                 hex_radius_meters: self.hex_radius_meters,
                 max_terrain_height_meters,

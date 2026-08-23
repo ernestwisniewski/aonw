@@ -274,6 +274,14 @@ func _test_authoring_session(scene_path: String) -> void:
 				"saving a draft does not move the published terrain pointer",
 			)
 			_test_snapshot_integrity(surface, artifact, next_draft["data_directory"])
+	surface.invalidate_reference_texture()
+	surface.refresh_overlays()
+	_check(
+		not surface.has_reference_texture()
+		and surface.get_node("ReferenceTexture").mesh == null
+		and surface.get_node("HexGrid").mesh is ArrayMesh,
+		"a stale reference can be disabled without disabling Terrain3D or the logical grid",
+	)
 	root.queue_free()
 	await Engine.get_main_loop().process_frame
 
@@ -318,8 +326,42 @@ func _test_persistence_port(artifact: AonwTerrainCompiledArtifact) -> void:
 			and persistence.last_revision == session.terrain_revision(),
 			"persistence adapter receives the current artifact and revision",
 		)
+		var sample := Vector2i(20, 20)
+		var previous_height := session.height_at(sample)
+		var next_artifact := _artifact_for_logical_revision(artifact)
+		var migration := session.migrate_logical_map_artifact(next_artifact)
+		_check(
+			migration["ok"]
+			and migration["manual_final_preserved"]
+			and session.artifact() == next_artifact,
+			"logical map revision migration accepts only a matching Terrain3D raster",
+		)
+		_check_approx(
+			session.height_at(sample),
+			previous_height,
+			"logical map revision migration preserves manual Terrain3D heights",
+		)
 	terrain.queue_free()
 	await Engine.get_main_loop().process_frame
+
+func _artifact_for_logical_revision(
+	artifact: AonwTerrainCompiledArtifact,
+) -> AonwTerrainCompiledArtifact:
+	var result := AonwTerrainCompiledArtifact.new()
+	for field in [
+		"directory", "map_id", "map_content_hash", "authoring_profile_hash",
+		"generated_base_hash", "generator_version", "width", "height",
+		"sample_spacing_meters", "world_min_meters", "world_origin_meters", "cols",
+		"rows", "hex_radius_meters", "max_terrain_height_meters",
+		"reference_translation_meters", "reference_rotation_degrees", "reference_scale",
+		"city_core_radius_meters", "max_city_slope", "base_image", "minimum_image",
+		"maximum_image",
+	]:
+		result.set(field, artifact.get(field))
+	result.map_content_hash = "a".repeat(64)
+	result.authoring_profile_hash = "b".repeat(64)
+	result.generated_base_hash = "c".repeat(64)
+	return result
 
 func _test_regional_clamp_and_publish(
 	surface: AonwTerrainAuthoringSurface,

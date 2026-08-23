@@ -89,7 +89,6 @@ func open_session(
 		return {"ok": true}
 	assert(session != null, "Terrain authoring session is required")
 	assert(artifact_value != null, "Compiled terrain artifact is required")
-	assert(reference_texture != null, "Terrain reference texture is required")
 	assert(artifact_reader != null, "Compiled terrain artifact reader is required")
 	_ensure_nodes()
 	_artifact = artifact_value
@@ -110,7 +109,7 @@ func open_session(
 	return {"ok": true}
 
 func set_reference_visible(value: bool) -> void:
-	reference_visible = value
+	reference_visible = value and _reference_texture != null
 	_ensure_nodes()
 	_reference.visible = value
 
@@ -200,14 +199,45 @@ func refresh_generated_artifact() -> Dictionary:
 	refresh_overlays()
 	return result
 
+func migrate_logical_map_artifact() -> Dictionary:
+	if _session == null:
+		return _failure("terrain authoring session is not open")
+	var artifact_result := _artifact_reader.load_artifact(
+		compiled_artifact_directory,
+		source_map_id,
+	)
+	if not artifact_result["ok"]:
+		return artifact_result
+	var result := _session.migrate_logical_map_artifact(artifact_result["artifact"])
+	if not result["ok"]:
+		return result
+	_artifact = artifact_result["artifact"]
+	_sync_metadata()
+	refresh_overlays()
+	return result
+
+func invalidate_reference_texture() -> void:
+	_reference_texture = null
+	reference_visible = false
+	_ensure_nodes()
+	_reference.mesh = null
+	_reference.visible = false
+
+func has_reference_texture() -> bool:
+	return _reference_texture != null
+
 func refresh_overlays() -> void:
-	if _session == null or _artifact == null or _reference_texture == null:
+	if _session == null or _artifact == null:
 		return
-	_reference.mesh = _overlay_builder.reference_mesh(
-		_artifact,
-		_terrain.data,
-		_reference_texture,
-		reference_opacity,
+	_reference.mesh = (
+		_overlay_builder.reference_mesh(
+			_artifact,
+			_terrain.data,
+			_reference_texture,
+			reference_opacity,
+		)
+		if _reference_texture != null
+		else null
 	)
 	_reference.transform = Transform3D.IDENTITY
 	_grid.mesh = _overlay_builder.grid_mesh(
@@ -365,7 +395,7 @@ func _sync_metadata() -> void:
 
 func _apply_visibility() -> void:
 	if _reference != null:
-		_reference.visible = reference_visible
+		_reference.visible = reference_visible and _reference_texture != null
 	if _grid != null:
 		_grid.visible = grid_visible
 	if _minimum_debug != null:

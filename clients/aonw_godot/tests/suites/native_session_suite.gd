@@ -141,6 +141,54 @@ func _test_logical_map_workbench_boundary() -> void:
 			and updated_profile.get("hexRadiusMeters") == 100.0,
 			"Rust rebuilds height envelopes and preserves the map spatial scale",
 		)
+	var tile := workbench.inspect_map_tile(
+		first["package"]["mapDocument"],
+		Vector2i(2, 3),
+	)
+	_check(
+		tile["ok"]
+		and tile["snapshot"]["tile"]["displayTerrain"] == "grassland"
+		and tile["snapshot"]["terrainOptions"].size() == 14
+		and tile["snapshot"]["resourceOptions"].size() == 29,
+		"Godot inspects logical tile state and palettes through Rust",
+	)
+	var terrain_edit := workbench.set_tile_terrain(
+		first["package"]["mapDocument"],
+		first["package"]["terrainAuthoringDocument"],
+		Vector2i(2, 3),
+		&"forest",
+	)
+	_check(
+		terrain_edit["ok"]
+		and terrain_edit["update"]["snapshot"]["tile"]["displayTerrain"] == "forest"
+		and terrain_edit["update"]["mapContentHash"] != first["package"]["mapContentHash"],
+		"Godot sends SetTileTerrain to the Rust workbench",
+	)
+	if terrain_edit["ok"]:
+		var resources_edit := workbench.set_tile_resources(
+			terrain_edit["update"]["mapDocument"],
+			terrain_edit["update"]["terrainAuthoringDocument"],
+			Vector2i(2, 3),
+			[&"iron", &"wheat"],
+		)
+		_check(
+			resources_edit["ok"]
+			and resources_edit["update"]["snapshot"]["tile"]["resources"]
+			== ["wheat", "iron"],
+			"Godot sends SetTileResources to the Rust workbench",
+		)
+		if resources_edit["ok"]:
+			var height_edit := workbench.set_tile_height(
+				resources_edit["update"]["mapDocument"],
+				resources_edit["update"]["terrainAuthoringDocument"],
+				Vector2i(2, 3),
+				5,
+			)
+			_check(
+				height_edit["ok"]
+				and height_edit["update"]["snapshot"]["tile"]["height"] == 5,
+				"Godot sends SetTileHeight to the Rust workbench",
+			)
 	var invalid: Dictionary = JSON.parse_string(spec)
 	invalid["cols"] = 4
 	_check(

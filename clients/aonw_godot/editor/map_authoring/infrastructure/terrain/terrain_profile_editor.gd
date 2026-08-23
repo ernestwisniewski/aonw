@@ -5,9 +5,13 @@ extends AonwTerrainProfileEditor
 const AtomicResourceStore := preload(
 	"res://editor/map_authoring/infrastructure/atomic_resource_store.gd"
 )
+const TerrainCompiler := preload(
+	"res://editor/map_authoring/infrastructure/terrain/terrain_compiler.gd"
+)
 
 var _workbench: AonwLogicalMapWorkbench
 var _atomic_store := AtomicResourceStore.new()
+var _compiler := TerrainCompiler.new()
 
 func _init(workbench: AonwLogicalMapWorkbench) -> void:
 	assert(workbench != null, "Logical map workbench is required")
@@ -49,7 +53,7 @@ func update_maximum(source: AonwMapSource, maximum: float) -> Dictionary:
 	)
 	if write_error != OK:
 		return _failure("cannot save terrain authoring profile: %s" % error_string(write_error))
-	var compile_result := _compile_profiles()
+	var compile_result := _compiler.compile_profiles()
 	if compile_result["ok"]:
 		return {
 			"ok": true,
@@ -65,26 +69,6 @@ func update_maximum(source: AonwMapSource, maximum: float) -> Dictionary:
 			]
 		)
 	return compile_result
-
-func _compile_profiles() -> Dictionary:
-	var script_path := ProjectSettings.globalize_path(
-		"res://../../tool/compile_godot_terrain.sh"
-	)
-	var output: Array = []
-	var exit_code := OS.execute(
-		"/bin/bash",
-		PackedStringArray([script_path]),
-		output,
-		true,
-	)
-	if exit_code == 0:
-		return {"ok": true}
-	var diagnostics := "\n".join(output).strip_edges()
-	return _failure(
-		"terrain compilation failed%s" % (
-			": %s" % diagnostics if not diagnostics.is_empty() else ""
-		)
-	)
 
 func _profile_path(source: AonwMapSource) -> String:
 	return source.map_path.get_base_dir().path_join("terrain_authoring.v1.json")

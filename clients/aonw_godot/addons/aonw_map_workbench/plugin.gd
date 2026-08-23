@@ -34,5 +34,10 @@ func _compose_scene(scene_root: Node) -> void:
 	var result: Dictionary = await _composition.open_scene(scene_root)
 	if not result["ok"]:
 		push_error("AoNW Terrain Workbench: %s" % result["message"])
+	elif result.has("reference_warning"):
+		push_warning(
+			"AoNW Terrain Workbench: 2D reference disabled: %s"
+			% result["reference_warning"]
+		)
 	if _dock != null:
 		_dock.sync_from_edited_scene()
