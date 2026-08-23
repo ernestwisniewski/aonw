@@ -162,11 +162,7 @@ final class _MapLayers extends StatelessWidget {
             painter: MapTerrainPainter(snapshot: snapshot, geometry: geometry),
           ),
         ),
-        if (snapshot.interaction.referenceVisible)
-          RepaintBoundary(
-            key: const ValueKey('static-reference-layer'),
-            child: _ReferenceLayer(snapshot: snapshot, geometry: geometry),
-          ),
+        if (snapshot.interaction.referenceVisible) _buildReferenceLayer(),
         RepaintBoundary(
           key: const ValueKey('static-grid-layer'),
           child: CustomPaint(
@@ -205,6 +201,11 @@ final class _MapLayers extends StatelessWidget {
         ),
       ],
     ),
+  );
+
+  Widget _buildReferenceLayer() => RepaintBoundary(
+    key: const ValueKey('static-reference-layer'),
+    child: _ReferenceLayer(snapshot: snapshot, geometry: geometry),
   );
 }
 

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../design_system/aonw_theme.dart';
 import '../../features/map/application/map_controller.dart';
 import '../../features/map/presentation/input/map_input.dart';
+import '../../features/settings/application/client_settings_controller.dart';
+import '../../features/settings/presentation/client_settings_scope.dart';
 import '../../l10n/l10n.dart';
 import 'aonw_router.dart';
 
@@ -12,12 +14,14 @@ final class AonwApp extends StatefulWidget {
   const AonwApp({
     required this.mapController,
     this.mapInputSource,
+    this.settingsController,
     this.locale,
     super.key,
   });
 
   final MapController mapController;
   final MapInputSource? mapInputSource;
+  final ClientSettingsController? settingsController;
   final Locale? locale;
 
   @override
@@ -25,6 +29,14 @@ final class AonwApp extends StatefulWidget {
 }
 
 final class _AonwAppState extends State<AonwApp> {
+  late ClientSettingsController _settingsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _installSettingsController();
+  }
+
   @override
   void didUpdateWidget(AonwApp oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -34,12 +46,17 @@ final class _AonwAppState extends State<AonwApp> {
     if (oldWidget.mapInputSource != widget.mapInputSource) {
       unawaited(oldWidget.mapInputSource?.close());
     }
+    if (oldWidget.settingsController != widget.settingsController) {
+      _settingsController.dispose();
+      _installSettingsController();
+    }
   }
 
   @override
   void dispose() {
     widget.mapController.dispose();
     unawaited(widget.mapInputSource?.close());
+    _settingsController.dispose();
     super.dispose();
   }
 
@@ -48,17 +65,46 @@ final class _AonwAppState extends State<AonwApp> {
     final router = AonwRouter(
       mapController: widget.mapController,
       mapInputSource: widget.mapInputSource,
+      settingsController: _settingsController,
     );
-    return MaterialApp(
-      key: ValueKey(widget.mapController),
-      onGenerateTitle: (context) => context.aonwL10n.appTitle,
-      debugShowCheckedModeBanner: false,
-      theme: AonwTheme.dark,
-      locale: widget.locale,
-      localizationsDelegates: AonwLocalizations.localizationsDelegates,
-      supportedLocales: AonwLocalizations.supportedLocales,
-      initialRoute: AonwRoute.map.location,
-      onGenerateRoute: router.onGenerateRoute,
+    return ClientSettingsScope(
+      controller: _settingsController,
+      child: ListenableBuilder(
+        listenable: _settingsController,
+        builder: (context, child) => MaterialApp(
+          key: ValueKey(widget.mapController),
+          onGenerateTitle: (context) => context.aonwL10n.appTitle,
+          debugShowCheckedModeBanner: false,
+          theme: AonwTheme.darkFor(
+            highContrast: _settingsController.settings.highContrast,
+          ),
+          locale: widget.locale,
+          localizationsDelegates: AonwLocalizations.localizationsDelegates,
+          supportedLocales: AonwLocalizations.supportedLocales,
+          initialRoute: AonwRoute.map.location,
+          onGenerateRoute: router.onGenerateRoute,
+          builder: (context, child) {
+            final media = MediaQuery.of(context);
+            return MediaQuery(
+              data: media.copyWith(
+                disableAnimations:
+                    media.disableAnimations ||
+                    _settingsController.settings.reducedMotion,
+                highContrast:
+                    media.highContrast ||
+                    _settingsController.settings.highContrast,
+              ),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+        ),
+      ),
     );
+  }
+
+  void _installSettingsController() {
+    _settingsController =
+        widget.settingsController ?? ClientSettingsController.ephemeral();
+    unawaited(_settingsController.load());
   }
 }

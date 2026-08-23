@@ -4,10 +4,13 @@ import '../../design_system/widgets/aonw_panel.dart';
 import '../../features/map/application/map_controller.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
+import '../../features/settings/application/client_settings_controller.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 import '../../l10n/l10n.dart';
 
 enum AonwRoute {
-  map('/');
+  map('/'),
+  settings('/settings');
 
   const AonwRoute(this.location);
 
@@ -22,9 +25,14 @@ enum AonwRoute {
 }
 
 final class AonwRouter {
-  const AonwRouter({required this.mapController, this.mapInputSource});
+  const AonwRouter({
+    required this.mapController,
+    required this.settingsController,
+    this.mapInputSource,
+  });
 
   final MapController mapController;
+  final ClientSettingsController settingsController;
   final MapInputSource? mapInputSource;
 
   Route<void> onGenerateRoute(RouteSettings settings) {
@@ -32,13 +40,18 @@ final class AonwRouter {
     return MaterialPageRoute<void>(
       settings: settings,
       builder: switch (route) {
-        AonwRoute.map => (_) => Scaffold(
+        AonwRoute.map => (context) => Scaffold(
           body: SafeArea(
             child: MapScreen(
               controller: mapController,
               inputSource: mapInputSource,
+              onOpenSettings: () =>
+                  Navigator.of(context).pushNamed(AonwRoute.settings.location),
             ),
           ),
+        ),
+        AonwRoute.settings => (_) => SettingsScreen(
+          controller: settingsController,
         ),
         null => (_) => _UnknownRoute(location: settings.name),
       },

@@ -84,4 +84,42 @@ class AonwLocalizationsEn extends AonwLocalizations {
 
   @override
   String get retry => 'Retry';
+
+  @override
+  String get openSettings => 'Open settings';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get audioSettings => 'Audio';
+
+  @override
+  String get masterVolume => 'Master volume';
+
+  @override
+  String get cameraSettings => 'Camera';
+
+  @override
+  String get cameraSensitivity => 'Zoom sensitivity';
+
+  @override
+  String get accessibilitySettings => 'Accessibility';
+
+  @override
+  String get reducedMotion => 'Reduce motion';
+
+  @override
+  String get reducedMotionDescription =>
+      'Avoid nonessential animations and transitions.';
+
+  @override
+  String get highContrast => 'High contrast';
+
+  @override
+  String get highContrastDescription =>
+      'Increase contrast in the application interface.';
+
+  @override
+  String get resetSettings => 'Restore defaults';
 }

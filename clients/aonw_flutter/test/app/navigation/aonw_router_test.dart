@@ -17,6 +17,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('map-canvas')), findsOneWidget);
 
+    await tester.tap(find.byKey(const ValueKey('open-settings')));
+    await tester.pumpAndSettle();
+    expect(find.text('Settings'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Settings'))).pop();
+    await tester.pumpAndSettle();
+
     final context = tester.element(find.byKey(const ValueKey('map-canvas')));
     Navigator.of(context).pushNamed('/future-screen');
     await tester.pumpAndSettle();

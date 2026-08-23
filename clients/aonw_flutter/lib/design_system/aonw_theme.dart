@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'aonw_tokens.dart';
 
 abstract final class AonwTheme {
-  static ThemeData get dark {
+  static ThemeData get dark => darkFor();
+
+  static ThemeData darkFor({bool highContrast = false}) {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: AonwColorTokens.brand,
       brightness: Brightness.dark,
+      contrastLevel: highContrast ? 1 : 0,
     );
     const minimumInteractiveSize = WidgetStatePropertyAll(
       Size.square(AonwSizes.minimumInteractive),

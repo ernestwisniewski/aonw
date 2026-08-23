@@ -8,6 +8,8 @@ import '../../../../design_system/aonw_tokens.dart';
 import '../../../../design_system/widgets/aonw_panel.dart';
 import '../../../../design_system/widgets/aonw_progress_indicator.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../settings/application/client_settings.dart';
+import '../../../settings/presentation/client_settings_scope.dart';
 import '../../application/map_controller.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_scene.dart';
@@ -23,6 +25,7 @@ final class MapScreen extends StatefulWidget {
     required this.controller,
     this.transformationController,
     this.inputSource,
+    this.onOpenSettings,
     this.autoLoad = true,
     super.key,
   });
@@ -30,6 +33,7 @@ final class MapScreen extends StatefulWidget {
   final MapController controller;
   final TransformationController? transformationController;
   final MapInputSource? inputSource;
+  final VoidCallback? onOpenSettings;
   final bool autoLoad;
 
   @override
@@ -80,6 +84,7 @@ final class _MapScreenState extends State<MapScreen> {
 
   Widget _buildState(BuildContext context, Widget? child) {
     final state = widget.controller.state;
+    final settings = ClientSettingsScope.settingsOf(context);
     return switch (state) {
       MapLoadingState() => const _LoadingMap(),
       MapFailureState(:final code, :final message) => _MapFailure(
@@ -93,6 +98,8 @@ final class _MapScreenState extends State<MapScreen> {
         controller: widget.controller,
         camera: _camera,
         onInput: _handleInput,
+        settings: settings,
+        onOpenSettings: widget.onOpenSettings,
       ),
     };
   }
@@ -139,6 +146,8 @@ final class _ReadyMap extends StatelessWidget {
     required this.controller,
     required this.camera,
     required this.onInput,
+    required this.settings,
+    required this.onOpenSettings,
   });
 
   final MapScene scene;
@@ -146,6 +155,8 @@ final class _ReadyMap extends StatelessWidget {
   final MapController controller;
   final TransformationController camera;
   final ValueChanged<MapInputCommand> onInput;
+  final ClientSettings settings;
+  final VoidCallback? onOpenSettings;
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -157,8 +168,20 @@ final class _ReadyMap extends StatelessWidget {
           controller: controller,
           camera: camera,
           onInput: onInput,
+          settings: settings,
         ),
       ),
+      if (onOpenSettings case final openSettings?)
+        Positioned(
+          top: AonwSpacing.md,
+          left: AonwSpacing.md,
+          child: IconButton.filledTonal(
+            key: const ValueKey('open-settings'),
+            tooltip: context.aonwL10n.openSettings,
+            onPressed: openSettings,
+            icon: const Icon(Icons.settings),
+          ),
+        ),
       Positioned(
         top: AonwSpacing.md,
         right: AonwSpacing.md,
@@ -188,6 +211,7 @@ final class _MapViewport extends StatefulWidget {
     required this.controller,
     required this.camera,
     required this.onInput,
+    required this.settings,
   });
 
   final MapScene scene;
@@ -195,6 +219,7 @@ final class _MapViewport extends StatefulWidget {
   final MapController controller;
   final TransformationController camera;
   final ValueChanged<MapInputCommand> onInput;
+  final ClientSettings settings;
 
   @override
   State<_MapViewport> createState() => _MapViewportState();
@@ -243,6 +268,7 @@ final class _MapViewportState extends State<_MapViewport> {
         constrained: false,
         minScale: math.min(0.25, initialScale),
         maxScale: math.max(4, initialScale * 4),
+        scaleFactor: 200 / widget.settings.cameraSensitivity,
         boundaryMargin: const EdgeInsets.all(360),
         child: MapCanvas(
           snapshot: MapRenderSnapshot(

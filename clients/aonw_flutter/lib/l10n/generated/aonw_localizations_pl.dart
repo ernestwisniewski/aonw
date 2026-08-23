@@ -84,4 +84,41 @@ class AonwLocalizationsPl extends AonwLocalizations {
 
   @override
   String get retry => 'Spróbuj ponownie';
+
+  @override
+  String get openSettings => 'Otwórz ustawienia';
+
+  @override
+  String get settingsTitle => 'Ustawienia';
+
+  @override
+  String get audioSettings => 'Dźwięk';
+
+  @override
+  String get masterVolume => 'Głośność główna';
+
+  @override
+  String get cameraSettings => 'Kamera';
+
+  @override
+  String get cameraSensitivity => 'Czułość przybliżenia';
+
+  @override
+  String get accessibilitySettings => 'Dostępność';
+
+  @override
+  String get reducedMotion => 'Ogranicz ruch';
+
+  @override
+  String get reducedMotionDescription => 'Wyłącz zbędne animacje i przejścia.';
+
+  @override
+  String get highContrast => 'Wysoki kontrast';
+
+  @override
+  String get highContrastDescription =>
+      'Zwiększ kontrast interfejsu aplikacji.';
+
+  @override
+  String get resetSettings => 'Przywróć domyślne';
 }

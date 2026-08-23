@@ -55,5 +55,17 @@
   "loadingMap": "Loading map",
   "mapLoadingFailed": "Map loading failed",
   "mapUnavailable": "Map unavailable",
-  "retry": "Retry"
+  "retry": "Retry",
+  "openSettings": "Open settings",
+  "settingsTitle": "Settings",
+  "audioSettings": "Audio",
+  "masterVolume": "Master volume",
+  "cameraSettings": "Camera",
+  "cameraSensitivity": "Zoom sensitivity",
+  "accessibilitySettings": "Accessibility",
+  "reducedMotion": "Reduce motion",
+  "reducedMotionDescription": "Avoid nonessential animations and transitions.",
+  "highContrast": "High contrast",
+  "highContrastDescription": "Increase contrast in the application interface.",
+  "resetSettings": "Restore defaults"
 }

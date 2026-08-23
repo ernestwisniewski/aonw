@@ -223,6 +223,78 @@ abstract class AonwLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retry;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get openSettings;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @audioSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get audioSettings;
+
+  /// No description provided for @masterVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Master volume'**
+  String get masterVolume;
+
+  /// No description provided for @cameraSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get cameraSettings;
+
+  /// No description provided for @cameraSensitivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom sensitivity'**
+  String get cameraSensitivity;
+
+  /// No description provided for @accessibilitySettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility'**
+  String get accessibilitySettings;
+
+  /// No description provided for @reducedMotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion'**
+  String get reducedMotion;
+
+  /// No description provided for @reducedMotionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid nonessential animations and transitions.'**
+  String get reducedMotionDescription;
+
+  /// No description provided for @highContrast.
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast'**
+  String get highContrast;
+
+  /// No description provided for @highContrastDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase contrast in the application interface.'**
+  String get highContrastDescription;
+
+  /// No description provided for @resetSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore defaults'**
+  String get resetSettings;
 }
 
 class _AonwLocalizationsDelegate

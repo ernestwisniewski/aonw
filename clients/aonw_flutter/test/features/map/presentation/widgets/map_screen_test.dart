@@ -8,6 +8,9 @@ import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_screen.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/features/settings/application/client_settings.dart';
+import 'package:aonw_flutter/features/settings/application/client_settings_controller.dart';
+import 'package:aonw_flutter/features/settings/presentation/client_settings_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -319,6 +322,33 @@ void main() {
       (controller.state as MapReadyState).interaction.referenceVisible,
       isFalse,
     );
+  });
+
+  testWidgets('applies camera client preference', (tester) async {
+    final settings = ClientSettingsController.ephemeral();
+    await settings.update(
+      ClientSettings.defaults.copyWith(cameraSensitivity: 2),
+    );
+    final controller = MapController(
+      repository: FakeMapRepository.success(testMapScene()),
+    );
+    addTearDown(settings.dispose);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      LocalizedTestApp(
+        home: ClientSettingsScope(
+          controller: settings,
+          child: MapScreen(controller: controller),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final viewport = tester.widget<InteractiveViewer>(
+      find.byKey(const ValueKey('map-viewport')),
+    );
+    expect(viewport.scaleFactor, 100);
   });
 }
 

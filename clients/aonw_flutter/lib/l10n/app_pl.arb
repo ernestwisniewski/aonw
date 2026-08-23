@@ -20,5 +20,17 @@
   "loadingMap": "Wczytywanie mapy",
   "mapLoadingFailed": "Nie udało się wczytać mapy",
   "mapUnavailable": "Mapa jest niedostępna",
-  "retry": "Spróbuj ponownie"
+  "retry": "Spróbuj ponownie",
+  "openSettings": "Otwórz ustawienia",
+  "settingsTitle": "Ustawienia",
+  "audioSettings": "Dźwięk",
+  "masterVolume": "Głośność główna",
+  "cameraSettings": "Kamera",
+  "cameraSensitivity": "Czułość przybliżenia",
+  "accessibilitySettings": "Dostępność",
+  "reducedMotion": "Ogranicz ruch",
+  "reducedMotionDescription": "Wyłącz zbędne animacje i przejścia.",
+  "highContrast": "Wysoki kontrast",
+  "highContrastDescription": "Zwiększ kontrast interfejsu aplikacji.",
+  "resetSettings": "Przywróć domyślne"
 }
