@@ -102,6 +102,18 @@ pub(super) fn required_i32_at(
     i32::try_from(value).map_err(display_error)
 }
 
+pub(super) fn required_i64_at(
+    object: &Map<String, Value>,
+    field: &str,
+    path: &str,
+) -> Result<i64, AdapterError> {
+    object
+        .get(field)
+        .ok_or_else(|| error(format!("{path}.{field} is required")))?
+        .as_i64()
+        .ok_or_else(|| error(format!("{path}.{field} must be an integer")))
+}
+
 pub(super) fn required_u32(object: &JsonObject, field: &str) -> Result<u32, AdapterError> {
     required_u32_at(object, field, "input")
 }

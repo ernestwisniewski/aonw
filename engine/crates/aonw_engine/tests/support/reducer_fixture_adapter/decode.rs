@@ -1,22 +1,23 @@
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
-    CityDto, CoordinateDto, EconomyStateDto, GameModeDto, GameStateDto,
-    InitialResourceDistributionDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
-    MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
-    QueuedMovePathDto, StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
-    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
-    UnitPostureDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    CityBuildingTypeDto, CityDto, CityProductionQueueDto, CitySpecializationTypeDto, CoordinateDto,
+    EconomyStateDto, GameModeDto, GameStateDto, InitialResourceDistributionDto,
+    InteractionStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto, ParticipantDto,
+    PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto,
+    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto, TurnLifecycleDto,
+    UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WonderTypeDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
-use aonw_domain::{HexGridBounds, MovementUnits, UnitId};
+use aonw_domain::{HexCoord, HexGridBounds, MovementUnits, UnitId};
 use aonw_testkit::{FixtureInput, JsonObject};
 use serde_json::{Map, Value};
 
 use super::AdapterError;
 use super::json::{
     coordinate_dto, coordinate_fields, decode_coordinates, display_error, error, object_at,
-    optional_string, required_array, required_i32_at, required_string, required_string_at,
-    required_u32, required_u32_at, value_to_u32,
+    optional_string, required_array, required_i32_at, required_i64_at, required_string,
+    required_string_at, required_u32, required_u32_at, value_to_u32,
 };
 
 pub(super) enum DecodedState {
@@ -289,58 +290,144 @@ fn decode_cities(state: &JsonObject, bounds: HexGridBounds) -> Result<Vec<CityDt
     required_array(state, "cities")?
         .iter()
         .enumerate()
-        .filter_map(|(index, value)| {
-            let path = format!("input.state.cities[{index}]");
-            let object = match object_at(value, &path) {
-                Ok(object) => object,
-                Err(error) => return Some(Err(error)),
-            };
-            let center = match object
-                .get("center")
-                .ok_or_else(|| error(format!("{path}.center is required")))
-                .and_then(|value| object_at(value, &format!("{path}.center")))
-                .and_then(|center| coordinate_fields(center, &format!("{path}.center")))
-            {
-                Ok(center) => center,
-                Err(error) => return Some(Err(error)),
-            };
-            let controlled = match required_array(object, "controlledHexes").and_then(|values| {
-                values
-                    .iter()
-                    .enumerate()
-                    .map(|(coordinate_index, value)| {
-                        let coordinate_path = format!("{path}.controlledHexes[{coordinate_index}]");
-                        object_at(value, &coordinate_path)
-                            .and_then(|value| coordinate_fields(value, &coordinate_path))
-                    })
-                    .collect::<Result<Vec<_>, _>>()
-            }) {
-                Ok(controlled) => controlled,
-                Err(error) => return Some(Err(error)),
-            };
-            if !bounds.contains(center)
-                || controlled
-                    .iter()
-                    .any(|coordinate| !bounds.contains(*coordinate))
-            {
-                return None;
-            }
-            let id = match required_string_at(object, "id", &path) {
-                Ok(value) => value.to_owned(),
-                Err(error) => return Some(Err(error)),
-            };
-            let owner_player_id = match required_string_at(object, "ownerPlayerId", &path) {
-                Ok(value) => value.to_owned(),
-                Err(error) => return Some(Err(error)),
-            };
-            Some(Ok(CityDto {
-                id,
-                owner_player_id,
-                center: coordinate_dto(center),
-                controlled_hexes: controlled.into_iter().map(coordinate_dto).collect(),
-            }))
+        .filter_map(|(index, value)| decode_city(value, index, bounds).transpose())
+        .collect()
+}
+
+fn decode_city(
+    value: &Value,
+    index: usize,
+    bounds: HexGridBounds,
+) -> Result<Option<CityDto>, AdapterError> {
+    let path = format!("input.state.cities[{index}]");
+    let object = object_at(value, &path)?;
+    let center_path = format!("{path}.center");
+    let center = object
+        .get("center")
+        .ok_or_else(|| error(format!("{center_path} is required")))
+        .and_then(|value| object_at(value, &center_path))
+        .and_then(|center| coordinate_fields(center, &center_path))?;
+    let controlled = required_array(object, "controlledHexes")
+        .and_then(|values| decode_city_coordinates(values, &format!("{path}.controlledHexes")))?;
+    let worked = required_array(object, "workedHexes")
+        .and_then(|values| decode_city_coordinates(values, &format!("{path}.workedHexes")))?;
+    if !city_coordinates_fit(bounds, center, &controlled, &worked) {
+        return Ok(None);
+    }
+    let preferred_expansion_hex = object
+        .get("preferredExpansionHex")
+        .map(|value| {
+            let preferred_path = format!("{path}.preferredExpansionHex");
+            object_at(value, &preferred_path)
+                .and_then(|value| coordinate_fields(value, &preferred_path))
+                .map(coordinate_dto)
+        })
+        .transpose()?;
+    if preferred_expansion_hex
+        .is_some_and(|coordinate| !bounds.contains(HexCoord::new(coordinate.col, coordinate.row)))
+    {
+        return Ok(None);
+    }
+    let hit_points = match object.get("hitPoints") {
+        None | Some(Value::Null) => None,
+        Some(value) => Some(
+            value
+                .as_i64()
+                .ok_or_else(|| error(format!("{path}.hitPoints must be an integer")))?,
+        ),
+    };
+    Ok(Some(CityDto {
+        id: required_string_at(object, "id", &path)?.to_owned(),
+        owner_player_id: required_string_at(object, "ownerPlayerId", &path)?.to_owned(),
+        founding_owner_player_id: optional_string(object, "foundingOwnerPlayerId")?,
+        name: required_string_at(object, "name", &path)?.to_owned(),
+        population: required_i64_at(object, "population", &path)?,
+        stored_food: required_i64_at(object, "storedFood", &path)?,
+        max_hexes: required_i64_at(object, "maxHexes", &path)?,
+        territory_radius: required_i64_at(object, "territoryRadius", &path)?,
+        center: coordinate_dto(center),
+        controlled_hexes: controlled.into_iter().map(coordinate_dto).collect(),
+        worked_hexes: worked.into_iter().map(coordinate_dto).collect(),
+        buildings: decode_city_buildings(object, &path)?,
+        wonders: decode_city_wonders(object)?,
+        production_queue: object
+            .get("productionQueue")
+            .map(|value| decode_city_production_queue(value, &path))
+            .transpose()?,
+        production_overflow: required_i64_at(object, "productionOverflow", &path)?,
+        specialization: object
+            .get("specialization")
+            .cloned()
+            .map(serde_json::from_value::<CitySpecializationTypeDto>)
+            .transpose()
+            .map_err(display_error)?,
+        preferred_expansion_hex,
+        hit_points,
+    }))
+}
+
+fn city_coordinates_fit(
+    bounds: HexGridBounds,
+    center: HexCoord,
+    controlled: &[HexCoord],
+    worked: &[HexCoord],
+) -> bool {
+    bounds.contains(center)
+        && controlled
+            .iter()
+            .all(|coordinate| bounds.contains(*coordinate))
+        && worked.iter().all(|coordinate| bounds.contains(*coordinate))
+}
+
+fn decode_city_coordinates(values: &[Value], path: &str) -> Result<Vec<HexCoord>, AdapterError> {
+    values
+        .iter()
+        .enumerate()
+        .map(|(index, value)| {
+            let path = format!("{path}[{index}]");
+            object_at(value, &path).and_then(|value| coordinate_fields(value, &path))
         })
         .collect()
+}
+
+fn decode_city_production_queue(
+    value: &Value,
+    city_path: &str,
+) -> Result<CityProductionQueueDto, AdapterError> {
+    let path = format!("{city_path}.productionQueue");
+    let object = object_at(value, &path)?;
+    serde_json::from_value(Value::Object(Map::from_iter([
+        ("target".to_owned(), json_field(object, "target", &path)?),
+        (
+            "investedProduction".to_owned(),
+            json_field(object, "investedProduction", &path)?,
+        ),
+        (
+            "resourceAllocation".to_owned(),
+            object
+                .get("resourceAllocation")
+                .cloned()
+                .unwrap_or_else(|| Value::Object(Map::new())),
+        ),
+    ])))
+    .map_err(display_error)
+}
+
+fn decode_city_buildings(
+    object: &JsonObject,
+    path: &str,
+) -> Result<Vec<CityBuildingTypeDto>, AdapterError> {
+    match object.get("buildings") {
+        Some(value) => serde_json::from_value(value.clone()).map_err(display_error),
+        None => Err(error(format!("{path}.buildings is required"))),
+    }
+}
+
+fn decode_city_wonders(object: &JsonObject) -> Result<Vec<WonderTypeDto>, AdapterError> {
+    match object.get("wonders") {
+        Some(value) => serde_json::from_value(value.clone()).map_err(display_error),
+        None => Ok(Vec::new()),
+    }
 }
 
 fn decode_referenced_artifacts(

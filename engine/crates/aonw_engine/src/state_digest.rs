@@ -3,10 +3,12 @@ use aonw_domain::{
     TroopKind, Unit, UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob,
     WorldArtifact, WorldArtifactLocation, WorldArtifactType,
 };
+mod city;
 mod economy;
 mod match_lifecycle;
 mod writer;
 
+use city::hash_city;
 use economy::hash_economy;
 use match_lifecycle::hash_match_lifecycle;
 use writer::DigestWriter;
@@ -57,13 +59,7 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
     cities.sort_unstable_by(|left, right| left.id().cmp(right.id()));
     writer.usize(cities.len());
     for city in cities {
-        writer.text(city.id().as_str());
-        writer.text(city.owner_player_id().as_str());
-        writer.coordinate(city.center());
-        writer.usize(city.controlled_hexes().len());
-        for coordinate in city.controlled_hexes() {
-            writer.coordinate(*coordinate);
-        }
+        hash_city(&mut writer, city);
     }
 
     let mut artifacts = state.artifacts().iter().collect::<Vec<_>>();

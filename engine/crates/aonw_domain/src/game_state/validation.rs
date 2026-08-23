@@ -46,8 +46,10 @@ pub(super) fn city_indices(
     cities: &[City],
 ) -> Result<Vec<usize>, GameStateBuildError> {
     for city in cities {
-        for position in
-            core::iter::once(city.center()).chain(city.controlled_hexes().iter().copied())
+        for position in core::iter::once(city.center())
+            .chain(city.controlled_hexes().iter().copied())
+            .chain(city.worked_hexes().iter().copied())
+            .chain(city.preferred_expansion_hex())
         {
             if !bounds.contains(position) {
                 return Err(GameStateBuildError::CityOutOfBounds {

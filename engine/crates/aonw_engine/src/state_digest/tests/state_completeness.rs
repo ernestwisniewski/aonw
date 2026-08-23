@@ -1,8 +1,10 @@
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
+    CityBuildingTypeDto, CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto,
     GameModeDto, GameStateDto, PaceProfileDto, PendingInteractionDto, PlayerCountryDto,
     PlayerTurnStateDto, ResourceTypeDto, RuleValueDto, TransportConditionDto,
-    UnitOccupancyPolicyDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    UnitOccupancyPolicyDto, WonderTypeDto, WorldArtifactDto, WorldArtifactLocationDto,
+    WorldArtifactTypeDto,
 };
 
 use super::fixture::{complete_state_contract, coordinate};
@@ -165,6 +167,86 @@ fn digest_changes_with_match_identity_and_turn_lifecycle() {
     });
     assert_digest_change(&source, "turn start", |candidate| {
         candidate.turn_lifecycle.turn_started_at = Some("2026-08-23T12:34:57.123456Z".to_owned());
+    });
+}
+
+#[test]
+fn digest_changes_with_every_complete_city_field() {
+    let source = complete_state_contract();
+    assert_digest_change(&source, "city owner", |candidate| {
+        candidate.cities[0].owner_player_id = "player-2".to_owned();
+    });
+    assert_digest_change(&source, "city founding owner", |candidate| {
+        candidate.cities[0].founding_owner_player_id = None;
+    });
+    assert_digest_change(&source, "city name", |candidate| {
+        candidate.cities[0].name.push_str(" Prime");
+    });
+    assert_digest_change(&source, "city population", |candidate| {
+        candidate.cities[0].population += 1;
+    });
+    assert_digest_change(&source, "city stored food", |candidate| {
+        candidate.cities[0].stored_food -= 1;
+    });
+    assert_digest_change(&source, "city max hexes", |candidate| {
+        candidate.cities[0].max_hexes += 1;
+    });
+    assert_digest_change(&source, "city territory radius", |candidate| {
+        candidate.cities[0].territory_radius += 1;
+    });
+    assert_digest_change(&source, "city center", |candidate| {
+        candidate.cities[0].center = coordinate(1, 1);
+    });
+    assert_digest_change(&source, "controlled hexes", |candidate| {
+        candidate.cities[0].controlled_hexes.push(coordinate(1, 0));
+    });
+    assert_digest_change(&source, "worked hexes", |candidate| {
+        candidate.cities[0].worked_hexes.clear();
+    });
+    assert_digest_change(&source, "city buildings", |candidate| {
+        candidate.cities[0]
+            .buildings
+            .push(CityBuildingTypeDto::Factory);
+    });
+    assert_digest_change(&source, "city wonders", |candidate| {
+        candidate.cities[0].wonders.push(WonderTypeDto::GreatWall);
+    });
+    assert_digest_change(&source, "production target", |candidate| {
+        candidate.cities[0]
+            .production_queue
+            .as_mut()
+            .expect("queue")
+            .target = CityProductionTargetDto::Project {
+            project_type: CityProjectTypeDto::Research,
+        };
+    });
+    assert_digest_change(&source, "invested production", |candidate| {
+        candidate.cities[0]
+            .production_queue
+            .as_mut()
+            .expect("queue")
+            .invested_production += 1;
+    });
+    assert_digest_change(&source, "production resource allocation", |candidate| {
+        candidate.cities[0]
+            .production_queue
+            .as_mut()
+            .expect("queue")
+            .resource_allocation
+            .0
+            .insert(ResourceTypeDto::Aluminium, 1);
+    });
+    assert_digest_change(&source, "production overflow", |candidate| {
+        candidate.cities[0].production_overflow += 1;
+    });
+    assert_digest_change(&source, "city specialization", |candidate| {
+        candidate.cities[0].specialization = Some(CitySpecializationTypeDto::Military);
+    });
+    assert_digest_change(&source, "preferred expansion", |candidate| {
+        candidate.cities[0].preferred_expansion_hex = None;
+    });
+    assert_digest_change(&source, "city hit points", |candidate| {
+        candidate.cities[0].hit_points = Some(40);
     });
 }
 

@@ -15,7 +15,7 @@ platform, shadow, canary, and rollback gates in the
 
 | Crate | Responsibility |
 | --- | --- |
-| `aonw_domain` | `GameState`, complete unit entities, validated identifiers, odd-q topology, and fixed-point values. |
+| `aonw_domain` | `GameState`, complete unit and city entities, validated identifiers, odd-q topology, and fixed-point values. |
 | `aonw_content` | Strict maps, immutable rulesets and scenarios, catalogs, validation, and separate deterministic content hashes. |
 | `aonw_map_authoring` | Metric terrain-authoring profiles bound to, but excluded from, logical map identity. |
 | `aonw_map_compiler` | Pure deterministic compilation of authoring profiles into bounded base/min/max height rasters. |
@@ -38,7 +38,8 @@ Recipient state has no conversion into canonical domain state.
 
 Large responsibilities are organized as modules instead of monolithic crate
 roots: scenarios separate model, codec, bootstrap, canonicalization, and tests;
-state mapping separates aggregate, unit, world, value, and error conversion;
+state mapping separates aggregate, identity, economy, city, unit, world, value,
+and error conversion;
 local runtime sessions separate lifecycle, state, capabilities, and execution;
 the engine separates application commands, queries, transitions, context, and
 state-digest writing; the Godot adapter separates request parsing, response
@@ -179,6 +180,16 @@ version. Persisted placements are authoritative, and the legacy Dart
 `algorithmVersion` has no runtime consumer once generation is complete; the
 fixture adapter therefore reads the result and discards that redundant
 internal counter.
+
+Cities use one complete typed contract and domain entity. The representation
+preserves current and founding ownership, name, progression counters, ordered
+controlled and worked coordinates, the full building and wonder sets, typed
+building/unit/project/wonder production, invested and overflow production,
+reserved strategic resources, specialization, preferred expansion, and
+optional hit points. Mapping validates participant identity, map bounds,
+duplicate collections, worked-territory consistency, and resource-allocation
+invariants with field paths. All persisted city fields contribute to the state
+digest; current movement and unit-action transitions preserve them unchanged.
 
 ## Movement foundation
 

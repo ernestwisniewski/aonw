@@ -3,11 +3,16 @@ use serde::{Deserialize, Serialize};
 use crate::{MovementStepDto, QueuedMovePathDto, UnitKindDto, UnitPostureDto};
 
 mod artifact;
+mod city;
 mod economy;
 mod interaction;
 mod match_lifecycle;
 
 pub use artifact::{WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto};
+pub use city::{
+    CityBuildingTypeDto, CityDto, CityProductionQueueDto, CityProductionTargetDto,
+    CityProjectTypeDto, CitySpecializationTypeDto, WonderTypeDto,
+};
 pub use economy::{
     EconomyStateDto, InitialResourceDistributionDto, InitialResourcePlacementDto, ResourceTypeDto,
     StrategicResourceStockpileDto,
@@ -163,16 +168,6 @@ pub struct CityFoundingJobDto {
     pub controlled_hexes: Vec<CoordinateDto>,
     pub remaining_turns: u32,
     pub total_turns: u32,
-}
-
-#[allow(missing_docs)]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct CityDto {
-    pub id: String,
-    pub owner_player_id: String,
-    pub center: CoordinateDto,
-    pub controlled_hexes: Vec<CoordinateDto>,
 }
 
 #[allow(missing_docs)]

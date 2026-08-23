@@ -7,15 +7,13 @@ use aonw_domain::{
 };
 
 use super::artifact::{decode_artifact, encode_artifact};
+use super::city::{decode_city, encode_city};
 use super::economy::{decode_economy, encode_economy};
 use super::error::GameStateMappingError;
 use super::interaction::{decode_interaction, encode_interaction};
 use super::match_lifecycle::{decode_match_lifecycle, encode_match_lifecycle};
 use super::unit::{decode_unit, encode_unit};
-use super::world::{
-    decode_city, decode_fog, decode_pair, decode_transport, encode_city, encode_fog,
-    encode_transport,
-};
+use super::world::{decode_fog, decode_pair, decode_transport, encode_fog, encode_transport};
 
 /// Validates and maps a complete game-state DTO.
 ///
@@ -46,7 +44,7 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         .cities
         .into_iter()
         .enumerate()
-        .map(|(index, city)| decode_city(index, city))
+        .map(|(index, city)| decode_city(index, match_lifecycle.identity(), bounds, city))
         .collect::<Result<Vec<_>, _>>()?;
     let artifacts = dto
         .artifacts

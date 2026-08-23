@@ -26,7 +26,10 @@ mod unit_kind;
 mod unit_posture;
 
 pub use artifact::{WorldArtifact, WorldArtifactLocation, WorldArtifactType};
-pub use city::City;
+pub use city::{
+    City, CityBuildError, CityBuilder, CityBuildingType, CityProductionQueue, CityProductionTarget,
+    CityProjectType, CitySpecializationType, WonderType,
+};
 pub use diplomacy::{Diplomacy, PlayerPair};
 pub use economy::{
     EconomyState, EconomyStateBuildError, InitialResourceDistribution, InitialResourcePlacement,

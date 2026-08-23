@@ -10,11 +10,7 @@ pub(super) fn hash_economy(writer: &mut DigestWriter, economy: &EconomyState) {
     writer.usize(economy.strategic_resources().len());
     for (player, stockpile) in economy.strategic_resources() {
         writer.text(player.as_str());
-        writer.usize(stockpile.amounts().len());
-        for (resource, amount) in stockpile.amounts() {
-            writer.u8(resource_tag(*resource));
-            writer.i64(*amount);
-        }
+        hash_stockpile(writer, stockpile);
     }
 
     let distribution = economy.initial_resource_distribution();
@@ -23,6 +19,17 @@ pub(super) fn hash_economy(writer: &mut DigestWriter, economy: &EconomyState) {
     for placement in distribution.placements() {
         writer.coordinate(placement.coordinate());
         writer.u8(resource_tag(placement.resource()));
+    }
+}
+
+pub(super) fn hash_stockpile(
+    writer: &mut DigestWriter,
+    stockpile: &aonw_domain::StrategicResourceStockpile,
+) {
+    writer.usize(stockpile.amounts().len());
+    for (resource, amount) in stockpile.amounts() {
+        writer.u8(resource_tag(*resource));
+        writer.i64(*amount);
     }
 }
 

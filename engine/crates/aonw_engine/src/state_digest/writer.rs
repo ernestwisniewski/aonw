@@ -73,6 +73,16 @@ impl DigestWriter {
         }
     }
 
+    pub(super) fn optional_i64(&mut self, value: Option<i64>) {
+        match value {
+            None => self.u8(0),
+            Some(value) => {
+                self.u8(1);
+                self.i64(value);
+            }
+        }
+    }
+
     pub(super) fn optional_text(&mut self, value: Option<&str>) {
         match value {
             None => self.u8(0),

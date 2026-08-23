@@ -1,16 +1,17 @@
 use std::collections::BTreeMap;
 
 use aonw_contracts::{
-    AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityDto,
-    CityFoundingDraftDto, CityFoundingJobDto, CoordinateDto, EconomyStateDto,
+    AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
+    CityDto, CityFoundingDraftDto, CityFoundingJobDto, CityProductionQueueDto,
+    CityProductionTargetDto, CitySpecializationTypeDto, CoordinateDto, EconomyStateDto,
     FieldImprovementKindDto, GameModeDto, GameStateDto, InitialResourceDistributionDto,
     InitialResourcePlacementDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
     MerchantTradeRouteDto, MovementStepDto, ParticipantDto, PendingInteractionDto,
     PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto, PlayerTurnStateDto,
     QueuedMovePathDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
     TransportConditionDto, TransportSegmentDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto,
-    UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto, WorldArtifactDto,
-    WorldArtifactLocationDto, WorldArtifactTypeDto,
+    UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WonderTypeDto, WorkerJobDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 pub(super) fn complete_state_contract() -> GameStateDto {
@@ -24,20 +25,7 @@ pub(super) fn complete_state_contract() -> GameStateDto {
         rows: 5,
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
         units: vec![complete_unit()],
-        cities: vec![
-            CityDto {
-                id: "city-1".to_owned(),
-                owner_player_id: "player-1".to_owned(),
-                center: coordinate(0, 0),
-                controlled_hexes: vec![coordinate(0, 1)],
-            },
-            CityDto {
-                id: "city-2".to_owned(),
-                owner_player_id: "player-1".to_owned(),
-                center: coordinate(4, 4),
-                controlled_hexes: vec![coordinate(4, 3)],
-            },
-        ],
+        cities: vec![complete_city(), secondary_city()],
         artifacts: vec![
             WorldArtifactDto {
                 id: "artifact-1".to_owned(),
@@ -84,6 +72,61 @@ pub(super) fn complete_state_contract() -> GameStateDto {
             built_by_player_id: "player-1".to_owned(),
             built_by_city_id: Some("city-1".to_owned()),
         }],
+    }
+}
+
+fn complete_city() -> CityDto {
+    CityDto {
+        id: "city-1".to_owned(),
+        owner_player_id: "player-1".to_owned(),
+        founding_owner_player_id: Some("player-2".to_owned()),
+        name: "Warsaw".to_owned(),
+        population: 7,
+        stored_food: -3,
+        max_hexes: 10,
+        territory_radius: 3,
+        center: coordinate(0, 0),
+        controlled_hexes: vec![coordinate(0, 1)],
+        worked_hexes: vec![coordinate(0, 1)],
+        buildings: vec![CityBuildingTypeDto::Granary, CityBuildingTypeDto::Workshop],
+        wonders: vec![WonderTypeDto::GreatLibrary],
+        production_queue: Some(CityProductionQueueDto {
+            target: CityProductionTargetDto::Building {
+                building_type: CityBuildingTypeDto::Factory,
+            },
+            invested_production: 23,
+            resource_allocation: StrategicResourceStockpileDto(BTreeMap::from([(
+                ResourceTypeDto::Oil,
+                2,
+            )])),
+        }),
+        production_overflow: -5,
+        specialization: Some(CitySpecializationTypeDto::Science),
+        preferred_expansion_hex: Some(coordinate(1, 0)),
+        hit_points: Some(41),
+    }
+}
+
+fn secondary_city() -> CityDto {
+    CityDto {
+        id: "city-2".to_owned(),
+        owner_player_id: "player-1".to_owned(),
+        founding_owner_player_id: None,
+        name: "Gdansk".to_owned(),
+        population: 3,
+        stored_food: 0,
+        max_hexes: 6,
+        territory_radius: 2,
+        center: coordinate(4, 4),
+        controlled_hexes: vec![coordinate(4, 3)],
+        worked_hexes: Vec::new(),
+        buildings: Vec::new(),
+        wonders: Vec::new(),
+        production_queue: None,
+        production_overflow: 0,
+        specialization: None,
+        preferred_expansion_hex: None,
+        hit_points: None,
     }
 }
 

@@ -39,13 +39,7 @@ pub(super) fn decode_economy(
                     format!("economy player is not a participant: {player}"),
                 ));
             }
-            let amounts = stockpile
-                .0
-                .into_iter()
-                .map(|(resource, amount)| (decode_resource(resource), amount))
-                .collect();
-            let stockpile = StrategicResourceStockpile::try_new(amounts)
-                .map_err(|error| GameStateMappingError::new(path, error.to_string()))?;
+            let stockpile = decode_stockpile(stockpile, &path)?;
             Ok((player, stockpile))
         })
         .collect::<Result<BTreeMap<_, _>, GameStateMappingError>>()?;
@@ -72,18 +66,7 @@ pub(super) fn encode_economy(value: &EconomyState) -> EconomyStateDto {
         strategic_resources: value
             .strategic_resources()
             .iter()
-            .map(|(player, stockpile)| {
-                (
-                    player.as_str().to_owned(),
-                    StrategicResourceStockpileDto(
-                        stockpile
-                            .amounts()
-                            .iter()
-                            .map(|(resource, amount)| (encode_resource(*resource), *amount))
-                            .collect(),
-                    ),
-                )
-            })
+            .map(|(player, stockpile)| (player.as_str().to_owned(), encode_stockpile(stockpile)))
             .collect(),
         initial_resource_distribution: InitialResourceDistributionDto {
             seed: value.initial_resource_distribution().seed(),
@@ -131,6 +114,32 @@ fn encode_player_accounts(accounts: &BTreeMap<PlayerId, i64>) -> BTreeMap<String
 
 fn decode_player_id(value: String, path: &str) -> Result<PlayerId, GameStateMappingError> {
     PlayerId::new(value).map_err(|error| GameStateMappingError::new(path, error.to_string()))
+}
+
+pub(super) fn decode_stockpile(
+    dto: StrategicResourceStockpileDto,
+    path: &str,
+) -> Result<StrategicResourceStockpile, GameStateMappingError> {
+    StrategicResourceStockpile::try_new(
+        dto.0
+            .into_iter()
+            .map(|(resource, amount)| (decode_resource(resource), amount))
+            .collect(),
+    )
+    .map_err(|error| GameStateMappingError::new(path, error.to_string()))
+}
+
+#[must_use]
+pub(super) fn encode_stockpile(
+    value: &StrategicResourceStockpile,
+) -> StrategicResourceStockpileDto {
+    StrategicResourceStockpileDto(
+        value
+            .amounts()
+            .iter()
+            .map(|(resource, amount)| (encode_resource(*resource), *amount))
+            .collect(),
+    )
 }
 
 fn decode_distribution(

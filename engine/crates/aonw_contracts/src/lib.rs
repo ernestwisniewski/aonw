@@ -13,16 +13,17 @@ mod limits;
 mod persistence;
 
 pub use canonical::{
-    AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityDto,
-    CityFoundingDraftDto, CityFoundingJobDto, CoordinateDto, EconomyStateDto,
-    FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto,
+    AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
+    CityDto, CityFoundingDraftDto, CityFoundingJobDto, CityProductionQueueDto,
+    CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto, CoordinateDto,
+    EconomyStateDto, FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto,
     GameStateCodecError, GameStateDto, InitialResourceDistributionDto, InitialResourcePlacementDto,
     InteractionStateDto, MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto, PaceProfileDto,
     ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto,
     PlayerPairDto, PlayerTurnStateDto, ResourceTypeDto, RuleValueDto,
     StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto, TroopKindDto,
     TurnLifecycleDto, UnitActivityDto, UnitDto, UnitOccupancyPolicyDto, VictoryRulesDto,
-    WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    WonderTypeDto, WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 pub use limits::{

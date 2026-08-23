@@ -4,16 +4,17 @@ use std::collections::BTreeMap;
 
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
-    AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityDto,
-    CoordinateDto, EconomyStateDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto,
-    GameStateDto, InitialResourceDistributionDto, InitialResourcePlacementDto, InteractionStateDto,
-    MatchIdentityDto, MatchRulesDto, MovementStepDto, PaceProfileDto, ParticipantDto,
-    PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
-    PlayerTurnStateDto, QueuedMovePathDto, ResourceTypeDto, RuleValueDto,
-    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto, TroopKindDto,
-    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
-    UnitPostureDto, VictoryRulesDto, WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto,
-    WorldArtifactTypeDto,
+    AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
+    CityDto, CityProductionQueueDto, CityProductionTargetDto, CityProjectTypeDto,
+    CitySpecializationTypeDto, CoordinateDto, EconomyStateDto, GameLengthConfigDto,
+    GameLengthKindDto, GameModeDto, GameStateDto, InitialResourceDistributionDto,
+    InitialResourcePlacementDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
+    MovementStepDto, PaceProfileDto, ParticipantDto, PendingInteractionDto, PlayerCountryDto,
+    PlayerFogDto, PlayerKindDto, PlayerPairDto, PlayerTurnStateDto, QueuedMovePathDto,
+    ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto, TransportConditionDto,
+    TransportSegmentDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
+    UnitOccupancyPolicyDto, UnitPostureDto, VictoryRulesDto, WonderTypeDto, WorkerJobDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{FogVisibility, HexCoord, UnitId};
 
@@ -74,12 +75,7 @@ fn contract() -> GameStateDto {
             posture: UnitPostureDto::AutoWorking,
             carried_artifact_id: Some("artifact-2".to_owned()),
         }],
-        cities: vec![CityDto {
-            id: "city-1".to_owned(),
-            owner_player_id: "player-1".to_owned(),
-            center: CoordinateDto { col: 0, row: 0 },
-            controlled_hexes: vec![CoordinateDto { col: 0, row: 1 }],
-        }],
+        cities: vec![city()],
         artifacts: vec![
             WorldArtifactDto {
                 id: "artifact-1".to_owned(),
@@ -117,6 +113,38 @@ fn contract() -> GameStateDto {
             built_by_player_id: "player-1".to_owned(),
             built_by_city_id: Some("city-1".to_owned()),
         }],
+    }
+}
+
+fn city() -> CityDto {
+    CityDto {
+        id: "city-1".to_owned(),
+        owner_player_id: "player-1".to_owned(),
+        founding_owner_player_id: Some("player-2".to_owned()),
+        name: "Warsaw".to_owned(),
+        population: 7,
+        stored_food: -3,
+        max_hexes: 10,
+        territory_radius: 3,
+        center: CoordinateDto { col: 0, row: 0 },
+        controlled_hexes: vec![CoordinateDto { col: 0, row: 1 }],
+        worked_hexes: vec![CoordinateDto { col: 0, row: 1 }],
+        buildings: vec![CityBuildingTypeDto::Granary, CityBuildingTypeDto::Workshop],
+        wonders: vec![WonderTypeDto::GreatLibrary],
+        production_queue: Some(CityProductionQueueDto {
+            target: CityProductionTargetDto::Wonder {
+                wonder_type: WonderTypeDto::GrandExposition,
+            },
+            invested_production: 23,
+            resource_allocation: StrategicResourceStockpileDto(BTreeMap::from([(
+                ResourceTypeDto::Oil,
+                2,
+            )])),
+        }),
+        production_overflow: -5,
+        specialization: Some(CitySpecializationTypeDto::Science),
+        preferred_expansion_hex: Some(CoordinateDto { col: 1, row: 0 }),
+        hit_points: Some(41),
     }
 }
 
@@ -291,6 +319,60 @@ fn economy_round_trip_preserves_signed_accounts_stockpiles_and_ordered_placement
 }
 
 #[test]
+fn complete_city_round_trip_preserves_progression_topology_production_and_planning() {
+    let source = contract();
+    let state = decode_game_state(source.clone()).expect("decode complete city");
+    let city = state.cities().first().expect("city");
+
+    assert_eq!(
+        city.founding_owner_player_id().expect("founder").as_str(),
+        "player-2"
+    );
+    assert_eq!(city.name(), "Warsaw");
+    assert_eq!(city.population(), 7);
+    assert_eq!(city.stored_food(), -3);
+    assert_eq!(city.worked_hexes(), [HexCoord::new(0, 1)]);
+    assert_eq!(
+        city.production_queue()
+            .expect("production")
+            .resource_allocation()
+            .amounts()
+            .values()
+            .copied()
+            .collect::<Vec<_>>(),
+        [2]
+    );
+    assert_eq!(encode_game_state(&state), source);
+}
+
+#[test]
+fn every_city_production_target_round_trips() {
+    for target in [
+        CityProductionTargetDto::Building {
+            building_type: CityBuildingTypeDto::WorldFairGrounds,
+        },
+        CityProductionTargetDto::Unit {
+            unit_type: UnitKindDto::ReconPlane,
+        },
+        CityProductionTargetDto::Project {
+            project_type: CityProjectTypeDto::Research,
+        },
+        CityProductionTargetDto::Wonder {
+            wonder_type: WonderTypeDto::SvalbardSeedVault,
+        },
+    ] {
+        let mut source = contract();
+        source.cities[0]
+            .production_queue
+            .as_mut()
+            .expect("queue")
+            .target = target;
+        let state = decode_game_state(source.clone()).expect("decode target");
+        assert_eq!(encode_game_state(&state), source);
+    }
+}
+
+#[test]
 fn json_round_trip_remains_strict_and_domain_validated() {
     let source = contract();
     let json = source.to_json().expect("encode json");
@@ -432,5 +514,71 @@ fn economy_rejects_unknown_players_invalid_stockpiles_and_invalid_placements_wit
             .expect_err("out-of-bounds placement")
             .path(),
         "$.economy.initialResourceDistribution.placements[0]"
+    );
+}
+
+#[test]
+fn city_rejects_unknown_owners_duplicates_and_invalid_resource_allocations_with_paths() {
+    let mut unknown = contract();
+    unknown.cities[0].founding_owner_player_id = Some("player-3".to_owned());
+    assert_eq!(
+        decode_game_state(unknown)
+            .expect_err("unknown founding owner")
+            .path(),
+        "$.cities[0].foundingOwnerPlayerId"
+    );
+
+    let mut duplicate_controlled = contract();
+    duplicate_controlled.cities[0]
+        .controlled_hexes
+        .push(CoordinateDto { col: 0, row: 1 });
+    assert_eq!(
+        decode_game_state(duplicate_controlled)
+            .expect_err("duplicate controlled hex")
+            .path(),
+        "$.cities[0].controlledHexes"
+    );
+
+    let mut invalid_worked = contract();
+    invalid_worked.cities[0].worked_hexes[0] = CoordinateDto { col: 2, row: 2 };
+    assert_eq!(
+        decode_game_state(invalid_worked)
+            .expect_err("uncontrolled worked hex")
+            .path(),
+        "$.cities[0].workedHexes"
+    );
+
+    let mut duplicate_building = contract();
+    duplicate_building.cities[0]
+        .buildings
+        .push(CityBuildingTypeDto::Granary);
+    assert_eq!(
+        decode_game_state(duplicate_building)
+            .expect_err("duplicate building")
+            .path(),
+        "$.cities[0].buildings"
+    );
+
+    let mut invalid_allocation = contract();
+    invalid_allocation.cities[0]
+        .production_queue
+        .as_mut()
+        .expect("queue")
+        .resource_allocation =
+        StrategicResourceStockpileDto(BTreeMap::from([(ResourceTypeDto::Iron, 1)]));
+    assert_eq!(
+        decode_game_state(invalid_allocation)
+            .expect_err("invalid allocation")
+            .path(),
+        "$.cities[0].productionQueue.resourceAllocation"
+    );
+
+    let mut outside = contract();
+    outside.cities[0].preferred_expansion_hex = Some(CoordinateDto { col: 5, row: 0 });
+    assert_eq!(
+        decode_game_state(outside)
+            .expect_err("out-of-bounds preferred expansion")
+            .path(),
+        "$.cities[0].preferredExpansionHex"
     );
 }
