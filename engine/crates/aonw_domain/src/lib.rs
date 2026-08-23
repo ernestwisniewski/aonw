@@ -9,6 +9,7 @@
 mod artifact;
 mod city;
 mod diplomacy;
+mod economy;
 mod fog;
 mod game_state;
 mod hex_coord;
@@ -27,6 +28,10 @@ mod unit_posture;
 pub use artifact::{WorldArtifact, WorldArtifactLocation, WorldArtifactType};
 pub use city::City;
 pub use diplomacy::{Diplomacy, PlayerPair};
+pub use economy::{
+    EconomyState, EconomyStateBuildError, InitialResourceDistribution, InitialResourcePlacement,
+    ResourceType, StrategicResourceStockpile,
+};
 pub use fog::{FogOfWar, FogVisibility, PlayerFog};
 pub use game_state::{GameState, GameStateBuildError, UnitOccupancyPolicy};
 pub use hex_coord::HexCoord;

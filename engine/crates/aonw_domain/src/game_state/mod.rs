@@ -1,8 +1,9 @@
 mod validation;
 
 use crate::{
-    ArtifactId, City, CityId, Diplomacy, FogOfWar, HexCoord, HexGridBounds, InteractionState,
-    MatchLifecycle, PlayerId, StateRevision, TransportNetwork, Unit, UnitId, WorldArtifact,
+    ArtifactId, City, CityId, Diplomacy, EconomyState, EconomyStateBuildError, FogOfWar, HexCoord,
+    HexGridBounds, InteractionState, MatchLifecycle, PlayerId, StateRevision, TransportNetwork,
+    Unit, UnitId, WorldArtifact,
 };
 use validation::{
     artifact_indices, city_indices, unit_indices, validate_artifacts, validate_environment,
@@ -109,6 +110,8 @@ pub enum GameStateBuildError {
     InteractionOwnerMismatch,
     /// A pending turn skip does not match the skipped unit state.
     InvalidTurnSkipState(UnitId),
+    /// Economy data violates participant ownership or map topology.
+    InvalidEconomy(EconomyStateBuildError),
 }
 
 #[cfg(test)]
@@ -209,6 +212,7 @@ impl core::fmt::Display for GameStateBuildError {
             Self::InvalidTurnSkipState(id) => {
                 write!(formatter, "pending turn skip does not match unit {id}")
             }
+            Self::InvalidEconomy(error) => error.fmt(formatter),
         }
     }
 }
@@ -221,6 +225,7 @@ pub struct GameState {
     revision: StateRevision,
     turn: u32,
     match_lifecycle: MatchLifecycle,
+    economy: EconomyState,
     bounds: HexGridBounds,
     occupancy_policy: UnitOccupancyPolicy,
     units: Box<[Unit]>,
@@ -282,10 +287,11 @@ impl GameState {
         diplomacy: Diplomacy,
         transport_network: TransportNetwork,
     ) -> Result<Self, GameStateBuildError> {
-        Self::try_new_with_world_and_match_lifecycle(
+        Self::try_new_with_world_and_state_sections(
             revision,
             turn,
             MatchLifecycle::default(),
+            EconomyState::default(),
             bounds,
             occupancy_policy,
             units,
@@ -298,16 +304,17 @@ impl GameState {
         )
     }
 
-    /// Validates and constructs a complete world with match lifecycle.
+    /// Validates and constructs a complete world with canonical state sections.
     ///
     /// # Errors
     ///
     /// Returns [`GameStateBuildError`] when an aggregate invariant is violated.
     #[allow(clippy::too_many_arguments)]
-    pub fn try_new_with_world_and_match_lifecycle(
+    pub fn try_new_with_world_and_state_sections(
         revision: StateRevision,
         turn: u32,
         match_lifecycle: MatchLifecycle,
+        economy: EconomyState,
         bounds: HexGridBounds,
         occupancy_policy: UnitOccupancyPolicy,
         units: impl IntoIterator<Item = Unit>,
@@ -327,10 +334,14 @@ impl GameState {
         validate_artifacts(bounds, &units, &cities, &artifacts)?;
         validate_interaction(bounds, &units, &cities, &interaction)?;
         validate_environment(bounds, &fog_of_war, &transport_network)?;
+        economy
+            .validate_for(match_lifecycle.identity(), bounds)
+            .map_err(GameStateBuildError::InvalidEconomy)?;
         Ok(Self {
             revision,
             turn,
             match_lifecycle,
+            economy,
             bounds,
             occupancy_policy,
             units: units.into_boxed_slice(),
@@ -360,6 +371,11 @@ impl GameState {
     #[must_use]
     pub const fn match_lifecycle(&self) -> &MatchLifecycle {
         &self.match_lifecycle
+    }
+    /// Returns canonical player economy and match-start resource placement.
+    #[must_use]
+    pub const fn economy(&self) -> &EconomyState {
+        &self.economy
     }
     /// Returns logical map bounds.
     #[must_use]
@@ -472,10 +488,11 @@ impl GameState {
             .map_err(|_| GameStateBuildError::UnitNotFound(unit.id().clone()))?;
         let mut units = self.units.into_vec();
         units[index] = unit;
-        Self::try_new_with_world_and_match_lifecycle(
+        Self::try_new_with_world_and_state_sections(
             revision,
             self.turn,
             self.match_lifecycle,
+            self.economy,
             self.bounds,
             self.occupancy_policy,
             units,
@@ -516,10 +533,11 @@ impl GameState {
         {
             artifact.restore_excavation(&unit_id);
         }
-        Self::try_new_with_world_and_match_lifecycle(
+        Self::try_new_with_world_and_state_sections(
             revision,
             self.turn,
             self.match_lifecycle,
+            self.economy,
             self.bounds,
             self.occupancy_policy,
             units,

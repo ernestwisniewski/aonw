@@ -7,6 +7,7 @@ use aonw_domain::{
 };
 
 use super::artifact::{decode_artifact, encode_artifact};
+use super::economy::{decode_economy, encode_economy};
 use super::error::GameStateMappingError;
 use super::interaction::{decode_interaction, encode_interaction};
 use super::match_lifecycle::{decode_match_lifecycle, encode_match_lifecycle};
@@ -34,6 +35,7 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
     let match_lifecycle = decode_match_lifecycle(dto.match_identity, dto.turn_lifecycle)?;
     let bounds = HexGridBounds::new(dto.cols, dto.rows)
         .ok_or_else(|| GameStateMappingError::new("$", "map bounds must be non-empty"))?;
+    let economy = decode_economy(match_lifecycle.identity(), bounds, dto.economy)?;
     let units = dto
         .units
         .into_iter()
@@ -87,10 +89,11 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
             ),
         )
     })?;
-    GameState::try_new_with_world_and_match_lifecycle(
+    GameState::try_new_with_world_and_state_sections(
         StateRevision::new(dto.revision),
         dto.turn,
         match_lifecycle,
+        economy,
         bounds,
         match dto.occupancy_policy {
             UnitOccupancyPolicyDto::Exclusive => UnitOccupancyPolicy::Exclusive,
@@ -116,6 +119,7 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
         turn: state.turn(),
         match_identity,
         turn_lifecycle,
+        economy: encode_economy(state.economy()),
         cols: state.bounds().cols(),
         rows: state.bounds().rows(),
         occupancy_policy: match state.occupancy_policy() {

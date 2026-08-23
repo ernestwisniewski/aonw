@@ -2,10 +2,12 @@ use std::collections::BTreeMap;
 
 use aonw_contracts::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityDto,
-    CityFoundingDraftDto, CityFoundingJobDto, CoordinateDto, FieldImprovementKindDto, GameModeDto,
-    GameStateDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto,
-    MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto,
-    PlayerKindDto, PlayerPairDto, PlayerTurnStateDto, QueuedMovePathDto, RuleValueDto,
+    CityFoundingDraftDto, CityFoundingJobDto, CoordinateDto, EconomyStateDto,
+    FieldImprovementKindDto, GameModeDto, GameStateDto, InitialResourceDistributionDto,
+    InitialResourcePlacementDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
+    MerchantTradeRouteDto, MovementStepDto, ParticipantDto, PendingInteractionDto,
+    PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto, PlayerTurnStateDto,
+    QueuedMovePathDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
     TransportConditionDto, TransportSegmentDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto,
     UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto, WorldArtifactDto,
     WorldArtifactLocationDto, WorldArtifactTypeDto,
@@ -17,6 +19,7 @@ pub(super) fn complete_state_contract() -> GameStateDto {
         turn: 3,
         match_identity: complete_match_identity(),
         turn_lifecycle: complete_turn_lifecycle(),
+        economy: complete_economy(),
         cols: 5,
         rows: 5,
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
@@ -81,6 +84,36 @@ pub(super) fn complete_state_contract() -> GameStateDto {
             built_by_player_id: "player-1".to_owned(),
             built_by_city_id: Some("city-1".to_owned()),
         }],
+    }
+}
+
+fn complete_economy() -> EconomyStateDto {
+    EconomyStateDto {
+        player_gold: BTreeMap::from([("player-1".to_owned(), 100), ("player-2".to_owned(), -4)]),
+        player_war_weariness: BTreeMap::from([("player-1".to_owned(), 3)]),
+        player_stability_net: BTreeMap::from([("player-2".to_owned(), -2)]),
+        strategic_resources: BTreeMap::from([(
+            "player-1".to_owned(),
+            StrategicResourceStockpileDto(BTreeMap::from([
+                (ResourceTypeDto::Oil, 7),
+                (ResourceTypeDto::Aluminium, 2),
+            ])),
+        )]),
+        initial_resource_distribution: InitialResourceDistributionDto {
+            seed: -31,
+            placements: vec![
+                InitialResourcePlacementDto {
+                    col: 3,
+                    row: 3,
+                    resource: ResourceTypeDto::Wheat,
+                },
+                InitialResourcePlacementDto {
+                    col: 4,
+                    row: 2,
+                    resource: ResourceTypeDto::Oil,
+                },
+            ],
+        },
     }
 }
 

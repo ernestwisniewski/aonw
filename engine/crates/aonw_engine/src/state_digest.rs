@@ -3,9 +3,11 @@ use aonw_domain::{
     TroopKind, Unit, UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob,
     WorldArtifact, WorldArtifactLocation, WorldArtifactType,
 };
+mod economy;
 mod match_lifecycle;
 mod writer;
 
+use economy::hash_economy;
 use match_lifecycle::hash_match_lifecycle;
 use writer::DigestWriter;
 
@@ -36,6 +38,7 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
     writer.u64(state.revision().get());
     writer.u32(state.turn());
     hash_match_lifecycle(&mut writer, state.match_lifecycle());
+    hash_economy(&mut writer, state.economy());
     writer.u16(state.bounds().cols());
     writer.u16(state.bounds().rows());
     writer.u8(match state.occupancy_policy() {

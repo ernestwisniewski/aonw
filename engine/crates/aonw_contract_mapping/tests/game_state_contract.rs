@@ -5,13 +5,15 @@ use std::collections::BTreeMap;
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityDto,
-    CoordinateDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto, GameStateDto,
-    InteractionStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto, PaceProfileDto,
-    ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto,
-    PlayerPairDto, PlayerTurnStateDto, QueuedMovePathDto, RuleValueDto, TransportConditionDto,
-    TransportSegmentDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
-    UnitOccupancyPolicyDto, UnitPostureDto, VictoryRulesDto, WorkerJobDto, WorldArtifactDto,
-    WorldArtifactLocationDto, WorldArtifactTypeDto,
+    CoordinateDto, EconomyStateDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto,
+    GameStateDto, InitialResourceDistributionDto, InitialResourcePlacementDto, InteractionStateDto,
+    MatchIdentityDto, MatchRulesDto, MovementStepDto, PaceProfileDto, ParticipantDto,
+    PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
+    PlayerTurnStateDto, QueuedMovePathDto, ResourceTypeDto, RuleValueDto,
+    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto, TroopKindDto,
+    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
+    UnitPostureDto, VictoryRulesDto, WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto,
+    WorldArtifactTypeDto,
 };
 use aonw_domain::{FogVisibility, HexCoord, UnitId};
 
@@ -21,6 +23,7 @@ fn contract() -> GameStateDto {
         turn: 3,
         match_identity: match_identity(),
         turn_lifecycle: turn_lifecycle(),
+        economy: economy(),
         cols: 5,
         rows: 5,
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
@@ -114,6 +117,51 @@ fn contract() -> GameStateDto {
             built_by_player_id: "player-1".to_owned(),
             built_by_city_id: Some("city-1".to_owned()),
         }],
+    }
+}
+
+fn economy() -> EconomyStateDto {
+    EconomyStateDto {
+        player_gold: BTreeMap::from([
+            ("player-1".to_owned(), 9_007_199_254_740_991),
+            ("player-2".to_owned(), -17),
+        ]),
+        player_war_weariness: BTreeMap::from([
+            ("player-1".to_owned(), -3),
+            ("player-2".to_owned(), 14),
+        ]),
+        player_stability_net: BTreeMap::from([
+            ("player-1".to_owned(), 8),
+            ("player-2".to_owned(), -11),
+        ]),
+        strategic_resources: BTreeMap::from([
+            (
+                "player-1".to_owned(),
+                StrategicResourceStockpileDto(BTreeMap::from([
+                    (ResourceTypeDto::Oil, 13),
+                    (ResourceTypeDto::Aluminium, 5),
+                ])),
+            ),
+            (
+                "player-2".to_owned(),
+                StrategicResourceStockpileDto::default(),
+            ),
+        ]),
+        initial_resource_distribution: InitialResourceDistributionDto {
+            seed: -9_007_199_254_740_991,
+            placements: vec![
+                InitialResourcePlacementDto {
+                    col: 4,
+                    row: 3,
+                    resource: ResourceTypeDto::Wheat,
+                },
+                InitialResourcePlacementDto {
+                    col: 3,
+                    row: 4,
+                    resource: ResourceTypeDto::Oil,
+                },
+            ],
+        },
     }
 }
 
@@ -226,6 +274,23 @@ fn identity_and_lifecycle_round_trip_preserves_typed_dart_values() {
 }
 
 #[test]
+fn economy_round_trip_preserves_signed_accounts_stockpiles_and_ordered_placements() {
+    let source = contract();
+    let state = decode_game_state(source.clone()).expect("decode complete economy");
+    let economy = state.economy();
+
+    assert_eq!(
+        economy.player_gold().values().copied().collect::<Vec<_>>(),
+        [9_007_199_254_740_991, -17]
+    );
+    assert_eq!(
+        economy.initial_resource_distribution().placements()[0].coordinate(),
+        HexCoord::new(4, 3)
+    );
+    assert_eq!(encode_game_state(&state), source);
+}
+
+#[test]
 fn json_round_trip_remains_strict_and_domain_validated() {
     let source = contract();
     let json = source.to_json().expect("encode json");
@@ -305,5 +370,67 @@ fn lifecycle_rejects_unknown_duplicates_and_non_utc_time_with_paths() {
             .expect_err("non-UTC time")
             .path(),
         "$.turnLifecycle.turnStartedAt"
+    );
+}
+
+#[test]
+fn economy_rejects_unknown_players_invalid_stockpiles_and_invalid_placements_with_paths() {
+    let mut unknown = contract();
+    unknown.economy.player_gold.insert("player-3".to_owned(), 1);
+    assert_eq!(
+        decode_game_state(unknown)
+            .expect_err("unknown player")
+            .path(),
+        "$.economy.playerGold.player-3"
+    );
+
+    let mut invalid_stockpile = contract();
+    invalid_stockpile.economy.strategic_resources.insert(
+        "player-1".to_owned(),
+        StrategicResourceStockpileDto(BTreeMap::from([(ResourceTypeDto::Iron, 2)])),
+    );
+    assert_eq!(
+        decode_game_state(invalid_stockpile)
+            .expect_err("non-stockpiled resource")
+            .path(),
+        "$.economy.strategicResources.player-1"
+    );
+
+    let mut zero_stockpile = contract();
+    zero_stockpile.economy.strategic_resources.insert(
+        "player-1".to_owned(),
+        StrategicResourceStockpileDto(BTreeMap::from([(ResourceTypeDto::Oil, 0)])),
+    );
+    assert_eq!(
+        decode_game_state(zero_stockpile)
+            .expect_err("zero canonical entry")
+            .path(),
+        "$.economy.strategicResources.player-1"
+    );
+
+    let mut duplicate = contract();
+    duplicate
+        .economy
+        .initial_resource_distribution
+        .placements
+        .push(InitialResourcePlacementDto {
+            col: 4,
+            row: 3,
+            resource: ResourceTypeDto::Fish,
+        });
+    assert_eq!(
+        decode_game_state(duplicate)
+            .expect_err("duplicate placement")
+            .path(),
+        "$.economy.initialResourceDistribution.placements"
+    );
+
+    let mut outside = contract();
+    outside.economy.initial_resource_distribution.placements[0].col = 5;
+    assert_eq!(
+        decode_game_state(outside)
+            .expect_err("out-of-bounds placement")
+            .path(),
+        "$.economy.initialResourceDistribution.placements[0]"
     );
 }

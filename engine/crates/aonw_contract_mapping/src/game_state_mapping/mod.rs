@@ -1,4 +1,5 @@
 mod artifact;
+mod economy;
 mod error;
 mod interaction;
 mod match_lifecycle;

@@ -14,14 +14,15 @@ mod persistence;
 
 pub use canonical::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityDto,
-    CityFoundingDraftDto, CityFoundingJobDto, CoordinateDto, FieldImprovementKindDto,
-    GameLengthConfigDto, GameLengthKindDto, GameModeDto, GameStateCodecError, GameStateDto,
+    CityFoundingDraftDto, CityFoundingJobDto, CoordinateDto, EconomyStateDto,
+    FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto,
+    GameStateCodecError, GameStateDto, InitialResourceDistributionDto, InitialResourcePlacementDto,
     InteractionStateDto, MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto, PaceProfileDto,
     ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto,
-    PlayerPairDto, PlayerTurnStateDto, RuleValueDto, TransportConditionDto, TransportSegmentDto,
-    TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitOccupancyPolicyDto,
-    VictoryRulesDto, WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto,
-    WorldArtifactTypeDto,
+    PlayerPairDto, PlayerTurnStateDto, ResourceTypeDto, RuleValueDto,
+    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto, TroopKindDto,
+    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitOccupancyPolicyDto, VictoryRulesDto,
+    WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 pub use limits::{

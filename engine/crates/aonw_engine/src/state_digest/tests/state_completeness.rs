@@ -1,8 +1,8 @@
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
     GameModeDto, GameStateDto, PaceProfileDto, PendingInteractionDto, PlayerCountryDto,
-    PlayerTurnStateDto, RuleValueDto, TransportConditionDto, UnitOccupancyPolicyDto,
-    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    PlayerTurnStateDto, ResourceTypeDto, RuleValueDto, TransportConditionDto,
+    UnitOccupancyPolicyDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 use super::fixture::{complete_state_contract, coordinate};
@@ -16,6 +16,38 @@ fn digest_changes_with_every_canonical_state_section() {
     });
     assert_digest_change(&source, "turn", |candidate| {
         candidate.turn += 1;
+    });
+    assert_digest_change(&source, "gold", |candidate| {
+        *candidate
+            .economy
+            .player_gold
+            .get_mut("player-1")
+            .expect("gold account") += 1;
+    });
+    assert_digest_change(&source, "war weariness", |candidate| {
+        candidate
+            .economy
+            .player_war_weariness
+            .insert("player-2".to_owned(), -7);
+    });
+    assert_digest_change(&source, "stability", |candidate| {
+        candidate.economy.player_stability_net.clear();
+    });
+    assert_digest_change(&source, "strategic stockpile", |candidate| {
+        candidate
+            .economy
+            .strategic_resources
+            .get_mut("player-1")
+            .expect("stockpile")
+            .0
+            .insert(ResourceTypeDto::Oil, 8);
+    });
+    assert_digest_change(&source, "initial distribution seed", |candidate| {
+        candidate.economy.initial_resource_distribution.seed += 1;
+    });
+    assert_digest_change(&source, "initial resource placement", |candidate| {
+        candidate.economy.initial_resource_distribution.placements[0].resource =
+            ResourceTypeDto::Fish;
     });
     assert_digest_change(&source, "bounds", |candidate| {
         candidate.cols += 1;

@@ -171,6 +171,15 @@ never reads a clock, and mapping rejects duplicate or unknown lifecycle
 identities. Presentation-only participant names and colors round-trip but do
 not contribute to the rule-state digest.
 
+Economy is likewise a typed canonical section: signed gold, war-weariness and
+stability accounts, positive oil/aluminium stockpiles, and the persisted seed
+plus ordered initial resource placements all round-trip and participate in the
+state digest. The successor contract intentionally has no resource-generator
+version. Persisted placements are authoritative, and the legacy Dart
+`algorithmVersion` has no runtime consumer once generation is complete; the
+fixture adapter therefore reads the result and discards that redundant
+internal counter.
+
 ## Movement foundation
 
 `GameState` is the canonical aggregate root for the implemented simulation

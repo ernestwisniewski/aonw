@@ -1,11 +1,12 @@
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
-    CityDto, CoordinateDto, GameModeDto, GameStateDto, InteractionStateDto, MatchIdentityDto,
-    MatchRulesDto, MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto,
-    PlayerPairDto, QueuedMovePathDto, TransportConditionDto, TransportSegmentDto, TurnLifecycleDto,
-    UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto,
-    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    CityDto, CoordinateDto, EconomyStateDto, GameModeDto, GameStateDto,
+    InitialResourceDistributionDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto,
+    MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
+    QueuedMovePathDto, StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
+    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
+    UnitPostureDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{HexGridBounds, MovementUnits, UnitId};
 use aonw_testkit::{FixtureInput, JsonObject};
@@ -116,6 +117,7 @@ pub(super) fn decode_state(
         turn: required_u32(input.save(), "turn")?,
         match_identity: decode_match_identity(input.save())?,
         turn_lifecycle: decode_turn_lifecycle(input.save(), input.state())?,
+        economy: decode_economy(input.state())?,
         cols: bounds.cols(),
         rows: bounds.rows(),
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
@@ -131,6 +133,58 @@ pub(super) fn decode_state(
         .map(Box::new)
         .map(DecodedState::Valid)
         .map_err(display_error)
+}
+
+fn decode_economy(state: &JsonObject) -> Result<EconomyStateDto, AdapterError> {
+    let initial_resource_distribution = match state.get("initialResourceDistribution") {
+        None | Some(Value::Null) => InitialResourceDistributionDto::default(),
+        Some(value) => {
+            let source = object_at(value, "input.state.initialResourceDistribution")?;
+            let selected = Value::Object(Map::from_iter([
+                (
+                    "seed".to_owned(),
+                    json_field(source, "seed", "input.state.initialResourceDistribution")?,
+                ),
+                (
+                    "placements".to_owned(),
+                    json_field(
+                        source,
+                        "placements",
+                        "input.state.initialResourceDistribution",
+                    )?,
+                ),
+            ]));
+            serde_json::from_value(selected).map_err(display_error)?
+        }
+    };
+    Ok(EconomyStateDto {
+        player_gold: serde_json::from_value(json_field(state, "playerGold", "input.state")?)
+            .map_err(display_error)?,
+        player_war_weariness: serde_json::from_value(json_field(
+            state,
+            "playerWarWeariness",
+            "input.state",
+        )?)
+        .map_err(display_error)?,
+        player_stability_net: serde_json::from_value(json_field(
+            state,
+            "playerStabilityNet",
+            "input.state",
+        )?)
+        .map_err(display_error)?,
+        strategic_resources: state
+            .get("strategicResources")
+            .cloned()
+            .map(
+                serde_json::from_value::<
+                    std::collections::BTreeMap<String, StrategicResourceStockpileDto>,
+                >,
+            )
+            .transpose()
+            .map_err(display_error)?
+            .unwrap_or_default(),
+        initial_resource_distribution,
+    })
 }
 
 fn decode_match_identity(save: &JsonObject) -> Result<MatchIdentityDto, AdapterError> {
@@ -567,4 +621,40 @@ fn decode_transport(value: &Value, path: &str) -> Result<TransportSegmentDto, Ad
         built_by_player_id: required_string_at(object, "builtByPlayerId", path)?.to_owned(),
         built_by_city_id: optional_string(object, "builtByCityId")?,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use aonw_contracts::ResourceTypeDto;
+    use serde_json::json;
+
+    use super::decode_economy;
+
+    #[test]
+    fn legacy_economy_adapter_uses_placements_without_internal_generator_version() {
+        let source = json!({
+            "playerGold": {"player_1": 17},
+            "playerWarWeariness": {"player_1": -2},
+            "playerStabilityNet": {"player_1": 4},
+            "strategicResources": {"player_1": {"oil": 3}},
+            "initialResourceDistribution": {
+                "seed": -41,
+                "algorithmVersion": 999,
+                "placements": [{"col": 2, "row": 1, "resource": "wheat"}]
+            }
+        });
+        let economy = decode_economy(source.as_object().expect("state object"))
+            .expect("decode legacy economy");
+
+        assert_eq!(economy.player_gold["player_1"], 17);
+        assert_eq!(
+            economy.strategic_resources["player_1"].0[&ResourceTypeDto::Oil],
+            3
+        );
+        assert_eq!(economy.initial_resource_distribution.seed, -41);
+        assert_eq!(
+            economy.initial_resource_distribution.placements[0].resource,
+            ResourceTypeDto::Wheat
+        );
+    }
 }

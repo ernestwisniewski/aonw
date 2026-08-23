@@ -32,7 +32,7 @@
 
 expected-fixture-count 120
 expected-envelope-count 10
-expected-envelope-field-count 67
+expected-envelope-field-count 68
 expected-domain-field-count 30
 expected-state-json-key-count 16
 expected-lifecycle-json-key-count 13
@@ -82,6 +82,7 @@ envelope-field rust-canonical-state revision authoritative-identity
 envelope-field rust-canonical-state turn canonical-rule-state
 envelope-field rust-canonical-state matchIdentity canonical-rule-state
 envelope-field rust-canonical-state turnLifecycle canonical-rule-state
+envelope-field rust-canonical-state economy canonical-rule-state
 envelope-field rust-canonical-state cols immutable-map-derived
 envelope-field rust-canonical-state rows immutable-map-derived
 envelope-field rust-canonical-state occupancyPolicy canonical-rule-state
@@ -144,11 +145,11 @@ domain-field afkPlayerIds identity-lifecycle characterized turnLifecycle
 domain-field kickedPlayerIds identity-lifecycle characterized turnLifecycle
 domain-field turnStartedAt identity-lifecycle characterized turnLifecycle
 domain-field actions identity-lifecycle characterized interaction
-domain-field playerGold economy reference-only -
-domain-field playerWarWeariness economy reference-only -
-domain-field playerStabilityNet economy reference-only -
-domain-field strategicResources economy reference-only -
-domain-field initialResourceDistribution economy reference-only -
+domain-field playerGold economy characterized economy
+domain-field playerWarWeariness economy characterized economy
+domain-field playerStabilityNet economy characterized economy
+domain-field strategicResources economy characterized economy
+domain-field initialResourceDistribution economy characterized economy
 domain-field units units characterized units
 domain-field cities cities characterized cities
 domain-field artifacts artifacts characterized artifacts
