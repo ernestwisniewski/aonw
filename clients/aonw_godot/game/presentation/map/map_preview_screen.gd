@@ -18,6 +18,7 @@ const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 @onready var _camera_rig: AonwOrbitCameraRig = %OrbitCameraRig
 @onready var _open_dialog: FileDialog = %OpenMapDialog
 @onready var _grid_toggle: CheckButton = %GridToggle
+@onready var _confirm_move: Button = %ConfirmMove
 @onready var _status: Label = %Status
 
 var _open_map := OpenMap.new(
@@ -29,6 +30,7 @@ var _local_session := LocalMatchSessionController.new()
 var _current_map: AonwMapView
 var _selected_unit_id := ""
 var _reachable_hexes: Dictionary = {}
+var _route: AonwClientReadModels.RoutePlanView
 
 func _ready() -> void:
 	_surface.map_presented.connect(_on_map_presented)
@@ -42,6 +44,16 @@ func _ready() -> void:
 	))
 
 func _unhandled_input(event: InputEvent) -> void:
+	if (
+		event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and event.keycode in [KEY_ENTER, KEY_KP_ENTER]
+		and _route != null
+	):
+		_on_confirm_move_pressed()
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_G:
 		_grid_toggle.button_pressed = not _grid_toggle.button_pressed
 		get_viewport().set_input_as_handled()
@@ -97,7 +109,7 @@ func _on_hex_selected(coordinate: Vector2i) -> void:
 		_select_unit(unit_id, coordinate)
 		return
 	if not _selected_unit_id.is_empty() and _reachable_hexes.has(coordinate):
-		_move_selected_unit(coordinate)
+		_preview_selected_route(coordinate)
 		return
 	_clear_movement_selection()
 	_status.text = "%s · hex %d,%d" % [_current_map.map_id(), coordinate.x, coordinate.y]
@@ -105,6 +117,8 @@ func _on_hex_selected(coordinate: Vector2i) -> void:
 func _setup_local_session(source: AonwMapSource) -> void:
 	_selected_unit_id = ""
 	_reachable_hexes.clear()
+	_route = null
+	_confirm_move.visible = false
 	_local_session.close()
 	var map_file := FileAccess.open(
 		AonwJsonMapRepository.resolve_path(source.map_path),
@@ -155,6 +169,7 @@ func _present_empty_unit_layer() -> void:
 	_unit_layer.present(_interaction.projection(), units)
 
 func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
+	_clear_route_preview()
 	var reachable := _local_session.reachable(unit_id)
 	if not reachable["ok"]:
 		_status.text = "Rust: %s" % reachable["message"]
@@ -173,6 +188,45 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 	]
 	if _interaction.selected_hex() != coordinate:
 		push_error("movement selection is inconsistent with the picked hex")
+
+func _preview_selected_route(target: Vector2i) -> void:
+	var planned := _local_session.route_plan(_selected_unit_id, target)
+	if not planned["ok"]:
+		_status.text = "Rust: %s" % planned["message"]
+		return
+	var route: AonwClientReadModels.RoutePlanView = planned["value"]
+	if (
+		route.stamp.map_hash != _current_map.content_hash()
+		or route.unit_id != _selected_unit_id
+		or route.target != target
+		or not _current_map.contains(route.destination)
+		or _unit_layer.unit_at(route.steps[0].coordinate) != _selected_unit_id
+	):
+		_status.text = "Rust returned a route for another request"
+		return
+	_route = route
+	var coordinates: Array[Vector2i] = []
+	for step in route.steps:
+		if not _current_map.contains(step.coordinate):
+			_status.text = "Rust returned an out-of-map route"
+			_clear_route_preview()
+			return
+		coordinates.append(step.coordinate)
+	_interaction.set_route_hexes(coordinates)
+	_confirm_move.visible = true
+	_status.text = "%s · route %s → %d,%d · cost %d · remaining %d" % [
+		_current_map.map_id(),
+		_selected_unit_id,
+		route.destination.x,
+		route.destination.y,
+		route.total_cost_units,
+		route.remaining_movement_units,
+	]
+
+func _on_confirm_move_pressed() -> void:
+	if _route == null or _selected_unit_id.is_empty():
+		return
+	_move_selected_unit(_route.target)
 
 func _move_selected_unit(target: Vector2i) -> void:
 	var previous_revision := _local_session.revision()
@@ -193,12 +247,23 @@ func _move_selected_unit(target: Vector2i) -> void:
 		_unit_layer.apply_transition(value.patch, value.evidence)
 	var selected := _selected_unit_id
 	_clear_movement_selection()
-	_status.text = "%s · moved %s → %d,%d" % [
-		_current_map.map_id(), selected, target.x, target.y,
-	]
+	if value.evidence == null:
+		_status.text = "%s · command accepted for %s" % [
+			_current_map.map_id(), selected,
+		]
+	else:
+		_status.text = "%s · moved %s → %d,%d" % [
+			_current_map.map_id(), selected, target.x, target.y,
+		]
 
 func _clear_movement_selection() -> void:
+	_clear_route_preview()
 	_selected_unit_id = ""
 	_reachable_hexes.clear()
 	_interaction.set_reachable_hexes([])
 	_interaction.clear_selection()
+
+func _clear_route_preview() -> void:
+	_route = null
+	_interaction.set_route_hexes([])
+	_confirm_move.visible = false

@@ -147,14 +147,17 @@ Controls:
 - right mouse button: orbit;
 - middle mouse button or arrow keys: pan;
 - mouse wheel: zoom;
+- `Enter`: confirm a previewed movement route;
 - `G`: toggle the hex grid.
 
 Picking uses a shared hex projection and separate hover, selection, and
 reachable overlay layers. When `assets/scenarios/<map_id>.json` exists, the
 preview opens it through the Rust local runtime and renders its player
 snapshot. Click a unit to query reachable hexes, then click a highlighted hex
-to execute the command and animate exact movement evidence. These layers
-contain no movement legality rules.
+to preview the exact Rust route. The canonical revision remains unchanged until
+the route is confirmed with the button or `Enter`. Accepted movement applies
+the recipient patch and animates only the exact Rust evidence; presentation
+never reconstructs legality or a hidden path.
 
 ## Boundaries
 
@@ -242,9 +245,11 @@ adapter and compares them with Flutter. Visual goldens remain client-owned and
 are not part of this gate.
 
 The runner delegates to focused runtime-map, geometry, native-session,
-Terrain3D-spike, and terrain-authoring suites. They cover strict Rust
+movement-presentation, Terrain3D-spike, and terrain-authoring suites. They cover strict Rust
 validation, scenario bootstrap, native
-snapshot/reachable/route/move and persistence calls, asset discovery, immutable
+snapshot/reachable/route/move and persistence calls, route preview without a
+revision change, explicit movement confirmation, evidence-animation endpoints,
+asset discovery, immutable
 map views, projection/picking round trips, texture assembly, verified EXR
 import, regional clamp, independent publish validation, metadata identities,
 overlay alignment, undo/redo, base-regeneration safety, and final-terrain

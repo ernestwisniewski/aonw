@@ -4,11 +4,13 @@ extends Node3D
 const HOVER_OFFSET := 0.055
 const SELECTION_OFFSET := 0.05
 const REACHABLE_OFFSET := 0.045
+const ROUTE_OFFSET := 0.065
 
 var _projection: AonwHexMapProjection
 var _hover: MeshInstance3D
 var _selection: MeshInstance3D
 var _reachable: MeshInstance3D
+var _route: MeshInstance3D
 
 func _ready() -> void:
 	_ensure_layers()
@@ -28,11 +30,16 @@ func set_reachable(coordinates: Array) -> void:
 	_ensure_layers()
 	_reachable.mesh = _build_mesh(coordinates, REACHABLE_OFFSET)
 
+func set_route(coordinates: Array) -> void:
+	_ensure_layers()
+	_route.mesh = _build_mesh(coordinates, ROUTE_OFFSET)
+
 func clear() -> void:
 	_ensure_layers()
 	_hover.mesh = null
 	_selection.mesh = null
 	_reachable.mesh = null
+	_route.mesh = null
 
 func _set_single_hex(layer: MeshInstance3D, coordinate: Vector2i, offset: float) -> void:
 	_ensure_layers()
@@ -64,6 +71,8 @@ func _build_mesh(coordinates: Array, offset: float) -> ArrayMesh:
 	return mesh
 
 func _ensure_layers() -> void:
+	if _route == null:
+		_route = _layer("Route", Color(1.0, 0.72, 0.12, 0.5))
 	if _reachable == null:
 		_reachable = _layer("Reachable", Color(0.12, 0.78, 0.45, 0.28))
 	if _selection == null:

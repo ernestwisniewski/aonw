@@ -79,7 +79,7 @@ script = ExtResource("5_interaction")
 [node name="Toolbar" type="PanelContainer" parent="Interface" unique_id=52331720]
 offset_left = 16.0
 offset_top = 16.0
-offset_right = 608.0
+offset_right = 780.0
 offset_bottom = 64.0
 theme_override_styles/panel = SubResource("Style_toolbar")
 
@@ -104,6 +104,12 @@ layout_mode = 2
 button_pressed = true
 text = "Hex grid (G)"
 
+[node name="ConfirmMove" type="Button" parent="Interface/Toolbar/Margin/Actions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Confirm move (Enter)"
+
 [node name="Separator" type="VSeparator" parent="Interface/Toolbar/Margin/Actions" unique_id=1140775945]
 layout_mode = 2
 
@@ -125,7 +131,7 @@ offset_right = -16.0
 offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
-text = "LMB: select hex · RMB: orbit · MMB: pan · wheel: zoom · arrows: pan"
+text = "LMB: select unit / preview route · Enter: confirm move · RMB: orbit · MMB: pan · wheel: zoom · arrows: pan"
 
 [node name="OpenMapDialog" type="FileDialog" parent="Interface" unique_id=1666186910]
 unique_name_in_owner = true
@@ -139,3 +145,4 @@ use_native_dialog = true
 
 [connection signal="pressed" from="Interface/Toolbar/Margin/Actions/OpenMap" to="." method="_on_open_pressed"]
 [connection signal="toggled" from="Interface/Toolbar/Margin/Actions/GridToggle" to="." method="_on_grid_toggled"]
+[connection signal="pressed" from="Interface/Toolbar/Margin/Actions/ConfirmMove" to="." method="_on_confirm_move_pressed"]

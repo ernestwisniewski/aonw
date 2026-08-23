@@ -32,6 +32,9 @@ func projection() -> AonwHexMapProjection:
 func set_reachable_hexes(coordinates: Array) -> void:
 	_overlay.set_reachable(coordinates)
 
+func set_route_hexes(coordinates: Array) -> void:
+	_overlay.set_route(coordinates)
+
 func clear_selection() -> void:
 	_selected = INVALID_HEX
 	_overlay.set_selected(INVALID_HEX)

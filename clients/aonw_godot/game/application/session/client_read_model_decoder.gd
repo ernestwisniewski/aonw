@@ -51,7 +51,7 @@ static func decode_reachable(raw: Variant) -> AonwClientReadModels.ReachableView
 		"type", "stamp", "unitId", "availableMovementUnits", "tiles",
 	]) or raw["type"] != "reachable" or not raw["tiles"] is Array:
 		return null
-	if not raw["unitId"] is String:
+	if not raw["unitId"] is String or raw["unitId"].is_empty():
 		return null
 	if not _integers(raw, ["availableMovementUnits"], true):
 		return null
@@ -88,7 +88,7 @@ static func decode_route_plan(raw: Variant) -> AonwClientReadModels.RoutePlanVie
 		"availableMovementUnits", "remainingMovementUnits", "steps",
 	]) or raw["type"] != "routePlan" or not raw["steps"] is Array:
 		return null
-	if not raw["unitId"] is String:
+	if not raw["unitId"] is String or raw["unitId"].is_empty():
 		return null
 	if not _integers(raw, [
 		"totalCostUnits", "availableMovementUnits", "remainingMovementUnits",
@@ -100,7 +100,15 @@ static func decode_route_plan(raw: Variant) -> AonwClientReadModels.RoutePlanVie
 	if stamp == null or target == null or destination == null:
 		return null
 	var steps: Variant = _decode_steps(raw["steps"])
-	if steps == null:
+	if (
+		steps == null
+		or steps.is_empty()
+		or steps[0].enter_cost_units != 0
+		or steps[0].cumulative_cost_units != 0
+		or steps[-1].coordinate != destination
+		or steps[-1].cumulative_cost_units != int(raw["totalCostUnits"])
+		or int(raw["remainingMovementUnits"]) > int(raw["availableMovementUnits"])
+	):
 		return null
 	var result := ReadModels.RoutePlanView.new()
 	result.stamp = stamp
