@@ -5,7 +5,11 @@ extends VBoxContainer
 const LogicalMapPanel := preload(
 	"res://editor/map_authoring/presentation/logical_map_panel.gd"
 )
+const NewMapPanel := preload(
+	"res://editor/map_authoring/presentation/new_map_panel.gd"
+)
 
+var _new_map_panel := NewMapPanel.new()
 var _map_picker := OptionButton.new()
 var _generate_button := Button.new()
 var _open_button := Button.new()
@@ -41,6 +45,10 @@ func _build_interface() -> void:
 	description.text = "Compiled AoNW height constraints → Terrain3D authoring"
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(description)
+	add_child(HSeparator.new())
+
+	add_child(_section_label("New map"))
+	add_child(_new_map_panel)
 	add_child(HSeparator.new())
 
 	add_child(_section_label("Source map"))

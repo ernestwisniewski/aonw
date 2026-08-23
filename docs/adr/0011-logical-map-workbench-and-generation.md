@@ -76,11 +76,17 @@ radius.
 
 ## Consequences
 
-The current UI still opens existing maps and exposes a coordinate-based logical
-tile editor for terrain, resources and logical height. Direct viewport brush
-painting and a complete `New Map` dialog remain later vertical slices. Their
-backend boundary is executable and tested instead of being a speculative UI
-abstraction.
+The current UI opens existing maps, exposes a coordinate-based logical tile
+editor for terrain, resources and logical height, and creates complete blank
+maps through a `New Map` form. New directories are staged and published as a
+complete set, existing maps are never overwritten, and failed Terrain3D
+compilation rolls the new directory back. A successful creation immediately
+prepares and opens its Terrain3D authoring scene without requiring a 2D atlas.
+
+Direct viewport brush painting and procedural population of terrain, resources,
+trees, rocks, water and details remain later vertical slices. They reuse the
+same Rust generation/editing boundary and the separate generated/manual world
+lifecycles rather than adding another canonical writer.
 
 A seed participates in generation provenance even when `blankV1` produces the
 same empty logical map for different seeds. Procedural generator versions may
@@ -92,6 +98,8 @@ use it while retaining deterministic replayability and explicit migrations.
 - Generated map and terrain documents pass their authoritative Rust decoders.
 - A 40x30 generated map respects the existing content limits.
 - Godot obtains all documents through the native Rust workbench bridge.
+- `New Map` persists all four documents or none, rejects an existing map ID,
+  compiles Terrain3D, and opens the resulting authoring scene.
 - Tile edits change the map hash, refresh the terrain profile hash and reject
   invalid coordinates, values, duplicates and unknown wire fields.
 - A logical revision migration preserves manual Terrain3D samples when raster

@@ -112,6 +112,19 @@ func _test_logical_map_workbench_boundary() -> void:
 	if not first["ok"]:
 		return
 	_check(first["package"] == second.get("package"), "Godot workbench generation is deterministic")
+	var direct := workbench.generate_blank_map(
+		"godot_generated",
+		5,
+		5,
+		1.0,
+		100.0,
+		240.0,
+		"42",
+	)
+	_check(
+		direct["ok"] and direct["package"] == first["package"],
+		"Godot New Map fields are encoded as the same strict Rust generation spec",
+	)
 	var map: Dictionary = JSON.parse_string(first["package"]["mapDocument"])
 	var authoring: Dictionary = JSON.parse_string(
 		first["package"]["terrainAuthoringDocument"]

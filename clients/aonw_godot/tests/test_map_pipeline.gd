@@ -3,6 +3,7 @@ extends SceneTree
 const MapAuthoringSuite := preload("res://tests/suites/map_authoring_suite.gd")
 const MapGeometrySuite := preload("res://tests/suites/map_geometry_suite.gd")
 const NativeSessionSuite := preload("res://tests/suites/native_session_suite.gd")
+const NewMapCreationSuite := preload("res://tests/suites/new_map_creation_suite.gd")
 const Terrain3DSpikeSuite := preload("res://tests/suites/terrain3d_spike_suite.gd")
 const TerrainAuthoringSuite := preload("res://tests/suites/terrain_authoring_suite.gd")
 
@@ -15,6 +16,7 @@ func _run() -> void:
 	for suite in [
 		MapGeometrySuite.new(),
 		NativeSessionSuite.new(),
+		NewMapCreationSuite.new(),
 		MapAuthoringSuite.new(),
 		Terrain3DSpikeSuite.new(),
 		TerrainAuthoringSuite.new(),

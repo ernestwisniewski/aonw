@@ -41,6 +41,15 @@ const FilesystemTerrainProfileEditor := preload(
 const FilesystemLogicalMapEditor := preload(
 	"res://editor/map_authoring/infrastructure/logical_map_editor.gd"
 )
+const CreateLogicalMap := preload(
+	"res://editor/map_authoring/application/create_logical_map.gd"
+)
+const FilesystemGeneratedMapStore := preload(
+	"res://editor/map_authoring/infrastructure/filesystem_generated_map_store.gd"
+)
+const TerrainCompiler := preload(
+	"res://editor/map_authoring/infrastructure/terrain/terrain_compiler.gd"
+)
 
 var _catalog: AonwMapSourceCatalog
 var _map_reader: AonwMapViewReader
@@ -50,6 +59,7 @@ var _scene_writer: AonwTerrainAuthoringSceneRepository
 var _generator: AonwGenerateTerrainAuthoringMap
 var _logical_map_workbench: AonwLogicalMapWorkbench
 var _logical_map_editor: AonwLogicalMapEditor
+var _create_logical_map: AonwCreateLogicalMap
 var _terrain_profile_editor: AonwTerrainProfileEditor
 
 func _init(
@@ -73,6 +83,10 @@ func _init(
 		_scene_writer,
 	)
 	_logical_map_workbench = RustLogicalMapWorkbench.new()
+	_create_logical_map = CreateLogicalMap.new(
+		_logical_map_workbench,
+		FilesystemGeneratedMapStore.new(TerrainCompiler.new()),
+	)
 	_logical_map_editor = FilesystemLogicalMapEditor.new(_logical_map_workbench)
 	_terrain_profile_editor = FilesystemTerrainProfileEditor.new(_logical_map_workbench)
 
@@ -82,6 +96,7 @@ func create_dock() -> Control:
 		_catalog,
 		_generator,
 		_scene_writer,
+		_create_logical_map,
 		_logical_map_editor,
 		_terrain_profile_editor,
 	)

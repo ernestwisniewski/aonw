@@ -71,6 +71,28 @@ func generate_map(spec_document: String) -> Dictionary:
 		return _failure("invalid_workbench_response", "generated map package is malformed")
 	return {"ok": true, "package": package}
 
+func generate_blank_map(
+	map_id: String,
+	cols: int,
+	rows: int,
+	default_zoom: float,
+	hex_radius_meters: float,
+	max_terrain_height_meters: float,
+	seed: String,
+) -> Dictionary:
+	return generate_map(JSON.stringify({
+		"schemaVersion": 1,
+		"generatorId": "blank",
+		"generatorVersion": 1,
+		"mapId": map_id,
+		"cols": cols,
+		"rows": rows,
+		"defaultZoom": default_zoom,
+		"hexRadiusMeters": hex_radius_meters,
+		"maxTerrainHeightMeters": max_terrain_height_meters,
+		"seed": seed,
+	}))
+
 func reconfigure_terrain_height(
 	map_document: String,
 	terrain_authoring_document: String,

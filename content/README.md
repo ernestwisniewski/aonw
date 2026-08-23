@@ -42,6 +42,13 @@ replaces the canonical map/profile pair from validated Rust output, changes
 `contentHash`, and refreshes the authoring profile identity; clients do not
 construct these documents themselves.
 
+Maps created by the Godot Workbench additionally retain
+`map_generation.v1.json` and `generated_decorations.v1.json`. The former binds
+the exact `blankV1` generation specification and seed to the hashes of the
+generated documents. The latter is an initially empty, versioned presentation
+plan that future procedural generators may populate without mixing generated
+objects with manual Godot authoring.
+
 `content/scenarios/` contains strict starting placements bound to one map ID
 and one immutable ruleset ID. Rust validates both content identities before it
 bootstraps revision-zero `GameState`. Scenario v1 uses

@@ -20,12 +20,15 @@ The desktop-only client uses Godot's Forward+ rendering method for maximum
 desktop visual quality. On macOS this keeps Terrain3D on Metal and off the
 OpenGL compatibility shader path that can crash inside Apple's shader compiler.
 
-The logical-map backend is also prepared for a later **New Map** flow. The
-framework-neutral Rust `aonw_map_workbench` boundary accepts a versioned
-generation specification and deterministically returns canonical `map.json`,
-`terrain_authoring.v1.json`, generation provenance, and a generated-decoration
-plan. The initial `blankV1` generator creates a validated empty grassland map;
-the dock does not expose the creation form yet.
+The **New map** section creates a validated `blankV1` map directly from the
+Godot dock. The form collects the map ID, odd-q dimensions, default zoom,
+metric hex radius, map-specific level-5 height, and deterministic seed. The
+framework-neutral Rust `aonw_map_workbench` boundary returns canonical
+`map.json`, `terrain_authoring.v1.json`, generation provenance, and a
+generated-decoration plan. The filesystem adapter publishes the complete
+directory without overwriting an existing map, compiles Terrain3D, and opens
+the new authoring scene. A new blank map intentionally has no 2D reference
+atlas.
 
 The **Logical tile authoring** section edits an existing map by coordinate.
 Terrain, the complete resource selection and logical height `0..=5` are sent as

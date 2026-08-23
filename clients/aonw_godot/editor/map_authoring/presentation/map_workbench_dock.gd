@@ -4,6 +4,7 @@ extends "res://editor/map_authoring/presentation/map_workbench_view.gd"
 var _catalog: AonwMapSourceCatalog
 var _scene_writer: AonwTerrainAuthoringSceneWriter
 var _generator: AonwGenerateTerrainAuthoringMap
+var _create_logical_map: AonwCreateLogicalMap
 var _logical_map_editor: AonwLogicalMapEditor
 var _terrain_profile_editor: AonwTerrainProfileEditor
 var _sources: Array[AonwMapSource] = []
@@ -12,12 +13,14 @@ func configure(
 	catalog: AonwMapSourceCatalog,
 	generator: AonwGenerateTerrainAuthoringMap,
 	scene_writer: AonwTerrainAuthoringSceneWriter,
+	create_logical_map: AonwCreateLogicalMap,
 	logical_map_editor: AonwLogicalMapEditor,
 	terrain_profile_editor: AonwTerrainProfileEditor,
 ) -> void:
 	_catalog = catalog
 	_generator = generator
 	_scene_writer = scene_writer
+	_create_logical_map = create_logical_map
 	_logical_map_editor = logical_map_editor
 	_terrain_profile_editor = terrain_profile_editor
 	_logical_map_panel.configure(logical_map_editor)
@@ -26,6 +29,7 @@ func _ready() -> void:
 	assert(_catalog != null, "Map source catalog is required")
 	assert(_generator != null, "Terrain authoring generator is required")
 	assert(_scene_writer != null, "Terrain authoring scene writer is required")
+	assert(_create_logical_map != null, "Logical map creator is required")
 	assert(_logical_map_editor != null, "Logical map editor is required")
 	assert(_terrain_profile_editor != null, "Terrain profile editor is required")
 	_build_interface()
@@ -34,6 +38,7 @@ func _ready() -> void:
 
 func _connect_interface() -> void:
 	_refresh_button.pressed.connect(_refresh_sources)
+	_new_map_panel.create_requested.connect(_create_new_map)
 	_generate_button.pressed.connect(_generate_selected_map)
 	_open_button.pressed.connect(_open_selected_scene)
 	_map_picker.item_selected.connect(_selected_map_changed)
@@ -54,6 +59,47 @@ func _connect_interface() -> void:
 	_reload_base_button.pressed.connect(_reload_generated_base)
 	_save_draft_button.pressed.connect(_save_draft)
 	_publish_button.pressed.connect(_publish)
+
+func _create_new_map(
+	map_id: String,
+	cols: int,
+	rows: int,
+	default_zoom: float,
+	hex_radius_meters: float,
+	max_terrain_height_meters: float,
+	seed: String,
+) -> void:
+	_set_busy(true)
+	_status.text = "Creating canonical map %s through Rust…" % map_id
+	await get_tree().process_frame
+	var created := _create_logical_map.execute(
+		map_id,
+		cols,
+		rows,
+		default_zoom,
+		hex_radius_meters,
+		max_terrain_height_meters,
+		seed,
+	)
+	if not created["ok"]:
+		_set_busy(false)
+		_show_error(created["message"])
+		return
+	var source: AonwMapSource = created["source"]
+	EditorInterface.get_resource_filesystem().scan()
+	_refresh_sources()
+	_select_source(source.map_id)
+	_set_busy(true)
+	var terrain_result := _generator.execute(source)
+	_set_busy(false)
+	if not terrain_result["ok"]:
+		_show_error(
+			"map %s was created, but Terrain3D preparation failed: %s"
+			% [source.map_id, terrain_result["message"]]
+		)
+		return
+	_status.text = "Blank map %s created and opened for Terrain3D authoring." % source.map_id
+	EditorInterface.open_scene_from_path(terrain_result["scene_path"])
 
 func _refresh_sources() -> void:
 	_sources = _catalog.discover()
@@ -362,7 +408,17 @@ func _selected_source() -> AonwMapSource:
 		return null
 	return _sources[index]
 
+func _select_source(map_id: String) -> void:
+	for index in _sources.size():
+		if _sources[index].map_id != map_id:
+			continue
+		_map_picker.select(index)
+		_sync_selected_height_scale()
+		_sync_logical_panel()
+		return
+
 func _set_busy(busy: bool) -> void:
+	_new_map_panel.set_busy(busy)
 	_generate_button.disabled = busy
 	_open_button.disabled = busy
 	_map_picker.disabled = busy
