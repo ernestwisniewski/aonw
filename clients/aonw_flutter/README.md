@@ -69,6 +69,16 @@ owned by Flame's image cache and released with the world. The temporary
 the shipped viewport still displays the Canvas oracle until FM5 removes both
 the switch and the old renderer in one cutover.
 
+FM3 gives Flame one bounded `CameraComponent`/`Viewfinder` backed by the same
+framework-neutral fit and screen/world transform used by the Canvas oracle.
+A single viewport-sized input surface maps Flame tap, hover, drag, scale and
+scroll callbacks to typed intents; pointer bursts are coalesced into one camera
+mutation per rendered frame and hex picking remains one geometry lookup, never
+a hitbox per tile. That surface is installed only when a shadow/test intent
+sink is injected. The production `GameWidget` therefore registers no pointer
+callbacks and cannot intercept the still-authoritative `InteractiveViewer`
+before the FM5 cutover; there is no user-facing renderer or input flag.
+
 Bootstrap installs one typed process error boundary. Flutter framework errors
 and unhandled asynchronous platform errors are classified separately and sent
 to an `AppErrorReporter`; the default reporter writes developer diagnostics

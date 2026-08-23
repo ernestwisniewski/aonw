@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import 'map_camera_transform.dart';
+
 final class MapInitialCamera {
   const MapInitialCamera._();
 
@@ -8,11 +10,11 @@ final class MapInitialCamera {
     required Size content,
     required double authoredZoom,
   }) {
-    final fit = (viewport.width / content.width).clamp(
-      0.0,
-      viewport.height / content.height,
-    );
-    return fit * authoredZoom;
+    return MapCameraTransform.fitted(
+      viewport: (width: viewport.width, height: viewport.height),
+      content: (width: content.width, height: content.height),
+      authoredZoom: authoredZoom,
+    ).zoom;
   }
 
   static Matrix4 centeredFit({
@@ -20,16 +22,13 @@ final class MapInitialCamera {
     required Size content,
     required double authoredZoom,
   }) {
-    final scale = scaleFor(
-      viewport: viewport,
-      content: content,
+    final camera = MapCameraTransform.fitted(
+      viewport: (width: viewport.width, height: viewport.height),
+      content: (width: content.width, height: content.height),
       authoredZoom: authoredZoom,
     );
-    final translation = Offset(
-      (viewport.width - content.width * scale) / 2,
-      (viewport.height - content.height * scale) / 2,
-    );
-    return Matrix4.diagonal3Values(scale, scale, 1)
-      ..setTranslationRaw(translation.dx, translation.dy, 0);
+    final origin = camera.worldToScreen((x: 0, y: 0));
+    return Matrix4.diagonal3Values(camera.zoom, camera.zoom, 1)
+      ..setTranslationRaw(origin.x, origin.y, 0);
   }
 }

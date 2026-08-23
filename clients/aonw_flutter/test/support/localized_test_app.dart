@@ -6,12 +6,14 @@ final class LocalizedTestApp extends StatelessWidget {
     required this.home,
     this.locale = const Locale('en'),
     this.theme,
+    this.navigatorObservers = const [],
     super.key,
   });
 
   final Widget home;
   final Locale locale;
   final ThemeData? theme;
+  final List<NavigatorObserver> navigatorObservers;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -19,6 +21,7 @@ final class LocalizedTestApp extends StatelessWidget {
     localizationsDelegates: AonwLocalizations.localizationsDelegates,
     supportedLocales: AonwLocalizations.supportedLocales,
     theme: theme,
+    navigatorObservers: navigatorObservers,
     home: home,
   );
 }

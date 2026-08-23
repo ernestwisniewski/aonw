@@ -36,6 +36,11 @@ void main() {
     expect(games, hasLength(1));
     expect(games.single.debugMountCount, 1);
     expect(games.single.world.debugScene?.map.mapId, 'test-map');
+    expect(
+      games.single.inputSurface,
+      isNull,
+      reason: 'the production Canvas oracle owns pointer input until FM5',
+    );
     expect(games.single.paused, isTrue, reason: 'the empty world stays idle');
     expect(find.byKey(const ValueKey('flame-viewport-clip')), findsOneWidget);
     expect(

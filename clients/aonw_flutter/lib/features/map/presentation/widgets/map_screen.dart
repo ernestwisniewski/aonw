@@ -236,6 +236,7 @@ final class _MapScreenState extends State<MapScreen>
   }
 
   void _handleInput(MapInputCommand command) {
+    if (!_routeVisible || _lifecycleState != AppLifecycleState.resumed) return;
     final state = widget.controller.state;
     if (state is! GameSessionReady) return;
     switch (command) {

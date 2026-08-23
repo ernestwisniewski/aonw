@@ -12,6 +12,7 @@ import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/features/settings/application/client_settings.dart';
 import 'package:aonw_flutter/features/settings/application/client_settings_controller.dart';
 import 'package:aonw_flutter/features/settings/presentation/client_settings_scope.dart';
+import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -329,6 +330,75 @@ void main() {
       (controller.state as GameSessionReady).interaction.referenceVisible,
       isFalse,
     );
+  });
+
+  testWidgets('a dialog suspends viewport and external map input', (
+    tester,
+  ) async {
+    final input = _TestMapInputSource();
+    final controller = MapController(
+      repository: FakeMapRepository.success(testMapScene(cols: 3, rows: 3)),
+    );
+    final routeObserver = RouteObserver<ModalRoute<void>>();
+    final games = <AonwFlameGame>[];
+    addTearDown(input.close);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      LocalizedTestApp(
+        navigatorObservers: [routeObserver],
+        home: Scaffold(
+          body: MapScreen(
+            controller: controller,
+            inputSource: input,
+            routeObserver: routeObserver,
+            flameGameFactory: () {
+              final game = AonwFlameGame();
+              games.add(game);
+              return game;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(games.single.debugViewportActive, isTrue);
+
+    final mapContext = tester.element(find.byType(MapScreen));
+    unawaited(
+      showDialog<void>(
+        context: mapContext,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Blocking dialog'),
+          actions: [
+            TextButton(
+              key: const ValueKey('close-blocking-dialog'),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(games.single.debugViewportActive, isFalse);
+
+    input.add(MapInputCommand.cursorLeft);
+    input.add(MapInputCommand.activate);
+    await tester.pump();
+    expect((controller.state as GameSessionReady).interaction.selected, isNull);
+
+    await tester.tap(find.byKey(const ValueKey('close-blocking-dialog')));
+    await tester.pumpAndSettle();
+    expect(games.single.debugViewportActive, isTrue);
+    input.add(MapInputCommand.cursorLeft);
+    input.add(MapInputCommand.activate);
+    await tester.pumpAndSettle();
+    expect((controller.state as GameSessionReady).interaction.selected, (
+      col: 0,
+      row: 1,
+    ));
   });
 
   testWidgets('applies camera client preference', (tester) async {
