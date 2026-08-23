@@ -300,6 +300,7 @@ final class MapController extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_disposed) return;
     _disposed = true;
     _loadGeneration += 1;
     _interactionGeneration += 1;

@@ -4,5 +4,5 @@ import '../composition/app_composition.dart';
 
 void runAonwApp() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const AppComposition().build());
+  runApp(AppComposition.production().root);
 }

@@ -31,7 +31,7 @@ void main() {
   testWidgets('standalone app renders the Rust-backed starter bundle', (
     tester,
   ) async {
-    await tester.pumpWidget(const AppComposition().build());
+    await tester.pumpWidget(AppComposition.production().root);
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('map-canvas')), findsOneWidget);

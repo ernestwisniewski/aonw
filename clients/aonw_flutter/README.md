@@ -10,7 +10,12 @@ The first vertical slice renders the canonical `aonw2_starter` map with
 `CustomPainter`/Canvas, the generated reference bundle, grid, hover, selection,
 pan, and zoom. The application exposes loading, ready, and typed failure states.
 Composition lives under `lib/app/`; widgets do not construct FFI sessions or
-repositories.
+repositories. `AppComposition.production()` is the only production composition
+root: it creates one `RustMapRepository`, one owning `MapController`, and one
+`AonwApp`. The root widget disposes its controller when it leaves the tree or
+is replaced; the controller closes the retained Rust session idempotently. The
+test constructor accepts only the application `MapRepository` port, so no DI
+container or service locator is needed.
 
 The map feature opens the starter map and scenario on one retained Rust
 backend. Its `MapScene` keeps the shared static `MapView` separate from the

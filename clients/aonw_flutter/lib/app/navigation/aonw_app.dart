@@ -15,6 +15,14 @@ final class AonwApp extends StatefulWidget {
 
 final class _AonwAppState extends State<AonwApp> {
   @override
+  void didUpdateWidget(AonwApp oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.mapController != widget.mapController) {
+      oldWidget.mapController.dispose();
+    }
+  }
+
+  @override
   void dispose() {
     widget.mapController.dispose();
     super.dispose();
