@@ -79,7 +79,9 @@ pub(super) const fn decode_improvement(kind: FieldImprovementKindDto) -> FieldIm
     )
 }
 
-pub(super) const fn encode_improvement(kind: FieldImprovementKind) -> FieldImprovementKindDto {
+/// Converts a validated field improvement into its stable contract value.
+#[must_use]
+pub const fn encode_improvement(kind: FieldImprovementKind) -> FieldImprovementKindDto {
     improvement_mapping!(
         kind,
         FieldImprovementKind::Farm => FieldImprovementKindDto::Farm,

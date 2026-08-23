@@ -37,10 +37,21 @@ class UnitMovedEvent:
 	var from: Vector2i
 	var to: Vector2i
 
+class PendingActionView:
+	extends RefCounted
+	var kind: StringName
+	var city_id: String
+	var unit_id: String
+	var improvement: StringName
+	var restore_movement_units: int
+	var has_defender: bool
+	var defender: Vector2i
+
 class SnapshotView:
 	extends RefCounted
 	var stamp: Stamp
 	var turn: int
+	var pending_action: PendingActionView
 	var units: Array[UnitView]
 
 class ReachableView:
@@ -67,6 +78,7 @@ class ViewPatch:
 	var to_revision: int
 	var upserted_units: Array[UnitView]
 	var removed_unit_ids: Array[String]
+	var pending_action: PendingActionView
 
 class MovementEvidence:
 	extends RefCounted

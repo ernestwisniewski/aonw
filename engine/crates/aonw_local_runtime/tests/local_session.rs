@@ -10,9 +10,9 @@ use aonw_domain::{
     UnitOccupancyPolicy,
 };
 use aonw_local_runtime::{
-    LocalRuntime, MoveUnitRequest, OpenSession, OpenSessionError, PersistenceError,
-    ReachableRequest, ReplayVerification, RngState, RoutePlanRequest, RuntimeError, RuntimeQuery,
-    RuntimeQueryResult, UnitActionRequest,
+    LocalRuntime, MoveUnitRequest, OpenSession, OpenSessionError, PendingActionView,
+    PersistenceError, ReachableRequest, ReplayVerification, RngState, RoutePlanRequest,
+    RuntimeError, RuntimeQuery, RuntimeQueryResult, UnitActionRequest,
 };
 
 fn map(id: &str, cols: u16, rows: u16) -> MapDefinition {
@@ -71,6 +71,7 @@ fn local_session_supports_snapshot_queries_and_dispatch() {
 
     let snapshot = runtime.snapshot().expect("snapshot");
     assert_eq!(snapshot.turn(), 1);
+    assert_eq!(snapshot.pending_action(), None);
     assert_eq!(snapshot.units().len(), 1);
     assert_eq!(snapshot.units()[0].id().as_str(), "unit-1");
 
@@ -127,6 +128,10 @@ fn unit_actions_update_canonical_state_and_are_replayable() {
         .expect("skip");
     assert!(skipped.is_accepted());
     assert_eq!(skipped.view_patch.upserted_units[0].movement_units(), 0);
+    assert!(matches!(
+        skipped.view_patch.pending_action,
+        Some(PendingActionView::UnitTurnSkip { ref unit_id, .. }) if unit_id.as_str() == "unit-1"
+    ));
 
     let cancelled = runtime
         .cancel_unit_action(&UnitActionRequest {
@@ -136,6 +141,7 @@ fn unit_actions_update_canonical_state_and_are_replayable() {
         .expect("cancel");
     assert!(cancelled.is_accepted());
     assert!(cancelled.view_patch.upserted_units[0].movement_units() > 0);
+    assert_eq!(cancelled.view_patch.pending_action, None);
 
     let fortified = runtime
         .fortify_unit(&UnitActionRequest {

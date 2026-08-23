@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, UnitKindDto, UnitPostureDto};
+use crate::{CoordinateDto, FieldImprovementKindDto, UnitKindDto, UnitPostureDto};
 
 use super::MapViewDto;
 
@@ -146,8 +146,50 @@ pub struct PlayerViewSnapshotDto {
     pub stamp: ClientSessionStampDto,
     /// Authoritative turn number.
     pub turn: u32,
+    /// Action currently awaiting input from this recipient.
+    pub pending_action: Option<PendingActionViewDto>,
     /// Units currently visible to the recipient.
     pub units: Vec<PlayerUnitViewDto>,
+}
+
+/// Recipient-owned action awaiting player input.
+#[allow(missing_docs)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum PendingActionViewDto {
+    ResearchSelection,
+    CityWorkedHexSelection {
+        city_id: String,
+    },
+    CityExpansionSelection {
+        city_id: String,
+    },
+    WorkerActionSelection {
+        unit_id: String,
+        improvement: Option<FieldImprovementKindDto>,
+    },
+    MerchantTradeRouteSelection {
+        unit_id: String,
+    },
+    MerchantMoveToCitySelection {
+        unit_id: String,
+    },
+    UnitTurnSkip {
+        unit_id: String,
+        restore_movement_units: u32,
+    },
+    AttackTargeting {
+        unit_id: String,
+        defender: Option<CoordinateDto>,
+    },
+    CommanderMergeSelection {
+        unit_id: String,
+    },
 }
 
 /// Recipient-safe unit read model.
@@ -182,6 +224,8 @@ pub struct PlayerViewPatchDto {
     pub upserted_units: Vec<PlayerUnitViewDto>,
     /// Units no longer visible.
     pub removed_unit_ids: Vec<String>,
+    /// Current action awaiting input from this recipient.
+    pub pending_action: Option<PendingActionViewDto>,
 }
 
 /// Result of one authoritative command.

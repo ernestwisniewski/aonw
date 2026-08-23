@@ -106,6 +106,7 @@ void main() {
       actorPlayerId: 'preview-player',
       stamp: testSessionStamp(revision: 1),
       turn: 1,
+      pendingAction: null,
       units: [testVisibleUnit(coordinate: (col: 1, row: 0), movementUnits: 8)],
     );
     final controller = MapController(

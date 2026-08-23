@@ -1,4 +1,7 @@
-use aonw_domain::{FogVisibility, GameState, PlayerId, Unit, UnitId, UnitKind, UnitPosture};
+use aonw_domain::{
+    CityId, FieldImprovementKind, FogVisibility, GameState, HexCoord, PendingInteraction, PlayerId,
+    Unit, UnitId, UnitKind, UnitPosture,
+};
 
 use crate::SessionStamp;
 
@@ -71,11 +74,46 @@ impl PlayerUnitView {
     }
 }
 
+/// Recipient-owned action currently awaiting player input.
+#[allow(missing_docs)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum PendingActionView {
+    ResearchSelection,
+    CityWorkedHexSelection {
+        city_id: CityId,
+    },
+    CityExpansionSelection {
+        city_id: CityId,
+    },
+    WorkerActionSelection {
+        unit_id: UnitId,
+        improvement: Option<FieldImprovementKind>,
+    },
+    MerchantTradeRouteSelection {
+        unit_id: UnitId,
+    },
+    MerchantMoveToCitySelection {
+        unit_id: UnitId,
+    },
+    UnitTurnSkip {
+        unit_id: UnitId,
+        restore_movement_units: u32,
+    },
+    AttackTargeting {
+        unit_id: UnitId,
+        defender: Option<HexCoord>,
+    },
+    CommanderMergeSelection {
+        unit_id: UnitId,
+    },
+}
+
 /// Complete recipient-safe presentation snapshot.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlayerViewSnapshot {
     stamp: SessionStamp,
     turn: u32,
+    pending_action: Option<PendingActionView>,
     units: Box<[PlayerUnitView]>,
 }
 
@@ -84,6 +122,7 @@ impl PlayerViewSnapshot {
         Self {
             stamp,
             turn: state.turn(),
+            pending_action: pending_action(state, actor),
             units: visible_units(state, actor).into_boxed_slice(),
         }
     }
@@ -98,11 +137,73 @@ impl PlayerViewSnapshot {
     pub const fn turn(&self) -> u32 {
         self.turn
     }
+    /// Returns the action awaiting input from this recipient.
+    #[must_use]
+    pub const fn pending_action(&self) -> Option<&PendingActionView> {
+        self.pending_action.as_ref()
+    }
     /// Returns all units visible to this local player.
     #[must_use]
     pub const fn units(&self) -> &[PlayerUnitView] {
         &self.units
     }
+}
+
+pub(crate) fn pending_action(state: &GameState, actor: &PlayerId) -> Option<PendingActionView> {
+    let pending = state.interaction().pending()?;
+    if pending.owner_player_id() != actor {
+        return None;
+    }
+    Some(match pending {
+        PendingInteraction::ResearchSelection { .. } => PendingActionView::ResearchSelection,
+        PendingInteraction::CityWorkedHexSelection { city_id, .. } => {
+            PendingActionView::CityWorkedHexSelection {
+                city_id: city_id.clone(),
+            }
+        }
+        PendingInteraction::CityExpansionSelection { city_id, .. } => {
+            PendingActionView::CityExpansionSelection {
+                city_id: city_id.clone(),
+            }
+        }
+        PendingInteraction::WorkerActionSelection {
+            unit_id,
+            improvement,
+            ..
+        } => PendingActionView::WorkerActionSelection {
+            unit_id: unit_id.clone(),
+            improvement: *improvement,
+        },
+        PendingInteraction::MerchantTradeRouteSelection { unit_id, .. } => {
+            PendingActionView::MerchantTradeRouteSelection {
+                unit_id: unit_id.clone(),
+            }
+        }
+        PendingInteraction::MerchantMoveToCitySelection { unit_id, .. } => {
+            PendingActionView::MerchantMoveToCitySelection {
+                unit_id: unit_id.clone(),
+            }
+        }
+        PendingInteraction::UnitTurnSkip {
+            unit_id,
+            restore_movement,
+            ..
+        } => PendingActionView::UnitTurnSkip {
+            unit_id: unit_id.clone(),
+            restore_movement_units: restore_movement.get(),
+        },
+        PendingInteraction::AttackTargeting {
+            unit_id, defender, ..
+        } => PendingActionView::AttackTargeting {
+            unit_id: unit_id.clone(),
+            defender: *defender,
+        },
+        PendingInteraction::CommanderMergeSelection { unit_id, .. } => {
+            PendingActionView::CommanderMergeSelection {
+                unit_id: unit_id.clone(),
+            }
+        }
+    })
 }
 
 pub(crate) fn visible_units(state: &GameState, actor: &PlayerId) -> Vec<PlayerUnitView> {
@@ -127,7 +228,7 @@ mod tests {
         UnitOccupancyPolicy,
     };
 
-    use super::visible_units;
+    use super::{PendingActionView, pending_action, visible_units};
 
     #[test]
     fn visible_units_have_stable_identifier_order() {
@@ -188,6 +289,37 @@ mod tests {
             .collect::<Vec<_>>();
 
         assert_eq!(identifiers, ["foreign-visible", "owned-hidden"]);
+    }
+
+    #[test]
+    fn pending_action_is_visible_only_to_its_owner() {
+        let actor = PlayerId::new("player-1").expect("actor id");
+        let foreign = PlayerId::new("player-2").expect("foreign id");
+        let state = GameState::try_new_with_world(
+            StateRevision::INITIAL,
+            1,
+            HexGridBounds::new(2, 2).expect("bounds"),
+            UnitOccupancyPolicy::Exclusive,
+            [],
+            [],
+            [],
+            InteractionState::new(
+                None,
+                Some(aonw_domain::PendingInteraction::ResearchSelection {
+                    owner_player_id: actor.clone(),
+                }),
+            ),
+            FogOfWar::default(),
+            Diplomacy::default(),
+            TransportNetwork::default(),
+        )
+        .expect("state");
+
+        assert_eq!(
+            pending_action(&state, &actor),
+            Some(PendingActionView::ResearchSelection)
+        );
+        assert_eq!(pending_action(&state, &foreign), None);
     }
 
     fn unit(id: &str, actor: &PlayerId, position: HexCoord) -> Unit {

@@ -8,7 +8,7 @@ use aonw_engine::{
 };
 
 use crate::persistence::{replay_context, replay_entry};
-use crate::player_view::{PlayerUnitView, visible_units};
+use crate::player_view::{PendingActionView, PlayerUnitView, pending_action, visible_units};
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
 
@@ -52,6 +52,8 @@ pub struct PlayerViewPatch {
     pub upserted_units: Box<[PlayerUnitView]>,
     /// Units no longer visible.
     pub removed_unit_ids: Box<[UnitId]>,
+    /// Current action awaiting input from this recipient.
+    pub pending_action: Option<PendingActionView>,
 }
 
 /// Complete local result of one authoritative command dispatch.
@@ -153,11 +155,13 @@ fn dispatch_domain(
     session.advance_event_offset(events.len())?;
     session.replace_state(parts.state, parts.digest);
     let after_view = visible_units(session.state(), session.actor());
+    let after_pending = pending_action(session.state(), session.actor());
     let view_patch = diff_view(
         before_revision,
         session.state().revision().get(),
         before_view,
         after_view,
+        after_pending,
     );
     let result = CommandResult {
         stamp: session.stamp(),
@@ -176,6 +180,7 @@ fn diff_view(
     to_revision: u64,
     before: Vec<PlayerUnitView>,
     after: Vec<PlayerUnitView>,
+    pending_action: Option<PendingActionView>,
 ) -> PlayerViewPatch {
     debug_assert!(before.windows(2).all(|pair| pair[0].id() < pair[1].id()));
     debug_assert!(after.windows(2).all(|pair| pair[0].id() < pair[1].id()));
@@ -211,6 +216,7 @@ fn diff_view(
         to_revision,
         upserted_units: upserted_units.into_boxed_slice(),
         removed_unit_ids: removed_unit_ids.into_boxed_slice(),
+        pending_action,
     }
 }
 
@@ -226,7 +232,7 @@ mod tests {
         let before = vec![view("unit-a", 0), view("unit-b", 1)];
         let after = vec![view("unit-b", 2), view("unit-c", 3)];
 
-        let patch = diff_view(4, 5, before, after);
+        let patch = diff_view(4, 5, before, after, None);
 
         assert_eq!(patch.from_revision, 4);
         assert_eq!(patch.to_revision, 5);
@@ -246,6 +252,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["unit-a"]
         );
+        assert_eq!(patch.pending_action, None);
     }
 
     fn view(id: &str, col: i32) -> PlayerUnitView {

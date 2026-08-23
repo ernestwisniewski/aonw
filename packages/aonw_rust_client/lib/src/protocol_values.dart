@@ -1,4 +1,6 @@
+import 'package:aonw_rust_client/src/protocol_coordinate.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
+import 'package:aonw_rust_client/src/protocol_pending_action.dart';
 
 enum AonwClientFeature {
   inspectMap,
@@ -60,22 +62,6 @@ enum AonwUnitPosture {
       orElse: () => throw FormatException('Unknown AoNW unit posture $wire.'),
     );
   }
-}
-
-final class AonwCoordinate {
-  const AonwCoordinate({required this.col, required this.row});
-
-  factory AonwCoordinate.fromJson(Object? source) {
-    final value = readObject(source, 'coordinate');
-    requireKeys(value, const {'col', 'row'}, 'coordinate');
-    return AonwCoordinate(
-      col: readInt(value['col'], 'coordinate column'),
-      row: readInt(value['row'], 'coordinate row'),
-    );
-  }
-
-  final int col;
-  final int row;
 }
 
 final class AonwSessionStamp {
@@ -161,15 +147,24 @@ final class AonwPlayerViewSnapshot {
   const AonwPlayerViewSnapshot({
     required this.stamp,
     required this.turn,
+    required this.pendingAction,
     required this.units,
   });
 
   factory AonwPlayerViewSnapshot.fromJson(Object? source) {
     final value = readObject(source, 'player snapshot');
-    requireKeys(value, const {'stamp', 'turn', 'units'}, 'player snapshot');
+    requireKeys(value, const {
+      'stamp',
+      'turn',
+      'pendingAction',
+      'units',
+    }, 'player snapshot');
     return AonwPlayerViewSnapshot(
       stamp: AonwSessionStamp.fromJson(value['stamp']),
       turn: readUnsigned(value['turn'], 'snapshot turn'),
+      pendingAction: value['pendingAction'] == null
+          ? null
+          : AonwPendingActionView.fromJson(value['pendingAction']),
       units: readList(
         value['units'],
         'snapshot units',
@@ -180,6 +175,7 @@ final class AonwPlayerViewSnapshot {
 
   final AonwSessionStamp stamp;
   final int turn;
+  final AonwPendingActionView? pendingAction;
   final List<AonwPlayerUnitView> units;
 }
 
@@ -189,6 +185,7 @@ final class AonwPlayerViewPatch {
     required this.toRevision,
     required this.upsertedUnits,
     required this.removedUnitIds,
+    required this.pendingAction,
   });
 
   factory AonwPlayerViewPatch.fromJson(Object? source) {
@@ -198,6 +195,7 @@ final class AonwPlayerViewPatch {
       'toRevision',
       'upsertedUnits',
       'removedUnitIds',
+      'pendingAction',
     }, 'player view patch');
     return AonwPlayerViewPatch(
       fromRevision: readUnsigned(
@@ -215,6 +213,9 @@ final class AonwPlayerViewPatch {
         'removed unit ids',
         (item, _) => readString(item, 'removed unit id'),
       ),
+      pendingAction: value['pendingAction'] == null
+          ? null
+          : AonwPendingActionView.fromJson(value['pendingAction']),
     );
   }
 
@@ -222,6 +223,7 @@ final class AonwPlayerViewPatch {
   final int toRevision;
   final List<AonwPlayerUnitView> upsertedUnits;
   final List<String> removedUnitIds;
+  final AonwPendingActionView? pendingAction;
 }
 
 final class AonwMovementStep {

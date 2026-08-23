@@ -15,9 +15,9 @@ pub use response::{
     ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto,
     ClientEventDto, ClientEvidenceDto, ClientFeatureDto, ClientOutcomeDto, ClientQueryResultDto,
     ClientReplayVerificationDto, ClientResponseBodyDto, ClientResponseDto, ClientSessionStampDto,
-    MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
-    ReachableTileViewDto,
+    MovementStepViewDto, PendingActionViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
+    PlayerViewSnapshotDto, ReachableTileViewDto,
 };
 
 /// The only client protocol version accepted by this build.
-pub const CLIENT_API_VERSION: u16 = 4;
+pub const CLIENT_API_VERSION: u16 = 5;

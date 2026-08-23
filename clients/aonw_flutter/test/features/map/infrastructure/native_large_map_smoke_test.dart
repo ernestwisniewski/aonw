@@ -200,6 +200,7 @@ PlayerMapView _emptyPlayer(String mapHash) => PlayerMapView(
     rulesetHash: 'c' * 64,
   ),
   turn: 1,
+  pendingAction: null,
   units: const [],
 );
 

@@ -8,6 +8,12 @@ const UNIT_KINDS := [
 	"tank", "scoutShip", "warship", "reconPlane",
 ]
 const UNIT_POSTURES := ["active", "fortified", "autoExploring", "autoWorking"]
+const FIELD_IMPROVEMENTS := [
+	"farm", "riverFarm", "mine", "lumberMill", "pasture", "camp", "quarry",
+	"fishingBoats", "orchard", "plantation", "vineyard", "tradingPost",
+	"prospectorCamp", "horseRanch", "pearlDivers", "coalShaft", "oilWell",
+	"bauxiteMine", "uraniumMine",
+]
 const COMMAND_REJECTION_CODES := [
 	"stale_revision",
 	"unit_not_found",
@@ -47,12 +53,15 @@ static func decode_stamp(raw: Variant) -> AonwClientReadModels.Stamp:
 	return result
 
 static func decode_snapshot(raw: Variant) -> AonwClientReadModels.SnapshotView:
-	if not _has_exact_fields(raw, ["stamp", "turn", "units"]) or not raw["units"] is Array:
+	if not _has_exact_fields(raw, [
+		"stamp", "turn", "pendingAction", "units",
+	]) or not raw["units"] is Array:
 		return null
 	if not _integers(raw, ["turn"], true) or int(raw["turn"]) < 1:
 		return null
 	var stamp := decode_stamp(raw["stamp"])
-	if stamp == null:
+	var pending_action := _decode_pending_action(raw["pendingAction"])
+	if stamp == null or (raw["pendingAction"] != null and pending_action == null):
 		return null
 	var units: Array[AonwClientReadModels.UnitView] = []
 	var previous_id := ""
@@ -66,6 +75,7 @@ static func decode_snapshot(raw: Variant) -> AonwClientReadModels.SnapshotView:
 	var result := ReadModels.SnapshotView.new()
 	result.stamp = stamp
 	result.turn = int(raw["turn"])
+	result.pending_action = pending_action
 	result.units = units
 	return result
 
@@ -220,7 +230,7 @@ static func _decode_unit(raw: Variant) -> AonwClientReadModels.UnitView:
 
 static func _decode_patch(raw: Variant) -> AonwClientReadModels.ViewPatch:
 	if not _has_exact_fields(raw, [
-		"fromRevision", "toRevision", "upsertedUnits", "removedUnitIds",
+		"fromRevision", "toRevision", "upsertedUnits", "removedUnitIds", "pendingAction",
 	]) or not raw["upsertedUnits"] is Array or not raw["removedUnitIds"] is Array:
 		return null
 	if not _integers(raw, ["fromRevision", "toRevision"], true):
@@ -238,12 +248,73 @@ static func _decode_patch(raw: Variant) -> AonwClientReadModels.ViewPatch:
 			return null
 		removed.append(value)
 	removed.make_read_only()
+	var pending_action := _decode_pending_action(raw["pendingAction"])
+	if raw["pendingAction"] != null and pending_action == null:
+		return null
 	var result := ReadModels.ViewPatch.new()
 	result.from_revision = int(raw["fromRevision"])
 	result.to_revision = int(raw["toRevision"])
 	result.upserted_units = units
 	result.removed_unit_ids = removed
+	result.pending_action = pending_action
 	return result
+
+static func _decode_pending_action(raw: Variant) -> AonwClientReadModels.PendingActionView:
+	if raw == null:
+		return null
+	if not raw is Dictionary or not raw.get("type") is String:
+		return null
+	var result := ReadModels.PendingActionView.new()
+	result.kind = StringName(raw["type"])
+	match raw["type"]:
+		"researchSelection":
+			if not _has_exact_fields(raw, ["type"]):
+				return null
+		"cityWorkedHexSelection", "cityExpansionSelection":
+			if not _has_exact_fields(raw, ["type", "cityId"]):
+				return null
+			if not raw["cityId"] is String or raw["cityId"].is_empty():
+				return null
+			result.city_id = raw["cityId"]
+		"workerActionSelection":
+			if not _has_exact_fields(raw, ["type", "unitId", "improvement"]):
+				return null
+			if not _valid_unit_id(raw["unitId"]):
+				return null
+			if raw["improvement"] != null:
+				if not raw["improvement"] is String or not FIELD_IMPROVEMENTS.has(raw["improvement"]):
+					return null
+				result.improvement = StringName(raw["improvement"])
+			result.unit_id = raw["unitId"]
+		"merchantTradeRouteSelection", "merchantMoveToCitySelection", "commanderMergeSelection":
+			if not _has_exact_fields(raw, ["type", "unitId"]) or not _valid_unit_id(raw["unitId"]):
+				return null
+			result.unit_id = raw["unitId"]
+		"unitTurnSkip":
+			if not _has_exact_fields(raw, ["type", "unitId", "restoreMovementUnits"]):
+				return null
+			if not _valid_unit_id(raw["unitId"]) or not _integers(raw, ["restoreMovementUnits"], true):
+				return null
+			result.unit_id = raw["unitId"]
+			result.restore_movement_units = int(raw["restoreMovementUnits"])
+		"attackTargeting":
+			if not _has_exact_fields(raw, ["type", "unitId", "defender"]):
+				return null
+			if not _valid_unit_id(raw["unitId"]):
+				return null
+			result.unit_id = raw["unitId"]
+			if raw["defender"] != null:
+				var defender: Variant = _decode_coordinate(raw["defender"])
+				if defender == null:
+					return null
+				result.has_defender = true
+				result.defender = defender
+		_:
+			return null
+	return result
+
+static func _valid_unit_id(value: Variant) -> bool:
+	return value is String and not value.is_empty()
 
 static func _decode_evidence(raw: Variant) -> AonwClientReadModels.MovementEvidence:
 	if raw == null:

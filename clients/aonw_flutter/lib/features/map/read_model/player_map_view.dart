@@ -1,4 +1,5 @@
 import 'map_view.dart';
+import 'pending_action_view.dart';
 
 enum VisibleUnitKind {
   commander,
@@ -63,12 +64,14 @@ final class PlayerMapView {
     required this.actorPlayerId,
     required this.stamp,
     required this.turn,
+    required this.pendingAction,
     required List<VisibleUnitView> units,
   }) : units = List.unmodifiable(units);
 
   final String actorPlayerId;
   final SessionStampView stamp;
   final int turn;
+  final PendingActionView? pendingAction;
   final List<VisibleUnitView> units;
 
   Iterable<VisibleUnitView> unitsAt(MapHexCoordinate coordinate) =>

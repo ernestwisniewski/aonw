@@ -190,9 +190,11 @@ unit. These actions emit no synthetic movement events or evidence.
 transactional, closing is idempotent, and every snapshot, query, and dispatch
 response carries behavior version, revision, state digest, map hash, and ruleset
 hash. Full recipient-safe snapshots also carry the authoritative turn number.
-The runtime exposes reachable and route queries,
-revision-bound commands, ordered events, exact execution evidence, and view
-patches including unit posture.
+They expose a pending action only when it belongs to the snapshot recipient;
+the owner identifier is intentionally redundant and omitted. The runtime
+exposes reachable and route queries, revision-bound commands, ordered events,
+exact execution evidence, and view patches including unit posture and the
+current recipient pending action, including an explicit `null` when it clears.
 Recipient unit views are sorted by stable unit identifier before snapshots and
 linear patch generation, independently from canonical contract order. Event
 offset capacity is checked before an owned-state dispatch can begin.
@@ -210,9 +212,10 @@ acceptance flag and rejection code cannot be represented on the wire. Rejection
 codes are closed enums in both the engine and client DTO; their current wire
 values are pinned by `command_rejection_codes.json` and unknown values fail
 closed in every adapter. Client API version 4 adds the authoritative turn to
-player snapshots. Engine behavior version 4 preserves turn-one scenario
-bootstrap semantics and retains unified stale command rejections as
-`stale_revision`.
+player snapshots. Client API version 5 adds the closed recipient-owned pending
+action view to snapshots and command patches. Engine behavior version 4
+preserves turn-one scenario bootstrap semantics and retains unified stale
+command rejections as `stale_revision`.
 
 The shared golden documents in `test/fixtures/client_protocol` are consumed by
 Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; each

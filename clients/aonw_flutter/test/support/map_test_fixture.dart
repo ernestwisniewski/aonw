@@ -59,6 +59,7 @@ MapScene testMapScene({
         rulesetHash: 'c' * 64,
       ),
       turn: 1,
+      pendingAction: null,
       units: units,
     ),
   );

@@ -5,10 +5,10 @@ use aonw_contracts::client::{
     ClientCommandResultDto, ClientErrorDto, ClientEventDto, ClientEvidenceDto, ClientFeatureDto,
     ClientOutcomeDto, ClientQueryDto, ClientQueryResultDto, ClientReplayVerificationDto,
     ClientRequestBodyDto, ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
-    ClientSessionStampDto, MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
-    PlayerViewSnapshotDto, ReachableTileViewDto,
+    ClientSessionStampDto, MovementStepViewDto, PendingActionViewDto, PlayerUnitViewDto,
+    PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
 };
-use aonw_contracts::{CoordinateDto, UnitKindDto, UnitPostureDto};
+use aonw_contracts::{CoordinateDto, FieldImprovementKindDto, UnitKindDto, UnitPostureDto};
 
 fn coordinate(col: i32, row: i32) -> CoordinateDto {
     CoordinateDto { col, row }
@@ -36,6 +36,18 @@ fn unit() -> PlayerUnitViewDto {
     }
 }
 
+fn player_snapshot() -> PlayerViewSnapshotDto {
+    PlayerViewSnapshotDto {
+        stamp: stamp(),
+        turn: 7,
+        pending_action: Some(PendingActionViewDto::WorkerActionSelection {
+            unit_id: "unit-1".to_owned(),
+            improvement: Some(FieldImprovementKindDto::Farm),
+        }),
+        units: vec![unit()],
+    }
+}
+
 fn command_result() -> ClientCommandResultDto {
     ClientCommandResultDto {
         stamp: stamp(),
@@ -59,6 +71,7 @@ fn command_result() -> ClientCommandResultDto {
             to_revision: 8,
             upserted_units: vec![unit()],
             removed_unit_ids: Vec::new(),
+            pending_action: None,
         },
     }
 }
@@ -217,11 +230,7 @@ fn every_current_response_variant_round_trips() {
         ClientResponseBodyDto::SessionOpened { stamp: stamp() },
         ClientResponseBodyDto::SessionClosed,
         ClientResponseBodyDto::Snapshot {
-            snapshot: PlayerViewSnapshotDto {
-                stamp: stamp(),
-                turn: 7,
-                units: vec![unit()],
-            },
+            snapshot: player_snapshot(),
         },
         ClientResponseBodyDto::Query {
             result: ClientQueryResultDto::Reachable {
@@ -305,20 +314,20 @@ fn every_current_response_variant_round_trips() {
 
 #[test]
 fn malformed_unknown_duplicate_and_future_documents_fail_closed() {
-    let unknown = r#"{"apiVersion":4,"request":{"type":"snapshot"},"extra":true}"#;
-    let duplicate = r#"{"apiVersion":4,"apiVersion":4,"request":{"type":"snapshot"}}"#;
-    let future = r#"{"apiVersion":5,"request":{"type":"snapshot"}}"#;
-    let malformed_nested = r#"{"apiVersion":4,"request":{"type":"query","query":{"type":"reachable","expectedRevision":0,"unitId":"u","extra":true}}}"#;
+    let unknown = r#"{"apiVersion":5,"request":{"type":"snapshot"},"extra":true}"#;
+    let duplicate = r#"{"apiVersion":5,"apiVersion":5,"request":{"type":"snapshot"}}"#;
+    let future = r#"{"apiVersion":6,"request":{"type":"snapshot"}}"#;
+    let malformed_nested = r#"{"apiVersion":5,"request":{"type":"query","query":{"type":"reachable","expectedRevision":0,"unitId":"u","extra":true}}}"#;
 
     for invalid in [unknown, duplicate, future, malformed_nested] {
         assert!(ClientRequestDto::from_json(invalid).is_err());
     }
 
     let future_response =
-        r#"{"apiVersion":5,"outcome":{"status":"success","response":{"type":"sessionClosed"}}}"#;
-    let unknown_response = r#"{"apiVersion":4,"outcome":{"status":"failure","error":{"code":"failed","message":"failed","extra":true}}}"#;
-    let old_command_shape = r#"{"apiVersion":4,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"behaviorVersion":2,"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"accepted":true,"rejection":null,"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[]}}}}}"#;
-    let unknown_rejection = r#"{"apiVersion":4,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"behaviorVersion":2,"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"outcome":{"status":"rejected","code":"future_rejection"},"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[]}}}}}"#;
+        r#"{"apiVersion":6,"outcome":{"status":"success","response":{"type":"sessionClosed"}}}"#;
+    let unknown_response = r#"{"apiVersion":5,"outcome":{"status":"failure","error":{"code":"failed","message":"failed","extra":true}}}"#;
+    let old_command_shape = r#"{"apiVersion":5,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"behaviorVersion":2,"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"accepted":true,"rejection":null,"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[],"pendingAction":null}}}}}"#;
+    let unknown_rejection = r#"{"apiVersion":5,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"behaviorVersion":2,"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"outcome":{"status":"rejected","code":"future_rejection"},"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[],"pendingAction":null}}}}}"#;
     assert!(ClientResponseDto::from_json(future_response).is_err());
     assert!(ClientResponseDto::from_json(unknown_response).is_err());
     assert!(ClientResponseDto::from_json(old_command_shape).is_err());

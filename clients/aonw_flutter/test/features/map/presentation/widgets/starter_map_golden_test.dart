@@ -61,6 +61,7 @@ void main() {
           rulesetHash: 'c' * 64,
         ),
         turn: 1,
+        pendingAction: null,
         units: const [],
       ),
     );

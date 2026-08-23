@@ -2,9 +2,15 @@ import 'package:aonw_rust_client/aonw_rust_client.dart';
 
 import '../read_model/map_view.dart';
 import '../read_model/player_map_view.dart';
+import 'pending_action_view_mapper.dart';
 
 final class PlayerMapViewMapper {
-  const PlayerMapViewMapper();
+  const PlayerMapViewMapper({
+    PendingActionViewMapper pendingActionMapper =
+        const PendingActionViewMapper(),
+  }) : _pendingActionMapper = pendingActionMapper;
+
+  final PendingActionViewMapper _pendingActionMapper;
 
   PlayerMapView fromWire(
     AonwPlayerViewSnapshot wire, {
@@ -12,11 +18,18 @@ final class PlayerMapViewMapper {
     required String actorPlayerId,
   }) {
     _validateSnapshot(wire, map: map, actorPlayerId: actorPlayerId);
+    final units = _mapUnits(wire.units, map);
     return PlayerMapView(
       actorPlayerId: actorPlayerId,
       stamp: _mapStamp(wire.stamp),
       turn: wire.turn,
-      units: _mapUnits(wire.units, map),
+      pendingAction: _pendingActionMapper.fromWire(
+        wire.pendingAction,
+        actorPlayerId: actorPlayerId,
+        units: units,
+        map: map,
+      ),
+      units: units,
     );
   }
 

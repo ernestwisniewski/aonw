@@ -16,7 +16,7 @@ mod session;
 pub use client_protocol::ClientProtocol;
 pub use command_dispatch::{CommandResult, MoveUnitRequest, PlayerViewPatch, UnitActionRequest};
 pub use persistence::{PersistenceError, ReplayVerification, RngState};
-pub use player_view::{PlayerUnitView, PlayerViewSnapshot};
+pub use player_view::{PendingActionView, PlayerUnitView, PlayerViewSnapshot};
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{
     MovementStepView, ReachableRequest, ReachableResult, ReachableTileView, RoutePlanRequest,

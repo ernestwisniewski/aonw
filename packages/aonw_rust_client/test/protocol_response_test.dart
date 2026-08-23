@@ -11,6 +11,7 @@ void main() {
       'snapshot': {
         'stamp': _stamp,
         'turn': 7,
+        'pendingAction': null,
         'units': [
           {
             'id': 'unit-1',
@@ -134,6 +135,48 @@ void main() {
     expect(route.result, isA<AonwRoutePlanResult>());
   });
 
+  test('pending actions are a strict closed recipient view', () {
+    final actions = <Map<String, Object?>>[
+      const {'type': 'researchSelection'},
+      const {'type': 'cityWorkedHexSelection', 'cityId': 'city-1'},
+      const {'type': 'cityExpansionSelection', 'cityId': 'city-1'},
+      const {
+        'type': 'workerActionSelection',
+        'unitId': 'worker-1',
+        'improvement': 'farm',
+      },
+      const {'type': 'merchantTradeRouteSelection', 'unitId': 'merchant-1'},
+      const {'type': 'merchantMoveToCitySelection', 'unitId': 'merchant-1'},
+      const {
+        'type': 'unitTurnSkip',
+        'unitId': 'unit-1',
+        'restoreMovementUnits': 4,
+      },
+      const {
+        'type': 'attackTargeting',
+        'unitId': 'unit-1',
+        'defender': {'col': 2, 'row': 3},
+      },
+      const {'type': 'commanderMergeSelection', 'unitId': 'commander-1'},
+    ];
+
+    expect(actions.map(AonwPendingActionView.fromJson), [
+      isA<AonwPendingResearchSelection>(),
+      isA<AonwPendingCityWorkedHexSelection>(),
+      isA<AonwPendingCityExpansionSelection>(),
+      isA<AonwPendingWorkerActionSelection>(),
+      isA<AonwPendingMerchantTradeRouteSelection>(),
+      isA<AonwPendingMerchantMoveToCitySelection>(),
+      isA<AonwPendingUnitTurnSkip>(),
+      isA<AonwPendingAttackTargeting>(),
+      isA<AonwPendingCommanderMergeSelection>(),
+    ]);
+    expect(
+      () => AonwPendingActionView.fromJson(const {'type': 'futureAction'}),
+      throwsFormatException,
+    );
+  });
+
   test('command result uses one tagged accepted or rejected outcome', () {
     final accepted = AonwCommandResult.fromJson(
       _commandResult(const {'status': 'accepted'}),
@@ -229,5 +272,6 @@ Map<String, Object?> _commandResult(Map<String, Object?> outcome) => {
     'toRevision': 7,
     'upsertedUnits': <Object?>[],
     'removedUnitIds': <Object?>[],
+    'pendingAction': null,
   },
 };

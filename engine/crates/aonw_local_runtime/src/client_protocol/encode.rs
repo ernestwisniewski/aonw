@@ -2,22 +2,22 @@ use aonw_content::{
     GridLayout, MapDocument, MapObjective, MapObjectiveType, ResourceType, TerrainType,
     TileDefinition,
 };
-use aonw_contract_mapping::{encode_unit_kind, encode_unit_posture};
+use aonw_contract_mapping::{encode_improvement, encode_unit_kind, encode_unit_posture};
 use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
     ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientEventDto,
     ClientEvidenceDto, ClientFeatureDto, ClientQueryResultDto, ClientReplayVerificationDto,
     ClientResponseBodyDto, ClientSessionStampDto, MapGridLayoutDto, MapObjectiveTypeDto,
     MapObjectiveViewDto, MapResourceDto, MapTerrainDto, MapTileViewDto, MapViewDto,
-    MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
-    ReachableTileViewDto,
+    MovementStepViewDto, PendingActionViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
+    PlayerViewSnapshotDto, ReachableTileViewDto,
 };
 use aonw_domain::HexCoord;
 use aonw_engine::{CommandRejectionCode, DomainEvent, ExecutionEvidence};
 
 use crate::{
-    CommandResult, LocalRuntime, PlayerUnitView, PlayerViewPatch, PlayerViewSnapshot,
-    ReplayVerification, RuntimeQueryResult, SessionStamp,
+    CommandResult, LocalRuntime, PendingActionView, PlayerUnitView, PlayerViewPatch,
+    PlayerViewSnapshot, ReplayVerification, RuntimeQueryResult, SessionStamp,
 };
 
 pub(super) fn capabilities() -> ClientResponseBodyDto {
@@ -171,6 +171,7 @@ pub(super) fn snapshot(value: &PlayerViewSnapshot) -> PlayerViewSnapshotDto {
     PlayerViewSnapshotDto {
         stamp: stamp(*value.stamp()),
         turn: value.turn(),
+        pending_action: value.pending_action().map(pending_action),
         units: value.units().iter().map(unit).collect(),
     }
 }
@@ -304,6 +305,58 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
             .iter()
             .map(|id| id.as_str().to_owned())
             .collect(),
+        pending_action: value.pending_action.as_ref().map(pending_action),
+    }
+}
+
+fn pending_action(value: &PendingActionView) -> PendingActionViewDto {
+    match value {
+        PendingActionView::ResearchSelection => PendingActionViewDto::ResearchSelection,
+        PendingActionView::CityWorkedHexSelection { city_id } => {
+            PendingActionViewDto::CityWorkedHexSelection {
+                city_id: city_id.as_str().to_owned(),
+            }
+        }
+        PendingActionView::CityExpansionSelection { city_id } => {
+            PendingActionViewDto::CityExpansionSelection {
+                city_id: city_id.as_str().to_owned(),
+            }
+        }
+        PendingActionView::WorkerActionSelection {
+            unit_id,
+            improvement,
+        } => PendingActionViewDto::WorkerActionSelection {
+            unit_id: unit_id.as_str().to_owned(),
+            improvement: (*improvement).map(encode_improvement),
+        },
+        PendingActionView::MerchantTradeRouteSelection { unit_id } => {
+            PendingActionViewDto::MerchantTradeRouteSelection {
+                unit_id: unit_id.as_str().to_owned(),
+            }
+        }
+        PendingActionView::MerchantMoveToCitySelection { unit_id } => {
+            PendingActionViewDto::MerchantMoveToCitySelection {
+                unit_id: unit_id.as_str().to_owned(),
+            }
+        }
+        PendingActionView::UnitTurnSkip {
+            unit_id,
+            restore_movement_units,
+        } => PendingActionViewDto::UnitTurnSkip {
+            unit_id: unit_id.as_str().to_owned(),
+            restore_movement_units: *restore_movement_units,
+        },
+        PendingActionView::AttackTargeting { unit_id, defender } => {
+            PendingActionViewDto::AttackTargeting {
+                unit_id: unit_id.as_str().to_owned(),
+                defender: (*defender).map(coordinate),
+            }
+        }
+        PendingActionView::CommanderMergeSelection { unit_id } => {
+            PendingActionViewDto::CommanderMergeSelection {
+                unit_id: unit_id.as_str().to_owned(),
+            }
+        }
     }
 }
 

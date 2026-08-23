@@ -1,4 +1,5 @@
 import 'package:aonw_flutter/features/map/infrastructure/player_map_view_mapper.dart';
+import 'package:aonw_flutter/features/map/read_model/pending_action_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -47,6 +48,7 @@ void main() {
     final invalid = AonwPlayerViewSnapshot(
       stamp: snapshot.stamp,
       turn: 0,
+      pendingAction: snapshot.pendingAction,
       units: snapshot.units,
     );
 
@@ -84,11 +86,70 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('maps an engine-owned pending action without deriving its rules', () {
+    final map = testMapScene().map;
+    final player = mapper.fromWire(
+      _snapshot(
+        [_unit('unit-a')],
+        pendingAction: const AonwPendingWorkerActionSelection(
+          unitId: 'unit-a',
+          improvement: AonwFieldImprovementKind.farm,
+        ),
+      ),
+      map: map,
+      actorPlayerId: 'player-1',
+    );
+
+    final pending = player.pendingAction;
+    expect(pending, isA<PendingWorkerActionSelectionView>());
+    expect(
+      (pending! as PendingWorkerActionSelectionView).improvement,
+      FieldImprovementKind.farm,
+    );
+  });
+
+  test(
+    'rejects pending actions for an uncontrolled unit or invalid target',
+    () {
+      final map = testMapScene().map;
+
+      expect(
+        () => mapper.fromWire(
+          _snapshot(
+            [_unit('unit-a')],
+            pendingAction: const AonwPendingUnitTurnSkip(
+              unitId: 'unit-b',
+              restoreMovementUnits: 4,
+            ),
+          ),
+          map: map,
+          actorPlayerId: 'player-1',
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => mapper.fromWire(
+          _snapshot(
+            [_unit('unit-a')],
+            pendingAction: const AonwPendingAttackTargeting(
+              unitId: 'unit-a',
+              defender: AonwCoordinate(col: 99, row: 99),
+            ),
+          ),
+          map: map,
+          actorPlayerId: 'player-1',
+        ),
+        throwsFormatException,
+      );
+    },
+  );
 }
 
 AonwPlayerViewSnapshot _snapshot(
   List<AonwPlayerUnitView> units, {
   String? mapHash,
+  AonwPendingActionView? pendingAction,
 }) => AonwPlayerViewSnapshot(
   stamp: AonwSessionStamp(
     behaviorVersion: 1,
@@ -98,6 +159,7 @@ AonwPlayerViewSnapshot _snapshot(
     rulesetHash: 'c' * 64,
   ),
   turn: 7,
+  pendingAction: pendingAction,
   units: units,
 );
 

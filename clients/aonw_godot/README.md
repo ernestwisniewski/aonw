@@ -221,9 +221,11 @@ controller and infrastructure boundary. Command rejection values are validated
 against the same closed fixture used by Rust and Flutter; unknown codes are
 rejected before presentation.
 
-Client API version 4 adds the positive authoritative turn number to every
-recipient snapshot. Godot validates and retains it in `SnapshotView`; it does
-not increment, infer, or otherwise reduce turn state locally.
+Client API version 5 carries the positive authoritative turn number and the
+closed recipient-owned pending action view. Godot validates both in snapshots
+and command patches; it does not infer pending actions, increment turns, or
+otherwise reduce this state locally. A missing pending action is represented
+explicitly by `null`, including after a command clears it.
 
 Selection is presentation-only; canonical state, visibility, paths, costs,
 revisions, events, and persistence remain owned by Rust. The local runtime
