@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/aonw_theme.dart';
 import '../../features/map/application/map_controller.dart';
-import '../../features/map/presentation/widgets/map_screen.dart';
+import 'aonw_router.dart';
 
 final class AonwApp extends StatefulWidget {
   const AonwApp({required this.mapController, super.key});
@@ -29,12 +29,15 @@ final class _AonwAppState extends State<AonwApp> {
   }
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'Age of New Worlds',
-    debugShowCheckedModeBanner: false,
-    theme: AonwTheme.dark,
-    home: Scaffold(
-      body: SafeArea(child: MapScreen(controller: widget.mapController)),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final router = AonwRouter(mapController: widget.mapController);
+    return MaterialApp(
+      key: ValueKey(widget.mapController),
+      title: 'Age of New Worlds',
+      debugShowCheckedModeBanner: false,
+      theme: AonwTheme.dark,
+      initialRoute: AonwRoute.map.location,
+      onGenerateRoute: router.onGenerateRoute,
+    );
+  }
 }

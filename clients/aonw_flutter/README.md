@@ -17,6 +17,12 @@ is replaced; the controller closes the retained Rust session idempotently. The
 test constructor accepts only the application `MapRepository` port, so no DI
 container or service locator is needed.
 
+`AonwRouter` owns the small typed route table on top of Flutter's Navigator.
+The current `/` route builds the map feature; unknown locations fail closed to
+an accessible diagnostic page. `AonwApp` owns theme and lifecycle but does not
+construct feature pages directly. New screens extend the route enum and router
+without adding navigation decisions to feature widgets.
+
 The map feature opens the starter map and scenario on one retained Rust
 backend. Its `MapScene` keeps the shared static `MapView` separate from the
 recipient-safe player snapshot, so fog-filtered units never become authored
