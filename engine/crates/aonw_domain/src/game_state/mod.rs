@@ -2,7 +2,7 @@ mod validation;
 
 use crate::{
     ArtifactId, City, CityId, Diplomacy, FogOfWar, HexCoord, HexGridBounds, InteractionState,
-    PlayerId, StateRevision, TransportNetwork, Unit, UnitId, WorldArtifact,
+    MatchLifecycle, PlayerId, StateRevision, TransportNetwork, Unit, UnitId, WorldArtifact,
 };
 use validation::{
     artifact_indices, city_indices, unit_indices, validate_artifacts, validate_environment,
@@ -220,6 +220,7 @@ impl std::error::Error for GameStateBuildError {}
 pub struct GameState {
     revision: StateRevision,
     turn: u32,
+    match_lifecycle: MatchLifecycle,
     bounds: HexGridBounds,
     occupancy_policy: UnitOccupancyPolicy,
     units: Box<[Unit]>,
@@ -281,6 +282,42 @@ impl GameState {
         diplomacy: Diplomacy,
         transport_network: TransportNetwork,
     ) -> Result<Self, GameStateBuildError> {
+        Self::try_new_with_world_and_match_lifecycle(
+            revision,
+            turn,
+            MatchLifecycle::default(),
+            bounds,
+            occupancy_policy,
+            units,
+            cities,
+            artifacts,
+            interaction,
+            fog_of_war,
+            diplomacy,
+            transport_network,
+        )
+    }
+
+    /// Validates and constructs a complete world with match lifecycle.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`GameStateBuildError`] when an aggregate invariant is violated.
+    #[allow(clippy::too_many_arguments)]
+    pub fn try_new_with_world_and_match_lifecycle(
+        revision: StateRevision,
+        turn: u32,
+        match_lifecycle: MatchLifecycle,
+        bounds: HexGridBounds,
+        occupancy_policy: UnitOccupancyPolicy,
+        units: impl IntoIterator<Item = Unit>,
+        cities: impl IntoIterator<Item = City>,
+        artifacts: impl IntoIterator<Item = WorldArtifact>,
+        interaction: InteractionState,
+        fog_of_war: FogOfWar,
+        diplomacy: Diplomacy,
+        transport_network: TransportNetwork,
+    ) -> Result<Self, GameStateBuildError> {
         let units = units.into_iter().collect::<Vec<_>>();
         let unit_indices_by_id = unit_indices(bounds, occupancy_policy, &units)?;
         let cities = cities.into_iter().collect::<Vec<_>>();
@@ -293,6 +330,7 @@ impl GameState {
         Ok(Self {
             revision,
             turn,
+            match_lifecycle,
             bounds,
             occupancy_policy,
             units: units.into_boxed_slice(),
@@ -317,6 +355,11 @@ impl GameState {
     #[must_use]
     pub const fn turn(&self) -> u32 {
         self.turn
+    }
+    /// Returns canonical match identity and current lifecycle.
+    #[must_use]
+    pub const fn match_lifecycle(&self) -> &MatchLifecycle {
+        &self.match_lifecycle
     }
     /// Returns logical map bounds.
     #[must_use]
@@ -429,9 +472,10 @@ impl GameState {
             .map_err(|_| GameStateBuildError::UnitNotFound(unit.id().clone()))?;
         let mut units = self.units.into_vec();
         units[index] = unit;
-        Self::try_new_with_world(
+        Self::try_new_with_world_and_match_lifecycle(
             revision,
             self.turn,
+            self.match_lifecycle,
             self.bounds,
             self.occupancy_policy,
             units,
@@ -472,9 +516,10 @@ impl GameState {
         {
             artifact.restore_excavation(&unit_id);
         }
-        Self::try_new_with_world(
+        Self::try_new_with_world_and_match_lifecycle(
             revision,
             self.turn,
+            self.match_lifecycle,
             self.bounds,
             self.occupancy_policy,
             units,

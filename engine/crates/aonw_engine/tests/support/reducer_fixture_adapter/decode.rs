@@ -1,14 +1,15 @@
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
-    CityDto, CoordinateDto, GameStateDto, InteractionStateDto, MovementStepDto,
-    PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto, TransportConditionDto,
-    TransportSegmentDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
-    UnitPostureDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    CityDto, CoordinateDto, GameModeDto, GameStateDto, InteractionStateDto, MatchIdentityDto,
+    MatchRulesDto, MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto,
+    PlayerPairDto, QueuedMovePathDto, TransportConditionDto, TransportSegmentDto, TurnLifecycleDto,
+    UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{HexGridBounds, MovementUnits, UnitId};
 use aonw_testkit::{FixtureInput, JsonObject};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 use super::AdapterError;
 use super::json::{
@@ -113,6 +114,8 @@ pub(super) fn decode_state(
     let dto = GameStateDto {
         revision: input.tick(),
         turn: required_u32(input.save(), "turn")?,
+        match_identity: decode_match_identity(input.save())?,
+        turn_lifecycle: decode_turn_lifecycle(input.save(), input.state())?,
         cols: bounds.cols(),
         rows: bounds.rows(),
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
@@ -128,6 +131,72 @@ pub(super) fn decode_state(
         .map(Box::new)
         .map(DecodedState::Valid)
         .map_err(display_error)
+}
+
+fn decode_match_identity(save: &JsonObject) -> Result<MatchIdentityDto, AdapterError> {
+    Ok(MatchIdentityDto {
+        match_rules: serde_json::from_value::<MatchRulesDto>(json_field(
+            save,
+            "ruleset",
+            "input.save",
+        )?)
+        .map_err(display_error)?,
+        participants: serde_json::from_value::<Vec<ParticipantDto>>(json_field(
+            save,
+            "players",
+            "input.save",
+        )?)
+        .map_err(display_error)?,
+        game_mode: serde_json::from_value::<GameModeDto>(json_field(
+            save,
+            "gameMode",
+            "input.save",
+        )?)
+        .map_err(display_error)?,
+    })
+}
+
+fn decode_turn_lifecycle(
+    save: &JsonObject,
+    state: &JsonObject,
+) -> Result<TurnLifecycleDto, AdapterError> {
+    let lifecycle = state
+        .get("lifecycle")
+        .and_then(Value::as_object)
+        .ok_or_else(|| error("input.state.lifecycle must be an object"))?;
+    let mut selected = Map::from_iter([
+        (
+            "turnStatesByPlayerId".to_owned(),
+            json_field(save, "playerStates", "input.save")?,
+        ),
+        ("submittedPlayerIds".to_owned(), Value::Array(Vec::new())),
+        (
+            "timeoutStreaksByPlayerId".to_owned(),
+            Value::Object(Map::new()),
+        ),
+        ("afkPlayerIds".to_owned(), Value::Array(Vec::new())),
+        ("kickedPlayerIds".to_owned(), Value::Array(Vec::new())),
+        ("turnStartedAt".to_owned(), Value::Null),
+    ]);
+    for field in [
+        "submittedPlayerIds",
+        "timeoutStreaksByPlayerId",
+        "afkPlayerIds",
+        "kickedPlayerIds",
+        "turnStartedAt",
+    ] {
+        if let Some(value) = lifecycle.get(field) {
+            selected.insert(field.to_owned(), value.clone());
+        }
+    }
+    serde_json::from_value::<TurnLifecycleDto>(Value::Object(selected)).map_err(display_error)
+}
+
+fn json_field(object: &JsonObject, field: &str, path: &str) -> Result<Value, AdapterError> {
+    object
+        .get(field)
+        .cloned()
+        .ok_or_else(|| error(format!("{path}.{field} is required")))
 }
 
 fn decode_units(

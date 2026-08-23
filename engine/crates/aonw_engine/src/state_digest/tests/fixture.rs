@@ -1,9 +1,13 @@
+use std::collections::BTreeMap;
+
 use aonw_contracts::{
-    ArmyTroopDto, CityDto, CityFoundingDraftDto, CityFoundingJobDto, CoordinateDto,
-    FieldImprovementKindDto, GameStateDto, InteractionStateDto, MerchantTradeRouteDto,
-    MovementStepDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto,
-    TransportConditionDto, TransportSegmentDto, TroopKindDto, UnitActivityDto, UnitDto,
-    UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto, WorldArtifactDto,
+    AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityDto,
+    CityFoundingDraftDto, CityFoundingJobDto, CoordinateDto, FieldImprovementKindDto, GameModeDto,
+    GameStateDto, InteractionStateDto, MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto,
+    MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto,
+    PlayerKindDto, PlayerPairDto, PlayerTurnStateDto, QueuedMovePathDto, RuleValueDto,
+    TransportConditionDto, TransportSegmentDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto,
+    UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto, WorldArtifactDto,
     WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
@@ -11,6 +15,8 @@ pub(super) fn complete_state_contract() -> GameStateDto {
     GameStateDto {
         revision: 9,
         turn: 3,
+        match_identity: complete_match_identity(),
+        turn_lifecycle: complete_turn_lifecycle(),
         cols: 5,
         rows: 5,
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
@@ -75,6 +81,58 @@ pub(super) fn complete_state_contract() -> GameStateDto {
             built_by_player_id: "player-1".to_owned(),
             built_by_city_id: Some("city-1".to_owned()),
         }],
+    }
+}
+
+fn complete_match_identity() -> MatchIdentityDto {
+    let mut rules = MatchRulesDto::default();
+    rules.balance.insert(
+        "economy".to_owned(),
+        RuleValueDto::Object(BTreeMap::from([(
+            "growth".to_owned(),
+            RuleValueDto::Number(serde_json::Number::from(2)),
+        )])),
+    );
+    MatchIdentityDto {
+        match_rules: rules,
+        participants: vec![
+            ParticipantDto {
+                id: "player-1".to_owned(),
+                name: "Ada".to_owned(),
+                color_value: 0xff3d_5fa8,
+                country: PlayerCountryDto::Poland,
+                kind: PlayerKindDto::Human,
+                ai: None,
+            },
+            ParticipantDto {
+                id: "player-2".to_owned(),
+                name: "Turing".to_owned(),
+                color_value: 0xffb8_3a3a,
+                country: PlayerCountryDto::UnitedKingdom,
+                kind: PlayerKindDto::Ai,
+                ai: Some(AiPlayerDto {
+                    strategy_id: AiStrategyIdDto::Mcts,
+                    difficulty: AiDifficultyDto::Hard,
+                    persona: AiPersonaDto::Scientific,
+                    seed: 41,
+                }),
+            },
+        ],
+        game_mode: GameModeDto::Multiplayer,
+    }
+}
+
+fn complete_turn_lifecycle() -> TurnLifecycleDto {
+    TurnLifecycleDto {
+        turn_states_by_player_id: BTreeMap::from([
+            ("player-1".to_owned(), PlayerTurnStateDto::Active),
+            ("player-2".to_owned(), PlayerTurnStateDto::Finished),
+        ]),
+        submitted_player_ids: vec!["player-2".to_owned()],
+        timeout_streaks_by_player_id: BTreeMap::from([("player-2".to_owned(), 2)]),
+        afk_player_ids: vec!["player-2".to_owned()],
+        kicked_player_ids: Vec::new(),
+        turn_started_at: Some("2026-08-23T12:34:56.123456Z".to_owned()),
     }
 }
 

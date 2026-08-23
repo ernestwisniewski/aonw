@@ -163,6 +163,14 @@ current-turn unit skips, without moving those rules into UI.
 `EngineContext` supplies actor, permission, validated map, and immutable
 ruleset; canonical fog and occupancy are derived from `GameState`.
 
+Match identity and turn lifecycle are typed canonical components rather than
+opaque JSON. They preserve ordered participants, match rules and recursive
+balance values, match mode, player turn states, submitted/AFK/kicked sets,
+timeout streaks, and an explicit host-provided UTC turn start. The pure domain
+never reads a clock, and mapping rejects duplicate or unknown lifecycle
+identities. Presentation-only participant names and colors round-trip but do
+not contribute to the rule-state digest.
+
 ## Movement foundation
 
 `GameState` is the canonical aggregate root for the implemented simulation

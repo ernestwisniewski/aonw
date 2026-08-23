@@ -3,8 +3,10 @@ use aonw_domain::{
     TroopKind, Unit, UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob,
     WorldArtifact, WorldArtifactLocation, WorldArtifactType,
 };
+mod match_lifecycle;
 mod writer;
 
+use match_lifecycle::hash_match_lifecycle;
 use writer::DigestWriter;
 
 /// SHA-256 identity of canonical simulation state.
@@ -30,9 +32,10 @@ impl core::fmt::Display for StateDigest {
 
 pub(crate) fn digest_state(state: &GameState) -> StateDigest {
     let mut writer = DigestWriter::new();
-    writer.text("aonw-game-state-v3");
+    writer.text("aonw-game-state");
     writer.u64(state.revision().get());
     writer.u32(state.turn());
+    hash_match_lifecycle(&mut writer, state.match_lifecycle());
     writer.u16(state.bounds().cols());
     writer.u16(state.bounds().rows());
     writer.u8(match state.occupancy_policy() {

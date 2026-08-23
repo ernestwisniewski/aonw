@@ -15,6 +15,7 @@ mod hex_coord;
 mod hex_grid;
 mod identifier;
 mod interaction;
+mod match_lifecycle;
 mod movement_path;
 mod movement_units;
 mod shared;
@@ -32,6 +33,12 @@ pub use hex_coord::HexCoord;
 pub use hex_grid::{HexGridBounds, HexTileIndex};
 pub use identifier::{ArtifactId, CityId, IdentifierError, PlayerId, UnitId};
 pub use interaction::{CityFoundingDraft, InteractionState, PendingInteraction};
+pub use match_lifecycle::{
+    AiDifficulty, AiPersona, AiPlayer, AiStrategyId, GameLengthConfig, GameLengthKind, GameMode,
+    MatchIdentity, MatchLifecycle, MatchRules, MatchRulesBuildError, PaceProfile, Participant,
+    PlayerCountry, PlayerKind, PlayerTurnState, RuleNumber, RuleNumberError, RuleValue,
+    TurnLifecycle, TurnLifecycleBuildError, UtcTimestamp, VictoryRules,
+};
 pub use movement_path::{MovementPathError, MovementStep, QueuedMovePath};
 pub use movement_units::MovementUnits;
 pub use shared::StateRevision;

@@ -1,6 +1,7 @@
 mod artifact;
 mod error;
 mod interaction;
+mod match_lifecycle;
 mod state;
 mod unit;
 mod value;

@@ -32,7 +32,7 @@
 
 expected-fixture-count 120
 expected-envelope-count 10
-expected-envelope-field-count 65
+expected-envelope-field-count 67
 expected-domain-field-count 30
 expected-state-json-key-count 16
 expected-lifecycle-json-key-count 13
@@ -80,6 +80,8 @@ envelope-field dart-snapshot-metadata origin persistence-metadata
 
 envelope-field rust-canonical-state revision authoritative-identity
 envelope-field rust-canonical-state turn canonical-rule-state
+envelope-field rust-canonical-state matchIdentity canonical-rule-state
+envelope-field rust-canonical-state turnLifecycle canonical-rule-state
 envelope-field rust-canonical-state cols immutable-map-derived
 envelope-field rust-canonical-state rows immutable-map-derived
 envelope-field rust-canonical-state occupancyPolicy canonical-rule-state
@@ -132,15 +134,15 @@ envelope-field rust-recipient-patch removedUnitIds recipient-view
 envelope-field rust-recipient-patch pendingAction recipient-view
 
 domain-field turn identity-lifecycle characterized turn
-domain-field matchRules identity-lifecycle reference-only -
-domain-field participants identity-lifecycle reference-only -
-domain-field gameMode identity-lifecycle reference-only -
-domain-field turnStatesByPlayerId identity-lifecycle reference-only -
-domain-field submittedPlayerIds identity-lifecycle reference-only -
-domain-field timeoutStreaksByPlayerId identity-lifecycle reference-only -
-domain-field afkPlayerIds identity-lifecycle reference-only -
-domain-field kickedPlayerIds identity-lifecycle reference-only -
-domain-field turnStartedAt identity-lifecycle reference-only -
+domain-field matchRules identity-lifecycle characterized matchIdentity
+domain-field participants identity-lifecycle characterized matchIdentity
+domain-field gameMode identity-lifecycle characterized matchIdentity
+domain-field turnStatesByPlayerId identity-lifecycle characterized turnLifecycle
+domain-field submittedPlayerIds identity-lifecycle characterized turnLifecycle
+domain-field timeoutStreaksByPlayerId identity-lifecycle characterized turnLifecycle
+domain-field afkPlayerIds identity-lifecycle characterized turnLifecycle
+domain-field kickedPlayerIds identity-lifecycle characterized turnLifecycle
+domain-field turnStartedAt identity-lifecycle characterized turnLifecycle
 domain-field actions identity-lifecycle characterized interaction
 domain-field playerGold economy reference-only -
 domain-field playerWarWeariness economy reference-only -

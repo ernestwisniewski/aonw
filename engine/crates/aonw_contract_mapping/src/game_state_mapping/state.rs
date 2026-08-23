@@ -9,6 +9,7 @@ use aonw_domain::{
 use super::artifact::{decode_artifact, encode_artifact};
 use super::error::GameStateMappingError;
 use super::interaction::{decode_interaction, encode_interaction};
+use super::match_lifecycle::{decode_match_lifecycle, encode_match_lifecycle};
 use super::unit::{decode_unit, encode_unit};
 use super::world::{
     decode_city, decode_fog, decode_pair, decode_transport, encode_city, encode_fog,
@@ -30,6 +31,7 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
             ),
         ));
     }
+    let match_lifecycle = decode_match_lifecycle(dto.match_identity, dto.turn_lifecycle)?;
     let bounds = HexGridBounds::new(dto.cols, dto.rows)
         .ok_or_else(|| GameStateMappingError::new("$", "map bounds must be non-empty"))?;
     let units = dto
@@ -85,9 +87,10 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
             ),
         )
     })?;
-    GameState::try_new_with_world(
+    GameState::try_new_with_world_and_match_lifecycle(
         StateRevision::new(dto.revision),
         dto.turn,
+        match_lifecycle,
         bounds,
         match dto.occupancy_policy {
             UnitOccupancyPolicyDto::Exclusive => UnitOccupancyPolicy::Exclusive,
@@ -107,9 +110,12 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
 /// Encodes the movement-complete canonical state.
 #[must_use]
 pub fn encode_game_state(state: &GameState) -> GameStateDto {
+    let (match_identity, turn_lifecycle) = encode_match_lifecycle(state.match_lifecycle());
     GameStateDto {
         revision: state.revision().get(),
         turn: state.turn(),
+        match_identity,
+        turn_lifecycle,
         cols: state.bounds().cols(),
         rows: state.bounds().rows(),
         occupancy_policy: match state.occupancy_policy() {
