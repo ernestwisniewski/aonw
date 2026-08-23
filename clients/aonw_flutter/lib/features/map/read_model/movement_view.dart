@@ -68,17 +68,42 @@ final class RoutePlanView {
   final List<MovementStepView> steps;
 }
 
+enum CommandRejectionCodeView {
+  staleRevision('stale_revision'),
+  unitNotFound('unit_not_found'),
+  unitNotControlled('unit_not_controlled'),
+  unitUnavailable('unit_unavailable'),
+  unitUsesTradeRoutes('unit_uses_trade_routes'),
+  unitOutOfBounds('unit_out_of_bounds'),
+  moveTargetOutOfBounds('move_target_out_of_bounds'),
+  moveTargetIsCurrentTile('move_target_is_current_tile'),
+  moveTargetIsForeignCityCenter('move_target_is_foreign_city_center'),
+  moveTargetOccupied('move_target_occupied'),
+  unitMovementCapacityInsufficient('unit_movement_capacity_insufficient'),
+  movePathNotFound('move_path_not_found'),
+  unitBusy('unit_busy'),
+  unitDefinitionMissing('unit_definition_missing'),
+  stateRevisionOverflow('state_revision_overflow'),
+  invalidQueuedMovementPath('invalid_queued_movement_path'),
+  invalidUnit('invalid_unit'),
+  movementUnitUpdateFailed('movement_unit_update_failed');
+
+  const CommandRejectionCodeView(this.wireCode);
+
+  final String wireCode;
+}
+
 final class MoveUnitResultView {
   const MoveUnitResultView.accepted({required this.player})
     : accepted = true,
       rejectionCode = null;
 
-  const MoveUnitResultView.rejected({required String code})
+  const MoveUnitResultView.rejected({required CommandRejectionCodeView code})
     : accepted = false,
       rejectionCode = code,
       player = null;
 
   final bool accepted;
-  final String? rejectionCode;
+  final CommandRejectionCodeView? rejectionCode;
   final PlayerMapView? player;
 }

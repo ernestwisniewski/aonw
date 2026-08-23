@@ -144,13 +144,38 @@ void main() {
     expect(accepted.accepted, isTrue);
     expect(accepted.rejection, isNull);
     expect(rejected.accepted, isFalse);
-    expect(rejected.rejection, 'stale_revision');
+    expect(rejected.rejection, AonwCommandRejectionCode.staleRevision);
     expect(
       () => AonwCommandResult.fromJson({
         ..._commandResult(const {'status': 'accepted'}),
         'accepted': true,
       }),
       throwsFormatException,
+    );
+    expect(
+      () => AonwCommandResult.fromJson(
+        _commandResult(const {
+          'status': 'rejected',
+          'code': 'future_rejection',
+        }),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('command rejection codes match the shared fixture', () {
+    final fixture =
+        jsonDecode(
+              File(
+                _fixturePath('command_rejection_codes.v1.json'),
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+
+    expect(fixture['schemaVersion'], 1);
+    expect(
+      AonwCommandRejectionCode.values.map((value) => value.wireCode),
+      fixture['codes'],
     );
   });
 

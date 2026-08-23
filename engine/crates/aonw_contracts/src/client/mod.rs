@@ -12,8 +12,8 @@ pub use map::{
 };
 pub use request::{ClientCommandDto, ClientQueryDto, ClientRequestBodyDto, ClientRequestDto};
 pub use response::{
-    ClientCommandOutcomeDto, ClientCommandResultDto, ClientErrorDto, ClientEventDto,
-    ClientEvidenceDto, ClientFeatureDto, ClientOutcomeDto, ClientQueryResultDto,
+    ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto,
+    ClientEventDto, ClientEvidenceDto, ClientFeatureDto, ClientOutcomeDto, ClientQueryResultDto,
     ClientReplayVerificationDto, ClientResponseBodyDto, ClientResponseDto, ClientSessionStampDto,
     MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
     ReachableTileViewDto,

@@ -195,7 +195,11 @@ events, evidence, persistence documents, and stable errors; canonical
 `CLIENT_API_VERSION` and has no historical readers or upcasters. Rust
 in-process runtime types deliberately have no version suffix.
 Command results use a tagged accepted/rejected outcome, so an incoherent
-acceptance flag and rejection code cannot be represented on the wire.
+acceptance flag and rejection code cannot be represented on the wire. Rejection
+codes are closed enums in both the engine and client DTO; their current wire
+values are pinned by `command_rejection_codes.v1.json` and unknown values fail
+closed in every adapter. Engine behavior version 3 unifies stale command
+rejections as `stale_revision`.
 
 The shared golden documents in `test/fixtures/client_protocol` are consumed by
 Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; each

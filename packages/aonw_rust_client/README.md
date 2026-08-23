@@ -6,10 +6,11 @@ used by the Godot GDExtension. Native calls run on a dedicated helper isolate.
 extension provide the typed Dart boundary. Snapshots, queries, command results,
 map views, events, evidence, patches, stamps, and persistence responses are
 parsed into strict read models; command acceptance is a tagged
-accepted/rejected outcome. `inspectMap` exposes the same validated map identity
-and presentation semantics as the Godot client.
+accepted/rejected outcome with a closed `AonwCommandRejectionCode` enum.
+`inspectMap` exposes the same validated map identity and presentation semantics
+as the Godot client.
 Raw JSON remains confined to the transport. Rust, Dart, and
-Godot consume the same committed protocol goldens.
+Godot consume the same committed protocol goldens and rejection-code fixture.
 
 Consumers omit the hook setting to compile a small unavailable stub. A native
 consumer that requires Rust declares the cache-aware setting below in its

@@ -3,7 +3,8 @@ use core::cmp::Ordering;
 use aonw_contracts::ReplayCommandDto;
 use aonw_domain::{HexCoord, UnitId};
 use aonw_engine::{
-    DomainCommand, DomainEvent, ExecutionEvidence, GameEngine, MoveUnitCommand, UnitActionCommand,
+    CommandRejectionCode, DomainCommand, DomainEvent, ExecutionEvidence, GameEngine,
+    MoveUnitCommand, UnitActionCommand,
 };
 
 use crate::persistence::{replay_context, replay_entry};
@@ -59,7 +60,7 @@ pub struct CommandResult {
     /// Version and authoritative identity metadata.
     pub stamp: SessionStamp,
     /// Stable rejection code, absent when accepted.
-    pub rejection: Option<&'static str>,
+    pub rejection: Option<CommandRejectionCode>,
     /// Ordered authoritative events.
     pub events: Box<[DomainEvent]>,
     /// Exact execution evidence.

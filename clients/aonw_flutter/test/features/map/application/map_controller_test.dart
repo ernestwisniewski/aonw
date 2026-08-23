@@ -147,7 +147,9 @@ void main() {
           scene,
           reachableResult: testReachableView(),
           routeResult: testRoutePlanView(),
-          moveResult: const MoveUnitResultView.rejected(code: 'target_blocked'),
+          moveResult: const MoveUnitResultView.rejected(
+            code: CommandRejectionCodeView.moveTargetOccupied,
+          ),
         ),
       );
       addTearDown(controller.dispose);
@@ -162,7 +164,10 @@ void main() {
 
       final ready = controller.state as MapReadyState;
       expect(ready.scene.player, same(scene.player));
-      expect(ready.interaction.movementError, 'Move rejected: target_blocked');
+      expect(
+        ready.interaction.movementError,
+        'Move rejected: move_target_occupied',
+      );
       expect(ready.interaction.route, isNotNull);
     },
   );

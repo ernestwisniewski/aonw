@@ -266,9 +266,12 @@ final class RustMapRepository implements MapRepository {
         map: context.map,
         expectedUnitId: unitId,
         expectedRevision: expectedRevision,
+        currentRevision: context.player.stamp.revision,
       );
       if (!command.accepted) {
-        return MoveUnitResultView.rejected(code: command.rejection!);
+        return MoveUnitResultView.rejected(
+          code: _movementMapper.rejectionCode(command.rejection!),
+        );
       }
       final snapshotResponse = await _send(
         context.session,

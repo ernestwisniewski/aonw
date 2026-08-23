@@ -198,6 +198,97 @@ pub struct ClientCommandResultDto {
     pub view_patch: PlayerViewPatchDto,
 }
 
+/// Closed set of stable authoritative command rejection codes.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ClientCommandRejectionCodeDto {
+    /// Command was planned against another canonical revision.
+    StaleRevision,
+    /// The requested unit does not exist.
+    UnitNotFound,
+    /// The actor cannot command the requested unit.
+    UnitNotControlled,
+    /// Current activity prevents manual movement.
+    UnitUnavailable,
+    /// The unit is controlled by the trade-route subsystem.
+    UnitUsesTradeRoutes,
+    /// The canonical unit position is outside the map.
+    UnitOutOfBounds,
+    /// The movement target is outside the map.
+    MoveTargetOutOfBounds,
+    /// The movement target equals the current unit position.
+    MoveTargetIsCurrentTile,
+    /// A known foreign city blocks the target.
+    MoveTargetIsForeignCityCenter,
+    /// A known foreign unit blocks the target.
+    MoveTargetOccupied,
+    /// The unit cannot pay the minimum movement cost.
+    UnitMovementCapacityInsufficient,
+    /// No valid route reaches the target.
+    MovePathNotFound,
+    /// The unit has an activity that prevents the requested action.
+    UnitBusy,
+    /// The ruleset lacks the requested unit definition.
+    UnitDefinitionMissing,
+    /// The next canonical revision cannot be represented.
+    StateRevisionOverflow,
+    /// A queued movement path violates its invariants.
+    InvalidQueuedMovementPath,
+    /// An engine-produced unit violates its invariants.
+    InvalidUnit,
+    /// The validated movement unit disappeared during transition construction.
+    MovementUnitUpdateFailed,
+}
+
+impl ClientCommandRejectionCodeDto {
+    /// Every code supported by the current client protocol.
+    pub const ALL: [Self; 18] = [
+        Self::StaleRevision,
+        Self::UnitNotFound,
+        Self::UnitNotControlled,
+        Self::UnitUnavailable,
+        Self::UnitUsesTradeRoutes,
+        Self::UnitOutOfBounds,
+        Self::MoveTargetOutOfBounds,
+        Self::MoveTargetIsCurrentTile,
+        Self::MoveTargetIsForeignCityCenter,
+        Self::MoveTargetOccupied,
+        Self::UnitMovementCapacityInsufficient,
+        Self::MovePathNotFound,
+        Self::UnitBusy,
+        Self::UnitDefinitionMissing,
+        Self::StateRevisionOverflow,
+        Self::InvalidQueuedMovementPath,
+        Self::InvalidUnit,
+        Self::MovementUnitUpdateFailed,
+    ];
+
+    /// Returns the stable snake-case wire value.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::StaleRevision => "stale_revision",
+            Self::UnitNotFound => "unit_not_found",
+            Self::UnitNotControlled => "unit_not_controlled",
+            Self::UnitUnavailable => "unit_unavailable",
+            Self::UnitUsesTradeRoutes => "unit_uses_trade_routes",
+            Self::UnitOutOfBounds => "unit_out_of_bounds",
+            Self::MoveTargetOutOfBounds => "move_target_out_of_bounds",
+            Self::MoveTargetIsCurrentTile => "move_target_is_current_tile",
+            Self::MoveTargetIsForeignCityCenter => "move_target_is_foreign_city_center",
+            Self::MoveTargetOccupied => "move_target_occupied",
+            Self::UnitMovementCapacityInsufficient => "unit_movement_capacity_insufficient",
+            Self::MovePathNotFound => "move_path_not_found",
+            Self::UnitBusy => "unit_busy",
+            Self::UnitDefinitionMissing => "unit_definition_missing",
+            Self::StateRevisionOverflow => "state_revision_overflow",
+            Self::InvalidQueuedMovementPath => "invalid_queued_movement_path",
+            Self::InvalidUnit => "invalid_unit",
+            Self::MovementUnitUpdateFailed => "movement_unit_update_failed",
+        }
+    }
+}
+
 /// Coherent authoritative command outcome.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(
@@ -212,7 +303,7 @@ pub enum ClientCommandOutcomeDto {
     /// The command was rejected without changing canonical state.
     Rejected {
         /// Stable language-neutral rejection code.
-        code: String,
+        code: ClientCommandRejectionCodeDto,
     },
 }
 

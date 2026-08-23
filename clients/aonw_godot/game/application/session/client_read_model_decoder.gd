@@ -8,6 +8,26 @@ const UNIT_KINDS := [
 	"tank", "scoutShip", "warship", "reconPlane",
 ]
 const UNIT_POSTURES := ["active", "fortified", "autoExploring", "autoWorking"]
+const COMMAND_REJECTION_CODES := [
+	"stale_revision",
+	"unit_not_found",
+	"unit_not_controlled",
+	"unit_unavailable",
+	"unit_uses_trade_routes",
+	"unit_out_of_bounds",
+	"move_target_out_of_bounds",
+	"move_target_is_current_tile",
+	"move_target_is_foreign_city_center",
+	"move_target_occupied",
+	"unit_movement_capacity_insufficient",
+	"move_path_not_found",
+	"unit_busy",
+	"unit_definition_missing",
+	"state_revision_overflow",
+	"invalid_queued_movement_path",
+	"invalid_unit",
+	"movement_unit_update_failed",
+]
 
 static func decode_stamp(raw: Variant) -> AonwClientReadModels.Stamp:
 	if not _has_exact_fields(raw, [
@@ -140,7 +160,7 @@ static func decode_command(raw: Variant) -> AonwClientReadModels.CommandResult:
 	if not outcome is Dictionary:
 		return null
 	var accepted := false
-	var rejection := ""
+	var rejection := &""
 	match outcome.get("status", ""):
 		"accepted":
 			if not _has_exact_fields(outcome, ["status"]):
@@ -150,9 +170,10 @@ static func decode_command(raw: Variant) -> AonwClientReadModels.CommandResult:
 			if (
 				not _has_exact_fields(outcome, ["status", "code"])
 				or not outcome["code"] is String
+				or not COMMAND_REJECTION_CODES.has(outcome["code"])
 			):
 				return null
-			rejection = outcome["code"]
+			rejection = StringName(outcome["code"])
 		_:
 			return null
 	var result := ReadModels.CommandResult.new()

@@ -24,7 +24,10 @@ a highlighted destination requests the versioned route plan, and the client
 dispatches `moveUnit` only after an explicit confirmation. The overlay and
 panel display returned costs; they do not calculate movement legality. After
 an accepted command the repository fetches a fresh recipient snapshot instead
-of reducing authoritative state in Dart.
+of reducing authoritative state in Dart. Rejections use a closed client-owned
+enum mapped exhaustively from the Rust wire enum. Unknown codes fail closed;
+the shared code fixture and native stale-revision test keep Flutter and Godot
+in parity.
 
 Run from the repository root:
 

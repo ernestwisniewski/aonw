@@ -145,10 +145,9 @@ final class MovementViewMapper {
     required MapView map,
     required String expectedUnitId,
     required int expectedRevision,
+    required int currentRevision,
   }) {
-    final nextRevision = wire.accepted
-        ? expectedRevision + 1
-        : expectedRevision;
+    final nextRevision = wire.accepted ? expectedRevision + 1 : currentRevision;
     _validateStamp(wire.stamp, map: map, expectedRevision: nextRevision);
     if (wire.accepted) {
       final evidence = wire.evidence;
@@ -159,10 +158,13 @@ final class MovementViewMapper {
           'Accepted move has inconsistent movement evidence.',
         );
       }
-    } else if (wire.rejection == null || wire.rejection!.isEmpty) {
+    } else if (wire.rejection == null) {
       throw const FormatException('Rejected move has no rejection code.');
     }
   }
+
+  CommandRejectionCodeView rejectionCode(AonwCommandRejectionCode value) =>
+      _rejectionCodes[value]!;
 
   static MapHexCoordinate _coordinate(AonwCoordinate value) =>
       (col: value.col, row: value.row);
@@ -195,3 +197,39 @@ final class MovementViewMapper {
     rulesetHash: value.rulesetHash,
   );
 }
+
+const _rejectionCodes = <AonwCommandRejectionCode, CommandRejectionCodeView>{
+  AonwCommandRejectionCode.staleRevision:
+      CommandRejectionCodeView.staleRevision,
+  AonwCommandRejectionCode.unitNotFound: CommandRejectionCodeView.unitNotFound,
+  AonwCommandRejectionCode.unitNotControlled:
+      CommandRejectionCodeView.unitNotControlled,
+  AonwCommandRejectionCode.unitUnavailable:
+      CommandRejectionCodeView.unitUnavailable,
+  AonwCommandRejectionCode.unitUsesTradeRoutes:
+      CommandRejectionCodeView.unitUsesTradeRoutes,
+  AonwCommandRejectionCode.unitOutOfBounds:
+      CommandRejectionCodeView.unitOutOfBounds,
+  AonwCommandRejectionCode.moveTargetOutOfBounds:
+      CommandRejectionCodeView.moveTargetOutOfBounds,
+  AonwCommandRejectionCode.moveTargetIsCurrentTile:
+      CommandRejectionCodeView.moveTargetIsCurrentTile,
+  AonwCommandRejectionCode.moveTargetIsForeignCityCenter:
+      CommandRejectionCodeView.moveTargetIsForeignCityCenter,
+  AonwCommandRejectionCode.moveTargetOccupied:
+      CommandRejectionCodeView.moveTargetOccupied,
+  AonwCommandRejectionCode.unitMovementCapacityInsufficient:
+      CommandRejectionCodeView.unitMovementCapacityInsufficient,
+  AonwCommandRejectionCode.movePathNotFound:
+      CommandRejectionCodeView.movePathNotFound,
+  AonwCommandRejectionCode.unitBusy: CommandRejectionCodeView.unitBusy,
+  AonwCommandRejectionCode.unitDefinitionMissing:
+      CommandRejectionCodeView.unitDefinitionMissing,
+  AonwCommandRejectionCode.stateRevisionOverflow:
+      CommandRejectionCodeView.stateRevisionOverflow,
+  AonwCommandRejectionCode.invalidQueuedMovementPath:
+      CommandRejectionCodeView.invalidQueuedMovementPath,
+  AonwCommandRejectionCode.invalidUnit: CommandRejectionCodeView.invalidUnit,
+  AonwCommandRejectionCode.movementUnitUpdateFailed:
+      CommandRejectionCodeView.movementUnitUpdateFailed,
+};

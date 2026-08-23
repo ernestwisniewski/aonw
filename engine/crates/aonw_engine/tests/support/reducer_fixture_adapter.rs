@@ -99,7 +99,7 @@ impl FixtureExecutor for RustEngineFixtureExecutor {
 
         if let Some(rejection) = transition.rejection() {
             return Ok(FixtureOutput::reject(
-                rejection.code(),
+                rejection.code().as_str(),
                 save,
                 input.state().clone(),
                 Vec::new(),

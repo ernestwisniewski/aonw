@@ -5,14 +5,15 @@ use aonw_content::{
 use aonw_contract_mapping::{encode_unit_kind, encode_unit_posture};
 use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
-    ClientCommandOutcomeDto, ClientCommandResultDto, ClientEventDto, ClientEvidenceDto,
-    ClientFeatureDto, ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto,
-    ClientSessionStampDto, MapGridLayoutDto, MapObjectiveTypeDto, MapObjectiveViewDto,
-    MapResourceDto, MapTerrainDto, MapTileViewDto, MapViewDto, MovementStepViewDto,
-    PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
+    ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientEventDto,
+    ClientEvidenceDto, ClientFeatureDto, ClientQueryResultDto, ClientReplayVerificationDto,
+    ClientResponseBodyDto, ClientSessionStampDto, MapGridLayoutDto, MapObjectiveTypeDto,
+    MapObjectiveViewDto, MapResourceDto, MapTerrainDto, MapTileViewDto, MapViewDto,
+    MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
+    ReachableTileViewDto,
 };
 use aonw_domain::HexCoord;
-use aonw_engine::{DomainEvent, ExecutionEvidence};
+use aonw_engine::{CommandRejectionCode, DomainEvent, ExecutionEvidence};
 
 use crate::{
     CommandResult, LocalRuntime, PlayerUnitView, PlayerViewPatch, PlayerViewSnapshot,
@@ -217,12 +218,55 @@ pub(super) fn command_result(value: &CommandResult) -> ClientCommandResultDto {
             .rejection
             .map_or(ClientCommandOutcomeDto::Accepted, |code| {
                 ClientCommandOutcomeDto::Rejected {
-                    code: code.to_owned(),
+                    code: rejection(code),
                 }
             }),
         events: value.events.iter().map(event).collect(),
         evidence: value.evidence.as_ref().map(evidence),
         view_patch: patch(&value.view_patch),
+    }
+}
+
+const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto {
+    match value {
+        CommandRejectionCode::StaleRevision => ClientCommandRejectionCodeDto::StaleRevision,
+        CommandRejectionCode::UnitNotFound => ClientCommandRejectionCodeDto::UnitNotFound,
+        CommandRejectionCode::UnitNotControlled => ClientCommandRejectionCodeDto::UnitNotControlled,
+        CommandRejectionCode::UnitUnavailable => ClientCommandRejectionCodeDto::UnitUnavailable,
+        CommandRejectionCode::UnitUsesTradeRoutes => {
+            ClientCommandRejectionCodeDto::UnitUsesTradeRoutes
+        }
+        CommandRejectionCode::UnitOutOfBounds => ClientCommandRejectionCodeDto::UnitOutOfBounds,
+        CommandRejectionCode::MoveTargetOutOfBounds => {
+            ClientCommandRejectionCodeDto::MoveTargetOutOfBounds
+        }
+        CommandRejectionCode::MoveTargetIsCurrentTile => {
+            ClientCommandRejectionCodeDto::MoveTargetIsCurrentTile
+        }
+        CommandRejectionCode::MoveTargetIsForeignCityCenter => {
+            ClientCommandRejectionCodeDto::MoveTargetIsForeignCityCenter
+        }
+        CommandRejectionCode::MoveTargetOccupied => {
+            ClientCommandRejectionCodeDto::MoveTargetOccupied
+        }
+        CommandRejectionCode::UnitMovementCapacityInsufficient => {
+            ClientCommandRejectionCodeDto::UnitMovementCapacityInsufficient
+        }
+        CommandRejectionCode::MovePathNotFound => ClientCommandRejectionCodeDto::MovePathNotFound,
+        CommandRejectionCode::UnitBusy => ClientCommandRejectionCodeDto::UnitBusy,
+        CommandRejectionCode::UnitDefinitionMissing => {
+            ClientCommandRejectionCodeDto::UnitDefinitionMissing
+        }
+        CommandRejectionCode::StateRevisionOverflow => {
+            ClientCommandRejectionCodeDto::StateRevisionOverflow
+        }
+        CommandRejectionCode::InvalidQueuedMovementPath => {
+            ClientCommandRejectionCodeDto::InvalidQueuedMovementPath
+        }
+        CommandRejectionCode::InvalidUnit => ClientCommandRejectionCodeDto::InvalidUnit,
+        CommandRejectionCode::MovementUnitUpdateFailed => {
+            ClientCommandRejectionCodeDto::MovementUnitUpdateFailed
+        }
     }
 }
 

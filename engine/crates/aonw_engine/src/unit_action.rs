@@ -1,6 +1,6 @@
 use aonw_domain::{ArtifactId, GameState, InteractionState, StateRevision, Unit, UnitId};
 
-use crate::EngineContext;
+use crate::{CommandRejectionCode, EngineContext};
 
 /// Revision-bound map-independent unit action.
 #[derive(Clone, Copy, Debug)]
@@ -59,21 +59,21 @@ pub enum UnitActionError {
 impl UnitActionError {
     /// Returns a stable language-neutral rejection code.
     #[must_use]
-    pub const fn code(self) -> &'static str {
+    pub const fn code(self) -> CommandRejectionCode {
         match self {
-            Self::StaleRevision => "stale_state_revision",
-            Self::UnitNotFound => "unit_not_found",
-            Self::UnitNotControlled => "unit_not_controlled",
-            Self::UnitBusy => "unit_busy",
-            Self::UnitDefinitionMissing => "unit_definition_missing",
-            Self::RevisionOverflow => "state_revision_overflow",
+            Self::StaleRevision => CommandRejectionCode::StaleRevision,
+            Self::UnitNotFound => CommandRejectionCode::UnitNotFound,
+            Self::UnitNotControlled => CommandRejectionCode::UnitNotControlled,
+            Self::UnitBusy => CommandRejectionCode::UnitBusy,
+            Self::UnitDefinitionMissing => CommandRejectionCode::UnitDefinitionMissing,
+            Self::RevisionOverflow => CommandRejectionCode::StateRevisionOverflow,
         }
     }
 }
 
 impl core::fmt::Display for UnitActionError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        formatter.write_str(self.code())
+        self.code().fmt(formatter)
     }
 }
 

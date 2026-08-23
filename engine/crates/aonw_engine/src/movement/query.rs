@@ -4,7 +4,7 @@ use aonw_domain::{GameState, HexCoord, MovementStep, MovementUnits, Unit, UnitId
 use super::MovementSearchMetrics;
 use super::reachable::movement_available_for_query;
 use super::route_search::{find_route, find_route_ignoring_capacity, find_route_to_any};
-use crate::EngineContext;
+use crate::{CommandRejectionCode, EngineContext};
 
 /// Input for deterministic terrain-only movement planning.
 #[derive(Clone, Copy, Debug)]
@@ -132,20 +132,22 @@ pub enum TerrainMovementQueryError {
 impl TerrainMovementQueryError {
     /// Returns the stable language-neutral rejection code.
     #[must_use]
-    pub const fn code(&self) -> &'static str {
+    pub const fn code(&self) -> CommandRejectionCode {
         match self {
-            Self::StaleRevision { .. } => "stale_revision",
-            Self::UnitNotFound => "unit_not_found",
-            Self::UnitNotControlled => "unit_not_controlled",
-            Self::UnitUnavailable => "unit_unavailable",
-            Self::UnitUsesTradeRoutes => "unit_uses_trade_routes",
-            Self::UnitOutOfBounds => "unit_out_of_bounds",
-            Self::TargetOutOfBounds => "move_target_out_of_bounds",
-            Self::TargetIsCurrentTile => "move_target_is_current_tile",
-            Self::TargetIsForeignCityCenter => "move_target_is_foreign_city_center",
-            Self::TargetOccupied => "move_target_occupied",
-            Self::MovementCapacityInsufficient => "unit_movement_capacity_insufficient",
-            Self::PathNotFound => "move_path_not_found",
+            Self::StaleRevision { .. } => CommandRejectionCode::StaleRevision,
+            Self::UnitNotFound => CommandRejectionCode::UnitNotFound,
+            Self::UnitNotControlled => CommandRejectionCode::UnitNotControlled,
+            Self::UnitUnavailable => CommandRejectionCode::UnitUnavailable,
+            Self::UnitUsesTradeRoutes => CommandRejectionCode::UnitUsesTradeRoutes,
+            Self::UnitOutOfBounds => CommandRejectionCode::UnitOutOfBounds,
+            Self::TargetOutOfBounds => CommandRejectionCode::MoveTargetOutOfBounds,
+            Self::TargetIsCurrentTile => CommandRejectionCode::MoveTargetIsCurrentTile,
+            Self::TargetIsForeignCityCenter => CommandRejectionCode::MoveTargetIsForeignCityCenter,
+            Self::TargetOccupied => CommandRejectionCode::MoveTargetOccupied,
+            Self::MovementCapacityInsufficient => {
+                CommandRejectionCode::UnitMovementCapacityInsufficient
+            }
+            Self::PathNotFound => CommandRejectionCode::MovePathNotFound,
         }
     }
 }

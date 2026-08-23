@@ -77,7 +77,7 @@ class CommandResult:
 	extends RefCounted
 	var stamp: Stamp
 	var accepted: bool
-	var rejection: String
+	var rejection: StringName
 	var events: Array[UnitMovedEvent]
 	var patch: ViewPatch
 	var evidence: MovementEvidence

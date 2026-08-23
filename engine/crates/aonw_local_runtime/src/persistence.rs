@@ -283,7 +283,7 @@ pub(crate) fn replay_context(session: &Session) -> ReplayContextDto {
 fn replay_result(result: &CommandResult, session: &Session) -> ReplayResultDto {
     ReplayResultDto {
         accepted: result.is_accepted(),
-        rejection: result.rejection.map(str::to_owned),
+        rejection: result.rejection.map(|code| code.as_str().to_owned()),
         revision: result.stamp.revision.get(),
         state_digest: result.stamp.state_digest.to_string(),
         events: result.events.iter().map(encode_event).collect(),

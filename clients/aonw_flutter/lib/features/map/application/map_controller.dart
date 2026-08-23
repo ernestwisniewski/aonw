@@ -376,7 +376,7 @@ MapReadyState _moveResultState(
     return current.withInteraction(
       current.interaction.copyWith(
         movementPending: false,
-        movementError: 'Move rejected: ${result.rejectionCode}',
+        movementError: 'Move rejected: ${result.rejectionCode!.wireCode}',
       ),
     );
   }

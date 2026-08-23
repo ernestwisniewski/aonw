@@ -1,12 +1,12 @@
 //! Golden and strict-boundary tests for the shared current client protocol.
 
 use aonw_contracts::client::{
-    CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto, ClientCommandResultDto,
-    ClientErrorDto, ClientEventDto, ClientEvidenceDto, ClientFeatureDto, ClientOutcomeDto,
-    ClientQueryDto, ClientQueryResultDto, ClientReplayVerificationDto, ClientRequestBodyDto,
-    ClientRequestDto, ClientResponseBodyDto, ClientResponseDto, ClientSessionStampDto,
-    MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
-    ReachableTileViewDto,
+    CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
+    ClientCommandResultDto, ClientErrorDto, ClientEventDto, ClientEvidenceDto, ClientFeatureDto,
+    ClientOutcomeDto, ClientQueryDto, ClientQueryResultDto, ClientReplayVerificationDto,
+    ClientRequestBodyDto, ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
+    ClientSessionStampDto, MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
+    PlayerViewSnapshotDto, ReachableTileViewDto,
 };
 use aonw_contracts::{CoordinateDto, UnitKindDto, UnitPostureDto};
 
@@ -107,6 +107,31 @@ fn golden_command_response_is_stable_and_strict() {
 }
 
 #[test]
+fn command_rejection_codes_match_the_shared_fixture() {
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../../test/fixtures/client_protocol/command_rejection_codes.v1.json"
+    ))
+    .expect("rejection code fixture");
+    let fixture_codes = fixture["codes"]
+        .as_array()
+        .expect("rejection code list")
+        .iter()
+        .map(|value| value.as_str().expect("rejection code"))
+        .collect::<Vec<_>>();
+    let contract_codes =
+        ClientCommandRejectionCodeDto::ALL.map(ClientCommandRejectionCodeDto::as_str);
+
+    assert_eq!(fixture["schemaVersion"], 1);
+    assert_eq!(fixture_codes, contract_codes);
+    for code in ClientCommandRejectionCodeDto::ALL {
+        assert_eq!(
+            serde_json::to_string(&code).expect("rejection code JSON"),
+            format!("\"{}\"", code.as_str())
+        );
+    }
+}
+
+#[test]
 fn every_current_request_variant_round_trips() {
     let requests = [
         ClientRequestBodyDto::Capabilities,
@@ -181,7 +206,7 @@ fn every_current_response_variant_round_trips() {
     let query_stamp = stamp();
     let mut rejected_command = command_result();
     rejected_command.outcome = ClientCommandOutcomeDto::Rejected {
-        code: "stale_revision".to_owned(),
+        code: ClientCommandRejectionCodeDto::StaleRevision,
     };
     rejected_command.events.clear();
     rejected_command.evidence = None;
@@ -293,7 +318,9 @@ fn malformed_unknown_duplicate_and_future_documents_fail_closed() {
         r#"{"apiVersion":4,"outcome":{"status":"success","response":{"type":"sessionClosed"}}}"#;
     let unknown_response = r#"{"apiVersion":3,"outcome":{"status":"failure","error":{"code":"failed","message":"failed","extra":true}}}"#;
     let old_command_shape = r#"{"apiVersion":3,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"behaviorVersion":2,"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"accepted":true,"rejection":null,"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[]}}}}}"#;
+    let unknown_rejection = r#"{"apiVersion":3,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"behaviorVersion":2,"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"outcome":{"status":"rejected","code":"future_rejection"},"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[]}}}}}"#;
     assert!(ClientResponseDto::from_json(future_response).is_err());
     assert!(ClientResponseDto::from_json(unknown_response).is_err());
     assert!(ClientResponseDto::from_json(old_command_shape).is_err());
+    assert!(ClientResponseDto::from_json(unknown_rejection).is_err());
 }

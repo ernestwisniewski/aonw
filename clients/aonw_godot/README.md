@@ -217,7 +217,9 @@ Snapshots, reachable tiles, routes, command results, events, evidence, and view
 patches are decoded into application-layer read models before they reach the
 map screen or unit layer. Read-model definitions and strict decoding have
 separate modules. Raw response dictionaries remain inside the session
-controller and infrastructure boundary.
+controller and infrastructure boundary. Command rejection values are validated
+against the same closed fixture used by Rust and Flutter; unknown codes are
+rejected before presentation.
 
 Selection is presentation-only; canonical state, visibility, paths, costs,
 revisions, events, and persistence remain owned by Rust. The local runtime

@@ -10,6 +10,7 @@ import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart'
 import 'package:aonw_flutter/features/map/presentation/widgets/map_canvas.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
+import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/material.dart';
@@ -95,6 +96,16 @@ void main() {
     expect(moved!.accepted, isTrue);
     expect(moved.player!.stamp.revision, 1);
     expect(moved.player!.units.single.coordinate, (col: 2, row: 2));
+    final rejected = await tester.runAsync(
+      () => repository.moveUnit(
+        expectedRevision: 0,
+        unitId: 'preview-commander',
+        target: (col: 2, row: 1),
+      ),
+    );
+    expect(rejected, isNotNull);
+    expect(rejected!.accepted, isFalse);
+    expect(rejected.rejectionCode, CommandRejectionCodeView.staleRevision);
     expect(backendCreations, 1);
     expect(backend.requestTypes, [
       'inspectMap',
@@ -104,6 +115,7 @@ void main() {
       'query',
       'dispatch',
       'snapshot',
+      'dispatch',
     ]);
     await tester.runAsync(repository.close);
     expect(backend.closeCalls, 1);

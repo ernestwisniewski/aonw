@@ -380,6 +380,23 @@ func _test_native_engine_boundary() -> void:
 		and moved["value"].evidence.steps[-1].coordinate.y == 2,
 		"native session applies a revision-bound move",
 	)
+	var stale_envelope := transport.request({
+		"type": "dispatch",
+		"command": {
+			"type": "moveUnit",
+			"expectedRevision": 0,
+			"unitId": "preview-commander",
+			"target": {"col": 2, "row": 1},
+		},
+	})
+	var stale_body: Dictionary = stale_envelope.get("outcome", {}).get("response", {})
+	var stale_result := ClientReadModelDecoder.decode_command(stale_body.get("result", {}))
+	_check(
+		stale_result != null
+		and not stale_result.accepted
+		and stale_result.rejection == &"stale_revision",
+		"native Rust rejection maps to the shared Godot rejection code",
+	)
 	var skipped: Dictionary = session.skip_unit_turn("preview-commander")
 	_check(
 		skipped["ok"]
@@ -415,7 +432,7 @@ func _test_native_engine_boundary() -> void:
 	)
 	var verified: Dictionary = session.verify_replay(map_json, replay["value"])
 	_check(
-		verified["ok"] and verified["value"]["entryCount"] == 4,
+		verified["ok"] and verified["value"]["entryCount"] == 5,
 		"native session verifies replay results in Rust",
 	)
 	session.close()
@@ -431,6 +448,7 @@ func _test_native_engine_boundary() -> void:
 			"snapshot",
 			"query",
 			"query",
+			"dispatch",
 			"dispatch",
 			"dispatch",
 			"dispatch",
@@ -495,12 +513,40 @@ func _test_shared_client_contract() -> void:
 			and command.evidence.steps[-1].coordinate == Vector2i(3, 4),
 			"Godot maps the shared response into typed client read models",
 		)
+		var rejected_result: Dictionary = body["result"].duplicate(true)
+		rejected_result["outcome"] = {"status": "rejected", "code": "stale_revision"}
+		rejected_result["events"] = []
+		rejected_result["evidence"] = null
+		var rejected := ClientReadModelDecoder.decode_command(rejected_result)
+		_check(
+			rejected != null and rejected.rejection == &"stale_revision",
+			"Godot maps a shared command rejection to a validated code",
+		)
+		rejected_result["outcome"]["code"] = "future_rejection"
+		_check(
+			ClientReadModelDecoder.decode_command(rejected_result) == null,
+			"Godot rejects an unknown command rejection code",
+		)
 		var invalid_version := decoder.decode(
 			'{"apiVersion":"3","outcome":{"status":"success","response":{}}}'
 		)
 		_check(
 			invalid_version.get("outcome", {}).get("status", "") == "failure",
 			"Godot rejects coercible client API versions",
+		)
+
+	var rejection_codes_file := FileAccess.open(
+		"res://../../test/fixtures/client_protocol/command_rejection_codes.v1.json",
+		FileAccess.READ,
+	)
+	_check(rejection_codes_file != null, "shared command rejection-code fixture opens in Godot")
+	if rejection_codes_file != null:
+		var rejection_codes: Dictionary = JSON.parse_string(rejection_codes_file.get_as_text())
+		_check(
+			rejection_codes.get("schemaVersion") == 1
+			and rejection_codes.get("codes")
+			== Array(ClientReadModelDecoder.COMMAND_REJECTION_CODES),
+			"Godot command rejection codes match the shared contract fixture",
 		)
 
 	var map_response_file := FileAccess.open(
