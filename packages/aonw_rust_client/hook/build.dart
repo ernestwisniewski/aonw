@@ -30,9 +30,19 @@ bool _rustBuildEnabled(BuildInput input) {
       'hooks.user_defines.aonw_rust_client.rust_backend must be a boolean.',
     );
   }
-  return enabled == true &&
-      input.config.code.targetOS == OS.current &&
-      input.config.code.targetArchitecture == Architecture.current;
+  if (enabled != true) return false;
+
+  final targetOS = input.config.code.targetOS;
+  final targetArchitecture = input.config.code.targetArchitecture;
+  if (targetOS != OS.current || targetArchitecture != Architecture.current) {
+    throw UnsupportedError(
+      'aonw_rust_client rust_backend:true requires a qualified native Rust '
+      'build for $targetOS/$targetArchitecture, but this hook currently '
+      'builds only the host $OS.current/$Architecture.current. Refusing to '
+      'substitute the unavailable C stub.',
+    );
+  }
+  return true;
 }
 
 Future<void> _buildRust(BuildInput input, BuildOutputBuilder output) async {

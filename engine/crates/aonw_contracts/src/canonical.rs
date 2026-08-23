@@ -8,14 +8,10 @@ mod interaction;
 pub use artifact::{WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto};
 pub use interaction::{CityFoundingDraftDto, InteractionStateDto, PendingInteractionDto};
 
-/// Current canonical game-state contract version.
-pub const CURRENT_GAME_STATE_VERSION: u16 = 3;
-
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GameStateDto {
-    pub schema_version: u16,
     pub revision: u64,
     pub turn: u32,
     pub cols: u16,
@@ -267,9 +263,9 @@ mod tests {
 
     #[test]
     fn strict_codec_rejects_unknown_and_duplicate_fields() {
-        let unknown = r#"{"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[],"extra":true}"#;
+        let unknown = r#"{"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[],"extra":true}"#;
         assert!(GameStateDto::from_json(unknown, 4096).is_err());
-        let duplicate = r#"{"schemaVersion":3,"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}"#;
+        let duplicate = r#"{"revision":0,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}"#;
         assert!(GameStateDto::from_json(duplicate, 4096).is_err());
     }
 }

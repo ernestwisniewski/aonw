@@ -4,8 +4,8 @@ import 'package:aonw_rust_client/src/api.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 import 'package:aonw_rust_client/src/protocol_response.dart';
 
-export 'protocol_execution.dart';
 export 'protocol_coordinate.dart';
+export 'protocol_execution.dart';
 export 'protocol_map.dart';
 export 'protocol_pending_action.dart';
 export 'protocol_query.dart';

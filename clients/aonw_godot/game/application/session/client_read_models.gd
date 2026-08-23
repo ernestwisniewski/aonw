@@ -3,7 +3,6 @@ extends RefCounted
 
 class Stamp:
 	extends RefCounted
-	var behavior_version: int
 	var revision: int
 	var state_digest: String
 	var map_hash: String

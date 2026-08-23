@@ -74,14 +74,32 @@ The component targets are `rust-format-check`, `rust-clippy`, `rust-test`, and
 `rust-doc`. They are intentionally independent of the existing Dart/Flutter
 `make ci` target during this migration phase.
 
-## Versioning policy
+The migration inventory under [`migration/`](migration/README.md) closes the
+authoritative surface before new Rust behavior is added. `p0-check` runs its
+dependency-free source census and negative fixtures; the analyzer-backed Dart
+AST census and exact field ledger run through
+`rust-engine-inventory-ast-check`. Together they compare 39 player commands,
+two trusted system commands, two queries, 40 Dart domain events, execution
+evidence, recipient projections, 30 Dart `DomainState` fields, 10 boundary
+envelopes, and all 120 reducer fixtures. The checker forbids claiming engine
+parity while the reducer adapter still preserves opaque Dart JSON.
 
-The greenfield engine and successor clients version only durable authored or
-persisted data, deterministic generator behavior, and APIs crossing an
-independently built native boundary. Internal snapshots, test fixtures,
-preference keys, and stable artifact filenames do not receive speculative
-`v1` suffixes. A migration layer is introduced only when a second format must
-actually be supported; current-only codecs continue to fail closed.
+## Greenfield compatibility policy
+
+The engine and successor clients evolve one current contract atomically. New
+files, types, snapshots, fixtures, codecs, and adapter boundaries do not receive
+speculative `v1` suffixes, schema counters, upcasters, or historical readers.
+A format version is introduced only when a concrete independently deployed
+consumer, supported production save/replay, or rollback path requires two
+formats at the same time. The decision then names the compatibility period and
+removal condition.
+
+Pinned dependency/toolchain versions, Git tree identities, content hashes, and
+build IDs remain useful for reproducibility and diagnostics; they do not by
+themselves create a compatibility API. The CP0 audit removed internal canonical
+state, engine behavior, and save/replay counters. Shared client and workbench
+API versions remain because independently built Rust, Godot, and Flutter
+components consume those boundaries.
 
 Run the diagnostic release baseline separately:
 
@@ -138,8 +156,8 @@ smaller positive grids constructed inside deterministic engine test adapters,
 such as the existing 3×3 movement oracle. Map bounds expose canonical odd-q
 neighbors and row-major indices without allocation.
 
-The actor is command/query context, not persisted state. `GameStateDto` version
-3 is the strict current contract for all implemented authoritative state. It
+The actor is command/query context, not persisted state. `GameStateDto` is the
+strict current contract for all implemented authoritative state. It
 persists artifacts and rule-relevant interaction state, including reversible
 current-turn unit skips, without moving those rules into UI.
 `EngineContext` supplies actor, permission, validated map, and immutable
@@ -188,8 +206,8 @@ unit. These actions emit no synthetic movement events or evidence.
 
 `aonw_local_runtime::LocalRuntime` owns one validated local session. Opening is
 transactional, closing is idempotent, and every snapshot, query, and dispatch
-response carries behavior version, revision, state digest, map hash, and ruleset
-hash. Full recipient-safe snapshots also carry the authoritative turn number.
+response carries revision, state digest, map hash, and ruleset hash. Full
+recipient-safe snapshots also carry the authoritative turn number.
 They expose a pending action only when it belongs to the snapshot recipient;
 the owner identifier is intentionally redundant and omitted. The runtime
 exposes reachable and route queries, revision-bound commands, ordered events,
@@ -211,11 +229,9 @@ Command results use a tagged accepted/rejected outcome, so an incoherent
 acceptance flag and rejection code cannot be represented on the wire. Rejection
 codes are closed enums in both the engine and client DTO; their current wire
 values are pinned by `command_rejection_codes.json` and unknown values fail
-closed in every adapter. Client API version 4 adds the authoritative turn to
-player snapshots. Client API version 5 adds the closed recipient-owned pending
-action view to snapshots and command patches. Engine behavior version 4
-preserves turn-one scenario bootstrap semantics and retains unified stale
-command rejections as `stale_revision`.
+closed in every adapter. The current contract includes authoritative turn,
+recipient-owned pending actions, turn-one scenario bootstrap semantics, and
+unified stale command rejections as `stale_revision`.
 
 The shared golden documents in `test/fixtures/client_protocol` are consumed by
 Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; each
@@ -247,18 +263,20 @@ constructs a synthetic canonical unit. Build it with `make rust-godot-build`.
 `aonw_flutter` exposes the same dispatcher through a panic-contained C ABI.
 `packages/aonw_rust_client` bundles it with Flutter build hooks and keeps native
 calls on a helper isolate. Its strict Dart read models cover snapshots, queries,
-commands, events, evidence, patches, and persistence results. Normal builds use
-an unavailable C stub, so the Dart local engine remains buildable and active.
-`make rust-flutter-test` verifies both lanes. A concrete Flutter
-`LocalEnginePort` remains gated on lossless complete-state mapping.
+commands, events, evidence, patches, and persistence results. Consumers that do
+not request Rust receive an explicit unavailable C stub; the successor client
+sets `rust_backend: true` and builds the real host-native adapter. A requested
+Rust backend for another OS or architecture fails closed instead of silently
+substituting the stub. `make rust-flutter-test` verifies these lanes. A concrete
+Flutter `LocalEnginePort` remains gated on lossless complete-state mapping.
 
 ## Save and replay
 
 `aonw_contracts` owns separate current-only save and replay schemas. A save
-contains the complete `GameStateDto`, behavior version, exact map and ruleset
-identities, actor, deterministic RNG position, event offset, and canonical
-state digest. Restore is transactional and rejects mismatched content, behavior,
-state invariants, or digest before replacing an open session.
+contains the complete `GameStateDto`, exact map and ruleset identities, actor,
+deterministic RNG position, event offset, and canonical state digest. Restore
+is transactional and rejects mismatched content, state invariants, or digest
+before replacing an open session.
 
 The bounded replay segment stores its complete initial state and context, then
 each revision-bound command with pre-command context and the exact rejection,

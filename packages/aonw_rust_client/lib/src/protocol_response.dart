@@ -47,22 +47,11 @@ final class AonwMapInspectedResponse extends AonwClientResponseBody {
 }
 
 final class AonwCapabilitiesResponse extends AonwClientResponseBody {
-  const AonwCapabilitiesResponse({
-    required this.behaviorVersion,
-    required this.features,
-  });
+  const AonwCapabilitiesResponse({required this.features});
 
   factory AonwCapabilitiesResponse.fromJson(Map<String, Object?> value) {
-    requireKeys(value, const {
-      'type',
-      'behaviorVersion',
-      'features',
-    }, 'capabilities response');
+    requireKeys(value, const {'type', 'features'}, 'capabilities response');
     return AonwCapabilitiesResponse(
-      behaviorVersion: readUnsigned(
-        value['behaviorVersion'],
-        'behavior version',
-      ),
       features: readList(
         value['features'],
         'client features',
@@ -71,7 +60,6 @@ final class AonwCapabilitiesResponse extends AonwClientResponseBody {
     );
   }
 
-  final int behaviorVersion;
   final List<AonwClientFeature> features;
 }
 

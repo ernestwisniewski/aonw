@@ -1,15 +1,14 @@
 use aonw_contracts::{
-    ArmyTroopDto, CURRENT_GAME_STATE_VERSION, CityDto, CityFoundingDraftDto, CityFoundingJobDto,
-    CoordinateDto, FieldImprovementKindDto, GameStateDto, InteractionStateDto,
-    MerchantTradeRouteDto, MovementStepDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
-    QueuedMovePathDto, TransportConditionDto, TransportSegmentDto, TroopKindDto, UnitActivityDto,
-    UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto, WorldArtifactDto,
+    ArmyTroopDto, CityDto, CityFoundingDraftDto, CityFoundingJobDto, CoordinateDto,
+    FieldImprovementKindDto, GameStateDto, InteractionStateDto, MerchantTradeRouteDto,
+    MovementStepDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto,
+    TransportConditionDto, TransportSegmentDto, TroopKindDto, UnitActivityDto, UnitDto,
+    UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto, WorldArtifactDto,
     WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 pub(super) fn complete_state_contract() -> GameStateDto {
     GameStateDto {
-        schema_version: CURRENT_GAME_STATE_VERSION,
         revision: 9,
         turn: 3,
         cols: 5,

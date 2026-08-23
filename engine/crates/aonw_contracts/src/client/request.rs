@@ -6,7 +6,7 @@ use crate::CoordinateDto;
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ClientRequestDto {
-    /// Client protocol version.
+    /// Client protocol version shared by independently packaged adapters.
     pub api_version: u16,
     /// Requested lifecycle, query, or command operation.
     pub request: ClientRequestBodyDto,

@@ -8,7 +8,7 @@ use super::MapViewDto;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ClientResponseDto {
-    /// Client protocol version.
+    /// Client protocol version shared by independently packaged adapters.
     pub api_version: u16,
     /// Successful result or stable failure.
     pub outcome: ClientOutcomeDto,
@@ -46,8 +46,6 @@ pub enum ClientOutcomeDto {
 pub enum ClientResponseBodyDto {
     /// Supported engine behavior and client operations.
     Capabilities {
-        /// Deterministic simulation behavior version.
-        behavior_version: u16,
         /// Supported current protocol features.
         features: Vec<ClientFeatureDto>,
     },
@@ -126,8 +124,6 @@ pub enum ClientFeatureDto {
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ClientSessionStampDto {
-    /// Deterministic simulation behavior version.
-    pub behavior_version: u16,
     /// Current canonical revision.
     pub revision: u64,
     /// Digest of the complete canonical state.

@@ -37,15 +37,14 @@ const COMMAND_REJECTION_CODES := [
 
 static func decode_stamp(raw: Variant) -> AonwClientReadModels.Stamp:
 	if not _has_exact_fields(raw, [
-		"behaviorVersion", "revision", "stateDigest", "mapHash", "rulesetHash",
+		"revision", "stateDigest", "mapHash", "rulesetHash",
 	]):
 		return null
 	if not _strings(raw, ["stateDigest", "mapHash", "rulesetHash"]):
 		return null
-	if not _integers(raw, ["behaviorVersion", "revision"], true):
+	if not _integers(raw, ["revision"], true):
 		return null
 	var result := ReadModels.Stamp.new()
-	result.behavior_version = int(raw["behaviorVersion"])
 	result.revision = int(raw["revision"])
 	result.state_digest = raw["stateDigest"]
 	result.map_hash = raw["mapHash"]

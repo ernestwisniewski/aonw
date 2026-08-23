@@ -2,17 +2,16 @@
 
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
-    ArmyTroopDto, CURRENT_GAME_STATE_VERSION, CityDto, CoordinateDto, GameStateDto,
-    InteractionStateDto, MovementStepDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
-    QueuedMovePathDto, TransportConditionDto, TransportSegmentDto, TroopKindDto, UnitActivityDto,
-    UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto, WorldArtifactDto,
+    ArmyTroopDto, CityDto, CoordinateDto, GameStateDto, InteractionStateDto, MovementStepDto,
+    PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto, TransportConditionDto,
+    TransportSegmentDto, TroopKindDto, UnitActivityDto, UnitDto, UnitKindDto,
+    UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto, WorldArtifactDto,
     WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{FogVisibility, HexCoord, UnitId};
 
 fn contract() -> GameStateDto {
     GameStateDto {
-        schema_version: CURRENT_GAME_STATE_VERSION,
         revision: 9,
         turn: 3,
         cols: 5,
@@ -162,14 +161,7 @@ fn current_turn_skip_round_trip_preserves_restore_balance() {
 }
 
 #[test]
-fn contract_version_and_map_bounds_fail_closed() {
-    let mut version = contract();
-    version.schema_version += 1;
-    assert_eq!(
-        decode_game_state(version).expect_err("version").path(),
-        "$.schemaVersion"
-    );
-
+fn invalid_map_bounds_fail_closed() {
     let mut bounds = contract();
     bounds.cols = 0;
     assert_eq!(decode_game_state(bounds).expect_err("bounds").path(), "$");

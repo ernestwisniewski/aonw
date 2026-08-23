@@ -101,7 +101,6 @@ final class PlayerMapViewMapper {
   );
 
   static SessionStampView _mapStamp(AonwSessionStamp stamp) => SessionStampView(
-    behaviorVersion: stamp.behaviorVersion,
     revision: stamp.revision,
     stateDigest: stamp.stateDigest,
     mapHash: stamp.mapHash,

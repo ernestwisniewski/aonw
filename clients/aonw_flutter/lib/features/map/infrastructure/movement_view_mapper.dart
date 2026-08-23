@@ -190,7 +190,6 @@ final class MovementViewMapper {
   }
 
   static SessionStampView _stamp(AonwSessionStamp value) => SessionStampView(
-    behaviorVersion: value.behaviorVersion,
     revision: value.revision,
     stateDigest: value.stateDigest,
     mapHash: value.mapHash,

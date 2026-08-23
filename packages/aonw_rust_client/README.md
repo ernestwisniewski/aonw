@@ -22,8 +22,11 @@ consumer that requires Rust declares the cache-aware setting below in its
           rust_backend: true
 
 The successor client sets this unconditionally, so it has no Dart engine or
-per-request fallback. Unsupported targets report the typed adapter-unavailable
-state until their Rust toolchain and packaging are qualified.
+per-request fallback. While the hook only supports a host-native Cargo build,
+`rust_backend: true` for another OS or architecture fails the build explicitly;
+it never substitutes the unavailable C stub. A new target must first add and
+test its real Rust toolchain and packaging path. Consumers that omit the
+setting still receive the intentional adapter-unavailable stub.
 
 The package does not yet implement the app's authoritative `LocalEnginePort`.
 The current recipient patch intentionally cannot reconstruct every field of the

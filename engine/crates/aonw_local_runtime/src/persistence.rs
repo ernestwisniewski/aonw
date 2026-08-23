@@ -1,12 +1,12 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
-    CURRENT_REPLAY_LOG_VERSION, CURRENT_SAVE_GAME_VERSION, CoordinateDto, MAX_REPLAY_ENTRY_COUNT,
-    MovementStepDto, ReplayCommandDto, ReplayContextDto, ReplayEntryDto, ReplayEventDto,
-    ReplayEvidenceDto, ReplayLogDto, ReplayResultDto, RngStateDto, SaveGameDto,
+    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, MovementStepDto, ReplayCommandDto, ReplayContextDto,
+    ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto, ReplayResultDto, RngStateDto,
+    SaveGameDto,
 };
 use aonw_domain::{PlayerId, UnitId};
-use aonw_engine::{DomainEvent, ENGINE_BEHAVIOR_VERSION, ExecutionEvidence, GameEngine};
+use aonw_engine::{DomainEvent, ExecutionEvidence, GameEngine};
 
 pub use crate::persistence_error::PersistenceError;
 use crate::persistence_validation::{validate_replay_header, validate_save_header};
@@ -113,8 +113,6 @@ impl ReplayRecorder {
 
     fn to_dto(&self, session: &Session) -> ReplayLogDto {
         ReplayLogDto {
-            schema_version: CURRENT_REPLAY_LOG_VERSION,
-            behavior_version: ENGINE_BEHAVIOR_VERSION,
             map_id: session.map().map_id().to_owned(),
             map_hash: session.stamp().map_hash.to_string(),
             ruleset_id: session.ruleset().ruleset_id().to_owned(),
@@ -138,8 +136,6 @@ impl LocalRuntime {
     pub fn export_save_json(&self) -> Result<String, PersistenceError> {
         let session = self.session_ref().map_err(PersistenceError::Runtime)?;
         let dto = SaveGameDto {
-            schema_version: CURRENT_SAVE_GAME_VERSION,
-            behavior_version: ENGINE_BEHAVIOR_VERSION,
             map_id: session.map().map_id().to_owned(),
             map_hash: session.stamp().map_hash.to_string(),
             ruleset_id: session.ruleset().ruleset_id().to_owned(),
@@ -271,7 +267,6 @@ pub(crate) fn replay_context(session: &Session) -> ReplayContextDto {
     let stamp = session.stamp();
     ReplayContextDto {
         actor_player_id: session.actor().as_str().to_owned(),
-        behavior_version: stamp.behavior_version,
         map_hash: stamp.map_hash.to_string(),
         ruleset_hash: stamp.ruleset_hash.to_string(),
         state_digest: stamp.state_digest.to_string(),

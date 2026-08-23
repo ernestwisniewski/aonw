@@ -300,14 +300,6 @@ fn save_load_is_transactional_and_rejects_identity_or_digest_tampering() {
         runtime.open_save_json(map, ruleset, &wrong_digest.to_json().expect("json")),
         Err(PersistenceError::StateDigestMismatch)
     ));
-
-    let mut wrong_behavior = SaveGameDto::from_json(&save_json).expect("save dto");
-    wrong_behavior.behavior_version += 1;
-    let (map, ruleset) = content();
-    assert!(matches!(
-        runtime.open_save_json(map, ruleset, &wrong_behavior.to_json().expect("json")),
-        Err(PersistenceError::BehaviorVersionMismatch { .. })
-    ));
 }
 
 #[test]

@@ -60,7 +60,6 @@ void main() {
     final cases = <String, Type>{
       _success({
         'type': 'capabilities',
-        'behaviorVersion': 2,
         'features': ['snapshot', 'moveUnit'],
       }): AonwCapabilitiesResponse,
       _success({'type': 'sessionOpened', 'stamp': _stamp}):
@@ -250,7 +249,6 @@ String _fixturePath(String name) {
 }
 
 const _stamp = {
-  'behaviorVersion': 2,
   'revision': 7,
   'stateDigest': 'digest-7',
   'mapHash': 'map-hash',

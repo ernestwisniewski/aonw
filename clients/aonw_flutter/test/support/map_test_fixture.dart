@@ -52,7 +52,6 @@ MapScene testMapScene({
     player: PlayerMapView(
       actorPlayerId: 'preview-player',
       stamp: SessionStampView(
-        behaviorVersion: 1,
         revision: 0,
         stateDigest: 'b' * 64,
         mapHash: contentHash ?? 'a' * 64,
@@ -81,7 +80,6 @@ VisibleUnitView testVisibleUnit({
 );
 
 SessionStampView testSessionStamp({int revision = 0}) => SessionStampView(
-  behaviorVersion: 1,
   revision: revision,
   stateDigest: 'b' * 64,
   mapHash: 'a' * 64,

@@ -2,10 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{CoordinateDto, GameStateDto, MovementStepDto};
 
-/// Current canonical save contract version.
-pub const CURRENT_SAVE_GAME_VERSION: u16 = 2;
-/// Current deterministic replay contract version.
-pub const CURRENT_REPLAY_LOG_VERSION: u16 = 2;
 /// Maximum accepted encoded save document.
 pub const MAX_SAVE_GAME_JSON_BYTES: usize = 16 * 1024 * 1024;
 /// Maximum accepted encoded replay document.
@@ -29,10 +25,6 @@ pub struct RngStateDto {
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SaveGameDto {
-    /// Save schema version.
-    pub schema_version: u16,
-    /// Engine behavior required to continue this state.
-    pub behavior_version: u16,
     /// Logical map identifier.
     pub map_id: String,
     /// SHA-256 identity of canonical map content.
@@ -100,8 +92,6 @@ pub enum ReplayCommandDto {
 pub struct ReplayContextDto {
     /// Actor issuing the command.
     pub actor_player_id: String,
-    /// Engine behavior used for execution.
-    pub behavior_version: u16,
     /// Exact canonical map identity.
     pub map_hash: String,
     /// Exact immutable ruleset identity.
@@ -194,10 +184,6 @@ pub struct ReplayEntryDto {
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReplayLogDto {
-    /// Replay schema version.
-    pub schema_version: u16,
-    /// Engine behavior required for verification.
-    pub behavior_version: u16,
     /// Logical map identifier.
     pub map_id: String,
     /// SHA-256 identity of canonical map content.
@@ -347,29 +333,21 @@ mod tests {
 
     #[test]
     fn strict_save_codec_rejects_unknown_duplicate_and_oversized_input() {
-        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","rngState":{"seed":0,"stream":0,"counter":0},"eventOffset":0,"stateDigest":"d","state":{"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}}"#;
+        let base = r#"{"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","rngState":{"seed":0,"stream":0,"counter":0},"eventOffset":0,"stateDigest":"d","state":{"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}}"#;
         let unknown = base.replacen("\"state\":", "\"extra\":true,\"state\":", 1);
         assert!(SaveGameDto::from_json(&unknown).is_err());
-        let duplicate = base.replacen(
-            "\"schemaVersion\":2,",
-            "\"schemaVersion\":2,\"schemaVersion\":2,",
-            1,
-        );
+        let duplicate = base.replacen("\"mapId\":\"m\",", "\"mapId\":\"m\",\"mapId\":\"m\",", 1);
         assert!(SaveGameDto::from_json(&duplicate).is_err());
         assert!(SaveGameDto::from_json(&"x".repeat(MAX_SAVE_GAME_JSON_BYTES + 1)).is_err());
     }
 
     #[test]
     fn strict_replay_codec_rejects_unknown_and_duplicate_fields() {
-        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialRngState":{"seed":0,"stream":0,"counter":0},"initialEventOffset":0,"initialStateDigest":"d","initialState":{"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]},"entries":[]}"#;
+        let base = r#"{"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialRngState":{"seed":0,"stream":0,"counter":0},"initialEventOffset":0,"initialStateDigest":"d","initialState":{"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]},"entries":[]}"#;
         assert!(ReplayLogDto::from_json(base).is_ok());
         let unknown = base.replacen("\"entries\":", "\"extra\":true,\"entries\":", 1);
         assert!(ReplayLogDto::from_json(&unknown).is_err());
-        let duplicate = base.replacen(
-            "\"schemaVersion\":2,",
-            "\"schemaVersion\":2,\"schemaVersion\":2,",
-            1,
-        );
+        let duplicate = base.replacen("\"mapId\":\"m\",", "\"mapId\":\"m\",\"mapId\":\"m\",", 1);
         assert!(ReplayLogDto::from_json(&duplicate).is_err());
     }
 

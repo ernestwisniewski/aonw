@@ -11,27 +11,6 @@ pub enum PersistenceError {
     Codec(PersistenceCodecError),
     /// JSON serialization failure.
     Serialize(String),
-    /// Unsupported save contract version.
-    UnsupportedSaveVersion {
-        /// Version present in the document.
-        found: u16,
-        /// Version accepted by this build.
-        supported: u16,
-    },
-    /// Unsupported replay contract version.
-    UnsupportedReplayVersion {
-        /// Version present in the document.
-        found: u16,
-        /// Version accepted by this build.
-        supported: u16,
-    },
-    /// Persisted engine behavior differs from this build.
-    BehaviorVersionMismatch {
-        /// Version present in the document.
-        found: u16,
-        /// Version implemented by this build.
-        required: u16,
-    },
     /// Persisted map identifier differs from supplied content.
     MapIdMismatch,
     /// Persisted map hash differs from supplied content.
@@ -78,18 +57,6 @@ impl core::fmt::Display for PersistenceError {
         match self {
             Self::Codec(source) => source.fmt(formatter),
             Self::Serialize(source) => write!(formatter, "serialization failed: {source}"),
-            Self::UnsupportedSaveVersion { found, supported } => write!(
-                formatter,
-                "unsupported save version {found}; supported version is {supported}"
-            ),
-            Self::UnsupportedReplayVersion { found, supported } => write!(
-                formatter,
-                "unsupported replay version {found}; supported version is {supported}"
-            ),
-            Self::BehaviorVersionMismatch { found, required } => write!(
-                formatter,
-                "behavior version {found} cannot be loaded by version {required}"
-            ),
             Self::MapIdMismatch => formatter.write_str("save map id does not match content"),
             Self::MapHashMismatch => formatter.write_str("save map hash does not match content"),
             Self::RulesetIdMismatch => {

@@ -152,7 +152,6 @@ AonwPlayerViewSnapshot _snapshot(
   AonwPendingActionView? pendingAction,
 }) => AonwPlayerViewSnapshot(
   stamp: AonwSessionStamp(
-    behaviorVersion: 1,
     revision: 7,
     stateDigest: 'b' * 64,
     mapHash: mapHash ?? 'a' * 64,

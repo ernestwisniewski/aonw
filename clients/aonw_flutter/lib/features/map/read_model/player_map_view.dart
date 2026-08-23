@@ -25,14 +25,12 @@ enum VisibleUnitPosture { active, fortified, autoExploring, autoWorking }
 
 final class SessionStampView {
   const SessionStampView({
-    required this.behaviorVersion,
     required this.revision,
     required this.stateDigest,
     required this.mapHash,
     required this.rulesetHash,
   });
 
-  final int behaviorVersion;
   final int revision;
   final String stateDigest;
   final String mapHash;

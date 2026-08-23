@@ -1,6 +1,5 @@
 use aonw_contracts::{
-    CURRENT_GAME_STATE_VERSION, GameStateDto, MAX_GAME_STATE_UNIT_COUNT, PlayerPairDto,
-    UnitOccupancyPolicyDto,
+    GameStateDto, MAX_GAME_STATE_UNIT_COUNT, PlayerPairDto, UnitOccupancyPolicyDto,
 };
 use aonw_domain::{
     Diplomacy, FogOfWar, GameState, HexGridBounds, StateRevision, TransportNetwork,
@@ -20,17 +19,8 @@ use super::world::{
 ///
 /// # Errors
 ///
-/// Returns a path-aware error for unsupported versions or violated invariants.
+/// Returns a path-aware error for violated invariants.
 pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappingError> {
-    if dto.schema_version != CURRENT_GAME_STATE_VERSION {
-        return Err(GameStateMappingError::new(
-            "$.schemaVersion",
-            format!(
-                "unsupported version {}; expected {CURRENT_GAME_STATE_VERSION}",
-                dto.schema_version
-            ),
-        ));
-    }
     if dto.units.len() > MAX_GAME_STATE_UNIT_COUNT {
         return Err(GameStateMappingError::new(
             "$.units",
@@ -118,7 +108,6 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
 #[must_use]
 pub fn encode_game_state(state: &GameState) -> GameStateDto {
     GameStateDto {
-        schema_version: CURRENT_GAME_STATE_VERSION,
         revision: state.revision().get(),
         turn: state.turn(),
         cols: state.bounds().cols(),

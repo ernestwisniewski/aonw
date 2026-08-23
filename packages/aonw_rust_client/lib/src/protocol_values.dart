@@ -66,7 +66,6 @@ enum AonwUnitPosture {
 
 final class AonwSessionStamp {
   const AonwSessionStamp({
-    required this.behaviorVersion,
     required this.revision,
     required this.stateDigest,
     required this.mapHash,
@@ -76,17 +75,12 @@ final class AonwSessionStamp {
   factory AonwSessionStamp.fromJson(Object? source) {
     final value = readObject(source, 'session stamp');
     requireKeys(value, const {
-      'behaviorVersion',
       'revision',
       'stateDigest',
       'mapHash',
       'rulesetHash',
     }, 'session stamp');
     return AonwSessionStamp(
-      behaviorVersion: readUnsigned(
-        value['behaviorVersion'],
-        'behavior version',
-      ),
       revision: readUnsigned(value['revision'], 'state revision'),
       stateDigest: readString(value['stateDigest'], 'state digest'),
       mapHash: readString(value['mapHash'], 'map hash'),
@@ -94,7 +88,6 @@ final class AonwSessionStamp {
     );
   }
 
-  final int behaviorVersion;
   final int revision;
   final String stateDigest;
   final String mapHash;

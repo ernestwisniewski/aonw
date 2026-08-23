@@ -80,7 +80,6 @@ class MalformedSnapshotTransport:
 
 	func _stamp(revision: int) -> Dictionary:
 		return {
-			"behaviorVersion": 1,
 			"revision": revision,
 			"stateDigest": "state",
 			"mapHash": "map",
@@ -595,7 +594,6 @@ func _test_shared_client_contract() -> void:
 		)
 
 	var snapshot_stamp := {
-		"behaviorVersion": 1,
 		"revision": 0,
 		"stateDigest": "b".repeat(64),
 		"mapHash": "a".repeat(64),

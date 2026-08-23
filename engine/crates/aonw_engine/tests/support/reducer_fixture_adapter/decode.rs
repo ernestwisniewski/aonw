@@ -1,11 +1,10 @@
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
-    CURRENT_GAME_STATE_VERSION, CityDto, CoordinateDto, GameStateDto, InteractionStateDto,
-    MovementStepDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto,
-    TransportConditionDto, TransportSegmentDto, UnitActivityDto, UnitDto, UnitKindDto,
-    UnitOccupancyPolicyDto, UnitPostureDto, WorldArtifactDto, WorldArtifactLocationDto,
-    WorldArtifactTypeDto,
+    CityDto, CoordinateDto, GameStateDto, InteractionStateDto, MovementStepDto,
+    PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto, TransportConditionDto,
+    TransportSegmentDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
+    UnitPostureDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{HexGridBounds, MovementUnits, UnitId};
 use aonw_testkit::{FixtureInput, JsonObject};
@@ -112,7 +111,6 @@ pub(super) fn decode_state(
         })
         .collect::<Result<Vec<_>, _>>()?;
     let dto = GameStateDto {
-        schema_version: CURRENT_GAME_STATE_VERSION,
         revision: input.tick(),
         turn: required_u32(input.save(), "turn")?,
         cols: bounds.cols(),

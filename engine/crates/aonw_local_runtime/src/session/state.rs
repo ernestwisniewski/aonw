@@ -1,8 +1,6 @@
 use aonw_content::{ContentHash, MapDefinition, RulesetDefinition};
 use aonw_domain::{GameState, PlayerId, StateRevision};
-use aonw_engine::{
-    ENGINE_BEHAVIOR_VERSION, EngineContext, GameEngine, MovementVisibility, StateDigest,
-};
+use aonw_engine::{EngineContext, GameEngine, MovementVisibility, StateDigest};
 
 use crate::persistence::{ReplayRecorder, RngState};
 use crate::prepared_world::PreparedWorld;
@@ -12,8 +10,6 @@ use super::{OpenSession, OpenSessionError, RuntimeError};
 /// Identity metadata carried by every session response.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SessionStamp {
-    /// Deterministic engine behavior version.
-    pub behavior_version: u16,
     /// Canonical state revision.
     pub revision: StateRevision,
     /// Canonical state digest.
@@ -142,7 +138,6 @@ impl Session {
 
     pub(crate) fn stamp(&self) -> SessionStamp {
         SessionStamp {
-            behavior_version: ENGINE_BEHAVIOR_VERSION,
             revision: self.state().revision(),
             state_digest: self.state_digest,
             map_hash: self.world.map_hash(),

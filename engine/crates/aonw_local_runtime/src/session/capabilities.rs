@@ -1,10 +1,6 @@
-use aonw_engine::ENGINE_BEHAVIOR_VERSION;
-
 /// Runtime capabilities independent of session state.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RuntimeCapabilities {
-    /// Deterministic engine behavior version.
-    pub behavior_version: u16,
     features: u8,
 }
 
@@ -17,7 +13,6 @@ impl RuntimeCapabilities {
     const UNIT_ACTIONS: u8 = 1 << 5;
 
     pub(super) const CURRENT: Self = Self {
-        behavior_version: ENGINE_BEHAVIOR_VERSION,
         features: Self::ROUTE_PLAN
             | Self::REACHABLE
             | Self::MOVE_UNIT

@@ -113,7 +113,6 @@ void main() {
 }
 
 AonwSessionStamp _stamp({int revision = 0}) => AonwSessionStamp(
-  behaviorVersion: 1,
   revision: revision,
   stateDigest: 'b' * 64,
   mapHash: 'a' * 64,

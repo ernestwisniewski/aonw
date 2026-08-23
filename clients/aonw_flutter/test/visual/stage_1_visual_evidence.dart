@@ -78,7 +78,6 @@ Future<void> _captureEvidence(
               player: PlayerMapView(
                 actorPlayerId: 'preview-player',
                 stamp: SessionStampView(
-                  behaviorVersion: 1,
                   revision: 0,
                   stateDigest: 'b' * 64,
                   mapHash: loadedMap.contentHash,

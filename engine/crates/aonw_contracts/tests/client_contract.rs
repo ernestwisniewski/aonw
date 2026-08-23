@@ -16,7 +16,6 @@ fn coordinate(col: i32, row: i32) -> CoordinateDto {
 
 fn stamp() -> ClientSessionStampDto {
     ClientSessionStampDto {
-        behavior_version: 2,
         revision: 8,
         state_digest: "digest-8".to_owned(),
         map_hash: "map-hash".to_owned(),
@@ -224,7 +223,6 @@ fn every_current_response_variant_round_trips() {
     rejected_command.evidence = None;
     let responses = vec![
         ClientResponseBodyDto::Capabilities {
-            behavior_version: 2,
             features: vec![ClientFeatureDto::Snapshot, ClientFeatureDto::MoveUnit],
         },
         ClientResponseBodyDto::SessionOpened { stamp: stamp() },
@@ -326,8 +324,8 @@ fn malformed_unknown_duplicate_and_future_documents_fail_closed() {
     let future_response =
         r#"{"apiVersion":6,"outcome":{"status":"success","response":{"type":"sessionClosed"}}}"#;
     let unknown_response = r#"{"apiVersion":5,"outcome":{"status":"failure","error":{"code":"failed","message":"failed","extra":true}}}"#;
-    let old_command_shape = r#"{"apiVersion":5,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"behaviorVersion":2,"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"accepted":true,"rejection":null,"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[],"pendingAction":null}}}}}"#;
-    let unknown_rejection = r#"{"apiVersion":5,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"behaviorVersion":2,"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"outcome":{"status":"rejected","code":"future_rejection"},"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[],"pendingAction":null}}}}}"#;
+    let old_command_shape = r#"{"apiVersion":5,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"accepted":true,"rejection":null,"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[],"pendingAction":null}}}}}"#;
+    let unknown_rejection = r#"{"apiVersion":5,"outcome":{"status":"success","response":{"type":"command","result":{"stamp":{"revision":0,"stateDigest":"d","mapHash":"m","rulesetHash":"r"},"outcome":{"status":"rejected","code":"future_rejection"},"events":[],"evidence":null,"viewPatch":{"fromRevision":0,"toRevision":0,"upsertedUnits":[],"removedUnitIds":[],"pendingAction":null}}}}}"#;
     assert!(ClientResponseDto::from_json(future_response).is_err());
     assert!(ClientResponseDto::from_json(unknown_response).is_err());
     assert!(ClientResponseDto::from_json(old_command_shape).is_err());

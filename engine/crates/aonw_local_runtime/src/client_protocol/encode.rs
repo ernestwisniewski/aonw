@@ -41,10 +41,7 @@ pub(super) fn capabilities() -> ClientResponseBodyDto {
     if capabilities.replay_verification() {
         features.push(ClientFeatureDto::ReplayVerification);
     }
-    ClientResponseBodyDto::Capabilities {
-        behavior_version: capabilities.behavior_version,
-        features,
-    }
+    ClientResponseBodyDto::Capabilities { features }
 }
 
 pub(super) fn map(document: &MapDocument) -> Result<MapViewDto, serde_json::Error> {
@@ -159,7 +156,6 @@ const fn objective_type(value: MapObjectiveType) -> MapObjectiveTypeDto {
 
 pub(super) fn stamp(value: SessionStamp) -> ClientSessionStampDto {
     ClientSessionStampDto {
-        behavior_version: value.behavior_version,
         revision: value.revision.get(),
         state_digest: value.state_digest.to_string(),
         map_hash: value.map_hash.to_string(),

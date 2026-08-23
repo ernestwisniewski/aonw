@@ -229,7 +229,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-benchmark rust-flutter-test rust-engine-oracle rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-device-test successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence
+.PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test rust-engine-inventory-ast-check rust-check rust-format-check rust-clippy rust-test rust-doc rust-benchmark rust-flutter-test rust-engine-oracle rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-device-test successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence
 
 help:
 	@echo "AONW deploy helpers"
@@ -242,7 +242,7 @@ help:
 	@echo "Individual targets:"
 	@echo "  make bootstrap    LOCAL: install pinned toolchains and all locked dependencies"
 	@echo "  make toolchain-check LOCAL: verify .fvmrc Flutter and its bundled Dart are active"
-	@echo "  make p0-check      LOCAL: verify legacy freeze and successor dependency boundaries"
+	@echo "  make p0-check      LOCAL: verify legacy freeze, successor boundaries and Rust migration inventory"
 	@echo "  make successor-map-contract-test LOCAL: verify shared geometry and deterministic starter bundle"
 	@echo "  make successor-flutter-check LOCAL: format, analyze, and test the Rust-backed successor client"
 	@echo "  make successor-flutter-device-test LOCAL: build and exercise the standalone client on macOS"
@@ -485,7 +485,7 @@ bootstrap:
 toolchain-check:
 	@tool/check_toolchain.sh
 
-p0-check: legacy-freeze dependency-boundaries successor-boundary-test
+p0-check: legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test
 
 legacy-freeze:
 	@tool/check_legacy_freeze.sh
@@ -495,6 +495,15 @@ dependency-boundaries:
 
 successor-boundary-test:
 	@tool/test_successor_boundaries.sh
+
+rust-engine-inventory-check:
+	@tool/check_rust_engine_inventory.sh
+
+rust-engine-inventory-test:
+	@tool/test_rust_engine_inventory.sh
+
+rust-engine-inventory-ast-check: root-dependencies
+	@flutter test --no-pub test/architecture/rust_engine_migration_inventory_test.dart
 
 successor-map-contract-test: root-dependencies successor-flutter-dependencies
 	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/presentation/geometry/odd_q_flat_top_geometry_test.dart
@@ -669,7 +678,7 @@ server-analyze: server-dependencies
 
 architecture: architecture-check
 
-architecture-check: root-dependencies
+architecture-check: root-dependencies rust-engine-inventory-ast-check
 	@dart run tool/check_architecture.dart check --ratchet-ref "$(ARCHITECTURE_RATCHET_REF)"
 	@dart run tool/check_architecture_aggregates.dart check --ratchet-ref "$(ARCHITECTURE_RATCHET_REF)"
 
