@@ -9,24 +9,30 @@ import '../../features/settings/application/client_settings_controller.dart';
 import '../../features/settings/application/client_settings_store.dart';
 import '../../features/settings/infrastructure/shared_preferences_client_settings_store.dart';
 import '../navigation/aonw_app.dart';
+import '../telemetry/client_telemetry.dart';
 
 final class AppComposition {
   AppComposition({
     required MapRepository mapRepository,
     MapInputSource? mapInputSource,
     ClientSettingsStore? settingsStore,
+    ClientTelemetry telemetry = const NoOpClientTelemetry(),
   }) : root = AonwApp(
          mapController: MapController(repository: mapRepository),
          mapInputSource: mapInputSource,
+         telemetry: telemetry,
          settingsController: settingsStore == null
              ? ClientSettingsController.ephemeral()
              : ClientSettingsController(store: settingsStore),
        );
 
-  factory AppComposition.production() => AppComposition(
+  factory AppComposition.production({
+    ClientTelemetry telemetry = const DebugClientTelemetry(),
+  }) => AppComposition(
     mapRepository: RustMapRepository(assets: rootBundle),
     mapInputSource: GamepadMapInputSource(),
     settingsStore: SharedPreferencesClientSettingsStore(),
+    telemetry: telemetry,
   );
 
   final AonwApp root;

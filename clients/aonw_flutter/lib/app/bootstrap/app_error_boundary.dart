@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 
+import '../telemetry/client_telemetry.dart';
+
 enum AppErrorKind {
   framework('flutter_framework_error'),
   asynchronous('unhandled_async_error');
@@ -36,6 +38,26 @@ final class DebugAppErrorReporter implements AppErrorReporter {
       label: 'AoNW client error [${report.kind.code}]: ${report.error}',
       stackTrace: report.stackTrace,
     );
+  }
+}
+
+final class AppErrorTelemetryReporter implements AppErrorReporter {
+  const AppErrorTelemetryReporter({
+    required ClientTelemetry telemetry,
+    required AppErrorReporter diagnostics,
+  }) : _telemetry = telemetry,
+       _diagnostics = diagnostics;
+
+  final ClientTelemetry _telemetry;
+  final AppErrorReporter _diagnostics;
+
+  @override
+  void report(AppErrorReport report) {
+    _telemetry.record(switch (report.kind) {
+      AppErrorKind.framework => ClientTelemetryEvent.frameworkError,
+      AppErrorKind.asynchronous => ClientTelemetryEvent.asynchronousError,
+    });
+    _diagnostics.report(report);
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:aonw_flutter/app/composition/app_composition.dart';
+import 'package:aonw_flutter/app/telemetry/client_telemetry.dart';
 import 'package:aonw_flutter/features/map/application/map_repository.dart';
 import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
@@ -45,29 +46,48 @@ void main() {
   ) async {
     final repository = _LifecycleMapRepository();
     final input = _LifecycleMapInputSource();
+    final telemetry = _RecordingClientTelemetry();
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
 
     await tester.pumpWidget(
-      AppComposition(mapRepository: repository, mapInputSource: input).root,
+      AppComposition(
+        mapRepository: repository,
+        mapInputSource: input,
+        telemetry: telemetry,
+      ).root,
     );
     await tester.pump();
     expect(input.activeStates, [true]);
+    expect(telemetry.events, [ClientTelemetryEvent.appStarted]);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pump();
     expect(input.activeStates.last, isFalse);
     expect(repository.closeCalls, 0);
+    expect(telemetry.events.last, ClientTelemetryEvent.appSuspended);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(input.activeStates.last, isTrue);
     expect(repository.closeCalls, 0);
+    expect(telemetry.events.map((event) => event.code), [
+      'app_started',
+      'app_suspended',
+      'app_resumed',
+    ]);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
     expect(input.activeStates.last, isFalse);
     expect(repository.closeCalls, 1);
   });
+}
+
+final class _RecordingClientTelemetry implements ClientTelemetry {
+  final events = <ClientTelemetryEvent>[];
+
+  @override
+  void record(ClientTelemetryEvent event) => events.add(event);
 }
 
 final class _LifecycleMapInputSource

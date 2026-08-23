@@ -1,4 +1,5 @@
 import 'package:aonw_flutter/app/bootstrap/app_error_boundary.dart';
+import 'package:aonw_flutter/app/telemetry/client_telemetry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,9 +13,13 @@ void main() {
     FlutterError.onError = previousFlutterHandler;
     dispatcher.onError = previousPlatformHandler;
 
-    final reporter = _RecordingAppErrorReporter();
+    final diagnostics = _RecordingAppErrorReporter();
+    final telemetry = _RecordingClientTelemetry();
     final boundary = AppErrorBoundary.install(
-      reporter: reporter,
+      reporter: AppErrorTelemetryReporter(
+        telemetry: telemetry,
+        diagnostics: diagnostics,
+      ),
       dispatcher: dispatcher,
     );
     addTearDown(() {
@@ -34,15 +39,19 @@ void main() {
     final handled = dispatcher.onError!(asynchronousError, asynchronousStack);
 
     expect(handled, isTrue);
-    expect(reporter.reports, hasLength(2));
-    expect(reporter.reports[0].kind, AppErrorKind.framework);
-    expect(reporter.reports[0].kind.code, 'flutter_framework_error');
-    expect(reporter.reports[0].error, same(frameworkError));
-    expect(reporter.reports[0].stackTrace, same(frameworkStack));
-    expect(reporter.reports[1].kind, AppErrorKind.asynchronous);
-    expect(reporter.reports[1].kind.code, 'unhandled_async_error');
-    expect(reporter.reports[1].error, same(asynchronousError));
-    expect(reporter.reports[1].stackTrace, same(asynchronousStack));
+    expect(diagnostics.reports, hasLength(2));
+    expect(diagnostics.reports[0].kind, AppErrorKind.framework);
+    expect(diagnostics.reports[0].kind.code, 'flutter_framework_error');
+    expect(diagnostics.reports[0].error, same(frameworkError));
+    expect(diagnostics.reports[0].stackTrace, same(frameworkStack));
+    expect(diagnostics.reports[1].kind, AppErrorKind.asynchronous);
+    expect(diagnostics.reports[1].kind.code, 'unhandled_async_error');
+    expect(diagnostics.reports[1].error, same(asynchronousError));
+    expect(diagnostics.reports[1].stackTrace, same(asynchronousStack));
+    expect(telemetry.events, [
+      ClientTelemetryEvent.frameworkError,
+      ClientTelemetryEvent.asynchronousError,
+    ]);
 
     boundary.dispose();
     expect(FlutterError.onError, same(previousFlutterHandler));
@@ -55,4 +64,11 @@ final class _RecordingAppErrorReporter implements AppErrorReporter {
 
   @override
   void report(AppErrorReport report) => reports.add(report);
+}
+
+final class _RecordingClientTelemetry implements ClientTelemetry {
+  final events = <ClientTelemetryEvent>[];
+
+  @override
+  void record(ClientTelemetryEvent event) => events.add(event);
 }

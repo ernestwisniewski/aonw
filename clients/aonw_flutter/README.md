@@ -44,6 +44,13 @@ only. Future crash reporting should implement that port without exposing game
 state or teaching feature controllers about a telemetry SDK. The boundary can
 be installed and restored independently in tests.
 
+Client telemetry is deliberately closed and domain-free. The sink accepts only
+the predefined `ClientTelemetryEvent` enum: app start, suspend/resume, framework
+error and asynchronous error. It cannot accept attributes, exception text,
+map identifiers, coordinates, player identifiers or game state. Production
+currently uses a developer log sink; a remote sink may replace it only behind
+the same allowlisted port.
+
 The design system keeps brand color, spacing, radii and minimum interaction
 sizes in small framework-level token groups. Shared panel, message and progress
 components provide consistent theming and explicit semantics while remaining

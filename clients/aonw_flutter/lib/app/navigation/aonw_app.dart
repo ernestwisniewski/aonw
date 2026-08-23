@@ -8,6 +8,7 @@ import '../../features/map/presentation/input/map_input.dart';
 import '../../features/settings/application/client_settings_controller.dart';
 import '../../features/settings/presentation/client_settings_scope.dart';
 import '../../l10n/l10n.dart';
+import '../telemetry/client_telemetry.dart';
 import 'aonw_router.dart';
 
 final class AonwApp extends StatefulWidget {
@@ -15,6 +16,7 @@ final class AonwApp extends StatefulWidget {
     required this.mapController,
     this.mapInputSource,
     this.settingsController,
+    this.telemetry = const NoOpClientTelemetry(),
     this.locale,
     super.key,
   });
@@ -22,6 +24,7 @@ final class AonwApp extends StatefulWidget {
   final MapController mapController;
   final MapInputSource? mapInputSource;
   final ClientSettingsController? settingsController;
+  final ClientTelemetry telemetry;
   final Locale? locale;
 
   @override
@@ -38,6 +41,7 @@ final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _lifecycleState =
         WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
+    widget.telemetry.record(ClientTelemetryEvent.appStarted);
     _installSettingsController();
     _synchronizeInputLifecycle();
   }
@@ -71,7 +75,16 @@ final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final wasResumed = _lifecycleState == AppLifecycleState.resumed;
     _lifecycleState = state;
+    final isResumed = state == AppLifecycleState.resumed;
+    if (wasResumed != isResumed) {
+      widget.telemetry.record(
+        isResumed
+            ? ClientTelemetryEvent.appResumed
+            : ClientTelemetryEvent.appSuspended,
+      );
+    }
     _synchronizeInputLifecycle();
   }
 
