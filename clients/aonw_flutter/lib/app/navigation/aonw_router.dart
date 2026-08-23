@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../design_system/widgets/aonw_panel.dart';
 import '../../features/map/application/map_controller.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
+import '../../l10n/l10n.dart';
 
 enum AonwRoute {
   map('/');
@@ -44,16 +45,21 @@ final class _UnknownRoute extends StatelessWidget {
   final String? location;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: Center(
-        child: AonwMessagePanel(
-          key: const ValueKey('unknown-route'),
-          semanticLabel: 'Unknown route',
-          title: 'Page unavailable',
-          message: 'Unknown route: ${location ?? '(missing)'}',
+  Widget build(BuildContext context) {
+    final l10n = context.aonwL10n;
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: AonwMessagePanel(
+            key: const ValueKey('unknown-route'),
+            semanticLabel: l10n.unknownRouteLabel,
+            title: l10n.pageUnavailable,
+            message: l10n.unknownRouteMessage(
+              location ?? l10n.missingRouteLocation,
+            ),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

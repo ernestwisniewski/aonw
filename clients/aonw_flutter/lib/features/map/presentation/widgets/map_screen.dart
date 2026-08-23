@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/aonw_tokens.dart';
 import '../../../../design_system/widgets/aonw_panel.dart';
 import '../../../../design_system/widgets/aonw_progress_indicator.dart';
+import '../../../../l10n/l10n.dart';
 import '../../application/map_controller.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_scene.dart';
@@ -235,12 +236,15 @@ final class _ReferenceToggle extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => IconButton.filledTonal(
-    key: const ValueKey('reference-toggle'),
-    tooltip: visible ? 'Hide reference layer' : 'Show reference layer',
-    onPressed: onPressed,
-    icon: Icon(visible ? Icons.layers : Icons.layers_clear),
-  );
+  Widget build(BuildContext context) {
+    final l10n = context.aonwL10n;
+    return IconButton.filledTonal(
+      key: const ValueKey('reference-toggle'),
+      tooltip: visible ? l10n.hideReferenceLayer : l10n.showReferenceLayer,
+      onPressed: onPressed,
+      icon: Icon(visible ? Icons.layers : Icons.layers_clear),
+    );
+  }
 }
 
 final class _MapSelectionPanel extends StatelessWidget {
@@ -255,62 +259,68 @@ final class _MapSelectionPanel extends StatelessWidget {
   final VoidCallback onConfirmMove;
 
   @override
-  Widget build(BuildContext context) => AonwPanel(
-    liveRegion: true,
-    maxWidth: 320,
-    padding: const EdgeInsets.symmetric(
-      horizontal: AonwSpacing.md,
-      vertical: AonwSpacing.sm,
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Hex ${coordinate.col}, ${coordinate.row}'),
-        if (interaction.selectedUnitId case final unitId?) ...[
-          const SizedBox(height: AonwSpacing.xs),
-          Text('Unit $unitId'),
-          if (interaction.route case final route?) ...[
-            Text(
-              'Route: ${route.totalCostUnits} movement units · '
-              '${route.remainingMovementUnits} remaining',
-            ),
+  Widget build(BuildContext context) {
+    final l10n = context.aonwL10n;
+    return AonwPanel(
+      liveRegion: true,
+      maxWidth: 320,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AonwSpacing.md,
+        vertical: AonwSpacing.sm,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.hexLabel(coordinate.col, coordinate.row)),
+          if (interaction.selectedUnitId case final unitId?) ...[
+            const SizedBox(height: AonwSpacing.xs),
+            Text(l10n.unitLabel(unitId)),
+            if (interaction.route case final route?) ...[
+              Text(
+                l10n.routeSummary(
+                  route.totalCostUnits,
+                  route.remainingMovementUnits,
+                ),
+              ),
+              const SizedBox(height: AonwSpacing.sm),
+              FilledButton.icon(
+                key: const ValueKey('confirm-move'),
+                onPressed: interaction.movementPending ? null : onConfirmMove,
+                icon: const Icon(Icons.directions_walk),
+                label: Text(l10n.confirmMove),
+              ),
+            ] else if (!interaction.movementPending)
+              Text(l10n.chooseHighlightedDestination),
+          ],
+          if (interaction.movementPending) ...[
             const SizedBox(height: AonwSpacing.sm),
-            FilledButton.icon(
-              key: const ValueKey('confirm-move'),
-              onPressed: interaction.movementPending ? null : onConfirmMove,
-              icon: const Icon(Icons.directions_walk),
-              label: const Text('Confirm move'),
+            AonwProgressIndicator(
+              semanticLabel: l10n.movingUnit,
+              compact: true,
             ),
-          ] else if (!interaction.movementPending)
-            const Text('Choose a highlighted destination.'),
+          ],
+          if (interaction.movementError case final message?) ...[
+            const SizedBox(height: AonwSpacing.sm),
+            Text(
+              message,
+              key: const ValueKey('movement-error'),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
         ],
-        if (interaction.movementPending) ...[
-          const SizedBox(height: AonwSpacing.sm),
-          const AonwProgressIndicator(
-            semanticLabel: 'Moving unit',
-            compact: true,
-          ),
-        ],
-        if (interaction.movementError case final message?) ...[
-          const SizedBox(height: AonwSpacing.sm),
-          Text(
-            message,
-            key: const ValueKey('movement-error'),
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-        ],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 final class _LoadingMap extends StatelessWidget {
   const _LoadingMap();
 
   @override
-  Widget build(BuildContext context) =>
-      const Center(child: AonwProgressIndicator(semanticLabel: 'Loading map'));
+  Widget build(BuildContext context) => Center(
+    child: AonwProgressIndicator(semanticLabel: context.aonwL10n.loadingMap),
+  );
 }
 
 final class _MapFailure extends StatelessWidget {
@@ -325,14 +335,17 @@ final class _MapFailure extends StatelessWidget {
   final AsyncCallback retry;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: AonwMessagePanel(
-      semanticLabel: 'Map loading failed',
-      title: 'Map unavailable',
-      message: message,
-      detail: code,
-      actionLabel: 'Retry',
-      onAction: retry,
-    ),
-  );
+  Widget build(BuildContext context) {
+    final l10n = context.aonwL10n;
+    return Center(
+      child: AonwMessagePanel(
+        semanticLabel: l10n.mapLoadingFailed,
+        title: l10n.mapUnavailable,
+        message: message,
+        detail: code,
+        actionLabel: l10n.retry,
+        onAction: retry,
+      ),
+    );
+  }
 }

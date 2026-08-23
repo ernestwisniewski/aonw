@@ -1,0 +1,58 @@
+{
+  "@@locale": "en",
+  "appTitle": "Age of New Worlds",
+  "unknownRouteLabel": "Unknown route",
+  "pageUnavailable": "Page unavailable",
+  "unknownRouteMessage": "Unknown route: {location}",
+  "@unknownRouteMessage": {
+    "placeholders": {
+      "location": {"type": "String"}
+    }
+  },
+  "missingRouteLocation": "(missing)",
+  "mapSemanticsLabel": "Map {mapId}, {cols} by {rows} hexes",
+  "@mapSemanticsLabel": {
+    "placeholders": {
+      "mapId": {"type": "String"},
+      "cols": {"type": "int"},
+      "rows": {"type": "int"}
+    }
+  },
+  "noHexSelected": "No hex selected",
+  "selectedHex": "Selected hex {col}, {row}",
+  "@selectedHex": {
+    "placeholders": {
+      "col": {"type": "int"},
+      "row": {"type": "int"}
+    }
+  },
+  "hideReferenceLayer": "Hide reference layer",
+  "showReferenceLayer": "Show reference layer",
+  "hexLabel": "Hex {col}, {row}",
+  "@hexLabel": {
+    "placeholders": {
+      "col": {"type": "int"},
+      "row": {"type": "int"}
+    }
+  },
+  "unitLabel": "Unit {unitId}",
+  "@unitLabel": {
+    "placeholders": {
+      "unitId": {"type": "String"}
+    }
+  },
+  "routeSummary": "Route: {totalCost} movement units · {remaining} remaining",
+  "@routeSummary": {
+    "placeholders": {
+      "totalCost": {"type": "int"},
+      "remaining": {"type": "int"}
+    }
+  },
+  "confirmMove": "Confirm move",
+  "chooseHighlightedDestination": "Choose a highlighted destination.",
+  "movingUnit": "Moving unit",
+  "loadingMap": "Loading map",
+  "mapLoadingFailed": "Map loading failed",
+  "mapUnavailable": "Map unavailable",
+  "retry": "Retry"
+}

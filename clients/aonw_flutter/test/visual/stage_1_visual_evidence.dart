@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/localized_test_app.dart';
+
 const _evidenceDirectory = String.fromEnvironment('AONW_STAGE_1_EVIDENCE_DIR');
 const _captureKey = ValueKey('stage-1-flutter-capture');
 
@@ -57,7 +59,7 @@ Future<void> _captureEvidence(
   addTearDown(() => tester.binding.setSurfaceSize(null));
 
   await tester.pumpWidget(
-    MaterialApp(
+    LocalizedTestApp(
       home: ColoredBox(
         color: Colors.black,
         child: RepaintBoundary(

@@ -8,6 +8,7 @@ import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../../support/localized_test_app.dart';
 import '../../../../support/map_test_fixture.dart';
 
 void main() {
@@ -24,7 +25,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(
+      LocalizedTestApp(
         home: Scaffold(
           body: MapScreen(
             controller: controller,
@@ -82,7 +83,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      MaterialApp(home: MapScreen(controller: controller)),
+      LocalizedTestApp(home: MapScreen(controller: controller)),
     );
     await tester.pumpAndSettle();
 
@@ -111,7 +112,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(
+      LocalizedTestApp(
         home: Scaffold(body: MapScreen(controller: controller)),
       ),
     );
@@ -158,7 +159,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
-        MaterialApp(
+        LocalizedTestApp(
           home: MapScreen(
             controller: controller,
             transformationController: camera,
@@ -201,7 +202,7 @@ void main() {
     await controller.load();
 
     await tester.pumpWidget(
-      MaterialApp(
+      LocalizedTestApp(
         home: MapScreen(
           controller: controller,
           transformationController: firstCamera,
@@ -211,7 +212,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.pumpWidget(
-      MaterialApp(
+      LocalizedTestApp(
         home: MapScreen(
           controller: controller,
           transformationController: secondCamera,
@@ -233,7 +234,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      MaterialApp(home: MapScreen(controller: controller)),
+      LocalizedTestApp(home: MapScreen(controller: controller)),
     );
     await tester.pumpAndSettle();
 
@@ -252,7 +253,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      MaterialApp(
+      LocalizedTestApp(
         home: MediaQuery(
           data: const MediaQueryData(disableAnimations: true),
           child: MapScreen(controller: controller),

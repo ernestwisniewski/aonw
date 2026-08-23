@@ -29,6 +29,11 @@ components provide consistent theming and explicit semantics while remaining
 independent of game features. Feature-specific colors stay with the map
 presentation layer in `MapPalette`.
 
+Flutter's generated localization boundary owns all app-shell and map-workflow
+copy. English is the canonical ARB catalog and Polish is a fully generated
+locale. Widgets consume typed placeholder methods, while `AonwApp` registers
+the generated delegates and follows the platform locale by default.
+
 The map feature opens the starter map and scenario on one retained Rust
 backend. Its `MapScene` keeps the shared static `MapView` separate from the
 recipient-safe player snapshot, so fog-filtered units never become authored

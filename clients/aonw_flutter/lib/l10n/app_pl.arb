@@ -1,0 +1,23 @@
+{
+  "@@locale": "pl",
+  "appTitle": "Age of New Worlds",
+  "unknownRouteLabel": "Nieznana trasa",
+  "pageUnavailable": "Strona niedostępna",
+  "unknownRouteMessage": "Nieznana trasa: {location}",
+  "missingRouteLocation": "(brak)",
+  "mapSemanticsLabel": "Mapa {mapId}, {cols} na {rows} heksów",
+  "noHexSelected": "Nie wybrano heksa",
+  "selectedHex": "Wybrany heks {col}, {row}",
+  "hideReferenceLayer": "Ukryj warstwę referencyjną",
+  "showReferenceLayer": "Pokaż warstwę referencyjną",
+  "hexLabel": "Heks {col}, {row}",
+  "unitLabel": "Jednostka {unitId}",
+  "routeSummary": "Trasa: {totalCost} punktów ruchu · pozostało {remaining}",
+  "confirmMove": "Potwierdź ruch",
+  "chooseHighlightedDestination": "Wybierz podświetlone pole docelowe.",
+  "movingUnit": "Przemieszczanie jednostki",
+  "loadingMap": "Wczytywanie mapy",
+  "mapLoadingFailed": "Nie udało się wczytać mapy",
+  "mapUnavailable": "Mapa jest niedostępna",
+  "retry": "Spróbuj ponownie"
+}

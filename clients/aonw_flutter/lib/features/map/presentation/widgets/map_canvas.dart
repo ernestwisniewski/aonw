@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../l10n/l10n.dart';
 import '../../read_model/map_view.dart';
 import '../camera/map_viewport_projection.dart';
 import '../geometry/odd_q_flat_top_geometry.dart';
@@ -29,11 +30,12 @@ final class MapCanvas extends StatelessWidget {
     final projection = MapViewportProjection(geometry);
     final bounds = geometry.bounds;
     final selection = snapshot.interaction.selected;
+    final l10n = context.aonwL10n;
     return Semantics(
-      label: 'Map ${map.mapId}, ${map.cols} by ${map.rows} hexes',
+      label: l10n.mapSemanticsLabel(map.mapId, map.cols, map.rows),
       value: selection == null
-          ? 'No hex selected'
-          : 'Selected hex ${selection.col}, ${selection.row}',
+          ? l10n.noHexSelected
+          : l10n.selectedHex(selection.col, selection.row),
       child: _MapInputRegion(
         projection: projection,
         onHover: onHover,

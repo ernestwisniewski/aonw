@@ -27,4 +27,31 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
+
+  testWidgets('uses Polish app shell and map translations', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final controller = MapController(
+      repository: FakeMapRepository.success(testMapScene()),
+    );
+
+    await tester.pumpWidget(
+      AonwApp(mapController: controller, locale: const Locale('pl')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.bySemanticsLabel('Mapa test-map, 3 na 2 heksów'),
+      findsOneWidget,
+    );
+
+    final context = tester.element(find.byKey(const ValueKey('map-canvas')));
+    Navigator.of(context).pushNamed('/future-screen');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Strona niedostępna'), findsOneWidget);
+    expect(find.text('Nieznana trasa: /future-screen'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    semantics.dispose();
+  });
 }

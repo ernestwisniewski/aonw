@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../../support/localized_test_app.dart';
+
 void main() {
   testWidgets('starter terrain has a client-owned visual golden', (
     tester,
@@ -65,7 +67,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(
+      LocalizedTestApp(
         home: ColoredBox(
           color: Colors.black,
           child: RepaintBoundary(

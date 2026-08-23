@@ -17,6 +17,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/localized_test_app.dart';
+
 void main() {
   testWidgets('returns the shared starter MapView identity', (tester) async {
     final loadedMap = await tester.runAsync(_loadStarter);
@@ -144,7 +146,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
+      LocalizedTestApp(
         home: InteractiveViewer(
           constrained: false,
           child: MapCanvas(
