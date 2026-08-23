@@ -28,13 +28,18 @@ final class AonwApp extends StatefulWidget {
   State<AonwApp> createState() => _AonwAppState();
 }
 
-final class _AonwAppState extends State<AonwApp> {
+final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
   late ClientSettingsController _settingsController;
+  late AppLifecycleState _lifecycleState;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _lifecycleState =
+        WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
     _installSettingsController();
+    _synchronizeInputLifecycle();
   }
 
   @override
@@ -44,7 +49,9 @@ final class _AonwAppState extends State<AonwApp> {
       oldWidget.mapController.dispose();
     }
     if (oldWidget.mapInputSource != widget.mapInputSource) {
+      _setInputActive(oldWidget.mapInputSource, false);
       unawaited(oldWidget.mapInputSource?.close());
+      _synchronizeInputLifecycle();
     }
     if (oldWidget.settingsController != widget.settingsController) {
       _settingsController.dispose();
@@ -54,10 +61,18 @@ final class _AonwAppState extends State<AonwApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _setInputActive(widget.mapInputSource, false);
     widget.mapController.dispose();
     unawaited(widget.mapInputSource?.close());
     _settingsController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycleState = state;
+    _synchronizeInputLifecycle();
   }
 
   @override
@@ -106,5 +121,18 @@ final class _AonwAppState extends State<AonwApp> {
     _settingsController =
         widget.settingsController ?? ClientSettingsController.ephemeral();
     unawaited(_settingsController.load());
+  }
+
+  void _synchronizeInputLifecycle() {
+    _setInputActive(
+      widget.mapInputSource,
+      _lifecycleState == AppLifecycleState.resumed,
+    );
+  }
+
+  static void _setInputActive(MapInputSource? source, bool active) {
+    if (source case final LifecycleAwareMapInputSource lifecycleAware) {
+      lifecycleAware.setActive(active);
+    }
   }
 }

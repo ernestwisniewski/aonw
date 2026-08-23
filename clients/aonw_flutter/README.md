@@ -17,11 +17,32 @@ is replaced; the controller closes the retained Rust session idempotently. The
 test constructor accepts only the application `MapRepository` port, so no DI
 container or service locator is needed.
 
+## Developer module map
+
+| Module | Responsibility and entry points | Dependency rule |
+| --- | --- | --- |
+| `lib/app` | Bootstrap, production composition, routing, lifecycle and process errors. Start at `bootstrap/run_aonw_app.dart`; wire adapters only in `composition/app_composition.dart`. | May compose features and infrastructure. Features never import `app`. |
+| `lib/design_system` | Brand tokens and accessible shared widgets. | Has no feature or Rust transport dependency. Feature-specific visuals stay in the feature. |
+| `lib/features/map` | Map/session ports, client read models, Rust adapter, interaction controller and rendering. | Application owns use cases, infrastructure maps the Rust protocol, presentation never evaluates game rules. |
+| `lib/features/settings` | Client-only preferences and their persistence. | Settings contain no gameplay state and do not depend on the map feature. |
+| `lib/l10n` | ARB catalogs, generated typed strings and locale helpers. | Edit ARB sources; never edit generated localization files manually. |
+
+When adding a module, extend this table with its owner, entry point and allowed
+dependencies. Keep implementation details in code and verification commands in
+this README.
+
 `AonwRouter` owns the small typed route table on top of Flutter's Navigator.
 The current `/` route builds the map feature; unknown locations fail closed to
 an accessible diagnostic page. `AonwApp` owns theme and lifecycle but does not
 construct feature pages directly. New screens extend the route enum and router
 without adding navigation decisions to feature widgets.
+
+Bootstrap installs one typed process error boundary. Flutter framework errors
+and unhandled asynchronous platform errors are classified separately and sent
+to an `AppErrorReporter`; the default reporter writes developer diagnostics
+only. Future crash reporting should implement that port without exposing game
+state or teaching feature controllers about a telemetry SDK. The boundary can
+be installed and restored independently in tests.
 
 The design system keeps brand color, spacing, radii and minimum interaction
 sizes in small framework-level token groups. Shared panel, message and progress
@@ -39,7 +60,9 @@ keyboard arrows/WASD with Enter/Escape, and normalized gamepad D-pad with
 A/B/Y all drive the same local cursor, selection and reference actions. The
 production composition root owns the gamepad adapter and closes it with the
 retained Rust-backed map repository. Linux uses the repository's hardened
-gamepads adapter; no input path evaluates game rules.
+gamepads adapter; no input path evaluates game rules. `AonwApp` pauses
+lifecycle-aware gamepad input whenever the application is not resumed and
+reenables it on resume. Losing focus never tears down the Rust session.
 
 The map feature opens the starter map and scenario on one retained Rust
 backend. Its `MapScene` keeps the shared static `MapView` separate from the

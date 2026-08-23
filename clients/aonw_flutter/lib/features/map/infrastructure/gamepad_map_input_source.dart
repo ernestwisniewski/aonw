@@ -22,7 +22,8 @@ abstract final class MapGamepadMapper {
   }
 }
 
-final class GamepadMapInputSource implements MapInputSource {
+final class GamepadMapInputSource
+    implements MapInputSource, LifecycleAwareMapInputSource {
   GamepadMapInputSource({Stream<NormalizedGamepadEvent>? events}) {
     _subscription = (events ?? Gamepads.normalizedEvents).listen(
       _onEvent,
@@ -32,6 +33,7 @@ final class GamepadMapInputSource implements MapInputSource {
 
   final _commands = StreamController<MapInputCommand>.broadcast(sync: true);
   late final StreamSubscription<NormalizedGamepadEvent> _subscription;
+  var _active = true;
   var _closed = false;
 
   @override
@@ -39,7 +41,7 @@ final class GamepadMapInputSource implements MapInputSource {
 
   void _onEvent(NormalizedGamepadEvent event) {
     final command = MapGamepadMapper.commandFor(event.button, event.value);
-    if (!_closed && command != null) _commands.add(command);
+    if (!_closed && _active && command != null) _commands.add(command);
   }
 
   void _onError(Object error, StackTrace stackTrace) {
@@ -47,6 +49,11 @@ final class GamepadMapInputSource implements MapInputSource {
       label: 'Gamepad input unavailable: $error',
       stackTrace: stackTrace,
     );
+  }
+
+  @override
+  void setActive(bool active) {
+    if (!_closed) _active = active;
   }
 
   @override

@@ -39,10 +39,41 @@ void main() {
     expect(second.closeCalls, 1);
     expect(secondInput.closeCalls, 1);
   });
+
+  testWidgets('application lifecycle pauses and resumes gamepad input', (
+    tester,
+  ) async {
+    final repository = _LifecycleMapRepository();
+    final input = _LifecycleMapInputSource();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+
+    await tester.pumpWidget(
+      AppComposition(mapRepository: repository, mapInputSource: input).root,
+    );
+    await tester.pump();
+    expect(input.activeStates, [true]);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    expect(input.activeStates.last, isFalse);
+    expect(repository.closeCalls, 0);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(input.activeStates.last, isTrue);
+    expect(repository.closeCalls, 0);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    expect(input.activeStates.last, isFalse);
+    expect(repository.closeCalls, 1);
+  });
 }
 
-final class _LifecycleMapInputSource implements MapInputSource {
+final class _LifecycleMapInputSource
+    implements MapInputSource, LifecycleAwareMapInputSource {
   var closeCalls = 0;
+  final activeStates = <bool>[];
 
   @override
   Stream<MapInputCommand> get commands => const Stream.empty();
@@ -51,6 +82,9 @@ final class _LifecycleMapInputSource implements MapInputSource {
   Future<void> close() async {
     closeCalls += 1;
   }
+
+  @override
+  void setActive(bool active) => activeStates.add(active);
 }
 
 final class _LifecycleMapRepository implements MapRepository {

@@ -16,6 +16,10 @@ abstract interface class MapInputSource {
   Future<void> close();
 }
 
+abstract interface class LifecycleAwareMapInputSource {
+  void setActive(bool active);
+}
+
 abstract final class MapInputCursor {
   static MapHexCoordinate initial(MapView map) =>
       (col: map.cols ~/ 2, row: map.rows ~/ 2);
