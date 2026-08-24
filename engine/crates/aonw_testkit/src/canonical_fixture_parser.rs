@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use aonw_content::MapDocument;
+use aonw_content::MapDefinition;
 use aonw_contracts::{GameStateDto, ReplayCommandDto};
 use serde::de::DeserializeOwned;
 use serde_json::{Map, Value};
@@ -76,7 +76,7 @@ fn validate_state_bounds(
     expected: &GameStateDto,
     path: Option<&Path>,
 ) -> Result<(), FixtureLoadError> {
-    let map = input.map.map();
+    let map = &input.map;
     let expected_bounds = (map.cols(), map.rows());
     if (input.state.cols, input.state.rows) != expected_bounds {
         return Err(invalid(
@@ -113,7 +113,7 @@ fn parse_input(
     let map_value = take(&mut input, "map", "$.input.map", path)?;
     let map_bytes = serde_json::to_vec(&map_value)
         .map_err(|error| invalid(path, "$.input.map", error.to_string()))?;
-    let map = MapDocument::from_json(&map_bytes)
+    let map = MapDefinition::from_canonical_json(&map_bytes)
         .map_err(|error| invalid(path, "$.input.map", error.to_string()))?;
     Ok(CanonicalFixtureInput {
         actor_player_id: actor.into_boxed_str(),

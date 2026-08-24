@@ -1,12 +1,14 @@
 //! Executes current canonical fixtures without a historical reducer adapter.
 
 use std::fmt;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use aonw_content::RulesetDefinition;
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
-    CoordinateDto, MovementStepDto, ReplayCommandDto, ReplayEventDto, ReplayEvidenceDto,
+    CoordinateDto, GameStateDto, MovementStepDto, ReplayCommandDto, ReplayEventDto,
+    ReplayEvidenceDto,
 };
 use aonw_domain::{HexCoord, PlayerId, UnitId};
 use aonw_engine::{
@@ -31,6 +33,8 @@ impl std::error::Error for ExecutionError {}
 
 struct CanonicalRustEngineExecutor;
 
+const CANONICAL_COMMAND_FIXTURE_COUNT: usize = 44;
+
 impl CanonicalFixtureExecutor for CanonicalRustEngineExecutor {
     type Error = ExecutionError;
 
@@ -42,7 +46,7 @@ impl CanonicalFixtureExecutor for CanonicalRustEngineExecutor {
     ) -> Result<CanonicalFixtureOutput, Self::Error> {
         let state = decode_game_state(input.state().clone()).map_err(display_error)?;
         let actor = PlayerId::new(input.actor_player_id()).map_err(display_error)?;
-        let map = input.map().map();
+        let map = input.map();
         let context = EngineContext::canonical(&actor, map, RulesetDefinition::standard());
         let transition = apply_command(state, context, input.command())?;
         let output_state = encode_game_state(transition.state());
@@ -199,7 +203,24 @@ fn rust_executes_current_canonical_command_corpus() {
         .load_corpus(fixture_dir)
         .expect("canonical command corpus must load");
 
-    assert_eq!(fixtures.len(), 1);
+    assert_eq!(fixtures.len(), CANONICAL_COMMAND_FIXTURE_COUNT);
+    assert!(
+        fixtures
+            .iter()
+            .all(|fixture| fixture.fixture_version() == 3)
+    );
     verify_canonical_corpus(&fixtures, &CanonicalRustEngineExecutor)
         .unwrap_or_else(|failure| panic!("{failure:?}"));
+}
+
+#[test]
+fn invalid_origin_is_rejected_at_the_canonical_state_boundary() {
+    let path = repository_root()
+        .join("engine/fixtures/canonical_state_rejections/unit-out-of-bounds.json");
+    let source = fs::read(path).expect("canonical state rejection fixture");
+    let dto = serde_json::from_slice::<GameStateDto>(&source).expect("strict current state DTO");
+    let error = decode_game_state(dto).expect_err("out-of-bounds state must fail closed");
+
+    assert_eq!(error.path(), "$");
+    assert!(error.to_string().contains("outside the map"));
 }

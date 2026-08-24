@@ -49,7 +49,6 @@ fn map_json() -> Value {
         "cols": 5,
         "rows": 5,
         "mapName": "canonical-fixture-plains",
-        "defaultZoom": 1.0,
         "objectives": [],
         "tiles": tiles
     })

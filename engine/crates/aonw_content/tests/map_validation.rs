@@ -76,6 +76,20 @@ fn logical_map(cols: u16, rows: u16) -> MapDefinition {
 }
 
 #[test]
+fn canonical_logical_map_round_trips_simulation_bounds_without_presentation_fields() {
+    let map = logical_map(2, 1);
+    let bytes = map.canonical_bytes().expect("canonical map");
+    let decoded = MapDefinition::from_canonical_json(&bytes).expect("logical map");
+
+    assert_eq!(decoded, map);
+    let mut value = serde_json::from_slice::<Value>(&bytes).expect("canonical JSON");
+    value["defaultZoom"] = json!(1.0);
+    assert!(
+        MapDefinition::from_canonical_json(&serde_json::to_vec(&value).expect("JSON")).is_err()
+    );
+}
+
+#[test]
 fn versioned_map_normalizes_lookup_and_resource_order() {
     let mut source = document();
     source["tiles"][0]["terrainTags"] = json!(["ocean", "mountain"]);

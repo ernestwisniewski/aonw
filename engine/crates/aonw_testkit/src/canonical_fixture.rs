@@ -1,4 +1,4 @@
-use aonw_content::MapDocument;
+use aonw_content::MapDefinition;
 use aonw_contracts::{GameStateDto, ReplayCommandDto, ReplayEventDto, ReplayEvidenceDto};
 use serde::Serialize;
 
@@ -72,7 +72,7 @@ impl CanonicalFixture {
 pub struct CanonicalFixtureInput {
     pub(crate) actor_player_id: Box<str>,
     pub(crate) ruleset_id: Box<str>,
-    pub(crate) map: MapDocument,
+    pub(crate) map: MapDefinition,
     pub(crate) state: GameStateDto,
     pub(crate) command: ReplayCommandDto,
 }
@@ -90,9 +90,9 @@ impl CanonicalFixtureInput {
         &self.ruleset_id
     }
 
-    /// Returns the validated versioned map document.
+    /// Returns the validated canonical logical map.
     #[must_use]
-    pub const fn map(&self) -> &MapDocument {
+    pub const fn map(&self) -> &MapDefinition {
         &self.map
     }
 

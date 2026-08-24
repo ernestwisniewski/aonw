@@ -22,6 +22,21 @@ pub(super) struct RawMapDocument {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(super) struct RawCanonicalMap {
+    #[serde(deserialize_with = "deserialize_u64")]
+    pub(super) schema_version: u64,
+    pub(super) grid_layout: Box<str>,
+    #[serde(deserialize_with = "deserialize_i64")]
+    pub(super) cols: i64,
+    #[serde(deserialize_with = "deserialize_i64")]
+    pub(super) rows: i64,
+    pub(super) map_name: Box<str>,
+    pub(super) objectives: Vec<RawObjective>,
+    pub(super) tiles: Vec<RawTile>,
+}
+
+#[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct RawTile {
     #[serde(deserialize_with = "deserialize_i64")]
@@ -113,18 +128,7 @@ impl TryFrom<RawMapDocument> for RawMap {
     type Error = crate::MapLoadError;
 
     fn try_from(raw: RawMapDocument) -> Result<Self, Self::Error> {
-        if raw.schema_version != CURRENT_MAP_SCHEMA_VERSION {
-            return Err(crate::MapLoadError::UnsupportedSchemaVersion {
-                found: raw.schema_version,
-                supported: CURRENT_MAP_SCHEMA_VERSION,
-            });
-        }
-        if raw.grid_layout.as_ref() != "oddQFlatTop" {
-            return Err(crate::MapLoadError::invalid(
-                "$.gridLayout",
-                "must be oddQFlatTop",
-            ));
-        }
+        validate_header(raw.schema_version, &raw.grid_layout)?;
         Ok(Self {
             cols: raw.cols,
             rows: raw.rows,
@@ -134,4 +138,36 @@ impl TryFrom<RawMapDocument> for RawMap {
             tiles: raw.tiles,
         })
     }
+}
+
+impl TryFrom<RawCanonicalMap> for RawMap {
+    type Error = crate::MapLoadError;
+
+    fn try_from(raw: RawCanonicalMap) -> Result<Self, Self::Error> {
+        validate_header(raw.schema_version, &raw.grid_layout)?;
+        Ok(Self {
+            cols: raw.cols,
+            rows: raw.rows,
+            map_name: raw.map_name,
+            default_zoom: 1.0,
+            objectives: raw.objectives,
+            tiles: raw.tiles,
+        })
+    }
+}
+
+fn validate_header(schema_version: u64, grid_layout: &str) -> Result<(), crate::MapLoadError> {
+    if schema_version != CURRENT_MAP_SCHEMA_VERSION {
+        return Err(crate::MapLoadError::UnsupportedSchemaVersion {
+            found: schema_version,
+            supported: CURRENT_MAP_SCHEMA_VERSION,
+        });
+    }
+    if grid_layout != "oddQFlatTop" {
+        return Err(crate::MapLoadError::invalid(
+            "$.gridLayout",
+            "must be oddQFlatTop",
+        ));
+    }
+    Ok(())
 }

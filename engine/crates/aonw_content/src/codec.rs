@@ -1,7 +1,7 @@
 use aonw_domain::HexCoord;
 
 use crate::error::MapLoadError;
-use crate::raw::{RawMap, RawMapDocument, RawObjective, RawTile};
+use crate::raw::{RawCanonicalMap, RawMap, RawMapDocument, RawObjective, RawTile};
 use crate::{
     GridLayout, MapDefinition, MapDocument, MapObjective, MapObjectiveType, ResourceType,
     TerrainProfile, TerrainType, TileDefinition,
@@ -18,6 +18,22 @@ impl MapDocument {
     pub fn from_json(source: &[u8]) -> Result<Self, MapLoadError> {
         check_size(source)?;
         build_document(serde_json::from_slice::<RawMapDocument>(source)?.try_into()?)
+    }
+}
+
+impl MapDefinition {
+    /// Decodes the strict canonical logical map used for content identity.
+    ///
+    /// Unlike an authored [`MapDocument`], a logical map has no presentation
+    /// zoom and may use simulation-sized bounds.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapLoadError`] for malformed, incomplete, unsupported, or
+    /// invalid input.
+    pub fn from_canonical_json(source: &[u8]) -> Result<Self, MapLoadError> {
+        check_size(source)?;
+        build_map(serde_json::from_slice::<RawCanonicalMap>(source)?.try_into()?)
     }
 }
 
