@@ -18,7 +18,7 @@ pub struct EngineContext<'context> {
 
 impl<'context> EngineContext<'context> {
     /// Constructs canonical context. Visibility is derived from [`GameState`]
-    /// by [`crate::GameEngine::apply_owned`] and [`crate::GameEngine::query`].
+    /// by [`crate::GameEngine::apply_player_owned`] and [`crate::GameEngine::query`].
     #[must_use]
     pub const fn canonical(
         actor_player_id: &'context PlayerId,

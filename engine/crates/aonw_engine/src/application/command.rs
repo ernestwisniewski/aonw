@@ -6,9 +6,9 @@ use crate::movement::{merge_discovered_contacts, recompute_after_move};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
 use crate::{EngineContext, GameEngine, MoveUnitCommand, StateDigest, UnitActionCommand};
 
-/// Authoritative simulation command family.
+/// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
-pub enum DomainCommand<'command> {
+pub enum PlayerCommand<'command> {
     /// Revision-bound manual unit movement.
     MoveUnit(MoveUnitCommand<'command>),
     /// Clears every cancellable order owned by one unit.
@@ -17,6 +17,52 @@ pub enum DomainCommand<'command> {
     SkipUnitTurn(UnitActionCommand<'command>),
     /// Places one idle unit in persistent fortification.
     FortifyUnit(UnitActionCommand<'command>),
+}
+
+/// Maximum number of authoritative events one player command may emit.
+///
+/// The runtime reserves this capacity before transferring ownership of the
+/// canonical state to the engine. This makes event-offset overflow fail before
+/// any transition can be applied.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct EventBudget {
+    maximum: u64,
+}
+
+impl EventBudget {
+    const NONE: Self = Self { maximum: 0 };
+    const SINGLE: Self = Self { maximum: 1 };
+
+    /// Constructs a bounded event allowance.
+    #[must_use]
+    pub const fn new(maximum: u64) -> Self {
+        Self { maximum }
+    }
+
+    /// Returns the largest permitted event count.
+    #[must_use]
+    pub const fn maximum(self) -> u64 {
+        self.maximum
+    }
+
+    /// Returns whether an actual transition stays within this command budget.
+    #[must_use]
+    pub const fn accepts(self, actual: u64) -> bool {
+        actual <= self.maximum
+    }
+}
+
+impl PlayerCommand<'_> {
+    /// Returns the reviewed upper event bound for this concrete command.
+    #[must_use]
+    pub const fn event_budget(self) -> EventBudget {
+        match self {
+            Self::MoveUnit(_) => EventBudget::SINGLE,
+            Self::CancelUnitAction(_) | Self::SkipUnitTurn(_) | Self::FortifyUnit(_) => {
+                EventBudget::NONE
+            }
+        }
+    }
 }
 
 /// Failure indicating corrupt internal state rather than a rejected command.
@@ -46,20 +92,20 @@ impl GameEngine {
     ///
     /// Returns an error only when canonical state or an engine-produced update
     /// violates internal invariants.
-    pub fn apply_owned(
+    pub fn apply_player_owned(
         state: GameState,
         context: EngineContext<'_>,
-        command: DomainCommand<'_>,
+        command: PlayerCommand<'_>,
     ) -> Result<DomainTransition, CanonicalEngineError> {
         let (map_hash, ruleset_hash) = content_hashes(context)?;
         let map = context.map();
         match command {
-            DomainCommand::MoveUnit(command) => {
+            PlayerCommand::MoveUnit(command) => {
                 let movement =
                     GameEngine::apply_move_unit(&state, context.with_world(&state), command);
                 apply_move(state, map, movement, map_hash, ruleset_hash)
             }
-            DomainCommand::CancelUnitAction(command) => apply_canonical_unit_action(
+            PlayerCommand::CancelUnitAction(command) => apply_canonical_unit_action(
                 state,
                 context,
                 command,
@@ -67,7 +113,7 @@ impl GameEngine {
                 map_hash,
                 ruleset_hash,
             ),
-            DomainCommand::SkipUnitTurn(command) => apply_canonical_unit_action(
+            PlayerCommand::SkipUnitTurn(command) => apply_canonical_unit_action(
                 state,
                 context,
                 command,
@@ -75,7 +121,7 @@ impl GameEngine {
                 map_hash,
                 ruleset_hash,
             ),
-            DomainCommand::FortifyUnit(command) => apply_canonical_unit_action(
+            PlayerCommand::FortifyUnit(command) => apply_canonical_unit_action(
                 state,
                 context,
                 command,
@@ -217,4 +263,27 @@ fn apply_move(
         map_hash,
         ruleset_hash,
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use aonw_domain::{HexCoord, UnitId};
+
+    use super::{EventBudget, PlayerCommand};
+    use crate::{MoveUnitCommand, UnitActionCommand};
+
+    #[test]
+    fn player_commands_publish_reviewed_event_budgets() {
+        let unit_id = UnitId::new("unit-1").expect("unit id");
+
+        assert_eq!(
+            PlayerCommand::MoveUnit(MoveUnitCommand::new(0, &unit_id, HexCoord::new(1, 0)))
+                .event_budget(),
+            EventBudget::SINGLE
+        );
+        assert_eq!(
+            PlayerCommand::FortifyUnit(UnitActionCommand::new(0, &unit_id)).event_budget(),
+            EventBudget::NONE
+        );
+    }
 }

@@ -12,7 +12,7 @@ use aonw_contracts::{
 };
 use aonw_domain::{HexCoord, PlayerId, UnitId};
 use aonw_engine::{
-    DomainCommand, DomainEvent, EngineContext, ExecutionEvidence, GameEngine, MoveUnitCommand,
+    DomainEvent, EngineContext, ExecutionEvidence, GameEngine, MoveUnitCommand, PlayerCommand,
     UnitActionCommand,
 };
 use aonw_testkit::{
@@ -80,10 +80,10 @@ fn apply_command(
             target,
         } => {
             let unit_id = UnitId::new(unit_id.as_str()).map_err(display_error)?;
-            GameEngine::apply_owned(
+            GameEngine::apply_player_owned(
                 state,
                 context,
-                DomainCommand::MoveUnit(MoveUnitCommand::new(
+                PlayerCommand::MoveUnit(MoveUnitCommand::new(
                     *expected_revision,
                     &unit_id,
                     HexCoord::new(target.col, target.row),
@@ -141,11 +141,11 @@ fn apply_unit_action(
     let unit_id = UnitId::new(unit_id).map_err(display_error)?;
     let command = UnitActionCommand::new(expected_revision, &unit_id);
     let command = match action {
-        FixtureUnitAction::Cancel => DomainCommand::CancelUnitAction(command),
-        FixtureUnitAction::Skip => DomainCommand::SkipUnitTurn(command),
-        FixtureUnitAction::Fortify => DomainCommand::FortifyUnit(command),
+        FixtureUnitAction::Cancel => PlayerCommand::CancelUnitAction(command),
+        FixtureUnitAction::Skip => PlayerCommand::SkipUnitTurn(command),
+        FixtureUnitAction::Fortify => PlayerCommand::FortifyUnit(command),
     };
-    GameEngine::apply_owned(state, context, command).map_err(display_error)
+    GameEngine::apply_player_owned(state, context, command).map_err(display_error)
 }
 
 fn encode_event(event: &DomainEvent) -> ReplayEventDto {

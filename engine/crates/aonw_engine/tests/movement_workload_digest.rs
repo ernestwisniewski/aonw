@@ -6,8 +6,8 @@ use aonw_domain::{
     UnitOccupancyPolicy,
 };
 use aonw_engine::{
-    CompiledMovementMap, DomainCommand, EngineContext, GameEngine, GameQuery, MoveUnitCommand,
-    MovementSearchMetrics, MovementSearchWorkspace, QueryResult, ReachableMovement,
+    CompiledMovementMap, EngineContext, GameEngine, GameQuery, MoveUnitCommand,
+    MovementSearchMetrics, MovementSearchWorkspace, PlayerCommand, QueryResult, ReachableMovement,
     ReachableMovementQuery, TerrainMovementPlan, TerrainMovementQuery,
 };
 
@@ -48,10 +48,10 @@ fn reference_workload_outputs_are_deterministic() {
             )
         });
 
-    let transition = GameEngine::apply_owned(
+    let transition = GameEngine::apply_player_owned(
         state.clone(),
         context,
-        DomainCommand::MoveUnit(MoveUnitCommand::new(
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(
             state.revision().get(),
             &mover_id,
             HexCoord::new(1, 0),

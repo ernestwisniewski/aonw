@@ -7,8 +7,8 @@ use aonw_domain::{
     UnitKind, UnitOccupancyPolicy,
 };
 use aonw_engine::{
-    CompiledMovementMap, DomainCommand, EngineContext, ExecutionEvidence, GameEngine, GameQuery,
-    MoveUnitCommand, QueryResult, TerrainMovementQuery,
+    CompiledMovementMap, EngineContext, ExecutionEvidence, GameEngine, GameQuery, MoveUnitCommand,
+    PlayerCommand, QueryResult, TerrainMovementQuery,
 };
 
 fn map() -> MapDefinition {
@@ -86,10 +86,10 @@ fn canonical_move_preserves_unit_fields_and_updates_fog_and_contact() {
         TransportNetwork::default(),
     );
     let unit_id = UnitId::new("unit-1").expect("unit id");
-    let transition = GameEngine::apply_owned(
+    let transition = GameEngine::apply_player_owned(
         state,
         EngineContext::canonical(&actor, &map, RulesetDefinition::standard()),
-        DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(2, 1))),
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(2, 1))),
     )
     .expect("transition");
 
@@ -133,10 +133,10 @@ fn canonical_rejection_preserves_revision_and_digest() {
         TransportNetwork::default(),
     );
     let unit_id = UnitId::new("unit-1").expect("unit id");
-    let transition = GameEngine::apply_owned(
+    let transition = GameEngine::apply_player_owned(
         state.clone(),
         EngineContext::canonical(&actor, &map, RulesetDefinition::standard()),
-        DomainCommand::MoveUnit(MoveUnitCommand::new(3, &unit_id, HexCoord::new(2, 1))),
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(3, &unit_id, HexCoord::new(2, 1))),
     )
     .expect("rejection transition");
 
@@ -161,13 +161,13 @@ fn prepared_apply_matches_raw_apply_and_exposes_owned_parts() {
     );
     let unit_id = UnitId::new("unit-1").expect("unit id");
     let command =
-        || DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(1, 0)));
+        || PlayerCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(1, 0)));
     let context = EngineContext::canonical(&actor, &map, RulesetDefinition::standard());
-    let raw = GameEngine::apply_owned(state.clone(), context, command()).expect("raw apply");
+    let raw = GameEngine::apply_player_owned(state.clone(), context, command()).expect("raw apply");
     let compiled =
         CompiledMovementMap::compile_owned(map.clone(), RulesetDefinition::standard().clone())
             .expect("compiled map");
-    let owned = GameEngine::apply_owned(
+    let owned = GameEngine::apply_player_owned(
         state,
         context.with_compiled_movement_map(&compiled),
         command(),
@@ -238,10 +238,10 @@ fn hidden_foreign_city_is_an_accepted_no_op_but_discovered_city_is_rejected() {
         FogOfWar::try_new([PlayerFog::new(actor.clone(), [], [HexCoord::new(1, 1)])]).expect("fog"),
         TransportNetwork::default(),
     );
-    let hidden_result = GameEngine::apply_owned(
+    let hidden_result = GameEngine::apply_player_owned(
         hidden,
         EngineContext::canonical(&actor, &map, RulesetDefinition::standard()),
-        DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(2, 1))),
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(2, 1))),
     )
     .expect("transition");
     assert!(hidden_result.is_accepted());
@@ -266,10 +266,10 @@ fn hidden_foreign_city_is_an_accepted_no_op_but_discovered_city_is_rejected() {
         .expect("fog"),
         TransportNetwork::default(),
     );
-    let discovered_result = GameEngine::apply_owned(
+    let discovered_result = GameEngine::apply_player_owned(
         discovered,
         EngineContext::canonical(&actor, &map, RulesetDefinition::standard()),
-        DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(2, 1))),
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(2, 1))),
     )
     .expect("transition");
     assert_eq!(

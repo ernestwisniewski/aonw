@@ -11,9 +11,10 @@ use aonw_domain::{
 };
 use aonw_local_runtime::{
     LocalRuntime, MoveUnitRequest, OpenSession, OpenSessionError, PendingActionView,
-    PersistenceError, ReachableRequest, ReplayVerification, RngState, RoutePlanRequest,
-    RuntimeError, RuntimeQuery, RuntimeQueryResult, UnitActionRequest,
+    PersistenceError, ReachableRequest, ReplayVerification, RoutePlanRequest, RuntimeError,
+    RuntimeQuery, RuntimeQueryResult, UnitActionRequest,
 };
+use sha2::{Digest, Sha256};
 
 fn map(id: &str, cols: u16, rows: u16) -> MapDefinition {
     let tiles = (0..rows)
@@ -195,7 +196,7 @@ fn failed_reopen_preserves_session_and_close_is_idempotent() {
 fn exhausted_event_offset_rejects_dispatch_without_closing_session() {
     let mut runtime = LocalRuntime::default();
     let opened = runtime
-        .open(request().with_runtime_state(RngState::new(0, 0, 0), u64::MAX))
+        .open(request().with_event_offset(u64::MAX))
         .expect("open");
 
     let result = runtime.dispatch(&MoveUnitRequest {
@@ -209,6 +210,90 @@ fn exhausted_event_offset_rejects_dispatch_without_closing_session() {
         runtime.snapshot().expect("session remains open").stamp(),
         &opened
     );
+}
+
+#[test]
+fn zero_event_command_succeeds_at_exhausted_event_offset() {
+    let mut runtime = LocalRuntime::default();
+    runtime
+        .open(request().with_event_offset(u64::MAX))
+        .expect("open");
+
+    let result = runtime
+        .fortify_unit(&UnitActionRequest {
+            expected_revision: 0,
+            unit_id: UnitId::new("unit-1").expect("unit id"),
+        })
+        .expect("zero-event action");
+
+    assert!(result.is_accepted());
+    assert!(result.events.is_empty());
+    assert_eq!(result.stamp.revision, StateRevision::new(1));
+    let save: SaveGameDto = serde_json::from_str(
+        &runtime
+            .export_save_json()
+            .expect("save at exhausted offset"),
+    )
+    .expect("save dto");
+    assert_eq!(save.event_offset, u64::MAX);
+}
+
+#[test]
+fn revision_overflow_is_rejected_without_advancing_runtime_counters() {
+    let (map, ruleset) = content();
+    let scenario = ScenarioDefinition::try_new(
+        "overflow-scenario",
+        &map,
+        &ruleset,
+        [ScenarioUnitDefinition::new(
+            UnitId::new("unit-1").expect("unit id"),
+            PlayerId::new("player-1").expect("player id"),
+            UnitKind::Commander,
+            "Commander",
+            HexCoord::new(0, 0),
+        )],
+    )
+    .expect("scenario");
+    let initial = scenario.bootstrap(&map, &ruleset).expect("bootstrap");
+    let exhausted = GameState::try_new(
+        StateRevision::new(u64::MAX),
+        initial.turn(),
+        initial.bounds(),
+        initial.occupancy_policy(),
+        initial.units().iter().cloned(),
+    )
+    .expect("exhausted state");
+    let mut runtime = LocalRuntime::default();
+    runtime
+        .open(
+            OpenSession::from_state(
+                map,
+                ruleset,
+                exhausted,
+                PlayerId::new("player-1").expect("player id"),
+            )
+            .with_event_offset(23),
+        )
+        .expect("open");
+
+    let result = runtime
+        .fortify_unit(&UnitActionRequest {
+            expected_revision: u64::MAX,
+            unit_id: UnitId::new("unit-1").expect("unit id"),
+        })
+        .expect("typed rejection");
+
+    assert_eq!(
+        result
+            .rejection
+            .map(aonw_engine::CommandRejectionCode::as_str),
+        Some("state_revision_overflow")
+    );
+    assert!(result.events.is_empty());
+    assert_eq!(result.stamp.revision, StateRevision::new(u64::MAX));
+    let save = SaveGameDto::from_json(&runtime.export_save_json().expect("save")).expect("dto");
+    assert_eq!(save.event_offset, 23);
+    assert_eq!(save.state.revision, u64::MAX);
 }
 
 #[test]
@@ -250,9 +335,7 @@ fn repeated_and_batch_queries_use_revision_scoped_cache() {
 #[test]
 fn save_round_trip_preserves_complete_state_and_runtime_checkpoint() {
     let mut runtime = LocalRuntime::default();
-    runtime
-        .open(request().with_runtime_state(RngState::new(41, 7, 3), 11))
-        .expect("open");
+    runtime.open(request().with_event_offset(11)).expect("open");
     runtime
         .dispatch(&MoveUnitRequest {
             expected_revision: 0,
@@ -264,9 +347,6 @@ fn save_round_trip_preserves_complete_state_and_runtime_checkpoint() {
     let save_json = runtime.export_save_json().expect("save");
     let save = SaveGameDto::from_json(&save_json).expect("strict save");
     assert_eq!(save.state.units.len(), 1);
-    assert_eq!(save.rng_state.seed, 41);
-    assert_eq!(save.rng_state.stream, 7);
-    assert_eq!(save.rng_state.counter, 3);
     assert_eq!(save.event_offset, 12);
 
     let (map, ruleset) = content();
@@ -338,6 +418,49 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
         }
     );
 
+    let mut reordered = replay.clone();
+    reordered.entries.swap(0, 1);
+    let (map, ruleset) = content();
+    assert!(matches!(
+        LocalRuntime::verify_replay_json(
+            map,
+            ruleset,
+            &reordered.to_json().expect("reordered replay")
+        ),
+        Err(PersistenceError::ReplayIndexMismatch {
+            expected: 0,
+            found: 1,
+        })
+    ));
+
+    let mut reordered_commands = replay.clone();
+    let first_command = reordered_commands.entries[0].command.clone();
+    reordered_commands.entries[0].command = reordered_commands.entries[1].command.clone();
+    reordered_commands.entries[1].command = first_command;
+    let (map, ruleset) = content();
+    assert!(matches!(
+        LocalRuntime::verify_replay_json(
+            map,
+            ruleset,
+            &reordered_commands
+                .to_json()
+                .expect("command-reordered replay")
+        ),
+        Err(PersistenceError::ReplayResultMismatch { entry: 0 })
+    ));
+
+    let mut tampered_event = replay.clone();
+    tampered_event.entries[0].result.events.clear();
+    let (map, ruleset) = content();
+    assert!(matches!(
+        LocalRuntime::verify_replay_json(
+            map,
+            ruleset,
+            &tampered_event.to_json().expect("event-tampered replay")
+        ),
+        Err(PersistenceError::ReplayResultMismatch { entry: 0 })
+    ));
+
     let mut tampered = replay;
     tampered.entries[0].result.state_digest = "00".repeat(32);
     let (map, ruleset) = content();
@@ -349,4 +472,39 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
         ),
         Err(PersistenceError::ReplayResultMismatch { entry: 0 })
     ));
+}
+
+#[test]
+fn deterministic_replay_signature_is_stable() {
+    let mut runtime = LocalRuntime::default();
+    runtime.open(request()).expect("open");
+    let unit_id = UnitId::new("unit-1").expect("unit id");
+    runtime
+        .dispatch(&MoveUnitRequest {
+            expected_revision: 0,
+            unit_id: unit_id.clone(),
+            target: HexCoord::new(1, 0),
+        })
+        .expect("move");
+    runtime
+        .dispatch(&MoveUnitRequest {
+            expected_revision: 0,
+            unit_id: unit_id.clone(),
+            target: HexCoord::new(2, 0),
+        })
+        .expect("typed stale rejection");
+    runtime
+        .fortify_unit(&UnitActionRequest {
+            expected_revision: 1,
+            unit_id,
+        })
+        .expect("fortify");
+
+    let replay_json = runtime.export_replay_json().expect("replay");
+    assert!(!replay_json.contains("rngState"));
+    assert!(!replay_json.contains("initialRngState"));
+    assert_eq!(
+        format!("{:x}", Sha256::digest(replay_json.as_bytes())),
+        "d67328d2b78bba1d3e7bd6a666084b4040f04fcd8d9813108622ac9e746ff0db"
+    );
 }

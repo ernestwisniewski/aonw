@@ -2,9 +2,12 @@
 
 `authoritative_inventory` is the reviewed, fail-closed inventory for the
 authoritative-engine migration. It records every concrete Dart
-`DomainCommand`, trusted `SystemCommand`, domain event, execution-evidence
+`DomainCommand`, its current Rust `PlayerCommand` counterpart, trusted
+`SystemCommand`, domain event, execution-evidence
 type, Rust query/result variant, recipient projection, current migration
 status, optional Rust counterpart, and exact declaration source.
+The Rust player-command census must also exactly match `ClientCommandDto`, so
+the greenfield client protocol cannot acquire a trusted system endpoint.
 
 `state_field_ledger` keeps the boundaries separate and names their exact
 fields: the 120 reducer fixture inputs, Dart `DomainState`, the Dart snapshot
@@ -13,6 +16,13 @@ identity stamp, and recipient-safe snapshot/patch. Rust canonical state fields
 are `state-contract-ready` only after strict typed round-trip, canonical
 normalization, invariant validation, and state-digest participation have been
 proven; missing state remains `reference-only`.
+
+`determinism_inventory` names every current oracle RNG/seed derivation and
+wall-clock read. Reference behavior is recorded with its concrete algorithm,
+inputs, and required evidence. It does not create a generic global RNG
+contract: each future Rust capability must own its named deterministic inputs
+and exact replay evidence. Pure Rust engine crates are forbidden from reading
+the system clock or system randomness.
 
 The status vocabulary is closed:
 
@@ -43,6 +53,7 @@ repository root:
 ```sh
 make rust-engine-inventory-check
 make rust-engine-inventory-test
+make rust-determinism-check
 ```
 
 The analyzer-backed AST census is a separate evidence gate because the small

@@ -19,6 +19,7 @@
 #   rust-event-source <repo-relative-path>
 #   rust-evidence-source <repo-relative-path>
 #   rust-persistence-source <repo-relative-path>
+#   rust-client-command-source <repo-relative-path>
 #   rust-client-response-source <repo-relative-path>
 #   rust-projection-source <repo-relative-path>
 #   partial-parity-mode <opaque-splice|full-state>
@@ -53,6 +54,7 @@ rust-query-source engine/crates/aonw_engine/src/application/query.rs
 rust-event-source engine/crates/aonw_engine/src/application/transition.rs
 rust-evidence-source engine/crates/aonw_engine/src/application/transition.rs
 rust-persistence-source engine/crates/aonw_contracts/src/persistence.rs
+rust-client-command-source engine/crates/aonw_contracts/src/client/request.rs
 rust-client-response-source engine/crates/aonw_contracts/src/client/response.rs
 rust-projection-source engine/crates/aonw_local_runtime/src/player_view.rs
 partial-parity-mode full-state

@@ -28,7 +28,7 @@ pub struct City {
 }
 
 impl City {
-    /// Constructs the legacy movement slice with canonical city defaults.
+    /// Constructs a minimal canonical city with validated defaults.
     #[must_use]
     pub fn new(
         id: CityId,

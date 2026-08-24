@@ -48,7 +48,7 @@ write_baseline() {
     'final class ExampleExecution {}' \
     >"${movement_root}/movement_command_execution.dart"
   printf '%s\n' \
-    "pub enum DomainCommand<'command> {" \
+    "pub enum PlayerCommand<'command> {" \
     "    Example(ExampleCommand<'command>)," \
     '}' \
     >"${rust_root}/command.rs"
@@ -76,6 +76,11 @@ write_baseline() {
     '    Example { value: u32 },' \
     '}' \
     >"${contracts_root}/persistence.rs"
+  printf '%s\n' \
+    'pub enum ClientCommandDto {' \
+    '    Example { value: u32 },' \
+    '}' \
+    >"${contracts_root}/client/request.rs"
   printf '%s\n' \
     'pub enum ClientQueryResultDto {' \
     '    Example { value: u32 },' \
@@ -120,6 +125,7 @@ write_baseline() {
     'rust-event-source engine/crates/aonw_engine/src/application/transition.rs' \
     'rust-evidence-source engine/crates/aonw_engine/src/application/transition.rs' \
     'rust-persistence-source engine/crates/aonw_contracts/src/persistence.rs' \
+    'rust-client-command-source engine/crates/aonw_contracts/src/client/request.rs' \
     'rust-client-response-source engine/crates/aonw_contracts/src/client/response.rs' \
     'rust-projection-source engine/crates/aonw_local_runtime/src/player_view.rs' \
     'partial-parity-mode opaque-splice' \
@@ -153,6 +159,11 @@ sed -i.bak '/Example(ExampleCommand/a\
     Unclassified(UnclassifiedCommand),' "${rust_root}/command.rs"
 rm -f "${rust_root}/command.rs.bak"
 expect_rejection "an unclassified Rust command variant"
+
+sed -i.bak '/    Example {/a\
+    TrustedSystem { value: u32 },' "${contracts_root}/client/request.rs"
+rm -f "${contracts_root}/client/request.rs.bak"
+expect_rejection "a trusted system command exposed to clients"
 
 sed -i.bak 's/characterized Example/engine-parity Example/' "${manifest}"
 rm -f "${manifest}.bak"

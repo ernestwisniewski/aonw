@@ -92,6 +92,7 @@ rust_query_source=""
 rust_event_source=""
 rust_evidence_source=""
 rust_persistence_source=""
+rust_client_command_source=""
 rust_client_response_source=""
 rust_projection_source=""
 partial_parity_mode=""
@@ -118,7 +119,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
   [[ "${#fields[@]}" -gt 0 ]] || continue
   key="${fields[0]}"
   case "${key}" in
-    oracle-tree|expected-domain-count|expected-system-count|expected-query-count|expected-event-count|expected-evidence-count|expected-projection-type-count|expected-projection-variant-count|dart-domain-root|dart-system-source|dart-event-root|dart-evidence-source|rust-domain-source|rust-system-source|rust-query-source|rust-event-source|rust-evidence-source|rust-persistence-source|rust-client-response-source|rust-projection-source|partial-parity-mode)
+    oracle-tree|expected-domain-count|expected-system-count|expected-query-count|expected-event-count|expected-evidence-count|expected-projection-type-count|expected-projection-variant-count|dart-domain-root|dart-system-source|dart-event-root|dart-evidence-source|rust-domain-source|rust-system-source|rust-query-source|rust-event-source|rust-evidence-source|rust-persistence-source|rust-client-command-source|rust-client-response-source|rust-projection-source|partial-parity-mode)
       [[ "${#fields[@]}" -eq 2 ]] || fail "${manifest}:${line_number}: ${key} requires exactly one value"
       value="${fields[1]}"
       case "${key}" in
@@ -140,6 +141,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
         rust-event-source) [[ -z "${rust_event_source}" ]] || fail "duplicate rust-event-source"; rust_event_source="${value}" ;;
         rust-evidence-source) [[ -z "${rust_evidence_source}" ]] || fail "duplicate rust-evidence-source"; rust_evidence_source="${value}" ;;
         rust-persistence-source) [[ -z "${rust_persistence_source}" ]] || fail "duplicate rust-persistence-source"; rust_persistence_source="${value}" ;;
+        rust-client-command-source) [[ -z "${rust_client_command_source}" ]] || fail "duplicate rust-client-command-source"; rust_client_command_source="${value}" ;;
         rust-client-response-source) [[ -z "${rust_client_response_source}" ]] || fail "duplicate rust-client-response-source"; rust_client_response_source="${value}" ;;
         rust-projection-source) [[ -z "${rust_projection_source}" ]] || fail "duplicate rust-projection-source"; rust_projection_source="${value}" ;;
         partial-parity-mode) [[ -z "${partial_parity_mode}" ]] || fail "duplicate partial-parity-mode"; partial_parity_mode="${value}" ;;
@@ -266,6 +268,7 @@ require_repo_file "${rust_query_source}"
 require_repo_file "${rust_event_source}"
 require_repo_file "${rust_evidence_source}"
 require_repo_file "${rust_persistence_source}"
+require_repo_file "${rust_client_command_source}"
 require_repo_file "${rust_client_response_source}"
 require_repo_file "${rust_projection_source}"
 
@@ -410,6 +413,7 @@ domain_actual="${scratch}/domain.actual"
 system_actual="${scratch}/system.actual"
 rust_domain_actual="${scratch}/rust-domain.actual"
 rust_system_actual="${scratch}/rust-system.actual"
+client_command_actual="${scratch}/client-command.actual"
 query_actual="${scratch}/query.actual"
 query_result_actual="${scratch}/query-result.actual"
 client_query_result_actual="${scratch}/client-query-result.actual"
@@ -426,7 +430,8 @@ projection_dto_variant_actual="${scratch}/projection-dto-variant.actual"
 census_dart_subclasses "${dart_domain_root}" "DomainCommand" "${domain_actual}"
 census_dart_subclasses "${dart_system_source}" "SystemCommand" "${system_actual}"
 census_dart_subclasses "${dart_event_root}" "DomainEvent" "${event_actual}"
-census_rust_enum "${rust_domain_source}" "DomainCommand" "${rust_domain_actual}"
+census_rust_enum "${rust_domain_source}" "PlayerCommand" "${rust_domain_actual}"
+census_rust_enum "${rust_client_command_source}" "ClientCommandDto" "${client_command_actual}"
 if [[ "${rust_system_source}" == "-" ]]; then
   : >"${rust_system_actual}"
 else
@@ -465,7 +470,8 @@ compare_inventory() {
 
 compare_inventory "${domain_expected}" "${domain_actual}" "Dart DomainCommand"
 compare_inventory "${system_expected}" "${system_actual}" "Dart SystemCommand"
-compare_inventory "${rust_domain_expected}" "${rust_domain_actual}" "Rust DomainCommand"
+compare_inventory "${rust_domain_expected}" "${rust_domain_actual}" "Rust PlayerCommand"
+compare_inventory "${rust_domain_expected}" "${client_command_actual}" "client player command"
 compare_inventory "${rust_system_expected}" "${rust_system_actual}" "Rust SystemCommand"
 compare_inventory "${query_expected}" "${query_actual}" "Rust GameQuery"
 compare_inventory "${query_result_expected}" "${query_result_actual}" "Rust QueryResult"

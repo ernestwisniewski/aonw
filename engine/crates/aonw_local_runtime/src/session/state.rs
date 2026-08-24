@@ -1,8 +1,8 @@
 use aonw_content::{ContentHash, MapDefinition, RulesetDefinition};
 use aonw_domain::{GameState, PlayerId, StateRevision};
-use aonw_engine::{EngineContext, GameEngine, MovementVisibility, StateDigest};
+use aonw_engine::{EngineContext, EventBudget, GameEngine, MovementVisibility, StateDigest};
 
-use crate::persistence::{ReplayRecorder, RngState};
+use crate::persistence::ReplayRecorder;
 use crate::prepared_world::PreparedWorld;
 
 use super::{OpenSession, OpenSessionError, RuntimeError};
@@ -27,9 +27,42 @@ pub(crate) struct Session {
     actor: PlayerId,
     state_digest: StateDigest,
     visibility: MovementVisibility,
-    rng_state: RngState,
     event_offset: u64,
     replay: ReplayRecorder,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct EventReservation {
+    initial_offset: u64,
+    budget: EventBudget,
+}
+
+impl EventReservation {
+    fn try_new(initial_offset: u64, budget: EventBudget) -> Result<Self, RuntimeError> {
+        initial_offset
+            .checked_add(budget.maximum())
+            .ok_or(RuntimeError::EventOffsetOverflow)?;
+        Ok(Self {
+            initial_offset,
+            budget,
+        })
+    }
+
+    fn committed_offset(self, actual: usize) -> Result<u64, RuntimeError> {
+        let actual = u64::try_from(actual).map_err(|_| RuntimeError::EventBudgetExceeded {
+            maximum: self.budget.maximum(),
+            actual: u64::MAX,
+        })?;
+        if !self.budget.accepts(actual) {
+            return Err(RuntimeError::EventBudgetExceeded {
+                maximum: self.budget.maximum(),
+                actual,
+            });
+        }
+        self.initial_offset
+            .checked_add(actual)
+            .ok_or(RuntimeError::EventOffsetOverflow)
+    }
 }
 
 impl Session {
@@ -38,19 +71,13 @@ impl Session {
         let state_digest = GameEngine::state_digest(&request.state);
         let visibility =
             MovementVisibility::for_player(&request.state, world.map(), &request.actor);
-        let replay = ReplayRecorder::new(
-            &request.state,
-            state_digest,
-            request.rng_state,
-            request.event_offset,
-        );
+        let replay = ReplayRecorder::new(&request.state, state_digest, request.event_offset);
         Ok(Self {
             world,
             state: Some(request.state),
             actor: request.actor,
             state_digest,
             visibility,
-            rng_state: request.rng_state,
             event_offset: request.event_offset,
             replay,
         })
@@ -72,28 +99,24 @@ impl Session {
         self.world.ruleset()
     }
 
-    pub(crate) const fn rng_state(&self) -> RngState {
-        self.rng_state
-    }
-
     pub(crate) const fn event_offset(&self) -> u64 {
         self.event_offset
     }
 
-    pub(crate) fn ensure_event_capacity(&self, count: usize) -> Result<(), RuntimeError> {
-        let count = u64::try_from(count).map_err(|_| RuntimeError::EventOffsetOverflow)?;
-        self.event_offset
-            .checked_add(count)
-            .map(|_| ())
-            .ok_or(RuntimeError::EventOffsetOverflow)
+    pub(crate) fn reserve_event_capacity(
+        &self,
+        budget: EventBudget,
+    ) -> Result<EventReservation, RuntimeError> {
+        EventReservation::try_new(self.event_offset, budget)
     }
 
-    pub(crate) fn advance_event_offset(&mut self, count: usize) -> Result<(), RuntimeError> {
-        let count = u64::try_from(count).map_err(|_| RuntimeError::EventOffsetOverflow)?;
-        self.event_offset = self
-            .event_offset
-            .checked_add(count)
-            .ok_or(RuntimeError::EventOffsetOverflow)?;
+    pub(crate) fn commit_event_reservation(
+        &mut self,
+        reservation: EventReservation,
+        actual: usize,
+    ) -> Result<(), RuntimeError> {
+        debug_assert_eq!(reservation.initial_offset, self.event_offset);
+        self.event_offset = reservation.committed_offset(actual)?;
         Ok(())
     }
 
@@ -103,12 +126,7 @@ impl Session {
 
     pub(crate) fn prepare_replay_segment(&mut self) {
         if self.replay.is_full() {
-            self.replay = ReplayRecorder::new(
-                self.state(),
-                self.state_digest,
-                self.rng_state,
-                self.event_offset,
-            );
+            self.replay = ReplayRecorder::new(self.state(), self.state_digest, self.event_offset);
         }
     }
 
@@ -143,5 +161,47 @@ impl Session {
             map_hash: self.world.map_hash(),
             ruleset_hash: self.world.ruleset_hash(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use aonw_engine::{EventBudget, MoveUnitCommand, PlayerCommand};
+
+    use super::EventReservation;
+    use crate::RuntimeError;
+
+    fn movement_budget() -> EventBudget {
+        let unit_id = aonw_domain::UnitId::new("unit-1").expect("unit id");
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(
+            0,
+            &unit_id,
+            aonw_domain::HexCoord::new(1, 0),
+        ))
+        .event_budget()
+    }
+
+    #[test]
+    fn reservation_preflights_offset_and_enforces_actual_count() {
+        let budget = movement_budget();
+        assert_eq!(
+            EventReservation::try_new(u64::MAX, budget),
+            Err(RuntimeError::EventOffsetOverflow)
+        );
+
+        let reservation = EventReservation::try_new(7, budget).expect("reserve");
+        assert_eq!(reservation.committed_offset(1), Ok(8));
+
+        let reservation = EventReservation::try_new(7, budget).expect("reserve");
+        assert_eq!(
+            reservation.committed_offset(2),
+            Err(RuntimeError::EventBudgetExceeded {
+                maximum: 1,
+                actual: 2,
+            })
+        );
+
+        let reservation = EventReservation::try_new(7, EventBudget::new(3)).expect("reserve");
+        assert_eq!(reservation.committed_offset(2), Ok(9));
     }
 }

@@ -86,6 +86,12 @@ envelopes, and all 120 reducer fixtures. The inventory remains migration
 evidence; active Rust execution gates use only typed current contracts and do
 not preserve opaque Dart JSON.
 
+The determinism inventory separately names all seven current oracle
+randomness/seed derivations and both wall-clock reads. Its dependency-free
+guard rejects unregistered sources, system time/randomness in pure Rust engine
+crates, and generic persisted RNG state. `make rust-determinism-check` also
+proves the same canonical replay signature in debug and release builds.
+
 ## Greenfield compatibility policy
 
 The engine and successor clients evolve one current contract atomically. New
@@ -102,6 +108,12 @@ themselves create a compatibility API. The CP0 audit removed internal canonical
 state, engine behavior, and save/replay counters. Shared client and workbench
 API versions remain because independently built Rust, Godot, and Flutter
 components consume those boundaries.
+
+The public mutation family is `PlayerCommand`; it contains only commands a
+player client may issue. There is no trusted system-command endpoint in the
+engine or successor client protocol. Future host-owned lifecycle capabilities
+must receive a separate explicit boundary and cannot be exposed through a
+player adapter. No legacy command adapter or compatibility alias is retained.
 
 Run the diagnostic release baseline separately:
 
@@ -330,6 +342,13 @@ Prepared and raw contexts have deterministic parity tests. Rayon, ECS, SIMD,
 GPU pathfinding, custom allocators, and `unsafe` are not used because the
 measured 1200-tile workload does not justify them.
 
+Each concrete player command publishes a reviewed event budget. The local
+runtime reserves the complete bound before transferring canonical state to the
+engine, commits only the actual ordered event count, and fails closed if the
+engine exceeds the bound. This supports future multi-event commands without a
+global one-event limit and prevents later offset overflow from partially
+applying a transition.
+
 `aonw_godot::AonwLocalSession` exposes one `request_json` transport operation.
 It decodes and encodes `aonw_contracts::client` documents and delegates every
 map inspection, lifecycle, query, command, save, and replay operation to `ClientProtocol` in
@@ -350,16 +369,20 @@ Flutter `LocalEnginePort` remains gated on lossless complete-state mapping.
 
 `aonw_contracts` owns separate current-only save and replay schemas. A save
 contains the complete `GameStateDto`, exact map and ruleset identities, actor,
-deterministic RNG position, event offset, and canonical state digest. Restore
-is transactional and rejects mismatched content, state invariants, or digest
-before replacing an open session.
+event offset, and canonical state digest. Restore is transactional and rejects
+mismatched content, state invariants, or digest before replacing an open
+session. Current commands are non-random, so saves do not carry a fabricated
+global RNG stream.
 
 The bounded replay segment stores its complete initial state and context, then
 each revision-bound command with pre-command context and the exact rejection,
-events, execution evidence, RNG position, event offset, revision, and resulting
-digest. Verification executes every command again through `GameEngine` and
-fails on the first context or result drift. The recorder rolls to a new
-checkpoint after 512 commands; adapters own filesystem paths and I/O.
+ordered events, execution evidence, event offset, revision, and resulting
+digest. A future random capability must add its named algorithm, exact seed
+inputs, and ordered draw/roll evidence to its own command result; a generic
+pre/post RNG counter is forbidden. Verification executes every command again
+through `GameEngine` and fails on the first context or result drift. The
+recorder rolls to a new checkpoint after 512 commands; adapters own filesystem
+paths and I/O.
 
 Godot sends save/open and replay export/verification through the same tagged
 client protocol as every other operation. Persistence rules remain in Rust.

@@ -189,7 +189,7 @@ fn canonical_fixture_rejects_historical_envelope_fields() {
 #[test]
 fn canonical_fixture_rejects_unknown_nested_dto_fields() {
     let mut value = fixture_json();
-    value["input"]["command"]["legacyType"] = json!("FortifyUnit");
+    value["input"]["command"]["unsupportedType"] = json!("FortifyUnit");
 
     assert!(matches!(
         CanonicalFixtureLoader::default().parse(&encoded(&value)),

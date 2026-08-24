@@ -80,6 +80,7 @@ dependencies = [
  "aonw_domain",
  "aonw_engine",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]

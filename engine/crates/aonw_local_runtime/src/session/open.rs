@@ -1,8 +1,6 @@
 use aonw_content::{MapDefinition, RulesetDefinition, ScenarioBootstrapError, ScenarioDefinition};
 use aonw_domain::{GameState, PlayerId};
 
-use crate::persistence::RngState;
-
 /// Fully validated input used to open one local session.
 #[derive(Clone, Debug)]
 pub struct OpenSession {
@@ -10,7 +8,6 @@ pub struct OpenSession {
     pub(super) ruleset: RulesetDefinition,
     pub(super) state: GameState,
     pub(super) actor: PlayerId,
-    pub(super) rng_state: RngState,
     pub(super) event_offset: u64,
 }
 
@@ -34,7 +31,6 @@ impl OpenSession {
             ruleset,
             state,
             actor,
-            rng_state: RngState::new(0, 0, 0),
             event_offset: 0,
         })
     }
@@ -52,15 +48,13 @@ impl OpenSession {
             ruleset,
             state,
             actor,
-            rng_state: RngState::new(0, 0, 0),
             event_offset: 0,
         }
     }
 
-    /// Restores deterministic runtime state owned outside the game aggregate.
+    /// Restores the authoritative event-log position owned by the runtime.
     #[must_use]
-    pub const fn with_runtime_state(mut self, rng_state: RngState, event_offset: u64) -> Self {
-        self.rng_state = rng_state;
+    pub const fn with_event_offset(mut self, event_offset: u64) -> Self {
         self.event_offset = event_offset;
         self
     }

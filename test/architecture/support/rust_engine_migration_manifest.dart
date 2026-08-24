@@ -11,6 +11,7 @@ final class _MigrationInventory {
     required this.rustEventSource,
     required this.rustEvidenceSource,
     required this.rustPersistenceSource,
+    required this.rustClientCommandSource,
     required this.rustClientResponseSource,
     required this.rustProjectionSource,
     required this.partialParityMode,
@@ -40,6 +41,7 @@ final class _MigrationInventory {
   final String rustEventSource;
   final String rustEvidenceSource;
   final String rustPersistenceSource;
+  final String rustClientCommandSource;
   final String rustClientResponseSource;
   final String rustProjectionSource;
   final String partialParityMode;
@@ -203,6 +205,7 @@ final class _MigrationInventoryBuilder {
       rustEventSource: directives['rust-event-source']!,
       rustEvidenceSource: directives['rust-evidence-source']!,
       rustPersistenceSource: directives['rust-persistence-source']!,
+      rustClientCommandSource: directives['rust-client-command-source']!,
       rustClientResponseSource: directives['rust-client-response-source']!,
       rustProjectionSource: directives['rust-projection-source']!,
       partialParityMode: directives['partial-parity-mode']!,
@@ -249,6 +252,7 @@ const _migrationInventoryDirectives = {
   'rust-event-source',
   'rust-evidence-source',
   'rust-persistence-source',
+  'rust-client-command-source',
   'rust-client-response-source',
   'rust-projection-source',
   'partial-parity-mode',

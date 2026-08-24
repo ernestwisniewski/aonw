@@ -43,10 +43,18 @@ void main() {
   });
 
   test('migration manifest matches Rust enum census', () {
-    expect(_rustEnumVariants(manifest.rustDomainSource, 'DomainCommand'), {
+    expect(_rustEnumVariants(manifest.rustDomainSource, 'PlayerCommand'), {
       for (final entry in manifest.domainEntries)
         if (entry.rustVariant != null) entry.rustVariant!,
     });
+    expect(
+      _rustEnumVariants(manifest.rustClientCommandSource, 'ClientCommandDto'),
+      {
+        for (final entry in manifest.domainEntries)
+          if (entry.rustVariant != null) entry.rustVariant!,
+      },
+      reason: 'Clients may expose only the implemented player command family.',
+    );
     expect(
       manifest.rustSystemSource,
       isNull,

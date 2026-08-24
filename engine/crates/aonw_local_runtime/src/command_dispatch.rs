@@ -3,16 +3,14 @@ use core::cmp::Ordering;
 use aonw_contracts::ReplayCommandDto;
 use aonw_domain::{HexCoord, UnitId};
 use aonw_engine::{
-    CommandRejectionCode, DomainCommand, DomainEvent, ExecutionEvidence, GameEngine,
-    MoveUnitCommand, UnitActionCommand,
+    CommandRejectionCode, DomainEvent, ExecutionEvidence, GameEngine, MoveUnitCommand,
+    PlayerCommand, UnitActionCommand,
 };
 
 use crate::persistence::{replay_context, replay_entry};
 use crate::player_view::{PendingActionView, PlayerUnitView, pending_action, visible_units};
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
-
-const MAX_EVENTS_PER_DISPATCH: usize = 1;
 
 /// Current revision-bound manual-movement command.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -91,9 +89,9 @@ pub(crate) fn dispatch_move(
             row: command.target.row(),
         },
     };
-    dispatch_domain(
+    dispatch_player(
         session,
-        DomainCommand::MoveUnit(MoveUnitCommand::new(
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(
             command.expected_revision,
             &command.unit_id,
             command.target,
@@ -108,51 +106,50 @@ pub(crate) fn dispatch_unit_action(
     kind: RuntimeUnitActionKind,
 ) -> Result<CommandResult, RuntimeError> {
     let engine_command = UnitActionCommand::new(command.expected_revision, &command.unit_id);
-    let (domain_command, replay_command) = match kind {
+    let (player_command, replay_command) = match kind {
         RuntimeUnitActionKind::Cancel => (
-            DomainCommand::CancelUnitAction(engine_command),
+            PlayerCommand::CancelUnitAction(engine_command),
             ReplayCommandDto::CancelUnitAction {
                 expected_revision: command.expected_revision,
                 unit_id: command.unit_id.as_str().to_owned(),
             },
         ),
         RuntimeUnitActionKind::Skip => (
-            DomainCommand::SkipUnitTurn(engine_command),
+            PlayerCommand::SkipUnitTurn(engine_command),
             ReplayCommandDto::SkipUnitTurn {
                 expected_revision: command.expected_revision,
                 unit_id: command.unit_id.as_str().to_owned(),
             },
         ),
         RuntimeUnitActionKind::Fortify => (
-            DomainCommand::FortifyUnit(engine_command),
+            PlayerCommand::FortifyUnit(engine_command),
             ReplayCommandDto::FortifyUnit {
                 expected_revision: command.expected_revision,
                 unit_id: command.unit_id.as_str().to_owned(),
             },
         ),
     };
-    dispatch_domain(session, domain_command, replay_command)
+    dispatch_player(session, player_command, replay_command)
 }
 
-fn dispatch_domain(
+fn dispatch_player(
     session: &mut Session,
-    command: DomainCommand<'_>,
+    command: PlayerCommand<'_>,
     replay_command: ReplayCommandDto,
 ) -> Result<CommandResult, RuntimeError> {
-    session.ensure_event_capacity(MAX_EVENTS_PER_DISPATCH)?;
+    let event_reservation = session.reserve_event_capacity(command.event_budget())?;
     session.prepare_replay_segment();
     let before_context = replay_context(session);
     let before_revision = session.state().revision().get();
     let before_view = visible_units(session.state(), session.actor());
     let state = session.take_state();
-    let transition =
-        GameEngine::apply_owned(state, session.context(), command).map_err(RuntimeError::Engine)?;
+    let transition = GameEngine::apply_player_owned(state, session.context(), command)
+        .map_err(RuntimeError::Engine)?;
     let parts = transition.into_parts();
     let rejection = parts.rejection.map(aonw_engine::DomainRejection::code);
     let events = parts.events;
-    debug_assert!(events.len() <= MAX_EVENTS_PER_DISPATCH);
     let evidence = parts.evidence;
-    session.advance_event_offset(events.len())?;
+    session.commit_event_reservation(event_reservation, events.len())?;
     session.replace_state(parts.state, parts.digest);
     let after_view = visible_units(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());

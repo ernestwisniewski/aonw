@@ -14,9 +14,9 @@ mod unit_action;
 use aonw_domain::GameState;
 
 pub use application::{
-    CanonicalEngineError, CanonicalQueryError, CommandRejectionCode, DomainCommand, DomainEvent,
-    DomainRejection, DomainTransition, DomainTransitionParts, ExecutionEvidence, GameQuery,
-    QueryResult,
+    CanonicalEngineError, CanonicalQueryError, CommandRejectionCode, DomainEvent, DomainRejection,
+    DomainTransition, DomainTransitionParts, EventBudget, ExecutionEvidence, GameQuery,
+    PlayerCommand, QueryResult,
 };
 pub use context::EngineContext;
 pub use movement::{

@@ -34,7 +34,7 @@
 
 expected-fixture-count 120
 expected-envelope-count 10
-expected-envelope-field-count 76
+expected-envelope-field-count 74
 expected-domain-field-count 30
 expected-state-json-key-count 16
 expected-lifecycle-json-key-count 13
@@ -109,7 +109,6 @@ envelope-field rust-save mapHash immutable-content-identity
 envelope-field rust-save rulesetId immutable-content-identity
 envelope-field rust-save rulesetHash immutable-content-identity
 envelope-field rust-save actorPlayerId recipient-context
-envelope-field rust-save rngState deterministic-runtime-metadata
 envelope-field rust-save eventOffset event-log-metadata
 envelope-field rust-save stateDigest authoritative-identity
 envelope-field rust-save state canonical-rule-state
@@ -119,7 +118,6 @@ envelope-field rust-replay mapHash immutable-content-identity
 envelope-field rust-replay rulesetId immutable-content-identity
 envelope-field rust-replay rulesetHash immutable-content-identity
 envelope-field rust-replay actorPlayerId recipient-context
-envelope-field rust-replay initialRngState deterministic-runtime-metadata
 envelope-field rust-replay initialEventOffset event-log-metadata
 envelope-field rust-replay initialStateDigest authoritative-identity
 envelope-field rust-replay initialState canonical-rule-state

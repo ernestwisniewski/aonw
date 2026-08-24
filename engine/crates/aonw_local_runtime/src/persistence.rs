@@ -2,8 +2,7 @@ use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
     CoordinateDto, MAX_REPLAY_ENTRY_COUNT, MovementStepDto, ReplayCommandDto, ReplayContextDto,
-    ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto, ReplayResultDto, RngStateDto,
-    SaveGameDto,
+    ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto, ReplayResultDto, SaveGameDto,
 };
 use aonw_domain::{PlayerId, UnitId};
 use aonw_engine::{DomainEvent, ExecutionEvidence, GameEngine};
@@ -14,58 +13,6 @@ use crate::session::Session;
 use crate::{
     CommandResult, LocalRuntime, MoveUnitRequest, OpenSession, SessionStamp, UnitActionRequest,
 };
-
-/// Deterministic random-stream position owned by a local session.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct RngState {
-    seed: u64,
-    stream: u64,
-    counter: u64,
-}
-
-impl RngState {
-    /// Creates an explicit deterministic random-stream position.
-    #[must_use]
-    pub const fn new(seed: u64, stream: u64, counter: u64) -> Self {
-        Self {
-            seed,
-            stream,
-            counter,
-        }
-    }
-
-    /// Returns the initial seed.
-    #[must_use]
-    pub const fn seed(self) -> u64 {
-        self.seed
-    }
-
-    /// Returns the independent stream selector.
-    #[must_use]
-    pub const fn stream(self) -> u64 {
-        self.stream
-    }
-
-    /// Returns the consumed-value counter.
-    #[must_use]
-    pub const fn counter(self) -> u64 {
-        self.counter
-    }
-
-    const fn to_dto(self) -> RngStateDto {
-        RngStateDto {
-            seed: self.seed,
-            stream: self.stream,
-            counter: self.counter,
-        }
-    }
-}
-
-impl From<RngStateDto> for RngState {
-    fn from(value: RngStateDto) -> Self {
-        Self::new(value.seed, value.stream, value.counter)
-    }
-}
 
 /// Result of deterministic replay verification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -82,7 +29,6 @@ pub struct ReplayVerification {
 pub(crate) struct ReplayRecorder {
     initial_state: aonw_contracts::GameStateDto,
     initial_state_digest: String,
-    initial_rng_state: RngState,
     initial_event_offset: u64,
     entries: Vec<ReplayEntryDto>,
 }
@@ -91,13 +37,11 @@ impl ReplayRecorder {
     pub(crate) fn new(
         state: &aonw_domain::GameState,
         digest: aonw_engine::StateDigest,
-        rng_state: RngState,
         event_offset: u64,
     ) -> Self {
         Self {
             initial_state: encode_game_state(state),
             initial_state_digest: digest.to_string(),
-            initial_rng_state: rng_state,
             initial_event_offset: event_offset,
             entries: Vec::new(),
         }
@@ -118,7 +62,6 @@ impl ReplayRecorder {
             ruleset_id: session.ruleset().ruleset_id().to_owned(),
             ruleset_hash: session.stamp().ruleset_hash.to_string(),
             actor_player_id: session.actor().as_str().to_owned(),
-            initial_rng_state: self.initial_rng_state.to_dto(),
             initial_event_offset: self.initial_event_offset,
             initial_state_digest: self.initial_state_digest.clone(),
             initial_state: self.initial_state.clone(),
@@ -141,7 +84,6 @@ impl LocalRuntime {
             ruleset_id: session.ruleset().ruleset_id().to_owned(),
             ruleset_hash: session.stamp().ruleset_hash.to_string(),
             actor_player_id: session.actor().as_str().to_owned(),
-            rng_state: session.rng_state().to_dto(),
             event_offset: session.event_offset(),
             state_digest: session.stamp().state_digest.to_string(),
             state: encode_game_state(session.state()),
@@ -169,7 +111,7 @@ impl LocalRuntime {
         }
         let actor = PlayerId::new(save.actor_player_id).map_err(PersistenceError::InvalidActor)?;
         let request = OpenSession::from_state(map, ruleset, state, actor)
-            .with_runtime_state(save.rng_state.into(), save.event_offset);
+            .with_event_offset(save.event_offset);
         self.open(request).map_err(PersistenceError::Open)
     }
 
@@ -209,15 +151,14 @@ impl LocalRuntime {
         let mut runtime = Self::default();
         runtime
             .open(
-                OpenSession::from_state(map, ruleset, state, actor).with_runtime_state(
-                    replay.initial_rng_state.into(),
-                    replay.initial_event_offset,
-                ),
+                OpenSession::from_state(map, ruleset, state, actor)
+                    .with_event_offset(replay.initial_event_offset),
             )
             .map_err(PersistenceError::Open)?;
 
         for (entry_index, entry) in replay.entries.iter().enumerate() {
-            let expected_index = u64::try_from(entry_index).unwrap_or(u64::MAX);
+            let expected_index =
+                u64::try_from(entry_index).map_err(|_| PersistenceError::ReplayIndexOverflow)?;
             if entry.index != expected_index {
                 return Err(PersistenceError::ReplayIndexMismatch {
                     expected: expected_index,
@@ -256,7 +197,8 @@ pub(crate) fn replay_entry(
     result: &CommandResult,
 ) -> ReplayEntryDto {
     ReplayEntryDto {
-        index: u64::try_from(session.replay().entries.len()).unwrap_or(u64::MAX),
+        index: u64::try_from(session.replay().entries.len())
+            .expect("bounded replay entry count fits u64"),
         context: before,
         command,
         result: replay_result(result, session),
@@ -270,7 +212,6 @@ pub(crate) fn replay_context(session: &Session) -> ReplayContextDto {
         map_hash: stamp.map_hash.to_string(),
         ruleset_hash: stamp.ruleset_hash.to_string(),
         state_digest: stamp.state_digest.to_string(),
-        rng_state: session.rng_state().to_dto(),
         event_offset: session.event_offset(),
     }
 }
@@ -283,7 +224,6 @@ fn replay_result(result: &CommandResult, session: &Session) -> ReplayResultDto {
         state_digest: result.stamp.state_digest.to_string(),
         events: result.events.iter().map(encode_event).collect(),
         evidence: result.evidence.as_ref().map(encode_evidence),
-        rng_state: session.rng_state().to_dto(),
         event_offset: session.event_offset(),
     }
 }

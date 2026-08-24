@@ -36,6 +36,8 @@ pub enum PersistenceError {
         /// Index present in the document.
         found: u64,
     },
+    /// A replay entry index cannot be represented by the wire contract.
+    ReplayIndexOverflow,
     /// Recorded trusted context differs from the replayed session.
     ReplayContextMismatch {
         /// Zero-based replay entry.
@@ -76,6 +78,9 @@ impl core::fmt::Display for PersistenceError {
                 formatter,
                 "replay entry index {found} is not the expected index {expected}"
             ),
+            Self::ReplayIndexOverflow => {
+                formatter.write_str("replay entry index exceeds the wire integer range")
+            }
             Self::ReplayContextMismatch { entry } => {
                 write!(formatter, "replay context differs at entry {entry}")
             }

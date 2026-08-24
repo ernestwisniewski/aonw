@@ -5,8 +5,8 @@ use std::hint::black_box;
 use aonw_content::{MapDefinition, MapDocument};
 use aonw_domain::{GameState, HexCoord, PlayerId, UnitId};
 use aonw_engine::{
-    CanonicalQueryError, CompiledMovementMap, DomainCommand, EngineContext, GameEngine, GameQuery,
-    MoveUnitCommand, MovementSearchMetrics, MovementSearchWorkspace, QueryResult,
+    CanonicalQueryError, CompiledMovementMap, EngineContext, GameEngine, GameQuery,
+    MoveUnitCommand, MovementSearchMetrics, MovementSearchWorkspace, PlayerCommand, QueryResult,
     ReachableMovement, ReachableMovementQuery, TerrainMovementPlan, TerrainMovementQuery,
 };
 
@@ -225,10 +225,10 @@ fn benchmark_apply(
 ) {
     let (cols, rows, units) = dimensions;
     report("apply", cols, rows, units, metrics, || {
-        GameEngine::apply_owned(
+        GameEngine::apply_player_owned(
             black_box(state.clone()),
             context,
-            DomainCommand::MoveUnit(MoveUnitCommand::new(
+            PlayerCommand::MoveUnit(MoveUnitCommand::new(
                 state.revision().get(),
                 mover_id,
                 HexCoord::new(1, 0),
@@ -240,10 +240,10 @@ fn benchmark_apply(
         )
     });
     report("prepared_apply", cols, rows, units, metrics, || {
-        GameEngine::apply_owned(
+        GameEngine::apply_player_owned(
             black_box(state.clone()),
             prepared_context,
-            DomainCommand::MoveUnit(MoveUnitCommand::new(
+            PlayerCommand::MoveUnit(MoveUnitCommand::new(
                 state.revision().get(),
                 mover_id,
                 HexCoord::new(1, 0),
@@ -261,10 +261,10 @@ fn benchmark_apply(
         units,
         MovementSearchMetrics::default(),
         || {
-            GameEngine::apply_owned(
+            GameEngine::apply_player_owned(
                 black_box(state.clone()),
                 prepared_context,
-                DomainCommand::MoveUnit(MoveUnitCommand::new(
+                PlayerCommand::MoveUnit(MoveUnitCommand::new(
                     state.revision().get() + 1,
                     mover_id,
                     HexCoord::new(1, 0),
@@ -284,10 +284,10 @@ fn benchmark_apply(
         units + 1,
         MovementSearchMetrics::default(),
         || {
-            GameEngine::apply_owned(
+            GameEngine::apply_player_owned(
                 black_box(hidden.clone()),
                 prepared_context,
-                DomainCommand::MoveUnit(MoveUnitCommand::new(
+                PlayerCommand::MoveUnit(MoveUnitCommand::new(
                     hidden.revision().get(),
                     mover_id,
                     HexCoord::new(1, 0),
