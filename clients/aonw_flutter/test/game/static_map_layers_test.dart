@@ -28,7 +28,7 @@ void main() {
   });
 
   testWithGame<AonwFlameGame>(
-    'batches static map into three ordered components',
+    'keeps three batched static layers before ordered gameplay layers',
     () => AonwFlameGame(renderStaticLayers: true),
     (game) async {
       final scene = testMapScene(cols: 7, rows: 7);
@@ -36,11 +36,25 @@ void main() {
       await game.ready();
 
       final layers = game.world.children.toList();
-      expect(layers, hasLength(3));
+      expect(layers, hasLength(8));
       expect(layers[0], same(game.world.terrainLayer));
       expect(layers[1], same(game.world.referenceLayer));
       expect(layers[2], same(game.world.gridLayer));
-      expect(layers.map((component) => component.priority), [0, 10, 20]);
+      expect(layers[3], same(game.world.reachableLayer));
+      expect(layers[4], same(game.world.routeLayer));
+      expect(layers[5], same(game.world.unitLayer));
+      expect(layers[6], same(game.world.selectionLayer));
+      expect(layers[7], same(game.world.effectHost));
+      expect(layers.map((component) => component.priority), [
+        0,
+        10,
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+      ]);
       expect(
         layers,
         everyElement(

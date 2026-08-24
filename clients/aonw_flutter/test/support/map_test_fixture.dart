@@ -79,12 +79,13 @@ VisibleUnitView testVisibleUnit({
   posture: VisibleUnitPosture.active,
 );
 
-SessionStampView testSessionStamp({int revision = 0}) => SessionStampView(
-  revision: revision,
-  stateDigest: 'b' * 64,
-  mapHash: 'a' * 64,
-  rulesetHash: 'c' * 64,
-);
+SessionStampView testSessionStamp({int revision = 0, String? stateDigest}) =>
+    SessionStampView(
+      revision: revision,
+      stateDigest: stateDigest ?? 'b' * 64,
+      mapHash: 'a' * 64,
+      rulesetHash: 'c' * 64,
+    );
 
 ReachableView testReachableView({
   String unitId = 'preview-commander',

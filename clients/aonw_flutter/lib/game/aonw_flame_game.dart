@@ -11,7 +11,9 @@ import '../features/map/presentation/map_render_snapshot.dart';
 import '../features/map/read_model/map_view.dart';
 import 'input/flame_map_input_surface.dart';
 import 'map/flame_map_camera.dart';
+import 'map/gameplay_map_layers.dart';
 import 'map/static_map_layers.dart';
+import 'presentation/flame_scene_patch.dart';
 import 'presentation/flame_scene_sink.dart';
 
 typedef AonwFlameGameFactory = AonwFlameGame Function();
@@ -25,12 +27,36 @@ final class AonwWorld extends World implements FlameSceneSink {
         renderEnabled: renderStaticLayers,
       ),
       gridLayer = MapGridLayerComponent(renderEnabled: renderStaticLayers) {
-    addAll([terrainLayer, referenceLayer, gridLayer]);
+    unitLayer = MapUnitLayerComponent(renderEnabled: renderStaticLayers);
+    reachableLayer = MapReachableLayerComponent(
+      renderEnabled: renderStaticLayers,
+    );
+    routeLayer = MapRouteLayerComponent(renderEnabled: renderStaticLayers);
+    selectionLayer = MapSelectionLayerComponent(
+      renderEnabled: renderStaticLayers,
+      units: unitLayer,
+    );
+    effectHost = MapEffectHostComponent(units: unitLayer);
+    addAll([
+      terrainLayer,
+      referenceLayer,
+      gridLayer,
+      reachableLayer,
+      routeLayer,
+      unitLayer,
+      selectionLayer,
+      effectHost,
+    ]);
   }
 
   final MapTerrainLayerComponent terrainLayer;
   final MapReferenceLayerComponent referenceLayer;
   final MapGridLayerComponent gridLayer;
+  late final MapReachableLayerComponent reachableLayer;
+  late final MapRouteLayerComponent routeLayer;
+  late final MapUnitLayerComponent unitLayer;
+  late final MapSelectionLayerComponent selectionLayer;
+  late final MapEffectHostComponent effectHost;
   MapRenderSnapshot? _scene;
   MapStaticRenderCache? _staticCache;
   var _sceneWriteCount = 0;
@@ -41,11 +67,15 @@ final class AonwWorld extends World implements FlameSceneSink {
   @visibleForTesting
   int get debugSceneWriteCount => _sceneWriteCount;
 
+  @visibleForTesting
+  MapStaticRenderCache? get debugStaticRenderCache => _staticCache;
+
   MapStaticRenderCache? get _staticRenderCacheForGame => _staticCache;
 
   @override
   void replaceScene(MapRenderSnapshot snapshot) {
     if (identical(_scene, snapshot)) return;
+    final patch = FlameScenePatch.between(_scene, snapshot);
     _scene = snapshot;
     _sceneWriteCount += 1;
     final identity = (
@@ -65,6 +95,11 @@ final class AonwWorld extends World implements FlameSceneSink {
       visible: snapshot.interaction.referenceVisible,
     );
     gridLayer.applyCache(cache);
+    reachableLayer.applyReachable(cache, snapshot.interaction.reachable);
+    routeLayer.applyRoute(cache, snapshot.interaction.route);
+    unitLayer.applyPatch(patch, cache);
+    selectionLayer.applySelection(cache, snapshot.interaction);
+    effectHost.applyPatch(patch, cache);
   }
 
   @override
@@ -76,6 +111,11 @@ final class AonwWorld extends World implements FlameSceneSink {
     terrainLayer.clearCache();
     referenceLayer.clearCache();
     gridLayer.clearCache();
+    reachableLayer.clearLayer();
+    routeLayer.clearLayer();
+    unitLayer.clearLayer();
+    selectionLayer.clearLayer();
+    effectHost.clearEffects();
   }
 
   @override
@@ -108,6 +148,7 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
             requestFrame: _requestInputFrame,
           );
     if (inputSurface case final surface?) add(surface);
+    this.world.effectHost.onActivityChanged = _handleEffectActivity;
   }
 
   late final FlameMapCameraController mapCamera;
@@ -120,6 +161,7 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
   var _disposed = false;
   var _viewportActive = false;
   var _continuousRendering = false;
+  var _effectsActive = false;
   var _inputFrameScheduled = false;
 
   FlameSceneSink get sceneSink => this;
@@ -135,6 +177,9 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
 
   @visibleForTesting
   bool get debugViewportActive => _viewportActive;
+
+  @visibleForTesting
+  bool get debugEffectsActive => _effectsActive;
 
   @visibleForTesting
   MapHexCoordinate? debugHexAtScreen(AonwPoint screenPoint) =>
@@ -154,6 +199,7 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
         authoredZoom: snapshot.map.defaultZoom,
       );
     }
+    _requestInputFrame();
   }
 
   @override
@@ -162,6 +208,7 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
     mapCamera.clear();
     _lastHoveredHex = null;
     _hasHoveredHex = false;
+    _requestInputFrame();
   }
 
   void setViewportActive(bool active) {
@@ -178,11 +225,32 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
   }
 
   void _synchronizeGameLoop() {
-    if (_viewportActive && _continuousRendering) {
+    if (_viewportActive && (_continuousRendering || _effectsActive)) {
       resumeEngine();
     } else {
       pauseEngine();
     }
+  }
+
+  void setReducedMotion(bool enabled) {
+    if (_disposed) return;
+    world.effectHost.setReducedMotion(enabled);
+  }
+
+  void setEffectPlaybackSpeed(double speed) {
+    if (_disposed) return;
+    world.effectHost.setPlaybackSpeed(speed);
+  }
+
+  void skipEffects() {
+    if (_disposed) return;
+    world.effectHost.skipAll();
+  }
+
+  void _handleEffectActivity(bool active) {
+    if (_disposed || _effectsActive == active) return;
+    _effectsActive = active;
+    _synchronizeGameLoop();
   }
 
   @override

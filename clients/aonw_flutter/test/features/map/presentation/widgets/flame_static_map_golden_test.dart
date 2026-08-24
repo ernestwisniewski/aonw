@@ -1,11 +1,13 @@
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
+import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../../support/map_test_fixture.dart';
 import 'starter_map_golden_support.dart';
 
 void main() {
@@ -87,6 +89,63 @@ void main() {
     await expectLater(
       find.byKey(const ValueKey('flame-starter-golden')),
       matchesGoldenFile('goldens/flame_starter_map_reference.png'),
+    );
+
+    game.sceneSink.replaceScene(
+      MapRenderSnapshot(
+        map: map,
+        interaction: MapInteractionState(
+          hovered: (col: 1, row: 1),
+          selected: (col: 2, row: 1),
+          selectedUnitId: 'preview-commander',
+          reachable: testReachableView(
+            tiles: const [
+              ReachableTileView(
+                coordinate: (col: 2, row: 1),
+                costUnits: 4,
+                exhaustsMovement: false,
+              ),
+              ReachableTileView(
+                coordinate: (col: 3, row: 1),
+                costUnits: 8,
+                exhaustsMovement: false,
+              ),
+              ReachableTileView(
+                coordinate: (col: 2, row: 2),
+                costUnits: 8,
+                exhaustsMovement: false,
+              ),
+            ],
+          ),
+          route: testRoutePlanView(
+            origin: (col: 2, row: 1),
+            target: (col: 3, row: 1),
+          ),
+          referenceVisible: false,
+        ),
+        reference: reference,
+        player: PlayerMapView(
+          actorPlayerId: 'preview-player',
+          stamp: starterMapGoldenStamp(map.contentHash),
+          turn: 1,
+          pendingAction: null,
+          units: [
+            testVisibleUnit(coordinate: (col: 2, row: 1)),
+            testVisibleUnit(id: 'preview-scout', coordinate: (col: 4, row: 2)),
+            testVisibleUnit(
+              id: 'foreign-warrior',
+              ownerPlayerId: 'foreign-player',
+              coordinate: (col: 3, row: 3),
+            ),
+          ],
+        ),
+      ),
+    );
+    game.stepEngine(stepTime: 0);
+    await tester.pump();
+    await expectLater(
+      find.byKey(const ValueKey('flame-starter-golden')),
+      matchesGoldenFile('goldens/flame_gameplay_map.png'),
     );
 
     await tester.pumpWidget(const SizedBox.shrink());

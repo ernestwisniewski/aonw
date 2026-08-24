@@ -155,6 +155,9 @@ final class _MapScreenState extends State<MapScreen>
   Widget _buildState(BuildContext context, Widget? child) {
     final state = widget.controller.state;
     final settings = ClientSettingsScope.settingsOf(context);
+    _flameGame.setReducedMotion(
+      settings.reducedMotion || MediaQuery.disableAnimationsOf(context),
+    );
     return switch (state) {
       GameSessionLoading() => const _LoadingMap(),
       GameSessionFailure(:final code) => _MapFailure(

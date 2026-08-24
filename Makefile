@@ -566,6 +566,9 @@ successor-flutter-device-test: successor-flutter-dependencies
 successor-flutter-fm0-baseline: successor-flutter-dependencies
 	@cd clients/aonw_flutter && flutter test --no-dds --no-pub integration_test/fm0_performance_baseline_test.dart
 
+successor-flutter-fm4-pilot: successor-flutter-dependencies
+	@cd clients/aonw_flutter && flutter test --no-dds --no-pub integration_test/fm4_flame_gameplay_pilot_test.dart
+
 successor-flutter-run: successor-flutter-dependencies
 	@cd clients/aonw_flutter && flutter run --no-pub -d macos
 

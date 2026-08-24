@@ -105,11 +105,12 @@ void main() {
   ) async {
     final movedPlayer = PlayerMapView(
       actorPlayerId: 'preview-player',
-      stamp: testSessionStamp(revision: 1),
+      stamp: testSessionStamp(revision: 1, stateDigest: 'd' * 64),
       turn: 1,
       pendingAction: null,
       units: [testVisibleUnit(coordinate: (col: 1, row: 0), movementUnits: 8)],
     );
+    final flameGame = AonwFlameGame();
     final controller = MapController(
       repository: FakeMapRepository.success(
         testMapScene(units: [testVisibleUnit()]),
@@ -124,7 +125,12 @@ void main() {
 
     await tester.pumpWidget(
       LocalizedTestApp(
-        home: Scaffold(body: MapScreen(controller: controller)),
+        home: Scaffold(
+          body: MapScreen(
+            controller: controller,
+            flameGameFactory: () => flameGame,
+          ),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -153,6 +159,15 @@ void main() {
     final ready = controller.state as GameSessionReady;
     expect(ready.scene.player.units.single.coordinate, (col: 1, row: 0));
     expect(find.byKey(const ValueKey('confirm-move')), findsNothing);
+    expect(flameGame.world.effectHost.debugCompletedMovementCount, 1);
+    expect(flameGame.world.effectHost.debugActiveEffectCount, 0);
+    expect(
+      flameGame.world.unitLayer
+          .debugComponentForUnit('preview-commander')
+          ?.debugUnit
+          .coordinate,
+      (col: 1, row: 0),
+    );
   });
 
   testWidgets(
@@ -265,13 +280,17 @@ void main() {
     final controller = MapController(
       repository: FakeMapRepository.success(testMapScene()),
     );
+    final flameGame = AonwFlameGame();
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
       LocalizedTestApp(
         home: MediaQuery(
           data: const MediaQueryData(disableAnimations: true),
-          child: MapScreen(controller: controller),
+          child: MapScreen(
+            controller: controller,
+            flameGameFactory: () => flameGame,
+          ),
         ),
       ),
     );
@@ -282,6 +301,7 @@ void main() {
       find.byKey(const ValueKey('map-canvas')),
     );
     expect(MediaQuery.disableAnimationsOf(canvasContext), isTrue);
+    expect(flameGame.world.effectHost.debugReducedMotion, isTrue);
     semantics.dispose();
   });
 
