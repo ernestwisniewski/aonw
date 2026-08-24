@@ -12,6 +12,9 @@ const LogicalMapPaintingSuite := preload(
 )
 const Terrain3DSpikeSuite := preload("res://tests/suites/terrain3d_spike_suite.gd")
 const TerrainAuthoringSuite := preload("res://tests/suites/terrain_authoring_suite.gd")
+const SceneSerializationSafetySuite := preload(
+	"res://tests/suites/scene_serialization_safety_suite.gd"
+)
 
 var _failures: Array[String] = []
 
@@ -27,6 +30,7 @@ func _run() -> void:
 		LogicalMapPaintingSuite.new(),
 		MapAuthoringSuite.new(),
 		Terrain3DSpikeSuite.new(),
+		SceneSerializationSafetySuite.new(),
 		TerrainAuthoringSuite.new(),
 	]:
 		await suite.run(_failures)

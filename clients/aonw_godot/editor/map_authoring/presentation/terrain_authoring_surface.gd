@@ -72,13 +72,6 @@ func configure(
 	authoring_root = session_root
 	_ensure_nodes()
 
-func assign_generated_owners(scene_owner: Node) -> void:
-	_ensure_nodes()
-	for child in [
-		_terrain, _reference, _grid, _city_marker, _generated_world, _manual_world,
-	]:
-		child.owner = scene_owner
-
 func terrain() -> Terrain3D:
 	_ensure_nodes()
 	return _terrain

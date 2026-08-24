@@ -1,6 +1,10 @@
 @tool
 extends "res://editor/map_authoring/presentation/map_workbench_view.gd"
 
+const SceneSaveGuard := preload(
+	"res://editor/map_authoring/presentation/scene_save_guard.gd"
+)
+
 const LOGICAL_MAP_TAB := 1
 
 var _catalog: AonwMapSourceCatalog
@@ -13,6 +17,7 @@ var _sources: Array[AonwMapSource] = []
 var _height_slider_dragging := false
 var _busy := false
 var _logical_drag_active := false
+var _scene_save_guard := SceneSaveGuard.new()
 
 func configure(
 	catalog: AonwMapSourceCatalog,
@@ -166,9 +171,9 @@ func _logical_edit_persisted(
 	if not saved["ok"]:
 		_show_error(saved["message"])
 		return
-	var scene_error := EditorInterface.save_scene()
-	if scene_error != OK:
-		_show_error("logical map changed, but the authoring scene could not be saved")
+	var scene_save := _save_edited_scene_safely()
+	if not scene_save["ok"]:
+		_show_error("logical map changed, but %s" % scene_save["message"])
 		return
 	_status.text = (
 		"%d logical tile(s) updated by Rust; Terrain3D final preserved. "
@@ -309,13 +314,13 @@ func _apply_selected_height_scale() -> void:
 		_set_busy(false)
 		_show_error(save_result["message"])
 		return
-	var scene_error := EditorInterface.save_scene()
+	var scene_save := _save_edited_scene_safely()
 	_set_busy(false)
 	_status.text = "Maximum Terrain3D height set to %.1f m for %s; %d samples rescaled.%s" % [
 		result["max_terrain_height_meters"],
 		source.map_id,
 		int(refresh_result["rescaled_pixels"]),
-		"" if scene_error == OK else " Scene save failed.",
+		"" if scene_save["ok"] else " %s" % scene_save["message"],
 	]
 
 func _generate_selected_map() -> void:
@@ -436,26 +441,41 @@ func _save_draft() -> void:
 	if not result["ok"]:
 		_show_error(result["message"])
 		return
-	var scene_error := EditorInterface.save_scene()
+	var scene_save := _save_edited_scene_safely()
 	_status.text = (
 		"Terrain3D draft and scene saved."
-		if scene_error == OK
-		else "Terrain3D draft saved, but the scene could not be saved."
+		if scene_save["ok"]
+		else "Terrain3D draft saved, but %s" % scene_save["message"]
 	)
 
 func _publish() -> void:
 	var surface := _current_surface()
 	if surface == null:
 		return
-	var scene_error := EditorInterface.save_scene()
-	if scene_error != OK:
-		_show_error("scene could not be saved; terrain was not published")
+	var scene_save := _save_edited_scene_safely()
+	if not scene_save["ok"]:
+		_show_error("%s; terrain was not published" % scene_save["message"])
 		return
 	var result := surface.publish()
 	if not result["ok"]:
 		_show_error(result["message"])
 		return
 	_status.text = "Terrain3D final validated and published at revision %d." % surface.terrain_revision
+
+func _save_edited_scene_safely() -> Dictionary:
+	var validation := _scene_save_guard.validate(EditorInterface.get_edited_scene_root())
+	if not validation["ok"]:
+		return {
+			"ok": false,
+			"message": _scene_save_guard.first_problem_message(validation),
+		}
+	var scene_error := EditorInterface.save_scene()
+	if scene_error != OK:
+		return {
+			"ok": false,
+			"message": "the authoring scene could not be saved: %s" % error_string(scene_error),
+		}
+	return {"ok": true}
 
 func sync_from_edited_scene() -> void:
 	var surface := _current_surface()
