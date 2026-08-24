@@ -1,16 +1,21 @@
 use aonw_content::{MapDefinition, MapDocument, RulesetDefinition, ScenarioDefinition};
 use aonw_contracts::client::{ClientCommandDto, ClientQueryDto};
-use aonw_domain::{HexCoord, PlayerId, UnitId};
+use aonw_domain::{CityId, HexCoord, PlayerId, UnitId};
 
 use crate::{
-    MoveUnitRequest, OpenSession, ReachableRequest, RoutePlanRequest, RuntimeQuery,
-    TurnCommandRequest, UnitActionRequest,
+    AutoExploreUnitRequest, DetachTroopRequest, MerchantCityRequest, MoveUnitRequest, OpenSession,
+    ReachableRequest, RoutePlanRequest, RuntimeQuery, TurnCommandRequest, UnitActionRequest,
+    UnitLogisticsOptionsRequest,
 };
 
 use super::ClientDecodeError;
 
 pub(super) enum DecodedCommand {
     Move(MoveUnitRequest),
+    AutoExplore(AutoExploreUnitRequest),
+    AssignMerchantRoute(MerchantCityRequest),
+    MoveMerchantToCity(MerchantCityRequest),
+    DetachTroop(DetachTroopRequest),
     Cancel(UnitActionRequest),
     Skip(UnitActionRequest),
     Fortify(UnitActionRequest),
@@ -60,6 +65,15 @@ pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeE
             unit_id: decode_unit_id(unit_id)?,
             target: HexCoord::new(target.col, target.row),
         })),
+        ClientQueryDto::UnitLogisticsOptions {
+            expected_revision,
+            unit_id,
+        } => Ok(RuntimeQuery::UnitLogisticsOptions(
+            UnitLogisticsOptionsRequest {
+                expected_revision,
+                unit_id: decode_unit_id(unit_id)?,
+            },
+        )),
     }
 }
 
@@ -73,6 +87,34 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, Clien
             expected_revision,
             unit_id: decode_unit_id(unit_id)?,
             target: HexCoord::new(target.col, target.row),
+        })),
+        ClientCommandDto::AutoExploreUnit {
+            expected_revision,
+            unit_id,
+        } => Ok(DecodedCommand::AutoExplore(AutoExploreUnitRequest {
+            expected_revision,
+            unit_id: decode_unit_id(unit_id)?,
+        })),
+        ClientCommandDto::AssignMerchantTradeRoute {
+            expected_revision,
+            unit_id,
+            destination_city_id,
+        } => merchant_city(expected_revision, unit_id, destination_city_id)
+            .map(DecodedCommand::AssignMerchantRoute),
+        ClientCommandDto::MoveMerchantToCity {
+            expected_revision,
+            unit_id,
+            destination_city_id,
+        } => merchant_city(expected_revision, unit_id, destination_city_id)
+            .map(DecodedCommand::MoveMerchantToCity),
+        ClientCommandDto::DetachTroop {
+            expected_revision,
+            unit_id,
+            troop_kind,
+        } => Ok(DecodedCommand::DetachTroop(DetachTroopRequest {
+            expected_revision,
+            unit_id: decode_unit_id(unit_id)?,
+            troop_kind: aonw_contract_mapping::decode_troop(troop_kind),
         })),
         ClientCommandDto::CancelUnitAction {
             expected_revision,
@@ -106,6 +148,19 @@ fn unit_action(
     Ok(UnitActionRequest {
         expected_revision,
         unit_id: decode_unit_id(unit_id)?,
+    })
+}
+
+fn merchant_city(
+    expected_revision: u64,
+    unit_id: String,
+    destination_city_id: String,
+) -> Result<MerchantCityRequest, ClientDecodeError> {
+    Ok(MerchantCityRequest {
+        expected_revision,
+        unit_id: decode_unit_id(unit_id)?,
+        destination_city_id: CityId::new(destination_city_id)
+            .map_err(|error| ClientDecodeError::new("invalid_city_id", error))?,
     })
 }
 

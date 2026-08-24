@@ -57,6 +57,7 @@ rust_event_expected="${scratch}/rust-event.expected"
 evidence_expected="${scratch}/evidence.expected"
 rust_evidence_expected="${scratch}/rust-evidence.expected"
 native_evidence_expected="${scratch}/native-evidence.expected"
+native_event_expected="${scratch}/native-event.expected"
 projection_type_expected="${scratch}/projection-type.expected"
 projection_variant_expected="${scratch}/projection-variant.expected"
 projection_dto_variant_expected="${scratch}/projection-dto-variant.expected"
@@ -72,6 +73,7 @@ projection_dto_variant_expected="${scratch}/projection-dto-variant.expected"
 : >"${evidence_expected}"
 : >"${rust_evidence_expected}"
 : >"${native_evidence_expected}"
+: >"${native_event_expected}"
 : >"${projection_type_expected}"
 : >"${projection_variant_expected}"
 : >"${projection_dto_variant_expected}"
@@ -81,6 +83,7 @@ expected_domain_count=""
 expected_system_count=""
 expected_query_count=""
 expected_event_count=""
+expected_native_event_count=""
 expected_evidence_count=""
 expected_native_evidence_count=""
 expected_projection_type_count=""
@@ -122,7 +125,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
   [[ "${#fields[@]}" -gt 0 ]] || continue
   key="${fields[0]}"
   case "${key}" in
-    oracle-tree|expected-domain-count|expected-system-count|expected-query-count|expected-event-count|expected-evidence-count|expected-native-evidence-count|expected-projection-type-count|expected-projection-variant-count|dart-domain-root|dart-system-source|dart-event-root|dart-evidence-source|rust-domain-source|rust-system-source|rust-query-source|rust-event-source|rust-evidence-source|rust-persistence-source|rust-client-command-source|rust-client-response-source|rust-projection-source|partial-parity-mode)
+    oracle-tree|expected-domain-count|expected-system-count|expected-query-count|expected-event-count|expected-native-event-count|expected-evidence-count|expected-native-evidence-count|expected-projection-type-count|expected-projection-variant-count|dart-domain-root|dart-system-source|dart-event-root|dart-evidence-source|rust-domain-source|rust-system-source|rust-query-source|rust-event-source|rust-evidence-source|rust-persistence-source|rust-client-command-source|rust-client-response-source|rust-projection-source|partial-parity-mode)
       [[ "${#fields[@]}" -eq 2 ]] || fail "${manifest}:${line_number}: ${key} requires exactly one value"
       value="${fields[1]}"
       case "${key}" in
@@ -131,6 +134,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
         expected-system-count) [[ -z "${expected_system_count}" ]] || fail "duplicate expected-system-count"; expected_system_count="${value}" ;;
         expected-query-count) [[ -z "${expected_query_count}" ]] || fail "duplicate expected-query-count"; expected_query_count="${value}" ;;
         expected-event-count) [[ -z "${expected_event_count}" ]] || fail "duplicate expected-event-count"; expected_event_count="${value}" ;;
+        expected-native-event-count) [[ -z "${expected_native_event_count}" ]] || fail "duplicate expected-native-event-count"; expected_native_event_count="${value}" ;;
         expected-evidence-count) [[ -z "${expected_evidence_count}" ]] || fail "duplicate expected-evidence-count"; expected_evidence_count="${value}" ;;
         expected-native-evidence-count) [[ -z "${expected_native_evidence_count}" ]] || fail "duplicate expected-native-evidence-count"; expected_native_evidence_count="${value}" ;;
         expected-projection-type-count) [[ -z "${expected_projection_type_count}" ]] || fail "duplicate expected-projection-type-count"; expected_projection_type_count="${value}" ;;
@@ -179,21 +183,26 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
         [[ "${rust_variant}" == "-" ]] || printf '%s\n' "${rust_variant}" >>"${rust_system_expected}"
       fi
       ;;
-    native-evidence)
-      [[ "${#fields[@]}" -eq 6 ]] || fail "${manifest}:${line_number}: native-evidence entry requires five values"
+    native-event|native-evidence)
+      [[ "${#fields[@]}" -eq 6 ]] || fail "${manifest}:${line_number}: ${key} entry requires five values"
       rust_type="${fields[1]}"
       family="${fields[2]}"
       status="${fields[3]}"
       rust_variant="${fields[4]}"
       source_path="${fields[5]}"
-      [[ "${rust_type}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || fail "invalid native evidence type: ${rust_type}"
-      [[ "${family}" =~ ^[a-z][a-z0-9-]*$ ]] || fail "invalid native evidence family: ${family}"
-      valid_status "${status}" || fail "invalid status for native evidence ${rust_type}: ${status}"
-      [[ "${status}" != "reference-only" ]] || fail "native evidence ${rust_type} cannot be reference-only"
-      [[ "${rust_variant}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || fail "invalid native evidence variant: ${rust_variant}"
+      [[ "${rust_type}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || fail "invalid ${key} type: ${rust_type}"
+      [[ "${family}" =~ ^[a-z][a-z0-9-]*$ ]] || fail "invalid ${key} family: ${family}"
+      valid_status "${status}" || fail "invalid status for ${key} ${rust_type}: ${status}"
+      [[ "${status}" != "reference-only" ]] || fail "${key} ${rust_type} cannot be reference-only"
+      [[ "${rust_variant}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || fail "invalid ${key} variant: ${rust_variant}"
       require_repo_file "${source_path}"
-      printf '%s %s\n' "${rust_type}" "${source_path}" >>"${native_evidence_expected}"
-      printf '%s\n' "${rust_variant}" >>"${rust_evidence_expected}"
+      if [[ "${key}" == "native-event" ]]; then
+        printf '%s %s\n' "${rust_type}" "${source_path}" >>"${native_event_expected}"
+        printf '%s\n' "${rust_variant}" >>"${rust_event_expected}"
+      else
+        printf '%s %s\n' "${rust_type}" "${source_path}" >>"${native_evidence_expected}"
+        printf '%s\n' "${rust_variant}" >>"${rust_evidence_expected}"
+      fi
       ;;
     query)
       [[ "${#fields[@]}" -eq 6 ]] || fail "${manifest}:${line_number}: query entry requires five values"
@@ -272,6 +281,7 @@ done <"${manifest}"
 [[ "${expected_system_count}" =~ ^[0-9]+$ ]] || fail "expected-system-count must be an integer"
 [[ "${expected_query_count}" =~ ^[0-9]+$ ]] || fail "expected-query-count must be an integer"
 [[ "${expected_event_count}" =~ ^[0-9]+$ ]] || fail "expected-event-count must be an integer"
+[[ "${expected_native_event_count}" =~ ^[0-9]+$ ]] || fail "expected-native-event-count must be an integer"
 [[ "${expected_evidence_count}" =~ ^[0-9]+$ ]] || fail "expected-evidence-count must be an integer"
 [[ "${expected_native_evidence_count}" =~ ^[0-9]+$ ]] || fail "expected-native-evidence-count must be an integer"
 [[ "${expected_projection_type_count}" =~ ^[0-9]+$ ]] || fail "expected-projection-type-count must be an integer"
@@ -312,6 +322,7 @@ assert_no_duplicates "${query_expected}" "query"
 assert_no_duplicates "${query_result_expected}" "query-result"
 assert_no_duplicates "${client_query_result_expected}" "client-query-result"
 assert_no_duplicates "${event_expected}" "event"
+assert_no_duplicates "${native_event_expected}" "native-event"
 assert_no_duplicates "${rust_event_expected}" "rust-event"
 assert_no_duplicates "${evidence_expected}" "evidence"
 assert_no_duplicates "${rust_evidence_expected}" "rust-evidence"
@@ -324,6 +335,7 @@ actual_domain_count="$(wc -l <"${domain_expected}" | tr -d ' ')"
 actual_system_count="$(wc -l <"${system_expected}" | tr -d ' ')"
 actual_query_count="$(wc -l <"${query_expected}" | tr -d ' ')"
 actual_event_count="$(wc -l <"${event_expected}" | tr -d ' ')"
+actual_native_event_count="$(wc -l <"${native_event_expected}" | tr -d ' ')"
 actual_evidence_count="$(wc -l <"${evidence_expected}" | tr -d ' ')"
 actual_native_evidence_count="$(wc -l <"${native_evidence_expected}" | tr -d ' ')"
 actual_projection_type_count="$(wc -l <"${projection_type_expected}" | tr -d ' ')"
@@ -332,6 +344,7 @@ actual_projection_variant_count="$(wc -l <"${projection_variant_expected}" | tr 
 [[ "${actual_system_count}" == "${expected_system_count}" ]] || fail "manifest has ${actual_system_count} system commands, expected ${expected_system_count}"
 [[ "${actual_query_count}" == "${expected_query_count}" ]] || fail "manifest has ${actual_query_count} queries, expected ${expected_query_count}"
 [[ "${actual_event_count}" == "${expected_event_count}" ]] || fail "manifest has ${actual_event_count} events, expected ${expected_event_count}"
+[[ "${actual_native_event_count}" == "${expected_native_event_count}" ]] || fail "manifest has ${actual_native_event_count} native events, expected ${expected_native_event_count}"
 [[ "${actual_evidence_count}" == "${expected_evidence_count}" ]] || fail "manifest has ${actual_evidence_count} evidence types, expected ${expected_evidence_count}"
 [[ "${actual_native_evidence_count}" == "${expected_native_evidence_count}" ]] || fail "manifest has ${actual_native_evidence_count} native evidence types, expected ${expected_native_evidence_count}"
 [[ "${actual_projection_type_count}" == "${expected_projection_type_count}" ]] || fail "manifest has ${actual_projection_type_count} projection types, expected ${expected_projection_type_count}"
@@ -424,13 +437,13 @@ require_dart_class() {
   ' "${repo_root}/${source_path}" || fail "Dart class ${type_name} missing from ${source_path}"
 }
 
-require_rust_struct() {
+require_rust_type() {
   local source_path="$1"
   local type_name="$2"
   awk -v type_name="${type_name}" '
-    $0 ~ "^[[:space:]]*pub struct[[:space:]]+" type_name "([[:space:]<{]|$)" { found = 1 }
+    $0 ~ "^[[:space:]]*pub (struct|enum)[[:space:]]+" type_name "([[:space:]<{]|$)" { found = 1 }
     END { exit found ? 0 : 1 }
-  ' "${repo_root}/${source_path}" || fail "Rust struct ${type_name} missing from ${source_path}"
+  ' "${repo_root}/${source_path}" || fail "Rust type ${type_name} missing from ${source_path}"
 }
 
 domain_actual="${scratch}/domain.actual"
@@ -478,12 +491,16 @@ while read -r type_name source_path; do
 done <"${evidence_expected}"
 
 while read -r rust_type source_path; do
-  require_rust_struct "${source_path}" "${rust_type}"
+  require_rust_type "${source_path}" "${rust_type}"
+done <"${native_event_expected}"
+
+while read -r rust_type source_path; do
+  require_rust_type "${source_path}" "${rust_type}"
 done <"${native_evidence_expected}"
 
 while read -r rust_type dto_type source_path; do
-  require_rust_struct "${source_path}" "${rust_type}"
-  require_rust_struct "${rust_client_response_source}" "${dto_type}"
+  require_rust_type "${source_path}" "${rust_type}"
+  require_rust_type "${rust_client_response_source}" "${dto_type}"
 done <"${projection_type_expected}"
 
 compare_inventory() {
@@ -514,4 +531,4 @@ compare_inventory "${rust_evidence_expected}" "${client_evidence_actual}" "clien
 compare_inventory "${projection_variant_expected}" "${projection_variant_actual}" "runtime pending-action projection"
 compare_inventory "${projection_dto_variant_expected}" "${projection_dto_variant_actual}" "client pending-action projection"
 
-echo "Rust engine inventory is closed: ${actual_domain_count} domain commands, ${actual_system_count} system commands, ${actual_query_count} queries, ${actual_event_count} events, ${actual_evidence_count} mapped and ${actual_native_evidence_count} native evidence types, ${actual_projection_type_count} projection types and ${actual_projection_variant_count} projection variants."
+echo "Rust engine inventory is closed: ${actual_domain_count} domain commands, ${actual_system_count} system commands, ${actual_query_count} queries, ${actual_event_count} mapped and ${actual_native_event_count} native events, ${actual_evidence_count} mapped and ${actual_native_evidence_count} native evidence types, ${actual_projection_type_count} projection types and ${actual_projection_variant_count} projection variants."

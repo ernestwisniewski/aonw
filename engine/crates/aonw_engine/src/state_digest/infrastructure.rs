@@ -31,7 +31,7 @@ pub(super) fn hash_infrastructure(writer: &mut DigestWriter, state: &Infrastruct
     }
 }
 
-const fn improvement_tag(kind: FieldImprovementKind) -> u8 {
+pub(super) const fn improvement_tag(kind: FieldImprovementKind) -> u8 {
     match kind {
         FieldImprovementKind::Farm => 0,
         FieldImprovementKind::RiverFarm => 1,

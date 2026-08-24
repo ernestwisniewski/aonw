@@ -33,7 +33,7 @@ pub(super) fn hash_knowledge(writer: &mut DigestWriter, state: &KnowledgeState) 
     }
 }
 
-const fn technology_tag(value: TechnologyId) -> u8 {
+pub(super) const fn technology_tag(value: TechnologyId) -> u8 {
     match value {
         TechnologyId::Agriculture => 0,
         TechnologyId::Woodworking => 1,

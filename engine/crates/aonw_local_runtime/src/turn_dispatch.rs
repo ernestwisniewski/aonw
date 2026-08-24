@@ -130,7 +130,8 @@ fn dispatch_system(
     command: SystemCommand<'_>,
     replay_command: ReplaySystemCommandDto,
 ) -> Result<CommandResult, RuntimeError> {
-    let event_reservation = session.reserve_event_capacity(command.event_budget())?;
+    let event_reservation =
+        session.reserve_event_capacity(command.event_budget(session.state()))?;
     session.prepare_replay_segment();
     let before_context = replay_context(session, None);
     let before_revision = session.state().revision().get();

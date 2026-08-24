@@ -142,6 +142,12 @@ fn serialization_failure() -> String {
 fn dispatch_command(runtime: &mut LocalRuntime, command: DecodedCommand) -> ClientResponseDto {
     let result = match command {
         DecodedCommand::Move(command) => runtime.dispatch(&command),
+        DecodedCommand::AutoExplore(command) => runtime.auto_explore_unit(&command),
+        DecodedCommand::AssignMerchantRoute(command) => {
+            runtime.assign_merchant_trade_route(&command)
+        }
+        DecodedCommand::MoveMerchantToCity(command) => runtime.move_merchant_to_city(&command),
+        DecodedCommand::DetachTroop(command) => runtime.detach_troop(&command),
         DecodedCommand::Cancel(command) => runtime.cancel_unit_action(&command),
         DecodedCommand::Skip(command) => runtime.skip_unit_turn(&command),
         DecodedCommand::Fortify(command) => runtime.fortify_unit(&command),

@@ -4,14 +4,17 @@
     "submission",
     "lifecycle",
     "movementReset",
+    "queuedMovement",
+    "tradeRoutes",
+    "autoExplore",
     "reversibleSkipCleanup"
   ],
   "fixtures": [
     {"id": "submit-partial-accepted", "recordKind": "player", "commandType": "submitTurn", "expectedEventCount": 0, "requiredProcessors": ["submission", "lifecycle"]},
     {"id": "submit-wrong-actor-rejected", "recordKind": "player", "commandType": "submitTurn", "expectedEventCount": 0, "requiredProcessors": ["submission", "lifecycle"]},
-    {"id": "end-sequential-accepted", "recordKind": "player", "commandType": "endTurn", "expectedEventCount": 1, "requiredProcessors": ["lifecycle", "movementReset", "reversibleSkipCleanup"]},
+    {"id": "end-sequential-accepted", "recordKind": "player", "commandType": "endTurn", "expectedEventCount": 1, "requiredProcessors": ["lifecycle", "movementReset", "queuedMovement", "tradeRoutes", "autoExplore", "reversibleSkipCleanup"]},
     {"id": "end-stale-rejected", "recordKind": "player", "commandType": "endTurn", "expectedEventCount": 0, "requiredProcessors": ["lifecycle"]},
-    {"id": "timeout-finalization-accepted", "recordKind": "system", "commandType": "finalizeTimedOutTurn", "expectedEventCount": 4, "requiredProcessors": ["submission", "lifecycle", "movementReset", "reversibleSkipCleanup"]},
+    {"id": "timeout-finalization-accepted", "recordKind": "system", "commandType": "finalizeTimedOutTurn", "expectedEventCount": 4, "requiredProcessors": ["submission", "lifecycle", "movementReset", "queuedMovement", "tradeRoutes", "autoExplore", "reversibleSkipCleanup"]},
     {"id": "timeout-invalid-scope-rejected", "recordKind": "system", "commandType": "finalizeTimedOutTurn", "expectedEventCount": 0, "requiredProcessors": ["submission", "lifecycle"]},
     {"id": "kick-participant-accepted", "recordKind": "system", "commandType": "kickParticipant", "expectedEventCount": 1, "requiredProcessors": ["lifecycle"]},
     {"id": "kick-unknown-player-rejected", "recordKind": "system", "commandType": "kickParticipant", "expectedEventCount": 0, "requiredProcessors": ["lifecycle"]}

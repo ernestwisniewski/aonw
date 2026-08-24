@@ -5,7 +5,9 @@ use super::{DomainEvent, DomainTransition, ExecutionEvidence};
 use crate::movement::{merge_discovered_contacts, recompute_after_move};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
 use crate::{
-    EngineContext, GameEngine, MoveUnitCommand, StateDigest, TurnCommand, UnitActionCommand,
+    AssignMerchantTradeRouteCommand, AutoExploreUnitCommand, DetachTroopCommand, EngineContext,
+    GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, StateDigest, TurnCommand,
+    UnitActionCommand,
 };
 
 /// Authoritative command family available to player-facing adapters.
@@ -13,6 +15,14 @@ use crate::{
 pub enum PlayerCommand<'command> {
     /// Revision-bound manual unit movement.
     MoveUnit(MoveUnitCommand<'command>),
+    /// Starts or continues deterministic scout auto-exploration.
+    AutoExploreUnit(AutoExploreUnitCommand<'command>),
+    /// Assigns a cyclic route between owned cities.
+    AssignMerchantTradeRoute(AssignMerchantTradeRouteCommand<'command>),
+    /// Queues explicit merchant travel to an owned city.
+    MoveMerchantToCity(MoveMerchantToCityCommand<'command>),
+    /// Detaches one troop from an army into a deterministic adjacent hex.
+    DetachTroop(DetachTroopCommand<'command>),
     /// Clears every cancellable order owned by one unit.
     CancelUnitAction(UnitActionCommand<'command>),
     /// Consumes one unit's remaining movement for the current turn.
@@ -63,15 +73,24 @@ impl PlayerCommand<'_> {
     #[must_use]
     pub fn event_budget(self, state: &GameState) -> EventBudget {
         match self {
-            Self::MoveUnit(_) | Self::EndTurn(_) => EventBudget::SINGLE,
+            Self::AutoExploreUnit(_) => EventBudget::new(2),
+            Self::MoveUnit(_)
+            | Self::AssignMerchantTradeRoute(_)
+            | Self::MoveMerchantToCity(_)
+            | Self::DetachTroop(_) => EventBudget::SINGLE,
             Self::CancelUnitAction(_) | Self::SkipUnitTurn(_) | Self::FortifyUnit(_) => {
                 EventBudget::NONE
+            }
+            Self::EndTurn(_) => {
+                let units = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
+                EventBudget::new(units.saturating_add(1))
             }
             Self::SubmitTurn(_) => {
                 let participants =
                     u64::try_from(state.match_lifecycle().identity().participants().len())
                         .unwrap_or(u64::MAX);
-                EventBudget::new(participants.saturating_add(1))
+                let units = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
+                EventBudget::new(participants.saturating_add(units).saturating_add(1))
             }
         }
     }
@@ -120,6 +139,38 @@ impl GameEngine {
                     GameEngine::apply_move_unit(&state, context.with_world(&state), command);
                 apply_move(state, map, movement, map_hash, ruleset_hash)
             }
+            PlayerCommand::AutoExploreUnit(command) => apply_movement_logistics(
+                state,
+                context,
+                command,
+                crate::movement::apply_auto_explore,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::AssignMerchantTradeRoute(command) => apply_movement_logistics(
+                state,
+                context,
+                command,
+                crate::movement::apply_assign_route,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::MoveMerchantToCity(command) => apply_movement_logistics(
+                state,
+                context,
+                command,
+                crate::movement::apply_move_to_city,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::DetachTroop(command) => apply_movement_logistics(
+                state,
+                context,
+                command,
+                crate::movement::apply_detach_troop,
+                map_hash,
+                ruleset_hash,
+            ),
             PlayerCommand::CancelUnitAction(command) => apply_canonical_unit_action(
                 state,
                 context,
@@ -162,6 +213,50 @@ impl GameEngine {
     pub fn state_digest(state: &GameState) -> StateDigest {
         crate::state_digest::digest_state(state)
     }
+}
+
+fn apply_movement_logistics<Command>(
+    state: GameState,
+    context: EngineContext<'_>,
+    command: Command,
+    apply: impl FnOnce(
+        &GameState,
+        EngineContext<'_>,
+        Command,
+    ) -> Result<
+        crate::movement::MovementLogisticsUpdate,
+        crate::MovementLogisticsError,
+    >,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let update = match apply(&state, context.with_world(&state), command) {
+        Ok(update) => update,
+        Err(rejection) => {
+            return Ok(DomainTransition::rejected(
+                state,
+                rejection.code(),
+                map_hash,
+                ruleset_hash,
+            ));
+        }
+    };
+    let next_state = state
+        .into_after_movement_logistics(
+            update.revision,
+            update.units,
+            update.fog_of_war,
+            update.diplomacy,
+            update.interaction,
+        )
+        .map_err(CanonicalEngineError::State)?;
+    Ok(DomainTransition::accepted(
+        next_state,
+        update.events,
+        Some(ExecutionEvidence::Logistics(update.evidence)),
+        map_hash,
+        ruleset_hash,
+    ))
 }
 
 fn content_hashes(

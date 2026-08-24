@@ -1,15 +1,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use aonw_content::{ContentHash, RulesetDefinition};
+use aonw_content::ContentHash;
 use aonw_domain::{
-    GameState, InteractionState, MatchLifecycle, PlayerId, PlayerTurnState, TurnLifecycle,
-    UnitPosture, UtcTimestamp,
+    Diplomacy, FogOfWar, GameState, InteractionState, MatchLifecycle, PlayerId, PlayerTurnState,
+    TurnLifecycle, UnitPosture, UtcTimestamp,
 };
 
 use crate::{
     CanonicalEngineError, CommandRejectionCode, DomainEvent, DomainTransition, EngineContext,
     ExecutionEvidence, SystemContext, TurnCommand, TurnKernelExecution, TurnProcessor,
-    maximum_movement_units,
+    UnitMovementExecution,
 };
 
 pub(super) fn validate_player_command(
@@ -99,64 +99,15 @@ pub(super) fn unsupported_processor_for_scope(
         .iter()
         .filter(|unit| scope.contains(unit.owner_player_id()))
     {
-        if unit.queued_path().is_some() {
-            return Some(TurnProcessor::QueuedMovement);
-        }
-        if unit.merchant_trade_route().is_some() {
-            return Some(TurnProcessor::TradeRoutes);
-        }
         match unit.posture() {
             UnitPosture::AutoWorking => return Some(TurnProcessor::WorkerAutomation),
-            UnitPosture::AutoExploring => return Some(TurnProcessor::AutoExplore),
-            UnitPosture::Active | UnitPosture::Fortified => {}
+            UnitPosture::Active | UnitPosture::Fortified | UnitPosture::AutoExploring => {}
         }
     }
     if !state.combat().intended_attacks().is_empty() {
         return Some(TurnProcessor::Combat);
     }
     None
-}
-
-pub(super) struct MovementReset {
-    pub(super) units: Vec<aonw_domain::Unit>,
-    pub(super) interaction: InteractionState,
-    pub(super) reset_unit_ids: Vec<aonw_domain::UnitId>,
-}
-
-pub(super) fn reset_movement(
-    state: &GameState,
-    ruleset: &RulesetDefinition,
-    player_ids: &[PlayerId],
-) -> Result<MovementReset, CommandRejectionCode> {
-    let scope = player_ids.iter().cloned().collect::<BTreeSet<_>>();
-    if state
-        .units()
-        .iter()
-        .filter(|unit| scope.contains(unit.owner_player_id()))
-        .any(|unit| ruleset.unit(unit.kind()).is_none())
-    {
-        return Err(CommandRejectionCode::UnitDefinitionMissing);
-    }
-    let mut reset_unit_ids = Vec::new();
-    let units = state
-        .units()
-        .iter()
-        .map(|unit| {
-            if !scope.contains(unit.owner_player_id()) {
-                return unit.clone();
-            }
-            reset_unit_ids.push(unit.id().clone());
-            let maximum =
-                maximum_movement_units(ruleset, unit.kind(), unit.carried_artifact_id().is_some());
-            unit.after_turn_movement_reset(maximum)
-        })
-        .collect();
-    let interaction = state.interaction().clone().expire_turn_skip_for(&scope);
-    Ok(MovementReset {
-        units,
-        interaction,
-        reset_unit_ids,
-    })
 }
 
 pub(super) fn valid_system_scope(
@@ -210,6 +161,8 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
     lifecycle: MatchLifecycle,
     turn: Option<u32>,
     units: Vec<aonw_domain::Unit>,
+    fog_of_war: Option<FogOfWar>,
+    diplomacy: Option<Diplomacy>,
     interaction: InteractionStateUpdate,
     events: Box<[DomainEvent]>,
     processors: [TurnProcessor; PROCESSORS],
@@ -230,12 +183,21 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
     } else {
         units
     };
+    let fog_of_war = fog_of_war.unwrap_or_else(|| state.fog_of_war().clone());
+    let diplomacy = diplomacy.unwrap_or_else(|| state.diplomacy().clone());
     let interaction = match interaction {
         InteractionStateUpdate::Preserve => state.interaction().clone(),
         InteractionStateUpdate::Replace(value) => value,
     };
     let state = state
-        .into_after_turn_kernel(revision, turn, lifecycle, units, interaction)
+        .into_after_turn_kernel(
+            revision,
+            aonw_domain::TurnAdvance::new(turn, lifecycle),
+            units,
+            fog_of_war,
+            diplomacy,
+            interaction,
+        )
         .map_err(CanonicalEngineError::State)?;
     Ok(DomainTransition::accepted(
         state,
@@ -249,9 +211,12 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
     ))
 }
 
-pub(super) fn transition_with_reset_evidence(
+pub(super) fn transition_with_movement_evidence(
     transition: DomainTransition,
     reset_unit_ids: Vec<aonw_domain::UnitId>,
+    movement_executions: Vec<UnitMovementExecution>,
+    invalidated_order_unit_ids: Vec<aonw_domain::UnitId>,
+    finished_auto_explore_unit_ids: Vec<aonw_domain::UnitId>,
 ) -> DomainTransition {
     let parts = transition.into_parts();
     let processors = match parts.evidence {
@@ -261,10 +226,15 @@ pub(super) fn transition_with_reset_evidence(
     DomainTransition::accepted(
         parts.state,
         parts.events,
-        Some(ExecutionEvidence::TurnKernel(TurnKernelExecution::new(
-            processors,
-            reset_unit_ids,
-        ))),
+        Some(ExecutionEvidence::TurnKernel(
+            TurnKernelExecution::with_movement(
+                processors,
+                reset_unit_ids,
+                movement_executions,
+                invalidated_order_unit_ids,
+                finished_auto_explore_unit_ids,
+            ),
+        )),
         parts.map_hash,
         parts.ruleset_hash,
     )

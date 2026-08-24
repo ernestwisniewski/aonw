@@ -8,6 +8,7 @@ use crate::{RuntimeQuery, RuntimeQueryResult, SessionStamp};
 enum QueryKind {
     Reachable,
     RoutePlan(HexCoord),
+    UnitLogisticsOptions,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -33,6 +34,11 @@ impl QueryCacheKey {
                 request.expected_revision,
                 request.unit_id.clone(),
                 QueryKind::RoutePlan(request.target),
+            ),
+            RuntimeQuery::UnitLogisticsOptions(request) => (
+                request.expected_revision,
+                request.unit_id.clone(),
+                QueryKind::UnitLogisticsOptions,
             ),
         };
         Self {

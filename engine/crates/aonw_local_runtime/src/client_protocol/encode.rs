@@ -2,23 +2,32 @@ use aonw_content::{
     GridLayout, MapDocument, MapObjective, MapObjectiveType, ResourceType, TerrainType,
     TileDefinition,
 };
-use aonw_contract_mapping::{encode_improvement, encode_unit_kind, encode_unit_posture};
+use aonw_contract_mapping::{
+    encode_improvement, encode_troop, encode_unit_kind, encode_unit_posture,
+};
 use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
-    ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientEventDto,
-    ClientEvidenceDto, ClientFeatureDto, ClientQueryResultDto, ClientReplayVerificationDto,
-    ClientResponseBodyDto, ClientSessionStampDto, MapGridLayoutDto, MapObjectiveTypeDto,
-    MapObjectiveViewDto, MapResourceDto, MapTerrainDto, MapTileViewDto, MapViewDto,
-    MovementStepViewDto, PendingActionViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto,
-    PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
+    AutoExploreOptionDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
+    ClientCommandResultDto, ClientFeatureDto, ClientQueryResultDto, ClientReplayVerificationDto,
+    ClientResponseBodyDto, ClientSessionStampDto, DetachmentOptionDto, MapGridLayoutDto,
+    MapObjectiveTypeDto, MapObjectiveViewDto, MapResourceDto, MapTerrainDto, MapTileViewDto,
+    MapViewDto, MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
+    PendingActionViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
+    PlayerViewSnapshotDto, ReachableTileViewDto,
 };
 use aonw_domain::{HexCoord, PlayerTurnState};
-use aonw_engine::{CommandRejectionCode, DomainEvent, ExecutionEvidence};
+use aonw_engine::CommandRejectionCode;
 
 use crate::{
     CommandResult, LocalRuntime, PendingActionView, PlayerTurnLifecycleView, PlayerUnitView,
     PlayerViewPatch, PlayerViewSnapshot, ReplayVerification, RuntimeQueryResult, SessionStamp,
 };
+
+mod evidence;
+#[cfg(test)]
+mod tests;
+
+use evidence::{event, evidence};
 
 pub(super) fn capabilities() -> ClientResponseBodyDto {
     let capabilities = LocalRuntime::capabilities();
@@ -37,6 +46,9 @@ pub(super) fn capabilities() -> ClientResponseBodyDto {
     }
     if capabilities.turn_kernel() {
         features.push(ClientFeatureDto::TurnKernel);
+    }
+    if capabilities.movement_logistics() {
+        features.push(ClientFeatureDto::MovementLogistics);
     }
     if capabilities.save_game() {
         features.push(ClientFeatureDto::SaveGame);
@@ -210,6 +222,35 @@ pub(super) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
                 })
                 .collect(),
         },
+        RuntimeQueryResult::UnitLogisticsOptions(value) => {
+            ClientQueryResultDto::UnitLogisticsOptions {
+                stamp: stamp(value.stamp),
+                unit_id: value.unit_id.as_str().to_owned(),
+                auto_explore: value.auto_explore.map(|option| AutoExploreOptionDto {
+                    target: coordinate(option.target),
+                    total_cost_units: option.total_cost.get(),
+                    search_metrics: movement_metrics(option.search_metrics),
+                }),
+                merchant_route_destinations: value
+                    .merchant_route_destinations
+                    .iter()
+                    .map(merchant_destination)
+                    .collect(),
+                merchant_travel_destinations: value
+                    .merchant_travel_destinations
+                    .iter()
+                    .map(merchant_destination)
+                    .collect(),
+                detachments: value
+                    .detachments
+                    .iter()
+                    .map(|option| DetachmentOptionDto {
+                        troop_kind: encode_troop(option.troop_kind),
+                        destination: coordinate(option.destination),
+                    })
+                    .collect(),
+            }
+        }
     }
 }
 
@@ -255,6 +296,42 @@ const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto
             ClientCommandRejectionCodeDto::UnitMovementCapacityInsufficient
         }
         CommandRejectionCode::MovePathNotFound => ClientCommandRejectionCodeDto::MovePathNotFound,
+        CommandRejectionCode::UnitNotScout => ClientCommandRejectionCodeDto::UnitNotScout,
+        CommandRejectionCode::UnitExhausted => ClientCommandRejectionCodeDto::UnitExhausted,
+        CommandRejectionCode::UnitHasPath => ClientCommandRejectionCodeDto::UnitHasPath,
+        CommandRejectionCode::AutoExploreNoTarget => {
+            ClientCommandRejectionCodeDto::AutoExploreNoTarget
+        }
+        CommandRejectionCode::UnitNotMerchant => ClientCommandRejectionCodeDto::UnitNotMerchant,
+        CommandRejectionCode::MerchantNotInCity => ClientCommandRejectionCodeDto::MerchantNotInCity,
+        CommandRejectionCode::DestinationCityNotFound => {
+            ClientCommandRejectionCodeDto::DestinationCityNotFound
+        }
+        CommandRejectionCode::DestinationCityNotControlled => {
+            ClientCommandRejectionCodeDto::DestinationCityNotControlled
+        }
+        CommandRejectionCode::DestinationCityIsOrigin => {
+            ClientCommandRejectionCodeDto::DestinationCityIsOrigin
+        }
+        CommandRejectionCode::DestinationCityIsCurrent => {
+            ClientCommandRejectionCodeDto::DestinationCityIsCurrent
+        }
+        CommandRejectionCode::MerchantRouteNotFound => {
+            ClientCommandRejectionCodeDto::MerchantRouteNotFound
+        }
+        CommandRejectionCode::MerchantCityPathNotFound => {
+            ClientCommandRejectionCodeDto::MerchantCityPathNotFound
+        }
+        CommandRejectionCode::TroopNotAvailable => ClientCommandRejectionCodeDto::TroopNotAvailable,
+        CommandRejectionCode::DetachmentSourceOutOfBounds => {
+            ClientCommandRejectionCodeDto::DetachmentSourceOutOfBounds
+        }
+        CommandRejectionCode::DetachmentDestinationUnavailable => {
+            ClientCommandRejectionCodeDto::DetachmentDestinationUnavailable
+        }
+        CommandRejectionCode::DetachedUnitIdUnavailable => {
+            ClientCommandRejectionCodeDto::DetachedUnitIdUnavailable
+        }
         CommandRejectionCode::UnitBusy => ClientCommandRejectionCodeDto::UnitBusy,
         CommandRejectionCode::UnitDefinitionMissing => {
             ClientCommandRejectionCodeDto::UnitDefinitionMissing
@@ -374,64 +451,20 @@ fn pending_action(value: &PendingActionView) -> PendingActionViewDto {
     }
 }
 
-fn event(value: &DomainEvent) -> ClientEventDto {
-    match value {
-        DomainEvent::UnitMoved(value) => ClientEventDto::UnitMoved {
-            unit_id: value.unit_id().as_str().to_owned(),
-            from: coordinate(value.from()),
-            to: coordinate(value.to()),
-        },
-        DomainEvent::TurnEnded(value) => ClientEventDto::TurnEnded {
-            player_id: value.player_id().as_str().to_owned(),
-        },
-        DomainEvent::AllPlayersSubmitted(value) => ClientEventDto::AllPlayersSubmitted {
-            turn: value.turn(),
-            player_ids: value
-                .player_ids()
-                .iter()
-                .map(|player| player.as_str().to_owned())
-                .collect(),
-        },
-        DomainEvent::PlayerTimedOut(value) => ClientEventDto::PlayerTimedOut {
-            turn: value.turn(),
-            player_id: value.player_id().as_str().to_owned(),
-        },
-        DomainEvent::PlayerKicked(value) => ClientEventDto::PlayerKicked {
-            turn: value.turn(),
-            player_id: value.player_id().as_str().to_owned(),
-            reason: value.reason().to_owned(),
-            timeout_streak: value.timeout_streak(),
-        },
+fn movement_metrics(value: aonw_engine::MovementSearchMetrics) -> MovementSearchMetricsDto {
+    MovementSearchMetricsDto {
+        frontier_pops: value.frontier_pops(),
+        expanded_tiles: value.expanded_tiles(),
+        examined_edges: value.examined_edges(),
+        heap_pushes: value.heap_pushes(),
+        route_records: value.route_records(),
     }
 }
 
-fn evidence(value: &ExecutionEvidence) -> ClientEvidenceDto {
-    match value {
-        ExecutionEvidence::UnitMovement(value) => ClientEvidenceDto::UnitMovement {
-            unit_id: value.unit_id().as_str().to_owned(),
-            from: coordinate(value.from()),
-            steps: value
-                .steps()
-                .iter()
-                .map(|step| MovementStepViewDto {
-                    coordinate: coordinate(step.coordinate()),
-                    enter_cost_units: step.enter_cost().get(),
-                    cumulative_cost_units: step.cumulative_cost().get(),
-                })
-                .collect(),
-        },
-        ExecutionEvidence::TurnKernel(value) => ClientEvidenceDto::TurnKernel {
-            processors: value
-                .processors()
-                .iter()
-                .map(|processor| processor.as_str().to_owned())
-                .collect(),
-            reset_unit_ids: value
-                .reset_unit_ids()
-                .iter()
-                .map(|unit| unit.as_str().to_owned())
-                .collect(),
-        },
+fn merchant_destination(value: &crate::MerchantDestinationView) -> MerchantDestinationOptionDto {
+    MerchantDestinationOptionDto {
+        city_id: value.city_id.as_str().to_owned(),
+        total_cost_units: value.total_cost.get(),
     }
 }
 

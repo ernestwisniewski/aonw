@@ -6,9 +6,16 @@ use crate::{
 
 use super::MapViewDto;
 
+mod logistics;
 mod rejection;
+mod session;
 
+pub use logistics::{
+    AutoExploreOptionDto, ClientLogisticsEvidenceDto, DetachmentOptionDto,
+    MerchantDestinationOptionDto, MovementSearchMetricsDto, UnitMovementExecutionDto,
+};
 pub use rejection::ClientCommandRejectionCodeDto;
+pub use session::{ClientErrorDto, ClientReplayVerificationDto};
 
 /// One current client protocol response.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -126,6 +133,8 @@ pub enum ClientFeatureDto {
     SaveGame,
     /// Replay export and verification.
     ReplayVerification,
+    /// Auto-exploration, merchant routing, and troop detachment.
+    MovementLogistics,
 }
 
 /// Identity metadata returned with state-dependent results.
@@ -302,6 +311,40 @@ pub enum ClientEventDto {
         /// New coordinate.
         to: CoordinateDto,
     },
+    /// A scout selected an engine-owned exploration target.
+    AutoExplorePlanned {
+        /// Scout identity.
+        unit_id: String,
+        /// Selected target.
+        target: CoordinateDto,
+    },
+    /// A cyclic merchant route was assigned.
+    MerchantRouteAssigned {
+        /// Merchant identity.
+        unit_id: String,
+        /// Route origin.
+        origin_city_id: String,
+        /// Route destination.
+        destination_city_id: String,
+    },
+    /// Explicit merchant travel was queued.
+    MerchantTravelQueued {
+        /// Merchant identity.
+        unit_id: String,
+        /// Destination city.
+        destination_city_id: String,
+    },
+    /// One army troop became an independent unit.
+    TroopDetached {
+        /// Source army unit.
+        source_unit_id: String,
+        /// New independent unit.
+        detached_unit_id: String,
+        /// Detached troop kind.
+        troop_kind: crate::TroopKindDto,
+        /// Spawn coordinate.
+        destination: CoordinateDto,
+    },
     /// One participant completed a sequential turn.
     TurnEnded {
         /// Participant that completed the turn.
@@ -352,12 +395,23 @@ pub enum ClientEvidenceDto {
         /// Executed steps excluding the origin.
         steps: Vec<MovementStepViewDto>,
     },
+    /// Exact auto-exploration, merchant, or detachment execution.
+    Logistics {
+        /// Typed logistics execution.
+        execution: ClientLogisticsEvidenceDto,
+    },
     /// Exact capability-gated turn processors executed.
     TurnKernel {
         /// Processors executed in canonical order.
         processors: Vec<String>,
         /// Units whose movement allowance was reset.
         reset_unit_ids: Vec<String>,
+        /// Exact movements performed by queued, merchant, and auto processors.
+        movement_executions: Vec<UnitMovementExecutionDto>,
+        /// Units whose stored movement order became invalid.
+        invalidated_order_unit_ids: Vec<String>,
+        /// Scouts whose auto-exploration ended without another target.
+        finished_auto_explore_unit_ids: Vec<String>,
     },
 }
 
@@ -412,6 +466,21 @@ pub enum ClientQueryResultDto {
         /// Ordered route including the origin.
         steps: Vec<MovementStepViewDto>,
     },
+    /// Complete engine-owned logistics options.
+    UnitLogisticsOptions {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Queried unit.
+        unit_id: String,
+        /// Selected auto-exploration action, when legal.
+        auto_explore: Option<AutoExploreOptionDto>,
+        /// Valid cyclic merchant-route destinations.
+        merchant_route_destinations: Vec<MerchantDestinationOptionDto>,
+        /// Valid explicit merchant-travel destinations.
+        merchant_travel_destinations: Vec<MerchantDestinationOptionDto>,
+        /// Exact legal troop-detachment actions.
+        detachments: Vec<DetachmentOptionDto>,
+    },
 }
 
 /// One current-turn reachable map tile.
@@ -424,26 +493,4 @@ pub struct ReachableTileViewDto {
     pub cost_units: u32,
     /// Whether entry consumes remaining current-turn movement.
     pub exhausts_movement: bool,
-}
-
-/// Replay verification summary returned to a client.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ClientReplayVerificationDto {
-    /// Number of verified commands.
-    pub entry_count: u64,
-    /// Final event offset.
-    pub final_event_offset: u64,
-    /// Final authoritative identity.
-    pub final_stamp: ClientSessionStampDto,
-}
-
-/// Stable client failure independent of transport details.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ClientErrorDto {
-    /// Stable machine-readable code.
-    pub code: String,
-    /// Human-readable diagnostic message.
-    pub message: String,
 }

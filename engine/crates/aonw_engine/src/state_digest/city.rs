@@ -92,7 +92,7 @@ pub(super) const fn wonder_tag(value: WonderType) -> u8 {
     }
 }
 
-const fn building_tag(value: CityBuildingType) -> u8 {
+pub(super) const fn building_tag(value: CityBuildingType) -> u8 {
     match value {
         CityBuildingType::Granary => 0,
         CityBuildingType::WaterMill => 1,

@@ -1,6 +1,9 @@
 use aonw_engine::MovementSearchWorkspace;
 
-use crate::command_dispatch::{RuntimeUnitActionKind, dispatch_move, dispatch_unit_action};
+use crate::command_dispatch::{
+    RuntimeUnitActionKind, dispatch_assign_merchant_route, dispatch_auto_explore,
+    dispatch_detach_troop, dispatch_move, dispatch_move_merchant_to_city, dispatch_unit_action,
+};
 use crate::player_view::PlayerViewSnapshot;
 use crate::query_cache::{QueryCache, QueryCacheStats};
 use crate::query_dispatch::dispatch_query;
@@ -8,7 +11,10 @@ use crate::turn_dispatch::{
     FinalizeTimedOutTurnRequest, KickParticipantRequest, RuntimeTurnKind, TurnCommandRequest,
     dispatch_kick, dispatch_timeout, dispatch_turn,
 };
-use crate::{CommandResult, MoveUnitRequest, RuntimeQuery, RuntimeQueryResult, UnitActionRequest};
+use crate::{
+    AutoExploreUnitRequest, CommandResult, DetachTroopRequest, MerchantCityRequest,
+    MoveUnitRequest, RuntimeQuery, RuntimeQueryResult, UnitActionRequest,
+};
 
 use super::{
     OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, Session, SessionStamp,
@@ -112,6 +118,70 @@ impl LocalRuntime {
         let result = {
             let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
             dispatch_move(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Starts or continues deterministic scout auto-exploration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn auto_explore_unit(
+        &mut self,
+        command: &AutoExploreUnitRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_auto_explore(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Assigns a cyclic route to one merchant.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn assign_merchant_trade_route(
+        &mut self,
+        command: &MerchantCityRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_assign_merchant_route(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Queues explicit merchant travel to one owned city.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn move_merchant_to_city(
+        &mut self,
+        command: &MerchantCityRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_move_merchant_to_city(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Detaches one troop into an engine-selected adjacent tile.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn detach_troop(
+        &mut self,
+        command: &DetachTroopRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_detach_troop(session, command)
         };
         self.complete_dispatch(result)
     }

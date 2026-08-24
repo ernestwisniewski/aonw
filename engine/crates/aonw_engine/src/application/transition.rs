@@ -1,7 +1,11 @@
 use aonw_content::ContentHash;
 use aonw_domain::{GameState, PlayerId, StateRevision};
 
-use crate::{StateDigest, TurnKernelExecution, UnitMovedEvent, UnitMovementExecution};
+use crate::{
+    AutoExplorePlannedEvent, LogisticsExecution, MerchantRouteAssignedEvent,
+    MerchantTravelQueuedEvent, StateDigest, TroopDetachedEvent, TurnKernelExecution,
+    UnitMovedEvent, UnitMovementExecution,
+};
 
 /// Stable command rejection shared by every authoritative command family.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -30,6 +34,38 @@ pub enum CommandRejectionCode {
     UnitMovementCapacityInsufficient,
     /// No valid route reaches the target.
     MovePathNotFound,
+    /// Auto-exploration requires a scout.
+    UnitNotScout,
+    /// The unit has no movement left for auto-exploration.
+    UnitExhausted,
+    /// Auto-exploration cannot replace an existing queued path.
+    UnitHasPath,
+    /// No deterministic exploration target remains.
+    AutoExploreNoTarget,
+    /// Merchant routing requires a merchant unit.
+    UnitNotMerchant,
+    /// A cyclic route can only start in an owned city center.
+    MerchantNotInCity,
+    /// The requested destination city does not exist.
+    DestinationCityNotFound,
+    /// The requested destination city is not controlled by the actor.
+    DestinationCityNotControlled,
+    /// A cyclic merchant destination equals its origin.
+    DestinationCityIsOrigin,
+    /// Explicit merchant travel already starts in the destination city.
+    DestinationCityIsCurrent,
+    /// No cyclic merchant route reaches the destination.
+    MerchantRouteNotFound,
+    /// No explicit merchant path reaches the destination city.
+    MerchantCityPathNotFound,
+    /// The requested troop is absent from the source army.
+    TroopNotAvailable,
+    /// The detachment source is outside immutable map content.
+    DetachmentSourceOutOfBounds,
+    /// No visible, passable, unoccupied detachment destination exists.
+    DetachmentDestinationUnavailable,
+    /// No bounded canonical identifier can be assigned to the detached unit.
+    DetachedUnitIdUnavailable,
     /// The unit has an activity that prevents the requested action.
     UnitBusy,
     /// The ruleset lacks the requested unit definition.
@@ -55,6 +91,49 @@ pub enum CommandRejectionCode {
 }
 
 impl CommandRejectionCode {
+    /// Complete stable rejection surface exposed to current clients.
+    pub const ALL: [Self; 39] = [
+        Self::StaleRevision,
+        Self::UnitNotFound,
+        Self::UnitNotControlled,
+        Self::UnitUnavailable,
+        Self::UnitUsesTradeRoutes,
+        Self::UnitOutOfBounds,
+        Self::MoveTargetOutOfBounds,
+        Self::MoveTargetIsCurrentTile,
+        Self::MoveTargetIsForeignCityCenter,
+        Self::MoveTargetOccupied,
+        Self::UnitMovementCapacityInsufficient,
+        Self::MovePathNotFound,
+        Self::UnitNotScout,
+        Self::UnitExhausted,
+        Self::UnitHasPath,
+        Self::AutoExploreNoTarget,
+        Self::UnitNotMerchant,
+        Self::MerchantNotInCity,
+        Self::DestinationCityNotFound,
+        Self::DestinationCityNotControlled,
+        Self::DestinationCityIsOrigin,
+        Self::DestinationCityIsCurrent,
+        Self::MerchantRouteNotFound,
+        Self::MerchantCityPathNotFound,
+        Self::TroopNotAvailable,
+        Self::DetachmentSourceOutOfBounds,
+        Self::DetachmentDestinationUnavailable,
+        Self::DetachedUnitIdUnavailable,
+        Self::UnitBusy,
+        Self::UnitDefinitionMissing,
+        Self::StateRevisionOverflow,
+        Self::InvalidQueuedMovementPath,
+        Self::InvalidUnit,
+        Self::MovementUnitUpdateFailed,
+        Self::TurnPlayerNotControlled,
+        Self::TurnPlayerNotActive,
+        Self::TurnScopeInvalid,
+        Self::TurnProcessorUnsupported,
+        Self::TurnNumberOverflow,
+    ];
+
     /// Returns the stable language-neutral wire value.
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -71,6 +150,22 @@ impl CommandRejectionCode {
             Self::MoveTargetOccupied => "move_target_occupied",
             Self::UnitMovementCapacityInsufficient => "unit_movement_capacity_insufficient",
             Self::MovePathNotFound => "move_path_not_found",
+            Self::UnitNotScout => "unit_not_scout",
+            Self::UnitExhausted => "unit_exhausted",
+            Self::UnitHasPath => "unit_has_path",
+            Self::AutoExploreNoTarget => "auto_explore_no_target",
+            Self::UnitNotMerchant => "unit_not_merchant",
+            Self::MerchantNotInCity => "merchant_not_in_city",
+            Self::DestinationCityNotFound => "destination_city_not_found",
+            Self::DestinationCityNotControlled => "destination_city_not_controlled",
+            Self::DestinationCityIsOrigin => "destination_city_is_origin",
+            Self::DestinationCityIsCurrent => "destination_city_is_current",
+            Self::MerchantRouteNotFound => "merchant_route_not_found",
+            Self::MerchantCityPathNotFound => "merchant_city_path_not_found",
+            Self::TroopNotAvailable => "troop_not_available",
+            Self::DetachmentSourceOutOfBounds => "detachment_source_out_of_bounds",
+            Self::DetachmentDestinationUnavailable => "detachment_destination_unavailable",
+            Self::DetachedUnitIdUnavailable => "detached_unit_id_unavailable",
             Self::UnitBusy => "unit_busy",
             Self::UnitDefinitionMissing => "unit_definition_missing",
             Self::StateRevisionOverflow => "state_revision_overflow",
@@ -111,6 +206,14 @@ impl DomainRejection {
 pub enum DomainEvent {
     /// One unit changed map position.
     UnitMoved(UnitMovedEvent),
+    /// Auto-exploration selected an engine-owned target.
+    AutoExplorePlanned(AutoExplorePlannedEvent),
+    /// A cyclic merchant route was assigned.
+    MerchantRouteAssigned(MerchantRouteAssignedEvent),
+    /// Explicit merchant travel was queued.
+    MerchantTravelQueued(MerchantTravelQueuedEvent),
+    /// One army troop became an independent unit.
+    TroopDetached(TroopDetachedEvent),
     /// One participant completed its sequential turn.
     TurnEnded(TurnEndedEvent),
     /// Every required participant became ready for simultaneous finalization.
@@ -126,6 +229,8 @@ pub enum DomainEvent {
 pub enum ExecutionEvidence {
     /// Exact movement steps executed by the engine.
     UnitMovement(UnitMovementExecution),
+    /// Exact result of one movement-logistics command.
+    Logistics(LogisticsExecution),
     /// Exact capability-gated processors executed by the T1 turn kernel.
     TurnKernel(TurnKernelExecution),
 }

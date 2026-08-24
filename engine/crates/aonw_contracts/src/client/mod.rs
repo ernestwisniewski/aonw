@@ -12,11 +12,13 @@ pub use map::{
 };
 pub use request::{ClientCommandDto, ClientQueryDto, ClientRequestBodyDto, ClientRequestDto};
 pub use response::{
-    ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto,
-    ClientEventDto, ClientEvidenceDto, ClientFeatureDto, ClientOutcomeDto, ClientQueryResultDto,
+    AutoExploreOptionDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
+    ClientCommandResultDto, ClientErrorDto, ClientEventDto, ClientEvidenceDto, ClientFeatureDto,
+    ClientLogisticsEvidenceDto, ClientOutcomeDto, ClientQueryResultDto,
     ClientReplayVerificationDto, ClientResponseBodyDto, ClientResponseDto, ClientSessionStampDto,
+    DetachmentOptionDto, MerchantDestinationOptionDto, MovementSearchMetricsDto,
     MovementStepViewDto, PendingActionViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto,
-    PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
+    PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto, UnitMovementExecutionDto,
 };
 
 /// The only client protocol version accepted by this build.

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -46,6 +47,12 @@ CRATE_BASELINE_KEYS = {
     "sourceFiles",
     "missingFiles",
 }
+EXECUTABLE_RUST = re.compile(
+    r"^\s*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+|const\s+|unsafe\s+|extern\s+\"[^\"]+\"\s+)*fn\s+"
+    r"|^\s*(?:pub(?:\([^)]*\))?\s+)?(?:unsafe\s+)?impl\b"
+    r"|^\s*(?:pub(?:\([^)]*\))?\s+)?(?:const|static)\s+"
+    r"|macro_rules!"
+)
 
 
 def strict_object(value: Any, label: str, keys: set[str]) -> dict[str, Any]:
@@ -416,7 +423,15 @@ def validate_baseline_crate(crate: str, value: Any) -> dict[str, Any]:
     return baseline
 
 
-def check_baseline(report: dict[str, Any], baseline_path: Path) -> None:
+def declarative_source(engine_root: Path, relative: str) -> bool:
+    try:
+        source = (engine_root / relative).read_text(encoding="utf-8")
+    except OSError as error:
+        raise CoverageFailure(f"cannot inspect missing coverage source {relative}: {error}") from error
+    return not any(EXECUTABLE_RUST.search(line) for line in source.splitlines())
+
+
+def check_baseline(report: dict[str, Any], baseline_path: Path, engine_root: Path) -> None:
     raw = strict_object(read_json(baseline_path, "coverage baseline"), "coverage baseline", BASELINE_KEYS)
     provenance = strict_object(
         raw["provenance"], "coverage baseline provenance", BASELINE_PROVENANCE_KEYS
@@ -438,8 +453,13 @@ def check_baseline(report: dict[str, Any], baseline_path: Path) -> None:
         if removed_sources:
             raise CoverageFailure(f"production source files were removed from {crate}: {sorted(removed_sources)}")
         new_missing = set(current["missingFiles"]) - set(baseline["missingFiles"])
-        if new_missing:
-            raise CoverageFailure(f"missing-file set grew for {crate}: {sorted(new_missing)}")
+        executable_missing = {
+            source for source in new_missing if not declarative_source(engine_root, source)
+        }
+        if executable_missing:
+            raise CoverageFailure(
+                f"executable missing-file set grew for {crate}: {sorted(executable_missing)}"
+            )
         if current["uncoveredLines"] > baseline["uncoveredLines"]:
             raise CoverageFailure(
                 f"uncovered lines grew for {crate}: "
@@ -482,7 +502,7 @@ def run() -> None:
         report = build_report(raw_path, lcov_path, scope, engine_root, provenance)
     write_json(report_path, report)
     if args.mode == "check":
-        check_baseline(report, resolve(repo_root, args.baseline))
+        check_baseline(report, resolve(repo_root, args.baseline), engine_root)
         print(f"Rust coverage check passed: {len(report['crates'])} ratcheted crates.")
     elif args.mode == "snapshot":
         write_json(resolve(repo_root, args.snapshot), snapshot_from(report))

@@ -1,6 +1,7 @@
 use aonw_domain::{PlayerId, UnitId, UtcTimestamp};
 
 use super::EventBudget;
+use crate::movement::UnitMovementExecution;
 
 /// Revision-bound player command that targets one participant lifecycle.
 #[derive(Clone, Copy, Debug)]
@@ -130,13 +131,19 @@ pub enum SystemCommand<'command> {
 impl SystemCommand<'_> {
     /// Returns the reviewed upper event bound for this trusted command.
     #[must_use]
-    pub fn event_budget(self) -> EventBudget {
+    pub fn event_budget(self, state: &aonw_domain::GameState) -> EventBudget {
         match self {
             Self::FinalizeTimedOutTurn(command) => {
                 let player_count = u64::try_from(command.player_ids().len()).unwrap_or(u64::MAX);
                 let skipped_count =
                     u64::try_from(command.skipped_player_ids().len()).unwrap_or(u64::MAX);
-                EventBudget::new(player_count.saturating_add(skipped_count).saturating_add(1))
+                let unit_count = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
+                EventBudget::new(
+                    player_count
+                        .saturating_add(skipped_count)
+                        .saturating_add(unit_count)
+                        .saturating_add(1),
+                )
             }
             Self::KickParticipant(_) => EventBudget::new(1),
         }
@@ -207,18 +214,18 @@ impl TurnKernelCapabilities {
     /// Capability label used by current fixtures and runtime clients.
     pub const LABEL: &'static str = "turn-kernel-ready";
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 4] = [
+    pub const ENABLED: [TurnProcessor; 7] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::MovementReset,
-        TurnProcessor::ReversibleSkipCleanup,
-    ];
-    /// Later turn processors that are intentionally unavailable in T1.
-    pub const DISABLED: [TurnProcessor; 10] = [
         TurnProcessor::QueuedMovement,
         TurnProcessor::TradeRoutes,
-        TurnProcessor::WorkerAutomation,
         TurnProcessor::AutoExplore,
+        TurnProcessor::ReversibleSkipCleanup,
+    ];
+    /// Later turn processors that are intentionally unavailable.
+    pub const DISABLED: [TurnProcessor; 7] = [
+        TurnProcessor::WorkerAutomation,
         TurnProcessor::Combat,
         TurnProcessor::Economy,
         TurnProcessor::Diplomacy,
@@ -235,6 +242,9 @@ impl TurnKernelCapabilities {
             TurnProcessor::Submission
                 | TurnProcessor::Lifecycle
                 | TurnProcessor::MovementReset
+                | TurnProcessor::QueuedMovement
+                | TurnProcessor::TradeRoutes
+                | TurnProcessor::AutoExplore
                 | TurnProcessor::ReversibleSkipCleanup
         )
     }
@@ -245,6 +255,9 @@ impl TurnKernelCapabilities {
 pub struct TurnKernelExecution {
     processors: Box<[TurnProcessor]>,
     reset_unit_ids: Box<[UnitId]>,
+    movement_executions: Box<[UnitMovementExecution]>,
+    invalidated_order_unit_ids: Box<[UnitId]>,
+    finished_auto_explore_unit_ids: Box<[UnitId]>,
 }
 
 impl TurnKernelExecution {
@@ -255,6 +268,25 @@ impl TurnKernelExecution {
         Self {
             processors: processors.into(),
             reset_unit_ids: reset_unit_ids.into(),
+            movement_executions: Box::new([]),
+            invalidated_order_unit_ids: Box::new([]),
+            finished_auto_explore_unit_ids: Box::new([]),
+        }
+    }
+
+    pub(crate) fn with_movement(
+        processors: impl Into<Box<[TurnProcessor]>>,
+        reset_unit_ids: impl Into<Box<[UnitId]>>,
+        movement_executions: impl Into<Box<[UnitMovementExecution]>>,
+        invalidated_order_unit_ids: impl Into<Box<[UnitId]>>,
+        finished_auto_explore_unit_ids: impl Into<Box<[UnitId]>>,
+    ) -> Self {
+        Self {
+            processors: processors.into(),
+            reset_unit_ids: reset_unit_ids.into(),
+            movement_executions: movement_executions.into(),
+            invalidated_order_unit_ids: invalidated_order_unit_ids.into(),
+            finished_auto_explore_unit_ids: finished_auto_explore_unit_ids.into(),
         }
     }
 
@@ -268,5 +300,23 @@ impl TurnKernelExecution {
     #[must_use]
     pub const fn reset_unit_ids(&self) -> &[UnitId] {
         &self.reset_unit_ids
+    }
+
+    /// Returns exact movement steps executed by turn processors.
+    #[must_use]
+    pub const fn movement_executions(&self) -> &[UnitMovementExecution] {
+        &self.movement_executions
+    }
+
+    /// Returns units whose queued or merchant order became invalid.
+    #[must_use]
+    pub const fn invalidated_order_unit_ids(&self) -> &[UnitId] {
+        &self.invalidated_order_unit_ids
+    }
+
+    /// Returns scouts whose auto-exploration ended without another target.
+    #[must_use]
+    pub const fn finished_auto_explore_unit_ids(&self) -> &[UnitId] {
+        &self.finished_auto_explore_unit_ids
     }
 }

@@ -71,10 +71,12 @@ expected_case_count=""
 expected_round_trip_count=""
 expected_engine_parity_count=""
 expected_blocked_count=""
+expected_historical_count=""
 case_count=0
 round_trip_count=0
 engine_parity_count=0
 blocked_count=0
+historical_count=0
 line_number=0
 
 while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
@@ -84,7 +86,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
   [[ "${#fields[@]}" -gt 0 ]] || continue
   key="${fields[0]}"
   case "${key}" in
-    source-corpus|source-corpus-oid|canonical-corpus|authoritative-inventory|expected-case-count|expected-round-trip-count|expected-engine-parity-count|expected-blocked-count)
+    source-corpus|source-corpus-oid|canonical-corpus|authoritative-inventory|expected-case-count|expected-round-trip-count|expected-engine-parity-count|expected-blocked-count|expected-historical-count)
       [[ "${#fields[@]}" -eq 2 ]] || fail "${manifest}:${line_number}: ${key} requires one value"
       value="${fields[1]}"
       case "${key}" in
@@ -96,6 +98,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
         expected-round-trip-count) [[ -z "${expected_round_trip_count}" ]] || fail "duplicate expected-round-trip-count"; expected_round_trip_count="${value}" ;;
         expected-engine-parity-count) [[ -z "${expected_engine_parity_count}" ]] || fail "duplicate expected-engine-parity-count"; expected_engine_parity_count="${value}" ;;
         expected-blocked-count) [[ -z "${expected_blocked_count}" ]] || fail "duplicate expected-blocked-count"; expected_blocked_count="${value}" ;;
+        expected-historical-count) [[ -z "${expected_historical_count}" ]] || fail "duplicate expected-historical-count"; expected_historical_count="${value}" ;;
       esac
       ;;
     case)
@@ -145,6 +148,12 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
           [[ "${canonical_artifact}" == "-" ]] || fail "blocked ${id} cannot claim a canonical artifact"
           blocked_count=$((blocked_count + 1))
           ;;
+        historical/reference-only)
+          [[ "${checkpoint}" == "current" ]] || fail "historical ${id} must use checkpoint current"
+          [[ "${blocker}" == "superseded-by-current-contract" ]] || fail "historical ${id} requires the current-contract disposition"
+          [[ "${canonical_artifact}" == "-" ]] || fail "historical ${id} cannot claim a canonical artifact"
+          historical_count=$((historical_count + 1))
+          ;;
         *)
           fail "unsupported structural/execution status for ${id}: ${structural_status}/${execution_status}"
           ;;
@@ -160,7 +169,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
   esac
 done <"${manifest}"
 
-for count_name in expected_case_count expected_round_trip_count expected_engine_parity_count expected_blocked_count; do
+for count_name in expected_case_count expected_round_trip_count expected_engine_parity_count expected_blocked_count expected_historical_count; do
   count_value="${!count_name}"
   [[ "${count_value}" =~ ^[0-9]+$ ]] || fail "${count_name//_/-} must be an integer"
 done
@@ -173,7 +182,8 @@ require_relative_file "${authoritative_inventory}"
 [[ "${round_trip_count}" -eq "${expected_round_trip_count}" ]] || fail "round-trip count ${round_trip_count}, expected ${expected_round_trip_count}"
 [[ "${engine_parity_count}" -eq "${expected_engine_parity_count}" ]] || fail "engine-parity count ${engine_parity_count}, expected ${expected_engine_parity_count}"
 [[ "${blocked_count}" -eq "${expected_blocked_count}" ]] || fail "blocked count ${blocked_count}, expected ${expected_blocked_count}"
-[[ $((round_trip_count + blocked_count)) -eq "${case_count}" ]] || fail "every case must have round-trip evidence or an explicit blocker"
+[[ "${historical_count}" -eq "${expected_historical_count}" ]] || fail "historical count ${historical_count}, expected ${expected_historical_count}"
+[[ $((round_trip_count + blocked_count + historical_count)) -eq "${case_count}" ]] || fail "every case must have round-trip evidence, an explicit blocker, or a reviewed historical disposition"
 
 duplicates="$(sort "${case_ids}" | uniq -d)"
 [[ -z "${duplicates}" ]] || fail "duplicate case id: ${duplicates}"
@@ -214,4 +224,4 @@ if rg -n -F "${source_corpus}" "${repo_root}/engine/crates" --glob '*.rs'; then
   fail "Rust crates may not read the historical reducer envelope"
 fi
 
-echo "Rust fixture dispositions are closed: ${case_count} reviewed, ${round_trip_count} round-trip/engine-parity, ${blocked_count} explicitly blocked."
+echo "Rust fixture dispositions are closed: ${case_count} reviewed, ${round_trip_count} round-trip/engine-parity, ${blocked_count} explicitly blocked, ${historical_count} superseded by current contracts."

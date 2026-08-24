@@ -1,6 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, GameStateDto, MovementStepDto};
+use crate::{CoordinateDto, GameStateDto, MovementStepDto, TroopKindDto};
+
+mod command;
+mod logistics;
+
+pub use command::{ReplayCommandDto, ReplaySystemCommandDto};
+pub use logistics::{ReplayLogisticsEvidenceDto, ReplayUnitMovementExecutionDto};
 
 /// Maximum accepted encoded save document.
 pub const MAX_SAVE_GAME_JSON_BYTES: usize = 16 * 1024 * 1024;
@@ -29,90 +35,6 @@ pub struct SaveGameDto {
     pub state_digest: String,
     /// Complete canonical game state.
     pub state: GameStateDto,
-}
-
-/// One revision-bound command stored in a replay.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum ReplayCommandDto {
-    /// Manual movement command.
-    MoveUnit {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Opaque canonical unit identifier.
-        unit_id: String,
-        /// Requested movement target.
-        target: CoordinateDto,
-    },
-    /// Clears all cancellable orders owned by one unit.
-    CancelUnitAction {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Opaque canonical unit identifier.
-        unit_id: String,
-    },
-    /// Consumes one unit's movement for the current turn.
-    SkipUnitTurn {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Opaque canonical unit identifier.
-        unit_id: String,
-    },
-    /// Fortifies one idle unit.
-    FortifyUnit {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Opaque canonical unit identifier.
-        unit_id: String,
-    },
-    /// Completes one sequential participant turn.
-    EndTurn {
-        /// Expected canonical revision.
-        expected_revision: u64,
-    },
-    /// Marks one simultaneous participant ready.
-    SubmitTurn {
-        /// Expected canonical revision.
-        expected_revision: u64,
-    },
-}
-
-/// Trusted host commands stored separately from player-authored requests.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum ReplaySystemCommandDto {
-    /// Finalizes one expired simultaneous turn.
-    FinalizeTimedOutTurn {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Ordered participant scope selected by the host.
-        player_ids: Vec<String>,
-        /// Ordered participants finalized because of timeout.
-        skipped_player_ids: Vec<String>,
-        /// Explicit host-provided next-turn UTC time when rule-relevant.
-        next_turn_started_at: Option<String>,
-    },
-    /// Removes one participant from the active match lifecycle.
-    KickParticipant {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Participant selected by the host.
-        player_id: String,
-        /// Stable host-owned reason.
-        reason: String,
-        /// Timeout streak observed by the host.
-        timeout_streak: i64,
-    },
 }
 
 /// Closed replay record boundary distinguishing player and trusted system input.
@@ -170,6 +92,40 @@ pub enum ReplayEventDto {
         /// New coordinate.
         to: CoordinateDto,
     },
+    /// A scout selected an exploration target.
+    AutoExplorePlanned {
+        /// Scout identity.
+        unit_id: String,
+        /// Selected target.
+        target: CoordinateDto,
+    },
+    /// A cyclic merchant route was assigned.
+    MerchantRouteAssigned {
+        /// Merchant identity.
+        unit_id: String,
+        /// Route origin.
+        origin_city_id: String,
+        /// Route destination.
+        destination_city_id: String,
+    },
+    /// Explicit merchant travel was queued.
+    MerchantTravelQueued {
+        /// Merchant identity.
+        unit_id: String,
+        /// Destination city.
+        destination_city_id: String,
+    },
+    /// One army troop became an independent unit.
+    TroopDetached {
+        /// Source army unit.
+        source_unit_id: String,
+        /// New independent unit.
+        detached_unit_id: String,
+        /// Detached troop kind.
+        troop_kind: TroopKindDto,
+        /// Spawn coordinate.
+        destination: CoordinateDto,
+    },
     /// One participant completed a sequential turn.
     TurnEnded {
         /// Participant identity.
@@ -220,12 +176,23 @@ pub enum ReplayEvidenceDto {
         /// Exact executed movement steps.
         steps: Vec<MovementStepDto>,
     },
+    /// Exact auto-exploration, merchant, or detachment execution.
+    Logistics {
+        /// Typed logistics execution.
+        execution: ReplayLogisticsEvidenceDto,
+    },
     /// Exact partial turn pipeline that executed.
     TurnKernel {
         /// Processor names in execution order.
         processors: Vec<String>,
         /// Units whose movement phase began, in canonical unit order.
         reset_unit_ids: Vec<String>,
+        /// Exact movements performed by turn processors.
+        movement_executions: Vec<ReplayUnitMovementExecutionDto>,
+        /// Units whose stored movement order became invalid.
+        invalidated_order_unit_ids: Vec<String>,
+        /// Scouts whose auto-exploration ended without another target.
+        finished_auto_explore_unit_ids: Vec<String>,
     },
 }
 
@@ -439,6 +406,21 @@ mod tests {
             let json = format!(r#"{{"type":"{kind}","expectedRevision":7,"unitId":"unit-1"}}"#);
             assert!(serde_json::from_str::<ReplayCommandDto>(&json).is_ok());
             let unknown = json.replacen('}', ",\"unknown\":true}", 1);
+            assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
+        }
+    }
+
+    #[test]
+    fn every_current_logistics_command_has_a_strict_wire_shape() {
+        let commands = [
+            r#"{"type":"autoExploreUnit","expectedRevision":7,"unitId":"scout-1"}"#,
+            r#"{"type":"assignMerchantTradeRoute","expectedRevision":7,"unitId":"merchant-1","destinationCityId":"city-2"}"#,
+            r#"{"type":"moveMerchantToCity","expectedRevision":7,"unitId":"merchant-1","destinationCityId":"city-2"}"#,
+            r#"{"type":"detachTroop","expectedRevision":7,"unitId":"army-1","troopKind":"archer"}"#,
+        ];
+        for json in commands {
+            assert!(serde_json::from_str::<ReplayCommandDto>(json).is_ok());
+            let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
             assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
         }
     }

@@ -29,7 +29,9 @@ pub(super) fn encode_step(step: MovementStep) -> MovementStepDto {
     }
 }
 
-pub(super) const fn decode_troop(kind: TroopKindDto) -> TroopKind {
+/// Converts a strict wire troop kind into its domain value.
+#[must_use]
+pub const fn decode_troop(kind: TroopKindDto) -> TroopKind {
     match kind {
         TroopKindDto::Warrior => TroopKind::Warrior,
         TroopKindDto::Archer => TroopKind::Archer,
@@ -37,7 +39,9 @@ pub(super) const fn decode_troop(kind: TroopKindDto) -> TroopKind {
     }
 }
 
-pub(super) const fn encode_troop(kind: TroopKind) -> TroopKindDto {
+/// Converts a domain troop kind into its strict wire value.
+#[must_use]
+pub const fn encode_troop(kind: TroopKind) -> TroopKindDto {
     match kind {
         TroopKind::Warrior => TroopKindDto::Warrior,
         TroopKind::Archer => TroopKindDto::Archer,

@@ -6,20 +6,25 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use aonw_content::RulesetDefinition;
-use aonw_contract_mapping::{canonicalize_game_state, decode_game_state, encode_game_state};
-use aonw_contracts::{
-    CoordinateDto, GameStateDto, MovementStepDto, ReplayCommandDto, ReplayEventDto,
-    ReplayEvidenceDto,
+use aonw_contract_mapping::{
+    canonicalize_game_state, decode_game_state, decode_troop, encode_game_state,
 };
-use aonw_domain::{HexCoord, PlayerId, UnitId};
+use aonw_contracts::{GameStateDto, ReplayCommandDto};
+use aonw_domain::{CityId, HexCoord, PlayerId, UnitId};
 use aonw_engine::{
-    DomainEvent, EngineContext, ExecutionEvidence, GameEngine, MoveUnitCommand, PlayerCommand,
-    TurnCommand, UnitActionCommand,
+    AssignMerchantTradeRouteCommand, AutoExploreUnitCommand, DetachTroopCommand, EngineContext,
+    GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand, TurnCommand,
+    UnitActionCommand,
 };
 use aonw_testkit::{
     CanonicalFixtureExecutor, CanonicalFixtureInput, CanonicalFixtureLoader,
     CanonicalFixtureOutput, verify_canonical_corpus, verify_canonical_fixture,
 };
+
+#[path = "canonical_fixture_engine/encoding.rs"]
+mod encoding;
+
+use encoding::{encode_event, encode_evidence};
 
 #[derive(Debug)]
 struct ExecutionError(String);
@@ -79,19 +84,40 @@ fn apply_command(
             expected_revision,
             unit_id,
             target,
-        } => {
-            let unit_id = UnitId::new(unit_id.as_str()).map_err(display_error)?;
-            GameEngine::apply_player_owned(
-                state,
-                context,
-                PlayerCommand::MoveUnit(MoveUnitCommand::new(
-                    *expected_revision,
-                    &unit_id,
-                    HexCoord::new(target.col, target.row),
-                )),
-            )
-            .map_err(display_error)
-        }
+        } => apply_move_command(state, context, *expected_revision, unit_id, *target),
+        ReplayCommandDto::AutoExploreUnit {
+            expected_revision,
+            unit_id,
+        } => apply_auto_explore(state, context, *expected_revision, unit_id),
+        ReplayCommandDto::AssignMerchantTradeRoute {
+            expected_revision,
+            unit_id,
+            destination_city_id,
+        } => apply_merchant_command(
+            state,
+            context,
+            *expected_revision,
+            unit_id,
+            destination_city_id,
+            true,
+        ),
+        ReplayCommandDto::MoveMerchantToCity {
+            expected_revision,
+            unit_id,
+            destination_city_id,
+        } => apply_merchant_command(
+            state,
+            context,
+            *expected_revision,
+            unit_id,
+            destination_city_id,
+            false,
+        ),
+        ReplayCommandDto::DetachTroop {
+            expected_revision,
+            unit_id,
+            troop_kind,
+        } => apply_detachment(state, context, *expected_revision, unit_id, *troop_kind),
         ReplayCommandDto::CancelUnitAction {
             expected_revision,
             unit_id,
@@ -143,6 +169,87 @@ fn apply_command(
     }
 }
 
+fn apply_move_command(
+    state: aonw_domain::GameState,
+    context: EngineContext<'_>,
+    expected_revision: u64,
+    unit_id: &str,
+    target: aonw_contracts::CoordinateDto,
+) -> Result<aonw_engine::DomainTransition, ExecutionError> {
+    let unit_id = UnitId::new(unit_id).map_err(display_error)?;
+    GameEngine::apply_player_owned(
+        state,
+        context,
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(
+            expected_revision,
+            &unit_id,
+            HexCoord::new(target.col, target.row),
+        )),
+    )
+    .map_err(display_error)
+}
+
+fn apply_auto_explore(
+    state: aonw_domain::GameState,
+    context: EngineContext<'_>,
+    expected_revision: u64,
+    unit_id: &str,
+) -> Result<aonw_engine::DomainTransition, ExecutionError> {
+    let unit_id = UnitId::new(unit_id).map_err(display_error)?;
+    GameEngine::apply_player_owned(
+        state,
+        context,
+        PlayerCommand::AutoExploreUnit(AutoExploreUnitCommand::new(expected_revision, &unit_id)),
+    )
+    .map_err(display_error)
+}
+
+fn apply_detachment(
+    state: aonw_domain::GameState,
+    context: EngineContext<'_>,
+    expected_revision: u64,
+    unit_id: &str,
+    troop_kind: aonw_contracts::TroopKindDto,
+) -> Result<aonw_engine::DomainTransition, ExecutionError> {
+    let unit_id = UnitId::new(unit_id).map_err(display_error)?;
+    GameEngine::apply_player_owned(
+        state,
+        context,
+        PlayerCommand::DetachTroop(DetachTroopCommand::new(
+            expected_revision,
+            &unit_id,
+            decode_troop(troop_kind),
+        )),
+    )
+    .map_err(display_error)
+}
+
+fn apply_merchant_command(
+    state: aonw_domain::GameState,
+    context: EngineContext<'_>,
+    expected_revision: u64,
+    unit_id: &str,
+    destination_city_id: &str,
+    cyclic: bool,
+) -> Result<aonw_engine::DomainTransition, ExecutionError> {
+    let unit_id = UnitId::new(unit_id).map_err(display_error)?;
+    let city_id = CityId::new(destination_city_id).map_err(display_error)?;
+    let command = if cyclic {
+        PlayerCommand::AssignMerchantTradeRoute(AssignMerchantTradeRouteCommand::new(
+            expected_revision,
+            &unit_id,
+            &city_id,
+        ))
+    } else {
+        PlayerCommand::MoveMerchantToCity(MoveMerchantToCityCommand::new(
+            expected_revision,
+            &unit_id,
+            &city_id,
+        ))
+    };
+    GameEngine::apply_player_owned(state, context, command).map_err(display_error)
+}
+
 #[derive(Clone, Copy)]
 enum FixtureUnitAction {
     Cancel,
@@ -165,75 +272,6 @@ fn apply_unit_action(
         FixtureUnitAction::Fortify => PlayerCommand::FortifyUnit(command),
     };
     GameEngine::apply_player_owned(state, context, command).map_err(display_error)
-}
-
-fn encode_event(event: &DomainEvent) -> ReplayEventDto {
-    match event {
-        DomainEvent::UnitMoved(event) => ReplayEventDto::UnitMoved {
-            unit_id: event.unit_id().as_str().to_owned(),
-            from: coordinate(event.from()),
-            to: coordinate(event.to()),
-        },
-        DomainEvent::TurnEnded(event) => ReplayEventDto::TurnEnded {
-            player_id: event.player_id().as_str().to_owned(),
-        },
-        DomainEvent::AllPlayersSubmitted(event) => ReplayEventDto::AllPlayersSubmitted {
-            turn: event.turn(),
-            player_ids: event
-                .player_ids()
-                .iter()
-                .map(|player| player.as_str().to_owned())
-                .collect(),
-        },
-        DomainEvent::PlayerTimedOut(event) => ReplayEventDto::PlayerTimedOut {
-            turn: event.turn(),
-            player_id: event.player_id().as_str().to_owned(),
-        },
-        DomainEvent::PlayerKicked(event) => ReplayEventDto::PlayerKicked {
-            turn: event.turn(),
-            player_id: event.player_id().as_str().to_owned(),
-            reason: event.reason().to_owned(),
-            timeout_streak: event.timeout_streak(),
-        },
-    }
-}
-
-fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto {
-    match evidence {
-        ExecutionEvidence::UnitMovement(execution) => ReplayEvidenceDto::UnitMovement {
-            unit_id: execution.unit_id().as_str().to_owned(),
-            from: coordinate(execution.from()),
-            steps: execution
-                .steps()
-                .iter()
-                .map(|step| MovementStepDto {
-                    col: step.coordinate().col(),
-                    row: step.coordinate().row(),
-                    enter_cost_units: step.enter_cost().get(),
-                    cumulative_cost_units: step.cumulative_cost().get(),
-                })
-                .collect(),
-        },
-        ExecutionEvidence::TurnKernel(execution) => ReplayEvidenceDto::TurnKernel {
-            processors: execution
-                .processors()
-                .iter()
-                .map(|processor| processor.as_str().to_owned())
-                .collect(),
-            reset_unit_ids: execution
-                .reset_unit_ids()
-                .iter()
-                .map(|unit| unit.as_str().to_owned())
-                .collect(),
-        },
-    }
-}
-
-const fn coordinate(value: HexCoord) -> CoordinateDto {
-    CoordinateDto {
-        col: value.col(),
-        row: value.row(),
-    }
 }
 
 fn display_error(error: impl fmt::Display) -> ExecutionError {
@@ -386,6 +424,10 @@ fn reviewed_execution_disposition(line: &str) -> Option<ReviewedExecutionDisposi
 const fn command_name(command: &ReplayCommandDto) -> &'static str {
     match command {
         ReplayCommandDto::MoveUnit { .. } => "MoveUnit",
+        ReplayCommandDto::AutoExploreUnit { .. } => "AutoExploreUnit",
+        ReplayCommandDto::AssignMerchantTradeRoute { .. } => "AssignMerchantTradeRoute",
+        ReplayCommandDto::MoveMerchantToCity { .. } => "MoveMerchantToCity",
+        ReplayCommandDto::DetachTroop { .. } => "DetachTroop",
         ReplayCommandDto::CancelUnitAction { .. } => "CancelUnitAction",
         ReplayCommandDto::SkipUnitTurn { .. } => "SkipUnitTurn",
         ReplayCommandDto::FortifyUnit { .. } => "FortifyUnit",

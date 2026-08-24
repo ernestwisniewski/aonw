@@ -67,10 +67,11 @@ void main() {
   });
 
   test('migration manifest closes queries, events, and evidence', () {
-    expect(manifest.queryEntries, hasLength(2));
+    expect(manifest.queryEntries, hasLength(3));
     expect(manifest.eventEntries, hasLength(40));
+    expect(manifest.nativeEventEntries, hasLength(4));
     expect(manifest.evidenceEntries, hasLength(1));
-    expect(manifest.nativeEvidenceEntries, hasLength(1));
+    expect(manifest.nativeEvidenceEntries, hasLength(2));
 
     expect(_rustEnumVariants(manifest.rustQuerySource, 'GameQuery'), {
       for (final entry in manifest.queryEntries) entry.queryVariant,
@@ -99,7 +100,15 @@ void main() {
     final rustEventVariants = {
       for (final entry in manifest.eventEntries)
         if (entry.rustVariant != null) entry.rustVariant!,
+      for (final entry in manifest.nativeEventEntries) entry.rustVariant,
     };
+    for (final entry in manifest.nativeEventEntries) {
+      expect(
+        _rustDataTypeNames(entry.rustSource),
+        contains(entry.rustType),
+        reason: '${entry.rustType} missing from ${entry.rustSource}',
+      );
+    }
     expect(
       _rustEnumVariants(manifest.rustEventSource, 'DomainEvent'),
       rustEventVariants,
@@ -122,7 +131,7 @@ void main() {
     }
     for (final entry in manifest.nativeEvidenceEntries) {
       expect(
-        _rustStructNames(entry.rustSource),
+        _rustDataTypeNames(entry.rustSource),
         contains(entry.rustType),
         reason: '${entry.rustType} missing from ${entry.rustSource}',
       );
@@ -183,8 +192,12 @@ void main() {
             entry.dartType: entry.status,
       },
       const {
+        'AssignMerchantTradeRouteCommand': 'runtime-ready',
+        'AutoExploreUnitCommand': 'runtime-ready',
         'CancelUnitActionCommand': 'engine-parity',
+        'DetachTroopCommand': 'runtime-ready',
         'FortifyUnitCommand': 'engine-parity',
+        'MoveMerchantToCityCommand': 'runtime-ready',
         'MoveUnitCommand': 'engine-parity',
         'SkipUnitTurnCommand': 'engine-parity',
         'UnitMovedEvent': 'engine-parity',

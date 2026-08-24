@@ -31,7 +31,13 @@
     },
     "soakIterations": 20,
     "workloadPrefixes": [
-      "engine/",
+      "engine/apply",
+      "engine/content_hash",
+      "engine/occupied_approach",
+      "engine/open",
+      "engine/prepared_",
+      "engine/reachable",
+      "engine/route",
       "runtime/client_json_dispatch_",
       "runtime/client_json_open",
       "runtime/runtime_dispatch_",
@@ -57,9 +63,9 @@
       "timeout-invalid-scope-rejected"
     ],
     "maxEventsPerCommand": 4,
-    "maxMeasuredPayloadBytes": 210255,
-    "maxMeasuredAllocations": 19054,
-    "maxMeasuredAllocatedBytes": 1468739,
+    "maxMeasuredPayloadBytes": 210470,
+    "maxMeasuredAllocations": 24191,
+    "maxMeasuredAllocatedBytes": 4401065,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -72,6 +78,39 @@
       "runtime/client_json_turn_",
       "runtime/runtime_turn_",
       "runtime/turn_replay_verify"
+    ]
+  },
+  "U2": {
+    "target": "rust-movement-logistics-check",
+    "capabilities": [
+      "AssignMerchantTradeRoute",
+      "AutoExploreUnit",
+      "DetachTroop",
+      "MoveMerchantToCity"
+    ],
+    "fixtureIds": [
+      "auto-explore-deterministic-bounded",
+      "auto-explore-without-fog-state",
+      "merchant-current-engine-route",
+      "merchant-owned-city-stacking",
+      "save-reopen-replay-exact",
+      "troop-detachment-army-invariants",
+      "turn-logistics-evidence"
+    ],
+    "maxEventsPerCommand": 2,
+    "maxMeasuredPayloadBytes": 1,
+    "maxMeasuredAllocations": 5291,
+    "maxMeasuredAllocatedBytes": 6601113,
+    "maxWorkCounters": {
+      "frontierPops": 1200,
+      "expandedTiles": 1200,
+      "examinedEdges": 6922,
+      "heapPushes": 1200,
+      "routeRecords": 0
+    },
+    "soakIterations": 20,
+    "workloadPrefixes": [
+      "engine/logistics_"
     ]
   }
 }

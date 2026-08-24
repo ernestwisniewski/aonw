@@ -28,6 +28,38 @@ pub enum ClientCommandRejectionCodeDto {
     UnitMovementCapacityInsufficient,
     /// No valid route reaches the target.
     MovePathNotFound,
+    /// Auto-exploration requires a scout.
+    UnitNotScout,
+    /// The unit has no movement left for auto-exploration.
+    UnitExhausted,
+    /// Auto-exploration cannot replace an existing queued path.
+    UnitHasPath,
+    /// No deterministic exploration target remains.
+    AutoExploreNoTarget,
+    /// Merchant routing requires a merchant unit.
+    UnitNotMerchant,
+    /// A cyclic route can only start in an owned city center.
+    MerchantNotInCity,
+    /// The requested destination city does not exist.
+    DestinationCityNotFound,
+    /// The requested destination city is not controlled by the actor.
+    DestinationCityNotControlled,
+    /// A cyclic merchant destination equals its origin.
+    DestinationCityIsOrigin,
+    /// Explicit merchant travel already starts in the destination city.
+    DestinationCityIsCurrent,
+    /// No cyclic merchant route reaches the destination.
+    MerchantRouteNotFound,
+    /// No explicit merchant path reaches the destination city.
+    MerchantCityPathNotFound,
+    /// The requested troop is absent from the source army.
+    TroopNotAvailable,
+    /// The detachment source is outside immutable map content.
+    DetachmentSourceOutOfBounds,
+    /// No legal detachment destination exists.
+    DetachmentDestinationUnavailable,
+    /// No bounded canonical detached-unit identifier is available.
+    DetachedUnitIdUnavailable,
     /// The unit has an activity that prevents the requested action.
     UnitBusy,
     /// The ruleset lacks the requested unit definition.
@@ -54,7 +86,7 @@ pub enum ClientCommandRejectionCodeDto {
 
 impl ClientCommandRejectionCodeDto {
     /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 23] = [
+    pub const ALL: [Self; 39] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -67,6 +99,22 @@ impl ClientCommandRejectionCodeDto {
         Self::MoveTargetOccupied,
         Self::UnitMovementCapacityInsufficient,
         Self::MovePathNotFound,
+        Self::UnitNotScout,
+        Self::UnitExhausted,
+        Self::UnitHasPath,
+        Self::AutoExploreNoTarget,
+        Self::UnitNotMerchant,
+        Self::MerchantNotInCity,
+        Self::DestinationCityNotFound,
+        Self::DestinationCityNotControlled,
+        Self::DestinationCityIsOrigin,
+        Self::DestinationCityIsCurrent,
+        Self::MerchantRouteNotFound,
+        Self::MerchantCityPathNotFound,
+        Self::TroopNotAvailable,
+        Self::DetachmentSourceOutOfBounds,
+        Self::DetachmentDestinationUnavailable,
+        Self::DetachedUnitIdUnavailable,
         Self::UnitBusy,
         Self::UnitDefinitionMissing,
         Self::StateRevisionOverflow,
@@ -96,6 +144,22 @@ impl ClientCommandRejectionCodeDto {
             Self::MoveTargetOccupied => "move_target_occupied",
             Self::UnitMovementCapacityInsufficient => "unit_movement_capacity_insufficient",
             Self::MovePathNotFound => "move_path_not_found",
+            Self::UnitNotScout => "unit_not_scout",
+            Self::UnitExhausted => "unit_exhausted",
+            Self::UnitHasPath => "unit_has_path",
+            Self::AutoExploreNoTarget => "auto_explore_no_target",
+            Self::UnitNotMerchant => "unit_not_merchant",
+            Self::MerchantNotInCity => "merchant_not_in_city",
+            Self::DestinationCityNotFound => "destination_city_not_found",
+            Self::DestinationCityNotControlled => "destination_city_not_controlled",
+            Self::DestinationCityIsOrigin => "destination_city_is_origin",
+            Self::DestinationCityIsCurrent => "destination_city_is_current",
+            Self::MerchantRouteNotFound => "merchant_route_not_found",
+            Self::MerchantCityPathNotFound => "merchant_city_path_not_found",
+            Self::TroopNotAvailable => "troop_not_available",
+            Self::DetachmentSourceOutOfBounds => "detachment_source_out_of_bounds",
+            Self::DetachmentDestinationUnavailable => "detachment_destination_unavailable",
+            Self::DetachedUnitIdUnavailable => "detached_unit_id_unavailable",
             Self::UnitBusy => "unit_busy",
             Self::UnitDefinitionMissing => "unit_definition_missing",
             Self::StateRevisionOverflow => "state_revision_overflow",

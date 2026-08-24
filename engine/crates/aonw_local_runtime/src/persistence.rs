@@ -1,20 +1,24 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
-use aonw_contract_mapping::{decode_game_state, encode_game_state};
+use aonw_contract_mapping::{decode_game_state, decode_troop, encode_game_state};
 use aonw_contracts::{
-    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, MovementStepDto, ReplayCommandDto, ReplayContextDto,
-    ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto, ReplayRecordDto,
-    ReplayResultDto, ReplaySystemCommandDto, SaveGameDto,
+    MAX_REPLAY_ENTRY_COUNT, ReplayCommandDto, ReplayContextDto, ReplayEntryDto, ReplayLogDto,
+    ReplayRecordDto, ReplayResultDto, ReplaySystemCommandDto, SaveGameDto,
 };
-use aonw_domain::{PlayerId, UnitId, UtcTimestamp};
-use aonw_engine::{DomainEvent, ExecutionEvidence, GameEngine};
+use aonw_domain::{CityId, PlayerId, UnitId, UtcTimestamp};
+use aonw_engine::GameEngine;
 
 pub use crate::persistence_error::PersistenceError;
 use crate::persistence_validation::{validate_replay_header, validate_save_header};
 use crate::session::Session;
 use crate::{
-    CommandResult, FinalizeTimedOutTurnRequest, KickParticipantRequest, LocalRuntime,
-    MoveUnitRequest, OpenSession, SessionStamp, TurnCommandRequest, UnitActionRequest,
+    AutoExploreUnitRequest, CommandResult, DetachTroopRequest, FinalizeTimedOutTurnRequest,
+    KickParticipantRequest, LocalRuntime, MerchantCityRequest, MoveUnitRequest, OpenSession,
+    SessionStamp, TurnCommandRequest, UnitActionRequest,
 };
+
+mod evidence;
+
+use evidence::{encode_event, encode_evidence};
 
 /// Result of deterministic replay verification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -177,6 +181,14 @@ impl LocalRuntime {
             }
             let result = match decode_record(&entry.record)? {
                 ReplayRuntimeCommand::Move(command) => runtime.dispatch(&command),
+                ReplayRuntimeCommand::AutoExplore(command) => runtime.auto_explore_unit(&command),
+                ReplayRuntimeCommand::AssignMerchantRoute(command) => {
+                    runtime.assign_merchant_trade_route(&command)
+                }
+                ReplayRuntimeCommand::MoveMerchantToCity(command) => {
+                    runtime.move_merchant_to_city(&command)
+                }
+                ReplayRuntimeCommand::DetachTroop(command) => runtime.detach_troop(&command),
                 ReplayRuntimeCommand::Cancel(command) => runtime.cancel_unit_action(&command),
                 ReplayRuntimeCommand::Skip(command) => runtime.skip_unit_turn(&command),
                 ReplayRuntimeCommand::Fortify(command) => runtime.fortify_unit(&command),
@@ -242,77 +254,12 @@ fn replay_result(result: &CommandResult, session: &Session) -> ReplayResultDto {
     }
 }
 
-fn encode_event(event: &DomainEvent) -> ReplayEventDto {
-    match event {
-        DomainEvent::UnitMoved(event) => ReplayEventDto::UnitMoved {
-            unit_id: event.unit_id().as_str().to_owned(),
-            from: coordinate(event.from()),
-            to: coordinate(event.to()),
-        },
-        DomainEvent::TurnEnded(event) => ReplayEventDto::TurnEnded {
-            player_id: event.player_id().as_str().to_owned(),
-        },
-        DomainEvent::AllPlayersSubmitted(event) => ReplayEventDto::AllPlayersSubmitted {
-            turn: event.turn(),
-            player_ids: event
-                .player_ids()
-                .iter()
-                .map(|player| player.as_str().to_owned())
-                .collect(),
-        },
-        DomainEvent::PlayerTimedOut(event) => ReplayEventDto::PlayerTimedOut {
-            turn: event.turn(),
-            player_id: event.player_id().as_str().to_owned(),
-        },
-        DomainEvent::PlayerKicked(event) => ReplayEventDto::PlayerKicked {
-            turn: event.turn(),
-            player_id: event.player_id().as_str().to_owned(),
-            reason: event.reason().to_owned(),
-            timeout_streak: event.timeout_streak(),
-        },
-    }
-}
-
-fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto {
-    match evidence {
-        ExecutionEvidence::UnitMovement(execution) => ReplayEvidenceDto::UnitMovement {
-            unit_id: execution.unit_id().as_str().to_owned(),
-            from: coordinate(execution.from()),
-            steps: execution
-                .steps()
-                .iter()
-                .map(|step| MovementStepDto {
-                    col: step.coordinate().col(),
-                    row: step.coordinate().row(),
-                    enter_cost_units: step.enter_cost().get(),
-                    cumulative_cost_units: step.cumulative_cost().get(),
-                })
-                .collect(),
-        },
-        ExecutionEvidence::TurnKernel(execution) => ReplayEvidenceDto::TurnKernel {
-            processors: execution
-                .processors()
-                .iter()
-                .map(|processor| processor.as_str().to_owned())
-                .collect(),
-            reset_unit_ids: execution
-                .reset_unit_ids()
-                .iter()
-                .map(|unit| unit.as_str().to_owned())
-                .collect(),
-        },
-    }
-}
-
-const fn coordinate(value: aonw_domain::HexCoord) -> CoordinateDto {
-    CoordinateDto {
-        col: value.col(),
-        row: value.row(),
-    }
-}
-
 enum ReplayRuntimeCommand {
     Move(MoveUnitRequest),
+    AutoExplore(AutoExploreUnitRequest),
+    AssignMerchantRoute(MerchantCityRequest),
+    MoveMerchantToCity(MerchantCityRequest),
+    DetachTroop(DetachTroopRequest),
     Cancel(UnitActionRequest),
     Skip(UnitActionRequest),
     Fortify(UnitActionRequest),
@@ -339,6 +286,34 @@ fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, Pe
             expected_revision: *expected_revision,
             unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
             target: aonw_domain::HexCoord::new(target.col, target.row),
+        })),
+        ReplayCommandDto::AutoExploreUnit {
+            expected_revision,
+            unit_id,
+        } => Ok(ReplayRuntimeCommand::AutoExplore(AutoExploreUnitRequest {
+            expected_revision: *expected_revision,
+            unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
+        })),
+        ReplayCommandDto::AssignMerchantTradeRoute {
+            expected_revision,
+            unit_id,
+            destination_city_id,
+        } => decode_merchant_city(*expected_revision, unit_id, destination_city_id)
+            .map(ReplayRuntimeCommand::AssignMerchantRoute),
+        ReplayCommandDto::MoveMerchantToCity {
+            expected_revision,
+            unit_id,
+            destination_city_id,
+        } => decode_merchant_city(*expected_revision, unit_id, destination_city_id)
+            .map(ReplayRuntimeCommand::MoveMerchantToCity),
+        ReplayCommandDto::DetachTroop {
+            expected_revision,
+            unit_id,
+            troop_kind,
+        } => Ok(ReplayRuntimeCommand::DetachTroop(DetachTroopRequest {
+            expected_revision: *expected_revision,
+            unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
+            troop_kind: decode_troop(*troop_kind),
         })),
         ReplayCommandDto::CancelUnitAction {
             expected_revision,
@@ -419,5 +394,18 @@ fn decode_unit_action(
     Ok(UnitActionRequest {
         expected_revision,
         unit_id: UnitId::new(unit_id.to_owned()).map_err(PersistenceError::InvalidUnit)?,
+    })
+}
+
+fn decode_merchant_city(
+    expected_revision: u64,
+    unit_id: &str,
+    destination_city_id: &str,
+) -> Result<MerchantCityRequest, PersistenceError> {
+    Ok(MerchantCityRequest {
+        expected_revision,
+        unit_id: UnitId::new(unit_id.to_owned()).map_err(PersistenceError::InvalidUnit)?,
+        destination_city_id: CityId::new(destination_city_id.to_owned())
+            .map_err(PersistenceError::InvalidCity)?,
     })
 }

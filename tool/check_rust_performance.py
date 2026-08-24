@@ -210,8 +210,8 @@ def parse_csv(source: str, scope: str, header: list[str]) -> tuple[dict[str, Any
 
 def load_stages(path: Path) -> dict[str, dict[str, Any]]:
     raw = read_json(path, "stage budgets")
-    if not isinstance(raw, dict) or set(raw) != {"E0", "T1"}:
-        raise PerformanceFailure("stage budgets must contain exactly active stages E0 and T1")
+    if not isinstance(raw, dict) or set(raw) != {"E0", "T1", "U2"}:
+        raise PerformanceFailure("stage budgets must contain exactly active stages E0, T1 and U2")
     expected = {
         "E0": {
             "target": "rust-foundation-check",
@@ -232,6 +232,16 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
                 "SubmitTurn",
             ],
             "fixtureCount": 8,
+        },
+        "U2": {
+            "target": "rust-movement-logistics-check",
+            "capabilities": [
+                "AssignMerchantTradeRoute",
+                "AutoExploreUnit",
+                "DetachTroop",
+                "MoveMerchantToCity",
+            ],
+            "fixtureCount": 7,
         },
     }
     stages: dict[str, dict[str, Any]] = {}
@@ -333,11 +343,38 @@ def validate_t1_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("T1 fixture event count exceeds the reviewed stage budget")
 
 
+def validate_u2_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
+    manifest = read_json(
+        repo_root / "engine/fixtures/movement_logistics/manifest.json",
+        "U2 fixture manifest",
+    )
+    if not isinstance(manifest, dict) or manifest.get("capability") != "movement-logistics-ready":
+        raise PerformanceFailure("U2 fixture manifest capability differs")
+    cases = manifest.get("cases")
+    if not isinstance(cases, list) or sorted(cases) != stage["fixtureIds"]:
+        raise PerformanceFailure("U2 fixture IDs differ from the stage budget")
+    command_names = {
+        "assignMerchantTradeRoute": "AssignMerchantTradeRoute",
+        "autoExploreUnit": "AutoExploreUnit",
+        "detachTroop": "DetachTroop",
+        "moveMerchantToCity": "MoveMerchantToCity",
+    }
+    commands = manifest.get("commands")
+    if not isinstance(commands, list):
+        raise PerformanceFailure("U2 fixture manifest has no command inventory")
+    capabilities = sorted(command_names.get(command, "") for command in commands)
+    if capabilities != stage["capabilities"]:
+        raise PerformanceFailure("U2 fixture capabilities differ from the stage budget")
+    if stage["maxEventsPerCommand"] < 2:
+        raise PerformanceFailure("U2 event budget cannot cover auto-exploration")
+
+
 def validate_stages(
     stages: dict[str, dict[str, Any]], stable: dict[str, Any], repo_root: Path
 ) -> None:
     validate_e0_fixtures(stages["E0"], repo_root)
     validate_t1_fixtures(stages["T1"], repo_root)
+    validate_u2_fixtures(stages["U2"], repo_root)
     for name, stage in stages.items():
         selected = {
             key: workload
@@ -386,11 +423,12 @@ def provenance() -> dict[str, Any]:
 
 
 def build_report(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
-    for source in [
+    sources = list((repo_root / "engine/crates/aonw_engine/benches/movement").glob("*.rs"))
+    sources.extend([
         repo_root / "engine/crates/aonw_engine/benches/movement.rs",
-        repo_root / "engine/crates/aonw_engine/benches/movement/support.rs",
         repo_root / "engine/crates/aonw_local_runtime/benches/runtime.rs",
-    ]:
+    ])
+    for source in sources:
         text = source.read_text(encoding="utf-8")
         if re.search(r"\b(?:thread::spawn|rayon|tokio)::?", text):
             raise PerformanceFailure(f"background threading is forbidden in measured harness: {source}")
@@ -413,7 +451,7 @@ def build_report(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
     validate_stages(stages, stable, repo_root)
     return {
         "provenance": provenance(),
-        "stage": "T1",
+        "stage": "U2",
         "stable": dict(sorted(stable.items())),
         "diagnosticTimings": dict(sorted({**engine_timings, **runtime_timings}.items())),
     }

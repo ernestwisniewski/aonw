@@ -6,6 +6,7 @@
 #   expected-system-count <integer>
 #   expected-query-count <integer>
 #   expected-event-count <integer>
+#   expected-native-event-count <integer>
 #   expected-evidence-count <integer>
 #   expected-native-evidence-count <integer>
 #   expected-projection-type-count <integer>
@@ -28,6 +29,7 @@
 #   system <DartType> <family> <status> <RustVariant-or-dash> <DartSource>
 #   query <RustQueryVariant> <RustResultVariant> <ClientResultVariant> <family> <status>
 #   event <DartType> <family> <status> <RustVariant-or-dash> <DartSource>
+#   native-event <RustType> <family> <status> <RustVariant> <RustSource>
 #   evidence <DartType> <family> <status> <RustVariant> <DartSource>
 #   native-evidence <RustType> <family> <status> <RustVariant> <RustSource>
 #   projection-type <RustType> <kind> <status> <DtoType> <RustSource>
@@ -41,10 +43,11 @@
 oracle-tree b83e4a513901403ab24e9d447feb5086edbdf9b9
 expected-domain-count 39
 expected-system-count 2
-expected-query-count 2
+expected-query-count 3
 expected-event-count 40
+expected-native-event-count 4
 expected-evidence-count 1
-expected-native-evidence-count 1
+expected-native-evidence-count 2
 expected-projection-type-count 3
 expected-projection-variant-count 9
 dart-domain-root packages/aonw_core/lib/game/domain/command/game_command.dart
@@ -62,10 +65,10 @@ rust-client-response-source engine/crates/aonw_contracts/src/client/response.rs
 rust-projection-source engine/crates/aonw_local_runtime/src/player_view.rs
 partial-parity-mode full-state
 
-domain AssignMerchantTradeRouteCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
+domain AssignMerchantTradeRouteCommand movement runtime-ready AssignMerchantTradeRoute packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain AssignWorkerToHexCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain AttackHexCommand combat reference-only - packages/aonw_core/lib/game/domain/command/combat_commands.dart
-domain AutoExploreUnitCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
+domain AutoExploreUnitCommand movement runtime-ready AutoExploreUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain AutomateWorkerCommand movement reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain BuildRoadCommand infrastructure reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain CancelUnitActionCommand movement engine-parity CancelUnitAction packages/aonw_core/lib/game/domain/command/unit_commands.dart
@@ -73,11 +76,11 @@ domain CancelWorkerAssignmentCommand worker reference-only - packages/aonw_core/
 domain CancelWorkerJobCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain ConfirmWorkerImprovementCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain DeclareWarCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
-domain DetachTroopCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
+domain DetachTroopCommand movement runtime-ready DetachTroop packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain EndTurnCommand turn turn-kernel-ready EndTurn packages/aonw_core/lib/game/domain/command/turn_commands.dart
 domain FortifyUnitCommand unit-action engine-parity FortifyUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain FoundCityCommand city reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
-domain MoveMerchantToCityCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
+domain MoveMerchantToCityCommand movement runtime-ready MoveMerchantToCity packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain MoveUnitCommand movement engine-parity MoveUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain OpenResourceExchangeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain OpenResourceTradeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
@@ -107,6 +110,7 @@ system KickParticipant system-lifecycle turn-kernel-ready KickParticipant packag
 
 query PlanRoute Route RoutePlan movement characterized
 query Reachable Reachable Reachable movement characterized
+query UnitLogisticsOptions UnitLogisticsOptions UnitLogisticsOptions movement runtime-ready
 
 event ArtifactCarriedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event ArtifactExcavationStartedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
@@ -149,7 +153,13 @@ event UnitRetreatedEvent combat reference-only - packages/aonw_core/lib/game/dom
 event WonderProductionRefundedEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event WorkerCompletedJobEvent turn reference-only - packages/aonw_core/lib/game/domain/event/turn_events.dart
 
+native-event AutoExplorePlannedEvent movement runtime-ready AutoExplorePlanned engine/crates/aonw_engine/src/application/logistics.rs
+native-event MerchantRouteAssignedEvent movement runtime-ready MerchantRouteAssigned engine/crates/aonw_engine/src/application/logistics.rs
+native-event MerchantTravelQueuedEvent movement runtime-ready MerchantTravelQueued engine/crates/aonw_engine/src/application/logistics.rs
+native-event TroopDetachedEvent movement runtime-ready TroopDetached engine/crates/aonw_engine/src/application/logistics.rs
+
 evidence MovementCommandExecution movement engine-parity UnitMovement packages/aonw_core/lib/game/domain/movement/movement_command_execution.dart
+native-evidence LogisticsExecution movement runtime-ready Logistics engine/crates/aonw_engine/src/application/logistics.rs
 native-evidence TurnKernelExecution turn turn-kernel-ready TurnKernel engine/crates/aonw_engine/src/application/turn.rs
 
 projection-type PlayerUnitView visible-entity characterized PlayerUnitViewDto engine/crates/aonw_local_runtime/src/player_view.rs

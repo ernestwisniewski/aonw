@@ -41,7 +41,7 @@
     },
     "aonw_contract_mapping": {
       "countedLines": 2378,
-      "coveredLines": 2079,
+      "coveredLines": 2082,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_contract_mapping/src/game_state_mapping/mod.rs"
@@ -65,11 +65,11 @@
         "crates/aonw_contract_mapping/src/game_state_mapping/world.rs",
         "crates/aonw_contract_mapping/src/lib.rs"
       ],
-      "uncoveredLines": 299
+      "uncoveredLines": 296
     },
     "aonw_contracts": {
-      "countedLines": 233,
-      "coveredLines": 186,
+      "countedLines": 261,
+      "coveredLines": 216,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_contracts/src/canonical/artifact.rs",
@@ -85,8 +85,12 @@
         "crates/aonw_contracts/src/client/mod.rs",
         "crates/aonw_contracts/src/client/request.rs",
         "crates/aonw_contracts/src/client/response.rs",
+        "crates/aonw_contracts/src/client/response/logistics.rs",
+        "crates/aonw_contracts/src/client/response/session.rs",
         "crates/aonw_contracts/src/lib.rs",
-        "crates/aonw_contracts/src/limits.rs"
+        "crates/aonw_contracts/src/limits.rs",
+        "crates/aonw_contracts/src/persistence/command.rs",
+        "crates/aonw_contracts/src/persistence/logistics.rs"
       ],
       "sourceFiles": [
         "crates/aonw_contracts/src/canonical.rs",
@@ -105,16 +109,20 @@
         "crates/aonw_contracts/src/client/mod.rs",
         "crates/aonw_contracts/src/client/request.rs",
         "crates/aonw_contracts/src/client/response.rs",
+        "crates/aonw_contracts/src/client/response/logistics.rs",
         "crates/aonw_contracts/src/client/response/rejection.rs",
+        "crates/aonw_contracts/src/client/response/session.rs",
         "crates/aonw_contracts/src/lib.rs",
         "crates/aonw_contracts/src/limits.rs",
-        "crates/aonw_contracts/src/persistence.rs"
+        "crates/aonw_contracts/src/persistence.rs",
+        "crates/aonw_contracts/src/persistence/command.rs",
+        "crates/aonw_contracts/src/persistence/logistics.rs"
       ],
-      "uncoveredLines": 47
+      "uncoveredLines": 45
     },
     "aonw_domain": {
-      "countedLines": 3686,
-      "coveredLines": 3199,
+      "countedLines": 3823,
+      "coveredLines": 3338,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_domain/src/city/mod.rs",
@@ -160,16 +168,17 @@
         "crates/aonw_domain/src/unit/activity.rs",
         "crates/aonw_domain/src/unit/army.rs",
         "crates/aonw_domain/src/unit/entity.rs",
+        "crates/aonw_domain/src/unit/entity/logistics.rs",
         "crates/aonw_domain/src/unit/merchant_route.rs",
         "crates/aonw_domain/src/unit/mod.rs",
         "crates/aonw_domain/src/unit_kind.rs",
         "crates/aonw_domain/src/unit_posture.rs"
       ],
-      "uncoveredLines": 487
+      "uncoveredLines": 485
     },
     "aonw_engine": {
-      "countedLines": 4460,
-      "coveredLines": 3795,
+      "countedLines": 6239,
+      "coveredLines": 5580,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_engine/src/application/mod.rs",
@@ -179,6 +188,7 @@
       ],
       "sourceFiles": [
         "crates/aonw_engine/src/application/command.rs",
+        "crates/aonw_engine/src/application/logistics.rs",
         "crates/aonw_engine/src/application/mod.rs",
         "crates/aonw_engine/src/application/query.rs",
         "crates/aonw_engine/src/application/transition.rs",
@@ -186,13 +196,18 @@
         "crates/aonw_engine/src/context.rs",
         "crates/aonw_engine/src/diplomacy_policy.rs",
         "crates/aonw_engine/src/lib.rs",
+        "crates/aonw_engine/src/movement/auto_explore.rs",
         "crates/aonw_engine/src/movement/balance.rs",
         "crates/aonw_engine/src/movement/compiled_map.rs",
         "crates/aonw_engine/src/movement/cost.rs",
+        "crates/aonw_engine/src/movement/detachment.rs",
         "crates/aonw_engine/src/movement/fog.rs",
+        "crates/aonw_engine/src/movement/logistics.rs",
+        "crates/aonw_engine/src/movement/merchant.rs",
         "crates/aonw_engine/src/movement/metrics.rs",
         "crates/aonw_engine/src/movement/mod.rs",
         "crates/aonw_engine/src/movement/occupancy.rs",
+        "crates/aonw_engine/src/movement/options.rs",
         "crates/aonw_engine/src/movement/planning_view.rs",
         "crates/aonw_engine/src/movement/query.rs",
         "crates/aonw_engine/src/movement/query_tests.rs",
@@ -201,6 +216,7 @@
         "crates/aonw_engine/src/movement/terrain_profile.rs",
         "crates/aonw_engine/src/movement/transition.rs",
         "crates/aonw_engine/src/movement/transition_tests.rs",
+        "crates/aonw_engine/src/movement/turn.rs",
         "crates/aonw_engine/src/movement/visibility.rs",
         "crates/aonw_engine/src/movement/workspace.rs",
         "crates/aonw_engine/src/state_digest.rs",
@@ -218,11 +234,11 @@
         "crates/aonw_engine/src/turn_kernel/support.rs",
         "crates/aonw_engine/src/unit_action.rs"
       ],
-      "uncoveredLines": 665
+      "uncoveredLines": 659
     },
     "aonw_local_runtime": {
-      "countedLines": 1977,
-      "coveredLines": 1219,
+      "countedLines": 2459,
+      "coveredLines": 2104,
       "group": "runtime",
       "missingFiles": [
         "crates/aonw_local_runtime/src/lib.rs",
@@ -231,10 +247,12 @@
       "sourceFiles": [
         "crates/aonw_local_runtime/src/client_protocol/decode.rs",
         "crates/aonw_local_runtime/src/client_protocol/encode.rs",
+        "crates/aonw_local_runtime/src/client_protocol/encode/evidence.rs",
         "crates/aonw_local_runtime/src/client_protocol/mod.rs",
         "crates/aonw_local_runtime/src/command_dispatch.rs",
         "crates/aonw_local_runtime/src/lib.rs",
         "crates/aonw_local_runtime/src/persistence.rs",
+        "crates/aonw_local_runtime/src/persistence/evidence.rs",
         "crates/aonw_local_runtime/src/persistence_error.rs",
         "crates/aonw_local_runtime/src/persistence_validation.rs",
         "crates/aonw_local_runtime/src/player_view.rs",
@@ -249,7 +267,7 @@
         "crates/aonw_local_runtime/src/session/state.rs",
         "crates/aonw_local_runtime/src/turn_dispatch.rs"
       ],
-      "uncoveredLines": 758
+      "uncoveredLines": 355
     }
   },
   "provenance": {

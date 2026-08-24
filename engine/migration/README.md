@@ -53,12 +53,13 @@ returned by the engine, so `partial-parity-mode` is `full-state`. The historical
 opaque splice adapter and its execution gate have been removed. State
 representation is `state-contract-ready`; command/query surfaces remain at
 their independently evidenced status until their own parity gate is met.
-The current T1 lifecycle surface is `turn-kernel-ready`: submission,
-lifecycle progression, movement reset, and reversible-skip cleanup are
-implemented. Queued movement, trade routes, automation, combat, economy,
-diplomacy, research, agreements, and objectives remain disabled and fail
-closed when their state is detected. The five historical integrated-turn
-fixtures therefore remain blocked until the complete CP9 pipeline; they are
+The current T1+U2 lifecycle surface is `turn-kernel-ready`: submission,
+lifecycle progression, movement reset, reversible-skip cleanup, queued
+movement, merchant routes, and scout auto-exploration are implemented. Worker
+automation, combat, economy, diplomacy, research, agreements, and objectives
+remain disabled and fail closed when their state is detected. The five
+historical integrated-turn fixtures therefore remain blocked until the
+complete O9 pipeline; they are
 not reclassified as full `engine-parity` by the smaller greenfield kernel.
 
 The CP7/DP read-only substrate is `state-contract-ready` rather than command

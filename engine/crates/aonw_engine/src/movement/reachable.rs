@@ -143,7 +143,14 @@ pub(crate) fn find_reachable_tiles_with_workspace(
     validate_revision(state, query.expected_revision)?;
     let unit = validate_unit(state, context, query.unit_id)?;
     let available = movement_available_for_query(unit, context.ruleset());
-    let search_metrics = reachable_costs(state, context.map(), unit, available, context, workspace);
+    let search_metrics = reachable_costs(
+        state.units(),
+        context.map(),
+        unit,
+        available,
+        context,
+        workspace,
+    );
     let costs = &workspace.reachable_costs[..context.map().bounds().tile_count()];
     let tiles = costs
         .iter()
@@ -184,7 +191,7 @@ pub(super) fn movement_available_for_query(
 }
 
 fn reachable_costs(
-    state: &GameState,
+    units: &[Unit],
     map: &MapDefinition,
     unit: &Unit,
     available: MovementUnits,
@@ -200,7 +207,7 @@ fn reachable_costs(
     let Some(start) = map.tile_index(unit.position()).map(HexTileIndex::get) else {
         return metrics;
     };
-    let occupied = MovementOccupancy::for_unit(state, map, unit, context);
+    let occupied = MovementOccupancy::for_unit(units, map, unit, context);
     let costs = &mut workspace.reachable_costs[..tile_count];
     costs[start] = 0;
     let frontier = &mut workspace.reachable_frontier;
@@ -240,7 +247,9 @@ fn reachable_costs(
             if occupied.contains(next_index) {
                 continue;
             }
-            if !context.can_plan_through_tile(unit, next) || context.city_block_is_known(unit, next)
+            if !context.can_plan_through_tile(unit, next)
+                || context.city_block_is_known(unit, next)
+                || context.territory_block_is_known(unit, next)
             {
                 continue;
             }
@@ -275,4 +284,21 @@ fn reachable_costs(
         }
     }
     metrics
+}
+
+pub(super) fn eventual_costs(
+    units: &[Unit],
+    map: &MapDefinition,
+    unit: &Unit,
+    context: EngineContext<'_>,
+    workspace: &mut MovementSearchWorkspace,
+) -> MovementSearchMetrics {
+    reachable_costs(
+        units,
+        map,
+        unit,
+        MovementUnits::new(u32::MAX),
+        context,
+        workspace,
+    )
 }

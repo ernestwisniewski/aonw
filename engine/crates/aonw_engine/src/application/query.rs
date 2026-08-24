@@ -2,7 +2,8 @@ use aonw_domain::GameState;
 
 use crate::{
     EngineContext, GameEngine, MovementSearchWorkspace, ReachableMovement, ReachableMovementQuery,
-    TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError,
+    TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitLogisticsOptions,
+    UnitLogisticsOptionsQuery,
 };
 
 /// Read-only game query family.
@@ -12,6 +13,8 @@ pub enum GameQuery<'query> {
     PlanRoute(TerrainMovementQuery<'query>),
     /// Current-turn reachable overlay.
     Reachable(ReachableMovementQuery<'query>),
+    /// Complete engine-owned logistics options for one unit.
+    UnitLogisticsOptions(UnitLogisticsOptionsQuery<'query>),
 }
 
 /// Typed query result.
@@ -21,6 +24,8 @@ pub enum QueryResult {
     Route(TerrainMovementPlan),
     /// Reachable coordinates.
     Reachable(ReachableMovement),
+    /// Auto-explore, merchant, and detachment options.
+    UnitLogisticsOptions(UnitLogisticsOptions),
 }
 
 /// Failure from a canonical read-only query.
@@ -28,6 +33,8 @@ pub enum QueryResult {
 pub enum CanonicalQueryError {
     /// Query was rejected by deterministic rules.
     Rejected(TerrainMovementQueryError),
+    /// Logistics options were rejected by deterministic rules.
+    Logistics(crate::MovementLogisticsError),
 }
 
 impl CanonicalQueryError {
@@ -36,6 +43,7 @@ impl CanonicalQueryError {
     pub const fn code(&self) -> &'static str {
         match self {
             Self::Rejected(rejection) => rejection.code().as_str(),
+            Self::Logistics(rejection) => rejection.code().as_str(),
         }
     }
 }
@@ -44,6 +52,7 @@ impl core::fmt::Display for CanonicalQueryError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Rejected(source) => source.fmt(formatter),
+            Self::Logistics(source) => source.fmt(formatter),
         }
     }
 }
@@ -85,6 +94,11 @@ impl GameEngine {
                 Self::reachable_movement_with_workspace(state, context, query, workspace)
                     .map(QueryResult::Reachable)
                     .map_err(CanonicalQueryError::Rejected)
+            }
+            GameQuery::UnitLogisticsOptions(query) => {
+                crate::movement::query_logistics_options(state, context, query, workspace)
+                    .map(QueryResult::UnitLogisticsOptions)
+                    .map_err(CanonicalQueryError::Logistics)
             }
         }
     }

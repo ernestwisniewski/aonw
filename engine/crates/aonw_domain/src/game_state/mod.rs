@@ -1,4 +1,4 @@
-mod turn_update;
+pub(crate) mod turn_update;
 mod validation;
 
 use crate::{

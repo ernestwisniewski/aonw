@@ -4,6 +4,8 @@ use crate::{
 
 use super::{ArmyTroop, MerchantTradeRoute, TroopKind, UnitActivity, WorkerJob};
 
+mod logistics;
+
 const MAX_UNIT_NAME_BYTES: usize = 256;
 
 /// Failure raised while constructing a canonical unit.

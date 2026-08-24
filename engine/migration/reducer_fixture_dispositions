@@ -14,7 +14,8 @@ authoritative-inventory engine/migration/authoritative_inventory
 expected-case-count 120
 expected-round-trip-count 9
 expected-engine-parity-count 9
-expected-blocked-count 111
+expected-blocked-count 99
+expected-historical-count 12
 
 case artifact-city-slot-full-rejected artifacts StoreArtifactInCity rejected city_artifact_slot_full blocked reference-only CP12 awaits-independent-current-contract-review -
 case artifact-excavation-accepted artifacts StartArtifactExcavation accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
@@ -24,9 +25,9 @@ case artifact-trade-accepted artifacts TradeArtifact accepted - blocked referenc
 case artifact-trade-invalid-actor-rejected artifacts TradeArtifact rejected invalid_artifact_trade_actor blocked reference-only CP12 awaits-independent-current-contract-review -
 case artifact-trade-requires-acceptance-rejected artifacts TradeArtifact rejected artifact_trade_requires_acceptance blocked reference-only CP12 awaits-independent-current-contract-review -
 case artifact-unit-not-controlled-rejected artifacts StartArtifactExcavation rejected unit_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case auto-explore-adjacent-accepted auto-explore AutoExploreUnit accepted - blocked reference-only CP8 awaits-independent-current-contract-review -
-case auto-explore-no-target-rejected auto-explore AutoExploreUnit rejected auto_explore_no_target blocked reference-only CP8 awaits-independent-current-contract-review -
-case auto-explore-wrong-actor-rejected auto-explore AutoExploreUnit rejected unit_not_controlled blocked reference-only CP8 awaits-independent-current-contract-review -
+case auto-explore-adjacent-accepted auto-explore AutoExploreUnit accepted - historical reference-only current superseded-by-current-contract -
+case auto-explore-no-target-rejected auto-explore AutoExploreUnit rejected auto_explore_no_target historical reference-only current superseded-by-current-contract -
+case auto-explore-wrong-actor-rejected auto-explore AutoExploreUnit rejected unit_not_controlled historical reference-only current superseded-by-current-contract -
 case city-expansion-accepted city-expansion SelectCityExpansionHex accepted - blocked reference-only CP10 awaits-independent-current-contract-review -
 case city-expansion-unavailable-rejected city-expansion SelectCityExpansionHex rejected city_expansion_hex_unavailable blocked reference-only CP10 awaits-independent-current-contract-review -
 case city-expansion-wrong-actor-rejected city-expansion SelectCityExpansionHex rejected city_not_controlled blocked reference-only CP10 awaits-independent-current-contract-review -
@@ -93,15 +94,15 @@ case city-worked-hex-wrong-actor-rejected city-worked-hex ToggleWorkedHex reject
 case combat-target-not-found-rejected combat AttackHex rejected attack_target_not_found blocked reference-only CP9 awaits-independent-current-contract-review -
 case combat-visible-unit-accepted combat AttackHex accepted - blocked reference-only CP9 awaits-independent-current-contract-review -
 case combat-wrong-actor-rejected combat AttackHex rejected attacker_not_controlled blocked reference-only CP9 awaits-independent-current-contract-review -
-case detachment-no-visible-destination-rejected detachment DetachTroop rejected detachment_destination_unavailable blocked reference-only CP8 awaits-independent-current-contract-review -
-case detachment-source-out-of-bounds-rejected detachment DetachTroop rejected detachment_source_out_of_bounds blocked reference-only CP8 awaits-independent-current-contract-review -
-case detachment-visible-accepted detachment DetachTroop accepted - blocked reference-only CP8 awaits-independent-current-contract-review -
-case detachment-wrong-actor-rejected detachment DetachTroop rejected unit_not_controlled blocked reference-only CP8 awaits-independent-current-contract-review -
-case merchant-route-assign-accepted merchant-routing AssignMerchantTradeRoute accepted - blocked reference-only CP8 awaits-independent-current-contract-review -
-case merchant-route-move-no-path-rejected merchant-routing MoveMerchantToCity rejected merchant_city_path_not_found blocked reference-only CP8 awaits-independent-current-contract-review -
-case merchant-route-move-to-city-accepted merchant-routing MoveMerchantToCity accepted - blocked reference-only CP8 awaits-independent-current-contract-review -
-case merchant-route-no-path-rejected merchant-routing AssignMerchantTradeRoute rejected merchant_route_not_found blocked reference-only CP8 awaits-independent-current-contract-review -
-case merchant-route-wrong-actor-rejected merchant-routing AssignMerchantTradeRoute rejected unit_not_controlled blocked reference-only CP8 awaits-independent-current-contract-review -
+case detachment-no-visible-destination-rejected detachment DetachTroop rejected detachment_destination_unavailable historical reference-only current superseded-by-current-contract -
+case detachment-source-out-of-bounds-rejected detachment DetachTroop rejected detachment_source_out_of_bounds historical reference-only current superseded-by-current-contract -
+case detachment-visible-accepted detachment DetachTroop accepted - historical reference-only current superseded-by-current-contract -
+case detachment-wrong-actor-rejected detachment DetachTroop rejected unit_not_controlled historical reference-only current superseded-by-current-contract -
+case merchant-route-assign-accepted merchant-routing AssignMerchantTradeRoute accepted - historical reference-only current superseded-by-current-contract -
+case merchant-route-move-no-path-rejected merchant-routing MoveMerchantToCity rejected merchant_city_path_not_found historical reference-only current superseded-by-current-contract -
+case merchant-route-move-to-city-accepted merchant-routing MoveMerchantToCity accepted - historical reference-only current superseded-by-current-contract -
+case merchant-route-no-path-rejected merchant-routing AssignMerchantTradeRoute rejected merchant_route_not_found historical reference-only current superseded-by-current-contract -
+case merchant-route-wrong-actor-rejected merchant-routing AssignMerchantTradeRoute rejected unit_not_controlled historical reference-only current superseded-by-current-contract -
 case movement-adjacent-accepted movement MoveUnit accepted - round-trip engine-parity current - engine/fixtures/canonical_commands/movement-adjacent-accepted.json
 case movement-out-of-bounds-rejected movement MoveUnit rejected move_target_out_of_bounds round-trip engine-parity current - engine/fixtures/canonical_commands/movement-out-of-bounds-rejected.json
 case movement-wrong-actor-rejected movement MoveUnit rejected unit_not_controlled round-trip engine-parity current - engine/fixtures/canonical_commands/movement-wrong-actor-rejected.json

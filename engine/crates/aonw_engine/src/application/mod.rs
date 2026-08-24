@@ -1,9 +1,14 @@
 mod command;
+mod logistics;
 mod query;
 mod transition;
 mod turn;
 
 pub use command::{CanonicalEngineError, EventBudget, PlayerCommand};
+pub use logistics::{
+    AutoExplorePlannedEvent, LogisticsExecution, MerchantRouteAssignedEvent,
+    MerchantTravelQueuedEvent, TroopDetachedEvent,
+};
 pub use query::{CanonicalQueryError, GameQuery, QueryResult};
 pub use transition::{
     AllPlayersSubmittedEvent, CommandRejectionCode, DomainEvent, DomainRejection, DomainTransition,

@@ -16,4 +16,4 @@ mod world;
 
 pub use error::GameStateMappingError;
 pub use state::{canonicalize_game_state, decode_game_state, encode_game_state};
-pub use value::encode_improvement;
+pub use value::{decode_troop, encode_improvement, encode_troop};

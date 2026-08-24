@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::CoordinateDto;
+use crate::{CoordinateDto, TroopKindDto};
 
 /// One current client protocol request.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -89,6 +89,40 @@ pub enum ClientCommandDto {
         /// Requested target.
         target: CoordinateDto,
     },
+    /// Starts or continues deterministic scout auto-exploration.
+    AutoExploreUnit {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Scout receiving the command.
+        unit_id: String,
+    },
+    /// Assigns a cyclic route between two owned cities.
+    AssignMerchantTradeRoute {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Merchant receiving the route.
+        unit_id: String,
+        /// Owned destination city.
+        destination_city_id: String,
+    },
+    /// Queues explicit merchant travel to an owned city.
+    MoveMerchantToCity {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Merchant receiving the order.
+        unit_id: String,
+        /// Owned destination city.
+        destination_city_id: String,
+    },
+    /// Detaches one troop into an engine-selected adjacent tile.
+    DetachTroop {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Army unit losing the troop.
+        unit_id: String,
+        /// Troop kind to detach.
+        troop_kind: TroopKindDto,
+    },
     /// Clears cancellable work and orders owned by one unit.
     CancelUnitAction {
         /// Revision observed by the client.
@@ -146,5 +180,12 @@ pub enum ClientQueryDto {
         unit_id: String,
         /// Requested target.
         target: CoordinateDto,
+    },
+    /// Returns engine-owned logistics options for one controlled unit.
+    UnitLogisticsOptions {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Unit inspected by the query.
+        unit_id: String,
     },
 }

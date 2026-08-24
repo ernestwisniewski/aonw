@@ -1,12 +1,13 @@
 //! Golden and strict-boundary tests for the shared current client protocol.
 
 use aonw_contracts::client::{
-    CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
-    ClientCommandResultDto, ClientErrorDto, ClientEventDto, ClientEvidenceDto, ClientFeatureDto,
-    ClientOutcomeDto, ClientQueryDto, ClientQueryResultDto, ClientReplayVerificationDto,
-    ClientRequestBodyDto, ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
-    ClientSessionStampDto, MovementStepViewDto, PendingActionViewDto, PlayerTurnLifecycleViewDto,
-    PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
+    AutoExploreOptionDto, CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto,
+    ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto, ClientEventDto,
+    ClientEvidenceDto, ClientFeatureDto, ClientOutcomeDto, ClientQueryDto, ClientQueryResultDto,
+    ClientReplayVerificationDto, ClientRequestBodyDto, ClientRequestDto, ClientResponseBodyDto,
+    ClientResponseDto, ClientSessionStampDto, MovementSearchMetricsDto, MovementStepViewDto,
+    PendingActionViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
+    PlayerViewSnapshotDto, ReachableTileViewDto,
 };
 use aonw_contracts::{
     CoordinateDto, FieldImprovementKindDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
@@ -153,7 +154,7 @@ fn command_rejection_codes_match_the_shared_fixture() {
 
 #[test]
 fn every_current_request_variant_round_trips() {
-    let requests = [
+    let mut requests = vec![
         ClientRequestBodyDto::Capabilities,
         ClientRequestBodyDto::InspectMap {
             map_document: "map".to_owned(),
@@ -176,6 +177,12 @@ fn every_current_request_variant_round_trips() {
                 expected_revision: 8,
                 unit_id: "unit-1".to_owned(),
                 target: coordinate(4, 4),
+            },
+        },
+        ClientRequestBodyDto::Query {
+            query: ClientQueryDto::UnitLogisticsOptions {
+                expected_revision: 8,
+                unit_id: "unit-1".to_owned(),
             },
         },
         ClientRequestBodyDto::Dispatch {
@@ -217,6 +224,7 @@ fn every_current_request_variant_round_trips() {
             replay_document: "replay".to_owned(),
         },
     ];
+    requests.extend(logistics_requests());
 
     for request in requests {
         let envelope = ClientRequestDto {
@@ -229,6 +237,38 @@ fn every_current_request_variant_round_trips() {
             envelope
         );
     }
+}
+
+fn logistics_requests() -> [ClientRequestBodyDto; 4] {
+    [
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::AutoExploreUnit {
+                expected_revision: 8,
+                unit_id: "unit-1".to_owned(),
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::AssignMerchantTradeRoute {
+                expected_revision: 8,
+                unit_id: "merchant-1".to_owned(),
+                destination_city_id: "city-2".to_owned(),
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::MoveMerchantToCity {
+                expected_revision: 8,
+                unit_id: "merchant-1".to_owned(),
+                destination_city_id: "city-2".to_owned(),
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::DetachTroop {
+                expected_revision: 8,
+                unit_id: "unit-1".to_owned(),
+                troop_kind: aonw_contracts::TroopKindDto::Archer,
+            },
+        },
+    ]
 }
 
 #[test]
@@ -277,6 +317,7 @@ fn every_current_response_variant_round_trips() {
                 }],
             },
         },
+        logistics_response(),
         ClientResponseBodyDto::Command {
             result: command_result(),
         },
@@ -329,14 +370,44 @@ fn every_current_response_variant_round_trips() {
     );
 }
 
+fn logistics_response() -> ClientResponseBodyDto {
+    ClientResponseBodyDto::Query {
+        result: ClientQueryResultDto::UnitLogisticsOptions {
+            stamp: stamp(),
+            unit_id: "scout-1".to_owned(),
+            auto_explore: Some(AutoExploreOptionDto {
+                target: coordinate(4, 3),
+                total_cost_units: 10,
+                search_metrics: MovementSearchMetricsDto {
+                    frontier_pops: 4,
+                    expanded_tiles: 3,
+                    examined_edges: 12,
+                    heap_pushes: 7,
+                    route_records: 7,
+                },
+            }),
+            merchant_route_destinations: Vec::new(),
+            merchant_travel_destinations: Vec::new(),
+            detachments: Vec::new(),
+        },
+    }
+}
+
 #[test]
 fn malformed_unknown_duplicate_and_future_documents_fail_closed() {
     let unknown = r#"{"apiVersion":5,"request":{"type":"snapshot"},"extra":true}"#;
     let duplicate = r#"{"apiVersion":5,"apiVersion":5,"request":{"type":"snapshot"}}"#;
     let future = r#"{"apiVersion":6,"request":{"type":"snapshot"}}"#;
     let malformed_nested = r#"{"apiVersion":5,"request":{"type":"query","query":{"type":"reachable","expectedRevision":0,"unitId":"u","extra":true}}}"#;
+    let malformed_logistics = r#"{"apiVersion":5,"request":{"type":"dispatch","command":{"type":"autoExploreUnit","expectedRevision":0,"unitId":"u","legacyPath":[]}}}"#;
 
-    for invalid in [unknown, duplicate, future, malformed_nested] {
+    for invalid in [
+        unknown,
+        duplicate,
+        future,
+        malformed_nested,
+        malformed_logistics,
+    ] {
         assert!(ClientRequestDto::from_json(invalid).is_err());
     }
 

@@ -1,10 +1,11 @@
 use core::cmp::Ordering;
 
 use aonw_contracts::{ReplayCommandDto, ReplayRecordDto};
-use aonw_domain::{HexCoord, UnitId};
+use aonw_domain::{CityId, HexCoord, TroopKind, UnitId};
 use aonw_engine::{
-    CommandRejectionCode, DomainEvent, ExecutionEvidence, GameEngine, MoveUnitCommand,
-    PlayerCommand, UnitActionCommand,
+    AssignMerchantTradeRouteCommand, AutoExploreUnitCommand, CommandRejectionCode,
+    DetachTroopCommand, DomainEvent, ExecutionEvidence, GameEngine, MoveMerchantToCityCommand,
+    MoveUnitCommand, PlayerCommand, UnitActionCommand,
 };
 
 use crate::persistence::{replay_context, replay_entry};
@@ -32,6 +33,37 @@ pub struct UnitActionRequest {
     pub expected_revision: u64,
     /// Unit receiving the action.
     pub unit_id: UnitId,
+}
+
+/// Current revision-bound scout auto-exploration command.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AutoExploreUnitRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Scout receiving the command.
+    pub unit_id: UnitId,
+}
+
+/// Current revision-bound merchant destination command.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MerchantCityRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Merchant receiving the command.
+    pub unit_id: UnitId,
+    /// Owned destination city.
+    pub destination_city_id: CityId,
+}
+
+/// Current revision-bound troop-detachment command.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DetachTroopRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Source army unit.
+    pub unit_id: UnitId,
+    /// Troop kind to detach.
+    pub troop_kind: TroopKind,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -102,6 +134,88 @@ pub(crate) fn dispatch_move(
         )),
         ReplayRecordDto::Player {
             command: replay_command,
+        },
+    )
+}
+
+pub(crate) fn dispatch_auto_explore(
+    session: &mut Session,
+    command: &AutoExploreUnitRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::AutoExploreUnit(AutoExploreUnitCommand::new(
+            command.expected_revision,
+            &command.unit_id,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::AutoExploreUnit {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_assign_merchant_route(
+    session: &mut Session,
+    command: &MerchantCityRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::AssignMerchantTradeRoute(AssignMerchantTradeRouteCommand::new(
+            command.expected_revision,
+            &command.unit_id,
+            &command.destination_city_id,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::AssignMerchantTradeRoute {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+                destination_city_id: command.destination_city_id.as_str().to_owned(),
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_move_merchant_to_city(
+    session: &mut Session,
+    command: &MerchantCityRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::MoveMerchantToCity(MoveMerchantToCityCommand::new(
+            command.expected_revision,
+            &command.unit_id,
+            &command.destination_city_id,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::MoveMerchantToCity {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+                destination_city_id: command.destination_city_id.as_str().to_owned(),
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_detach_troop(
+    session: &mut Session,
+    command: &DetachTroopRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::DetachTroop(DetachTroopCommand::new(
+            command.expected_revision,
+            &command.unit_id,
+            command.troop_kind,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::DetachTroop {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+                troop_kind: aonw_contract_mapping::encode_troop(command.troop_kind),
+            },
         },
     )
 }

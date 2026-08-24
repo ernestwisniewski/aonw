@@ -22,7 +22,7 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_map_compiler_cli` | Thin filesystem adapter that writes compiled terrain as OpenEXR, raw R16, and a strict manifest. |
 | `aonw_contracts` | Current-only shared client API plus strict bounded canonical state, save, and replay codecs. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
-| `aonw_engine` | Authoritative movement/unit actions plus the capability-gated T1 turn kernel and separate trusted lifecycle boundary. |
+| `aonw_engine` | Authoritative movement, unit actions, logistics, DP/TG policy queries, and the capability-gated turn kernel with a separate trusted lifecycle boundary. |
 | `aonw_local_runtime` | Transactional local sessions, player/system replay records, recipient-safe lifecycle snapshots/patches, and query/command dispatch. |
 | `aonw_godot` | Thin GDExtension translating Godot calls into the framework-neutral local runtime. |
 | `aonw_flutter` | Panic-contained C ABI exposing the same client protocol to Flutter Native Assets. |
@@ -82,7 +82,8 @@ separate scheduled workflow.
 `cargo-llvm-cov 0.9.0` performs source instrumentation and exports LCOV plus
 LLVM JSON. The repository checker adds only the project-specific crate census
 and historical ratchet: authoritative and local-runtime ratios cannot fall,
-uncovered lines cannot grow, and missing production files can only disappear.
+uncovered lines cannot grow, and a new uninstrumented production file is
+accepted only when it is purely declarative; executable files must be measured.
 Adapter, authoring, generated, platform, test, and testkit scopes are classified
 separately rather than diluted into one host-dependent denominator.
 
@@ -94,19 +95,22 @@ allocated bytes, and payload bytes. Wall-clock medians and p95 values remain
 diagnostic because ordinary CI runners are not stable timing references.
 Criterion/Divan would improve host-local timing analysis but would not replace
 these structural metrics. Iai-Callgrind remains a possible future Linux-only
-deep diagnostic, not a substitute for the portable E0/T1 gate. T1 adds
+deep diagnostic, not a substitute for the portable E0/T1/U2 gate. T1 adds
 allocation/payload workloads for partial submit, trusted timeout finalization,
 participant removal, client JSON submit, and exact replay verification at
 1/64/512 units. Run its complete focused gate with `make
-rust-turn-kernel-check`.
+rust-turn-kernel-check`. U2 adds 21 allocation/work-counter workloads for
+auto-explore apply/options and long merchant routes at the same scales; run its
+focused gate with `make rust-movement-logistics-check`.
 
 The migration inventory under [`migration/`](migration/README.md) closes the
 authoritative surface before new Rust behavior is added. `p0-check` runs its
 dependency-free source census and negative fixtures; the analyzer-backed Dart
 AST census and exact field ledger run through
 `rust-engine-inventory-ast-check`. Together they compare 39 player commands,
-two trusted system commands, two queries, 40 Dart domain events, execution
-evidence, recipient projections, 30 Dart `DomainState` fields, 10 boundary
+two trusted system commands, three queries, 40 mapped plus four native domain
+events, one mapped plus two native evidence types, recipient projections, 30
+Dart `DomainState` fields, 10 boundary
 envelopes, and all 120 reducer fixtures. The inventory remains migration
 evidence; active Rust execution gates use only typed current contracts and do
 not preserve opaque Dart JSON.
@@ -124,7 +128,9 @@ case to have either current structural round-trip evidence or an explicit
 future checkpoint, and rejects any Rust source that reads the old corpus.
 `make rust-corpus-parity-check` executes only the nine root cases whose current
 canonical artifacts and four player-command capabilities are promoted to
-`engine-parity`; the other 111 remain honestly `reference-only`.
+`engine-parity`; 99 remain blocked `reference-only`, while 12 U2 cases are
+historical `reference-only` superseded by separately reviewed current
+contracts. No Rust reader parses their historical envelope.
 
 ## Greenfield compatibility policy
 
@@ -150,13 +156,12 @@ no player actor. They do not exist in `ClientCommandDto`, the successor client
 protocol, or any player adapter. No legacy command adapter or compatibility
 alias is retained.
 
-T1 advertises `turn-kernel-ready`, not full turn parity. It executes only
-submission, lifecycle progression, movement reset, and reversible-skip
-cleanup. Queued movement, trade routes, worker/scout automation, combat,
-economy, diplomacy, research, agreements, and objectives remain explicitly
-disabled. Manifests requiring them and canonical states that visibly need the
-first five processors fail closed with `turn_processor_unsupported`; the full
-integrated turn remains an O9 capability.
+T1 advertises `turn-kernel-ready`, not full turn parity. CP8/U2 extends its
+ordered processors with queued movement, merchant routes, and scout
+auto-exploration. Worker automation, combat, economy, diplomacy, research,
+agreements, and objectives remain explicitly disabled; states requiring them
+fail closed with `turn_processor_unsupported`. The full integrated turn remains
+an O9 capability.
 
 The DP policy foundation exposes one pure `DiplomacyPolicyQuery` for hostility,
 foreign city and territory entry, attack protection, automation, trade, and
@@ -345,6 +350,15 @@ rather than disclosing the blocker. Accepted movement returns a new revision,
 recomputed fog and diplomatic contacts, an ordered `UnitMovedEvent`, exact
 authoritative execution evidence, state digest, map hash, and ruleset hash.
 
+The U2 logistics surface adds deterministic bounded auto-explore, engine-owned
+merchant route planning/travel, troop detachment, and one recipient-safe
+`UnitLogisticsOptions` query. These paths reuse the same movement costs,
+occupancy, route search, and `DiplomacyPolicyQuery` as manual movement; clients
+never calculate a private route. Four native logistics events and typed
+`LogisticsExecution` evidence are persisted and encoded through the current
+client API. Save/reopen/replay tests compare exact state, event order, evidence,
+and fog-safe recipient views. Worker automation remains disabled until W5.
+
 `CancelUnitAction`, `SkipUnitTurn`, and `FortifyUnit` use the same full-state
 boundary and rejection semantics. Skip records its restorable movement inside
 canonical `InteractionState`; cancel clears unit-owned interaction,
@@ -358,7 +372,8 @@ response carries revision, state digest, map hash, and ruleset hash. Full
 recipient-safe snapshots also carry the authoritative turn number.
 They expose a pending action only when it belongs to the snapshot recipient;
 the owner identifier is intentionally redundant and omitted. The runtime
-exposes reachable and route queries, revision-bound commands, ordered events,
+exposes reachable, route, and unit-logistics-options queries,
+revision-bound commands, ordered events,
 exact execution evidence, and view patches including unit posture and the
 current recipient pending action, including an explicit `null` when it clears.
 Recipient unit views are sorted by stable unit identifier before snapshots and

@@ -96,3 +96,228 @@ fn digest_includes_reversible_skip_balance() {
 
     assert_ne!(digest_state(&base_state), digest_state(&skipped_state));
 }
+
+#[test]
+fn city_identity_tags_are_stable_and_total() {
+    use aonw_domain::CityBuildingType::*;
+    use aonw_domain::WonderType::*;
+    let buildings = [
+        Granary,
+        WaterMill,
+        Workshop,
+        Storehouse,
+        Housing,
+        MerchantHall,
+        Stonemason,
+        Barracks,
+        Marketplace,
+        Port,
+        Aqueduct,
+        Forge,
+        Stable,
+        Bank,
+        BuildersGuild,
+        Factory,
+        Lighthouse,
+        TrainingGrounds,
+        TownHall,
+        Monument,
+        Archive,
+        Academy,
+        University,
+        Observatory,
+        Laboratory,
+        Reactor,
+        Courthouse,
+        Court,
+        GovernorsOffice,
+        SurveyorsOffice,
+        PlanningOffice,
+        Apothecary,
+        PublicBaths,
+        Hospital,
+        Ministries,
+        Walls,
+        Armory,
+        SiegeWorkshop,
+        Citadel,
+        WarCollege,
+        ConscriptionOffice,
+        BorderFort,
+        Airfield,
+        ArtisansGuild,
+        MasterWorkshop,
+        Steelworks,
+        RailDepot,
+        PowerPlant,
+        AssemblyPlant,
+        Refinery,
+        MapRoom,
+        Shipyard,
+        DryDock,
+        NavalAcademy,
+        HarborCustoms,
+        Museum,
+        Parliament,
+        BroadcastTower,
+        WorldFairGrounds,
+    ];
+    for (expected, value) in buildings.into_iter().enumerate() {
+        assert_eq!(super::city::building_tag(value), tag_index(expected));
+    }
+    for (expected, value) in [
+        GreatLibrary,
+        HangingGardens,
+        GreatWall,
+        Petra,
+        CentralBank,
+        ImperialUniversity,
+        GrandCathedral,
+        MotherFactory,
+        NationalObservatory,
+        SvalbardSeedVault,
+        GrandExposition,
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        assert_eq!(super::city::wonder_tag(value), tag_index(expected));
+    }
+}
+
+#[test]
+fn technology_identity_tags_are_stable_and_total() {
+    use aonw_domain::TechnologyId::*;
+    let technologies = [
+        Agriculture,
+        Woodworking,
+        Mining,
+        AnimalHusbandry,
+        Hunting,
+        Fishing,
+        Craftsmanship,
+        Trade,
+        Storage,
+        WaterEngineering,
+        Stoneworking,
+        MilitaryOrganization,
+        AdvancedTrade,
+        Construction,
+        Navigation,
+        Irrigation,
+        Banking,
+        Engineering,
+        Metallurgy,
+        HorsebackRiding,
+        IronWorking,
+        CoalMining,
+        Machinery,
+        Administration,
+        Logistics,
+        Shipbuilding,
+        Tactics,
+        Economy,
+        Urbanization,
+        Fortifications,
+        Strategy,
+        Specialization,
+        Writing,
+        Mathematics,
+        Medicine,
+        CivilService,
+        Siegecraft,
+        Cartography,
+        Guilds,
+        Law,
+        Education,
+        UrbanPlanning,
+        NavalDoctrine,
+        Steel,
+        Bureaucracy,
+        Nationalism,
+        ScientificMethod,
+        SteamPower,
+        Electricity,
+        Combustion,
+        Flight,
+        MassProduction,
+        Radio,
+        NuclearPhysics,
+    ];
+    for (expected, value) in technologies.into_iter().enumerate() {
+        assert_eq!(super::research::technology_tag(value), tag_index(expected));
+    }
+}
+
+#[test]
+fn resource_identity_tags_are_stable_and_total() {
+    use aonw_domain::ResourceType::*;
+    let resources = [
+        Wheat, Fish, Deer, Sheep, Rice, Cow, Apple, Banana, Citrus, Gold, Silver, Gems, Silk,
+        Spices, Cotton, Grapes, Ivory, Pearls, Coffee, Cocoa, Tobacco, Sugar, Iron, Coal, Oil,
+        Aluminium, Uranium, Horses, Marble,
+    ];
+    for (expected, value) in resources.into_iter().enumerate() {
+        assert_eq!(super::economy::resource_tag(value), tag_index(expected));
+    }
+}
+
+#[test]
+fn unit_and_improvement_identity_tags_are_stable_and_total() {
+    use aonw_domain::FieldImprovementKind::*;
+    use aonw_domain::UnitKind::*;
+    let units = [
+        Commander,
+        Warrior,
+        Archer,
+        Settler,
+        Worker,
+        Merchant,
+        Scout,
+        Spearman,
+        Cavalry,
+        Catapult,
+        HeavyInfantry,
+        FieldCannon,
+        Rifleman,
+        Tank,
+        ScoutShip,
+        Warship,
+        ReconPlane,
+    ];
+    for (expected, value) in units.into_iter().enumerate() {
+        assert_eq!(super::unit_kind_tag(value), tag_index(expected));
+    }
+    let improvements = [
+        Farm,
+        RiverFarm,
+        Mine,
+        LumberMill,
+        Pasture,
+        Camp,
+        Quarry,
+        FishingBoats,
+        Orchard,
+        Plantation,
+        Vineyard,
+        TradingPost,
+        ProspectorCamp,
+        HorseRanch,
+        PearlDivers,
+        CoalShaft,
+        OilWell,
+        BauxiteMine,
+        UraniumMine,
+    ];
+    for (expected, value) in improvements.into_iter().enumerate() {
+        assert_eq!(super::improvement_tag(value), tag_index(expected));
+        assert_eq!(
+            super::infrastructure::improvement_tag(value),
+            tag_index(expected)
+        );
+    }
+}
+
+fn tag_index(expected: usize) -> u8 {
+    u8::try_from(expected).expect("tag index fits u8")
+}

@@ -48,6 +48,7 @@ write_baseline() {
     'expected-round-trip-count 1' \
     'expected-engine-parity-count 1' \
     'expected-blocked-count 1' \
+    'expected-historical-count 0' \
     'case a example A accepted - round-trip engine-parity current - engine/fixtures/canonical_commands/a.json' \
     'case b example B rejected stable_reason blocked reference-only CP9 awaits-independent-current-contract-review -' \
     >"${manifest}"

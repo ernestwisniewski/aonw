@@ -112,6 +112,7 @@ write_baseline() {
     'expected-system-count 1' \
     'expected-query-count 1' \
     'expected-event-count 1' \
+    'expected-native-event-count 0' \
     'expected-evidence-count 1' \
     'expected-native-evidence-count 0' \
     'expected-projection-type-count 1' \

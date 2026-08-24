@@ -189,19 +189,42 @@ pub(crate) fn plan_terrain_route(
 ) -> Result<TerrainMovementPlan, TerrainMovementQueryError> {
     validate_revision(state, query.expected_revision)?;
     let unit = validate_unit(state, context, query.unit_id)?;
-    validate_target(context.map(), unit, query.target)?;
-    if context.city_block_is_known(unit, query.target) {
+    plan_route_for_unit(
+        state.revision().get(),
+        state.units(),
+        context,
+        unit,
+        query.target,
+        movement_available_for_query(unit, context.ruleset()),
+        true,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn plan_route_for_unit(
+    revision: u64,
+    units: &[Unit],
+    context: EngineContext<'_>,
+    unit: &Unit,
+    target: HexCoord,
+    available_movement: MovementUnits,
+    allow_occupied_approach: bool,
+) -> Result<TerrainMovementPlan, TerrainMovementQueryError> {
+    validate_target(context.map(), unit, target)?;
+    if context.city_block_is_known(unit, target) {
         return Err(TerrainMovementQueryError::TargetIsForeignCityCenter);
     }
 
-    let available_movement = movement_available_for_query(unit, context.ruleset());
-    let known_blocker = known_target_blocker(state, unit, query.target, context);
+    let known_blocker = known_target_blocker(units, unit, target, context);
     let (steps, search_metrics) = if let Some(blocker) = known_blocker {
+        if !allow_occupied_approach {
+            return Err(TerrainMovementQueryError::TargetOccupied);
+        }
         let approach = find_approach_route(
-            state,
+            units,
             context.map(),
             unit,
-            query.target,
+            target,
             available_movement,
             context,
         );
@@ -222,19 +245,19 @@ pub(crate) fn plan_terrain_route(
         (steps, approach.metrics)
     } else {
         let search = find_route(
-            state,
+            units,
             context.map(),
             unit,
-            query.target,
+            target,
             available_movement,
             context,
         );
         let Some(steps) = search.steps else {
             let diagnostic = find_route_ignoring_capacity(
-                state,
+                units,
                 context.map(),
                 unit,
-                query.target,
+                target,
                 available_movement,
                 context,
             );
@@ -259,9 +282,9 @@ pub(crate) fn plan_terrain_route(
         .unwrap_or(MovementUnits::ZERO);
 
     Ok(TerrainMovementPlan {
-        revision: state.revision().get(),
+        revision,
         unit_id: unit.id().clone(),
-        target: query.target,
+        target,
         destination: steps
             .last()
             .map_or(unit.position(), |step| step.coordinate()),
@@ -328,15 +351,16 @@ fn validate_target(
 }
 
 fn known_target_blocker<'state>(
-    state: &'state GameState,
+    units: &'state [Unit],
     unit: &Unit,
     target: HexCoord,
     context: EngineContext<'_>,
 ) -> Option<&'state Unit> {
-    state.units().iter().find(|candidate| {
+    units.iter().find(|candidate| {
         candidate.id() != unit.id()
             && candidate.position() == target
             && context.observes_occupancy(unit, candidate)
+            && !context.can_share_occupied_city(unit, candidate.position())
     })
 }
 
@@ -346,7 +370,7 @@ struct ApproachSearchResult {
 }
 
 fn find_approach_route(
-    state: &GameState,
+    units: &[Unit],
     map: &MapDefinition,
     unit: &Unit,
     target: HexCoord,
@@ -354,7 +378,7 @@ fn find_approach_route(
     context: EngineContext<'_>,
 ) -> ApproachSearchResult {
     let destinations = map.neighbors(target).collect::<Vec<_>>();
-    let search = find_route_to_any(state, map, unit, &destinations, available_movement, context);
+    let search = find_route_to_any(units, map, unit, &destinations, available_movement, context);
     ApproachSearchResult {
         steps: search.steps,
         metrics: search.metrics,

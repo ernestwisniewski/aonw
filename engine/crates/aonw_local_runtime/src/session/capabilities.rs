@@ -12,6 +12,7 @@ impl RuntimeCapabilities {
     const REPLAY_VERIFICATION: u8 = 1 << 4;
     const UNIT_ACTIONS: u8 = 1 << 5;
     const TURN_KERNEL: u8 = 1 << 6;
+    const MOVEMENT_LOGISTICS: u8 = 1 << 7;
 
     pub(super) const CURRENT: Self = Self {
         features: Self::ROUTE_PLAN
@@ -20,7 +21,8 @@ impl RuntimeCapabilities {
             | Self::SAVE_GAME
             | Self::REPLAY_VERIFICATION
             | Self::UNIT_ACTIONS
-            | Self::TURN_KERNEL,
+            | Self::TURN_KERNEL
+            | Self::MOVEMENT_LOGISTICS,
     };
 
     /// Returns whether route planning is available.
@@ -63,5 +65,11 @@ impl RuntimeCapabilities {
     #[must_use]
     pub const fn turn_kernel(self) -> bool {
         self.features & Self::TURN_KERNEL != 0
+    }
+
+    /// Returns whether auto-exploration, merchant routing, and detachment are available.
+    #[must_use]
+    pub const fn movement_logistics(self) -> bool {
+        self.features & Self::MOVEMENT_LOGISTICS != 0
     }
 }

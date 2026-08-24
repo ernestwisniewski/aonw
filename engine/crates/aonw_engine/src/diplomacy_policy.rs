@@ -1,4 +1,6 @@
-use aonw_domain::{DiplomaticRelationStatus, GameState, PlayerId, PlayerPair};
+use aonw_domain::{
+    Diplomacy, DiplomaticRelationStatus, GameState, MatchIdentity, PlayerId, PlayerPair,
+};
 
 /// Recipient-safe visibility of one bilateral diplomatic relation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -137,9 +139,23 @@ impl DiplomacyPolicyQuery {
         actor_player_id: &PlayerId,
         counterparty_player_id: &PlayerId,
     ) -> Result<DiplomacyPolicy, DiplomacyPolicyError> {
-        validate_player(state, actor_player_id, DiplomacyPolicyPlayerRole::Actor)?;
+        Self::between_parts(
+            state.match_lifecycle().identity(),
+            state.diplomacy(),
+            actor_player_id,
+            counterparty_player_id,
+        )
+    }
+
+    pub(crate) fn between_parts(
+        identity: &MatchIdentity,
+        diplomacy: &Diplomacy,
+        actor_player_id: &PlayerId,
+        counterparty_player_id: &PlayerId,
+    ) -> Result<DiplomacyPolicy, DiplomacyPolicyError> {
+        validate_player(identity, actor_player_id, DiplomacyPolicyPlayerRole::Actor)?;
         validate_player(
-            state,
+            identity,
             counterparty_player_id,
             DiplomacyPolicyPlayerRole::Counterparty,
         )?;
@@ -159,18 +175,14 @@ impl DiplomacyPolicyQuery {
                 disclosure: DiplomacyDisclosure::Own,
             });
         };
-        let status = state
-            .diplomacy()
+        let status = diplomacy
             .relations()
             .binary_search_by(|relation| relation.pair().cmp(&pair))
             .ok()
             .map_or(DiplomaticRelationStatus::Neutral, |index| {
-                state.diplomacy().relations()[index].status()
+                diplomacy.relations()[index].status()
             });
-        let disclosure = if state
-            .diplomacy()
-            .has_contact(actor_player_id, counterparty_player_id)
-        {
+        let disclosure = if diplomacy.has_contact(actor_player_id, counterparty_player_id) {
             DiplomacyDisclosure::Known(status)
         } else {
             DiplomacyDisclosure::Hidden
@@ -184,11 +196,11 @@ impl DiplomacyPolicyQuery {
 }
 
 fn validate_player(
-    state: &GameState,
+    identity: &MatchIdentity,
     player_id: &PlayerId,
     role: DiplomacyPolicyPlayerRole,
 ) -> Result<(), DiplomacyPolicyError> {
-    if state.match_lifecycle().identity().contains(player_id) {
+    if identity.contains(player_id) {
         Ok(())
     } else {
         Err(DiplomacyPolicyError {

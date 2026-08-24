@@ -103,7 +103,7 @@ pub(crate) fn merge_discovered_contacts(
     diplomacy.merging(contacts)
 }
 
-fn visible_from_source(
+pub(super) fn visible_from_source(
     map: &MapDefinition,
     origin: HexCoord,
     range: u32,

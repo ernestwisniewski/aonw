@@ -17,11 +17,12 @@ mod unit_action;
 use aonw_domain::GameState;
 
 pub use application::{
-    AllPlayersSubmittedEvent, CanonicalEngineError, CanonicalQueryError, CommandRejectionCode,
-    DomainEvent, DomainRejection, DomainTransition, DomainTransitionParts, EventBudget,
-    ExecutionEvidence, FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand,
-    PlayerCommand, PlayerKickedEvent, PlayerTimedOutEvent, QueryResult, SystemCommand, TurnCommand,
-    TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
+    AllPlayersSubmittedEvent, AutoExplorePlannedEvent, CanonicalEngineError, CanonicalQueryError,
+    CommandRejectionCode, DomainEvent, DomainRejection, DomainTransition, DomainTransitionParts,
+    EventBudget, ExecutionEvidence, FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand,
+    LogisticsExecution, MerchantRouteAssignedEvent, MerchantTravelQueuedEvent, PlayerCommand,
+    PlayerKickedEvent, PlayerTimedOutEvent, QueryResult, SystemCommand, TroopDetachedEvent,
+    TurnCommand, TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
 };
 pub use context::{EngineContext, SystemContext};
 pub use diplomacy_policy::{
@@ -29,10 +30,13 @@ pub use diplomacy_policy::{
     DiplomacyPolicyQuery,
 };
 pub use movement::{
-    CompiledMovementMap, CompiledMovementMapError, MoveUnitCommand, MoveUnitError, MovementCost,
-    MovementSearchMetrics, MovementSearchWorkspace, MovementVisibility, ReachableMovement,
-    ReachableMovementQuery, ReachableMovementTile, TerrainMovementPlan, TerrainMovementQuery,
-    TerrainMovementQueryError, UnitMovedEvent, UnitMovementExecution, maximum_movement_units,
+    AssignMerchantTradeRouteCommand, AutoExploreOption, AutoExploreUnitCommand,
+    CompiledMovementMap, CompiledMovementMapError, DetachTroopCommand, DetachmentOption,
+    MerchantDestinationOption, MoveMerchantToCityCommand, MoveUnitCommand, MoveUnitError,
+    MovementCost, MovementLogisticsError, MovementSearchMetrics, MovementSearchWorkspace,
+    MovementVisibility, ReachableMovement, ReachableMovementQuery, ReachableMovementTile,
+    TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitLogisticsOptions,
+    UnitLogisticsOptionsQuery, UnitMovedEvent, UnitMovementExecution, maximum_movement_units,
     terrain_entry_cost,
 };
 pub use state_digest::StateDigest;

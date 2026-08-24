@@ -115,6 +115,14 @@ Set<String> _rustStructNames(String sourcePath) => {
     match.group(1)!,
 };
 
+Set<String> _rustDataTypeNames(String sourcePath) => {
+  for (final match in RegExp(
+    r'^\s*pub (?:enum|struct)\s+([A-Z][A-Za-z0-9_]*)',
+    multiLine: true,
+  ).allMatches(File(sourcePath).readAsStringSync()))
+    match.group(1)!,
+};
+
 Set<String> _dartPublicFinalFields(String sourcePath, String className) {
   final unit = parseString(
     content: File(sourcePath).readAsStringSync(),
