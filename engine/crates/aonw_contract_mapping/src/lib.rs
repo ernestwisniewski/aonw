@@ -9,7 +9,8 @@
 mod game_state_mapping;
 
 pub use game_state_mapping::{
-    GameStateMappingError, decode_game_state, encode_game_state, encode_improvement,
+    GameStateMappingError, canonicalize_game_state, decode_game_state, encode_game_state,
+    encode_improvement,
 };
 
 use aonw_contracts::{MovementStepDto, QueuedMovePathDto, UnitKindDto, UnitPostureDto};

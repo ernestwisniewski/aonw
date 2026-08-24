@@ -172,6 +172,26 @@ void main() {
     );
   });
 
+  test('canonical state representation is contract ready', () {
+    expect(stateLedger.domainFields.map((entry) => entry.status).toSet(), {
+      'state-contract-ready',
+    });
+    final canonicalEnvelopeStatuses = {
+      for (final entry in stateLedger.envelopes)
+        if ({
+          'rust-canonical-state',
+          'rust-save',
+          'rust-replay',
+        }.contains(entry.id))
+          entry.id: entry.status,
+    };
+    expect(canonicalEnvelopeStatuses, {
+      'rust-canonical-state': 'state-contract-ready',
+      'rust-save': 'state-contract-ready',
+      'rust-replay': 'state-contract-ready',
+    });
+  });
+
   test('command family counts remain explicit', () {
     expect(_familyCounts(manifest.domainEntries), const {
       'artifact-resource-trade': 5,

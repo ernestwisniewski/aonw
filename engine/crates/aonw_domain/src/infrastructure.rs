@@ -54,7 +54,7 @@ pub struct InfrastructureState {
 }
 
 impl InfrastructureState {
-    /// Validates unique field-improvement coordinates and preserves contract order.
+    /// Validates unique field-improvement coordinates and normalizes their order.
     ///
     /// # Errors
     ///
@@ -63,7 +63,8 @@ impl InfrastructureState {
         field_improvements: impl IntoIterator<Item = FieldImprovement>,
         transport_network: TransportNetwork,
     ) -> Result<Self, InfrastructureStateBuildError> {
-        let field_improvements = field_improvements.into_iter().collect::<Vec<_>>();
+        let mut field_improvements = field_improvements.into_iter().collect::<Vec<_>>();
+        field_improvements.sort_unstable_by_key(FieldImprovement::coordinate);
         let mut indices = (0..field_improvements.len()).collect::<Vec<_>>();
         indices.sort_unstable_by_key(|index| field_improvements[*index].coordinate());
         if let Some(pair) = indices.windows(2).find(|pair| {
@@ -90,7 +91,7 @@ impl InfrastructureState {
         }
     }
 
-    /// Returns field improvements in persisted contract order.
+    /// Returns field improvements in coordinate order.
     #[must_use]
     pub const fn field_improvements(&self) -> &[FieldImprovement] {
         &self.field_improvements
@@ -271,13 +272,13 @@ mod tests {
     use super::{FieldImprovement, InfrastructureState, InfrastructureStateBuildError};
 
     #[test]
-    fn infrastructure_preserves_order_and_rejects_duplicate_coordinates() {
+    fn infrastructure_normalizes_order_and_rejects_duplicate_coordinates() {
         let mine = FieldImprovement::new(HexCoord::new(2, 1), FieldImprovementKind::Mine, None);
         let farm = FieldImprovement::new(HexCoord::new(0, 1), FieldImprovementKind::Farm, None);
         let state =
             InfrastructureState::try_new([mine.clone(), farm.clone()], TransportNetwork::default())
                 .expect("infrastructure");
-        assert_eq!(state.field_improvements(), &[mine, farm.clone()]);
+        assert_eq!(state.field_improvements(), &[farm.clone(), mine]);
         assert_eq!(state.field_improvement_at(farm.coordinate()), Some(&farm));
 
         assert_eq!(

@@ -9,9 +9,10 @@ status, optional Rust counterpart, and exact declaration source.
 `state_field_ledger` keeps the boundaries separate and names their exact
 fields: the 120 reducer fixture inputs, Dart `DomainState`, the Dart snapshot
 and persistence metadata, Rust canonical DTO, save/replay envelopes, client
-identity stamp, and recipient-safe snapshot/patch. A related Rust field is
-only `characterized` while lossless typed round-trip has not been proven;
-missing state remains `reference-only`.
+identity stamp, and recipient-safe snapshot/patch. Rust canonical state fields
+are `state-contract-ready` only after strict typed round-trip, canonical
+normalization, invariant validation, and state-digest participation have been
+proven; missing state remains `reference-only`.
 
 The status vocabulary is closed:
 
@@ -27,9 +28,9 @@ The status vocabulary is closed:
 
 Active Rust fixtures now own typed canonical input and compare complete output
 returned by the engine, so `partial-parity-mode` is `full-state`. The historical
-opaque splice adapter and its execution gate have been removed. Implemented
-surfaces remain `characterized` until their individual parity evidence meets
-the next status gate.
+opaque splice adapter and its execution gate have been removed. State
+representation is `state-contract-ready`; command/query surfaces remain at
+their independently evidenced status until their own parity gate is met.
 
 The file deliberately has no `v1` suffix or schema-version field. The engine
 and greenfield clients update this one current contract atomically. A format

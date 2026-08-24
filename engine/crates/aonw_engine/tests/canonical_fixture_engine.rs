@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use aonw_content::RulesetDefinition;
-use aonw_contract_mapping::{decode_game_state, encode_game_state};
+use aonw_contract_mapping::{canonicalize_game_state, decode_game_state, encode_game_state};
 use aonw_contracts::{
     CoordinateDto, GameStateDto, MovementStepDto, ReplayCommandDto, ReplayEventDto,
     ReplayEvidenceDto,
@@ -209,6 +209,22 @@ fn rust_executes_current_canonical_command_corpus() {
             .iter()
             .all(|fixture| fixture.fixture_version() == 3)
     );
+    for fixture in &fixtures {
+        assert_eq!(
+            canonicalize_game_state(fixture.input().state().clone())
+                .expect("valid canonical input state"),
+            *fixture.input().state(),
+            "fixture {} input state is not canonically ordered",
+            fixture.id()
+        );
+        assert_eq!(
+            canonicalize_game_state(fixture.expected().state().clone())
+                .expect("valid canonical expected state"),
+            *fixture.expected().state(),
+            "fixture {} expected state is not canonically ordered",
+            fixture.id()
+        );
+    }
     verify_canonical_corpus(&fixtures, &CanonicalRustEngineExecutor)
         .unwrap_or_else(|failure| panic!("{failure:?}"));
 }

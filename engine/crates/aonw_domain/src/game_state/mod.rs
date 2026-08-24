@@ -379,7 +379,13 @@ impl GameStateBuilder {
     ///
     /// Returns [`GameStateBuildError`] when any aggregate invariant is
     /// violated. No partially validated [`GameState`] is returned.
-    pub fn try_build(self) -> Result<GameState, GameStateBuildError> {
+    pub fn try_build(mut self) -> Result<GameState, GameStateBuildError> {
+        self.units
+            .sort_unstable_by(|left, right| left.id().cmp(right.id()));
+        self.cities
+            .sort_unstable_by(|left, right| left.id().cmp(right.id()));
+        self.artifacts
+            .sort_unstable_by(|left, right| left.id().cmp(right.id()));
         let unit_indices_by_id = unit_indices(self.bounds, self.occupancy_policy, &self.units)?;
         let city_indices_by_id = city_indices(self.bounds, &self.cities)?;
         let artifact_indices_by_id = artifact_indices(&self.artifacts)?;
@@ -510,17 +516,17 @@ impl GameState {
     pub const fn occupancy_policy(&self) -> UnitOccupancyPolicy {
         self.occupancy_policy
     }
-    /// Returns canonical units in contract order.
+    /// Returns canonical units in identifier order.
     #[must_use]
     pub const fn units(&self) -> &[Unit] {
         &self.units
     }
-    /// Returns cities in canonical contract order.
+    /// Returns cities in identifier order.
     #[must_use]
     pub const fn cities(&self) -> &[City] {
         &self.cities
     }
-    /// Returns artifacts in canonical contract order.
+    /// Returns artifacts in identifier order.
     #[must_use]
     pub const fn artifacts(&self) -> &[WorldArtifact] {
         &self.artifacts
@@ -550,7 +556,7 @@ impl GameState {
     pub const fn infrastructure(&self) -> &InfrastructureState {
         &self.infrastructure
     }
-    /// Returns economic field improvements in contract order.
+    /// Returns economic field improvements in coordinate order.
     #[must_use]
     pub const fn field_improvements(&self) -> &[FieldImprovement] {
         self.infrastructure.field_improvements()

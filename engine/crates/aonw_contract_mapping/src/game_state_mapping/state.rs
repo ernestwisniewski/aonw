@@ -119,6 +119,18 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
     .map_err(|error| GameStateMappingError::new("$", error.to_string()))
 }
 
+/// Validates and normalizes one typed canonical state document.
+///
+/// Map and set fields use their stable key order, entity registries use stable
+/// identity order, and semantically ordered sequences retain their order.
+///
+/// # Errors
+///
+/// Returns a path-aware error for any violated canonical-state invariant.
+pub fn canonicalize_game_state(dto: GameStateDto) -> Result<GameStateDto, GameStateMappingError> {
+    decode_game_state(dto).map(|state| encode_game_state(&state))
+}
+
 fn decode_infrastructure_state(
     identity: &MatchIdentity,
     bounds: HexGridBounds,

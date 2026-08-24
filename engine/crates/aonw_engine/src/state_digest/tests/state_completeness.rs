@@ -1,13 +1,14 @@
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
-    CityBuildingTypeDto, CityConquestActionDto, CityProductionTargetDto, CityProjectTypeDto,
-    CitySpecializationTypeDto, DiplomaticMessageCategoryDto, DiplomaticMessageResponseDto,
-    DiplomaticMessageTopicDto, DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto,
-    DiplomaticRelationStatusDto, DiplomaticScoreChangeReasonDto, FieldImprovementDto,
-    FieldImprovementKindDto, GameModeDto, GameStateDto, PaceProfileDto, PendingInteractionDto,
-    PlayerCountryDto, PlayerTurnStateDto, ResourceTypeDto, RuleValueDto, TechnologyIdDto,
-    TransportConditionDto, UnitOccupancyPolicyDto, WonderTypeDto, WorldArtifactDto,
-    WorldArtifactLocationDto, WorldArtifactTypeDto,
+    AiDifficultyDto, AiPersonaDto, AiStrategyIdDto, CityBuildingTypeDto, CityConquestActionDto,
+    CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto,
+    DiplomaticMessageCategoryDto, DiplomaticMessageResponseDto, DiplomaticMessageTopicDto,
+    DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationStatusDto,
+    DiplomaticScoreChangeReasonDto, FieldImprovementDto, FieldImprovementKindDto,
+    GameLengthKindDto, GameModeDto, GameStateDto, PaceProfileDto, PendingInteractionDto,
+    PlayerCountryDto, PlayerKindDto, PlayerTurnStateDto, ResourceTypeDto, RuleValueDto,
+    TechnologyIdDto, TransportConditionDto, UnitOccupancyPolicyDto, WonderTypeDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
 use super::fixture::{complete_state_contract, coordinate};
@@ -345,20 +346,8 @@ fn field_improvement_digest_uses_coordinate_canonical_order() {
 #[test]
 fn digest_changes_with_match_identity_and_turn_lifecycle() {
     let source = complete_state_contract();
-    assert_digest_change(&source, "game length", |candidate| {
-        candidate
-            .match_identity
-            .match_rules
-            .game_length
-            .pace_profile = PaceProfileDto::Long120;
-    });
-    assert_digest_change(&source, "victory rules", |candidate| {
-        candidate
-            .match_identity
-            .match_rules
-            .victory
-            .domination_hold_turns += 1;
-    });
+    assert_game_length_digest_changes(&source);
+    assert_victory_digest_changes(&source);
     assert_digest_change(&source, "balance rules", |candidate| {
         candidate.match_identity.match_rules.balance.insert(
             "combat".to_owned(),
@@ -374,13 +363,7 @@ fn digest_changes_with_match_identity_and_turn_lifecycle() {
     assert_digest_change(&source, "participant country", |candidate| {
         candidate.match_identity.participants[0].country = PlayerCountryDto::France;
     });
-    assert_digest_change(&source, "participant AI identity", |candidate| {
-        candidate.match_identity.participants[1]
-            .ai
-            .as_mut()
-            .expect("AI participant")
-            .seed += 1;
-    });
+    assert_participant_ai_digest_changes(&source);
     assert_digest_change(&source, "player turn state", |candidate| {
         candidate
             .turn_lifecycle
@@ -408,6 +391,141 @@ fn digest_changes_with_match_identity_and_turn_lifecycle() {
     });
     assert_digest_change(&source, "turn start", |candidate| {
         candidate.turn_lifecycle.turn_started_at = Some("2026-08-23T12:34:57.123456Z".to_owned());
+    });
+}
+
+fn assert_game_length_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "game length kind", |candidate| {
+        candidate.match_identity.match_rules.game_length.kind = GameLengthKindDto::TargetMinutes;
+    });
+    assert_digest_change(source, "game length target minutes", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .game_length
+            .target_minutes = Some(60);
+    });
+    assert_digest_change(source, "game length turn limit", |candidate| {
+        candidate.match_identity.match_rules.game_length.turn_limit = Some(100);
+    });
+    assert_digest_change(source, "game length pace", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .game_length
+            .pace_profile = PaceProfileDto::Long120;
+    });
+    assert_digest_change(source, "game length score fallback", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .game_length
+            .score_fallback_enabled = true;
+    });
+}
+
+fn assert_victory_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "conquest enabled", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .victory
+            .conquest_enabled = false;
+    });
+    assert_digest_change(source, "domination enabled", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .victory
+            .domination_enabled = false;
+    });
+    assert_digest_change(source, "domination control percent", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .victory
+            .domination_control_percent = serde_json::Number::from(61);
+    });
+    assert_digest_change(source, "domination hold turns", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .victory
+            .domination_hold_turns += 1;
+    });
+    assert_digest_change(source, "victory score fallback", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .victory
+            .score_fallback_enabled = true;
+    });
+    assert_digest_change(source, "victory turn limit", |candidate| {
+        candidate.match_identity.match_rules.victory.turn_limit = Some(100);
+    });
+    assert_digest_change(source, "victory hard time limit", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .victory
+            .hard_time_limit_minutes = Some(180);
+    });
+    assert_digest_change(source, "cultural enabled", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .victory
+            .cultural_enabled = false;
+    });
+    assert_digest_change(source, "cultural required artifacts", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .victory
+            .cultural_required_artifacts += 1;
+    });
+    assert_digest_change(source, "cultural hold turns", |candidate| {
+        candidate
+            .match_identity
+            .match_rules
+            .victory
+            .cultural_hold_turns += 1;
+    });
+}
+
+fn assert_participant_ai_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "participant kind and AI presence", |candidate| {
+        let participant = &mut candidate.match_identity.participants[1];
+        participant.kind = PlayerKindDto::Human;
+        participant.ai = None;
+    });
+    assert_digest_change(source, "participant AI strategy", |candidate| {
+        candidate.match_identity.participants[1]
+            .ai
+            .as_mut()
+            .expect("AI participant")
+            .strategy_id = AiStrategyIdDto::Basic;
+    });
+    assert_digest_change(source, "participant AI difficulty", |candidate| {
+        candidate.match_identity.participants[1]
+            .ai
+            .as_mut()
+            .expect("AI participant")
+            .difficulty = AiDifficultyDto::VeryHard;
+    });
+    assert_digest_change(source, "participant AI persona", |candidate| {
+        candidate.match_identity.participants[1]
+            .ai
+            .as_mut()
+            .expect("AI participant")
+            .persona = AiPersonaDto::Balanced;
+    });
+    assert_digest_change(source, "participant AI seed", |candidate| {
+        candidate.match_identity.participants[1]
+            .ai
+            .as_mut()
+            .expect("AI participant")
+            .seed += 1;
     });
 }
 
@@ -492,14 +610,14 @@ fn digest_changes_with_every_complete_city_field() {
 }
 
 #[test]
-fn presentation_name_and_color_do_not_change_rule_state_digest() {
+fn persisted_participant_display_identity_changes_state_digest() {
     let source = complete_state_contract();
-    let baseline = contract_digest(&source);
-    let mut presentation = source;
-    presentation.match_identity.participants[0].name = "New display name".to_owned();
-    presentation.match_identity.participants[0].color_value = 0xff00_ff00;
-
-    assert_eq!(baseline, contract_digest(&presentation));
+    assert_digest_change(&source, "participant name", |candidate| {
+        candidate.match_identity.participants[0].name = "New display name".to_owned();
+    });
+    assert_digest_change(&source, "participant color", |candidate| {
+        candidate.match_identity.participants[0].color_value = 0xff00_ff00;
+    });
 }
 
 fn contract_digest(contract: &GameStateDto) -> StateDigest {

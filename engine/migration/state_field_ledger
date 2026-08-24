@@ -26,9 +26,11 @@
 #   lifecycle-json-key <key> <section> <conditional> <domain-owner>
 #
 # `reference-only` means the Rust canonical state cannot represent the field.
-# `characterized` means a related Rust field exists, but full lossless Dart
-# round-trip has not been demonstrated. No field is state-contract-ready while
-# parity still preserves opaque JSON.
+# `characterized` means a related Rust field exists, but the current typed
+# canonical round-trip has not been demonstrated. `state-contract-ready` means
+# the field has strict DTO/domain representation, canonical normalization and
+# digest participation without opaque JSON preservation; it does not claim
+# functional engine parity for commands that mutate the field.
 
 expected-fixture-count 120
 expected-envelope-count 10
@@ -48,9 +50,9 @@ rust-client-response-source engine/crates/aonw_contracts/src/client/response.rs
 envelope reducer-fixture-input oracle-input ReducerParityFixture test/support/reducer_parity_fixture.dart characterized
 envelope dart-canonical-snapshot persistence-envelope CanonicalGameSnapshot packages/aonw_core/lib/game/domain/state/canonical_game_snapshot.dart characterized
 envelope dart-snapshot-metadata persistence-metadata GameSnapshotMetadata packages/aonw_core/lib/game/domain/state/game_snapshot_metadata.dart characterized
-envelope rust-canonical-state canonical-rule-state GameStateDto engine/crates/aonw_contracts/src/canonical.rs characterized
-envelope rust-save persistence-envelope SaveGameDto engine/crates/aonw_contracts/src/persistence.rs characterized
-envelope rust-replay persistence-envelope ReplayLogDto engine/crates/aonw_contracts/src/persistence.rs characterized
+envelope rust-canonical-state canonical-rule-state GameStateDto engine/crates/aonw_contracts/src/canonical.rs state-contract-ready
+envelope rust-save persistence-envelope SaveGameDto engine/crates/aonw_contracts/src/persistence.rs state-contract-ready
+envelope rust-replay persistence-envelope ReplayLogDto engine/crates/aonw_contracts/src/persistence.rs state-contract-ready
 envelope rust-client-response client-transport ClientResponseDto engine/crates/aonw_contracts/src/client/response.rs characterized
 envelope rust-session-stamp authoritative-identity ClientSessionStampDto engine/crates/aonw_contracts/src/client/response.rs characterized
 envelope rust-recipient-snapshot recipient-view PlayerViewSnapshotDto engine/crates/aonw_contracts/src/client/response.rs characterized
@@ -142,36 +144,36 @@ envelope-field rust-recipient-patch upsertedUnits recipient-view
 envelope-field rust-recipient-patch removedUnitIds recipient-view
 envelope-field rust-recipient-patch pendingAction recipient-view
 
-domain-field turn identity-lifecycle characterized turn
-domain-field matchRules identity-lifecycle characterized matchIdentity
-domain-field participants identity-lifecycle characterized matchIdentity
-domain-field gameMode identity-lifecycle characterized matchIdentity
-domain-field turnStatesByPlayerId identity-lifecycle characterized turnLifecycle
-domain-field submittedPlayerIds identity-lifecycle characterized turnLifecycle
-domain-field timeoutStreaksByPlayerId identity-lifecycle characterized turnLifecycle
-domain-field afkPlayerIds identity-lifecycle characterized turnLifecycle
-domain-field kickedPlayerIds identity-lifecycle characterized turnLifecycle
-domain-field turnStartedAt identity-lifecycle characterized turnLifecycle
-domain-field actions identity-lifecycle characterized interaction
-domain-field playerGold economy characterized economy
-domain-field playerWarWeariness economy characterized economy
-domain-field playerStabilityNet economy characterized economy
-domain-field strategicResources economy characterized economy
-domain-field initialResourceDistribution economy characterized economy
-domain-field units units characterized units
-domain-field cities cities characterized cities
-domain-field artifacts artifacts characterized artifacts
-domain-field fieldImprovements infrastructure characterized fieldImprovements
-domain-field transportNetwork infrastructure characterized transportNetwork
-domain-field fogOfWar fog characterized fogOfWar
-domain-field research research characterized research
-domain-field wonderRegistry wonders characterized wonderRegistry
-domain-field intendedAttacks combat characterized intendedAttacks
-domain-field diplomacy diplomacy characterized diplomacy
-domain-field resourceTradeAgreements diplomacy characterized resourceTradeAgreements
-domain-field dominationHoldTurnsByPlayerId victory characterized dominationHoldTurnsByPlayerId
-domain-field culturalVictoryHoldTurnsByPlayerId victory characterized culturalVictoryHoldTurnsByPlayerId
-domain-field mapObjectiveHoldStatesByObjectiveId victory characterized mapObjectiveHoldStates
+domain-field turn identity-lifecycle state-contract-ready turn
+domain-field matchRules identity-lifecycle state-contract-ready matchIdentity
+domain-field participants identity-lifecycle state-contract-ready matchIdentity
+domain-field gameMode identity-lifecycle state-contract-ready matchIdentity
+domain-field turnStatesByPlayerId identity-lifecycle state-contract-ready turnLifecycle
+domain-field submittedPlayerIds identity-lifecycle state-contract-ready turnLifecycle
+domain-field timeoutStreaksByPlayerId identity-lifecycle state-contract-ready turnLifecycle
+domain-field afkPlayerIds identity-lifecycle state-contract-ready turnLifecycle
+domain-field kickedPlayerIds identity-lifecycle state-contract-ready turnLifecycle
+domain-field turnStartedAt identity-lifecycle state-contract-ready turnLifecycle
+domain-field actions identity-lifecycle state-contract-ready interaction
+domain-field playerGold economy state-contract-ready economy
+domain-field playerWarWeariness economy state-contract-ready economy
+domain-field playerStabilityNet economy state-contract-ready economy
+domain-field strategicResources economy state-contract-ready economy
+domain-field initialResourceDistribution economy state-contract-ready economy
+domain-field units units state-contract-ready units
+domain-field cities cities state-contract-ready cities
+domain-field artifacts artifacts state-contract-ready artifacts
+domain-field fieldImprovements infrastructure state-contract-ready fieldImprovements
+domain-field transportNetwork infrastructure state-contract-ready transportNetwork
+domain-field fogOfWar fog state-contract-ready fogOfWar
+domain-field research research state-contract-ready research
+domain-field wonderRegistry wonders state-contract-ready wonderRegistry
+domain-field intendedAttacks combat state-contract-ready intendedAttacks
+domain-field diplomacy diplomacy state-contract-ready diplomacy
+domain-field resourceTradeAgreements diplomacy state-contract-ready resourceTradeAgreements
+domain-field dominationHoldTurnsByPlayerId victory state-contract-ready dominationHoldTurnsByPlayerId
+domain-field culturalVictoryHoldTurnsByPlayerId victory state-contract-ready culturalVictoryHoldTurnsByPlayerId
+domain-field mapObjectiveHoldStatesByObjectiveId victory state-contract-ready mapObjectiveHoldStates
 
 state-json-key playerColors identity-lifecycle required participants-derived
 state-json-key playerCountries identity-lifecycle required participants-derived

@@ -116,7 +116,7 @@ pub enum RuleValueDto {
     Object(BTreeMap<String, RuleValueDto>),
 }
 
-/// Ordered player entry retained by canonical match state.
+/// Ordered player entry, including persisted display identity, retained by canonical state.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

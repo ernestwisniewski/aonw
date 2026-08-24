@@ -18,7 +18,7 @@ fn unit(id: &str, position: HexCoord) -> Unit {
 }
 
 #[test]
-fn aggregate_preserves_contract_order_and_indexes_by_id() {
+fn aggregate_normalizes_entity_order_and_indexes_by_id() {
     let state = GameState::try_new(
         StateRevision::new(7),
         3,
@@ -31,7 +31,8 @@ fn aggregate_preserves_contract_order_and_indexes_by_id() {
     )
     .expect("state");
 
-    assert_eq!(state.units()[0].id().as_str(), "unit-z");
+    assert_eq!(state.units()[0].id().as_str(), "unit-a");
+    assert_eq!(state.units()[1].id().as_str(), "unit-z");
     assert_eq!(
         state
             .unit(&UnitId::new("unit-a").expect("id"))

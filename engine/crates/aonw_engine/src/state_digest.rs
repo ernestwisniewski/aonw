@@ -23,7 +23,7 @@ use objective::hash_objectives;
 use research::hash_knowledge;
 use writer::DigestWriter;
 
-/// SHA-256 identity of canonical simulation state.
+/// SHA-256 identity of the complete persisted canonical state.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct StateDigest([u8; 32]);
 

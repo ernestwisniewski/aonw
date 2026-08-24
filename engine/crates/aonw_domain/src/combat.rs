@@ -68,7 +68,7 @@ impl IntendedAttack {
     }
 }
 
-/// Canonical pending combat declarations in contract order.
+/// Canonical pending combat declarations in attacker-identifier order.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct CombatState {
     intended_attacks: Box<[IntendedAttack]>,
@@ -83,7 +83,9 @@ impl CombatState {
     pub fn try_new(
         intended_attacks: impl IntoIterator<Item = IntendedAttack>,
     ) -> Result<Self, UnitId> {
-        let intended_attacks = intended_attacks.into_iter().collect::<Vec<_>>();
+        let mut intended_attacks = intended_attacks.into_iter().collect::<Vec<_>>();
+        intended_attacks
+            .sort_unstable_by(|left, right| left.attacker_unit_id().cmp(right.attacker_unit_id()));
         let mut attackers = BTreeSet::new();
         for attack in &intended_attacks {
             if !attackers.insert(attack.attacker_unit_id().clone()) {
@@ -95,7 +97,7 @@ impl CombatState {
         })
     }
 
-    /// Returns declarations in persisted contract order.
+    /// Returns declarations in attacker-identifier order.
     #[must_use]
     pub const fn intended_attacks(&self) -> &[IntendedAttack] {
         &self.intended_attacks

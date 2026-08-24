@@ -131,7 +131,7 @@ impl AiPlayer {
     }
 }
 
-/// Ordered canonical participant including preserved presentation metadata.
+/// Ordered canonical participant including persisted display identity.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Participant {
     id: PlayerId,
@@ -178,12 +178,12 @@ impl Participant {
     pub const fn id(&self) -> &PlayerId {
         &self.id
     }
-    /// Returns presentation name.
+    /// Returns the persisted participant name.
     #[must_use]
     pub const fn name(&self) -> &str {
         &self.name
     }
-    /// Returns presentation ARGB color.
+    /// Returns the persisted participant ARGB color.
     #[must_use]
     pub const fn color_value(&self) -> u32 {
         self.color_value

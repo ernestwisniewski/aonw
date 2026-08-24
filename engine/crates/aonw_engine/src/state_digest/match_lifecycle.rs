@@ -54,6 +54,8 @@ fn hash_identity(writer: &mut DigestWriter, identity: &MatchIdentity) {
     writer.usize(identity.participants().len());
     for participant in identity.participants() {
         writer.text(participant.id().as_str());
+        writer.text(participant.name());
+        writer.u32(participant.color_value());
         writer.u8(country_tag(participant.country()));
         writer.u8(match participant.kind() {
             PlayerKind::Human => 0,

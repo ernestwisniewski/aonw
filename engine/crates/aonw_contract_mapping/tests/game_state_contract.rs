@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-use aonw_contract_mapping::{decode_game_state, encode_game_state};
+use aonw_contract_mapping::{canonicalize_game_state, decode_game_state, encode_game_state};
 use aonw_contracts::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
     CityConquestActionDto, CityDto, CityProductionQueueDto, CityProductionTargetDto,
@@ -428,6 +428,44 @@ fn complete_state_round_trip_preserves_every_movement_slice() {
 
     assert_eq!(encoded, source);
     assert_eq!(decode_game_state(encoded), Ok(state));
+}
+
+#[test]
+fn canonical_json_has_one_semantic_identity_and_explicit_sequence_order() {
+    let source = contract();
+    let canonical = canonicalize_game_state(source.clone()).expect("canonical state");
+    let canonical_json = canonical.to_json().expect("canonical JSON");
+
+    let reordered_object_json = source.to_json().expect("source JSON").replacen(
+        "{\"revision\":9,\"turn\":3",
+        "{\"turn\":3,\"revision\":9",
+        1,
+    );
+    let reordered_object = GameStateDto::from_json(&reordered_object_json, 1024 * 1024)
+        .expect("object member order is insignificant");
+    assert_eq!(
+        canonicalize_game_state(reordered_object)
+            .expect("canonical reordered object")
+            .to_json()
+            .expect("canonical reordered JSON"),
+        canonical_json
+    );
+
+    let mut reordered_registry = source.clone();
+    reordered_registry.artifacts.reverse();
+    assert_eq!(
+        canonicalize_game_state(reordered_registry).expect("canonical entity registry"),
+        canonical,
+        "entity registry order must normalize by stable identity"
+    );
+
+    let mut reordered_turn_order = source;
+    reordered_turn_order.match_identity.participants.reverse();
+    assert_ne!(
+        canonicalize_game_state(reordered_turn_order).expect("ordered participants"),
+        canonical,
+        "participant order is semantic turn order and must remain observable"
+    );
 }
 
 #[test]

@@ -180,8 +180,10 @@ opaque JSON. They preserve ordered participants, match rules and recursive
 balance values, match mode, player turn states, submitted/AFK/kicked sets,
 timeout streaks, and an explicit host-provided UTC turn start. The pure domain
 never reads a clock, and mapping rejects duplicate or unknown lifecycle
-identities. Presentation-only participant names and colors round-trip but do
-not contribute to the rule-state digest.
+identities. Persisted participant names and colors are part of canonical
+display identity and therefore contribute to the complete state digest.
+Mutable localization, client theme, camera and recipient presentation stay
+outside `GameStateDto`.
 
 Economy is likewise a typed canonical section: signed gold, war-weariness and
 stability accounts, positive oil/aluminium stockpiles, and the persisted seed
@@ -189,7 +191,7 @@ plus ordered initial resource placements all round-trip and participate in the
 state digest. The successor contract intentionally has no resource-generator
 version. Persisted placements are authoritative, and the legacy Dart
 `algorithmVersion` has no runtime consumer once generation is complete; the
-fixture adapter therefore reads the result and discards that redundant
+canonical contract stores the generated result rather than that redundant
 internal counter.
 
 Cities use one complete typed contract and domain entity. The representation
@@ -203,9 +205,9 @@ invariants with field paths. All persisted city fields contribute to the state
 digest; current movement and unit-action transitions preserve them unchanged.
 
 Infrastructure is one validated domain component containing economic field
-improvements and the transport network. Field improvements preserve their
-contract order while a private coordinate index rejects duplicates and serves
-lookups; all 19 current improvement kinds, optional builder-city attribution,
+improvements and the transport network. Field improvements normalize to
+coordinate order while validation rejects duplicates and serves lookups; all
+19 current improvement kinds, optional builder-city attribution,
 road identity, condition, builder player, and optional builder city round-trip.
 Mapping rejects coordinates outside the map and missing participant/city
 references with field paths. Digest ordering is coordinate-canonical, and both
@@ -233,10 +235,17 @@ are preserved by current transitions, save, replay, and the state digest.
 ## Movement foundation
 
 `GameState` is the canonical aggregate root for the implemented simulation
-slice. It uses the nominal `StateRevision`, preserves entity contract order in
-contiguous storage, and maintains private sorted ID indices. Construction
-validates map bounds, duplicate IDs, unit occupancy, artifact locations and
-ownership, and rule-relevant interaction references.
+slice. It uses the nominal `StateRevision` and stores units, cities and
+artifacts in stable identifier order. Construction validates map bounds,
+duplicate IDs, unit occupancy, artifact locations and ownership, and
+rule-relevant interaction references.
+
+`canonicalize_game_state` defines one semantic JSON identity through strict
+DTO -> domain -> DTO normalization. JSON object member order is irrelevant;
+maps and sets use stable key order, entity registries use identifier or
+coordinate order, and genuinely ordered sequences such as participant turn
+order, paths, events and resource placements retain their contract order. The
+active canonical fixture corpus must already be in that normalized form.
 
 The complete `Unit` entity preserves identity, display name, HP, XP, army,
 queued and merchant routes, worker charges, posture, artifacts, and concrete
