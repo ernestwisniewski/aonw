@@ -4,7 +4,7 @@ use aonw_domain::{HexCoord, PlayerId, UnitId};
 
 use crate::{
     MoveUnitRequest, OpenSession, ReachableRequest, RoutePlanRequest, RuntimeQuery,
-    UnitActionRequest,
+    TurnCommandRequest, UnitActionRequest,
 };
 
 use super::ClientDecodeError;
@@ -14,6 +14,8 @@ pub(super) enum DecodedCommand {
     Cancel(UnitActionRequest),
     Skip(UnitActionRequest),
     Fortify(UnitActionRequest),
+    EndTurn(TurnCommandRequest),
+    SubmitTurn(TurnCommandRequest),
 }
 
 pub(super) fn open_session(
@@ -84,6 +86,16 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, Clien
             expected_revision,
             unit_id,
         } => unit_action(expected_revision, unit_id).map(DecodedCommand::Fortify),
+        ClientCommandDto::EndTurn { expected_revision } => {
+            Ok(DecodedCommand::EndTurn(TurnCommandRequest {
+                expected_revision,
+            }))
+        }
+        ClientCommandDto::SubmitTurn { expected_revision } => {
+            Ok(DecodedCommand::SubmitTurn(TurnCommandRequest {
+                expected_revision,
+            }))
+        }
     }
 }
 

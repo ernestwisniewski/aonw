@@ -59,6 +59,10 @@ fn validate_capability(
                     | ReplayCommandDto::SkipUnitTurn { .. }
                     | ReplayCommandDto::FortifyUnit { .. }
             )
+            | (
+                "turn-kernel-ready",
+                ReplayCommandDto::EndTurn { .. } | ReplayCommandDto::SubmitTurn { .. }
+            )
     );
     if matches {
         Ok(())

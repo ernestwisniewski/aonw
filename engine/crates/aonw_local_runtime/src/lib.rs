@@ -12,11 +12,14 @@ mod prepared_world;
 mod query_cache;
 mod query_dispatch;
 mod session;
+mod turn_dispatch;
 
 pub use client_protocol::ClientProtocol;
 pub use command_dispatch::{CommandResult, MoveUnitRequest, PlayerViewPatch, UnitActionRequest};
 pub use persistence::{PersistenceError, ReplayVerification};
-pub use player_view::{PendingActionView, PlayerUnitView, PlayerViewSnapshot};
+pub use player_view::{
+    PendingActionView, PlayerTurnLifecycleView, PlayerUnitView, PlayerViewSnapshot,
+};
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{
     MovementStepView, ReachableRequest, ReachableResult, ReachableTileView, RoutePlanRequest,
@@ -25,3 +28,4 @@ pub use query_dispatch::{
 pub use session::{
     LocalRuntime, OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, SessionStamp,
 };
+pub use turn_dispatch::{FinalizeTimedOutTurnRequest, KickParticipantRequest, TurnCommandRequest};

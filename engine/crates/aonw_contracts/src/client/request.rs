@@ -110,6 +110,16 @@ pub enum ClientCommandDto {
         /// Unit receiving the command.
         unit_id: String,
     },
+    /// Completes the authenticated participant's sequential turn.
+    EndTurn {
+        /// Revision observed by the client.
+        expected_revision: u64,
+    },
+    /// Submits the authenticated participant's simultaneous turn.
+    SubmitTurn {
+        /// Revision observed by the client.
+        expected_revision: u64,
+    },
 }
 
 /// Read-only queries available to local clients.

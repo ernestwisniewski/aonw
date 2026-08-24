@@ -2,16 +2,18 @@ use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
     CoordinateDto, MAX_REPLAY_ENTRY_COUNT, MovementStepDto, ReplayCommandDto, ReplayContextDto,
-    ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto, ReplayResultDto, SaveGameDto,
+    ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto, ReplayRecordDto,
+    ReplayResultDto, ReplaySystemCommandDto, SaveGameDto,
 };
-use aonw_domain::{PlayerId, UnitId};
+use aonw_domain::{PlayerId, UnitId, UtcTimestamp};
 use aonw_engine::{DomainEvent, ExecutionEvidence, GameEngine};
 
 pub use crate::persistence_error::PersistenceError;
 use crate::persistence_validation::{validate_replay_header, validate_save_header};
 use crate::session::Session;
 use crate::{
-    CommandResult, LocalRuntime, MoveUnitRequest, OpenSession, SessionStamp, UnitActionRequest,
+    CommandResult, FinalizeTimedOutTurnRequest, KickParticipantRequest, LocalRuntime,
+    MoveUnitRequest, OpenSession, SessionStamp, TurnCommandRequest, UnitActionRequest,
 };
 
 /// Result of deterministic replay verification.
@@ -166,14 +168,26 @@ impl LocalRuntime {
                 });
             }
             let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-            if entry.context != replay_context(session) {
+            let actor = match &entry.record {
+                ReplayRecordDto::Player { .. } => Some(session.actor()),
+                ReplayRecordDto::System { .. } => None,
+            };
+            if entry.context != replay_context(session, actor) {
                 return Err(PersistenceError::ReplayContextMismatch { entry: entry_index });
             }
-            let result = match decode_command(&entry.command)? {
+            let result = match decode_record(&entry.record)? {
                 ReplayRuntimeCommand::Move(command) => runtime.dispatch(&command),
                 ReplayRuntimeCommand::Cancel(command) => runtime.cancel_unit_action(&command),
                 ReplayRuntimeCommand::Skip(command) => runtime.skip_unit_turn(&command),
                 ReplayRuntimeCommand::Fortify(command) => runtime.fortify_unit(&command),
+                ReplayRuntimeCommand::EndTurn(command) => runtime.end_turn(command),
+                ReplayRuntimeCommand::SubmitTurn(command) => runtime.submit_turn(command),
+                ReplayRuntimeCommand::FinalizeTimedOutTurn(command) => {
+                    runtime.finalize_timed_out_turn(&command)
+                }
+                ReplayRuntimeCommand::KickParticipant(command) => {
+                    runtime.kick_participant(&command)
+                }
             }
             .map_err(PersistenceError::Runtime)?;
             let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
@@ -192,7 +206,7 @@ impl LocalRuntime {
 
 pub(crate) fn replay_entry(
     session: &Session,
-    command: ReplayCommandDto,
+    record: ReplayRecordDto,
     before: ReplayContextDto,
     result: &CommandResult,
 ) -> ReplayEntryDto {
@@ -200,15 +214,15 @@ pub(crate) fn replay_entry(
         index: u64::try_from(session.replay().entries.len())
             .expect("bounded replay entry count fits u64"),
         context: before,
-        command,
+        record,
         result: replay_result(result, session),
     }
 }
 
-pub(crate) fn replay_context(session: &Session) -> ReplayContextDto {
+pub(crate) fn replay_context(session: &Session, actor: Option<&PlayerId>) -> ReplayContextDto {
     let stamp = session.stamp();
     ReplayContextDto {
-        actor_player_id: session.actor().as_str().to_owned(),
+        actor_player_id: actor.map(|player| player.as_str().to_owned()),
         map_hash: stamp.map_hash.to_string(),
         ruleset_hash: stamp.ruleset_hash.to_string(),
         state_digest: stamp.state_digest.to_string(),
@@ -235,6 +249,27 @@ fn encode_event(event: &DomainEvent) -> ReplayEventDto {
             from: coordinate(event.from()),
             to: coordinate(event.to()),
         },
+        DomainEvent::TurnEnded(event) => ReplayEventDto::TurnEnded {
+            player_id: event.player_id().as_str().to_owned(),
+        },
+        DomainEvent::AllPlayersSubmitted(event) => ReplayEventDto::AllPlayersSubmitted {
+            turn: event.turn(),
+            player_ids: event
+                .player_ids()
+                .iter()
+                .map(|player| player.as_str().to_owned())
+                .collect(),
+        },
+        DomainEvent::PlayerTimedOut(event) => ReplayEventDto::PlayerTimedOut {
+            turn: event.turn(),
+            player_id: event.player_id().as_str().to_owned(),
+        },
+        DomainEvent::PlayerKicked(event) => ReplayEventDto::PlayerKicked {
+            turn: event.turn(),
+            player_id: event.player_id().as_str().to_owned(),
+            reason: event.reason().to_owned(),
+            timeout_streak: event.timeout_streak(),
+        },
     }
 }
 
@@ -254,6 +289,18 @@ fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto {
                 })
                 .collect(),
         },
+        ExecutionEvidence::TurnKernel(execution) => ReplayEvidenceDto::TurnKernel {
+            processors: execution
+                .processors()
+                .iter()
+                .map(|processor| processor.as_str().to_owned())
+                .collect(),
+            reset_unit_ids: execution
+                .reset_unit_ids()
+                .iter()
+                .map(|unit| unit.as_str().to_owned())
+                .collect(),
+        },
     }
 }
 
@@ -269,6 +316,17 @@ enum ReplayRuntimeCommand {
     Cancel(UnitActionRequest),
     Skip(UnitActionRequest),
     Fortify(UnitActionRequest),
+    EndTurn(TurnCommandRequest),
+    SubmitTurn(TurnCommandRequest),
+    FinalizeTimedOutTurn(FinalizeTimedOutTurnRequest),
+    KickParticipant(KickParticipantRequest),
+}
+
+fn decode_record(record: &ReplayRecordDto) -> Result<ReplayRuntimeCommand, PersistenceError> {
+    match record {
+        ReplayRecordDto::Player { command } => decode_command(command),
+        ReplayRecordDto::System { command } => decode_system_command(command),
+    }
 }
 
 fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, PersistenceError> {
@@ -294,7 +352,64 @@ fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, Pe
             expected_revision,
             unit_id,
         } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Fortify),
+        ReplayCommandDto::EndTurn { expected_revision } => {
+            Ok(ReplayRuntimeCommand::EndTurn(TurnCommandRequest {
+                expected_revision: *expected_revision,
+            }))
+        }
+        ReplayCommandDto::SubmitTurn { expected_revision } => {
+            Ok(ReplayRuntimeCommand::SubmitTurn(TurnCommandRequest {
+                expected_revision: *expected_revision,
+            }))
+        }
     }
+}
+
+fn decode_system_command(
+    command: &ReplaySystemCommandDto,
+) -> Result<ReplayRuntimeCommand, PersistenceError> {
+    match command {
+        ReplaySystemCommandDto::FinalizeTimedOutTurn {
+            expected_revision,
+            player_ids,
+            skipped_player_ids,
+            next_turn_started_at,
+        } => Ok(ReplayRuntimeCommand::FinalizeTimedOutTurn(
+            FinalizeTimedOutTurnRequest {
+                expected_revision: *expected_revision,
+                player_ids: decode_player_ids(player_ids)?.into_boxed_slice(),
+                skipped_player_ids: decode_player_ids(skipped_player_ids)?.into_boxed_slice(),
+                next_turn_started_at: next_turn_started_at
+                    .as_ref()
+                    .map(|value| UtcTimestamp::new(value.clone()))
+                    .transpose()
+                    .map_err(|error| PersistenceError::InvalidTurnTime(error.into()))?,
+            },
+        )),
+        ReplaySystemCommandDto::KickParticipant {
+            expected_revision,
+            player_id,
+            reason,
+            timeout_streak,
+        } => Ok(ReplayRuntimeCommand::KickParticipant(
+            KickParticipantRequest {
+                expected_revision: *expected_revision,
+                player_id: PlayerId::new(player_id.clone())
+                    .map_err(PersistenceError::InvalidActor)?,
+                reason: reason.clone().into_boxed_str(),
+                timeout_streak: *timeout_streak,
+            },
+        )),
+    }
+}
+
+fn decode_player_ids(values: &[String]) -> Result<Vec<PlayerId>, PersistenceError> {
+    values
+        .iter()
+        .cloned()
+        .map(PlayerId::new)
+        .map(|result| result.map_err(PersistenceError::InvalidActor))
+        .collect()
 }
 
 fn decode_unit_action(

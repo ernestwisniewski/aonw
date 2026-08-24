@@ -9,15 +9,15 @@ use aonw_contracts::client::{
     ClientEvidenceDto, ClientFeatureDto, ClientQueryResultDto, ClientReplayVerificationDto,
     ClientResponseBodyDto, ClientSessionStampDto, MapGridLayoutDto, MapObjectiveTypeDto,
     MapObjectiveViewDto, MapResourceDto, MapTerrainDto, MapTileViewDto, MapViewDto,
-    MovementStepViewDto, PendingActionViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
-    PlayerViewSnapshotDto, ReachableTileViewDto,
+    MovementStepViewDto, PendingActionViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto,
+    PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
 };
-use aonw_domain::HexCoord;
+use aonw_domain::{HexCoord, PlayerTurnState};
 use aonw_engine::{CommandRejectionCode, DomainEvent, ExecutionEvidence};
 
 use crate::{
-    CommandResult, LocalRuntime, PendingActionView, PlayerUnitView, PlayerViewPatch,
-    PlayerViewSnapshot, ReplayVerification, RuntimeQueryResult, SessionStamp,
+    CommandResult, LocalRuntime, PendingActionView, PlayerTurnLifecycleView, PlayerUnitView,
+    PlayerViewPatch, PlayerViewSnapshot, ReplayVerification, RuntimeQueryResult, SessionStamp,
 };
 
 pub(super) fn capabilities() -> ClientResponseBodyDto {
@@ -34,6 +34,9 @@ pub(super) fn capabilities() -> ClientResponseBodyDto {
     }
     if capabilities.unit_actions() {
         features.push(ClientFeatureDto::UnitActions);
+    }
+    if capabilities.turn_kernel() {
+        features.push(ClientFeatureDto::TurnKernel);
     }
     if capabilities.save_game() {
         features.push(ClientFeatureDto::SaveGame);
@@ -167,6 +170,7 @@ pub(super) fn snapshot(value: &PlayerViewSnapshot) -> PlayerViewSnapshotDto {
     PlayerViewSnapshotDto {
         stamp: stamp(*value.stamp()),
         turn: value.turn(),
+        turn_lifecycle: turn_lifecycle(*value.turn_lifecycle()),
         pending_action: value.pending_action().map(pending_action),
         units: value.units().iter().map(unit).collect(),
     }
@@ -265,6 +269,19 @@ const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto
         CommandRejectionCode::MovementUnitUpdateFailed => {
             ClientCommandRejectionCodeDto::MovementUnitUpdateFailed
         }
+        CommandRejectionCode::TurnPlayerNotControlled => {
+            ClientCommandRejectionCodeDto::TurnPlayerNotControlled
+        }
+        CommandRejectionCode::TurnPlayerNotActive => {
+            ClientCommandRejectionCodeDto::TurnPlayerNotActive
+        }
+        CommandRejectionCode::TurnScopeInvalid => ClientCommandRejectionCodeDto::TurnScopeInvalid,
+        CommandRejectionCode::TurnProcessorUnsupported => {
+            ClientCommandRejectionCodeDto::TurnProcessorUnsupported
+        }
+        CommandRejectionCode::TurnNumberOverflow => {
+            ClientCommandRejectionCodeDto::TurnNumberOverflow
+        }
     }
 }
 
@@ -295,6 +312,7 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
     PlayerViewPatchDto {
         from_revision: value.from_revision,
         to_revision: value.to_revision,
+        turn_lifecycle: value.turn_lifecycle.map(turn_lifecycle),
         upserted_units: value.upserted_units.iter().map(unit).collect(),
         removed_unit_ids: value
             .removed_unit_ids
@@ -363,6 +381,27 @@ fn event(value: &DomainEvent) -> ClientEventDto {
             from: coordinate(value.from()),
             to: coordinate(value.to()),
         },
+        DomainEvent::TurnEnded(value) => ClientEventDto::TurnEnded {
+            player_id: value.player_id().as_str().to_owned(),
+        },
+        DomainEvent::AllPlayersSubmitted(value) => ClientEventDto::AllPlayersSubmitted {
+            turn: value.turn(),
+            player_ids: value
+                .player_ids()
+                .iter()
+                .map(|player| player.as_str().to_owned())
+                .collect(),
+        },
+        DomainEvent::PlayerTimedOut(value) => ClientEventDto::PlayerTimedOut {
+            turn: value.turn(),
+            player_id: value.player_id().as_str().to_owned(),
+        },
+        DomainEvent::PlayerKicked(value) => ClientEventDto::PlayerKicked {
+            turn: value.turn(),
+            player_id: value.player_id().as_str().to_owned(),
+            reason: value.reason().to_owned(),
+            timeout_streak: value.timeout_streak(),
+        },
     }
 }
 
@@ -381,6 +420,30 @@ fn evidence(value: &ExecutionEvidence) -> ClientEvidenceDto {
                 })
                 .collect(),
         },
+        ExecutionEvidence::TurnKernel(value) => ClientEvidenceDto::TurnKernel {
+            processors: value
+                .processors()
+                .iter()
+                .map(|processor| processor.as_str().to_owned())
+                .collect(),
+            reset_unit_ids: value
+                .reset_unit_ids()
+                .iter()
+                .map(|unit| unit.as_str().to_owned())
+                .collect(),
+        },
+    }
+}
+
+fn turn_lifecycle(value: PlayerTurnLifecycleView) -> PlayerTurnLifecycleViewDto {
+    PlayerTurnLifecycleViewDto {
+        own_state: value.own_state().map(|state| match state {
+            PlayerTurnState::Active => aonw_contracts::PlayerTurnStateDto::Active,
+            PlayerTurnState::Finished => aonw_contracts::PlayerTurnStateDto::Finished,
+        }),
+        own_submitted: value.own_submitted(),
+        required_submission_count: value.required_submission_count(),
+        submitted_count: value.submitted_count(),
     }
 }
 

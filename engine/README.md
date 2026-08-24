@@ -22,8 +22,8 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_map_compiler_cli` | Thin filesystem adapter that writes compiled terrain as OpenEXR, raw R16, and a strict manifest. |
 | `aonw_contracts` | Current-only shared client API plus strict bounded canonical state, save, and replay codecs. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
-| `aonw_engine` | Authoritative movement queries/transitions and revision-bound cancel, skip, and fortify unit actions. |
-| `aonw_local_runtime` | Transactional local-session lifecycle, player snapshots, query/command dispatch, and recipient-safe patches. |
+| `aonw_engine` | Authoritative movement/unit actions plus the capability-gated T1 turn kernel and separate trusted lifecycle boundary. |
+| `aonw_local_runtime` | Transactional local sessions, player/system replay records, recipient-safe lifecycle snapshots/patches, and query/command dispatch. |
 | `aonw_godot` | Thin GDExtension translating Godot calls into the framework-neutral local runtime. |
 | `aonw_flutter` | Panic-contained C ABI exposing the same client protocol to Flutter Native Assets. |
 | `aonw_testkit` | Bounded canonical fixture/corpus loader, duplicate-key rejection, structural output diff, and engine-neutral runner for current contracts. |
@@ -94,7 +94,11 @@ allocated bytes, and payload bytes. Wall-clock medians and p95 values remain
 diagnostic because ordinary CI runners are not stable timing references.
 Criterion/Divan would improve host-local timing analysis but would not replace
 these structural metrics. Iai-Callgrind remains a possible future Linux-only
-deep diagnostic, not a substitute for the portable E0 gate.
+deep diagnostic, not a substitute for the portable E0/T1 gate. T1 adds
+allocation/payload workloads for partial submit, trusted timeout finalization,
+participant removal, client JSON submit, and exact replay verification at
+1/64/512 units. Run its complete focused gate with `make
+rust-turn-kernel-check`.
 
 The migration inventory under [`migration/`](migration/README.md) closes the
 authoritative surface before new Rust behavior is added. `p0-check` runs its
@@ -140,10 +144,19 @@ API versions remain because independently built Rust, Godot, and Flutter
 components consume those boundaries.
 
 The public mutation family is `PlayerCommand`; it contains only commands a
-player client may issue. There is no trusted system-command endpoint in the
-engine or successor client protocol. Future host-owned lifecycle capabilities
-must receive a separate explicit boundary and cannot be exposed through a
-player adapter. No legacy command adapter or compatibility alias is retained.
+player client may issue. Trusted lifecycle mutations use the separate
+`SystemCommand` and `GameEngine::apply_system_owned` boundary, whose context has
+no player actor. They do not exist in `ClientCommandDto`, the successor client
+protocol, or any player adapter. No legacy command adapter or compatibility
+alias is retained.
+
+T1 advertises `turn-kernel-ready`, not full turn parity. It executes only
+submission, lifecycle progression, movement reset, and reversible-skip
+cleanup. Queued movement, trade routes, worker/scout automation, combat,
+economy, diplomacy, research, agreements, and objectives remain explicitly
+disabled. Manifests requiring them and canonical states that visibly need the
+first five processors fail closed with `turn_processor_unsupported`; the full
+integrated turn remains an O9 capability.
 
 Run the diagnostic release baseline separately:
 
@@ -153,10 +166,11 @@ make rust-benchmark
 
 It reports map open/hash plus raw and prepared reachable/route, occupied-target
 approach, owned apply, direct local-runtime dispatch, and shared client JSON
-workloads. Movement cases cover 1, 10, 64, and 512 units, including accepted,
-rejected, and hidden no-op commands. Wall-clock values are diagnostic; stable
-result signatures, search-work counters, payload sizes, and allocation ceilings
-are test gates.
+workloads. Movement and T1 lifecycle cases cover 1, 10, 64, and 512 units as
+applicable, including accepted, rejected, hidden no-op, trusted system, JSON,
+and replay-verification paths. Wall-clock values are diagnostic; stable result
+signatures, search-work counters, payload sizes, and allocation ceilings are
+test gates.
 
 The 2026-08-14 reference run on the development Mac kept the 40×30, 512-unit
 accepted runtime dispatch at about 1.46 ms p95, including state digest, replay
@@ -221,12 +235,12 @@ ruleset; canonical fog and occupancy are derived from `GameState`.
 Match identity and turn lifecycle are typed canonical components rather than
 opaque JSON. They preserve ordered participants, match rules and recursive
 balance values, match mode, player turn states, submitted/AFK/kicked sets,
-timeout streaks, and an explicit host-provided UTC turn start. The pure domain
-never reads a clock, and mapping rejects duplicate or unknown lifecycle
-identities. Persisted participant names and colors are part of canonical
-display identity and therefore contribute to the complete state digest.
-Mutable localization, client theme, camera and recipient presentation stay
-outside `GameStateDto`.
+the explicit required-submission scope, timeout streaks, and a host-provided
+UTC turn start. The pure domain never reads a clock, and mapping rejects
+duplicate or unknown lifecycle identities. Persisted participant names and
+colors are part of canonical display identity and therefore contribute to the
+complete state digest. Mutable localization, client theme, camera and
+recipient presentation stay outside `GameStateDto`.
 
 Economy is likewise a typed canonical section: signed gold, war-weariness and
 stability accounts, positive oil/aluminium stockpiles, and the persisted seed

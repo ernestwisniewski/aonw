@@ -240,6 +240,22 @@ impl Unit {
         updated.posture = UnitPosture::Fortified;
         updated
     }
+
+    /// Resets movement at the start of a turn without running later automation.
+    #[must_use]
+    pub fn after_turn_movement_reset(&self, maximum_movement: MovementUnits) -> Self {
+        let mut updated = self.clone();
+        updated.movement_units =
+            if self.posture == UnitPosture::Fortified || self.activity.blocks_manual_movement() {
+                MovementUnits::ZERO
+            } else {
+                maximum_movement
+            };
+        if self.posture == UnitPosture::Fortified || self.activity.blocks_manual_movement() {
+            updated.queued_path = None;
+        }
+        updated
+    }
 }
 
 /// Builder for the complete unit entity.

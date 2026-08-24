@@ -115,11 +115,11 @@ case resource-trade-wrong-actor-rejected resource-trade OpenResourceTrade reject
 case road-construction-accepted infrastructure BuildRoad accepted - blocked reference-only CP11 awaits-independent-current-contract-review -
 case road-construction-existing-road-rejected infrastructure BuildRoad rejected road_construction_existingRoad blocked reference-only CP11 awaits-independent-current-contract-review -
 case road-construction-wrong-actor-rejected infrastructure BuildRoad rejected worker_not_controlled blocked reference-only CP11 awaits-independent-current-contract-review -
-case turn-final-submit-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP6 awaits-independent-current-contract-review -
-case turn-first-submit-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP6 awaits-independent-current-contract-review -
-case turn-inactive-player-rejected turn-finalization SubmitTurn rejected turn_player_not_active blocked reference-only CP6 awaits-independent-current-contract-review -
-case turn-rich-map-finalization-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP6 awaits-independent-current-contract-review -
-case turn-wrong-actor-rejected turn-finalization SubmitTurn rejected turn_player_not_controlled blocked reference-only CP6 awaits-independent-current-contract-review -
+case turn-final-submit-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP9 awaits-full-turn-pipeline -
+case turn-first-submit-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP9 awaits-full-turn-pipeline -
+case turn-inactive-player-rejected turn-finalization SubmitTurn rejected turn_player_not_active blocked reference-only CP9 awaits-full-turn-pipeline -
+case turn-rich-map-finalization-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP9 awaits-full-turn-pipeline -
+case turn-wrong-actor-rejected turn-finalization SubmitTurn rejected turn_player_not_controlled blocked reference-only CP9 awaits-full-turn-pipeline -
 case unit-action-cancel-orders-accepted unit-actions CancelUnitAction accepted - round-trip engine-parity current - engine/fixtures/canonical_commands/unit-action-cancel-orders-accepted.json
 case unit-action-cancel-skipped-accepted unit-actions CancelUnitAction accepted - round-trip engine-parity current - engine/fixtures/canonical_commands/unit-action-cancel-skipped-accepted.json
 case unit-action-fortify-busy-rejected unit-actions FortifyUnit rejected unit_busy round-trip engine-parity current - engine/fixtures/canonical_commands/unit-action-fortify-busy-rejected.json

@@ -145,6 +145,8 @@ fn dispatch_command(runtime: &mut LocalRuntime, command: DecodedCommand) -> Clie
         DecodedCommand::Cancel(command) => runtime.cancel_unit_action(&command),
         DecodedCommand::Skip(command) => runtime.skip_unit_turn(&command),
         DecodedCommand::Fortify(command) => runtime.fortify_unit(&command),
+        DecodedCommand::EndTurn(command) => runtime.end_turn(command),
+        DecodedCommand::SubmitTurn(command) => runtime.submit_turn(command),
     };
     match result {
         Ok(result) => success(ClientResponseBodyDto::Command {

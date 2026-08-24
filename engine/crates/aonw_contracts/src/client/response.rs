@@ -1,8 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, FieldImprovementKindDto, UnitKindDto, UnitPostureDto};
+use crate::{
+    CoordinateDto, FieldImprovementKindDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
+};
 
 use super::MapViewDto;
+
+mod rejection;
+
+pub use rejection::ClientCommandRejectionCodeDto;
 
 /// One current client protocol response.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -114,6 +120,8 @@ pub enum ClientFeatureDto {
     MoveUnit,
     /// Cancel, skip, and fortify commands.
     UnitActions,
+    /// Capability-gated `EndTurn` and `SubmitTurn` kernel commands.
+    TurnKernel,
     /// Save export and restore.
     SaveGame,
     /// Replay export and verification.
@@ -142,10 +150,26 @@ pub struct PlayerViewSnapshotDto {
     pub stamp: ClientSessionStampDto,
     /// Authoritative turn number.
     pub turn: u32,
+    /// Recipient-owned lifecycle status and aggregate submission progress.
+    pub turn_lifecycle: PlayerTurnLifecycleViewDto,
     /// Action currently awaiting input from this recipient.
     pub pending_action: Option<PendingActionViewDto>,
     /// Units currently visible to the recipient.
     pub units: Vec<PlayerUnitViewDto>,
+}
+
+/// Recipient-safe lifecycle projection with no per-opponent readiness map.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PlayerTurnLifecycleViewDto {
+    /// Current lifecycle status of the recipient.
+    pub own_state: Option<PlayerTurnStateDto>,
+    /// Whether the recipient already submitted this turn.
+    pub own_submitted: bool,
+    /// Number of participants required to submit.
+    pub required_submission_count: u32,
+    /// Number of required submissions received, without participant identities.
+    pub submitted_count: u32,
 }
 
 /// Recipient-owned action awaiting player input.
@@ -216,6 +240,8 @@ pub struct PlayerViewPatchDto {
     pub from_revision: u64,
     /// Revision represented after the patch.
     pub to_revision: u64,
+    /// Replacement lifecycle projection when turn/readiness changed.
+    pub turn_lifecycle: Option<PlayerTurnLifecycleViewDto>,
     /// New or changed visible units.
     pub upserted_units: Vec<PlayerUnitViewDto>,
     /// Units no longer visible.
@@ -238,97 +264,6 @@ pub struct ClientCommandResultDto {
     pub evidence: Option<ClientEvidenceDto>,
     /// Recipient-safe state delta.
     pub view_patch: PlayerViewPatchDto,
-}
-
-/// Closed set of stable authoritative command rejection codes.
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ClientCommandRejectionCodeDto {
-    /// Command was planned against another canonical revision.
-    StaleRevision,
-    /// The requested unit does not exist.
-    UnitNotFound,
-    /// The actor cannot command the requested unit.
-    UnitNotControlled,
-    /// Current activity prevents manual movement.
-    UnitUnavailable,
-    /// The unit is controlled by the trade-route subsystem.
-    UnitUsesTradeRoutes,
-    /// The canonical unit position is outside the map.
-    UnitOutOfBounds,
-    /// The movement target is outside the map.
-    MoveTargetOutOfBounds,
-    /// The movement target equals the current unit position.
-    MoveTargetIsCurrentTile,
-    /// A known foreign city blocks the target.
-    MoveTargetIsForeignCityCenter,
-    /// A known foreign unit blocks the target.
-    MoveTargetOccupied,
-    /// The unit cannot pay the minimum movement cost.
-    UnitMovementCapacityInsufficient,
-    /// No valid route reaches the target.
-    MovePathNotFound,
-    /// The unit has an activity that prevents the requested action.
-    UnitBusy,
-    /// The ruleset lacks the requested unit definition.
-    UnitDefinitionMissing,
-    /// The next canonical revision cannot be represented.
-    StateRevisionOverflow,
-    /// A queued movement path violates its invariants.
-    InvalidQueuedMovementPath,
-    /// An engine-produced unit violates its invariants.
-    InvalidUnit,
-    /// The validated movement unit disappeared during transition construction.
-    MovementUnitUpdateFailed,
-}
-
-impl ClientCommandRejectionCodeDto {
-    /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 18] = [
-        Self::StaleRevision,
-        Self::UnitNotFound,
-        Self::UnitNotControlled,
-        Self::UnitUnavailable,
-        Self::UnitUsesTradeRoutes,
-        Self::UnitOutOfBounds,
-        Self::MoveTargetOutOfBounds,
-        Self::MoveTargetIsCurrentTile,
-        Self::MoveTargetIsForeignCityCenter,
-        Self::MoveTargetOccupied,
-        Self::UnitMovementCapacityInsufficient,
-        Self::MovePathNotFound,
-        Self::UnitBusy,
-        Self::UnitDefinitionMissing,
-        Self::StateRevisionOverflow,
-        Self::InvalidQueuedMovementPath,
-        Self::InvalidUnit,
-        Self::MovementUnitUpdateFailed,
-    ];
-
-    /// Returns the stable snake-case wire value.
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::StaleRevision => "stale_revision",
-            Self::UnitNotFound => "unit_not_found",
-            Self::UnitNotControlled => "unit_not_controlled",
-            Self::UnitUnavailable => "unit_unavailable",
-            Self::UnitUsesTradeRoutes => "unit_uses_trade_routes",
-            Self::UnitOutOfBounds => "unit_out_of_bounds",
-            Self::MoveTargetOutOfBounds => "move_target_out_of_bounds",
-            Self::MoveTargetIsCurrentTile => "move_target_is_current_tile",
-            Self::MoveTargetIsForeignCityCenter => "move_target_is_foreign_city_center",
-            Self::MoveTargetOccupied => "move_target_occupied",
-            Self::UnitMovementCapacityInsufficient => "unit_movement_capacity_insufficient",
-            Self::MovePathNotFound => "move_path_not_found",
-            Self::UnitBusy => "unit_busy",
-            Self::UnitDefinitionMissing => "unit_definition_missing",
-            Self::StateRevisionOverflow => "state_revision_overflow",
-            Self::InvalidQueuedMovementPath => "invalid_queued_movement_path",
-            Self::InvalidUnit => "invalid_unit",
-            Self::MovementUnitUpdateFailed => "movement_unit_update_failed",
-        }
-    }
 }
 
 /// Coherent authoritative command outcome.
@@ -367,6 +302,36 @@ pub enum ClientEventDto {
         /// New coordinate.
         to: CoordinateDto,
     },
+    /// One participant completed a sequential turn.
+    TurnEnded {
+        /// Participant that completed the turn.
+        player_id: String,
+    },
+    /// Every participant in the required scope submitted.
+    AllPlayersSubmitted {
+        /// Finalized turn number.
+        turn: u32,
+        /// Participants in canonical turn order.
+        player_ids: Vec<String>,
+    },
+    /// Trusted timeout notification.
+    PlayerTimedOut {
+        /// Timed-out turn number.
+        turn: u32,
+        /// Timed-out participant.
+        player_id: String,
+    },
+    /// Trusted participant-removal notification.
+    PlayerKicked {
+        /// Turn during which removal occurred.
+        turn: u32,
+        /// Removed participant.
+        player_id: String,
+        /// Stable host-owned removal reason.
+        reason: String,
+        /// Timeout streak observed by the host.
+        timeout_streak: i64,
+    },
 }
 
 /// Exact client-visible execution evidence.
@@ -386,6 +351,13 @@ pub enum ClientEvidenceDto {
         from: CoordinateDto,
         /// Executed steps excluding the origin.
         steps: Vec<MovementStepViewDto>,
+    },
+    /// Exact capability-gated turn processors executed.
+    TurnKernel {
+        /// Processors executed in canonical order.
+        processors: Vec<String>,
+        /// Units whose movement allowance was reset.
+        reset_unit_ids: Vec<String>,
     },
 }
 

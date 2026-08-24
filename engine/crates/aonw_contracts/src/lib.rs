@@ -39,7 +39,8 @@ pub use limits::{
 pub use persistence::{
     MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_SAVE_GAME_JSON_BYTES,
     PersistenceCodecError, ReplayCommandDto, ReplayContextDto, ReplayEntryDto, ReplayEventDto,
-    ReplayEvidenceDto, ReplayLogDto, ReplayResultDto, SaveGameDto,
+    ReplayEvidenceDto, ReplayLogDto, ReplayRecordDto, ReplayResultDto, ReplaySystemCommandDto,
+    SaveGameDto,
 };
 
 /// Stable unit type used at engine boundaries.

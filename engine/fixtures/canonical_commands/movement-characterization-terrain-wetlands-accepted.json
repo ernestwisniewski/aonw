@@ -191,7 +191,7 @@
         "kickedPlayerIds": [
           "player_2"
         ],
-        "submittedPlayerIds": [
+        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [
           "player_2"
         ],
         "timeoutStreaksByPlayerId": {
@@ -434,7 +434,7 @@
         "kickedPlayerIds": [
           "player_2"
         ],
-        "submittedPlayerIds": [
+        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [
           "player_2"
         ],
         "timeoutStreaksByPlayerId": {

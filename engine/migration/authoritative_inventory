@@ -7,6 +7,7 @@
 #   expected-query-count <integer>
 #   expected-event-count <integer>
 #   expected-evidence-count <integer>
+#   expected-native-evidence-count <integer>
 #   expected-projection-type-count <integer>
 #   expected-projection-variant-count <integer>
 #   dart-domain-root <repo-relative-path>
@@ -28,6 +29,7 @@
 #   query <RustQueryVariant> <RustResultVariant> <ClientResultVariant> <family> <status>
 #   event <DartType> <family> <status> <RustVariant-or-dash> <DartSource>
 #   evidence <DartType> <family> <status> <RustVariant> <DartSource>
+#   native-evidence <RustType> <family> <status> <RustVariant> <RustSource>
 #   projection-type <RustType> <kind> <status> <DtoType> <RustSource>
 #   projection-variant <RustVariant> <kind> <status> <DtoVariant>
 #
@@ -42,6 +44,7 @@ expected-system-count 2
 expected-query-count 2
 expected-event-count 40
 expected-evidence-count 1
+expected-native-evidence-count 1
 expected-projection-type-count 3
 expected-projection-variant-count 9
 dart-domain-root packages/aonw_core/lib/game/domain/command/game_command.dart
@@ -49,7 +52,7 @@ dart-system-source packages/aonw_core/lib/game/application/engine/system_command
 dart-event-root packages/aonw_core/lib/game/domain/event/game_event.dart
 dart-evidence-source packages/aonw_core/lib/game/domain/movement/movement_command_execution.dart
 rust-domain-source engine/crates/aonw_engine/src/application/command.rs
-rust-system-source -
+rust-system-source engine/crates/aonw_engine/src/application/turn.rs
 rust-query-source engine/crates/aonw_engine/src/application/query.rs
 rust-event-source engine/crates/aonw_engine/src/application/transition.rs
 rust-evidence-source engine/crates/aonw_engine/src/application/transition.rs
@@ -71,7 +74,7 @@ domain CancelWorkerJobCommand worker reference-only - packages/aonw_core/lib/gam
 domain ConfirmWorkerImprovementCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain DeclareWarCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain DetachTroopCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
-domain EndTurnCommand turn reference-only - packages/aonw_core/lib/game/domain/command/turn_commands.dart
+domain EndTurnCommand turn turn-kernel-ready EndTurn packages/aonw_core/lib/game/domain/command/turn_commands.dart
 domain FortifyUnitCommand unit-action engine-parity FortifyUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain FoundCityCommand city reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain MoveMerchantToCityCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
@@ -95,12 +98,12 @@ domain StartCityProjectCommand production reference-only - packages/aonw_core/li
 domain StartUnitProductionCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain StartWonderCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain StoreArtifactInCityCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
-domain SubmitTurnCommand turn reference-only - packages/aonw_core/lib/game/domain/command/turn_commands.dart
+domain SubmitTurnCommand turn turn-kernel-ready SubmitTurn packages/aonw_core/lib/game/domain/command/turn_commands.dart
 domain ToggleWorkedHexCommand city reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain TradeArtifactCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
 
-system FinalizeTimedOutTurn system-lifecycle reference-only - packages/aonw_core/lib/game/application/engine/system_command.dart
-system KickParticipant system-lifecycle reference-only - packages/aonw_core/lib/game/application/engine/system_command.dart
+system FinalizeTimedOutTurn system-lifecycle turn-kernel-ready FinalizeTimedOutTurn packages/aonw_core/lib/game/application/engine/system_command.dart
+system KickParticipant system-lifecycle turn-kernel-ready KickParticipant packages/aonw_core/lib/game/application/engine/system_command.dart
 
 query PlanRoute Route RoutePlan movement characterized
 query Reachable Reachable Reachable movement characterized
@@ -108,7 +111,7 @@ query Reachable Reachable Reachable movement characterized
 event ArtifactCarriedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event ArtifactExcavationStartedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event ArtifactStoredEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
-event AllPlayersSubmittedEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
+event AllPlayersSubmittedEvent system-lifecycle turn-kernel-ready AllPlayersSubmitted packages/aonw_core/lib/game/domain/event/system_events.dart
 event CityAttackedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
 event CityBuiltBuildingEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityBuiltWonderEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
@@ -130,14 +133,14 @@ event DiplomaticScoreChangedEvent diplomacy reference-only - packages/aonw_core/
 event DominationThresholdReachedEvent turn reference-only - packages/aonw_core/lib/game/domain/event/turn_events.dart
 event FortifiedUnitThreatenedEvent unit-action reference-only - packages/aonw_core/lib/game/domain/event/unit_events.dart
 event MapObjectiveSecuredEvent objective reference-only - packages/aonw_core/lib/game/domain/event/objective_events.dart
-event PlayerKickedEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
-event PlayerTimedOutEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
+event PlayerKickedEvent system-lifecycle turn-kernel-ready PlayerKicked packages/aonw_core/lib/game/domain/event/system_events.dart
+event PlayerTimedOutEvent system-lifecycle turn-kernel-ready PlayerTimedOut packages/aonw_core/lib/game/domain/event/system_events.dart
 event ResearchPointsGainedEvent research reference-only - packages/aonw_core/lib/game/domain/event/research_events.dart
 event StabilityBandChangedEvent stability reference-only - packages/aonw_core/lib/game/domain/event/stability_events.dart
 event StrategicResourceDiscoveredEvent resource reference-only - packages/aonw_core/lib/game/domain/event/resource_events.dart
 event TechnologyResearchedEvent research reference-only - packages/aonw_core/lib/game/domain/event/research_events.dart
 event TurnAutoResolvedEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
-event TurnEndedEvent turn reference-only - packages/aonw_core/lib/game/domain/event/turn_events.dart
+event TurnEndedEvent turn turn-kernel-ready TurnEnded packages/aonw_core/lib/game/domain/event/turn_events.dart
 event UnitAttackedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
 event UnitGainedExperienceEvent unit-action reference-only - packages/aonw_core/lib/game/domain/event/unit_events.dart
 event UnitKilledEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
@@ -147,6 +150,7 @@ event WonderProductionRefundedEvent city reference-only - packages/aonw_core/lib
 event WorkerCompletedJobEvent turn reference-only - packages/aonw_core/lib/game/domain/event/turn_events.dart
 
 evidence MovementCommandExecution movement engine-parity UnitMovement packages/aonw_core/lib/game/domain/movement/movement_command_execution.dart
+native-evidence TurnKernelExecution turn turn-kernel-ready TurnKernel engine/crates/aonw_engine/src/application/turn.rs
 
 projection-type PlayerUnitView visible-entity characterized PlayerUnitViewDto engine/crates/aonw_local_runtime/src/player_view.rs
 projection-type PlayerViewPatch recipient-patch characterized PlayerViewPatchDto engine/crates/aonw_local_runtime/src/command_dispatch.rs

@@ -11,6 +11,7 @@ impl RuntimeCapabilities {
     const SAVE_GAME: u8 = 1 << 3;
     const REPLAY_VERIFICATION: u8 = 1 << 4;
     const UNIT_ACTIONS: u8 = 1 << 5;
+    const TURN_KERNEL: u8 = 1 << 6;
 
     pub(super) const CURRENT: Self = Self {
         features: Self::ROUTE_PLAN
@@ -18,7 +19,8 @@ impl RuntimeCapabilities {
             | Self::MOVE_UNIT
             | Self::SAVE_GAME
             | Self::REPLAY_VERIFICATION
-            | Self::UNIT_ACTIONS,
+            | Self::UNIT_ACTIONS
+            | Self::TURN_KERNEL,
     };
 
     /// Returns whether route planning is available.
@@ -55,5 +57,11 @@ impl RuntimeCapabilities {
     #[must_use]
     pub const fn unit_actions(self) -> bool {
         self.features & Self::UNIT_ACTIONS != 0
+    }
+
+    /// Returns whether capability-gated `EndTurn` and `SubmitTurn` are available.
+    #[must_use]
+    pub const fn turn_kernel(self) -> bool {
+        self.features & Self::TURN_KERNEL != 0
     }
 }

@@ -38,4 +38,13 @@ impl MatchLifecycle {
     pub const fn turn(&self) -> &TurnLifecycle {
         &self.turn
     }
+
+    /// Replaces current turn state while retaining immutable match identity.
+    #[must_use]
+    pub fn with_turn(self, turn: TurnLifecycle) -> Self {
+        Self {
+            identity: self.identity,
+            turn,
+        }
+    }
 }

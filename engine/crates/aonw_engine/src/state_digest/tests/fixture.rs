@@ -309,6 +309,7 @@ fn complete_turn_lifecycle() -> TurnLifecycleDto {
             ("player-1".to_owned(), PlayerTurnStateDto::Active),
             ("player-2".to_owned(), PlayerTurnStateDto::Finished),
         ]),
+        required_submission_player_ids: vec!["player-1".to_owned(), "player-2".to_owned()],
         submitted_player_ids: vec!["player-2".to_owned()],
         timeout_streaks_by_player_id: BTreeMap::from([("player-2".to_owned(), 2)]),
         afk_player_ids: vec!["player-2".to_owned()],

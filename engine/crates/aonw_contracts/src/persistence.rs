@@ -70,14 +70,78 @@ pub enum ReplayCommandDto {
         /// Opaque canonical unit identifier.
         unit_id: String,
     },
+    /// Completes one sequential participant turn.
+    EndTurn {
+        /// Expected canonical revision.
+        expected_revision: u64,
+    },
+    /// Marks one simultaneous participant ready.
+    SubmitTurn {
+        /// Expected canonical revision.
+        expected_revision: u64,
+    },
+}
+
+/// Trusted host commands stored separately from player-authored requests.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum ReplaySystemCommandDto {
+    /// Finalizes one expired simultaneous turn.
+    FinalizeTimedOutTurn {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Ordered participant scope selected by the host.
+        player_ids: Vec<String>,
+        /// Ordered participants finalized because of timeout.
+        skipped_player_ids: Vec<String>,
+        /// Explicit host-provided next-turn UTC time when rule-relevant.
+        next_turn_started_at: Option<String>,
+    },
+    /// Removes one participant from the active match lifecycle.
+    KickParticipant {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Participant selected by the host.
+        player_id: String,
+        /// Stable host-owned reason.
+        reason: String,
+        /// Timeout streak observed by the host.
+        timeout_streak: i64,
+    },
+}
+
+/// Closed replay record boundary distinguishing player and trusted system input.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(
+    tag = "recordKind",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum ReplayRecordDto {
+    /// Authenticated player-authored command.
+    Player {
+        /// Closed player command payload.
+        command: ReplayCommandDto,
+    },
+    /// Host/scheduler-authored command unavailable to player endpoints.
+    System {
+        /// Closed trusted command payload.
+        command: ReplaySystemCommandDto,
+    },
 }
 
 /// Trusted command context recorded before execution.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReplayContextDto {
-    /// Actor issuing the command.
-    pub actor_player_id: String,
+    /// Authenticated actor for player records; absent for trusted system records.
+    pub actor_player_id: Option<String>,
     /// Exact canonical map identity.
     pub map_hash: String,
     /// Exact immutable ruleset identity.
@@ -106,6 +170,36 @@ pub enum ReplayEventDto {
         /// New coordinate.
         to: CoordinateDto,
     },
+    /// One participant completed a sequential turn.
+    TurnEnded {
+        /// Participant identity.
+        player_id: String,
+    },
+    /// Every required participant submitted the simultaneous turn.
+    AllPlayersSubmitted {
+        /// Finalized turn number.
+        turn: u32,
+        /// Canonically ordered participant identities.
+        player_ids: Vec<String>,
+    },
+    /// Trusted timeout fact.
+    PlayerTimedOut {
+        /// Timed-out turn.
+        turn: u32,
+        /// Timed-out participant.
+        player_id: String,
+    },
+    /// Trusted participant-removal fact.
+    PlayerKicked {
+        /// Current turn.
+        turn: u32,
+        /// Removed participant.
+        player_id: String,
+        /// Stable host-owned reason.
+        reason: String,
+        /// Timeout streak observed by the host.
+        timeout_streak: i64,
+    },
 }
 
 /// Exact execution evidence stored in a replay result.
@@ -125,6 +219,13 @@ pub enum ReplayEvidenceDto {
         from: CoordinateDto,
         /// Exact executed movement steps.
         steps: Vec<MovementStepDto>,
+    },
+    /// Exact partial turn pipeline that executed.
+    TurnKernel {
+        /// Processor names in execution order.
+        processors: Vec<String>,
+        /// Units whose movement phase began, in canonical unit order.
+        reset_unit_ids: Vec<String>,
     },
 }
 
@@ -156,8 +257,8 @@ pub struct ReplayEntryDto {
     pub index: u64,
     /// Complete trusted context before execution.
     pub context: ReplayContextDto,
-    /// Revision-bound command.
-    pub command: ReplayCommandDto,
+    /// Explicit player or trusted system record.
+    pub record: ReplayRecordDto,
     /// Exact authoritative result.
     pub result: ReplayResultDto,
 }
@@ -313,7 +414,7 @@ mod tests {
 
     #[test]
     fn strict_save_codec_rejects_unknown_duplicate_and_oversized_input() {
-        let base = r#"{"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","eventOffset":0,"stateDigest":"d","state":{"revision":0,"turn":0,"matchIdentity":{"matchRules":{"gameLength":{"kind":"unlimited","targetMinutes":null,"turnLimit":null,"paceProfile":"unlimited","scoreFallbackEnabled":false},"victory":{"conquestEnabled":true,"dominationEnabled":true,"dominationControlPercent":60,"dominationHoldTurns":5,"scoreFallbackEnabled":false,"turnLimit":null,"hardTimeLimitMinutes":null,"culturalEnabled":true,"culturalRequiredArtifacts":6,"culturalHoldTurns":5},"balance":{}},"participants":[],"gameMode":"hotSeat"},"turnLifecycle":{"turnStatesByPlayerId":{},"submittedPlayerIds":[],"timeoutStreaksByPlayerId":{},"afkPlayerIds":[],"kickedPlayerIds":[],"turnStartedAt":null},"economy":{"playerGold":{},"playerWarWeariness":{},"playerStabilityNet":{},"strategicResources":{},"initialResourceDistribution":{"seed":0,"placements":[]}},"research":{"players":{}},"wonderRegistry":{},"intendedAttacks":[],"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"fieldImprovements":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomacy":{"contacts":[],"relations":[],"pendingProposals":[],"messages":[],"scoreHistory":[]},"resourceTradeAgreements":[],"dominationHoldTurnsByPlayerId":{},"culturalVictoryHoldTurnsByPlayerId":{},"mapObjectiveHoldStates":[],"transportNetwork":[]}}"#;
+        let base = r#"{"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","eventOffset":0,"stateDigest":"d","state":{"revision":0,"turn":0,"matchIdentity":{"matchRules":{"gameLength":{"kind":"unlimited","targetMinutes":null,"turnLimit":null,"paceProfile":"unlimited","scoreFallbackEnabled":false},"victory":{"conquestEnabled":true,"dominationEnabled":true,"dominationControlPercent":60,"dominationHoldTurns":5,"scoreFallbackEnabled":false,"turnLimit":null,"hardTimeLimitMinutes":null,"culturalEnabled":true,"culturalRequiredArtifacts":6,"culturalHoldTurns":5},"balance":{}},"participants":[],"gameMode":"hotSeat"},"turnLifecycle":{"turnStatesByPlayerId":{},"requiredSubmissionPlayerIds":[],"submittedPlayerIds":[],"timeoutStreaksByPlayerId":{},"afkPlayerIds":[],"kickedPlayerIds":[],"turnStartedAt":null},"economy":{"playerGold":{},"playerWarWeariness":{},"playerStabilityNet":{},"strategicResources":{},"initialResourceDistribution":{"seed":0,"placements":[]}},"research":{"players":{}},"wonderRegistry":{},"intendedAttacks":[],"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"fieldImprovements":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomacy":{"contacts":[],"relations":[],"pendingProposals":[],"messages":[],"scoreHistory":[]},"resourceTradeAgreements":[],"dominationHoldTurnsByPlayerId":{},"culturalVictoryHoldTurnsByPlayerId":{},"mapObjectiveHoldStates":[],"transportNetwork":[]}}"#;
         assert!(SaveGameDto::from_json(base).is_ok());
         let unknown = base.replacen("\"state\":", "\"extra\":true,\"state\":", 1);
         assert!(SaveGameDto::from_json(&unknown).is_err());
@@ -324,7 +425,7 @@ mod tests {
 
     #[test]
     fn strict_replay_codec_rejects_unknown_and_duplicate_fields() {
-        let base = r#"{"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialEventOffset":0,"initialStateDigest":"d","initialState":{"revision":0,"turn":0,"matchIdentity":{"matchRules":{"gameLength":{"kind":"unlimited","targetMinutes":null,"turnLimit":null,"paceProfile":"unlimited","scoreFallbackEnabled":false},"victory":{"conquestEnabled":true,"dominationEnabled":true,"dominationControlPercent":60,"dominationHoldTurns":5,"scoreFallbackEnabled":false,"turnLimit":null,"hardTimeLimitMinutes":null,"culturalEnabled":true,"culturalRequiredArtifacts":6,"culturalHoldTurns":5},"balance":{}},"participants":[],"gameMode":"hotSeat"},"turnLifecycle":{"turnStatesByPlayerId":{},"submittedPlayerIds":[],"timeoutStreaksByPlayerId":{},"afkPlayerIds":[],"kickedPlayerIds":[],"turnStartedAt":null},"economy":{"playerGold":{},"playerWarWeariness":{},"playerStabilityNet":{},"strategicResources":{},"initialResourceDistribution":{"seed":0,"placements":[]}},"research":{"players":{}},"wonderRegistry":{},"intendedAttacks":[],"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"fieldImprovements":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomacy":{"contacts":[],"relations":[],"pendingProposals":[],"messages":[],"scoreHistory":[]},"resourceTradeAgreements":[],"dominationHoldTurnsByPlayerId":{},"culturalVictoryHoldTurnsByPlayerId":{},"mapObjectiveHoldStates":[],"transportNetwork":[]},"entries":[]}"#;
+        let base = r#"{"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialEventOffset":0,"initialStateDigest":"d","initialState":{"revision":0,"turn":0,"matchIdentity":{"matchRules":{"gameLength":{"kind":"unlimited","targetMinutes":null,"turnLimit":null,"paceProfile":"unlimited","scoreFallbackEnabled":false},"victory":{"conquestEnabled":true,"dominationEnabled":true,"dominationControlPercent":60,"dominationHoldTurns":5,"scoreFallbackEnabled":false,"turnLimit":null,"hardTimeLimitMinutes":null,"culturalEnabled":true,"culturalRequiredArtifacts":6,"culturalHoldTurns":5},"balance":{}},"participants":[],"gameMode":"hotSeat"},"turnLifecycle":{"turnStatesByPlayerId":{},"requiredSubmissionPlayerIds":[],"submittedPlayerIds":[],"timeoutStreaksByPlayerId":{},"afkPlayerIds":[],"kickedPlayerIds":[],"turnStartedAt":null},"economy":{"playerGold":{},"playerWarWeariness":{},"playerStabilityNet":{},"strategicResources":{},"initialResourceDistribution":{"seed":0,"placements":[]}},"research":{"players":{}},"wonderRegistry":{},"intendedAttacks":[],"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"fieldImprovements":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomacy":{"contacts":[],"relations":[],"pendingProposals":[],"messages":[],"scoreHistory":[]},"resourceTradeAgreements":[],"dominationHoldTurnsByPlayerId":{},"culturalVictoryHoldTurnsByPlayerId":{},"mapObjectiveHoldStates":[],"transportNetwork":[]},"entries":[]}"#;
         assert!(ReplayLogDto::from_json(base).is_ok());
         let unknown = base.replacen("\"entries\":", "\"extra\":true,\"entries\":", 1);
         assert!(ReplayLogDto::from_json(&unknown).is_err());

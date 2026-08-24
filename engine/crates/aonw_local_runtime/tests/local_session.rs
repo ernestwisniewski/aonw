@@ -434,9 +434,9 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
     ));
 
     let mut reordered_commands = replay.clone();
-    let first_command = reordered_commands.entries[0].command.clone();
-    reordered_commands.entries[0].command = reordered_commands.entries[1].command.clone();
-    reordered_commands.entries[1].command = first_command;
+    let first_record = reordered_commands.entries[0].record.clone();
+    reordered_commands.entries[0].record = reordered_commands.entries[1].record.clone();
+    reordered_commands.entries[1].record = first_record;
     let (map, ruleset) = content();
     assert!(matches!(
         LocalRuntime::verify_replay_json(
@@ -505,6 +505,6 @@ fn deterministic_replay_signature_is_stable() {
     assert!(!replay_json.contains("initialRngState"));
     assert_eq!(
         format!("{:x}", Sha256::digest(replay_json.as_bytes())),
-        "d67328d2b78bba1d3e7bd6a666084b4040f04fcd8d9813108622ac9e746ff0db"
+        "f1b9afccaeb12bf285f301eb83d767d3d48a6f4aa4f1fd8edc6afc574174a416"
     );
 }

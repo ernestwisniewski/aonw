@@ -55,14 +55,14 @@ void main() {
       },
       reason: 'Clients may expose only the implemented player command family.',
     );
+    expect(manifest.rustSystemSource, isNotNull);
     expect(
-      manifest.rustSystemSource,
-      isNull,
-      reason: 'Rust does not implement the trusted system boundary yet.',
-    );
-    expect(
-      manifest.systemEntries.where((entry) => entry.rustVariant != null),
-      isEmpty,
+      _rustEnumVariants(manifest.rustSystemSource!, 'SystemCommand'),
+      {
+        for (final entry in manifest.systemEntries)
+          if (entry.rustVariant != null) entry.rustVariant!,
+      },
+      reason: 'Trusted commands use a separate non-client Rust boundary.',
     );
   });
 
@@ -70,6 +70,7 @@ void main() {
     expect(manifest.queryEntries, hasLength(2));
     expect(manifest.eventEntries, hasLength(40));
     expect(manifest.evidenceEntries, hasLength(1));
+    expect(manifest.nativeEvidenceEntries, hasLength(1));
 
     expect(_rustEnumVariants(manifest.rustQuerySource, 'GameQuery'), {
       for (final entry in manifest.queryEntries) entry.queryVariant,
@@ -119,8 +120,16 @@ void main() {
         reason: '${entry.dartType} missing from ${entry.dartSource}',
       );
     }
+    for (final entry in manifest.nativeEvidenceEntries) {
+      expect(
+        _rustStructNames(entry.rustSource),
+        contains(entry.rustType),
+        reason: '${entry.rustType} missing from ${entry.rustSource}',
+      );
+    }
     final rustEvidenceVariants = {
       for (final entry in manifest.evidenceEntries) entry.rustVariant!,
+      for (final entry in manifest.nativeEvidenceEntries) entry.rustVariant,
     };
     expect(
       _rustEnumVariants(manifest.rustEvidenceSource, 'ExecutionEvidence'),
@@ -188,12 +197,7 @@ void main() {
         for (final entry in manifest.domainEntries)
           if (entry.status == 'engine-parity') entry.rustVariant,
       },
-      const {
-        'CancelUnitAction',
-        'FortifyUnit',
-        'MoveUnit',
-        'SkipUnitTurn',
-      },
+      const {'CancelUnitAction', 'FortifyUnit', 'MoveUnit', 'SkipUnitTurn'},
     );
   });
 

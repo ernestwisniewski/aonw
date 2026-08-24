@@ -62,6 +62,7 @@ STAGE_KEYS = {
     "maxMeasuredAllocatedBytes",
     "maxWorkCounters",
     "soakIterations",
+    "workloadPrefixes",
 }
 BASELINE_COLUMNS = [
     "signature",
@@ -207,35 +208,76 @@ def parse_csv(source: str, scope: str, header: list[str]) -> tuple[dict[str, Any
     return stable, timings
 
 
-def load_stage(path: Path) -> dict[str, Any]:
+def load_stages(path: Path) -> dict[str, dict[str, Any]]:
     raw = read_json(path, "stage budgets")
-    if not isinstance(raw, dict) or set(raw) != {"E0"}:
-        raise PerformanceFailure("stage budgets must contain exactly the active E0 stage")
-    stage = strict_object(raw["E0"], "stage E0", STAGE_KEYS)
-    if stage["target"] != "rust-foundation-check":
-        raise PerformanceFailure("E0 target must be rust-foundation-check")
-    expected_capabilities = ["CancelUnitAction", "FortifyUnit", "MoveUnit", "SkipUnitTurn"]
-    if stage["capabilities"] != expected_capabilities:
-        raise PerformanceFailure("E0 capability set differs from active engine parity")
-    fixtures = stage["fixtureIds"]
-    if not isinstance(fixtures, list) or len(fixtures) != 9 or fixtures != sorted(set(fixtures)):
-        raise PerformanceFailure("E0 fixtureIds must contain nine sorted unique cases")
-    for key in [
-        "maxEventsPerCommand",
-        "maxMeasuredPayloadBytes",
-        "maxMeasuredAllocations",
-        "maxMeasuredAllocatedBytes",
-        "soakIterations",
-    ]:
-        if not isinstance(stage[key], int) or stage[key] <= 0:
-            raise PerformanceFailure(f"stage E0 {key} must be a positive integer")
-    counters = strict_object(stage["maxWorkCounters"], "stage E0 work counters", WORK_COUNTER_KEYS)
-    if not all(isinstance(value, int) and value >= 0 for value in counters.values()):
-        raise PerformanceFailure("stage E0 work counters must be non-negative integers")
-    return stage
+    if not isinstance(raw, dict) or set(raw) != {"E0", "T1"}:
+        raise PerformanceFailure("stage budgets must contain exactly active stages E0 and T1")
+    expected = {
+        "E0": {
+            "target": "rust-foundation-check",
+            "capabilities": [
+                "CancelUnitAction",
+                "FortifyUnit",
+                "MoveUnit",
+                "SkipUnitTurn",
+            ],
+            "fixtureCount": 9,
+        },
+        "T1": {
+            "target": "rust-turn-kernel-check",
+            "capabilities": [
+                "EndTurn",
+                "FinalizeTimedOutTurn",
+                "KickParticipant",
+                "SubmitTurn",
+            ],
+            "fixtureCount": 8,
+        },
+    }
+    stages: dict[str, dict[str, Any]] = {}
+    for name, requirements in expected.items():
+        stage = strict_object(raw[name], f"stage {name}", STAGE_KEYS)
+        if stage["target"] != requirements["target"]:
+            raise PerformanceFailure(f"{name} target differs from its required Make target")
+        if stage["capabilities"] != requirements["capabilities"]:
+            raise PerformanceFailure(f"{name} capability set differs from its active surface")
+        fixtures = stage["fixtureIds"]
+        if (
+            not isinstance(fixtures, list)
+            or len(fixtures) != requirements["fixtureCount"]
+            or fixtures != sorted(set(fixtures))
+        ):
+            raise PerformanceFailure(
+                f"{name} fixtureIds must contain "
+                f"{requirements['fixtureCount']} sorted unique cases"
+            )
+        prefixes = stage["workloadPrefixes"]
+        if (
+            not isinstance(prefixes, list)
+            or not prefixes
+            or prefixes != sorted(set(prefixes))
+            or any(re.fullmatch(r"[a-z][a-z0-9_/]*", value) is None for value in prefixes)
+        ):
+            raise PerformanceFailure(f"stage {name} workloadPrefixes must be sorted and unique")
+        for key in [
+            "maxEventsPerCommand",
+            "maxMeasuredPayloadBytes",
+            "maxMeasuredAllocations",
+            "maxMeasuredAllocatedBytes",
+            "soakIterations",
+        ]:
+            if not isinstance(stage[key], int) or stage[key] <= 0:
+                raise PerformanceFailure(f"stage {name} {key} must be a positive integer")
+        counters = strict_object(
+            stage["maxWorkCounters"], f"stage {name} work counters", WORK_COUNTER_KEYS
+        )
+        if not all(isinstance(value, int) and value >= 0 for value in counters.values()):
+            raise PerformanceFailure(f"stage {name} work counters must be non-negative integers")
+        stages[name] = stage
+    return stages
 
 
-def validate_stage_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
+def validate_e0_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
     command_names = {
         "cancelUnitAction": "CancelUnitAction",
         "fortifyUnit": "FortifyUnit",
@@ -269,20 +311,57 @@ def validate_stage_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("stage fixture capabilities differ from the E0 manifest")
 
 
-def validate_stage(stage: dict[str, Any], stable: dict[str, Any], repo_root: Path) -> None:
-    validate_stage_fixtures(stage, repo_root)
-    for key, workload in stable.items():
-        if workload["iterations"] < stage["soakIterations"]:
-            raise PerformanceFailure(f"soak iterations below E0 budget for {key}")
-        if workload["payloadBytes"] > stage["maxMeasuredPayloadBytes"]:
-            raise PerformanceFailure(f"payload budget exceeded for {key}")
-        if workload["allocations"] > stage["maxMeasuredAllocations"]:
-            raise PerformanceFailure(f"allocation count budget exceeded for {key}")
-        if workload["allocatedBytes"] > stage["maxMeasuredAllocatedBytes"]:
-            raise PerformanceFailure(f"allocated byte budget exceeded for {key}")
-        for counter, value in workload["workCounters"].items():
-            if value > stage["maxWorkCounters"][counter]:
-                raise PerformanceFailure(f"{counter} budget exceeded for {key}")
+def validate_t1_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
+    manifest = read_json(
+        repo_root / "engine/fixtures/turn_kernel/manifest.json", "T1 fixture manifest"
+    )
+    if not isinstance(manifest, dict) or manifest.get("capability") != "turn-kernel-ready":
+        raise PerformanceFailure("T1 fixture manifest capability differs")
+    fixtures = manifest.get("fixtures")
+    if not isinstance(fixtures, list):
+        raise PerformanceFailure("T1 fixture manifest has no fixture list")
+    ids = sorted(fixture.get("id") for fixture in fixtures if isinstance(fixture, dict))
+    if ids != stage["fixtureIds"]:
+        raise PerformanceFailure("T1 fixture IDs differ from the stage budget")
+    maximum_events = 0
+    for fixture in fixtures:
+        expected_event_count = fixture.get("expectedEventCount")
+        if not isinstance(expected_event_count, int) or expected_event_count < 0:
+            raise PerformanceFailure("T1 fixtures require non-negative expectedEventCount")
+        maximum_events = max(maximum_events, expected_event_count)
+    if maximum_events > stage["maxEventsPerCommand"]:
+        raise PerformanceFailure("T1 fixture event count exceeds the reviewed stage budget")
+
+
+def validate_stages(
+    stages: dict[str, dict[str, Any]], stable: dict[str, Any], repo_root: Path
+) -> None:
+    validate_e0_fixtures(stages["E0"], repo_root)
+    validate_t1_fixtures(stages["T1"], repo_root)
+    for name, stage in stages.items():
+        selected = {
+            key: workload
+            for key, workload in stable.items()
+            if any(key.startswith(prefix) for prefix in stage["workloadPrefixes"])
+        }
+        if not selected:
+            raise PerformanceFailure(f"stage {name} has no measured workload")
+        for key, workload in selected.items():
+            if workload["iterations"] < stage["soakIterations"]:
+                raise PerformanceFailure(f"soak iterations below {name} budget for {key}")
+            if workload["payloadBytes"] > stage["maxMeasuredPayloadBytes"]:
+                raise PerformanceFailure(f"payload budget exceeded for {name} workload {key}")
+            if workload["allocations"] > stage["maxMeasuredAllocations"]:
+                raise PerformanceFailure(
+                    f"allocation count budget exceeded for {name} workload {key}"
+                )
+            if workload["allocatedBytes"] > stage["maxMeasuredAllocatedBytes"]:
+                raise PerformanceFailure(
+                    f"allocated byte budget exceeded for {name} workload {key}"
+                )
+            for counter, value in workload["workCounters"].items():
+                if value > stage["maxWorkCounters"][counter]:
+                    raise PerformanceFailure(f"{counter} budget exceeded for {name} workload {key}")
 
 
 def provenance() -> dict[str, Any]:
@@ -328,13 +407,13 @@ def build_report(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
     stable = {**engine_stable, **runtime_stable}
     if len(stable) != len(engine_stable) + len(runtime_stable):
         raise PerformanceFailure("engine/runtime workload keys overlap")
-    stage = load_stage(
+    stages = load_stages(
         args.stage_budgets if args.stage_budgets.is_absolute() else repo_root / args.stage_budgets
     )
-    validate_stage(stage, stable, repo_root)
+    validate_stages(stages, stable, repo_root)
     return {
         "provenance": provenance(),
-        "stage": "E0",
+        "stage": "T1",
         "stable": dict(sorted(stable.items())),
         "diagnosticTimings": dict(sorted({**engine_timings, **runtime_timings}.items())),
     }

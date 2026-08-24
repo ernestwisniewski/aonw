@@ -260,6 +260,10 @@ fn decode_turn(
         dto.submitted_player_ids,
         "$.turnLifecycle.submittedPlayerIds",
     )?;
+    let required = decode_player_list(
+        dto.required_submission_player_ids,
+        "$.turnLifecycle.requiredSubmissionPlayerIds",
+    )?;
     let timeout_streaks = dto
         .timeout_streaks_by_player_id
         .into_iter()
@@ -280,6 +284,7 @@ fn decode_turn(
     TurnLifecycle::try_new(
         identity,
         turn_states,
+        required,
         submitted,
         timeout_streaks,
         afk,
@@ -295,6 +300,11 @@ fn encode_turn(value: &TurnLifecycle) -> TurnLifecycleDto {
             .turn_states_by_player_id()
             .iter()
             .map(|(player, state)| (player.as_str().to_owned(), encode_turn_state(*state)))
+            .collect(),
+        required_submission_player_ids: value
+            .required_submission_player_ids()
+            .iter()
+            .map(|player| player.as_str().to_owned())
             .collect(),
         submitted_player_ids: value
             .submitted_player_ids()

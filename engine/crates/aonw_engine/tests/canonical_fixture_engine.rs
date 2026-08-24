@@ -14,7 +14,7 @@ use aonw_contracts::{
 use aonw_domain::{HexCoord, PlayerId, UnitId};
 use aonw_engine::{
     DomainEvent, EngineContext, ExecutionEvidence, GameEngine, MoveUnitCommand, PlayerCommand,
-    UnitActionCommand,
+    TurnCommand, UnitActionCommand,
 };
 use aonw_testkit::{
     CanonicalFixtureExecutor, CanonicalFixtureInput, CanonicalFixtureLoader,
@@ -122,6 +122,24 @@ fn apply_command(
             unit_id,
             FixtureUnitAction::Fortify,
         ),
+        ReplayCommandDto::EndTurn { expected_revision } => GameEngine::apply_player_owned(
+            state,
+            context,
+            PlayerCommand::EndTurn(TurnCommand::new(
+                *expected_revision,
+                context.actor_player_id(),
+            )),
+        )
+        .map_err(display_error),
+        ReplayCommandDto::SubmitTurn { expected_revision } => GameEngine::apply_player_owned(
+            state,
+            context,
+            PlayerCommand::SubmitTurn(TurnCommand::new(
+                *expected_revision,
+                context.actor_player_id(),
+            )),
+        )
+        .map_err(display_error),
     }
 }
 
@@ -156,6 +174,27 @@ fn encode_event(event: &DomainEvent) -> ReplayEventDto {
             from: coordinate(event.from()),
             to: coordinate(event.to()),
         },
+        DomainEvent::TurnEnded(event) => ReplayEventDto::TurnEnded {
+            player_id: event.player_id().as_str().to_owned(),
+        },
+        DomainEvent::AllPlayersSubmitted(event) => ReplayEventDto::AllPlayersSubmitted {
+            turn: event.turn(),
+            player_ids: event
+                .player_ids()
+                .iter()
+                .map(|player| player.as_str().to_owned())
+                .collect(),
+        },
+        DomainEvent::PlayerTimedOut(event) => ReplayEventDto::PlayerTimedOut {
+            turn: event.turn(),
+            player_id: event.player_id().as_str().to_owned(),
+        },
+        DomainEvent::PlayerKicked(event) => ReplayEventDto::PlayerKicked {
+            turn: event.turn(),
+            player_id: event.player_id().as_str().to_owned(),
+            reason: event.reason().to_owned(),
+            timeout_streak: event.timeout_streak(),
+        },
     }
 }
 
@@ -173,6 +212,18 @@ fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto {
                     enter_cost_units: step.enter_cost().get(),
                     cumulative_cost_units: step.cumulative_cost().get(),
                 })
+                .collect(),
+        },
+        ExecutionEvidence::TurnKernel(execution) => ReplayEvidenceDto::TurnKernel {
+            processors: execution
+                .processors()
+                .iter()
+                .map(|processor| processor.as_str().to_owned())
+                .collect(),
+            reset_unit_ids: execution
+                .reset_unit_ids()
+                .iter()
+                .map(|unit| unit.as_str().to_owned())
                 .collect(),
         },
     }
@@ -338,5 +389,7 @@ const fn command_name(command: &ReplayCommandDto) -> &'static str {
         ReplayCommandDto::CancelUnitAction { .. } => "CancelUnitAction",
         ReplayCommandDto::SkipUnitTurn { .. } => "SkipUnitTurn",
         ReplayCommandDto::FortifyUnit { .. } => "FortifyUnit",
+        ReplayCommandDto::EndTurn { .. } => "EndTurn",
+        ReplayCommandDto::SubmitTurn { .. } => "SubmitTurn",
     }
 }

@@ -30,8 +30,8 @@
       "uncoveredLines": 339
     },
     "aonw_contract_mapping": {
-      "countedLines": 2368,
-      "coveredLines": 2070,
+      "countedLines": 2378,
+      "coveredLines": 2079,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_contract_mapping/src/game_state_mapping/mod.rs"
@@ -55,11 +55,11 @@
         "crates/aonw_contract_mapping/src/game_state_mapping/world.rs",
         "crates/aonw_contract_mapping/src/lib.rs"
       ],
-      "uncoveredLines": 298
+      "uncoveredLines": 299
     },
     "aonw_contracts": {
-      "countedLines": 228,
-      "coveredLines": 177,
+      "countedLines": 233,
+      "coveredLines": 186,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_contracts/src/canonical/artifact.rs",
@@ -74,6 +74,7 @@
         "crates/aonw_contracts/src/client/map.rs",
         "crates/aonw_contracts/src/client/mod.rs",
         "crates/aonw_contracts/src/client/request.rs",
+        "crates/aonw_contracts/src/client/response.rs",
         "crates/aonw_contracts/src/lib.rs",
         "crates/aonw_contracts/src/limits.rs"
       ],
@@ -94,15 +95,16 @@
         "crates/aonw_contracts/src/client/mod.rs",
         "crates/aonw_contracts/src/client/request.rs",
         "crates/aonw_contracts/src/client/response.rs",
+        "crates/aonw_contracts/src/client/response/rejection.rs",
         "crates/aonw_contracts/src/lib.rs",
         "crates/aonw_contracts/src/limits.rs",
         "crates/aonw_contracts/src/persistence.rs"
       ],
-      "uncoveredLines": 51
+      "uncoveredLines": 47
     },
     "aonw_domain": {
-      "countedLines": 3622,
-      "coveredLines": 3149,
+      "countedLines": 3686,
+      "coveredLines": 3199,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_domain/src/city/mod.rs",
@@ -125,6 +127,7 @@
         "crates/aonw_domain/src/economy.rs",
         "crates/aonw_domain/src/fog/mod.rs",
         "crates/aonw_domain/src/game_state/mod.rs",
+        "crates/aonw_domain/src/game_state/turn_update.rs",
         "crates/aonw_domain/src/game_state/validation.rs",
         "crates/aonw_domain/src/hex_coord.rs",
         "crates/aonw_domain/src/hex_grid.rs",
@@ -152,11 +155,11 @@
         "crates/aonw_domain/src/unit_kind.rs",
         "crates/aonw_domain/src/unit_posture.rs"
       ],
-      "uncoveredLines": 473
+      "uncoveredLines": 487
     },
     "aonw_engine": {
-      "countedLines": 3287,
-      "coveredLines": 2774,
+      "countedLines": 4111,
+      "coveredLines": 3467,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_engine/src/application/mod.rs",
@@ -169,6 +172,7 @@
         "crates/aonw_engine/src/application/mod.rs",
         "crates/aonw_engine/src/application/query.rs",
         "crates/aonw_engine/src/application/transition.rs",
+        "crates/aonw_engine/src/application/turn.rs",
         "crates/aonw_engine/src/context.rs",
         "crates/aonw_engine/src/lib.rs",
         "crates/aonw_engine/src/movement/balance.rs",
@@ -198,13 +202,15 @@
         "crates/aonw_engine/src/state_digest/objective.rs",
         "crates/aonw_engine/src/state_digest/research.rs",
         "crates/aonw_engine/src/state_digest/writer.rs",
+        "crates/aonw_engine/src/turn_kernel.rs",
+        "crates/aonw_engine/src/turn_kernel/support.rs",
         "crates/aonw_engine/src/unit_action.rs"
       ],
-      "uncoveredLines": 513
+      "uncoveredLines": 644
     },
     "aonw_local_runtime": {
-      "countedLines": 1591,
-      "coveredLines": 949,
+      "countedLines": 1977,
+      "coveredLines": 1219,
       "group": "runtime",
       "missingFiles": [
         "crates/aonw_local_runtime/src/lib.rs",
@@ -228,9 +234,10 @@
         "crates/aonw_local_runtime/src/session/mod.rs",
         "crates/aonw_local_runtime/src/session/open.rs",
         "crates/aonw_local_runtime/src/session/runtime.rs",
-        "crates/aonw_local_runtime/src/session/state.rs"
+        "crates/aonw_local_runtime/src/session/state.rs",
+        "crates/aonw_local_runtime/src/turn_dispatch.rs"
       ],
-      "uncoveredLines": 642
+      "uncoveredLines": 758
     }
   },
   "provenance": {

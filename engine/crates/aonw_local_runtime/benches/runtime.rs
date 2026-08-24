@@ -15,12 +15,18 @@ use aonw_contracts::client::{
 use aonw_domain::{
     FogOfWar, GameState, HexCoord, PlayerFog, PlayerId, StateRevision, Unit, UnitId, UnitKind,
 };
-use aonw_local_runtime::{ClientProtocol, LocalRuntime, MoveUnitRequest, OpenSession};
+use aonw_local_runtime::{
+    ClientProtocol, FinalizeTimedOutTurnRequest, KickParticipantRequest, LocalRuntime,
+    MoveUnitRequest, OpenSession, TurnCommandRequest,
+};
 use serde_json::json;
 use stats_alloc::{INSTRUMENTED_SYSTEM, Region, Stats, StatsAlloc};
 
 #[global_allocator]
 static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
+
+#[path = "runtime/turn_support.rs"]
+mod turn_support;
 
 const COLS: u16 = 40;
 const ROWS: u16 = 30;
@@ -32,7 +38,104 @@ fn main() {
     );
     for unit_count in [1, 64, 512] {
         benchmark_runtime(unit_count);
+        benchmark_turn_kernel(unit_count);
     }
+}
+
+fn benchmark_turn_kernel(unit_count: usize) {
+    let map = map();
+    let ruleset = RulesetDefinition::standard().clone();
+    let (base, first, second) =
+        turn_support::opened_turn_runtime(map.clone(), ruleset.clone(), unit_count);
+    let submit = TurnCommandRequest {
+        expected_revision: 0,
+    };
+    report_with_setup(
+        "runtime_turn_submit_partial",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let result = runtime.submit_turn(submit).expect("submit turn");
+            (command_signature(&result), 0)
+        },
+    );
+
+    let timeout = FinalizeTimedOutTurnRequest {
+        expected_revision: 1,
+        player_ids: vec![first.clone(), second.clone()].into_boxed_slice(),
+        skipped_player_ids: vec![second.clone()].into_boxed_slice(),
+        next_turn_started_at: None,
+    };
+    report_with_setup(
+        "runtime_turn_timeout_finalization",
+        unit_count,
+        || {
+            let mut runtime = base.clone();
+            runtime.submit_turn(submit).expect("prepare partial turn");
+            runtime
+        },
+        |mut runtime| {
+            let result = runtime
+                .finalize_timed_out_turn(&timeout)
+                .expect("finalize timeout");
+            (command_signature(&result), 0)
+        },
+    );
+
+    let kick = KickParticipantRequest {
+        expected_revision: 0,
+        player_id: second,
+        reason: "benchmark_timeout".into(),
+        timeout_streak: 3,
+    };
+    report_with_setup(
+        "runtime_turn_kick_participant",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let result = runtime.kick_participant(&kick).expect("kick participant");
+            (command_signature(&result), 0)
+        },
+    );
+
+    let request = client_request(ClientRequestBodyDto::Dispatch {
+        command: ClientCommandDto::SubmitTurn {
+            expected_revision: 0,
+        },
+    });
+    report_with_setup(
+        "client_json_turn_submit_partial",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let response = ClientProtocol::dispatch_json(&mut runtime, &request);
+            (signature_bytes(&response), response.len())
+        },
+    );
+
+    report_with_setup(
+        "turn_replay_verify",
+        unit_count,
+        || {
+            let mut runtime = base.clone();
+            runtime.submit_turn(submit).expect("prepare replay submit");
+            runtime
+                .finalize_timed_out_turn(&timeout)
+                .expect("prepare replay timeout");
+            runtime.export_replay_json().expect("replay JSON")
+        },
+        |replay| {
+            let verified = LocalRuntime::verify_replay_json(map.clone(), ruleset.clone(), &replay)
+                .expect("verify replay");
+            (
+                mix(
+                    u64::try_from(verified.entry_count).unwrap_or(u64::MAX),
+                    verified.final_event_offset,
+                ),
+                replay.len(),
+            )
+        },
+    );
 }
 
 fn benchmark_runtime(unit_count: usize) {

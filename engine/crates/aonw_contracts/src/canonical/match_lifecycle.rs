@@ -28,6 +28,7 @@ impl Default for MatchIdentityDto {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TurnLifecycleDto {
     pub turn_states_by_player_id: BTreeMap<String, PlayerTurnStateDto>,
+    pub required_submission_player_ids: Vec<String>,
     pub submitted_player_ids: Vec<String>,
     pub timeout_streaks_by_player_id: BTreeMap<String, i64>,
     pub afk_player_ids: Vec<String>,

@@ -8,6 +8,9 @@ type, Rust query/result variant, recipient projection, current migration
 status, optional Rust counterpart, and exact declaration source.
 The Rust player-command census must also exactly match `ClientCommandDto`, so
 the greenfield client protocol cannot acquire a trusted system endpoint.
+Rust-native evidence without an old Dart counterpart is recorded separately as
+`native-evidence`; this keeps the census closed without inventing a legacy
+adapter or pretending a new contract came from the reference implementation.
 
 `state_field_ledger` keeps the boundaries separate and names their exact
 fields: the 120 reducer fixture inputs, Dart `DomainState`, the Dart snapshot
@@ -50,6 +53,13 @@ returned by the engine, so `partial-parity-mode` is `full-state`. The historical
 opaque splice adapter and its execution gate have been removed. State
 representation is `state-contract-ready`; command/query surfaces remain at
 their independently evidenced status until their own parity gate is met.
+The current T1 lifecycle surface is `turn-kernel-ready`: submission,
+lifecycle progression, movement reset, and reversible-skip cleanup are
+implemented. Queued movement, trade routes, automation, combat, economy,
+diplomacy, research, agreements, and objectives remain disabled and fail
+closed when their state is detected. The five historical integrated-turn
+fixtures therefore remain blocked until the complete CP9 pipeline; they are
+not reclassified as full `engine-parity` by the smaller greenfield kernel.
 
 The file deliberately has no `v1` suffix or schema-version field. The engine
 and greenfield clients update this one current contract atomically. A format

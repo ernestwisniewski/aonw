@@ -1,6 +1,6 @@
 use core::cmp::Ordering;
 
-use aonw_contracts::ReplayCommandDto;
+use aonw_contracts::{ReplayCommandDto, ReplayRecordDto};
 use aonw_domain::{HexCoord, UnitId};
 use aonw_engine::{
     CommandRejectionCode, DomainEvent, ExecutionEvidence, GameEngine, MoveUnitCommand,
@@ -8,7 +8,9 @@ use aonw_engine::{
 };
 
 use crate::persistence::{replay_context, replay_entry};
-use crate::player_view::{PendingActionView, PlayerUnitView, pending_action, visible_units};
+use crate::player_view::{
+    PendingActionView, PlayerTurnLifecycleView, PlayerUnitView, pending_action, visible_units,
+};
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
 
@@ -46,6 +48,8 @@ pub struct PlayerViewPatch {
     pub from_revision: u64,
     /// Revision after the patch.
     pub to_revision: u64,
+    /// Replacement turn projection when lifecycle state changed.
+    pub turn_lifecycle: Option<PlayerTurnLifecycleView>,
     /// New or changed visible units.
     pub upserted_units: Box<[PlayerUnitView]>,
     /// Units no longer visible.
@@ -96,7 +100,9 @@ pub(crate) fn dispatch_move(
             &command.unit_id,
             command.target,
         )),
-        replay_command,
+        ReplayRecordDto::Player {
+            command: replay_command,
+        },
     )
 }
 
@@ -129,18 +135,26 @@ pub(crate) fn dispatch_unit_action(
             },
         ),
     };
-    dispatch_player(session, player_command, replay_command)
+    dispatch_player(
+        session,
+        player_command,
+        ReplayRecordDto::Player {
+            command: replay_command,
+        },
+    )
 }
 
-fn dispatch_player(
+pub(crate) fn dispatch_player(
     session: &mut Session,
     command: PlayerCommand<'_>,
-    replay_command: ReplayCommandDto,
+    replay_record: ReplayRecordDto,
 ) -> Result<CommandResult, RuntimeError> {
-    let event_reservation = session.reserve_event_capacity(command.event_budget())?;
+    let event_reservation =
+        session.reserve_event_capacity(command.event_budget(session.state()))?;
     session.prepare_replay_segment();
-    let before_context = replay_context(session);
+    let before_context = replay_context(session, Some(session.actor()));
     let before_revision = session.state().revision().get();
+    let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
     let state = session.take_state();
     let transition = GameEngine::apply_player_owned(state, session.context(), command)
@@ -152,10 +166,13 @@ fn dispatch_player(
     session.commit_event_reservation(event_reservation, events.len())?;
     session.replace_state(parts.state, parts.digest);
     let after_view = visible_units(session.state(), session.actor());
+    let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());
     let view_patch = diff_view(
         before_revision,
         session.state().revision().get(),
+        before_turn,
+        after_turn,
         before_view,
         after_view,
         after_pending,
@@ -167,14 +184,16 @@ fn dispatch_player(
         evidence,
         view_patch,
     };
-    let replay = replay_entry(session, replay_command, before_context, &result);
+    let replay = replay_entry(session, replay_record, before_context, &result);
     session.push_replay(replay);
     Ok(result)
 }
 
-fn diff_view(
+pub(crate) fn diff_view(
     from_revision: u64,
     to_revision: u64,
+    before_turn: PlayerTurnLifecycleView,
+    after_turn: PlayerTurnLifecycleView,
     before: Vec<PlayerUnitView>,
     after: Vec<PlayerUnitView>,
     pending_action: Option<PendingActionView>,
@@ -211,6 +230,7 @@ fn diff_view(
     PlayerViewPatch {
         from_revision,
         to_revision,
+        turn_lifecycle: (before_turn != after_turn).then_some(after_turn),
         upserted_units: upserted_units.into_boxed_slice(),
         removed_unit_ids: removed_unit_ids.into_boxed_slice(),
         pending_action,
@@ -229,7 +249,8 @@ mod tests {
         let before = vec![view("unit-a", 0), view("unit-b", 1)];
         let after = vec![view("unit-b", 2), view("unit-c", 3)];
 
-        let patch = diff_view(4, 5, before, after, None);
+        let turn = super::PlayerTurnLifecycleView::default();
+        let patch = diff_view(4, 5, turn, turn, before, after, None);
 
         assert_eq!(patch.from_revision, 4);
         assert_eq!(patch.to_revision, 5);

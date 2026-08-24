@@ -20,6 +20,7 @@ final class _MigrationInventory {
     required this.queryEntries,
     required this.eventEntries,
     required this.evidenceEntries,
+    required this.nativeEvidenceEntries,
     required this.projectionTypes,
     required this.projectionVariants,
   });
@@ -50,6 +51,7 @@ final class _MigrationInventory {
   final List<_QueryEntry> queryEntries;
   final List<_InventoryEntry> eventEntries;
   final List<_InventoryEntry> evidenceEntries;
+  final List<_NativeEvidenceEntry> nativeEvidenceEntries;
   final List<_ProjectionTypeEntry> projectionTypes;
   final List<_ProjectionVariantEntry> projectionVariants;
 
@@ -68,6 +70,7 @@ final class _MigrationInventoryBuilder {
   final queryEntries = <_QueryEntry>[];
   final eventEntries = <_InventoryEntry>[];
   final evidenceEntries = <_InventoryEntry>[];
+  final nativeEvidenceEntries = <_NativeEvidenceEntry>[];
   final projectionTypes = <_ProjectionTypeEntry>[];
   final projectionVariants = <_ProjectionVariantEntry>[];
 
@@ -85,6 +88,9 @@ final class _MigrationInventoryBuilder {
       case 'query':
         _addQuery(fields, line);
         break;
+      case 'native-evidence':
+        _addNativeEvidence(fields, line);
+        break;
       case 'projection-type':
         _addProjectionType(fields, line);
         break;
@@ -94,6 +100,21 @@ final class _MigrationInventoryBuilder {
       default:
         _addDirective(fields, line);
     }
+  }
+
+  void _addNativeEvidence(List<String> fields, String line) {
+    if (fields.length != 6) {
+      throw FormatException('Malformed native evidence line: $line');
+    }
+    nativeEvidenceEntries.add(
+      _NativeEvidenceEntry(
+        rustType: fields[1],
+        family: fields[2],
+        status: fields[3],
+        rustVariant: fields[4],
+        rustSource: fields[5],
+      ),
+    );
   }
 
   void _addDartEntry(List<String> fields, String line) {
@@ -188,6 +209,10 @@ final class _MigrationInventoryBuilder {
     _requireCount('expected-query-count', queryEntries.length);
     _requireCount('expected-event-count', eventEntries.length);
     _requireCount('expected-evidence-count', evidenceEntries.length);
+    _requireCount(
+      'expected-native-evidence-count',
+      nativeEvidenceEntries.length,
+    );
     _requireCount('expected-projection-type-count', projectionTypes.length);
     _requireCount(
       'expected-projection-variant-count',
@@ -214,6 +239,7 @@ final class _MigrationInventoryBuilder {
       queryEntries: List.unmodifiable(queryEntries),
       eventEntries: List.unmodifiable(eventEntries),
       evidenceEntries: List.unmodifiable(evidenceEntries),
+      nativeEvidenceEntries: List.unmodifiable(nativeEvidenceEntries),
       projectionTypes: List.unmodifiable(projectionTypes),
       projectionVariants: List.unmodifiable(projectionVariants),
     );
@@ -240,6 +266,7 @@ const _migrationInventoryDirectives = {
   'expected-query-count',
   'expected-event-count',
   'expected-evidence-count',
+  'expected-native-evidence-count',
   'expected-projection-type-count',
   'expected-projection-variant-count',
   'dart-domain-root',
@@ -288,6 +315,22 @@ final class _QueryEntry {
   final String clientResultVariant;
   final String family;
   final String status;
+}
+
+final class _NativeEvidenceEntry {
+  const _NativeEvidenceEntry({
+    required this.rustType,
+    required this.family,
+    required this.status,
+    required this.rustVariant,
+    required this.rustSource,
+  });
+
+  final String rustType;
+  final String family;
+  final String status;
+  final String rustVariant;
+  final String rustSource;
 }
 
 final class _ProjectionTypeEntry {

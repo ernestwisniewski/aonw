@@ -25,6 +25,8 @@ pub enum PersistenceError {
     InvalidActor(IdentifierError),
     /// Persisted command unit identifier is invalid.
     InvalidUnit(IdentifierError),
+    /// Persisted trusted turn time is not canonical UTC.
+    InvalidTurnTime(Box<str>),
     /// Canonical state contract violates domain invariants.
     State(GameStateMappingError),
     /// Persisted state digest does not identify the decoded canonical state.
@@ -70,6 +72,7 @@ impl core::fmt::Display for PersistenceError {
             Self::ContentHash(source) => write!(formatter, "content hash failed: {source}"),
             Self::InvalidActor(source) => write!(formatter, "invalid actor: {source}"),
             Self::InvalidUnit(source) => write!(formatter, "invalid unit: {source}"),
+            Self::InvalidTurnTime(source) => write!(formatter, "invalid turn time: {source}"),
             Self::State(source) => write!(formatter, "invalid canonical state: {source}"),
             Self::StateDigestMismatch => {
                 formatter.write_str("state digest does not match canonical state")

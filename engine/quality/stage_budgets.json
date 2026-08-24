@@ -21,7 +21,7 @@
     "maxEventsPerCommand": 1,
     "maxMeasuredPayloadBytes": 167475,
     "maxMeasuredAllocations": 22468,
-    "maxMeasuredAllocatedBytes": 3128692,
+    "maxMeasuredAllocatedBytes": 3128716,
     "maxWorkCounters": {
       "frontierPops": 5971,
       "expandedTiles": 5970,
@@ -29,6 +29,49 @@
       "heapPushes": 5987,
       "routeRecords": 5987
     },
-    "soakIterations": 20
+    "soakIterations": 20,
+    "workloadPrefixes": [
+      "engine/",
+      "runtime/client_json_dispatch_",
+      "runtime/client_json_open",
+      "runtime/runtime_dispatch_",
+      "runtime/runtime_open"
+    ]
+  },
+  "T1": {
+    "target": "rust-turn-kernel-check",
+    "capabilities": [
+      "EndTurn",
+      "FinalizeTimedOutTurn",
+      "KickParticipant",
+      "SubmitTurn"
+    ],
+    "fixtureIds": [
+      "end-sequential-accepted",
+      "end-stale-rejected",
+      "kick-participant-accepted",
+      "kick-unknown-player-rejected",
+      "submit-partial-accepted",
+      "submit-wrong-actor-rejected",
+      "timeout-finalization-accepted",
+      "timeout-invalid-scope-rejected"
+    ],
+    "maxEventsPerCommand": 4,
+    "maxMeasuredPayloadBytes": 210255,
+    "maxMeasuredAllocations": 19054,
+    "maxMeasuredAllocatedBytes": 1468739,
+    "maxWorkCounters": {
+      "frontierPops": 0,
+      "expandedTiles": 0,
+      "examinedEdges": 0,
+      "heapPushes": 0,
+      "routeRecords": 0
+    },
+    "soakIterations": 20,
+    "workloadPrefixes": [
+      "runtime/client_json_turn_",
+      "runtime/runtime_turn_",
+      "runtime/turn_replay_verify"
+    ]
   }
 }

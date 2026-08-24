@@ -409,6 +409,7 @@ fn turn_lifecycle() -> TurnLifecycleDto {
             ("player-1".to_owned(), PlayerTurnStateDto::Active),
             ("player-2".to_owned(), PlayerTurnStateDto::Finished),
         ]),
+        required_submission_player_ids: vec!["player-1".to_owned(), "player-2".to_owned()],
         submitted_player_ids: vec!["player-2".to_owned()],
         timeout_streaks_by_player_id: BTreeMap::from([
             ("player-1".to_owned(), 0),
@@ -425,7 +426,6 @@ fn complete_state_round_trip_preserves_every_movement_slice() {
     let source = contract();
     let state = decode_game_state(source.clone()).expect("decode");
     let encoded = encode_game_state(&state);
-
     assert_eq!(encoded, source);
     assert_eq!(decode_game_state(encoded), Ok(state));
 }

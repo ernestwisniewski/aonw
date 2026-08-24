@@ -1,7 +1,7 @@
 use aonw_content::ContentHash;
-use aonw_domain::{GameState, StateRevision};
+use aonw_domain::{GameState, PlayerId, StateRevision};
 
-use crate::{StateDigest, UnitMovedEvent, UnitMovementExecution};
+use crate::{StateDigest, TurnKernelExecution, UnitMovedEvent, UnitMovementExecution};
 
 /// Stable command rejection shared by every authoritative command family.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -42,6 +42,16 @@ pub enum CommandRejectionCode {
     InvalidUnit,
     /// The validated movement unit disappeared during transition construction.
     MovementUnitUpdateFailed,
+    /// Player payload identity conflicts with authenticated actor identity.
+    TurnPlayerNotControlled,
+    /// Participant cannot act in the current turn scope.
+    TurnPlayerNotActive,
+    /// Trusted player scope is empty, duplicated, or inconsistent.
+    TurnScopeInvalid,
+    /// A later turn processor was requested from the partial T1 kernel.
+    TurnProcessorUnsupported,
+    /// The next turn number cannot be represented.
+    TurnNumberOverflow,
 }
 
 impl CommandRejectionCode {
@@ -67,6 +77,11 @@ impl CommandRejectionCode {
             Self::InvalidQueuedMovementPath => "invalid_queued_movement_path",
             Self::InvalidUnit => "invalid_unit",
             Self::MovementUnitUpdateFailed => "movement_unit_update_failed",
+            Self::TurnPlayerNotControlled => "turn_player_not_controlled",
+            Self::TurnPlayerNotActive => "turn_player_not_active",
+            Self::TurnScopeInvalid => "turn_scope_invalid",
+            Self::TurnProcessorUnsupported => "turn_processor_unsupported",
+            Self::TurnNumberOverflow => "turn_number_overflow",
         }
     }
 }
@@ -96,6 +111,14 @@ impl DomainRejection {
 pub enum DomainEvent {
     /// One unit changed map position.
     UnitMoved(UnitMovedEvent),
+    /// One participant completed its sequential turn.
+    TurnEnded(TurnEndedEvent),
+    /// Every required participant became ready for simultaneous finalization.
+    AllPlayersSubmitted(AllPlayersSubmittedEvent),
+    /// The trusted host finalized one participant on timeout.
+    PlayerTimedOut(PlayerTimedOutEvent),
+    /// The trusted host removed one participant from active lifecycle.
+    PlayerKicked(PlayerKickedEvent),
 }
 
 /// Exact evidence used by clients for deterministic presentation.
@@ -103,6 +126,128 @@ pub enum DomainEvent {
 pub enum ExecutionEvidence {
     /// Exact movement steps executed by the engine.
     UnitMovement(UnitMovementExecution),
+    /// Exact capability-gated processors executed by the T1 turn kernel.
+    TurnKernel(TurnKernelExecution),
+}
+
+/// Accepted fact that one participant completed its sequential turn.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TurnEndedEvent {
+    player_id: PlayerId,
+}
+
+impl TurnEndedEvent {
+    pub(crate) const fn new(player_id: PlayerId) -> Self {
+        Self { player_id }
+    }
+
+    /// Returns the participant ending its turn.
+    #[must_use]
+    pub const fn player_id(&self) -> &PlayerId {
+        &self.player_id
+    }
+}
+
+/// Accepted fact that a simultaneous submission scope completed.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AllPlayersSubmittedEvent {
+    turn: u32,
+    player_ids: Box<[PlayerId]>,
+}
+
+impl AllPlayersSubmittedEvent {
+    pub(crate) fn new(turn: u32, player_ids: impl Into<Box<[PlayerId]>>) -> Self {
+        Self {
+            turn,
+            player_ids: player_ids.into(),
+        }
+    }
+
+    /// Returns the finalized turn.
+    #[must_use]
+    pub const fn turn(&self) -> u32 {
+        self.turn
+    }
+
+    /// Returns participants in canonical turn order.
+    #[must_use]
+    pub const fn player_ids(&self) -> &[PlayerId] {
+        &self.player_ids
+    }
+}
+
+/// Accepted timeout fact emitted before finalization events.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PlayerTimedOutEvent {
+    turn: u32,
+    player_id: PlayerId,
+}
+
+impl PlayerTimedOutEvent {
+    pub(crate) const fn new(turn: u32, player_id: PlayerId) -> Self {
+        Self { turn, player_id }
+    }
+
+    /// Returns the timed-out turn.
+    #[must_use]
+    pub const fn turn(&self) -> u32 {
+        self.turn
+    }
+
+    /// Returns the timed-out participant.
+    #[must_use]
+    pub const fn player_id(&self) -> &PlayerId {
+        &self.player_id
+    }
+}
+
+/// Accepted participant-removal fact.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PlayerKickedEvent {
+    turn: u32,
+    player_id: PlayerId,
+    reason: Box<str>,
+    timeout_streak: i64,
+}
+
+impl PlayerKickedEvent {
+    pub(crate) fn new(
+        turn: u32,
+        player_id: PlayerId,
+        reason: impl Into<Box<str>>,
+        timeout_streak: i64,
+    ) -> Self {
+        Self {
+            turn,
+            player_id,
+            reason: reason.into(),
+            timeout_streak,
+        }
+    }
+
+    /// Returns the turn during which removal occurred.
+    #[must_use]
+    pub const fn turn(&self) -> u32 {
+        self.turn
+    }
+
+    /// Returns the removed participant.
+    #[must_use]
+    pub const fn player_id(&self) -> &PlayerId {
+        &self.player_id
+    }
+
+    /// Returns the stable host-owned reason.
+    #[must_use]
+    pub const fn reason(&self) -> &str {
+        &self.reason
+    }
+
+    /// Returns the host-observed timeout streak.
+    #[must_use]
+    pub const fn timeout_streak(&self) -> i64 {
+        self.timeout_streak
+    }
 }
 
 /// Complete authoritative outcome of one command.
@@ -137,7 +282,7 @@ pub struct DomainTransitionParts {
 }
 
 impl DomainTransition {
-    pub(super) fn accepted(
+    pub(crate) fn accepted(
         state: GameState,
         events: Box<[DomainEvent]>,
         evidence: Option<ExecutionEvidence>,
@@ -155,7 +300,7 @@ impl DomainTransition {
         }
     }
 
-    pub(super) fn rejected(
+    pub(crate) fn rejected(
         state: GameState,
         code: CommandRejectionCode,
         map_hash: ContentHash,

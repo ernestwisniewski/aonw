@@ -156,6 +156,10 @@
     "kickedPlayerIds": [
       "player_2"
     ],
+    "requiredSubmissionPlayerIds": [
+      "player_1",
+      "player_2"
+    ],
     "submittedPlayerIds": [
       "player_2"
     ],

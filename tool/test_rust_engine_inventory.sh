@@ -113,6 +113,7 @@ write_baseline() {
     'expected-query-count 1' \
     'expected-event-count 1' \
     'expected-evidence-count 1' \
+    'expected-native-evidence-count 0' \
     'expected-projection-type-count 1' \
     'expected-projection-variant-count 1' \
     'dart-domain-root packages/aonw_core/lib/game/domain/command/game_command.dart' \

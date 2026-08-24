@@ -80,7 +80,7 @@
       },
       "turnLifecycle": {
         "turnStatesByPlayerId": {"player-1": "active"},
-        "submittedPlayerIds": [],
+        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {},
         "afkPlayerIds": [],
         "kickedPlayerIds": [],
@@ -191,7 +191,7 @@
       },
       "turnLifecycle": {
         "turnStatesByPlayerId": {"player-1": "active"},
-        "submittedPlayerIds": [],
+        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {},
         "afkPlayerIds": [],
         "kickedPlayerIds": [],

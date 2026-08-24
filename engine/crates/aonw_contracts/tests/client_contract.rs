@@ -5,10 +5,12 @@ use aonw_contracts::client::{
     ClientCommandResultDto, ClientErrorDto, ClientEventDto, ClientEvidenceDto, ClientFeatureDto,
     ClientOutcomeDto, ClientQueryDto, ClientQueryResultDto, ClientReplayVerificationDto,
     ClientRequestBodyDto, ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
-    ClientSessionStampDto, MovementStepViewDto, PendingActionViewDto, PlayerUnitViewDto,
-    PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
+    ClientSessionStampDto, MovementStepViewDto, PendingActionViewDto, PlayerTurnLifecycleViewDto,
+    PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
 };
-use aonw_contracts::{CoordinateDto, FieldImprovementKindDto, UnitKindDto, UnitPostureDto};
+use aonw_contracts::{
+    CoordinateDto, FieldImprovementKindDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
+};
 
 fn coordinate(col: i32, row: i32) -> CoordinateDto {
     CoordinateDto { col, row }
@@ -39,6 +41,12 @@ fn player_snapshot() -> PlayerViewSnapshotDto {
     PlayerViewSnapshotDto {
         stamp: stamp(),
         turn: 7,
+        turn_lifecycle: PlayerTurnLifecycleViewDto {
+            own_state: Some(PlayerTurnStateDto::Active),
+            own_submitted: false,
+            required_submission_count: 2,
+            submitted_count: 1,
+        },
         pending_action: Some(PendingActionViewDto::WorkerActionSelection {
             unit_id: "unit-1".to_owned(),
             improvement: Some(FieldImprovementKindDto::Farm),
@@ -68,6 +76,7 @@ fn command_result() -> ClientCommandResultDto {
         view_patch: PlayerViewPatchDto {
             from_revision: 7,
             to_revision: 8,
+            turn_lifecycle: None,
             upserted_units: vec![unit()],
             removed_unit_ids: Vec::new(),
             pending_action: None,
@@ -185,6 +194,16 @@ fn every_current_request_variant_round_trips() {
             command: ClientCommandDto::FortifyUnit {
                 expected_revision: 8,
                 unit_id: "unit-1".to_owned(),
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::EndTurn {
+                expected_revision: 8,
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::SubmitTurn {
+                expected_revision: 8,
             },
         },
         ClientRequestBodyDto::ExportSave,

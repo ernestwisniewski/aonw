@@ -3,6 +3,36 @@ use aonw_domain::{FogVisibility, GameState, HexCoord, PlayerId, Unit};
 
 use crate::movement::{CompiledMovementMap, MovementPlanningView, MovementVisibility};
 
+/// Immutable content available only to a trusted system-command boundary.
+#[derive(Clone, Copy, Debug)]
+pub struct SystemContext<'context> {
+    map: &'context MapDefinition,
+    ruleset: &'context RulesetDefinition,
+}
+
+impl<'context> SystemContext<'context> {
+    /// Constructs a trusted context without player identity or presentation state.
+    #[must_use]
+    pub const fn canonical(
+        map: &'context MapDefinition,
+        ruleset: &'context RulesetDefinition,
+    ) -> Self {
+        Self { map, ruleset }
+    }
+
+    /// Returns the validated logical map.
+    #[must_use]
+    pub const fn map(self) -> &'context MapDefinition {
+        self.map
+    }
+
+    /// Returns immutable rules.
+    #[must_use]
+    pub const fn ruleset(self) -> &'context RulesetDefinition {
+        self.ruleset
+    }
+}
+
 /// Immutable inputs that are authoritative for one command or query.
 #[derive(Clone, Copy, Debug)]
 pub struct EngineContext<'context> {

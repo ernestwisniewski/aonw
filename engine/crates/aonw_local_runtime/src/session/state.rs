@@ -1,6 +1,8 @@
 use aonw_content::{ContentHash, MapDefinition, RulesetDefinition};
 use aonw_domain::{GameState, PlayerId, StateRevision};
-use aonw_engine::{EngineContext, EventBudget, GameEngine, MovementVisibility, StateDigest};
+use aonw_engine::{
+    EngineContext, EventBudget, GameEngine, MovementVisibility, StateDigest, SystemContext,
+};
 
 use crate::persistence::ReplayRecorder;
 use crate::prepared_world::PreparedWorld;
@@ -140,6 +142,10 @@ impl Session {
             .with_movement_visibility(&self.visibility)
     }
 
+    pub(crate) fn system_context(&self) -> SystemContext<'_> {
+        SystemContext::canonical(self.world.map(), self.world.ruleset())
+    }
+
     pub(crate) fn replace_state(&mut self, state: GameState, state_digest: StateDigest) {
         self.state_digest = state_digest;
         self.visibility = MovementVisibility::for_player(&state, self.world.map(), &self.actor);
@@ -178,7 +184,16 @@ mod tests {
             &unit_id,
             aonw_domain::HexCoord::new(1, 0),
         ))
-        .event_budget()
+        .event_budget(
+            &aonw_domain::GameState::try_new(
+                aonw_domain::StateRevision::INITIAL,
+                1,
+                aonw_domain::HexGridBounds::new(1, 1).expect("bounds"),
+                aonw_domain::UnitOccupancyPolicy::Exclusive,
+                [],
+            )
+            .expect("state"),
+        )
     }
 
     #[test]

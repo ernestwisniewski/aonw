@@ -1,10 +1,12 @@
 use aonw_content::ContentHash;
-use aonw_domain::{GameState, GameStateBuildError};
+use aonw_domain::{GameState, GameStateBuildError, TurnLifecycleBuildError};
 
 use super::{DomainEvent, DomainTransition, ExecutionEvidence};
 use crate::movement::{merge_discovered_contacts, recompute_after_move};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
-use crate::{EngineContext, GameEngine, MoveUnitCommand, StateDigest, UnitActionCommand};
+use crate::{
+    EngineContext, GameEngine, MoveUnitCommand, StateDigest, TurnCommand, UnitActionCommand,
+};
 
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
@@ -17,6 +19,10 @@ pub enum PlayerCommand<'command> {
     SkipUnitTurn(UnitActionCommand<'command>),
     /// Places one idle unit in persistent fortification.
     FortifyUnit(UnitActionCommand<'command>),
+    /// Completes one sequential participant turn.
+    EndTurn(TurnCommand<'command>),
+    /// Marks one simultaneous participant ready and finalizes when scope completes.
+    SubmitTurn(TurnCommand<'command>),
 }
 
 /// Maximum number of authoritative events one player command may emit.
@@ -55,11 +61,17 @@ impl EventBudget {
 impl PlayerCommand<'_> {
     /// Returns the reviewed upper event bound for this concrete command.
     #[must_use]
-    pub const fn event_budget(self) -> EventBudget {
+    pub fn event_budget(self, state: &GameState) -> EventBudget {
         match self {
-            Self::MoveUnit(_) => EventBudget::SINGLE,
+            Self::MoveUnit(_) | Self::EndTurn(_) => EventBudget::SINGLE,
             Self::CancelUnitAction(_) | Self::SkipUnitTurn(_) | Self::FortifyUnit(_) => {
                 EventBudget::NONE
+            }
+            Self::SubmitTurn(_) => {
+                let participants =
+                    u64::try_from(state.match_lifecycle().identity().participants().len())
+                        .unwrap_or(u64::MAX);
+                EventBudget::new(participants.saturating_add(1))
             }
         }
     }
@@ -72,6 +84,8 @@ pub enum CanonicalEngineError {
     ContentHash(Box<str>),
     /// Applying the result violates an aggregate invariant.
     State(GameStateBuildError),
+    /// Applying a lifecycle result violates lifecycle invariants.
+    TurnLifecycle(TurnLifecycleBuildError),
 }
 
 impl core::fmt::Display for CanonicalEngineError {
@@ -79,6 +93,7 @@ impl core::fmt::Display for CanonicalEngineError {
         match self {
             Self::ContentHash(source) => write!(formatter, "content hash failed: {source}"),
             Self::State(source) => source.fmt(formatter),
+            Self::TurnLifecycle(source) => source.fmt(formatter),
         }
     }
 }
@@ -126,6 +141,16 @@ impl GameEngine {
                 context,
                 command,
                 UnitActionKind::Fortify,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::EndTurn(command) => {
+                crate::turn_kernel::apply_end_turn(state, context, command, map_hash, ruleset_hash)
+            }
+            PlayerCommand::SubmitTurn(command) => crate::turn_kernel::apply_submit_turn(
+                state,
+                context,
+                command,
                 map_hash,
                 ruleset_hash,
             ),
@@ -267,7 +292,9 @@ fn apply_move(
 
 #[cfg(test)]
 mod tests {
-    use aonw_domain::{HexCoord, UnitId};
+    use aonw_domain::{
+        GameState, HexCoord, HexGridBounds, StateRevision, UnitId, UnitOccupancyPolicy,
+    };
 
     use super::{EventBudget, PlayerCommand};
     use crate::{MoveUnitCommand, UnitActionCommand};
@@ -275,14 +302,22 @@ mod tests {
     #[test]
     fn player_commands_publish_reviewed_event_budgets() {
         let unit_id = UnitId::new("unit-1").expect("unit id");
+        let state = GameState::try_new(
+            StateRevision::INITIAL,
+            1,
+            HexGridBounds::new(1, 1).expect("bounds"),
+            UnitOccupancyPolicy::Exclusive,
+            [],
+        )
+        .expect("state");
 
         assert_eq!(
             PlayerCommand::MoveUnit(MoveUnitCommand::new(0, &unit_id, HexCoord::new(1, 0)))
-                .event_budget(),
+                .event_budget(&state),
             EventBudget::SINGLE
         );
         assert_eq!(
-            PlayerCommand::FortifyUnit(UnitActionCommand::new(0, &unit_id)).event_budget(),
+            PlayerCommand::FortifyUnit(UnitActionCommand::new(0, &unit_id)).event_budget(&state),
             EventBudget::NONE
         );
     }

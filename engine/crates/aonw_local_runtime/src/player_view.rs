@@ -1,6 +1,6 @@
 use aonw_domain::{
     CityId, FieldImprovementKind, FogVisibility, GameState, HexCoord, PendingInteraction, PlayerId,
-    Unit, UnitId, UnitKind, UnitPosture,
+    PlayerTurnState, Unit, UnitId, UnitKind, UnitPosture,
 };
 
 use crate::SessionStamp;
@@ -113,6 +113,7 @@ pub enum PendingActionView {
 pub struct PlayerViewSnapshot {
     stamp: SessionStamp,
     turn: u32,
+    turn_lifecycle: PlayerTurnLifecycleView,
     pending_action: Option<PendingActionView>,
     units: Box<[PlayerUnitView]>,
 }
@@ -122,6 +123,7 @@ impl PlayerViewSnapshot {
         Self {
             stamp,
             turn: state.turn(),
+            turn_lifecycle: PlayerTurnLifecycleView::new(state, actor),
             pending_action: pending_action(state, actor),
             units: visible_units(state, actor).into_boxed_slice(),
         }
@@ -137,6 +139,11 @@ impl PlayerViewSnapshot {
     pub const fn turn(&self) -> u32 {
         self.turn
     }
+    /// Returns recipient-owned lifecycle and aggregate submission progress.
+    #[must_use]
+    pub const fn turn_lifecycle(&self) -> &PlayerTurnLifecycleView {
+        &self.turn_lifecycle
+    }
     /// Returns the action awaiting input from this recipient.
     #[must_use]
     pub const fn pending_action(&self) -> Option<&PendingActionView> {
@@ -146,6 +153,68 @@ impl PlayerViewSnapshot {
     #[must_use]
     pub const fn units(&self) -> &[PlayerUnitView] {
         &self.units
+    }
+}
+
+/// Recipient-safe turn state without per-opponent readiness identities.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct PlayerTurnLifecycleView {
+    own_state: Option<PlayerTurnState>,
+    own_submitted: bool,
+    required_submission_count: u32,
+    submitted_count: u32,
+}
+
+impl PlayerTurnLifecycleView {
+    pub(crate) fn new(state: &GameState, actor: &PlayerId) -> Self {
+        let turn = state.match_lifecycle().turn();
+        let required = turn.required_submission_player_ids();
+        let required_submission_count = if required.is_empty() {
+            state
+                .match_lifecycle()
+                .identity()
+                .participants()
+                .iter()
+                .filter(|participant| !turn.kicked_player_ids().contains(participant.id()))
+                .count()
+        } else {
+            required.len()
+        };
+        let submitted_count = turn
+            .submitted_player_ids()
+            .iter()
+            .filter(|player| required.is_empty() || required.contains(*player))
+            .count();
+        Self {
+            own_state: turn.turn_states_by_player_id().get(actor).copied(),
+            own_submitted: turn.submitted_player_ids().contains(actor),
+            required_submission_count: u32::try_from(required_submission_count).unwrap_or(u32::MAX),
+            submitted_count: u32::try_from(submitted_count).unwrap_or(u32::MAX),
+        }
+    }
+
+    /// Returns the recipient's own lifecycle status.
+    #[must_use]
+    pub const fn own_state(self) -> Option<PlayerTurnState> {
+        self.own_state
+    }
+
+    /// Returns whether the recipient submitted.
+    #[must_use]
+    pub const fn own_submitted(self) -> bool {
+        self.own_submitted
+    }
+
+    /// Returns the required submission count.
+    #[must_use]
+    pub const fn required_submission_count(self) -> u32 {
+        self.required_submission_count
+    }
+
+    /// Returns the received required-submission count.
+    #[must_use]
+    pub const fn submitted_count(self) -> u32 {
+        self.submitted_count
     }
 }
 

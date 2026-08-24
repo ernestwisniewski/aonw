@@ -46,6 +46,8 @@ pub enum TurnLifecycleBuildError {
     DuplicatePlayer(PlayerId),
     /// A lifecycle field referenced someone outside match participants.
     UnknownPlayer(PlayerId),
+    /// A timeout streak cannot be negative.
+    NegativeTimeoutStreak(PlayerId),
 }
 
 impl core::fmt::Display for TurnLifecycleBuildError {
@@ -57,6 +59,12 @@ impl core::fmt::Display for TurnLifecycleBuildError {
             Self::UnknownPlayer(player) => {
                 write!(formatter, "lifecycle player is not a participant: {player}")
             }
+            Self::NegativeTimeoutStreak(player) => {
+                write!(
+                    formatter,
+                    "timeout streak is negative for participant: {player}"
+                )
+            }
         }
     }
 }
@@ -67,6 +75,7 @@ impl std::error::Error for TurnLifecycleBuildError {}
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct TurnLifecycle {
     turn_states_by_player_id: BTreeMap<PlayerId, PlayerTurnState>,
+    required_submission_player_ids: BTreeSet<PlayerId>,
     submitted_player_ids: BTreeSet<PlayerId>,
     timeout_streaks_by_player_id: BTreeMap<PlayerId, i64>,
     afk_player_ids: BTreeSet<PlayerId>,
@@ -84,17 +93,20 @@ impl TurnLifecycle {
     pub fn try_new(
         identity: &MatchIdentity,
         turn_states_by_player_id: BTreeMap<PlayerId, PlayerTurnState>,
+        required_submission_player_ids: impl IntoIterator<Item = PlayerId>,
         submitted_player_ids: impl IntoIterator<Item = PlayerId>,
         timeout_streaks_by_player_id: BTreeMap<PlayerId, i64>,
         afk_player_ids: impl IntoIterator<Item = PlayerId>,
         kicked_player_ids: impl IntoIterator<Item = PlayerId>,
         turn_started_at: Option<UtcTimestamp>,
     ) -> Result<Self, TurnLifecycleBuildError> {
+        let required_submission_player_ids = collect_set(required_submission_player_ids)?;
         let submitted_player_ids = collect_set(submitted_player_ids)?;
         let afk_player_ids = collect_set(afk_player_ids)?;
         let kicked_player_ids = collect_set(kicked_player_ids)?;
         for player in turn_states_by_player_id
             .keys()
+            .chain(required_submission_player_ids.iter())
             .chain(submitted_player_ids.iter())
             .chain(timeout_streaks_by_player_id.keys())
             .chain(afk_player_ids.iter())
@@ -104,8 +116,17 @@ impl TurnLifecycle {
                 return Err(TurnLifecycleBuildError::UnknownPlayer(player.clone()));
             }
         }
+        if let Some((player, _)) = timeout_streaks_by_player_id
+            .iter()
+            .find(|(_, streak)| **streak < 0)
+        {
+            return Err(TurnLifecycleBuildError::NegativeTimeoutStreak(
+                player.clone(),
+            ));
+        }
         Ok(Self {
             turn_states_by_player_id,
+            required_submission_player_ids,
             submitted_player_ids,
             timeout_streaks_by_player_id,
             afk_player_ids,
@@ -118,6 +139,11 @@ impl TurnLifecycle {
     #[must_use]
     pub const fn turn_states_by_player_id(&self) -> &BTreeMap<PlayerId, PlayerTurnState> {
         &self.turn_states_by_player_id
+    }
+    /// Returns the explicit submission scope sorted by identifier.
+    #[must_use]
+    pub const fn required_submission_player_ids(&self) -> &BTreeSet<PlayerId> {
+        &self.required_submission_player_ids
     }
     /// Returns submitted player identities sorted by identifier.
     #[must_use]

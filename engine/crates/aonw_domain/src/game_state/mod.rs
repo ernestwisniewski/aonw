@@ -1,3 +1,4 @@
+mod turn_update;
 mod validation;
 
 use crate::{
@@ -657,7 +658,6 @@ impl GameState {
     /// Consumes the aggregate and applies one complete unit-action update.
     ///
     /// # Errors
-    ///
     /// Returns an error if the unit is absent or the next aggregate is invalid.
     pub fn into_after_unit_action(
         self,

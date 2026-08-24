@@ -135,7 +135,13 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
           ;;
         blocked/reference-only)
           [[ "${checkpoint}" =~ ^CP[0-9]+$ ]] || fail "blocked ${id} requires a concrete CP checkpoint"
-          [[ "${blocker}" == "awaits-independent-current-contract-review" ]] || fail "blocked ${id} requires the reviewed current-contract blocker"
+          case "${blocker}" in
+            awaits-independent-current-contract-review|awaits-full-turn-pipeline) ;;
+            *) fail "blocked ${id} requires a reviewed blocker" ;;
+          esac
+          if [[ "${blocker}" == "awaits-full-turn-pipeline" ]]; then
+            [[ "${family}" == "turn-finalization" && "${checkpoint}" == "CP9" ]] || fail "full-turn blocker is reserved for CP9 turn-finalization"
+          fi
           [[ "${canonical_artifact}" == "-" ]] || fail "blocked ${id} cannot claim a canonical artifact"
           blocked_count=$((blocked_count + 1))
           ;;

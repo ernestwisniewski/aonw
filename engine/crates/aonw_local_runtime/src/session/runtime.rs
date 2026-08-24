@@ -4,6 +4,10 @@ use crate::command_dispatch::{RuntimeUnitActionKind, dispatch_move, dispatch_uni
 use crate::player_view::PlayerViewSnapshot;
 use crate::query_cache::{QueryCache, QueryCacheStats};
 use crate::query_dispatch::dispatch_query;
+use crate::turn_dispatch::{
+    FinalizeTimedOutTurnRequest, KickParticipantRequest, RuntimeTurnKind, TurnCommandRequest,
+    dispatch_kick, dispatch_timeout, dispatch_turn,
+};
 use crate::{CommandResult, MoveUnitRequest, RuntimeQuery, RuntimeQueryResult, UnitActionRequest};
 
 use super::{
@@ -146,6 +150,71 @@ impl LocalRuntime {
         command: &UnitActionRequest,
     ) -> Result<CommandResult, RuntimeError> {
         self.dispatch_unit_action(command, RuntimeUnitActionKind::Fortify)
+    }
+
+    /// Completes the local actor's sequential turn through the partial T1 kernel.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn end_turn(&mut self, command: TurnCommandRequest) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_turn(command, RuntimeTurnKind::End)
+    }
+
+    /// Submits the local actor's simultaneous turn through the partial T1 kernel.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn submit_turn(
+        &mut self,
+        command: TurnCommandRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_turn(command, RuntimeTurnKind::Submit)
+    }
+
+    /// Finalizes an expired turn through the trusted host-only boundary.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn finalize_timed_out_turn(
+        &mut self,
+        command: &FinalizeTimedOutTurnRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_timeout(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Removes a participant through the trusted host-only boundary.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn kick_participant(
+        &mut self,
+        command: &KickParticipantRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_kick(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    fn dispatch_turn(
+        &mut self,
+        command: TurnCommandRequest,
+        kind: RuntimeTurnKind,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_turn(session, command, kind)
+        };
+        self.complete_dispatch(result)
     }
 
     fn dispatch_unit_action(

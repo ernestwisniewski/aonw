@@ -107,6 +107,10 @@ fn hash_turn(writer: &mut DigestWriter, turn: &TurnLifecycle) {
             PlayerTurnState::Finished => 1,
         });
     }
+    writer.usize(turn.required_submission_player_ids().len());
+    for player in turn.required_submission_player_ids() {
+        writer.text(player.as_str());
+    }
     writer.usize(turn.submitted_player_ids().len());
     for player in turn.submitted_player_ids() {
         writer.text(player.as_str());

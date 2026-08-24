@@ -93,7 +93,7 @@ fn state_json(revision: u64, posture: &str, movement_units: u32) -> Value {
         },
         "turnLifecycle": {
             "turnStatesByPlayerId": {"player-1": "active"},
-            "submittedPlayerIds": [],
+            "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [],
             "timeoutStreaksByPlayerId": {},
             "afkPlayerIds": [],
             "kickedPlayerIds": [],

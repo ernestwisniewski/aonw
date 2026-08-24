@@ -238,4 +238,19 @@ impl InteractionState {
         });
         self
     }
+
+    /// Expires a reversible skip when its owner begins a new turn.
+    #[must_use]
+    pub fn expire_turn_skip_for(
+        mut self,
+        player_ids: &std::collections::BTreeSet<PlayerId>,
+    ) -> Self {
+        if self.pending.as_ref().is_some_and(|pending| {
+            matches!(pending, PendingInteraction::UnitTurnSkip { .. })
+                && player_ids.contains(pending.owner_player_id())
+        }) {
+            self.pending = None;
+        }
+        self
+    }
 }
