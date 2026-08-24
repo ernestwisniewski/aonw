@@ -3,16 +3,17 @@ use std::collections::BTreeMap;
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
-    CityBuildingTypeDto, CityConquestActionDto, CityDto, CityProductionQueueDto,
-    CitySpecializationTypeDto, CoordinateDto, DiplomacyStateDto, EconomyStateDto,
-    FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto,
-    InitialResourceDistributionDto, IntendedAttackDto, InteractionStateDto,
-    MapObjectiveHoldStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto, ParticipantDto,
-    PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto, ResearchStateDto,
-    ResourceTradeAgreementDto, StrategicResourceStockpileDto, TransportConditionDto,
-    TransportSegmentDto, TransportSegmentKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto,
-    UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WonderRegistryDto, WonderTypeDto,
-    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    ArmyTroopDto, CityBuildingTypeDto, CityConquestActionDto, CityDto, CityFoundingDraftDto,
+    CityFoundingJobDto, CityProductionQueueDto, CitySpecializationTypeDto, CoordinateDto,
+    DiplomacyStateDto, EconomyStateDto, FieldImprovementDto, FieldImprovementKindDto, GameModeDto,
+    GameStateDto, InitialResourceDistributionDto, IntendedAttackDto, InteractionStateDto,
+    MapObjectiveHoldStateDto, MatchIdentityDto, MatchRulesDto, MerchantTradeRouteDto,
+    MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
+    QueuedMovePathDto, ResearchStateDto, ResourceTradeAgreementDto, StrategicResourceStockpileDto,
+    TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto, TroopKindDto,
+    TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
+    UnitPostureDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto, WorldArtifactDto,
+    WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{HexCoord, HexGridBounds, MovementUnits, UnitId};
 use aonw_testkit::{FixtureInput, JsonObject};
@@ -95,17 +96,15 @@ pub(super) fn decode_state(
     input: &FixtureInput,
     bounds: HexGridBounds,
     command_unit_id: &UnitId,
-    include_unit_orders: bool,
 ) -> Result<DecodedState, AdapterError> {
-    let (units, command_unit_out_of_bounds) =
-        decode_units(input.state(), bounds, command_unit_id, include_unit_orders)?;
+    let (units, command_unit_out_of_bounds) = decode_units(input.state(), bounds, command_unit_id)?;
     if command_unit_out_of_bounds {
         return Ok(DecodedState::CommandUnitOutOfBounds);
     }
     let cities = decode_cities(input.state(), bounds)?;
-    let artifacts = decode_referenced_artifacts(input.state(), &units)?;
+    let artifacts = decode_referenced_artifacts(input.state(), &units, bounds)?;
     let field_improvements = decode_field_improvements(input.state(), bounds)?;
-    let interaction = decode_interaction(input.state())?;
+    let interaction = decode_interaction(input.state(), bounds, &units, &cities)?;
     let fog_of_war = required_array(input.state(), "fogOfWar")?
         .iter()
         .enumerate()
@@ -433,7 +432,6 @@ fn decode_units(
     state: &JsonObject,
     bounds: HexGridBounds,
     command_unit_id: &UnitId,
-    include_unit_orders: bool,
 ) -> Result<(Vec<UnitDto>, bool), AdapterError> {
     let mut command_unit_out_of_bounds = false;
     let units = required_array(state, "units")?
@@ -455,7 +453,7 @@ fn decode_units(
                 }
                 return None;
             }
-            Some(decode_unit(object, &path, include_unit_orders))
+            Some(decode_unit(object, &path))
         })
         .collect::<Result<Vec<_>, _>>()?;
     Ok((units, command_unit_out_of_bounds))
@@ -608,74 +606,91 @@ fn decode_city_wonders(object: &JsonObject) -> Result<Vec<WonderTypeDto>, Adapte
 fn decode_referenced_artifacts(
     state: &JsonObject,
     units: &[UnitDto],
+    bounds: HexGridBounds,
 ) -> Result<Vec<WorldArtifactDto>, AdapterError> {
-    let raw_artifacts = required_array(state, "artifacts")?;
-    let mut artifacts = Vec::new();
+    let artifacts = required_array(state, "artifacts")?
+        .iter()
+        .enumerate()
+        .filter_map(|(index, value)| decode_artifact(value, index, bounds).transpose())
+        .collect::<Result<Vec<_>, _>>()?;
     for unit in units {
-        if let Some(artifact_id) = &unit.carried_artifact_id {
-            artifacts.push(WorldArtifactDto {
-                id: artifact_id.clone(),
-                artifact_type: referenced_artifact_type(raw_artifacts, artifact_id)?,
-                location: WorldArtifactLocationDto::Carried {
-                    unit_id: unit.id.clone(),
-                },
-            });
-        }
-        if let Some(artifact_id) = &unit.activity.excavating_artifact_id {
-            let raw_location = raw_artifacts
-                .iter()
-                .find(|value| value.get("id").and_then(Value::as_str) == Some(artifact_id))
-                .and_then(|value| value.get("location"))
-                .and_then(Value::as_object);
-            let coordinate = raw_location
-                .filter(|location| {
-                    location.get("kind").and_then(Value::as_str) == Some("excavation")
-                })
-                .map(|location| {
-                    Ok(CoordinateDto {
-                        col: required_i32_at(location, "col", "input.state.artifacts[].location")?,
-                        row: required_i32_at(location, "row", "input.state.artifacts[].location")?,
-                    })
-                })
-                .transpose()?
-                .unwrap_or(CoordinateDto {
-                    col: unit.col,
-                    row: unit.row,
-                });
-            let remaining_turns = raw_location
-                .filter(|location| {
-                    location.get("kind").and_then(Value::as_str) == Some("excavation")
-                })
-                .and_then(|location| location.get("remainingTurns"))
-                .map(|value| value_to_u32(value, "input.state.artifacts[].location.remainingTurns"))
-                .transpose()?
-                .unwrap_or(1);
-            artifacts.push(WorldArtifactDto {
-                id: artifact_id.clone(),
-                artifact_type: referenced_artifact_type(raw_artifacts, artifact_id)?,
-                location: WorldArtifactLocationDto::Excavation {
-                    unit_id: unit.id.clone(),
-                    coordinate,
-                    remaining_turns,
-                },
-            });
+        for (field, artifact_id) in [
+            ("carriedArtifactId", unit.carried_artifact_id.as_ref()),
+            (
+                "excavatingArtifactId",
+                unit.activity.excavating_artifact_id.as_ref(),
+            ),
+        ] {
+            if let Some(artifact_id) = artifact_id
+                && !artifacts.iter().any(|artifact| artifact.id == *artifact_id)
+            {
+                return Err(error(format!(
+                    "input.state.units[id={}].{field} references missing artifact {artifact_id}",
+                    unit.id
+                )));
+            }
         }
     }
     Ok(artifacts)
 }
 
-fn referenced_artifact_type(
-    raw_artifacts: &[Value],
-    artifact_id: &str,
-) -> Result<WorldArtifactTypeDto, AdapterError> {
-    let Some(value) = raw_artifacts
-        .iter()
-        .find(|value| value.get("id").and_then(Value::as_str) == Some(artifact_id))
-        .and_then(|value| value.get("type"))
-        .and_then(Value::as_str)
-    else {
-        return Ok(WorldArtifactTypeDto::AstronomersTablets);
-    };
+fn decode_artifact(
+    value: &Value,
+    index: usize,
+    bounds: HexGridBounds,
+) -> Result<Option<WorldArtifactDto>, AdapterError> {
+    let path = format!("input.state.artifacts[{index}]");
+    let object = object_at(value, &path)?;
+    let location_path = format!("{path}.location");
+    let location = object
+        .get("location")
+        .ok_or_else(|| error(format!("{location_path} is required")))
+        .and_then(|value| object_at(value, &location_path))
+        .and_then(|location| decode_artifact_location(location, &location_path))?;
+    if artifact_coordinate(&location)
+        .is_some_and(|coordinate| !bounds.contains(HexCoord::new(coordinate.col, coordinate.row)))
+    {
+        return Ok(None);
+    }
+    Ok(Some(WorldArtifactDto {
+        id: required_string_at(object, "id", &path)?.to_owned(),
+        artifact_type: parse_artifact_type(required_string_at(object, "type", &path)?)?,
+        location,
+    }))
+}
+
+fn decode_artifact_location(
+    object: &JsonObject,
+    path: &str,
+) -> Result<WorldArtifactLocationDto, AdapterError> {
+    match required_string_at(object, "kind", path)? {
+        "map" => Ok(WorldArtifactLocationDto::Map {
+            coordinate: coordinate_dto(coordinate_fields(object, path)?),
+        }),
+        "carried" => Ok(WorldArtifactLocationDto::Carried {
+            unit_id: required_string_at(object, "unitId", path)?.to_owned(),
+        }),
+        "stored" => Ok(WorldArtifactLocationDto::Stored {
+            city_id: required_string_at(object, "cityId", path)?.to_owned(),
+        }),
+        "excavation" => Ok(WorldArtifactLocationDto::Excavation {
+            unit_id: required_string_at(object, "unitId", path)?.to_owned(),
+            coordinate: coordinate_dto(coordinate_fields(object, path)?),
+            remaining_turns: required_u32_at(object, "remainingTurns", path)?,
+        }),
+        value => Err(error(format!("unknown artifact location kind: {value}"))),
+    }
+}
+
+fn artifact_coordinate(location: &WorldArtifactLocationDto) -> Option<CoordinateDto> {
+    match location {
+        WorldArtifactLocationDto::Map { coordinate }
+        | WorldArtifactLocationDto::Excavation { coordinate, .. } => Some(*coordinate),
+        WorldArtifactLocationDto::Carried { .. } | WorldArtifactLocationDto::Stored { .. } => None,
+    }
+}
+
+fn parse_artifact_type(value: &str) -> Result<WorldArtifactTypeDto, AdapterError> {
     match value {
         "ancientImperialCrown" => Ok(WorldArtifactTypeDto::AncientImperialCrown),
         "astronomersTablets" => Ok(WorldArtifactTypeDto::AstronomersTablets),
@@ -689,11 +704,7 @@ fn referenced_artifact_type(
     }
 }
 
-fn decode_unit(
-    object: &JsonObject,
-    path: &str,
-    include_unit_orders: bool,
-) -> Result<UnitDto, AdapterError> {
+fn decode_unit(object: &JsonObject, path: &str) -> Result<UnitDto, AdapterError> {
     let movement_units = if let Some(value) = object.get("movementUnits") {
         value_to_u32(value, &format!("{path}.movementUnits"))?
     } else {
@@ -715,79 +726,452 @@ fn decode_unit(
         Some("autoWorking") => UnitPostureDto::AutoWorking,
         Some(value) => return Err(error(format!("unknown unit posture: {value}"))),
     };
+    let kind = parse_unit_kind(required_string_at(object, "type", path)?)?;
+    let worker_build_charges = object
+        .get("workerBuildCharges")
+        .map(|value| value_to_u32(value, &format!("{path}.workerBuildCharges")))
+        .transpose()?
+        .unwrap_or(u32::from(kind == UnitKindDto::Worker));
+    let hit_points = object
+        .get("hitPoints")
+        .filter(|value| !value.is_null())
+        .map(|value| value_to_u32(value, &format!("{path}.hitPoints")))
+        .transpose()?;
     Ok(UnitDto {
         id: required_string_at(object, "id", path)?.to_owned(),
         owner_player_id: required_string_at(object, "ownerPlayerId", path)?.to_owned(),
-        kind: parse_unit_kind(required_string_at(object, "type", path)?)?,
+        kind,
         name: required_string_at(object, "name", path)?.to_owned(),
         col: required_i32_at(object, "col", path)?,
         row: required_i32_at(object, "row", path)?,
         movement_units,
-        army: Vec::new(),
-        queued_path: if include_unit_orders {
-            object
-                .get("queuedPath")
-                .map(|value| decode_queued_path(value, path))
-                .transpose()?
-        } else {
-            None
-        },
-        merchant_trade_route: None,
+        army: decode_army(object, path)?,
+        queued_path: object
+            .get("queuedPath")
+            .filter(|value| !value.is_null())
+            .map(|value| decode_queued_path(value, path))
+            .transpose()?,
+        merchant_trade_route: object
+            .get("merchantTradeRoute")
+            .filter(|value| !value.is_null())
+            .map(|value| decode_merchant_trade_route(value, path))
+            .transpose()?,
         activity: UnitActivityDto {
-            worker_job: None,
-            city_founding_job: None,
-            worker_assignment: include_unit_orders
-                .then(|| {
-                    ["workerJob", "cityFoundingJob", "workerAssignment"]
-                        .iter()
-                        .any(|field| object.contains_key(*field))
-                        .then_some(CoordinateDto {
-                            col: required_i32_at(object, "col", path).ok()?,
-                            row: required_i32_at(object, "row", path).ok()?,
-                        })
-                })
-                .flatten(),
+            worker_job: object
+                .get("workerJob")
+                .filter(|value| !value.is_null())
+                .map(|value| decode_worker_job(value, path))
+                .transpose()?,
+            city_founding_job: object
+                .get("cityFoundingJob")
+                .filter(|value| !value.is_null())
+                .map(|value| decode_city_founding_job(value, path))
+                .transpose()?,
+            worker_assignment: object
+                .get("workerAssignment")
+                .filter(|value| !value.is_null())
+                .map(|value| decode_worker_assignment(value, path))
+                .transpose()?,
             excavating_artifact_id: optional_string(object, "excavatingArtifactId")?,
         },
-        worker_build_charges: 0,
-        hit_points: None,
-        experience_points: 0,
+        worker_build_charges,
+        hit_points,
+        experience_points: object
+            .get("experiencePoints")
+            .map(|value| value_to_u32(value, &format!("{path}.experiencePoints")))
+            .transpose()?
+            .unwrap_or(0),
         posture,
         carried_artifact_id: optional_string(object, "carriedArtifactId")?,
     })
 }
 
-fn decode_interaction(state: &JsonObject) -> Result<InteractionStateDto, AdapterError> {
-    let Some(pending) = state
-        .get("lifecycle")
-        .and_then(Value::as_object)
-        .and_then(|lifecycle| lifecycle.get("pendingAction"))
-        .and_then(Value::as_object)
-    else {
+fn decode_army(object: &JsonObject, path: &str) -> Result<Vec<ArmyTroopDto>, AdapterError> {
+    required_array(object, "army")?
+        .iter()
+        .enumerate()
+        .map(|(index, value)| {
+            let troop_path = format!("{path}.army[{index}]");
+            let troop = object_at(value, &troop_path)?;
+            let kind = match required_string_at(troop, "type", &troop_path)? {
+                "warrior" => TroopKindDto::Warrior,
+                "archer" => TroopKindDto::Archer,
+                "settler" => TroopKindDto::Settler,
+                value => return Err(error(format!("unknown army troop type: {value}"))),
+            };
+            Ok(ArmyTroopDto {
+                kind,
+                count: required_u32_at(troop, "count", &troop_path)?,
+            })
+        })
+        .collect()
+}
+
+fn decode_merchant_trade_route(
+    value: &Value,
+    unit_path: &str,
+) -> Result<MerchantTradeRouteDto, AdapterError> {
+    let path = format!("{unit_path}.merchantTradeRoute");
+    let object = object_at(value, &path)?;
+    let transport_network_fingerprint = match object.get("transportNetworkFingerprint") {
+        None => String::new(),
+        Some(Value::String(value)) => value.clone(),
+        Some(_) => {
+            return Err(error(format!(
+                "{path}.transportNetworkFingerprint must be a string"
+            )));
+        }
+    };
+    Ok(MerchantTradeRouteDto {
+        origin_city_id: required_string_at(object, "originCityId", &path)?.to_owned(),
+        destination_city_id: required_string_at(object, "destinationCityId", &path)?.to_owned(),
+        steps: decode_movement_steps(required_array(object, "steps")?, &format!("{path}.steps"))?,
+        transport_network_fingerprint,
+    })
+}
+
+fn decode_worker_job(value: &Value, unit_path: &str) -> Result<WorkerJobDto, AdapterError> {
+    let path = format!("{unit_path}.workerJob");
+    let object = object_at(value, &path)?;
+    let target = coordinate_field_alias(object, "target", "targetHex", &path)?;
+    let remaining_turns = required_u32_at(object, "remainingTurns", &path)?;
+    let total_turns = required_u32_at(object, "totalTurns", &path)?;
+    match required_string_at(object, "kind", &path)? {
+        "fieldImprovement" => {
+            let improvement = object
+                .get("improvement")
+                .or_else(|| object.get("improvementType"))
+                .and_then(Value::as_str)
+                .ok_or_else(|| {
+                    error(format!(
+                        "{path}.improvement or {path}.improvementType must be a string"
+                    ))
+                })?;
+            Ok(WorkerJobDto::FieldImprovement {
+                target,
+                improvement: parse_improvement_kind(improvement, &path)?,
+                remaining_turns,
+                total_turns,
+            })
+        }
+        "roadConstruction" => Ok(WorkerJobDto::RoadConstruction {
+            target,
+            remaining_turns,
+            total_turns,
+        }),
+        value => Err(error(format!("unknown worker job kind: {value}"))),
+    }
+}
+
+fn decode_city_founding_job(
+    value: &Value,
+    unit_path: &str,
+) -> Result<CityFoundingJobDto, AdapterError> {
+    let path = format!("{unit_path}.cityFoundingJob");
+    let object = object_at(value, &path)?;
+    Ok(CityFoundingJobDto {
+        center: coordinate_field(object, "center", &path)?,
+        controlled_hexes: decode_coordinates(
+            required_array(object, "controlledHexes")?,
+            &format!("{path}.controlledHexes"),
+        )?,
+        remaining_turns: required_u32_at(object, "remainingTurns", &path)?,
+        total_turns: required_u32_at(object, "totalTurns", &path)?,
+    })
+}
+
+fn decode_worker_assignment(value: &Value, unit_path: &str) -> Result<CoordinateDto, AdapterError> {
+    let path = format!("{unit_path}.workerAssignment");
+    let object = object_at(value, &path)?;
+    if object.contains_key("col") || object.contains_key("row") {
+        return coordinate_fields(object, &path).map(coordinate_dto);
+    }
+    coordinate_field_alias(object, "target", "targetHex", &path)
+}
+
+fn coordinate_field(
+    object: &JsonObject,
+    field: &str,
+    path: &str,
+) -> Result<CoordinateDto, AdapterError> {
+    let coordinate_path = format!("{path}.{field}");
+    object
+        .get(field)
+        .ok_or_else(|| error(format!("{coordinate_path} is required")))
+        .and_then(|value| object_at(value, &coordinate_path))
+        .and_then(|coordinate| coordinate_fields(coordinate, &coordinate_path))
+        .map(coordinate_dto)
+}
+
+fn coordinate_field_alias(
+    object: &JsonObject,
+    field: &str,
+    legacy_field: &str,
+    path: &str,
+) -> Result<CoordinateDto, AdapterError> {
+    if object.contains_key(field) {
+        coordinate_field(object, field, path)
+    } else {
+        coordinate_field(object, legacy_field, path)
+    }
+}
+
+fn parse_improvement_kind(
+    value: &str,
+    path: &str,
+) -> Result<FieldImprovementKindDto, AdapterError> {
+    serde_json::from_value(Value::String(value.to_owned()))
+        .map_err(|source| error(format!("{path}: {source}")))
+}
+
+fn decode_interaction(
+    state: &JsonObject,
+    bounds: HexGridBounds,
+    units: &[UnitDto],
+    cities: &[CityDto],
+) -> Result<InteractionStateDto, AdapterError> {
+    let Some(lifecycle) = state.get("lifecycle").and_then(Value::as_object) else {
         return Ok(InteractionStateDto::default());
     };
-    if pending.get("type").and_then(Value::as_str) != Some("unitTurnSkip") {
-        return Ok(InteractionStateDto::default());
-    }
-    let path = "input.state.lifecycle.pendingAction";
+    let city_founding_draft = lifecycle
+        .get("cityFoundingDraft")
+        .filter(|value| !value.is_null())
+        .map(decode_city_founding_draft)
+        .transpose()?
+        .filter(|draft| city_founding_draft_in_scope(draft, bounds, units, state));
+    let pending = lifecycle
+        .get("pendingAction")
+        .filter(|value| !value.is_null())
+        .map(decode_pending_interaction)
+        .transpose()?
+        .filter(|pending| pending_interaction_in_scope(pending, bounds, units, cities, state));
     Ok(InteractionStateDto {
-        city_founding_draft: None,
-        pending: Some(PendingInteractionDto::UnitTurnSkip {
-            owner_player_id: required_string_at(pending, "ownerPlayerId", path)?.to_owned(),
-            unit_id: required_string_at(pending, "unitId", path)?.to_owned(),
-            restore_movement_units: required_u32_at(pending, "restoreMovementUnits", path)?,
-        }),
+        city_founding_draft,
+        pending,
     })
+}
+
+fn decode_city_founding_draft(value: &Value) -> Result<CityFoundingDraftDto, AdapterError> {
+    let path = "input.state.lifecycle.cityFoundingDraft";
+    let object = object_at(value, path)?;
+    Ok(CityFoundingDraftDto {
+        unit_id: required_string_at(object, "unitId", path)?.to_owned(),
+        owner_player_id: required_string_at(object, "ownerPlayerId", path)?.to_owned(),
+        center: coordinate_field(object, "center", path)?,
+        controlled_hexes: decode_coordinates(
+            required_array(object, "controlledHexes")?,
+            &format!("{path}.controlledHexes"),
+        )?,
+    })
+}
+
+fn decode_pending_interaction(value: &Value) -> Result<PendingInteractionDto, AdapterError> {
+    let path = "input.state.lifecycle.pendingAction";
+    let object = object_at(value, path)?;
+    let owner_player_id = required_string_at(object, "ownerPlayerId", path)?.to_owned();
+    match required_string_at(object, "type", path)? {
+        "researchSelection" => Ok(PendingInteractionDto::ResearchSelection { owner_player_id }),
+        "cityWorkedHexSelection" => Ok(PendingInteractionDto::CityWorkedHexSelection {
+            owner_player_id,
+            city_id: required_string_at(object, "cityId", path)?.to_owned(),
+        }),
+        "cityExpansionSelection" => Ok(PendingInteractionDto::CityExpansionSelection {
+            owner_player_id,
+            city_id: required_string_at(object, "cityId", path)?.to_owned(),
+        }),
+        "workerActionSelection" => Ok(PendingInteractionDto::WorkerActionSelection {
+            owner_player_id,
+            unit_id: required_string_at(object, "unitId", path)?.to_owned(),
+            improvement: optional_improvement_kind(object, path)?,
+        }),
+        "merchantTradeRouteSelection" => Ok(PendingInteractionDto::MerchantTradeRouteSelection {
+            owner_player_id,
+            unit_id: required_string_at(object, "unitId", path)?.to_owned(),
+        }),
+        "merchantMoveToCitySelection" => Ok(PendingInteractionDto::MerchantMoveToCitySelection {
+            owner_player_id,
+            unit_id: required_string_at(object, "unitId", path)?.to_owned(),
+        }),
+        "unitTurnSkip" => Ok(PendingInteractionDto::UnitTurnSkip {
+            owner_player_id,
+            unit_id: required_string_at(object, "unitId", path)?.to_owned(),
+            restore_movement_units: required_u32_at(object, "restoreMovementUnits", path)?,
+        }),
+        "attackTargeting" => Ok(PendingInteractionDto::AttackTargeting {
+            owner_player_id,
+            unit_id: required_string_alias(object, "unitId", "attackerUnitId", path)?.to_owned(),
+            defender: optional_defender(object, path)?,
+        }),
+        "commanderMergeSelection" => Ok(PendingInteractionDto::CommanderMergeSelection {
+            owner_player_id,
+            unit_id: required_string_at(object, "unitId", path)?.to_owned(),
+        }),
+        value => Err(error(format!("unknown pending interaction type: {value}"))),
+    }
+}
+
+fn optional_improvement_kind(
+    object: &JsonObject,
+    path: &str,
+) -> Result<Option<FieldImprovementKindDto>, AdapterError> {
+    match object
+        .get("improvement")
+        .or_else(|| object.get("improvementType"))
+    {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(value)) => parse_improvement_kind(value, path).map(Some),
+        Some(_) => Err(error(format!(
+            "{path}.improvement or {path}.improvementType must be a string or null"
+        ))),
+    }
+}
+
+fn optional_defender(
+    object: &JsonObject,
+    path: &str,
+) -> Result<Option<CoordinateDto>, AdapterError> {
+    if let Some(value) = object.get("defender") {
+        if value.is_null() {
+            return Ok(None);
+        }
+        let defender_path = format!("{path}.defender");
+        return object_at(value, &defender_path)
+            .and_then(|defender| coordinate_fields(defender, &defender_path))
+            .map(coordinate_dto)
+            .map(Some);
+    }
+    match (object.get("defenderCol"), object.get("defenderRow")) {
+        (None, None) => Ok(None),
+        (Some(_), Some(_)) => Ok(Some(CoordinateDto {
+            col: required_i32_at(object, "defenderCol", path)?,
+            row: required_i32_at(object, "defenderRow", path)?,
+        })),
+        _ => Err(error(format!(
+            "{path}.defenderCol and {path}.defenderRow must be provided together"
+        ))),
+    }
+}
+
+fn required_string_alias<'value>(
+    object: &'value JsonObject,
+    field: &str,
+    legacy_field: &str,
+    path: &str,
+) -> Result<&'value str, AdapterError> {
+    object
+        .get(field)
+        .or_else(|| object.get(legacy_field))
+        .and_then(Value::as_str)
+        .ok_or_else(|| {
+            error(format!(
+                "{path}.{field} or {path}.{legacy_field} must be a string"
+            ))
+        })
+}
+
+fn city_founding_draft_in_scope(
+    draft: &CityFoundingDraftDto,
+    bounds: HexGridBounds,
+    units: &[UnitDto],
+    state: &JsonObject,
+) -> bool {
+    unit_reference_in_scope(state, bounds, units, &draft.unit_id)
+        && core::iter::once(draft.center)
+            .chain(draft.controlled_hexes.iter().copied())
+            .all(|coordinate| bounds.contains(HexCoord::new(coordinate.col, coordinate.row)))
+}
+
+fn pending_interaction_in_scope(
+    pending: &PendingInteractionDto,
+    bounds: HexGridBounds,
+    units: &[UnitDto],
+    cities: &[CityDto],
+    state: &JsonObject,
+) -> bool {
+    let unit_in_scope = |unit_id: &str| unit_reference_in_scope(state, bounds, units, unit_id);
+    let city_in_scope = |city_id: &str| city_reference_in_scope(state, bounds, cities, city_id);
+    match pending {
+        PendingInteractionDto::ResearchSelection { .. } => true,
+        PendingInteractionDto::CityWorkedHexSelection { city_id, .. }
+        | PendingInteractionDto::CityExpansionSelection { city_id, .. } => city_in_scope(city_id),
+        PendingInteractionDto::WorkerActionSelection { unit_id, .. }
+        | PendingInteractionDto::MerchantTradeRouteSelection { unit_id, .. }
+        | PendingInteractionDto::MerchantMoveToCitySelection { unit_id, .. }
+        | PendingInteractionDto::UnitTurnSkip { unit_id, .. }
+        | PendingInteractionDto::CommanderMergeSelection { unit_id, .. } => unit_in_scope(unit_id),
+        PendingInteractionDto::AttackTargeting {
+            unit_id, defender, ..
+        } => {
+            unit_in_scope(unit_id)
+                && defender.is_none_or(|coordinate| {
+                    bounds.contains(HexCoord::new(coordinate.col, coordinate.row))
+                })
+        }
+    }
+}
+
+fn unit_reference_in_scope(
+    state: &JsonObject,
+    bounds: HexGridBounds,
+    units: &[UnitDto],
+    unit_id: &str,
+) -> bool {
+    units.iter().any(|unit| unit.id == unit_id)
+        || state
+            .get("units")
+            .and_then(Value::as_array)
+            .and_then(|values| {
+                values
+                    .iter()
+                    .find(|value| value.get("id").and_then(Value::as_str) == Some(unit_id))
+            })
+            .and_then(Value::as_object)
+            .and_then(|unit| coordinate_fields(unit, "input.state.units[]").ok())
+            .is_none_or(|coordinate| bounds.contains(coordinate))
+}
+
+fn city_reference_in_scope(
+    state: &JsonObject,
+    bounds: HexGridBounds,
+    cities: &[CityDto],
+    city_id: &str,
+) -> bool {
+    cities.iter().any(|city| city.id == city_id)
+        || state
+            .get("cities")
+            .and_then(Value::as_array)
+            .and_then(|values| {
+                values
+                    .iter()
+                    .find(|value| value.get("id").and_then(Value::as_str) == Some(city_id))
+            })
+            .and_then(Value::as_object)
+            .and_then(|city| city.get("center"))
+            .and_then(Value::as_object)
+            .and_then(|center| coordinate_fields(center, "input.state.cities[].center").ok())
+            .is_none_or(|coordinate| bounds.contains(coordinate))
 }
 
 fn decode_queued_path(value: &Value, unit_path: &str) -> Result<QueuedMovePathDto, AdapterError> {
     let path = format!("{unit_path}.queuedPath");
     let object = object_at(value, &path)?;
-    let steps = required_array(object, "steps")?
+    let steps = decode_movement_steps(required_array(object, "steps")?, &format!("{path}.steps"))?;
+    Ok(QueuedMovePathDto {
+        target_col: required_i32_at(object, "targetCol", &path)?,
+        target_row: required_i32_at(object, "targetRow", &path)?,
+        steps,
+    })
+}
+
+fn decode_movement_steps(
+    values: &[Value],
+    path: &str,
+) -> Result<Vec<MovementStepDto>, AdapterError> {
+    values
         .iter()
         .enumerate()
         .map(|(index, value)| {
-            let step_path = format!("{path}.steps[{index}]");
+            let step_path = format!("{path}[{index}]");
             let step = object_at(value, &step_path)?;
             Ok(MovementStepDto {
                 col: required_i32_at(step, "col", &step_path)?,
@@ -796,12 +1180,7 @@ fn decode_queued_path(value: &Value, unit_path: &str) -> Result<QueuedMovePathDt
                 cumulative_cost_units: required_u32_at(step, "cumulativeCost", &step_path)?,
             })
         })
-        .collect::<Result<Vec<_>, AdapterError>>()?;
-    Ok(QueuedMovePathDto {
-        target_col: required_i32_at(object, "targetCol", &path)?,
-        target_row: required_i32_at(object, "targetRow", &path)?,
-        steps,
-    })
+        .collect()
 }
 
 fn parse_unit_kind(value: &str) -> Result<UnitKindDto, AdapterError> {
@@ -1015,16 +1394,361 @@ mod tests {
     use aonw_contracts::{
         CityConquestActionDto, DiplomaticMessageCategoryDto, DiplomaticMessageTopicDto,
         DiplomaticProposalKindDto, DiplomaticRelationStatusDto, DiplomaticScoreChangeReasonDto,
-        FieldImprovementKindDto, ResourceTypeDto, TechnologyIdDto, WonderTypeDto,
+        FieldImprovementKindDto, PendingInteractionDto, ResourceTypeDto, TechnologyIdDto,
+        TroopKindDto, UnitKindDto, UnitPostureDto, WonderTypeDto, WorkerJobDto,
+        WorldArtifactLocationDto, WorldArtifactTypeDto,
     };
-    use aonw_domain::HexGridBounds;
+    use aonw_domain::{HexGridBounds, MovementUnits};
     use serde_json::json;
 
     use super::{
         decode_diplomacy_state, decode_economy, decode_field_improvements, decode_hold_turns,
-        decode_intended_attacks, decode_map_objective_holds, decode_research,
-        decode_resource_trade_agreements, decode_wonder_registry,
+        decode_intended_attacks, decode_interaction, decode_map_objective_holds,
+        decode_pending_interaction, decode_referenced_artifacts, decode_research,
+        decode_resource_trade_agreements, decode_unit, decode_wonder_registry,
     };
+
+    #[test]
+    fn legacy_unit_adapter_preserves_complete_state_and_serializer_omissions() {
+        let source = json!({
+            "id": "worker-1",
+            "ownerPlayerId": "player-1",
+            "type": "worker",
+            "name": "Worker",
+            "col": 1,
+            "row": 1,
+            "movementPoints": 2,
+            "movementSubpoints": 1,
+            "army": [{"type": "warrior", "count": 2}],
+            "queuedPath": {
+                "targetCol": 2,
+                "targetRow": 1,
+                "steps": [
+                    {"col": 1, "row": 1, "enterCost": 0, "cumulativeCost": 0},
+                    {"col": 2, "row": 1, "enterCost": 2, "cumulativeCost": 2}
+                ]
+            },
+            "merchantTradeRoute": {
+                "originCityId": "city-1",
+                "destinationCityId": "city-2",
+                "steps": [
+                    {"col": 1, "row": 1, "enterCost": 0, "cumulativeCost": 0},
+                    {"col": 2, "row": 1, "enterCost": 2, "cumulativeCost": 2}
+                ]
+            },
+            "workerJob": {
+                "kind": "fieldImprovement",
+                "targetHex": {"col": 2, "row": 1},
+                "improvementType": "farm",
+                "remainingTurns": 2,
+                "totalTurns": 3
+            },
+            "cityFoundingJob": {
+                "center": {"col": 1, "row": 1},
+                "controlledHexes": [{"col": 2, "row": 1}],
+                "remainingTurns": 1,
+                "totalTurns": 2
+            },
+            "workerAssignment": {"targetHex": {"col": 2, "row": 1}},
+            "excavatingArtifactId": "artifact-dig",
+            "workerBuildCharges": 3,
+            "hitPoints": 7,
+            "experiencePoints": 11,
+            "posture": "autoWorking",
+            "carriedArtifactId": "artifact-carry"
+        });
+        let path = "input.state.units[0]";
+        let unit = decode_unit(source.as_object().expect("unit object"), path)
+            .expect("decode complete unit");
+
+        assert_eq!(unit.kind, UnitKindDto::Worker);
+        assert_eq!(unit.movement_units, 2 * MovementUnits::PER_POINT + 1);
+        assert_eq!(unit.army[0].kind, TroopKindDto::Warrior);
+        assert_eq!(unit.army[0].count, 2);
+        assert_eq!(
+            unit.queued_path.as_ref().expect("queued path").steps.len(),
+            2
+        );
+        let route = unit.merchant_trade_route.as_ref().expect("merchant route");
+        assert_eq!(route.origin_city_id, "city-1");
+        assert_eq!(route.destination_city_id, "city-2");
+        assert_eq!(route.steps.len(), 2);
+        assert_eq!(route.transport_network_fingerprint, "");
+        assert_eq!(
+            unit.activity.worker_job,
+            Some(WorkerJobDto::FieldImprovement {
+                target: aonw_contracts::CoordinateDto { col: 2, row: 1 },
+                improvement: FieldImprovementKindDto::Farm,
+                remaining_turns: 2,
+                total_turns: 3,
+            })
+        );
+        assert_eq!(
+            unit.activity
+                .city_founding_job
+                .as_ref()
+                .expect("founding job")
+                .controlled_hexes,
+            [aonw_contracts::CoordinateDto { col: 2, row: 1 }]
+        );
+        assert_eq!(
+            unit.activity.worker_assignment,
+            Some(aonw_contracts::CoordinateDto { col: 2, row: 1 })
+        );
+        assert_eq!(
+            unit.activity.excavating_artifact_id.as_deref(),
+            Some("artifact-dig")
+        );
+        assert_eq!(unit.worker_build_charges, 3);
+        assert_eq!(unit.hit_points, Some(7));
+        assert_eq!(unit.experience_points, 11);
+        assert_eq!(unit.posture, UnitPostureDto::AutoWorking);
+        assert_eq!(unit.carried_artifact_id.as_deref(), Some("artifact-carry"));
+
+        let mut omitted = source.as_object().expect("unit object").clone();
+        omitted.remove("workerBuildCharges");
+        let unit = decode_unit(&omitted, path).expect("decode omitted worker charge");
+        assert_eq!(unit.worker_build_charges, 1);
+    }
+
+    #[test]
+    fn legacy_artifact_adapter_requires_explicit_referenced_records() {
+        let unit_source = json!({
+            "id": "unit-1",
+            "ownerPlayerId": "player-1",
+            "type": "commander",
+            "name": "Commander",
+            "col": 1,
+            "row": 1,
+            "movementPoints": 1,
+            "army": [],
+            "carriedArtifactId": "artifact-1"
+        });
+        let unit = decode_unit(
+            unit_source.as_object().expect("unit object"),
+            "input.state.units[0]",
+        )
+        .expect("decode unit");
+        let source = json!({
+            "artifacts": [{
+                "id": "artifact-1",
+                "type": "heroSword",
+                "location": {"kind": "carried", "unitId": "unit-1"}
+            }]
+        });
+        let bounds = HexGridBounds::new(3, 3).expect("bounds");
+        let artifacts = decode_referenced_artifacts(
+            source.as_object().expect("state object"),
+            core::slice::from_ref(&unit),
+            bounds,
+        )
+        .expect("decode artifacts");
+
+        assert_eq!(artifacts.len(), 1);
+        assert_eq!(artifacts[0].artifact_type, WorldArtifactTypeDto::HeroSword);
+        assert_eq!(
+            artifacts[0].location,
+            WorldArtifactLocationDto::Carried {
+                unit_id: "unit-1".to_owned()
+            }
+        );
+
+        let missing = json!({"artifacts": []});
+        let error = decode_referenced_artifacts(
+            missing.as_object().expect("state object"),
+            &[unit],
+            bounds,
+        )
+        .expect_err("missing artifact must fail");
+        assert!(
+            error
+                .to_string()
+                .contains("references missing artifact artifact-1")
+        );
+    }
+
+    #[test]
+    fn legacy_interaction_adapter_preserves_draft_and_legacy_aliases() {
+        let unit_source = json!({
+            "id": "unit-1",
+            "ownerPlayerId": "player-1",
+            "type": "settler",
+            "name": "Settler",
+            "col": 1,
+            "row": 1,
+            "movementPoints": 1,
+            "army": []
+        });
+        let unit = decode_unit(
+            unit_source.as_object().expect("unit object"),
+            "input.state.units[0]",
+        )
+        .expect("decode unit");
+        let source = json!({
+            "lifecycle": {
+                "cityFoundingDraft": {
+                    "unitId": "unit-1",
+                    "ownerPlayerId": "player-1",
+                    "center": {"col": 1, "row": 1},
+                    "controlledHexes": [{"col": 2, "row": 1}]
+                },
+                "pendingAction": {
+                    "type": "attackTargeting",
+                    "ownerPlayerId": "player-1",
+                    "attackerUnitId": "unit-1",
+                    "defenderCol": 2,
+                    "defenderRow": 2
+                }
+            }
+        });
+        let interaction = decode_interaction(
+            source.as_object().expect("state object"),
+            HexGridBounds::new(3, 3).expect("bounds"),
+            &[unit],
+            &[],
+        )
+        .expect("decode interaction");
+
+        let draft = interaction.city_founding_draft.expect("founding draft");
+        assert_eq!(draft.unit_id, "unit-1");
+        assert_eq!(
+            draft.controlled_hexes,
+            [aonw_contracts::CoordinateDto { col: 2, row: 1 }]
+        );
+        assert_eq!(
+            interaction.pending,
+            Some(PendingInteractionDto::AttackTargeting {
+                owner_player_id: "player-1".to_owned(),
+                unit_id: "unit-1".to_owned(),
+                defender: Some(aonw_contracts::CoordinateDto { col: 2, row: 2 }),
+            })
+        );
+    }
+
+    #[test]
+    fn legacy_pending_adapter_decodes_owner_and_city_variants() {
+        let cases = [
+            (
+                json!({"type": "researchSelection", "ownerPlayerId": "player-1"}),
+                PendingInteractionDto::ResearchSelection {
+                    owner_player_id: "player-1".to_owned(),
+                },
+            ),
+            (
+                json!({
+                    "type": "cityWorkedHexSelection",
+                    "ownerPlayerId": "player-1",
+                    "cityId": "city-1"
+                }),
+                PendingInteractionDto::CityWorkedHexSelection {
+                    owner_player_id: "player-1".to_owned(),
+                    city_id: "city-1".to_owned(),
+                },
+            ),
+            (
+                json!({
+                    "type": "cityExpansionSelection",
+                    "ownerPlayerId": "player-1",
+                    "cityId": "city-1"
+                }),
+                PendingInteractionDto::CityExpansionSelection {
+                    owner_player_id: "player-1".to_owned(),
+                    city_id: "city-1".to_owned(),
+                },
+            ),
+        ];
+
+        for (source, expected) in cases {
+            assert_eq!(
+                decode_pending_interaction(&source).expect("decode pending interaction"),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn legacy_pending_adapter_decodes_unit_variants() {
+        let cases = [
+            (
+                json!({
+                    "type": "workerActionSelection",
+                    "ownerPlayerId": "player-1",
+                    "unitId": "unit-1",
+                    "improvementType": "mine"
+                }),
+                PendingInteractionDto::WorkerActionSelection {
+                    owner_player_id: "player-1".to_owned(),
+                    unit_id: "unit-1".to_owned(),
+                    improvement: Some(FieldImprovementKindDto::Mine),
+                },
+            ),
+            (
+                json!({
+                    "type": "merchantTradeRouteSelection",
+                    "ownerPlayerId": "player-1",
+                    "unitId": "unit-1"
+                }),
+                PendingInteractionDto::MerchantTradeRouteSelection {
+                    owner_player_id: "player-1".to_owned(),
+                    unit_id: "unit-1".to_owned(),
+                },
+            ),
+            (
+                json!({
+                    "type": "merchantMoveToCitySelection",
+                    "ownerPlayerId": "player-1",
+                    "unitId": "unit-1"
+                }),
+                PendingInteractionDto::MerchantMoveToCitySelection {
+                    owner_player_id: "player-1".to_owned(),
+                    unit_id: "unit-1".to_owned(),
+                },
+            ),
+            (
+                json!({
+                    "type": "unitTurnSkip",
+                    "ownerPlayerId": "player-1",
+                    "unitId": "unit-1",
+                    "restoreMovementUnits": 3
+                }),
+                PendingInteractionDto::UnitTurnSkip {
+                    owner_player_id: "player-1".to_owned(),
+                    unit_id: "unit-1".to_owned(),
+                    restore_movement_units: 3,
+                },
+            ),
+            (
+                json!({
+                    "type": "attackTargeting",
+                    "ownerPlayerId": "player-1",
+                    "attackerUnitId": "unit-1"
+                }),
+                PendingInteractionDto::AttackTargeting {
+                    owner_player_id: "player-1".to_owned(),
+                    unit_id: "unit-1".to_owned(),
+                    defender: None,
+                },
+            ),
+            (
+                json!({
+                    "type": "commanderMergeSelection",
+                    "ownerPlayerId": "player-1",
+                    "unitId": "unit-1"
+                }),
+                PendingInteractionDto::CommanderMergeSelection {
+                    owner_player_id: "player-1".to_owned(),
+                    unit_id: "unit-1".to_owned(),
+                },
+            ),
+        ];
+
+        for (source, expected) in cases {
+            assert_eq!(
+                decode_pending_interaction(&source).expect("decode pending interaction"),
+                expected
+            );
+        }
+    }
 
     #[test]
     fn legacy_combat_adapter_preserves_in_bounds_intents_and_filters_fixture_sentinels() {

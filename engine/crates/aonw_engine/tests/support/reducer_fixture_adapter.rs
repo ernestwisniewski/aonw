@@ -52,7 +52,7 @@ impl FixtureExecutor for RustEngineFixtureExecutor {
         let mut save = input.save().clone();
         save.remove("savedAt");
 
-        let state = match decode_state(input, map.bounds(), &unit_id, family == "unit-actions")? {
+        let state = match decode_state(input, map.bounds(), &unit_id)? {
             DecodedState::Valid(state) => state,
             DecodedState::CommandUnitOutOfBounds => {
                 return Ok(FixtureOutput::reject(
