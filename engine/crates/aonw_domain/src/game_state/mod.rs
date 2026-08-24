@@ -4,8 +4,9 @@ use crate::{
     ArtifactId, City, CityId, CombatState, CombatStateValidationError, Diplomacy, EconomyState,
     EconomyStateBuildError, FieldImprovement, FogOfWar, HexCoord, HexGridBounds,
     InfrastructureState, InfrastructureValidationError, InteractionState, KnowledgeState,
-    KnowledgeStateValidationError, MatchLifecycle, PlayerId, ResearchState, StateRevision,
-    TransportNetwork, Unit, UnitId, WonderRegistry, WorldArtifact,
+    KnowledgeStateValidationError, MatchLifecycle, ObjectiveState, ObjectiveStateBuildError,
+    PlayerId, ResearchState, StateRevision, TransportNetwork, Unit, UnitId, WonderRegistry,
+    WorldArtifact,
 };
 use validation::{
     artifact_indices, city_indices, unit_indices, validate_artifacts, validate_environment,
@@ -118,6 +119,8 @@ pub enum GameStateBuildError {
     InvalidKnowledge(KnowledgeStateValidationError),
     /// Pending combat declarations violate aggregate references.
     InvalidCombat(CombatStateValidationError),
+    /// Victory-progress state violates participant or sparse-value invariants.
+    InvalidObjectives(ObjectiveStateBuildError),
 }
 
 #[cfg(test)]
@@ -216,6 +219,7 @@ impl core::fmt::Display for GameStateBuildError {
             Self::InvalidInfrastructure(error) => error.fmt(formatter),
             Self::InvalidKnowledge(error) => error.fmt(formatter),
             Self::InvalidCombat(error) => error.fmt(formatter),
+            Self::InvalidObjectives(error) => error.fmt(formatter),
         }
     }
 }
@@ -231,6 +235,7 @@ pub struct GameState {
     economy: EconomyState,
     knowledge: KnowledgeState,
     combat: CombatState,
+    objectives: ObjectiveState,
     bounds: HexGridBounds,
     occupancy_policy: UnitOccupancyPolicy,
     units: Box<[Unit]>,
@@ -299,6 +304,7 @@ impl GameState {
             EconomyState::default(),
             KnowledgeState::default(),
             CombatState::default(),
+            ObjectiveState::default(),
             bounds,
             occupancy_policy,
             units,
@@ -324,6 +330,7 @@ impl GameState {
         economy: EconomyState,
         knowledge: KnowledgeState,
         combat: CombatState,
+        objectives: ObjectiveState,
         bounds: HexGridBounds,
         occupancy_policy: UnitOccupancyPolicy,
         units: impl IntoIterator<Item = Unit>,
@@ -358,6 +365,9 @@ impl GameState {
         combat
             .validate_for(match_lifecycle.identity(), bounds, &units)
             .map_err(GameStateBuildError::InvalidCombat)?;
+        objectives
+            .validate_for(match_lifecycle.identity())
+            .map_err(GameStateBuildError::InvalidObjectives)?;
         Ok(Self {
             revision,
             turn,
@@ -365,6 +375,7 @@ impl GameState {
             economy,
             knowledge,
             combat,
+            objectives,
             bounds,
             occupancy_policy,
             units: units.into_boxed_slice(),
@@ -419,6 +430,11 @@ impl GameState {
     #[must_use]
     pub const fn combat(&self) -> &CombatState {
         &self.combat
+    }
+    /// Returns persisted victory and map-objective hold progress.
+    #[must_use]
+    pub const fn objectives(&self) -> &ObjectiveState {
+        &self.objectives
     }
     /// Returns logical map bounds.
     #[must_use]
@@ -548,6 +564,7 @@ impl GameState {
             self.economy,
             self.knowledge,
             self.combat,
+            self.objectives,
             self.bounds,
             self.occupancy_policy,
             units,
@@ -595,6 +612,7 @@ impl GameState {
             self.economy,
             self.knowledge,
             self.combat,
+            self.objectives,
             self.bounds,
             self.occupancy_policy,
             units,

@@ -13,14 +13,14 @@ use aonw_contracts::{
     DiplomaticScoreChangeReasonDto, DiplomaticScoreEntryDto, EconomyStateDto, FieldImprovementDto,
     FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto, GameStateDto,
     InitialResourceDistributionDto, InitialResourcePlacementDto, IntendedAttackDto,
-    InteractionStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto, PaceProfileDto,
-    ParticipantDto, PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto,
-    PlayerPairDto, PlayerResearchStateDto, PlayerTurnStateDto, QueuedMovePathDto, ResearchStateDto,
-    ResourceTradeAgreementDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
-    TechnologyIdDto, TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto,
-    TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
-    UnitPostureDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto,
-    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    InteractionStateDto, MapObjectiveHoldStateDto, MatchIdentityDto, MatchRulesDto,
+    MovementStepDto, PaceProfileDto, ParticipantDto, PendingInteractionDto, PlayerCountryDto,
+    PlayerFogDto, PlayerKindDto, PlayerPairDto, PlayerResearchStateDto, PlayerTurnStateDto,
+    QueuedMovePathDto, ResearchStateDto, ResourceTradeAgreementDto, ResourceTypeDto, RuleValueDto,
+    StrategicResourceStockpileDto, TechnologyIdDto, TransportConditionDto, TransportSegmentDto,
+    TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
+    UnitOccupancyPolicyDto, UnitPostureDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto,
+    WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{FogVisibility, HexCoord, PlayerId, PlayerPair, UnitId};
 
@@ -115,14 +115,37 @@ fn contract() -> GameStateDto {
         }],
         diplomacy: diplomacy(),
         resource_trade_agreements: resource_trade_agreements(),
-        transport_network: vec![TransportSegmentDto {
-            coordinate: CoordinateDto { col: 1, row: 1 },
-            kind: TransportSegmentKindDto::Road,
-            condition: TransportConditionDto::Operational,
-            built_by_player_id: "player-1".to_owned(),
-            built_by_city_id: Some("city-1".to_owned()),
-        }],
+        domination_hold_turns_by_player_id: domination_holds(),
+        cultural_victory_hold_turns_by_player_id: cultural_holds(),
+        map_objective_hold_states: map_objective_holds(),
+        transport_network: transport_network(),
     }
+}
+
+fn domination_holds() -> BTreeMap<String, i64> {
+    BTreeMap::from([("player-1".to_owned(), 2)])
+}
+
+fn cultural_holds() -> BTreeMap<String, i64> {
+    BTreeMap::from([("player-2".to_owned(), 4)])
+}
+
+fn map_objective_holds() -> Vec<MapObjectiveHoldStateDto> {
+    vec![MapObjectiveHoldStateDto {
+        objective_id: "strategic-pass-1".to_owned(),
+        player_id: "player-1".to_owned(),
+        hold_turns: 3,
+    }]
+}
+
+fn transport_network() -> Vec<TransportSegmentDto> {
+    vec![TransportSegmentDto {
+        coordinate: CoordinateDto { col: 1, row: 1 },
+        kind: TransportSegmentKindDto::Road,
+        condition: TransportConditionDto::Operational,
+        built_by_player_id: "player-1".to_owned(),
+        built_by_city_id: Some("city-1".to_owned()),
+    }]
 }
 
 fn research() -> ResearchStateDto {
@@ -563,6 +586,24 @@ fn merging_contacts_preserves_complete_diplomacy_state() {
 }
 
 #[test]
+fn aggregate_rebuild_preserves_complete_objective_state() {
+    let state = decode_game_state(contract()).expect("decode complete objectives");
+    let expected = state.objectives().clone();
+    let unit = state.units()[0].clone();
+    let next = state
+        .clone()
+        .into_after_movement(
+            state.revision(),
+            unit,
+            state.fog_of_war().clone(),
+            state.diplomacy().clone(),
+        )
+        .expect("rebuild state");
+
+    assert_eq!(next.objectives(), &expected);
+}
+
+#[test]
 fn current_turn_skip_round_trip_preserves_restore_balance() {
     let mut source = contract();
     let unit = &mut source.units[0];
@@ -798,6 +839,93 @@ fn diplomacy_rejects_invalid_resource_trades_with_paths() {
             .expect_err("empty exchange group")
             .path(),
         "$.resourceTradeAgreements[0].exchangeGroupId"
+    );
+}
+
+#[test]
+fn objectives_reject_unknown_players_and_nonpositive_counters_with_paths() {
+    let mut unknown = contract();
+    unknown
+        .domination_hold_turns_by_player_id
+        .insert("player-3".to_owned(), 1);
+    assert_eq!(
+        decode_game_state(unknown)
+            .expect_err("unknown domination player")
+            .path(),
+        "$.dominationHoldTurnsByPlayerId.player-3"
+    );
+
+    let mut zero = contract();
+    zero.domination_hold_turns_by_player_id
+        .insert("player-1".to_owned(), 0);
+    assert_eq!(
+        decode_game_state(zero)
+            .expect_err("zero domination hold")
+            .path(),
+        "$.dominationHoldTurnsByPlayerId.player-1"
+    );
+
+    let mut negative = contract();
+    negative
+        .cultural_victory_hold_turns_by_player_id
+        .insert("player-2".to_owned(), -1);
+    assert_eq!(
+        decode_game_state(negative)
+            .expect_err("negative cultural hold")
+            .path(),
+        "$.culturalVictoryHoldTurnsByPlayerId.player-2"
+    );
+
+    let mut overflow = contract();
+    overflow
+        .cultural_victory_hold_turns_by_player_id
+        .insert("player-2".to_owned(), i64::MAX);
+    assert_eq!(
+        decode_game_state(overflow)
+            .expect_err("overflowing cultural hold")
+            .path(),
+        "$.culturalVictoryHoldTurnsByPlayerId.player-2"
+    );
+}
+
+#[test]
+fn objectives_reject_invalid_and_duplicate_map_holds_with_paths() {
+    let mut unknown = contract();
+    unknown.map_objective_hold_states[0].player_id = "player-3".to_owned();
+    assert_eq!(
+        decode_game_state(unknown)
+            .expect_err("unknown objective player")
+            .path(),
+        "$.mapObjectiveHoldStates[0].playerId"
+    );
+
+    let mut empty_id = contract();
+    empty_id.map_objective_hold_states[0].objective_id = " ".to_owned();
+    assert_eq!(
+        decode_game_state(empty_id)
+            .expect_err("empty objective id")
+            .path(),
+        "$.mapObjectiveHoldStates[0].objectiveId"
+    );
+
+    let mut zero = contract();
+    zero.map_objective_hold_states[0].hold_turns = 0;
+    assert_eq!(
+        decode_game_state(zero)
+            .expect_err("zero objective hold")
+            .path(),
+        "$.mapObjectiveHoldStates[0].holdTurns"
+    );
+
+    let mut duplicate = contract();
+    duplicate
+        .map_objective_hold_states
+        .push(duplicate.map_objective_hold_states[0].clone());
+    assert_eq!(
+        decode_game_state(duplicate)
+            .expect_err("duplicate objective hold")
+            .path(),
+        "$.mapObjectiveHoldStates[1].objectiveId"
     );
 }
 

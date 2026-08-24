@@ -7,6 +7,7 @@ mod error;
 mod infrastructure;
 mod interaction;
 mod match_lifecycle;
+mod objective;
 mod research;
 mod state;
 mod unit;

@@ -137,10 +137,13 @@ codecs.
 
 The characterization covers terrain bases and features, roads, partial and
 queued movement, occupancy and hidden information, cities, fog, complete
-diplomacy and resource-trade state, posture, artifact capacity, rejection
-precedence, and exact movement evidence. Diplomacy persists normalized contacts
+diplomacy and resource-trade state, victory-progress substrates, posture,
+artifact capacity, rejection precedence, and exact movement evidence. Diplomacy persists normalized contacts
 and relations, proposals, messages and responses, score history, war status,
-and active resource agreements. The domain rejects unknown participants,
+and active resource agreements. Outcome progress persists sparse domination and
+cultural hold counters plus ordered map-objective controllers and hold turns;
+the derived match outcome remains a future engine result, not duplicated state.
+The domain rejects unknown participants,
 self-relations, missing contacts, duplicate records, invalid score/turn ranges,
 and incoherent message or trade fields before constructing state. Both Dart
 reducers and Rust execute the same reviewed outcomes. Run

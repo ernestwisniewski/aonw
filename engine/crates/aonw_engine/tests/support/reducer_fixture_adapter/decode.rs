@@ -1,16 +1,18 @@
+use std::collections::BTreeMap;
+
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
     CityBuildingTypeDto, CityConquestActionDto, CityDto, CityProductionQueueDto,
     CitySpecializationTypeDto, CoordinateDto, DiplomacyStateDto, EconomyStateDto,
     FieldImprovementDto, FieldImprovementKindDto, GameModeDto, GameStateDto,
-    InitialResourceDistributionDto, IntendedAttackDto, InteractionStateDto, MatchIdentityDto,
-    MatchRulesDto, MovementStepDto, ParticipantDto, PendingInteractionDto, PlayerFogDto,
-    PlayerPairDto, QueuedMovePathDto, ResearchStateDto, ResourceTradeAgreementDto,
-    StrategicResourceStockpileDto, TransportConditionDto, TransportSegmentDto,
-    TransportSegmentKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
-    UnitOccupancyPolicyDto, UnitPostureDto, WonderRegistryDto, WonderTypeDto, WorldArtifactDto,
-    WorldArtifactLocationDto, WorldArtifactTypeDto,
+    InitialResourceDistributionDto, IntendedAttackDto, InteractionStateDto,
+    MapObjectiveHoldStateDto, MatchIdentityDto, MatchRulesDto, MovementStepDto, ParticipantDto,
+    PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto, ResearchStateDto,
+    ResourceTradeAgreementDto, StrategicResourceStockpileDto, TransportConditionDto,
+    TransportSegmentDto, TransportSegmentKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto,
+    UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WonderRegistryDto, WonderTypeDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{HexCoord, HexGridBounds, MovementUnits, UnitId};
 use aonw_testkit::{FixtureInput, JsonObject};
@@ -111,6 +113,11 @@ pub(super) fn decode_state(
         .collect::<Result<Vec<_>, _>>()?;
     let diplomacy = decode_diplomacy_state(input.state())?;
     let resource_trade_agreements = decode_resource_trade_agreements(input.state())?;
+    let domination_hold_turns_by_player_id =
+        decode_hold_turns(input.state(), "dominationHoldTurnsByPlayerId")?;
+    let cultural_victory_hold_turns_by_player_id =
+        decode_hold_turns(input.state(), "culturalVictoryHoldTurnsByPlayerId")?;
+    let map_objective_hold_states = decode_map_objective_holds(input.state())?;
     let transport_network = required_array(input.state(), "transportNetwork")?
         .iter()
         .enumerate()
@@ -138,6 +145,9 @@ pub(super) fn decode_state(
         fog_of_war,
         diplomacy,
         resource_trade_agreements,
+        domination_hold_turns_by_player_id,
+        cultural_victory_hold_turns_by_player_id,
+        map_objective_hold_states,
         transport_network,
     };
     decode_game_state(dto)
@@ -929,6 +939,31 @@ fn decode_resource_trade_agreements(
     .map_err(display_error)
 }
 
+fn decode_hold_turns(
+    state: &JsonObject,
+    field: &str,
+) -> Result<BTreeMap<String, i64>, AdapterError> {
+    let value = state
+        .get("lifecycle")
+        .and_then(Value::as_object)
+        .and_then(|lifecycle| lifecycle.get(field))
+        .cloned()
+        .unwrap_or_else(|| Value::Object(Map::new()));
+    serde_json::from_value(value).map_err(display_error)
+}
+
+fn decode_map_objective_holds(
+    state: &JsonObject,
+) -> Result<Vec<MapObjectiveHoldStateDto>, AdapterError> {
+    let value = state
+        .get("lifecycle")
+        .and_then(Value::as_object)
+        .and_then(|lifecycle| lifecycle.get("mapObjectiveHoldStates"))
+        .cloned()
+        .unwrap_or_else(|| Value::Array(Vec::new()));
+    serde_json::from_value(value).map_err(display_error)
+}
+
 fn normalize_records(
     value: Option<&Value>,
     path: &str,
@@ -986,8 +1021,9 @@ mod tests {
     use serde_json::json;
 
     use super::{
-        decode_diplomacy_state, decode_economy, decode_field_improvements, decode_intended_attacks,
-        decode_research, decode_resource_trade_agreements, decode_wonder_registry,
+        decode_diplomacy_state, decode_economy, decode_field_improvements, decode_hold_turns,
+        decode_intended_attacks, decode_map_objective_holds, decode_research,
+        decode_resource_trade_agreements, decode_wonder_registry,
     };
 
     #[test]
@@ -1193,5 +1229,45 @@ mod tests {
         assert_eq!(trades[0].gold_per_turn, 0);
         assert_eq!(trades[0].amount_per_turn, 1);
         assert_eq!(trades[0].exchange_group_id, None);
+    }
+
+    #[test]
+    fn legacy_objective_adapter_preserves_sparse_outcome_progress() {
+        let source = json!({
+            "lifecycle": {
+                "dominationHoldTurnsByPlayerId": {"player-1": 2},
+                "culturalVictoryHoldTurnsByPlayerId": {"player-2": 4},
+                "mapObjectiveHoldStates": [{
+                    "objectiveId": "strategic-pass-1",
+                    "playerId": "player-1",
+                    "holdTurns": 3
+                }]
+            }
+        });
+        let state = source.as_object().expect("state object");
+        let domination =
+            decode_hold_turns(state, "dominationHoldTurnsByPlayerId").expect("decode domination");
+        let cultural = decode_hold_turns(state, "culturalVictoryHoldTurnsByPlayerId")
+            .expect("decode cultural");
+        let holds = decode_map_objective_holds(state).expect("decode map objectives");
+
+        assert_eq!(domination["player-1"], 2);
+        assert_eq!(cultural["player-2"], 4);
+        assert_eq!(holds[0].objective_id, "strategic-pass-1");
+        assert_eq!(holds[0].player_id, "player-1");
+        assert_eq!(holds[0].hold_turns, 3);
+
+        let empty = json!({});
+        let empty_state = empty.as_object().expect("empty state object");
+        assert!(
+            decode_hold_turns(empty_state, "dominationHoldTurnsByPlayerId")
+                .expect("omitted domination")
+                .is_empty()
+        );
+        assert!(
+            decode_map_objective_holds(empty_state)
+                .expect("omitted objectives")
+                .is_empty()
+        );
     }
 }

@@ -1,7 +1,10 @@
-use aonw_contracts::{GameStateDto, MAX_GAME_STATE_UNIT_COUNT, UnitOccupancyPolicyDto};
+use aonw_contracts::{
+    FieldImprovementDto, GameStateDto, MAX_GAME_STATE_UNIT_COUNT, TransportSegmentDto,
+    UnitOccupancyPolicyDto,
+};
 use aonw_domain::{
-    FogOfWar, GameState, HexGridBounds, InfrastructureState, StateRevision, TransportNetwork,
-    UnitOccupancyPolicy,
+    City, FogOfWar, GameState, HexGridBounds, InfrastructureState, MatchIdentity, StateRevision,
+    TransportNetwork, UnitOccupancyPolicy,
 };
 
 use super::artifact::{decode_artifact, encode_artifact};
@@ -15,6 +18,9 @@ use super::infrastructure::{
 };
 use super::interaction::{decode_interaction, encode_interaction};
 use super::match_lifecycle::{decode_match_lifecycle, encode_match_lifecycle};
+use super::objective::{
+    decode_objectives, encode_cultural, encode_domination, encode_map_objectives,
+};
 use super::research::{decode_knowledge, encode_research, encode_wonder_registry};
 use super::unit::{decode_unit, encode_unit};
 use super::world::{decode_fog, encode_fog};
@@ -59,12 +65,6 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         .enumerate()
         .map(|(index, artifact)| decode_artifact(index, artifact))
         .collect::<Result<Vec<_>, _>>()?;
-    let field_improvements = dto
-        .field_improvements
-        .into_iter()
-        .enumerate()
-        .map(|(index, improvement)| decode_field_improvement(index, bounds, &cities, improvement))
-        .collect::<Result<Vec<_>, _>>()?;
     let interaction = decode_interaction(dto.interaction)?;
     let fog = FogOfWar::try_new(
         dto.fog_of_war
@@ -81,27 +81,19 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         dto.diplomacy,
         dto.resource_trade_agreements,
     )?;
-    let transport = TransportNetwork::try_new(
-        dto.transport_network
-            .into_iter()
-            .enumerate()
-            .map(|(index, segment)| {
-                decode_transport(index, match_lifecycle.identity(), bounds, &cities, segment)
-            })
-            .collect::<Result<Vec<_>, _>>()?,
-    )
-    .map_err(|coordinate| {
-        GameStateMappingError::new(
-            "$.transportNetwork",
-            format!(
-                "duplicate coordinate: ({}, {})",
-                coordinate.col(),
-                coordinate.row()
-            ),
-        )
-    })?;
-    let infrastructure = InfrastructureState::try_new(field_improvements, transport)
-        .map_err(|error| GameStateMappingError::new("$.fieldImprovements", error.to_string()))?;
+    let objectives = decode_objectives(
+        match_lifecycle.identity(),
+        dto.domination_hold_turns_by_player_id,
+        dto.cultural_victory_hold_turns_by_player_id,
+        dto.map_objective_hold_states,
+    )?;
+    let infrastructure = decode_infrastructure_state(
+        match_lifecycle.identity(),
+        bounds,
+        &cities,
+        dto.field_improvements,
+        dto.transport_network,
+    )?;
     GameState::try_new_with_world_and_state_sections(
         StateRevision::new(dto.revision),
         dto.turn,
@@ -109,6 +101,7 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         economy,
         knowledge,
         combat,
+        objectives,
         bounds,
         match dto.occupancy_policy {
             UnitOccupancyPolicyDto::Exclusive => UnitOccupancyPolicy::Exclusive,
@@ -123,6 +116,39 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         infrastructure,
     )
     .map_err(|error| GameStateMappingError::new("$", error.to_string()))
+}
+
+fn decode_infrastructure_state(
+    identity: &MatchIdentity,
+    bounds: HexGridBounds,
+    cities: &[City],
+    field_improvements: Vec<FieldImprovementDto>,
+    transport_network: Vec<TransportSegmentDto>,
+) -> Result<InfrastructureState, GameStateMappingError> {
+    let field_improvements = field_improvements
+        .into_iter()
+        .enumerate()
+        .map(|(index, improvement)| decode_field_improvement(index, bounds, cities, improvement))
+        .collect::<Result<Vec<_>, _>>()?;
+    let transport = TransportNetwork::try_new(
+        transport_network
+            .into_iter()
+            .enumerate()
+            .map(|(index, segment)| decode_transport(index, identity, bounds, cities, segment))
+            .collect::<Result<Vec<_>, _>>()?,
+    )
+    .map_err(|coordinate| {
+        GameStateMappingError::new(
+            "$.transportNetwork",
+            format!(
+                "duplicate coordinate: ({}, {})",
+                coordinate.col(),
+                coordinate.row()
+            ),
+        )
+    })?;
+    InfrastructureState::try_new(field_improvements, transport)
+        .map_err(|error| GameStateMappingError::new("$.fieldImprovements", error.to_string()))
 }
 
 fn validate_unit_count(dto: &GameStateDto) -> Result<(), GameStateMappingError> {
@@ -175,6 +201,9 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
             .collect(),
         diplomacy,
         resource_trade_agreements,
+        domination_hold_turns_by_player_id: encode_domination(state.objectives()),
+        cultural_victory_hold_turns_by_player_id: encode_cultural(state.objectives()),
+        map_objective_hold_states: encode_map_objectives(state.objectives()),
         transport_network: state
             .transport_network()
             .segments()

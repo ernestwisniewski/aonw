@@ -9,6 +9,7 @@ mod diplomacy;
 mod economy;
 mod infrastructure;
 mod match_lifecycle;
+mod objective;
 mod research;
 mod writer;
 
@@ -18,6 +19,7 @@ use diplomacy::hash_diplomacy;
 use economy::hash_economy;
 use infrastructure::hash_infrastructure;
 use match_lifecycle::hash_match_lifecycle;
+use objective::hash_objectives;
 use research::hash_knowledge;
 use writer::DigestWriter;
 
@@ -51,6 +53,7 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
     hash_economy(&mut writer, state.economy());
     hash_knowledge(&mut writer, state.knowledge());
     hash_combat(&mut writer, state.combat());
+    hash_objectives(&mut writer, state.objectives());
     writer.u16(state.bounds().cols());
     writer.u16(state.bounds().rows());
     writer.u8(match state.occupancy_policy() {

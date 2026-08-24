@@ -56,6 +56,7 @@ fn digest_changes_with_every_canonical_state_section() {
     });
     assert_knowledge_digest_changes(&source);
     assert_combat_digest_changes(&source);
+    assert_objective_digest_changes(&source);
     assert_diplomacy_digest_changes(&source);
     assert_digest_change(&source, "bounds", |candidate| {
         candidate.cols += 1;
@@ -110,6 +111,35 @@ fn digest_changes_with_every_canonical_state_section() {
     });
     assert_digest_change(&source, "transport builder", |candidate| {
         candidate.transport_network[0].built_by_city_id = None;
+    });
+}
+
+fn assert_objective_digest_changes(source: &GameStateDto) {
+    assert_digest_change(source, "objective progress empty", |candidate| {
+        candidate.domination_hold_turns_by_player_id.clear();
+        candidate.cultural_victory_hold_turns_by_player_id.clear();
+        candidate.map_objective_hold_states.clear();
+    });
+    assert_digest_change(source, "domination hold turns", |candidate| {
+        *candidate
+            .domination_hold_turns_by_player_id
+            .get_mut("player-1")
+            .expect("domination hold") += 1;
+    });
+    assert_digest_change(source, "cultural hold turns", |candidate| {
+        *candidate
+            .cultural_victory_hold_turns_by_player_id
+            .get_mut("player-2")
+            .expect("cultural hold") += 1;
+    });
+    assert_digest_change(source, "map objective id", |candidate| {
+        candidate.map_objective_hold_states[0].objective_id = "strategic-pass-2".to_owned();
+    });
+    assert_digest_change(source, "map objective player", |candidate| {
+        candidate.map_objective_hold_states[0].player_id = "player-2".to_owned();
+    });
+    assert_digest_change(source, "map objective hold turns", |candidate| {
+        candidate.map_objective_hold_states[0].hold_turns += 1;
     });
 }
 

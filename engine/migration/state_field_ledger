@@ -32,7 +32,7 @@
 
 expected-fixture-count 120
 expected-envelope-count 10
-expected-envelope-field-count 73
+expected-envelope-field-count 76
 expected-domain-field-count 30
 expected-state-json-key-count 16
 expected-lifecycle-json-key-count 13
@@ -97,6 +97,9 @@ envelope-field rust-canonical-state interaction canonical-rule-state
 envelope-field rust-canonical-state fogOfWar canonical-rule-state
 envelope-field rust-canonical-state diplomacy canonical-rule-state
 envelope-field rust-canonical-state resourceTradeAgreements canonical-rule-state
+envelope-field rust-canonical-state dominationHoldTurnsByPlayerId canonical-rule-state
+envelope-field rust-canonical-state culturalVictoryHoldTurnsByPlayerId canonical-rule-state
+envelope-field rust-canonical-state mapObjectiveHoldStates canonical-rule-state
 envelope-field rust-canonical-state transportNetwork canonical-rule-state
 
 envelope-field rust-save mapId immutable-content-identity
@@ -166,9 +169,9 @@ domain-field wonderRegistry wonders characterized wonderRegistry
 domain-field intendedAttacks combat characterized intendedAttacks
 domain-field diplomacy diplomacy characterized diplomacy
 domain-field resourceTradeAgreements diplomacy characterized resourceTradeAgreements
-domain-field dominationHoldTurnsByPlayerId victory reference-only -
-domain-field culturalVictoryHoldTurnsByPlayerId victory reference-only -
-domain-field mapObjectiveHoldStatesByObjectiveId victory reference-only -
+domain-field dominationHoldTurnsByPlayerId victory characterized dominationHoldTurnsByPlayerId
+domain-field culturalVictoryHoldTurnsByPlayerId victory characterized culturalVictoryHoldTurnsByPlayerId
+domain-field mapObjectiveHoldStatesByObjectiveId victory characterized mapObjectiveHoldStates
 
 state-json-key playerColors identity-lifecycle required participants-derived
 state-json-key playerCountries identity-lifecycle required participants-derived
