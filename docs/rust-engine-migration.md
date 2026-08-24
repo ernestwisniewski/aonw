@@ -141,13 +141,14 @@ Only after retirement should the repository be reorganized mechanically into fin
 
 ## Verification and fixtures
 
-The reviewed parity corpus lives under `test/fixtures/`. Candidate regeneration is a review aid, not an approval mechanism:
+Historical reducer corpora under `test/fixtures/` are frozen, read-only
+migration evidence. Rust does not read or regenerate them. Active Rust behavior
+coverage lives under `engine/fixtures/` and uses only the strict current
+canonical contract.
 
-```sh
-make rust-engine-oracle
-```
-
-A slice is complete only when Dart and Rust agree on full envelopes, not just the visible destination or a subset of fields.
+A slice is complete only when the canonical fixture owns the full typed input
+and Rust returns the full expected state, events, evidence, and rejection—not
+just the visible destination or a projected subset of fields.
 
 Run Rust performance diagnostics separately:
 

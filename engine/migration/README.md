@@ -25,10 +25,11 @@ The status vocabulary is closed:
 - `shadow-ready`
 - `cutover`
 
-The current parity adapter still preserves opaque Dart JSON, so implemented
-Rust variants remain `characterized`. The checker rejects `engine-parity` or a
-later status until `partial-parity-mode` is deliberately changed to
-`full-state` after the splice is removed.
+Active Rust fixtures now own typed canonical input and compare complete output
+returned by the engine, so `partial-parity-mode` is `full-state`. The historical
+opaque splice adapter and its execution gate have been removed. Implemented
+surfaces remain `characterized` until their individual parity evidence meets
+the next status gate.
 
 The file deliberately has no `v1` suffix or schema-version field. The engine
 and greenfield clients update this one current contract atomically. A format

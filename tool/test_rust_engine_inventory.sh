@@ -156,7 +156,7 @@ expect_rejection "an unclassified Rust command variant"
 
 sed -i.bak 's/characterized Example/engine-parity Example/' "${manifest}"
 rm -f "${manifest}.bak"
-expect_rejection "engine-parity while the adapter preserves opaque state"
+expect_rejection "engine-parity in a synthetic opaque-splice manifest"
 
 sed -i.bak 's#command/commands.dart#command/wrong_source.dart#' "${manifest}"
 rm -f "${manifest}.bak"

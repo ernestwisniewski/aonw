@@ -3,10 +3,38 @@ use std::fs::{self, File};
 use std::io::Read;
 use std::path::Path;
 
+use crate::FixtureLoadError;
 use crate::canonical_fixture::CanonicalFixture;
 use crate::canonical_fixture_parser::parse_canonical_fixture;
 use crate::unique_json::UniqueJson;
-use crate::{FixtureLimits, FixtureLoadError};
+
+/// Default maximum size of one fixture: one MiB.
+const DEFAULT_MAX_FIXTURE_BYTES: usize = 1024 * 1024;
+/// Default maximum corpus size: 64 MiB.
+const DEFAULT_MAX_CORPUS_BYTES: usize = 64 * 1024 * 1024;
+/// Default maximum number of fixture files.
+const DEFAULT_MAX_CORPUS_FIXTURES: usize = 2048;
+
+/// Resource limits applied before and during canonical fixture loading.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct FixtureLimits {
+    /// Maximum bytes accepted for one JSON fixture.
+    pub max_fixture_bytes: usize,
+    /// Maximum aggregate bytes accepted for one corpus.
+    pub max_corpus_bytes: usize,
+    /// Maximum JSON fixture count accepted for one corpus.
+    pub max_corpus_fixtures: usize,
+}
+
+impl Default for FixtureLimits {
+    fn default() -> Self {
+        Self {
+            max_fixture_bytes: DEFAULT_MAX_FIXTURE_BYTES,
+            max_corpus_bytes: DEFAULT_MAX_CORPUS_BYTES,
+            max_corpus_fixtures: DEFAULT_MAX_CORPUS_FIXTURES,
+        }
+    }
+}
 
 /// Bounded loader for current canonical fixtures and corpora.
 #[derive(Clone, Copy, Debug, Default)]

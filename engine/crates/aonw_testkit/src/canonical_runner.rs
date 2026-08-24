@@ -1,4 +1,6 @@
-use crate::{CanonicalFixture, CanonicalFixtureInput, CanonicalFixtureOutput, FixtureRunError};
+use std::fmt;
+
+use crate::{CanonicalFixture, CanonicalFixtureInput, CanonicalFixtureOutput, JsonDifference};
 
 /// Engine-specific executor for the current canonical fixture contract.
 ///
@@ -18,6 +20,77 @@ pub trait CanonicalFixtureExecutor {
         capability: &str,
         input: &CanonicalFixtureInput,
     ) -> Result<CanonicalFixtureOutput, Self::Error>;
+}
+
+/// Failure produced while executing or comparing one canonical fixture.
+#[derive(Debug)]
+pub enum FixtureRunError<ExecutionError> {
+    /// The engine failed before producing a complete output.
+    Execution {
+        /// Fixture identifier.
+        fixture_id: Box<str>,
+        /// Engine-specific error.
+        source: ExecutionError,
+    },
+    /// The engine output differs from the committed oracle.
+    Mismatch {
+        /// Fixture identifier.
+        fixture_id: Box<str>,
+        /// Bounded structural differences.
+        differences: Vec<JsonDifference>,
+    },
+}
+
+impl<ExecutionError> FixtureRunError<ExecutionError> {
+    /// Returns the failing fixture identifier.
+    #[must_use]
+    pub fn fixture_id(&self) -> &str {
+        match self {
+            Self::Execution { fixture_id, .. } | Self::Mismatch { fixture_id, .. } => fixture_id,
+        }
+    }
+
+    /// Returns structural differences for an oracle mismatch.
+    #[must_use]
+    pub fn differences(&self) -> Option<&[JsonDifference]> {
+        match self {
+            Self::Mismatch { differences, .. } => Some(differences),
+            Self::Execution { .. } => None,
+        }
+    }
+}
+
+impl<ExecutionError: fmt::Display> fmt::Display for FixtureRunError<ExecutionError> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Execution { fixture_id, source } => {
+                write!(
+                    formatter,
+                    "fixture {fixture_id} failed to execute: {source}"
+                )
+            }
+            Self::Mismatch {
+                fixture_id,
+                differences,
+            } => write!(
+                formatter,
+                "fixture {fixture_id} differs from the oracle at {} location(s)",
+                differences.len()
+            ),
+        }
+    }
+}
+
+impl<ExecutionError> std::error::Error for FixtureRunError<ExecutionError>
+where
+    ExecutionError: std::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Execution { source, .. } => Some(source),
+            Self::Mismatch { .. } => None,
+        }
+    }
 }
 
 /// Executes and verifies one current canonical fixture.

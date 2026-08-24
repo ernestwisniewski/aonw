@@ -26,7 +26,7 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_local_runtime` | Transactional local-session lifecycle, player snapshots, query/command dispatch, and recipient-safe patches. |
 | `aonw_godot` | Thin GDExtension translating Godot calls into the framework-neutral local runtime. |
 | `aonw_flutter` | Panic-contained C ABI exposing the same client protocol to Flutter Native Assets. |
-| `aonw_testkit` | Bounded fixture/corpus loader, duplicate-key rejection, structural state/event/execution diff, and engine-neutral runner for the shared reducer-parity corpus. |
+| `aonw_testkit` | Bounded canonical fixture/corpus loader, duplicate-key rejection, structural output diff, and engine-neutral runner for current contracts. |
 
 The split enforces an inward dependency direction: contracts and domain do not
 depend on one another, content depends only on domain coordinates, map
@@ -43,8 +43,8 @@ and error conversion;
 local runtime sessions separate lifecycle, state, capabilities, and execution;
 the engine separates application commands, queries, transitions, context, and
 state-digest writing; the Godot adapter separates request parsing, response
-mapping, and bindings. Reducer-parity support separates input decoding, JSON
-helpers, and output projection from fixture execution.
+mapping, and bindings. Canonical fixture support separates strict parsing,
+bounded loading, structural comparison, and engine execution.
 
 ## Terrain compilation
 
@@ -82,8 +82,9 @@ AST census and exact field ledger run through
 `rust-engine-inventory-ast-check`. Together they compare 39 player commands,
 two trusted system commands, two queries, 40 Dart domain events, execution
 evidence, recipient projections, 30 Dart `DomainState` fields, 10 boundary
-envelopes, and all 120 reducer fixtures. The checker forbids claiming engine
-parity while the reducer adapter still preserves opaque Dart JSON.
+envelopes, and all 120 reducer fixtures. The inventory remains migration
+evidence; active Rust execution gates use only typed current contracts and do
+not preserve opaque Dart JSON.
 
 ## Greenfield compatibility policy
 
@@ -127,13 +128,15 @@ order in contiguous storage and use private sorted secondary indices for
 deterministic lookup. Boundary mappings validate all external input before
 domain construction. Release builds retain integer overflow checks.
 
-Reducer fixture version 2 requires ordered authoritative `movementExecutions`.
-The current static corpus contains 44 fixtures: 38 movement cases and six
-cancel/skip/fortify cases. Every fixture executes through canonical
-`GameEngine::apply` and compares the complete Dart state envelope, rejection,
-ordered events, and exact movement evidence. `aonw_testkit` accepts only the
-current fixture contract. Rust and Godot boundaries use strict, current-only
-codecs.
+The current canonical command corpus contains 44 fixtures covering movement
+and cancel/skip/fortify behavior. Each fixture owns a validated logical map,
+complete `GameStateDto`, typed command, rejection, ordered events, execution
+evidence, and complete returned state. Every case executes through
+`GameEngine::apply`; the result is encoded from the returned `GameState`
+without copying fields from the input or projecting into a historical shape.
+`aonw_testkit` accepts only canonical fixture contract version 3. That version
+remains because fixture files are shared artifacts consumed independently from
+the engine implementation.
 
 The characterization covers terrain bases and features, roads, partial and
 queued movement, occupancy and hidden information, cities, fog, complete
@@ -145,10 +148,10 @@ cultural hold counters plus ordered map-objective controllers and hold turns;
 the derived match outcome remains a future engine result, not duplicated state.
 The domain rejects unknown participants,
 self-relations, missing contacts, duplicate records, invalid score/turn ranges,
-and incoherent message or trade fields before constructing state. Both Dart
-reducers and Rust execute the same reviewed outcomes. Run
-`make rust-engine-oracle` only to regenerate review candidates; generation
-never blesses a changed oracle.
+and incoherent message or trade fields before constructing state. Historical
+version 2 reducer fixtures remain frozen read-only migration evidence outside
+the Rust workspace. No Rust reader, adapter, projection, gate, or generator
+consumes or rewrites them.
 
 ## Map content contract
 
@@ -161,9 +164,9 @@ wire rank, so enum source order cannot change canonical bytes.
 Versioned documents fail closed on missing, unknown, duplicated, or invalid
 fields and apply no compatibility defaults. Authored `MapDocument` values
 retain the schema's 5×5 minimum, while logical `MapDefinition` values accept
-smaller positive grids constructed inside deterministic engine test adapters,
-such as the existing 3×3 movement oracle. Map bounds expose canonical odd-q
-neighbors and row-major indices without allocation.
+smaller positive grids constructed inside deterministic canonical fixtures.
+Map bounds expose canonical odd-q neighbors and row-major indices without
+allocation.
 
 The actor is command/query context, not persisted state. `GameStateDto` is the
 strict current contract for all implemented authoritative state. It

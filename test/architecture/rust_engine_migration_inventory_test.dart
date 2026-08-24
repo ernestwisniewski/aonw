@@ -157,13 +157,14 @@ void main() {
     );
   });
 
-  test('partial JSON parity cannot claim engine parity', () {
-    expect(manifest.partialParityMode, 'opaque-splice');
+  test('full-state parity mode remains explicit after splice removal', () {
+    expect(manifest.partialParityMode, 'full-state');
     expect(
       manifest.entries.where(
         (entry) => _requiresFullStateParity.contains(entry.status),
       ),
       isEmpty,
+      reason: 'individual surfaces require their own promotion evidence',
     );
     expect(
       manifest.domainEntries.where((entry) => entry.rustVariant != null),

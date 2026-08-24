@@ -30,9 +30,10 @@
 #   projection-type <RustType> <kind> <status> <DtoType> <RustSource>
 #   projection-variant <RustVariant> <kind> <status> <DtoVariant>
 #
-# A Rust-backed command remains `characterized` while the current parity
-# adapter preserves opaque Dart JSON. It must not be promoted to
-# `engine-parity` until `partial-parity-mode` becomes `full-state`.
+# `full-state` records that active Rust parity fixtures own typed canonical
+# input and compare complete returned engine output without opaque JSON splice.
+# Individual surfaces still advance beyond `characterized` only when their own
+# acceptance evidence is complete.
 
 oracle-tree b83e4a513901403ab24e9d447feb5086edbdf9b9
 expected-domain-count 39
@@ -54,7 +55,7 @@ rust-evidence-source engine/crates/aonw_engine/src/application/transition.rs
 rust-persistence-source engine/crates/aonw_contracts/src/persistence.rs
 rust-client-response-source engine/crates/aonw_contracts/src/client/response.rs
 rust-projection-source engine/crates/aonw_local_runtime/src/player_view.rs
-partial-parity-mode opaque-splice
+partial-parity-mode full-state
 
 domain AssignMerchantTradeRouteCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain AssignWorkerToHexCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
