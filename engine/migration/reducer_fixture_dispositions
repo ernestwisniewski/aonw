@@ -14,8 +14,8 @@ authoritative-inventory engine/migration/authoritative_inventory
 expected-case-count 120
 expected-round-trip-count 9
 expected-engine-parity-count 9
-expected-blocked-count 96
-expected-historical-count 15
+expected-blocked-count 85
+expected-historical-count 26
 
 case artifact-city-slot-full-rejected artifacts StoreArtifactInCity rejected city_artifact_slot_full blocked reference-only CP12 awaits-independent-current-contract-review -
 case artifact-excavation-accepted artifacts StartArtifactExcavation accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
@@ -28,13 +28,13 @@ case artifact-unit-not-controlled-rejected artifacts StartArtifactExcavation rej
 case auto-explore-adjacent-accepted auto-explore AutoExploreUnit accepted - historical reference-only current superseded-by-current-contract -
 case auto-explore-no-target-rejected auto-explore AutoExploreUnit rejected auto_explore_no_target historical reference-only current superseded-by-current-contract -
 case auto-explore-wrong-actor-rejected auto-explore AutoExploreUnit rejected unit_not_controlled historical reference-only current superseded-by-current-contract -
-case city-expansion-accepted city-expansion SelectCityExpansionHex accepted - blocked reference-only CP10 awaits-independent-current-contract-review -
-case city-expansion-unavailable-rejected city-expansion SelectCityExpansionHex rejected city_expansion_hex_unavailable blocked reference-only CP10 awaits-independent-current-contract-review -
-case city-expansion-wrong-actor-rejected city-expansion SelectCityExpansionHex rejected city_not_controlled blocked reference-only CP10 awaits-independent-current-contract-review -
-case city-founding-controlled-hexes-invalid-rejected city-founding FoundCity rejected city_controlled_hexes_invalid blocked reference-only CP10 awaits-independent-current-contract-review -
-case city-founding-explicit-payload-accepted city-founding FoundCity accepted - blocked reference-only CP10 awaits-independent-current-contract-review -
-case city-founding-founder-not-controlled-rejected city-founding FoundCity rejected city_founder_not_controlled blocked reference-only CP10 awaits-independent-current-contract-review -
-case city-founding-founder-not-found-rejected city-founding FoundCity rejected city_founder_not_found blocked reference-only CP10 awaits-independent-current-contract-review -
+case city-expansion-accepted city-expansion SelectCityExpansionHex accepted - historical reference-only current superseded-by-current-contract -
+case city-expansion-unavailable-rejected city-expansion SelectCityExpansionHex rejected city_expansion_hex_unavailable historical reference-only current superseded-by-current-contract -
+case city-expansion-wrong-actor-rejected city-expansion SelectCityExpansionHex rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-founding-controlled-hexes-invalid-rejected city-founding FoundCity rejected city_controlled_hexes_invalid historical reference-only current superseded-by-current-contract -
+case city-founding-explicit-payload-accepted city-founding FoundCity accepted - historical reference-only current superseded-by-current-contract -
+case city-founding-founder-not-controlled-rejected city-founding FoundCity rejected city_founder_not_controlled historical reference-only current superseded-by-current-contract -
+case city-founding-founder-not-found-rejected city-founding FoundCity rejected city_founder_not_found historical reference-only current superseded-by-current-contract -
 case city-production-building-already-built-rejected city-production StartBuilding rejected building_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
 case city-production-building-locked-rejected city-production StartBuilding rejected building_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
 case city-production-building-map-requirement-rejected city-production StartBuilding rejected building_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
@@ -87,10 +87,10 @@ case city-production-wonder-same-target-rejected city-production StartWonder rej
 case city-production-wonder-wrong-actor-rejected city-production StartWonder rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
 case city-production-wonder-wrong-actor-unavailable-rejected city-production StartWonder rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
 case city-production-wrong-actor-rejected city-production StartBuilding rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-worked-hex-add-accepted city-worked-hex ToggleWorkedHex accepted - blocked reference-only CP10 awaits-independent-current-contract-review -
-case city-worked-hex-limit-reached-rejected city-worked-hex ToggleWorkedHex rejected worked_hex_limit_reached blocked reference-only CP10 awaits-independent-current-contract-review -
-case city-worked-hex-remove-accepted city-worked-hex ToggleWorkedHex accepted - blocked reference-only CP10 awaits-independent-current-contract-review -
-case city-worked-hex-wrong-actor-rejected city-worked-hex ToggleWorkedHex rejected city_not_controlled blocked reference-only CP10 awaits-independent-current-contract-review -
+case city-worked-hex-add-accepted city-worked-hex ToggleWorkedHex accepted - historical reference-only current superseded-by-current-contract -
+case city-worked-hex-limit-reached-rejected city-worked-hex ToggleWorkedHex rejected worked_hex_limit_reached historical reference-only current superseded-by-current-contract -
+case city-worked-hex-remove-accepted city-worked-hex ToggleWorkedHex accepted - historical reference-only current superseded-by-current-contract -
+case city-worked-hex-wrong-actor-rejected city-worked-hex ToggleWorkedHex rejected city_not_controlled historical reference-only current superseded-by-current-contract -
 case combat-target-not-found-rejected combat AttackHex rejected attack_target_not_found historical reference-only current superseded-by-current-contract -
 case combat-visible-unit-accepted combat AttackHex accepted - historical reference-only current superseded-by-current-contract -
 case combat-wrong-actor-rejected combat AttackHex rejected attacker_not_controlled historical reference-only current superseded-by-current-contract -

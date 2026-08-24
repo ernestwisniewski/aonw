@@ -440,13 +440,32 @@ require_dart_class() {
   ' "${repo_root}/${source_path}" || fail "Dart class ${type_name} missing from ${source_path}"
 }
 
-require_rust_type() {
-  local source_path="$1"
+rust_type_declared_in() {
+  local source_file="$1"
   local type_name="$2"
   awk -v type_name="${type_name}" '
     $0 ~ "^[[:space:]]*pub (struct|enum)[[:space:]]+" type_name "([[:space:]<{]|$)" { found = 1 }
     END { exit found ? 0 : 1 }
-  ' "${repo_root}/${source_path}" || fail "Rust type ${type_name} missing from ${source_path}"
+  ' "${source_file}"
+}
+
+require_rust_type() {
+  local source_path="$1"
+  local type_name="$2"
+  local source_file="${repo_root}/${source_path}"
+  if rust_type_declared_in "${source_file}" "${type_name}"; then
+    return
+  fi
+  local module_dir="${source_file%.rs}"
+  if [[ -d "${module_dir}" ]]; then
+    local module_source
+    while IFS= read -r module_source; do
+      if rust_type_declared_in "${module_source}" "${type_name}"; then
+        return
+      fi
+    done < <(find "${module_dir}" -type f -name '*.rs' -print)
+  fi
+  fail "Rust type ${type_name} missing from ${source_path} or its module tree"
 }
 
 domain_actual="${scratch}/domain.actual"

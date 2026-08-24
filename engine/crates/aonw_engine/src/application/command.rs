@@ -8,13 +8,24 @@ use crate::movement::{merge_discovered_contacts, recompute_after_move};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
 use crate::{
     AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand, DetachTroopCommand,
-    EngineContext, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, StateDigest,
-    TurnCommand, UnitActionCommand,
+    EngineContext, FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
+    SelectCityExpansionHexCommand, StateDigest, ToggleWorkedHexCommand, TurnCommand,
+    UnitActionCommand,
 };
+
+mod canonical_transition;
+
+use canonical_transition::{apply_city, apply_combat};
 
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
 pub enum PlayerCommand<'command> {
+    /// Schedules a validated city-founding job.
+    FoundCity(FoundCityCommand<'command>),
+    /// Toggles one manually worked controlled coordinate.
+    ToggleWorkedHex(ToggleWorkedHexCommand<'command>),
+    /// Selects the preferred next territory expansion.
+    SelectCityExpansionHex(SelectCityExpansionHexCommand<'command>),
     /// Resolves one visible unit or city attack.
     AttackHex(AttackHexCommand<'command>),
     /// Revision-bound manual unit movement.
@@ -83,9 +94,12 @@ impl PlayerCommand<'_> {
             | Self::AssignMerchantTradeRoute(_)
             | Self::MoveMerchantToCity(_)
             | Self::DetachTroop(_) => EventBudget::SINGLE,
-            Self::CancelUnitAction(_) | Self::SkipUnitTurn(_) | Self::FortifyUnit(_) => {
-                EventBudget::NONE
-            }
+            Self::FoundCity(_)
+            | Self::ToggleWorkedHex(_)
+            | Self::SelectCityExpansionHex(_)
+            | Self::CancelUnitAction(_)
+            | Self::SkipUnitTurn(_)
+            | Self::FortifyUnit(_) => EventBudget::NONE,
             Self::EndTurn(_) => {
                 let units = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
                 EventBudget::new(units.saturating_add(1))
@@ -120,6 +134,10 @@ pub enum CanonicalEngineError {
     TurnLifecycle(TurnLifecycleBuildError),
     /// Applying combat diplomacy violates diplomacy invariants.
     Diplomacy(DiplomacyStateBuildError),
+    /// Technology content referenced by canonical city rules is incomplete.
+    Technology(crate::TechnologyQueryError),
+    /// A validated city-founding job could not construct canonical state.
+    CityFounding(Box<str>),
 }
 
 impl core::fmt::Display for CanonicalEngineError {
@@ -129,6 +147,8 @@ impl core::fmt::Display for CanonicalEngineError {
             Self::State(source) => source.fmt(formatter),
             Self::TurnLifecycle(source) => source.fmt(formatter),
             Self::Diplomacy(source) => source.fmt(formatter),
+            Self::Technology(source) => source.fmt(formatter),
+            Self::CityFounding(source) => write!(formatter, "city founding failed: {source}"),
         }
     }
 }
@@ -150,6 +170,18 @@ impl GameEngine {
         let (map_hash, ruleset_hash) = content_hashes(context)?;
         let map = context.map();
         match command {
+            PlayerCommand::FoundCity(command) => {
+                let mutation = crate::city::apply_found_city(&state, context, command);
+                apply_city(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::ToggleWorkedHex(command) => {
+                let mutation = crate::city::apply_toggle_worked_hex(&state, context, command);
+                apply_city(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::SelectCityExpansionHex(command) => {
+                let mutation = crate::city::apply_select_expansion(&state, context, command);
+                apply_city(state, mutation, map_hash, ruleset_hash)
+            }
             PlayerCommand::AttackHex(command) => {
                 let update = crate::combat::apply(&state, context, command);
                 apply_combat(state, update, map_hash, ruleset_hash)
@@ -233,46 +265,6 @@ impl GameEngine {
     pub fn state_digest(state: &GameState) -> StateDigest {
         crate::state_digest::digest_state(state)
     }
-}
-
-fn apply_combat(
-    state: GameState,
-    update: Result<crate::combat::CombatUpdate, crate::combat::CombatApplyError>,
-    map_hash: ContentHash,
-    ruleset_hash: ContentHash,
-) -> Result<DomainTransition, CanonicalEngineError> {
-    let update = match update {
-        Ok(value) => value,
-        Err(crate::combat::CombatApplyError::Rejected(rejection)) => {
-            return Ok(DomainTransition::rejected(
-                state,
-                rejection,
-                map_hash,
-                ruleset_hash,
-            ));
-        }
-        Err(crate::combat::CombatApplyError::Diplomacy(error)) => {
-            return Err(CanonicalEngineError::Diplomacy(error));
-        }
-    };
-    let next = state
-        .into_after_combat(aonw_domain::CombatStateUpdate {
-            revision: update.revision,
-            units: update.units,
-            cities: update.cities,
-            artifacts: update.artifacts,
-            combat: update.combat,
-            fog_of_war: update.fog_of_war,
-            diplomacy: update.diplomacy,
-        })
-        .map_err(CanonicalEngineError::State)?;
-    Ok(DomainTransition::accepted(
-        next,
-        update.events,
-        Some(ExecutionEvidence::Combat(update.evidence)),
-        map_hash,
-        ruleset_hash,
-    ))
 }
 
 fn apply_movement_logistics<Command>(

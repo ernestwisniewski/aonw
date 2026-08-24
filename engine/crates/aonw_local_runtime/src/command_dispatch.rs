@@ -1,16 +1,18 @@
-use core::cmp::Ordering;
-
 use aonw_contracts::{ReplayCommandDto, ReplayRecordDto};
 use aonw_domain::{CityConquestAction, CityId, HexCoord, TroopKind, UnitId};
 use aonw_engine::{
     AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand,
-    CommandRejectionCode, DetachTroopCommand, DomainEvent, ExecutionEvidence, GameEngine,
-    MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand, UnitActionCommand,
+    CommandRejectionCode, DetachTroopCommand, DomainEvent, ExecutionEvidence, FoundCityCommand,
+    GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand,
+    SelectCityExpansionHexCommand, ToggleWorkedHexCommand, UnitActionCommand,
 };
 
 mod disclosure;
+mod view_diff;
 
 pub(crate) use disclosure::{RecipientDisclosure, visible_city_ids};
+pub use view_diff::PlayerViewPatch;
+pub(crate) use view_diff::{ProjectedView, diff_view};
 
 /// Current revision-bound visible attack.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -27,7 +29,7 @@ pub struct AttackHexRequest {
 
 use crate::persistence::{replay_context, replay_entry};
 use crate::player_view::{
-    PendingActionView, PlayerTurnLifecycleView, PlayerUnitView, pending_action, visible_units,
+    PlayerTurnLifecycleView, city_founding_draft, pending_action, visible_cities, visible_units,
 };
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
@@ -40,6 +42,39 @@ pub struct MoveUnitRequest {
     /// Unit to move.
     pub unit_id: UnitId,
     /// Requested target.
+    pub target: HexCoord,
+}
+
+/// Current revision-bound city-founding command.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FoundCityRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled founder.
+    pub founder_unit_id: UnitId,
+    /// Complete initial non-center territory.
+    pub controlled_hexes: Box<[HexCoord]>,
+}
+
+/// Current revision-bound manual worked-hex command.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ToggleWorkedHexRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled city.
+    pub city_id: CityId,
+    /// Non-center controlled coordinate.
+    pub target: HexCoord,
+}
+
+/// Current revision-bound preferred-expansion command.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SelectCityExpansionHexRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled city.
+    pub city_id: CityId,
+    /// Current engine-owned candidate.
     pub target: HexCoord,
 }
 
@@ -90,23 +125,6 @@ pub(crate) enum RuntimeUnitActionKind {
     Fortify,
 }
 
-/// Recipient-safe view delta produced by one dispatch.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PlayerViewPatch {
-    /// Revision the patch applies to.
-    pub from_revision: u64,
-    /// Revision after the patch.
-    pub to_revision: u64,
-    /// Replacement turn projection when lifecycle state changed.
-    pub turn_lifecycle: Option<PlayerTurnLifecycleView>,
-    /// New or changed visible units.
-    pub upserted_units: Box<[PlayerUnitView]>,
-    /// Units no longer visible.
-    pub removed_unit_ids: Box<[UnitId]>,
-    /// Current action awaiting input from this recipient.
-    pub pending_action: Option<PendingActionView>,
-}
-
 /// Complete local result of one authoritative command dispatch.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommandResult {
@@ -129,6 +147,82 @@ impl CommandResult {
     pub const fn is_accepted(&self) -> bool {
         self.rejection.is_none()
     }
+}
+
+pub(crate) fn dispatch_found_city(
+    session: &mut Session,
+    command: &FoundCityRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::FoundCity(FoundCityCommand::new(
+            command.expected_revision,
+            &command.founder_unit_id,
+            &command.controlled_hexes,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::FoundCity {
+                expected_revision: command.expected_revision,
+                founder_unit_id: command.founder_unit_id.as_str().to_owned(),
+                controlled_hexes: command
+                    .controlled_hexes
+                    .iter()
+                    .map(|coordinate| aonw_contracts::CoordinateDto {
+                        col: coordinate.col(),
+                        row: coordinate.row(),
+                    })
+                    .collect(),
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_toggle_worked_hex(
+    session: &mut Session,
+    command: &ToggleWorkedHexRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::ToggleWorkedHex(ToggleWorkedHexCommand::new(
+            command.expected_revision,
+            &command.city_id,
+            command.target,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::ToggleWorkedHex {
+                expected_revision: command.expected_revision,
+                city_id: command.city_id.as_str().to_owned(),
+                target: aonw_contracts::CoordinateDto {
+                    col: command.target.col(),
+                    row: command.target.row(),
+                },
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_select_city_expansion_hex(
+    session: &mut Session,
+    command: &SelectCityExpansionHexRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::SelectCityExpansionHex(SelectCityExpansionHexCommand::new(
+            command.expected_revision,
+            &command.city_id,
+            command.target,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::SelectCityExpansionHex {
+                expected_revision: command.expected_revision,
+                city_id: command.city_id.as_str().to_owned(),
+                target: aonw_contracts::CoordinateDto {
+                    col: command.target.col(),
+                    row: command.target.row(),
+                },
+            },
+        },
+    )
 }
 
 pub(crate) fn dispatch_move(
@@ -319,6 +413,7 @@ pub(crate) fn dispatch_player(
     let before_revision = session.state().revision().get();
     let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
+    let before_city_view = visible_cities(session.state(), session.actor());
     let before_visible_city_ids = visible_city_ids(session.state(), session.actor());
     let state = session.take_state();
     let transition = GameEngine::apply_player_owned(state, session.context(), command)
@@ -330,8 +425,10 @@ pub(crate) fn dispatch_player(
     session.commit_event_reservation(event_reservation, events.len())?;
     session.replace_state(parts.state, parts.digest);
     let after_view = visible_units(session.state(), session.actor());
+    let after_city_view = visible_cities(session.state(), session.actor());
     let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());
+    let after_founding_draft = city_founding_draft(session.state(), session.actor());
     let recipient_disclosure = RecipientDisclosure::new(
         session.actor().clone(),
         &before_view,
@@ -341,11 +438,10 @@ pub(crate) fn dispatch_player(
     let view_patch = diff_view(
         before_revision,
         session.state().revision().get(),
-        before_turn,
-        after_turn,
-        before_view,
-        after_view,
+        ProjectedView::new(before_turn, before_view, before_city_view),
+        ProjectedView::new(after_turn, after_view, after_city_view),
         after_pending,
+        after_founding_draft,
     );
     let result = CommandResult {
         stamp: session.stamp(),
@@ -358,103 +454,4 @@ pub(crate) fn dispatch_player(
     let replay = replay_entry(session, replay_record, before_context, &result);
     session.push_replay(replay);
     Ok(result)
-}
-
-pub(crate) fn diff_view(
-    from_revision: u64,
-    to_revision: u64,
-    before_turn: PlayerTurnLifecycleView,
-    after_turn: PlayerTurnLifecycleView,
-    before: Vec<PlayerUnitView>,
-    after: Vec<PlayerUnitView>,
-    pending_action: Option<PendingActionView>,
-) -> PlayerViewPatch {
-    debug_assert!(before.windows(2).all(|pair| pair[0].id() < pair[1].id()));
-    debug_assert!(after.windows(2).all(|pair| pair[0].id() < pair[1].id()));
-    let mut before = before.into_iter().peekable();
-    let mut after = after.into_iter().peekable();
-    let mut upserted_units = Vec::new();
-    let mut removed_unit_ids = Vec::new();
-    while let (Some(previous), Some(current)) = (before.peek(), after.peek()) {
-        match previous.id().cmp(current.id()) {
-            Ordering::Less => {
-                if let Some(previous) = before.next() {
-                    removed_unit_ids.push(previous.id().clone());
-                }
-            }
-            Ordering::Equal => {
-                if let (Some(previous), Some(current)) = (before.next(), after.next())
-                    && previous != current
-                {
-                    upserted_units.push(current);
-                }
-            }
-            Ordering::Greater => {
-                if let Some(current) = after.next() {
-                    upserted_units.push(current);
-                }
-            }
-        }
-    }
-    removed_unit_ids.extend(before.map(|unit| unit.id().clone()));
-    upserted_units.extend(after);
-    PlayerViewPatch {
-        from_revision,
-        to_revision,
-        turn_lifecycle: (before_turn != after_turn).then_some(after_turn),
-        upserted_units: upserted_units.into_boxed_slice(),
-        removed_unit_ids: removed_unit_ids.into_boxed_slice(),
-        pending_action,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use aonw_domain::{HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind};
-
-    use super::diff_view;
-    use crate::player_view::PlayerUnitView;
-
-    #[test]
-    fn sorted_view_diff_reports_updates_insertions_and_removals() {
-        let before = vec![view("unit-a", 0), view("unit-b", 1)];
-        let after = vec![view("unit-b", 2), view("unit-c", 3)];
-
-        let turn = super::PlayerTurnLifecycleView::default();
-        let patch = diff_view(4, 5, turn, turn, before, after, None);
-
-        assert_eq!(patch.from_revision, 4);
-        assert_eq!(patch.to_revision, 5);
-        assert_eq!(
-            patch
-                .upserted_units
-                .iter()
-                .map(|unit| unit.id().as_str())
-                .collect::<Vec<_>>(),
-            ["unit-b", "unit-c"]
-        );
-        assert_eq!(
-            patch
-                .removed_unit_ids
-                .iter()
-                .map(UnitId::as_str)
-                .collect::<Vec<_>>(),
-            ["unit-a"]
-        );
-        assert_eq!(patch.pending_action, None);
-    }
-
-    fn view(id: &str, col: i32) -> PlayerUnitView {
-        let unit = Unit::builder(
-            UnitId::new(id).expect("unit id"),
-            PlayerId::new("player-1").expect("player id"),
-            UnitKind::Commander,
-            "Commander",
-            HexCoord::new(col, 0),
-            MovementUnits::new(10),
-        )
-        .build()
-        .expect("unit");
-        PlayerUnitView::from_unit(&unit)
-    }
 }

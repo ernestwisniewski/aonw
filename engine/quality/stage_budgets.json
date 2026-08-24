@@ -63,9 +63,9 @@
       "timeout-invalid-scope-rejected"
     ],
     "maxEventsPerCommand": 4,
-    "maxMeasuredPayloadBytes": 210523,
-    "maxMeasuredAllocations": 25222,
-    "maxMeasuredAllocatedBytes": 4431993,
+    "maxMeasuredPayloadBytes": 210578,
+    "maxMeasuredAllocations": 25225,
+    "maxMeasuredAllocatedBytes": 4432359,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -130,9 +130,9 @@
       "technology-modifiers"
     ],
     "maxEventsPerCommand": 7,
-    "maxMeasuredPayloadBytes": 1880,
+    "maxMeasuredPayloadBytes": 1945,
     "maxMeasuredAllocations": 139205,
-    "maxMeasuredAllocatedBytes": 100466364,
+    "maxMeasuredAllocatedBytes": 100466366,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -145,6 +145,42 @@
       "engine/combat_",
       "runtime/client_json_combat_",
       "runtime/runtime_combat_"
+    ]
+  },
+  "C4": {
+    "target": "rust-city-check",
+    "capabilities": [
+      "FoundCity",
+      "SelectCityExpansionHex",
+      "ToggleWorkedHex"
+    ],
+    "fixtureIds": [
+      "atomic-invalid-founding",
+      "canonical-controlled-worked-order",
+      "commander-settler-consumption",
+      "expansion-ranking-selection",
+      "fog-and-recipient-safety",
+      "founding-completion",
+      "founding-draft-save-reopen",
+      "founding-legality-query",
+      "rejection-precedence",
+      "replay-exactness",
+      "worked-hex-limit-toggle"
+    ],
+    "maxEventsPerCommand": 1,
+    "maxMeasuredPayloadBytes": 1,
+    "maxMeasuredAllocations": 2073,
+    "maxMeasuredAllocatedBytes": 299555,
+    "maxWorkCounters": {
+      "frontierPops": 0,
+      "expandedTiles": 0,
+      "examinedEdges": 0,
+      "heapPushes": 0,
+      "routeRecords": 0
+    },
+    "soakIterations": 20,
+    "workloadPrefixes": [
+      "engine/city_"
     ]
   }
 }

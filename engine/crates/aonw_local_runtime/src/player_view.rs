@@ -5,6 +5,11 @@ use aonw_domain::{
 
 use crate::SessionStamp;
 
+mod city;
+
+pub use city::{CityFoundingDraftView, OwnedCityPlanningView, PlayerCityView};
+pub(crate) use city::{city_founding_draft, visible_cities};
+
 /// Recipient-safe unit view for local presentation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlayerUnitView {
@@ -115,7 +120,9 @@ pub struct PlayerViewSnapshot {
     turn: u32,
     turn_lifecycle: PlayerTurnLifecycleView,
     pending_action: Option<PendingActionView>,
+    city_founding_draft: Option<CityFoundingDraftView>,
     units: Box<[PlayerUnitView]>,
+    cities: Box<[PlayerCityView]>,
 }
 
 impl PlayerViewSnapshot {
@@ -125,7 +132,9 @@ impl PlayerViewSnapshot {
             turn: state.turn(),
             turn_lifecycle: PlayerTurnLifecycleView::new(state, actor),
             pending_action: pending_action(state, actor),
+            city_founding_draft: city_founding_draft(state, actor),
             units: visible_units(state, actor).into_boxed_slice(),
+            cities: visible_cities(state, actor).into_boxed_slice(),
         }
     }
 
@@ -149,10 +158,20 @@ impl PlayerViewSnapshot {
     pub const fn pending_action(&self) -> Option<&PendingActionView> {
         self.pending_action.as_ref()
     }
+    /// Returns the recipient-owned persisted founding workflow.
+    #[must_use]
+    pub const fn city_founding_draft(&self) -> Option<&CityFoundingDraftView> {
+        self.city_founding_draft.as_ref()
+    }
     /// Returns all units visible to this local player.
     #[must_use]
     pub const fn units(&self) -> &[PlayerUnitView] {
         &self.units
+    }
+    /// Returns all cities known to this recipient.
+    #[must_use]
+    pub const fn cities(&self) -> &[PlayerCityView] {
+        &self.cities
     }
 }
 

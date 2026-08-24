@@ -52,7 +52,9 @@ fn player_snapshot() -> PlayerViewSnapshotDto {
             unit_id: "unit-1".to_owned(),
             improvement: Some(FieldImprovementKindDto::Farm),
         }),
+        city_founding_draft: None,
         units: vec![unit()],
+        cities: Vec::new(),
     }
 }
 
@@ -80,7 +82,10 @@ fn command_result() -> ClientCommandResultDto {
             turn_lifecycle: None,
             upserted_units: vec![unit()],
             removed_unit_ids: Vec::new(),
+            upserted_cities: Vec::new(),
+            removed_city_ids: Vec::new(),
             pending_action: None,
+            city_founding_draft: None,
         },
     }
 }

@@ -265,6 +265,7 @@ pub(super) fn transition_with_phase_evidence(
     movement_executions: Vec<UnitMovementExecution>,
     invalidated_order_unit_ids: Vec<aonw_domain::UnitId>,
     finished_auto_explore_unit_ids: Vec<aonw_domain::UnitId>,
+    founded_city_ids: Vec<aonw_domain::CityId>,
 ) -> DomainTransition {
     let parts = transition.into_parts();
     let processors = match parts.evidence {
@@ -282,6 +283,7 @@ pub(super) fn transition_with_phase_evidence(
                 movement_executions,
                 invalidated_order_unit_ids,
                 finished_auto_explore_unit_ids,
+                founded_city_ids,
             ),
         )),
         parts.map_hash,

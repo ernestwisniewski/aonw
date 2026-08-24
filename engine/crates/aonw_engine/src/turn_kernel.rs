@@ -1,3 +1,4 @@
+mod city_phase;
 mod support;
 
 use std::collections::BTreeSet;
@@ -19,6 +20,7 @@ use self::support::{
     transition_with_phase_evidence, unsupported_processor_for_scope, valid_system_scope,
     validate_player_command,
 };
+use city_phase::advance_city_phase;
 
 impl GameEngine {
     /// Applies one host-owned lifecycle command through a boundary that has no player identity.
@@ -131,6 +133,13 @@ pub(crate) fn apply_end_turn(
             ruleset_hash,
         ));
     }
+    let city = advance_city_phase(
+        state,
+        context.map(),
+        context.ruleset(),
+        &progress.reset_scope,
+    )?;
+    let state = city.state;
     let movement = match advance_turn_movement(
         &state,
         context.map(),
@@ -171,6 +180,7 @@ pub(crate) fn apply_end_turn(
     let mut events = vec![DomainEvent::TurnEnded(TurnEndedEvent::new(
         command.player_id().clone(),
     ))];
+    events.extend(city.events);
     events.extend(movement_events);
     apply_update(
         state,
@@ -183,6 +193,7 @@ pub(crate) fn apply_end_turn(
         events.into_boxed_slice(),
         [
             TurnProcessor::Lifecycle,
+            TurnProcessor::CityFounding,
             TurnProcessor::MovementReset,
             TurnProcessor::QueuedMovement,
             TurnProcessor::TradeRoutes,
@@ -200,6 +211,7 @@ pub(crate) fn apply_end_turn(
             executions,
             invalidated_order_unit_ids,
             finished_auto_explore_unit_ids,
+            city.founded_city_ids,
         )
     })
 }
@@ -352,19 +364,12 @@ fn finalize_simultaneous(
     )?;
     let current_turn = state.turn();
     let combat =
-        crate::combat::resolve_intended_attacks(state, map, ruleset).map_err(
-            |error| match error {
-                crate::combat::CombatPhaseError::Diplomacy(source) => {
-                    CanonicalEngineError::Diplomacy(source)
-                }
-                crate::combat::CombatPhaseError::State(source) => {
-                    CanonicalEngineError::State(source)
-                }
-            },
-        )?;
-    let movement = match advance_turn_movement(&combat.state, map, ruleset, scope) {
+        crate::combat::resolve_intended_attacks(state, map, ruleset).map_err(combat_phase_error)?;
+    let city = advance_city_phase(combat.state, map, ruleset, scope)?;
+    let state_after_city = city.state;
+    let movement = match advance_turn_movement(&state_after_city, map, ruleset, scope) {
         Ok(movement) => movement,
-        Err(code) => return Ok(reject(combat.state, code, map_hash, ruleset_hash)),
+        Err(code) => return Ok(reject(state_after_city, code, map_hash, ruleset_hash)),
     };
     let mut events = skipped
         .iter()
@@ -375,6 +380,7 @@ fn finalize_simultaneous(
         AllPlayersSubmittedEvent::new(current_turn, scope.to_vec()),
     ));
     events.extend(combat.events.iter().cloned());
+    events.extend(city.events);
     events.extend(
         scope
             .iter()
@@ -395,7 +401,7 @@ fn finalize_simultaneous(
     } = movement;
     events.extend(movement_events);
     apply_update(
-        combat.state,
+        state_after_city,
         lifecycle,
         Some(next_turn),
         units,
@@ -407,6 +413,7 @@ fn finalize_simultaneous(
             TurnProcessor::Submission,
             TurnProcessor::Lifecycle,
             TurnProcessor::Combat,
+            TurnProcessor::CityFounding,
             TurnProcessor::MovementReset,
             TurnProcessor::QueuedMovement,
             TurnProcessor::TradeRoutes,
@@ -424,8 +431,18 @@ fn finalize_simultaneous(
             executions,
             invalidated_order_unit_ids,
             finished_auto_explore_unit_ids,
+            city.founded_city_ids,
         )
     })
+}
+
+fn combat_phase_error(error: crate::combat::CombatPhaseError) -> CanonicalEngineError {
+    match error {
+        crate::combat::CombatPhaseError::Diplomacy(source) => {
+            CanonicalEngineError::Diplomacy(source)
+        }
+        crate::combat::CombatPhaseError::State(source) => CanonicalEngineError::State(source),
+    }
 }
 
 fn simultaneous_lifecycle(

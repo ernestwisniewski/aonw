@@ -210,9 +210,9 @@ def parse_csv(source: str, scope: str, header: list[str]) -> tuple[dict[str, Any
 
 def load_stages(path: Path) -> dict[str, dict[str, Any]]:
     raw = read_json(path, "stage budgets")
-    if not isinstance(raw, dict) or set(raw) != {"E0", "T1", "U2", "C3"}:
+    if not isinstance(raw, dict) or set(raw) != {"E0", "T1", "U2", "C3", "C4"}:
         raise PerformanceFailure(
-            "stage budgets must contain exactly active stages E0, T1, U2 and C3"
+            "stage budgets must contain exactly active stages E0, T1, U2, C3 and C4"
         )
     expected = {
         "E0": {
@@ -249,6 +249,15 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
             "target": "rust-combat-check",
             "capabilities": ["AttackHex"],
             "fixtureCount": 9,
+        },
+        "C4": {
+            "target": "rust-city-check",
+            "capabilities": [
+                "FoundCity",
+                "SelectCityExpansionHex",
+                "ToggleWorkedHex",
+            ],
+            "fixtureCount": 11,
         },
     }
     stages: dict[str, dict[str, Any]] = {}
@@ -396,6 +405,34 @@ def validate_c3_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("C3 event budget cannot cover combat resolution")
 
 
+def validate_c4_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
+    manifest = read_json(
+        repo_root / "engine/fixtures/city/manifest.json",
+        "C4 fixture manifest",
+    )
+    if not isinstance(manifest, dict) or manifest.get("capability") != "city-territory-ready":
+        raise PerformanceFailure("C4 fixture manifest capability differs")
+    cases = manifest.get("cases")
+    if not isinstance(cases, list) or sorted(cases) != stage["fixtureIds"]:
+        raise PerformanceFailure("C4 fixture IDs differ from the stage budget")
+    if manifest.get("commands") != [
+        "foundCity",
+        "selectCityExpansionHex",
+        "toggleWorkedHex",
+    ]:
+        raise PerformanceFailure("C4 command inventory differs")
+    if manifest.get("queries") != [
+        "cityExpansionOptions",
+        "cityFoundingOptions",
+        "cityWorkedHexOptions",
+    ]:
+        raise PerformanceFailure("C4 query inventory differs")
+    if manifest.get("turnProcessors") != ["cityFounding"]:
+        raise PerformanceFailure("C4 turn processor inventory differs")
+    if stage["maxEventsPerCommand"] < 1:
+        raise PerformanceFailure("C4 event budget cannot cover founding completion")
+
+
 def validate_stages(
     stages: dict[str, dict[str, Any]], stable: dict[str, Any], repo_root: Path
 ) -> None:
@@ -403,6 +440,7 @@ def validate_stages(
     validate_t1_fixtures(stages["T1"], repo_root)
     validate_u2_fixtures(stages["U2"], repo_root)
     validate_c3_fixtures(stages["C3"], repo_root)
+    validate_c4_fixtures(stages["C4"], repo_root)
     for name, stage in stages.items():
         selected = {
             key: workload
@@ -479,7 +517,7 @@ def build_report(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
     validate_stages(stages, stable, repo_root)
     return {
         "provenance": provenance(),
-        "stage": "C3",
+        "stage": "C4",
         "stable": dict(sorted(stable.items())),
         "diagnosticTimings": dict(sorted({**engine_timings, **runtime_timings}.items())),
     }

@@ -108,11 +108,41 @@ pub enum ClientCommandRejectionCodeDto {
     AttackTargetOutOfRange,
     /// The target city has no health.
     AttackCityHasNoHealth,
+    /// The requested city founder does not exist.
+    CityFounderNotFound,
+    /// The actor cannot command the requested founder.
+    CityFounderNotControlled,
+    /// The founder is already performing work.
+    CityFounderBusy,
+    /// The unit cannot found cities.
+    CityFounderInvalid,
+    /// A commander has no settler troop.
+    CityFounderNoSettlers,
+    /// The center tile cannot host a city.
+    CitySiteInvalid,
+    /// Another city occupies the center.
+    CityCenterOccupied,
+    /// Another city controls the center.
+    CityCenterClaimed,
+    /// The center is too close to another city.
+    CityCenterTooClose,
+    /// Initial territory is invalid.
+    CityControlledHexesInvalid,
+    /// The requested city does not exist.
+    CityNotFound,
+    /// The actor cannot manage the city.
+    CityNotControlled,
+    /// The requested worked hex is unavailable.
+    WorkedHexUnavailable,
+    /// The manual worked-hex limit was reached.
+    WorkedHexLimitReached,
+    /// The expansion coordinate is unavailable.
+    CityExpansionHexUnavailable,
 }
 
 impl ClientCommandRejectionCodeDto {
     /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 52] = [
+    pub const ALL: [Self; 67] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -165,6 +195,21 @@ impl ClientCommandRejectionCodeDto {
         Self::AttackTargetProtectedByTreaty,
         Self::AttackTargetOutOfRange,
         Self::AttackCityHasNoHealth,
+        Self::CityFounderNotFound,
+        Self::CityFounderNotControlled,
+        Self::CityFounderBusy,
+        Self::CityFounderInvalid,
+        Self::CityFounderNoSettlers,
+        Self::CitySiteInvalid,
+        Self::CityCenterOccupied,
+        Self::CityCenterClaimed,
+        Self::CityCenterTooClose,
+        Self::CityControlledHexesInvalid,
+        Self::CityNotFound,
+        Self::CityNotControlled,
+        Self::WorkedHexUnavailable,
+        Self::WorkedHexLimitReached,
+        Self::CityExpansionHexUnavailable,
     ];
 
     /// Returns the stable snake-case wire value.
@@ -223,6 +268,21 @@ impl ClientCommandRejectionCodeDto {
             Self::AttackTargetProtectedByTreaty => "attack_target_protected_by_treaty",
             Self::AttackTargetOutOfRange => "attack_target_out_of_range",
             Self::AttackCityHasNoHealth => "attack_city_has_no_health",
+            Self::CityFounderNotFound => "city_founder_not_found",
+            Self::CityFounderNotControlled => "city_founder_not_controlled",
+            Self::CityFounderBusy => "city_founder_busy",
+            Self::CityFounderInvalid => "city_founder_invalid",
+            Self::CityFounderNoSettlers => "city_founder_no_settlers",
+            Self::CitySiteInvalid => "city_site_invalid",
+            Self::CityCenterOccupied => "city_center_occupied",
+            Self::CityCenterClaimed => "city_center_claimed",
+            Self::CityCenterTooClose => "city_center_too_close",
+            Self::CityControlledHexesInvalid => "city_controlled_hexes_invalid",
+            Self::CityNotFound => "city_not_found",
+            Self::CityNotControlled => "city_not_controlled",
+            Self::WorkedHexUnavailable => "worked_hex_unavailable",
+            Self::WorkedHexLimitReached => "worked_hex_limit_reached",
+            Self::CityExpansionHexUnavailable => "city_expansion_hex_unavailable",
         }
     }
 }

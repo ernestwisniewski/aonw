@@ -7,10 +7,12 @@ use aonw_engine::{
 
 use crate::RuntimeError;
 use crate::command_dispatch::{
-    CommandResult, RecipientDisclosure, diff_view, dispatch_player, visible_city_ids,
+    CommandResult, ProjectedView, RecipientDisclosure, diff_view, dispatch_player, visible_city_ids,
 };
 use crate::persistence::{replay_context, replay_entry};
-use crate::player_view::{PlayerTurnLifecycleView, pending_action, visible_units};
+use crate::player_view::{
+    PlayerTurnLifecycleView, city_founding_draft, pending_action, visible_cities, visible_units,
+};
 use crate::session::Session;
 
 /// Revision-bound `EndTurn` or `SubmitTurn` request from the local authenticated actor.
@@ -139,6 +141,7 @@ fn dispatch_system(
     let before_revision = session.state().revision().get();
     let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
+    let before_city_view = visible_cities(session.state(), session.actor());
     let before_visible_city_ids = visible_city_ids(session.state(), session.actor());
     let state = session.take_state();
     let transition = GameEngine::apply_system_owned(state, session.system_context(), command)
@@ -150,6 +153,7 @@ fn dispatch_system(
     session.commit_event_reservation(event_reservation, events.len())?;
     session.replace_state(parts.state, parts.digest);
     let after_view = visible_units(session.state(), session.actor());
+    let after_city_view = visible_cities(session.state(), session.actor());
     let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());
     let recipient_disclosure = RecipientDisclosure::new(
@@ -166,11 +170,10 @@ fn dispatch_system(
         view_patch: diff_view(
             before_revision,
             session.state().revision().get(),
-            before_turn,
-            after_turn,
-            before_view,
-            after_view,
+            ProjectedView::new(before_turn, before_view, before_city_view),
+            ProjectedView::new(after_turn, after_view, after_city_view),
             after_pending,
+            city_founding_draft(session.state(), session.actor()),
         ),
         recipient_disclosure,
     };

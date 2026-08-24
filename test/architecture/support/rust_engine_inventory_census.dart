@@ -111,9 +111,27 @@ Set<String> _rustStructNames(String sourcePath) => {
   for (final match in RegExp(
     r'^\s*pub struct\s+([A-Z][A-Za-z0-9_]*)',
     multiLine: true,
-  ).allMatches(File(sourcePath).readAsStringSync()))
+  ).allMatches(_rustModuleTreeSource(sourcePath)))
     match.group(1)!,
 };
+
+String _rustModuleTreeSource(String sourcePath) {
+  final sources = [File(sourcePath).readAsStringSync()];
+  final moduleDirectory = Directory(
+    sourcePath.substring(0, sourcePath.length - 3),
+  );
+  if (moduleDirectory.existsSync()) {
+    final modules =
+        moduleDirectory
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => file.path.endsWith('.rs'))
+            .toList()
+          ..sort((left, right) => left.path.compareTo(right.path));
+    sources.addAll(modules.map((file) => file.readAsStringSync()));
+  }
+  return sources.join('\n');
+}
 
 Set<String> _rustDataTypeNames(String sourcePath) => {
   for (final match in RegExp(

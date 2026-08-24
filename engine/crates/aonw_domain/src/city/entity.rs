@@ -164,6 +164,34 @@ impl City {
         self.hit_points
     }
 
+    /// Returns whether the city controls a center or territory coordinate.
+    #[must_use]
+    pub fn controls(&self, coordinate: HexCoord) -> bool {
+        self.center == coordinate || self.controlled_hexes.contains(&coordinate)
+    }
+
+    /// Returns the center plus all controlled non-center coordinates.
+    #[must_use]
+    pub fn territory_hex_count(&self) -> usize {
+        self.controlled_hexes.len().saturating_add(1)
+    }
+
+    /// Replaces manually worked coordinates after authoritative legality checks.
+    #[must_use]
+    pub fn with_worked_hexes(&self, worked_hexes: impl Into<Box<[HexCoord]>>) -> Self {
+        let mut updated = self.clone();
+        updated.worked_hexes = worked_hexes.into();
+        updated
+    }
+
+    /// Replaces the preferred next expansion coordinate.
+    #[must_use]
+    pub fn with_preferred_expansion_hex(&self, preferred: Option<HexCoord>) -> Self {
+        let mut updated = self.clone();
+        updated.preferred_expansion_hex = preferred;
+        updated
+    }
+
     /// Applies an authoritative city-combat result.
     #[must_use]
     pub fn after_combat(&self, owner_player_id: PlayerId, hit_points: Option<i64>) -> Self {

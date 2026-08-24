@@ -7,6 +7,7 @@ use crate::player_view::PlayerUnitView;
 pub(crate) struct RecipientDisclosure {
     actor: PlayerId,
     unit_ids: Box<[UnitId]>,
+    city_ids: Box<[CityId]>,
     combats: Box<[(UnitId, CombatTarget)]>,
 }
 
@@ -32,6 +33,7 @@ impl RecipientDisclosure {
         Self {
             actor,
             unit_ids: visible_units.iter().map(|unit| unit.id().clone()).collect(),
+            city_ids: visible_city_ids.into(),
             combats: combats.into_boxed_slice(),
         }
     }
@@ -47,8 +49,15 @@ impl RecipientDisclosure {
         )
     }
 
+    pub(crate) fn allows_city(&self, city_id: &CityId) -> bool {
+        self.city_ids.contains(city_id)
+    }
+
     pub(crate) fn allows_event(&self, event: &DomainEvent) -> bool {
         match event {
+            DomainEvent::CityFounded(value) => {
+                value.owner_player_id() == &self.actor || self.allows_city(value.city_id())
+            }
             DomainEvent::UnitAttacked(value)
             | DomainEvent::CityAttacked(value)
             | DomainEvent::CombatResolved(value)

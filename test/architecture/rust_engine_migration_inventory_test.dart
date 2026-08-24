@@ -67,7 +67,7 @@ void main() {
   });
 
   test('migration manifest closes queries, events, and evidence', () {
-    expect(manifest.queryEntries, hasLength(4));
+    expect(manifest.queryEntries, hasLength(7));
     expect(manifest.eventEntries, hasLength(40));
     expect(manifest.nativeEventEntries, hasLength(4));
     expect(manifest.evidenceEntries, hasLength(1));
@@ -155,7 +155,7 @@ void main() {
   });
 
   test('migration manifest closes recipient projection variants', () {
-    expect(manifest.projectionTypes, hasLength(3));
+    expect(manifest.projectionTypes, hasLength(6));
     expect(manifest.projectionVariants, hasLength(9));
     for (final entry in manifest.projectionTypes) {
       expect(
@@ -198,12 +198,16 @@ void main() {
         'CancelUnitActionCommand': 'engine-parity',
         'DetachTroopCommand': 'runtime-ready',
         'FortifyUnitCommand': 'engine-parity',
+        'FoundCityCommand': 'runtime-ready',
         'MoveMerchantToCityCommand': 'runtime-ready',
         'MoveUnitCommand': 'engine-parity',
+        'SelectCityExpansionHexCommand': 'runtime-ready',
         'SkipUnitTurnCommand': 'engine-parity',
+        'ToggleWorkedHexCommand': 'runtime-ready',
         'CityAttackedEvent': 'runtime-ready',
         'CityCapturedEvent': 'runtime-ready',
         'CityDestroyedEvent': 'runtime-ready',
+        'CityFoundedEvent': 'runtime-ready',
         'CombatResolvedEvent': 'runtime-ready',
         'DiplomaticScoreChangedEvent': 'runtime-ready',
         'UnitAttackedEvent': 'runtime-ready',

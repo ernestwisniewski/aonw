@@ -40,6 +40,30 @@ impl TurnAdvance {
 }
 
 impl GameState {
+    /// Consumes the aggregate and applies one complete city command update.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when any replacement collection violates aggregate invariants.
+    pub fn into_after_city(
+        self,
+        revision: StateRevision,
+        units: Vec<Unit>,
+        cities: Vec<City>,
+        interaction: InteractionState,
+        fog_of_war: FogOfWar,
+        diplomacy: Diplomacy,
+    ) -> Result<Self, GameStateBuildError> {
+        let mut builder = self.into_builder();
+        builder.revision = revision;
+        builder.units = units;
+        builder.cities = cities;
+        builder.interaction = interaction;
+        builder.fog_of_war = fog_of_war;
+        builder.diplomacy = diplomacy;
+        builder.try_build()
+    }
+
     /// Consumes the aggregate and applies one complete combat update.
     ///
     /// # Errors

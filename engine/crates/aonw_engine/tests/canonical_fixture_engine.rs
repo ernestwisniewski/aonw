@@ -21,6 +21,8 @@ use aonw_testkit::{
     CanonicalFixtureOutput, verify_canonical_corpus, verify_canonical_fixture,
 };
 
+#[path = "canonical_fixture_engine/city.rs"]
+mod city;
 #[path = "canonical_fixture_engine/encoding.rs"]
 mod encoding;
 
@@ -81,6 +83,27 @@ fn apply_command(
     command: &ReplayCommandDto,
 ) -> Result<aonw_engine::DomainTransition, ExecutionError> {
     match command {
+        ReplayCommandDto::FoundCity {
+            expected_revision,
+            founder_unit_id,
+            controlled_hexes,
+        } => city::apply_found(
+            state,
+            context,
+            *expected_revision,
+            founder_unit_id,
+            controlled_hexes,
+        ),
+        ReplayCommandDto::ToggleWorkedHex {
+            expected_revision,
+            city_id,
+            target,
+        } => city::apply_toggle_worked(state, context, *expected_revision, city_id, *target),
+        ReplayCommandDto::SelectCityExpansionHex {
+            expected_revision,
+            city_id,
+            target,
+        } => city::apply_select_expansion(state, context, *expected_revision, city_id, *target),
         ReplayCommandDto::AttackHex {
             expected_revision,
             attacker_unit_id,
@@ -449,6 +472,9 @@ fn reviewed_execution_disposition(line: &str) -> Option<ReviewedExecutionDisposi
 
 const fn command_name(command: &ReplayCommandDto) -> &'static str {
     match command {
+        ReplayCommandDto::FoundCity { .. } => "FoundCity",
+        ReplayCommandDto::ToggleWorkedHex { .. } => "ToggleWorkedHex",
+        ReplayCommandDto::SelectCityExpansionHex { .. } => "SelectCityExpansionHex",
         ReplayCommandDto::AttackHex { .. } => "AttackHex",
         ReplayCommandDto::MoveUnit { .. } => "MoveUnit",
         ReplayCommandDto::AutoExploreUnit { .. } => "AutoExploreUnit",

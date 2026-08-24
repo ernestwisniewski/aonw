@@ -2,6 +2,7 @@ use crate::{
     ArtifactId, HexCoord, MovementUnits, PlayerId, QueuedMovePath, UnitId, UnitKind, UnitPosture,
 };
 
+use super::CityFoundingJob;
 use super::{ArmyTroop, MerchantTradeRoute, TroopKind, UnitActivity, WorkerJob};
 
 mod logistics;
@@ -276,6 +277,47 @@ impl Unit {
             updated.movement_units = MovementUnits::ZERO;
         }
         updated
+    }
+
+    /// Schedules or advances authoritative city-founding work.
+    #[must_use]
+    pub fn with_city_founding_job(&self, job: Option<CityFoundingJob>) -> Self {
+        let mut updated = self.clone();
+        updated.activity = updated.activity.with_city_founding_job(job);
+        updated.queued_path = None;
+        if updated.activity.city_founding_job().is_some() {
+            updated.movement_units = MovementUnits::ZERO;
+            updated.posture = UnitPosture::Active;
+        }
+        updated
+    }
+
+    /// Consumes one settler troop and clears completed city-founding work.
+    ///
+    /// Standalone settler units are removed by the aggregate processor and
+    /// therefore return `None`. A non-founder or malformed commander also
+    /// returns `None`; callers validate the pending job before committing.
+    #[must_use]
+    pub fn after_city_founded(&self) -> Option<Self> {
+        if self.kind == UnitKind::Settler {
+            return None;
+        }
+        let mut updated = self.clone();
+        let index = updated
+            .army
+            .iter()
+            .position(|troop| troop.kind() == TroopKind::Settler && troop.count() > 0)?;
+        let troop = updated.army[index];
+        let mut army = updated.army.into_vec();
+        if troop.count() == 1 {
+            army.remove(index);
+        } else {
+            army[index] = ArmyTroop::new(TroopKind::Settler, troop.count() - 1);
+        }
+        updated.army = army.into_boxed_slice();
+        updated.activity = updated.activity.with_city_founding_job(None);
+        updated.queued_path = None;
+        Some(updated)
     }
 }
 

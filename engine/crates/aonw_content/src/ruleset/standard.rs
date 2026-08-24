@@ -3,9 +3,17 @@ use aonw_domain::MovementUnits;
 use crate::{TechnologyCostBalance, technology::STANDARD_TECHNOLOGIES};
 
 use super::{
-    CombatBalance, CombatStats, RulesetDefinition, UnitCapabilities, UnitDefinition, UnitKindValue,
-    UnitMovementDomainValue, UnitOccupancyPolicyValue,
+    CityBalance, CityNameSet, CombatBalance, CombatStats, PlayerCountryValue, RulesetDefinition,
+    UnitCapabilities, UnitDefinition, UnitKindValue, UnitMovementDomainValue,
+    UnitOccupancyPolicyValue,
 };
+
+const fn names(country: PlayerCountryValue, values: &'static [&'static str]) -> CityNameSet {
+    CityNameSet {
+        country,
+        names: values,
+    }
+}
 
 const fn caps(domain: UnitMovementDomainValue, flags: u8) -> UnitCapabilities {
     UnitCapabilities {
@@ -84,10 +92,304 @@ pub(super) static STANDARD_RULESET: RulesetDefinition = RulesetDefinition {
         mixed_commander_army_attack_bonus: 1,
         city: stats(0, 2, 16, 1, 0),
     },
+    city: CityBalance {
+        founding_controlled_hexes: 2,
+        founding_max_radius: 2,
+        minimum_center_distance: 3,
+        founding_turns: 1,
+        start_population: 3,
+        start_stored_food: 0,
+        start_max_hexes: 6,
+        start_territory_radius: 2,
+        worked_hex_limit_base: 0,
+        worked_hexes_per_population: 1,
+    },
+    city_name_sets: &STANDARD_CITY_NAMES,
     unit_definitions: &STANDARD_UNITS,
     technology_cost_balance: TechnologyCostBalance::STANDARD,
     technology_definitions: &STANDARD_TECHNOLOGIES,
 };
+
+const STANDARD_CITY_NAMES: [CityNameSet; 24] = [
+    names(
+        PlayerCountryValue::Poland,
+        &[
+            "Warszawa",
+            "Krakow",
+            "Gdansk",
+            "Wroclaw",
+            "Poznan",
+            "Lublin",
+            "Katowice",
+            "Torun",
+            "Poniatowa",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Ukraine,
+        &[
+            "Kyiv",
+            "Lviv",
+            "Odesa",
+            "Kharkiv",
+            "Dnipro",
+            "Zaporizhzhia",
+            "Donetsk",
+            "Krym",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Germany,
+        &[
+            "Berlin",
+            "Hamburg",
+            "Munich",
+            "Cologne",
+            "Frankfurt",
+            "Dresden",
+            "Bremen",
+            "Leipzig",
+        ],
+    ),
+    names(
+        PlayerCountryValue::France,
+        &[
+            "Paris",
+            "Lyon",
+            "Marseille",
+            "Bordeaux",
+            "Toulouse",
+            "Nantes",
+            "Strasbourg",
+            "Lille",
+        ],
+    ),
+    names(
+        PlayerCountryValue::UnitedKingdom,
+        &[
+            "London",
+            "Edinburgh",
+            "Cardiff",
+            "Belfast",
+            "Manchester",
+            "Liverpool",
+            "York",
+            "Bristol",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Italy,
+        &[
+            "Rome", "Milan", "Venice", "Florence", "Naples", "Turin", "Genoa", "Bologna",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Spain,
+        &[
+            "Madrid",
+            "Barcelona",
+            "Valencia",
+            "Seville",
+            "Granada",
+            "Bilbao",
+            "Zaragoza",
+            "Toledo",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Netherlands,
+        &[
+            "Amsterdam",
+            "Rotterdam",
+            "Utrecht",
+            "The Hague",
+            "Eindhoven",
+            "Groningen",
+            "Haarlem",
+            "Leiden",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Sweden,
+        &[
+            "Stockholm",
+            "Gothenburg",
+            "Malmo",
+            "Uppsala",
+            "Lund",
+            "Umea",
+            "Vasteras",
+            "Orebro",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Russia,
+        &[
+            "Moscow",
+            "Saint Petersburg",
+            "Novgorod",
+            "Kazan",
+            "Smolensk",
+            "Yaroslavl",
+            "Vladimir",
+            "Tver",
+        ],
+    ),
+    names(
+        PlayerCountryValue::UnitedStates,
+        &[
+            "Washington",
+            "New York",
+            "Boston",
+            "Philadelphia",
+            "Chicago",
+            "San Francisco",
+            "Atlanta",
+            "Seattle",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Canada,
+        &[
+            "Ottawa",
+            "Toronto",
+            "Montreal",
+            "Vancouver",
+            "Quebec City",
+            "Calgary",
+            "Halifax",
+            "Winnipeg",
+        ],
+    ),
+    names(
+        PlayerCountryValue::China,
+        &[
+            "Beijing",
+            "Shanghai",
+            "Nanjing",
+            "Guangzhou",
+            "Chengdu",
+            "Xi'an",
+            "Hangzhou",
+            "Wuhan",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Korea,
+        &[
+            "Seoul", "Busan", "Incheon", "Daegu", "Daejeon", "Gwangju", "Suwon", "Jeonju",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Japan,
+        &[
+            "Tokyo",
+            "Kyoto",
+            "Osaka",
+            "Nara",
+            "Yokohama",
+            "Nagoya",
+            "Hiroshima",
+            "Sapporo",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Portugal,
+        &[
+            "Lisbon",
+            "Porto",
+            "Coimbra",
+            "Braga",
+            "Faro",
+            "Evora",
+            "Guimaraes",
+            "Aveiro",
+        ],
+    ),
+    names(
+        PlayerCountryValue::India,
+        &[
+            "Delhi",
+            "Mumbai",
+            "Kolkata",
+            "Chennai",
+            "Bengaluru",
+            "Hyderabad",
+            "Jaipur",
+            "Varanasi",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Brazil,
+        &[
+            "Brasilia",
+            "Rio de Janeiro",
+            "Sao Paulo",
+            "Salvador",
+            "Recife",
+            "Manaus",
+            "Belo Horizonte",
+            "Curitiba",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Indonesia,
+        &[
+            "Jakarta",
+            "Surabaya",
+            "Bandung",
+            "Medan",
+            "Yogyakarta",
+            "Makassar",
+            "Denpasar",
+            "Palembang",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Mexico,
+        &[
+            "Mexico City",
+            "Guadalajara",
+            "Monterrey",
+            "Puebla",
+            "Oaxaca",
+            "Veracruz",
+            "Merida",
+            "Tenochtitlan",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Turkey,
+        &[
+            "Ankara", "Istanbul", "Izmir", "Bursa", "Konya", "Antalya", "Edirne", "Kayseri",
+        ],
+    ),
+    names(
+        PlayerCountryValue::SaudiArabia,
+        &[
+            "Riyadh", "Jeddah", "Mecca", "Medina", "Dammam", "Taif", "Tabuk", "Diriyah",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Egypt,
+        &[
+            "Cairo",
+            "Alexandria",
+            "Memphis",
+            "Thebes",
+            "Giza",
+            "Luxor",
+            "Aswan",
+            "Heliopolis",
+        ],
+    ),
+    names(
+        PlayerCountryValue::Greece,
+        &[
+            "Athens", "Sparta", "Corinth", "Thebes", "Argos", "Rhodes", "Delphi", "Knossos",
+        ],
+    ),
+];
 
 pub(super) const STANDARD_UNITS: [UnitDefinition; 17] = [
     unit(

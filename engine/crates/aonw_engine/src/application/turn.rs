@@ -175,6 +175,8 @@ pub enum TurnProcessor {
     AutoExplore,
     /// Simultaneous combat resolution.
     Combat,
+    /// Completion or cancellation of scheduled city-founding jobs.
+    CityFounding,
     /// Economy and production progression.
     Economy,
     /// Diplomacy/contact progression.
@@ -201,6 +203,7 @@ impl TurnProcessor {
             Self::WorkerAutomation => "workerAutomation",
             Self::AutoExplore => "autoExplore",
             Self::Combat => "combat",
+            Self::CityFounding => "cityFounding",
             Self::Economy => "economy",
             Self::Diplomacy => "diplomacy",
             Self::Research => "research",
@@ -218,10 +221,11 @@ impl TurnKernelCapabilities {
     /// Capability label used by current fixtures and runtime clients.
     pub const LABEL: &'static str = "turn-kernel-ready";
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 8] = [
+    pub const ENABLED: [TurnProcessor; 9] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
+        TurnProcessor::CityFounding,
         TurnProcessor::MovementReset,
         TurnProcessor::QueuedMovement,
         TurnProcessor::TradeRoutes,
@@ -246,6 +250,7 @@ impl TurnKernelCapabilities {
             TurnProcessor::Submission
                 | TurnProcessor::Lifecycle
                 | TurnProcessor::Combat
+                | TurnProcessor::CityFounding
                 | TurnProcessor::MovementReset
                 | TurnProcessor::QueuedMovement
                 | TurnProcessor::TradeRoutes
@@ -264,6 +269,7 @@ pub struct TurnKernelExecution {
     movement_executions: Box<[UnitMovementExecution]>,
     invalidated_order_unit_ids: Box<[UnitId]>,
     finished_auto_explore_unit_ids: Box<[UnitId]>,
+    founded_city_ids: Box<[aonw_domain::CityId]>,
 }
 
 impl TurnKernelExecution {
@@ -278,6 +284,7 @@ impl TurnKernelExecution {
             movement_executions: Box::new([]),
             invalidated_order_unit_ids: Box::new([]),
             finished_auto_explore_unit_ids: Box::new([]),
+            founded_city_ids: Box::new([]),
         }
     }
 
@@ -288,6 +295,7 @@ impl TurnKernelExecution {
         movement_executions: impl Into<Box<[UnitMovementExecution]>>,
         invalidated_order_unit_ids: impl Into<Box<[UnitId]>>,
         finished_auto_explore_unit_ids: impl Into<Box<[UnitId]>>,
+        founded_city_ids: impl Into<Box<[aonw_domain::CityId]>>,
     ) -> Self {
         Self {
             processors: processors.into(),
@@ -296,6 +304,7 @@ impl TurnKernelExecution {
             movement_executions: movement_executions.into(),
             invalidated_order_unit_ids: invalidated_order_unit_ids.into(),
             finished_auto_explore_unit_ids: finished_auto_explore_unit_ids.into(),
+            founded_city_ids: founded_city_ids.into(),
         }
     }
 
@@ -333,5 +342,11 @@ impl TurnKernelExecution {
     #[must_use]
     pub const fn finished_auto_explore_unit_ids(&self) -> &[UnitId] {
         &self.finished_auto_explore_unit_ids
+    }
+
+    /// Returns cities founded during this turn pipeline.
+    #[must_use]
+    pub const fn founded_city_ids(&self) -> &[aonw_domain::CityId] {
+        &self.founded_city_ids
     }
 }

@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 mod application;
+mod city;
 mod combat;
 mod context;
 mod diplomacy_policy;
@@ -19,12 +20,17 @@ use aonw_domain::GameState;
 
 pub use application::{
     AllPlayersSubmittedEvent, AutoExplorePlannedEvent, CanonicalEngineError, CanonicalQueryError,
-    CombatEvent, CommandRejectionCode, DiplomaticScoreChangedEvent, DomainEvent, DomainRejection,
-    DomainTransition, DomainTransitionParts, EventBudget, ExecutionEvidence,
+    CityFoundedEvent, CombatEvent, CommandRejectionCode, DiplomaticScoreChangedEvent, DomainEvent,
+    DomainRejection, DomainTransition, DomainTransitionParts, EventBudget, ExecutionEvidence,
     FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand, LogisticsExecution,
     MerchantRouteAssignedEvent, MerchantTravelQueuedEvent, PlayerCommand, PlayerKickedEvent,
     PlayerTimedOutEvent, QueryResult, SystemCommand, TroopDetachedEvent, TurnCommand,
     TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
+};
+pub use city::{
+    CityExpansionCandidate, CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions,
+    CityFoundingOptionsQuery, CityWorkedHexOptions, CityWorkedHexOptionsQuery, FoundCityCommand,
+    SelectCityExpansionHexCommand, ToggleWorkedHexCommand,
 };
 pub use combat::{
     AttackHexCommand, CombatExecution, CombatModifier, CombatModifierKind, CombatOutcome,

@@ -85,6 +85,13 @@ pub struct ReplayContextDto {
     deny_unknown_fields
 )]
 pub enum ReplayEventDto {
+    /// One city-founding job completed.
+    CityFounded {
+        /// New city identity.
+        city_id: String,
+        /// Founding player.
+        owner_player_id: String,
+    },
     /// A visible attacker engaged a visible target.
     UnitAttacked {
         /// Attacking unit identity.
@@ -269,6 +276,8 @@ pub enum ReplayEvidenceDto {
     TurnKernel {
         /// Processor names in execution order.
         processors: Vec<String>,
+        /// Cities founded during the pipeline in canonical order.
+        founded_city_ids: Vec<String>,
         /// Exact intended-attack resolutions in execution order.
         combat_executions: Vec<CombatExecutionDto>,
         /// Units whose movement phase began, in canonical unit order.

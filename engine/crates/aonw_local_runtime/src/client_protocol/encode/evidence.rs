@@ -20,6 +20,10 @@ use super::coordinate;
 #[allow(clippy::too_many_lines)]
 pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
     match value {
+        DomainEvent::CityFounded(value) => ClientEventDto::CityFounded {
+            city_id: value.city_id().as_str().to_owned(),
+            owner_player_id: value.owner_player_id().as_str().to_owned(),
+        },
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
             ClientEventDto::UnitAttacked {
                 attacker_unit_id,
@@ -135,7 +139,8 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
 
 #[cfg(test)]
 pub(super) fn evidence(value: &ExecutionEvidence) -> ClientEvidenceDto {
-    encode_evidence(value, |_| true, |_| true).expect("unfiltered evidence is always visible")
+    encode_evidence(value, |_| true, |_| true, |_| true)
+        .expect("unfiltered evidence is always visible")
 }
 
 pub(super) fn recipient_evidence(
@@ -146,6 +151,7 @@ pub(super) fn recipient_evidence(
         value,
         |combat| disclosure.allows_combat(combat),
         |unit| disclosure.allows_unit(unit),
+        |city| disclosure.allows_city(city),
     )
 }
 
@@ -153,6 +159,7 @@ fn encode_evidence(
     value: &ExecutionEvidence,
     allows_combat: impl Fn(&CombatExecution) -> bool,
     allows_unit: impl Fn(&aonw_domain::UnitId) -> bool,
+    allows_city: impl Fn(&aonw_domain::CityId) -> bool,
 ) -> Option<ClientEvidenceDto> {
     match value {
         ExecutionEvidence::Combat(value) => {
@@ -173,6 +180,12 @@ fn encode_evidence(
                 .processors()
                 .iter()
                 .map(|processor| processor.as_str().to_owned())
+                .collect(),
+            founded_city_ids: value
+                .founded_city_ids()
+                .iter()
+                .filter(|city| allows_city(city))
+                .map(|city| city.as_str().to_owned())
                 .collect(),
             combat_executions: value
                 .combat_executions()

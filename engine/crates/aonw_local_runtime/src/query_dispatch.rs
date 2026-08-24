@@ -1,9 +1,37 @@
 use aonw_domain::{CityId, HexCoord, MovementUnits, TroopKind, UnitId};
 use aonw_engine::{
-    CombatPreview, CombatPreviewQuery, GameEngine, GameQuery, MovementSearchMetrics,
-    MovementSearchWorkspace, QueryResult, ReachableMovementQuery, TerrainMovementQuery,
-    UnitLogisticsOptionsQuery,
+    CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions, CityFoundingOptionsQuery,
+    CityWorkedHexOptions, CityWorkedHexOptionsQuery, CombatPreview, CombatPreviewQuery, GameEngine,
+    GameQuery, MovementSearchMetrics, MovementSearchWorkspace, QueryResult, ReachableMovementQuery,
+    TerrainMovementQuery, UnitLogisticsOptionsQuery,
 };
+
+/// Current city-founding-options request.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CityFoundingOptionsRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled founder.
+    pub founder_unit_id: UnitId,
+}
+
+/// Current city-worked-hex-options request.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CityWorkedHexOptionsRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled city.
+    pub city_id: CityId,
+}
+
+/// Current city-expansion-options request.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CityExpansionOptionsRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled city.
+    pub city_id: CityId,
+}
 
 /// Current recipient-safe combat preview request.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -51,6 +79,12 @@ pub struct UnitLogisticsOptionsRequest {
 /// Versioned local query family.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RuntimeQuery {
+    /// Legal initial territory choices.
+    CityFoundingOptions(CityFoundingOptionsRequest),
+    /// Controlled/manual/effective worked coordinates.
+    CityWorkedHexOptions(CityWorkedHexOptionsRequest),
+    /// Ranked current territory-expansion candidates.
+    CityExpansionOptions(CityExpansionOptionsRequest),
     /// Effective combat stats and damage bounds without RNG evidence.
     CombatPreview(CombatPreviewRequest),
     /// Current-turn reachable overlay.
@@ -166,6 +200,27 @@ pub struct UnitLogisticsOptionsResult {
 /// Versioned local query response family.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RuntimeQueryResult {
+    /// Legal city-founding choices.
+    CityFoundingOptions {
+        /// Version and authoritative identity metadata.
+        stamp: SessionStamp,
+        /// Engine-owned query result.
+        options: CityFoundingOptions,
+    },
+    /// Worked-city coordinates.
+    CityWorkedHexOptions {
+        /// Version and authoritative identity metadata.
+        stamp: SessionStamp,
+        /// Engine-owned query result.
+        options: CityWorkedHexOptions,
+    },
+    /// Ranked expansion candidates.
+    CityExpansionOptions {
+        /// Version and authoritative identity metadata.
+        stamp: SessionStamp,
+        /// Engine-owned query result.
+        options: CityExpansionOptions,
+    },
     /// Recipient-safe combat preview.
     CombatPreview {
         /// Version and authoritative identity metadata.
@@ -187,6 +242,15 @@ pub(crate) fn dispatch_query(
     workspace: &mut MovementSearchWorkspace,
 ) -> Result<RuntimeQueryResult, RuntimeError> {
     match request {
+        RuntimeQuery::CityFoundingOptions(request) => {
+            dispatch_city_founding_query(session, &request, workspace)
+        }
+        RuntimeQuery::CityWorkedHexOptions(request) => {
+            dispatch_city_worked_query(session, &request, workspace)
+        }
+        RuntimeQuery::CityExpansionOptions(request) => {
+            dispatch_city_expansion_query(session, &request, workspace)
+        }
         RuntimeQuery::CombatPreview(request) => {
             let result = GameEngine::query_with_workspace(
                 session.state(),
@@ -274,6 +338,78 @@ pub(crate) fn dispatch_query(
             dispatch_logistics_query(session, &request, workspace)
         }
     }
+}
+
+fn dispatch_city_founding_query(
+    session: &Session,
+    request: &CityFoundingOptionsRequest,
+    workspace: &mut MovementSearchWorkspace,
+) -> Result<RuntimeQueryResult, RuntimeError> {
+    let result = GameEngine::query_with_workspace(
+        session.state(),
+        session.context(),
+        GameQuery::CityFoundingOptions(CityFoundingOptionsQuery::new(
+            request.expected_revision,
+            &request.founder_unit_id,
+        )),
+        workspace,
+    )
+    .map_err(RuntimeError::Query)?;
+    let QueryResult::CityFoundingOptions(options) = result else {
+        unreachable!("city founding query returns founding options")
+    };
+    Ok(RuntimeQueryResult::CityFoundingOptions {
+        stamp: session.stamp(),
+        options,
+    })
+}
+
+fn dispatch_city_worked_query(
+    session: &Session,
+    request: &CityWorkedHexOptionsRequest,
+    workspace: &mut MovementSearchWorkspace,
+) -> Result<RuntimeQueryResult, RuntimeError> {
+    let result = GameEngine::query_with_workspace(
+        session.state(),
+        session.context(),
+        GameQuery::CityWorkedHexOptions(CityWorkedHexOptionsQuery::new(
+            request.expected_revision,
+            &request.city_id,
+        )),
+        workspace,
+    )
+    .map_err(RuntimeError::Query)?;
+    let QueryResult::CityWorkedHexOptions(options) = result else {
+        unreachable!("city worked query returns worked options")
+    };
+    Ok(RuntimeQueryResult::CityWorkedHexOptions {
+        stamp: session.stamp(),
+        options,
+    })
+}
+
+fn dispatch_city_expansion_query(
+    session: &Session,
+    request: &CityExpansionOptionsRequest,
+    workspace: &mut MovementSearchWorkspace,
+) -> Result<RuntimeQueryResult, RuntimeError> {
+    let result = GameEngine::query_with_workspace(
+        session.state(),
+        session.context(),
+        GameQuery::CityExpansionOptions(CityExpansionOptionsQuery::new(
+            request.expected_revision,
+            &request.city_id,
+        )),
+        workspace,
+    )
+    .map_err(RuntimeError::Query)?;
+    let QueryResult::CityExpansionOptions(options) = result else {
+        unreachable!("city expansion query returns expansion options")
+    };
+    Ok(RuntimeQueryResult::CityExpansionOptions {
+        stamp: session.stamp(),
+        options,
+    })
 }
 
 fn dispatch_logistics_query(

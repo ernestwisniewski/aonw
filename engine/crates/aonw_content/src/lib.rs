@@ -27,7 +27,10 @@ pub use model::{
     MAX_MAP_COLS, MAX_MAP_ROWS, MIN_MAP_COLS, MIN_MAP_ROWS, MapDefinition, MapObjective,
     TerrainProfile, TileDefinition,
 };
-pub use ruleset::{RulesetDefinition, UnitCapabilities, UnitDefinition, UnitMovementDomainValue};
+pub use ruleset::{
+    CityBalance, CityNameSet, RulesetDefinition, UnitCapabilities, UnitDefinition,
+    UnitMovementDomainValue,
+};
 pub use scenario::{
     ScenarioBootstrapError, ScenarioDefinition, ScenarioLoadError, ScenarioUnitDefinition,
     ScenarioValidationError,

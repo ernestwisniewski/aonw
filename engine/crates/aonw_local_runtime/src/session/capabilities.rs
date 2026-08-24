@@ -14,6 +14,7 @@ impl RuntimeCapabilities {
     const TURN_KERNEL: u16 = 1 << 6;
     const MOVEMENT_LOGISTICS: u16 = 1 << 7;
     const COMBAT: u16 = 1 << 8;
+    const CITIES: u16 = 1 << 9;
 
     pub(super) const CURRENT: Self = Self {
         features: Self::ROUTE_PLAN
@@ -24,7 +25,8 @@ impl RuntimeCapabilities {
             | Self::UNIT_ACTIONS
             | Self::TURN_KERNEL
             | Self::MOVEMENT_LOGISTICS
-            | Self::COMBAT,
+            | Self::COMBAT
+            | Self::CITIES,
     };
 
     /// Returns whether route planning is available.
@@ -79,5 +81,11 @@ impl RuntimeCapabilities {
     #[must_use]
     pub const fn combat(self) -> bool {
         self.features & Self::COMBAT != 0
+    }
+
+    /// Returns whether city commands, queries, and projections are available.
+    #[must_use]
+    pub const fn cities(self) -> bool {
+        self.features & Self::CITIES != 0
     }
 }

@@ -11,6 +11,33 @@ use crate::{CityConquestActionDto, CoordinateDto, TroopKindDto};
     deny_unknown_fields
 )]
 pub enum ReplayCommandDto {
+    /// Schedules a validated city-founding job.
+    FoundCity {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Controlled founder.
+        founder_unit_id: String,
+        /// Complete initial non-center territory.
+        controlled_hexes: Vec<CoordinateDto>,
+    },
+    /// Toggles one manually worked city coordinate.
+    ToggleWorkedHex {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Controlled city.
+        city_id: String,
+        /// Non-center controlled coordinate.
+        target: CoordinateDto,
+    },
+    /// Selects one current city-expansion candidate.
+    SelectCityExpansionHex {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Controlled city.
+        city_id: String,
+        /// Preferred expansion coordinate.
+        target: CoordinateDto,
+    },
     /// Visible unit or city attack.
     AttackHex {
         /// Expected canonical revision.

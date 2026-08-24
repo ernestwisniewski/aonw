@@ -2,7 +2,8 @@ use aonw_engine::MovementSearchWorkspace;
 
 use crate::command_dispatch::{
     RuntimeUnitActionKind, dispatch_assign_merchant_route, dispatch_attack, dispatch_auto_explore,
-    dispatch_detach_troop, dispatch_move, dispatch_move_merchant_to_city, dispatch_unit_action,
+    dispatch_detach_troop, dispatch_found_city, dispatch_move, dispatch_move_merchant_to_city,
+    dispatch_select_city_expansion_hex, dispatch_toggle_worked_hex, dispatch_unit_action,
 };
 use crate::player_view::PlayerViewSnapshot;
 use crate::query_cache::{QueryCache, QueryCacheStats};
@@ -12,8 +13,9 @@ use crate::turn_dispatch::{
     dispatch_kick, dispatch_timeout, dispatch_turn,
 };
 use crate::{
-    AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest,
-    MerchantCityRequest, MoveUnitRequest, RuntimeQuery, RuntimeQueryResult, UnitActionRequest,
+    AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest, FoundCityRequest,
+    MerchantCityRequest, MoveUnitRequest, RuntimeQuery, RuntimeQueryResult,
+    SelectCityExpansionHexRequest, ToggleWorkedHexRequest, UnitActionRequest,
 };
 
 use super::{
@@ -29,6 +31,54 @@ pub struct LocalRuntime {
 }
 
 impl LocalRuntime {
+    /// Schedules a validated city-founding job.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn found_city(
+        &mut self,
+        command: &FoundCityRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_found_city(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Toggles one manually worked city coordinate.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn toggle_worked_hex(
+        &mut self,
+        command: &ToggleWorkedHexRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_toggle_worked_hex(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Selects one current territory-expansion candidate.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn select_city_expansion_hex(
+        &mut self,
+        command: &SelectCityExpansionHexRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_select_city_expansion_hex(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
     /// Resolves one visible unit or city attack.
     ///
     /// # Errors

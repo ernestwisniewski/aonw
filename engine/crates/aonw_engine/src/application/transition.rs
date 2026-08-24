@@ -1,5 +1,5 @@
 use aonw_content::ContentHash;
-use aonw_domain::{GameState, StateRevision};
+use aonw_domain::GameState;
 
 use crate::{
     AutoExplorePlannedEvent, CombatExecution, LogisticsExecution, MerchantRouteAssignedEvent,
@@ -7,11 +7,12 @@ use crate::{
     UnitMovedEvent, UnitMovementExecution,
 };
 
+mod domain_transition;
 mod events;
 
 pub use events::{
-    AllPlayersSubmittedEvent, CombatEvent, DiplomaticScoreChangedEvent, PlayerKickedEvent,
-    PlayerTimedOutEvent, TurnEndedEvent,
+    AllPlayersSubmittedEvent, CityFoundedEvent, CombatEvent, DiplomaticScoreChangedEvent,
+    PlayerKickedEvent, PlayerTimedOutEvent, TurnEndedEvent,
 };
 
 /// Stable command rejection shared by every authoritative command family.
@@ -121,11 +122,41 @@ pub enum CommandRejectionCode {
     AttackTargetOutOfRange,
     /// A target city has no positive current health.
     AttackCityHasNoHealth,
+    /// The requested city founder does not exist.
+    CityFounderNotFound,
+    /// The actor cannot command the requested founder.
+    CityFounderNotControlled,
+    /// The founder is already performing authoritative work.
+    CityFounderBusy,
+    /// The unit cannot found cities.
+    CityFounderInvalid,
+    /// A commander army has no settler troop to consume.
+    CityFounderNoSettlers,
+    /// The founder's current tile cannot contain a city center.
+    CitySiteInvalid,
+    /// Another city already occupies the requested center.
+    CityCenterOccupied,
+    /// Another city controls the requested center.
+    CityCenterClaimed,
+    /// The requested center is too close to another city.
+    CityCenterTooClose,
+    /// Initial controlled territory is incomplete or invalid.
+    CityControlledHexesInvalid,
+    /// The requested city does not exist.
+    CityNotFound,
+    /// The actor cannot manage the requested city.
+    CityNotControlled,
+    /// The coordinate cannot be manually worked by the city.
+    WorkedHexUnavailable,
+    /// The city already manually works its population-based limit.
+    WorkedHexLimitReached,
+    /// The coordinate is not a legal current expansion candidate.
+    CityExpansionHexUnavailable,
 }
 
 impl CommandRejectionCode {
     /// Complete stable rejection surface exposed to current clients.
-    pub const ALL: [Self; 52] = [
+    pub const ALL: [Self; 67] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -178,6 +209,21 @@ impl CommandRejectionCode {
         Self::AttackTargetProtectedByTreaty,
         Self::AttackTargetOutOfRange,
         Self::AttackCityHasNoHealth,
+        Self::CityFounderNotFound,
+        Self::CityFounderNotControlled,
+        Self::CityFounderBusy,
+        Self::CityFounderInvalid,
+        Self::CityFounderNoSettlers,
+        Self::CitySiteInvalid,
+        Self::CityCenterOccupied,
+        Self::CityCenterClaimed,
+        Self::CityCenterTooClose,
+        Self::CityControlledHexesInvalid,
+        Self::CityNotFound,
+        Self::CityNotControlled,
+        Self::WorkedHexUnavailable,
+        Self::WorkedHexLimitReached,
+        Self::CityExpansionHexUnavailable,
     ];
 
     /// Returns the stable language-neutral wire value.
@@ -236,6 +282,21 @@ impl CommandRejectionCode {
             Self::AttackTargetProtectedByTreaty => "attack_target_protected_by_treaty",
             Self::AttackTargetOutOfRange => "attack_target_out_of_range",
             Self::AttackCityHasNoHealth => "attack_city_has_no_health",
+            Self::CityFounderNotFound => "city_founder_not_found",
+            Self::CityFounderNotControlled => "city_founder_not_controlled",
+            Self::CityFounderBusy => "city_founder_busy",
+            Self::CityFounderInvalid => "city_founder_invalid",
+            Self::CityFounderNoSettlers => "city_founder_no_settlers",
+            Self::CitySiteInvalid => "city_site_invalid",
+            Self::CityCenterOccupied => "city_center_occupied",
+            Self::CityCenterClaimed => "city_center_claimed",
+            Self::CityCenterTooClose => "city_center_too_close",
+            Self::CityControlledHexesInvalid => "city_controlled_hexes_invalid",
+            Self::CityNotFound => "city_not_found",
+            Self::CityNotControlled => "city_not_controlled",
+            Self::WorkedHexUnavailable => "worked_hex_unavailable",
+            Self::WorkedHexLimitReached => "worked_hex_limit_reached",
+            Self::CityExpansionHexUnavailable => "city_expansion_hex_unavailable",
         }
     }
 }
@@ -263,6 +324,8 @@ impl DomainRejection {
 /// Ordered event emitted by an accepted transition.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DomainEvent {
+    /// One city-founding job completed.
+    CityFounded(CityFoundedEvent),
     /// One unit changed map position.
     UnitMoved(UnitMovedEvent),
     /// Auto-exploration selected an engine-owned target.
@@ -343,109 +406,4 @@ pub struct DomainTransitionParts {
     pub map_hash: ContentHash,
     /// Exact immutable ruleset identity.
     pub ruleset_hash: ContentHash,
-}
-
-impl DomainTransition {
-    pub(crate) fn accepted(
-        state: GameState,
-        events: Box<[DomainEvent]>,
-        evidence: Option<ExecutionEvidence>,
-        map_hash: ContentHash,
-        ruleset_hash: ContentHash,
-    ) -> Self {
-        Self {
-            digest: crate::state_digest::digest_state(&state),
-            state,
-            rejection: None,
-            events,
-            evidence,
-            map_hash,
-            ruleset_hash,
-        }
-    }
-
-    pub(crate) fn rejected(
-        state: GameState,
-        code: CommandRejectionCode,
-        map_hash: ContentHash,
-        ruleset_hash: ContentHash,
-    ) -> Self {
-        Self {
-            digest: crate::state_digest::digest_state(&state),
-            state,
-            rejection: Some(DomainRejection { code }),
-            events: Box::new([]),
-            evidence: None,
-            map_hash,
-            ruleset_hash,
-        }
-    }
-
-    /// Returns whether the command was accepted.
-    #[must_use]
-    pub const fn is_accepted(&self) -> bool {
-        self.rejection.is_none()
-    }
-
-    /// Returns the unchanged or next canonical state.
-    #[must_use]
-    pub const fn state(&self) -> &GameState {
-        &self.state
-    }
-
-    /// Returns a stable rejection when the command was not accepted.
-    #[must_use]
-    pub const fn rejection(&self) -> Option<DomainRejection> {
-        self.rejection
-    }
-
-    /// Returns ordered domain events.
-    #[must_use]
-    pub const fn events(&self) -> &[DomainEvent] {
-        &self.events
-    }
-
-    /// Returns exact command execution evidence.
-    #[must_use]
-    pub const fn evidence(&self) -> Option<&ExecutionEvidence> {
-        self.evidence.as_ref()
-    }
-
-    /// Returns the revision of the returned state.
-    #[must_use]
-    pub const fn revision(&self) -> StateRevision {
-        self.state.revision()
-    }
-
-    /// Returns canonical state identity.
-    #[must_use]
-    pub const fn digest(&self) -> StateDigest {
-        self.digest
-    }
-
-    /// Returns the exact map identity used by the transition.
-    #[must_use]
-    pub const fn map_hash(&self) -> ContentHash {
-        self.map_hash
-    }
-
-    /// Returns the exact ruleset identity used by the transition.
-    #[must_use]
-    pub const fn ruleset_hash(&self) -> ContentHash {
-        self.ruleset_hash
-    }
-
-    /// Consumes the transition without cloning its canonical state.
-    #[must_use]
-    pub fn into_parts(self) -> DomainTransitionParts {
-        DomainTransitionParts {
-            state: self.state,
-            rejection: self.rejection,
-            events: self.events,
-            evidence: self.evidence,
-            digest: self.digest,
-            map_hash: self.map_hash,
-            ruleset_hash: self.ruleset_hash,
-        }
-    }
 }

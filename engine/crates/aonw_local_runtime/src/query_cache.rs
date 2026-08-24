@@ -1,11 +1,14 @@
 use aonw_content::ContentHash;
-use aonw_domain::{HexCoord, UnitId};
+use aonw_domain::{CityId, HexCoord, UnitId};
 use aonw_engine::StateDigest;
 
 use crate::{RuntimeQuery, RuntimeQueryResult, SessionStamp};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum QueryKind {
+    CityFoundingOptions,
+    CityWorkedHexOptions,
+    CityExpansionOptions,
     CombatPreview(HexCoord),
     Reachable,
     RoutePlan(HexCoord),
@@ -13,10 +16,16 @@ enum QueryKind {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+enum QuerySubject {
+    Unit(UnitId),
+    City(CityId),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct QueryCacheKey {
     revision: u64,
     expected_revision: u64,
-    unit_id: UnitId,
+    subject: QuerySubject,
     visibility_digest: StateDigest,
     map_hash: ContentHash,
     ruleset_hash: ContentHash,
@@ -25,32 +34,47 @@ struct QueryCacheKey {
 
 impl QueryCacheKey {
     fn new(stamp: SessionStamp, request: &RuntimeQuery) -> Self {
-        let (expected_revision, unit_id, kind) = match request {
+        let (expected_revision, subject, kind) = match request {
+            RuntimeQuery::CityFoundingOptions(request) => (
+                request.expected_revision,
+                QuerySubject::Unit(request.founder_unit_id.clone()),
+                QueryKind::CityFoundingOptions,
+            ),
+            RuntimeQuery::CityWorkedHexOptions(request) => (
+                request.expected_revision,
+                QuerySubject::City(request.city_id.clone()),
+                QueryKind::CityWorkedHexOptions,
+            ),
+            RuntimeQuery::CityExpansionOptions(request) => (
+                request.expected_revision,
+                QuerySubject::City(request.city_id.clone()),
+                QueryKind::CityExpansionOptions,
+            ),
             RuntimeQuery::CombatPreview(request) => (
                 request.expected_revision,
-                request.attacker_unit_id.clone(),
+                QuerySubject::Unit(request.attacker_unit_id.clone()),
                 QueryKind::CombatPreview(request.defender),
             ),
             RuntimeQuery::Reachable(request) => (
                 request.expected_revision,
-                request.unit_id.clone(),
+                QuerySubject::Unit(request.unit_id.clone()),
                 QueryKind::Reachable,
             ),
             RuntimeQuery::RoutePlan(request) => (
                 request.expected_revision,
-                request.unit_id.clone(),
+                QuerySubject::Unit(request.unit_id.clone()),
                 QueryKind::RoutePlan(request.target),
             ),
             RuntimeQuery::UnitLogisticsOptions(request) => (
                 request.expected_revision,
-                request.unit_id.clone(),
+                QuerySubject::Unit(request.unit_id.clone()),
                 QueryKind::UnitLogisticsOptions,
             ),
         };
         Self {
             revision: stamp.revision.get(),
             expected_revision,
-            unit_id,
+            subject,
             visibility_digest: stamp.state_digest,
             map_hash: stamp.map_hash,
             ruleset_hash: stamp.ruleset_hash,

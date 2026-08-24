@@ -221,6 +221,20 @@ impl InteractionState {
         self
     }
 
+    /// Replaces the canonical city-founding draft.
+    #[must_use]
+    pub fn with_city_founding_draft(mut self, draft: Option<CityFoundingDraft>) -> Self {
+        self.city_founding_draft = draft;
+        self
+    }
+
+    /// Replaces the current pending interaction.
+    #[must_use]
+    pub fn with_pending(mut self, pending: Option<PendingInteraction>) -> Self {
+        self.pending = pending;
+        self
+    }
+
     /// Replaces the pending interaction with a reversible unit skip.
     #[must_use]
     pub fn after_skip(mut self, unit: &Unit) -> Self {

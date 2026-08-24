@@ -99,6 +99,17 @@ impl CityFoundingJob {
     pub const fn total_turns(&self) -> u32 {
         self.total_turns
     }
+
+    /// Returns the same job with a new remaining duration.
+    #[must_use]
+    pub fn with_remaining_turns(&self, remaining_turns: u32) -> Self {
+        Self {
+            center: self.center,
+            controlled_hexes: self.controlled_hexes.clone(),
+            remaining_turns,
+            total_turns: self.total_turns,
+        }
+    }
 }
 
 /// Concrete activities that make manual movement unavailable.
@@ -158,5 +169,16 @@ impl UnitActivity {
     #[must_use]
     pub const fn excavating_artifact_id(&self) -> Option<&ArtifactId> {
         self.excavating_artifact_id.as_ref()
+    }
+
+    /// Replaces city-founding work while preserving independent activity slots.
+    #[must_use]
+    pub fn with_city_founding_job(&self, job: Option<CityFoundingJob>) -> Self {
+        Self {
+            worker_job: self.worker_job.clone(),
+            city_founding_job: job,
+            worker_assignment: self.worker_assignment,
+            excavating_artifact_id: self.excavating_artifact_id.clone(),
+        }
     }
 }

@@ -80,6 +80,33 @@ pub enum ClientRequestBodyDto {
     deny_unknown_fields
 )]
 pub enum ClientCommandDto {
+    /// Schedules a validated city-founding job.
+    FoundCity {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Controlled settler or commander carrying settlers.
+        founder_unit_id: String,
+        /// Complete initial non-center territory selected through engine queries.
+        controlled_hexes: Vec<CoordinateDto>,
+    },
+    /// Toggles one manually worked controlled city hex.
+    ToggleWorkedHex {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Controlled city.
+        city_id: String,
+        /// Non-center controlled coordinate.
+        target: CoordinateDto,
+    },
+    /// Selects the preferred next territory expansion.
+    SelectCityExpansionHex {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Controlled city.
+        city_id: String,
+        /// Current engine-ranked expansion candidate.
+        target: CoordinateDto,
+    },
     /// Resolves one visible unit or city attack.
     AttackHex {
         /// Revision observed by the client.
@@ -176,6 +203,27 @@ pub enum ClientCommandDto {
     deny_unknown_fields
 )]
 pub enum ClientQueryDto {
+    /// Returns legal initial territory choices for one founder.
+    CityFoundingOptions {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Controlled settler or commander carrying settlers.
+        founder_unit_id: String,
+    },
+    /// Returns controlled, manual, and effective worked coordinates.
+    CityWorkedHexOptions {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Controlled city.
+        city_id: String,
+    },
+    /// Returns deterministically ranked territory-expansion candidates.
+    CityExpansionOptions {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Controlled city.
+        city_id: String,
+    },
     /// Returns effective combat stats and damage bounds without RNG evidence.
     CombatPreview {
         /// Revision observed by the client.

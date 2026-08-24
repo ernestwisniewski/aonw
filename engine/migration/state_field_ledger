@@ -34,7 +34,7 @@
 
 expected-fixture-count 120
 expected-envelope-count 10
-expected-envelope-field-count 76
+expected-envelope-field-count 81
 expected-domain-field-count 30
 expected-state-json-key-count 16
 expected-lifecycle-json-key-count 13
@@ -135,14 +135,19 @@ envelope-field rust-recipient-snapshot stamp authoritative-identity
 envelope-field rust-recipient-snapshot turn recipient-view
 envelope-field rust-recipient-snapshot turnLifecycle recipient-view
 envelope-field rust-recipient-snapshot pendingAction recipient-view
+envelope-field rust-recipient-snapshot cityFoundingDraft recipient-view
 envelope-field rust-recipient-snapshot units recipient-view
+envelope-field rust-recipient-snapshot cities recipient-view
 
 envelope-field rust-recipient-patch fromRevision authoritative-identity
 envelope-field rust-recipient-patch toRevision authoritative-identity
 envelope-field rust-recipient-patch turnLifecycle recipient-view
 envelope-field rust-recipient-patch upsertedUnits recipient-view
 envelope-field rust-recipient-patch removedUnitIds recipient-view
+envelope-field rust-recipient-patch upsertedCities recipient-view
+envelope-field rust-recipient-patch removedCityIds recipient-view
 envelope-field rust-recipient-patch pendingAction recipient-view
+envelope-field rust-recipient-patch cityFoundingDraft recipient-view
 
 domain-field turn identity-lifecycle state-contract-ready turn
 domain-field matchRules identity-lifecycle state-contract-ready matchIdentity

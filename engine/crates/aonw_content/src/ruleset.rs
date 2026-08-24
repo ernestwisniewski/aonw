@@ -1,6 +1,8 @@
 use std::io::{self, Write};
 
-use aonw_domain::{MovementUnits, TechnologyId, UnitKind, UnitMovementDomain, UnitOccupancyPolicy};
+use aonw_domain::{
+    MovementUnits, PlayerCountry, TechnologyId, UnitKind, UnitMovementDomain, UnitOccupancyPolicy,
+};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
@@ -249,6 +251,8 @@ pub struct RulesetDefinition {
     ruleset_id: &'static str,
     occupancy_policy: UnitOccupancyPolicyValue,
     combat: CombatBalance,
+    city: CityBalance,
+    city_name_sets: &'static [CityNameSet],
     unit_definitions: &'static [UnitDefinition],
     technology_cost_balance: TechnologyCostBalance,
     technology_definitions: &'static [TechnologyDefinition],
@@ -277,6 +281,33 @@ impl RulesetDefinition {
     #[must_use]
     pub const fn combat(&self) -> CombatBalance {
         self.combat
+    }
+
+    /// Returns immutable city and territory balance.
+    #[must_use]
+    pub const fn city(&self) -> CityBalance {
+        self.city
+    }
+
+    /// Returns a deterministic country name, cycling with a numeric suffix.
+    #[must_use]
+    pub fn city_name(&self, country: PlayerCountry, sequence: usize) -> String {
+        let names = self
+            .city_name_sets
+            .iter()
+            .copied()
+            .find(|set| set.country() == country)
+            .or_else(|| self.city_name_sets.first().copied())
+            .map_or(&[][..], CityNameSet::names);
+        let Some(base) = names.get(sequence.saturating_sub(1) % names.len().max(1)) else {
+            return format!("city_{}", sequence.max(1));
+        };
+        let cycle = sequence.saturating_sub(1) / names.len();
+        if cycle == 0 {
+            (*base).to_owned()
+        } else {
+            format!("{base} {}", cycle.saturating_add(1))
+        }
     }
 
     /// Finds a definition by canonical kind.
@@ -386,6 +417,10 @@ impl Write for HashWriter {
 }
 
 mod standard;
+
+mod city;
+use city::PlayerCountryValue;
+pub use city::{CityBalance, CityNameSet};
 
 use standard::STANDARD_RULESET;
 #[cfg(test)]

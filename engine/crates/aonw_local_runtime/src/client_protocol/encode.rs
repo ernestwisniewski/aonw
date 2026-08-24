@@ -1,33 +1,34 @@
-use aonw_contract_mapping::{
-    encode_improvement, encode_troop, encode_unit_kind, encode_unit_posture,
-};
+use aonw_contract_mapping::{encode_improvement, encode_unit_kind, encode_unit_posture};
 use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
-    AutoExploreOptionDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
-    ClientCommandResultDto, ClientFeatureDto, ClientQueryResultDto, ClientReplayVerificationDto,
-    ClientResponseBodyDto, ClientSessionStampDto, DetachmentOptionDto,
-    MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
-    PendingActionViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
-    PlayerViewSnapshotDto, ReachableTileViewDto,
+    CityFoundingDraftViewDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
+    ClientCommandResultDto, ClientFeatureDto, ClientReplayVerificationDto, ClientResponseBodyDto,
+    ClientSessionStampDto, OwnedCityPlanningViewDto, PendingActionViewDto, PlayerCityViewDto,
+    PlayerTurnLifecycleViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
 };
 use aonw_domain::PlayerTurnState;
 use aonw_engine::CommandRejectionCode;
 
 use crate::{
-    CommandResult, LocalRuntime, PendingActionView, PlayerTurnLifecycleView, PlayerUnitView,
-    PlayerViewPatch, PlayerViewSnapshot, ReplayVerification, RuntimeQueryResult, SessionStamp,
+    CityFoundingDraftView, CommandResult, LocalRuntime, PendingActionView, PlayerCityView,
+    PlayerTurnLifecycleView, PlayerUnitView, PlayerViewPatch, PlayerViewSnapshot,
+    ReplayVerification, SessionStamp,
 };
 
 mod evidence;
 mod map_view;
+mod query;
 #[cfg(test)]
 mod tests;
 
-use evidence::{combat_preview, event, recipient_evidence};
+use evidence::{event, recipient_evidence};
 use map_view::coordinate;
 pub(super) use map_view::map;
 #[cfg(test)]
 use map_view::{objective_type, resource, terrain};
+pub(super) use query::query_result;
+#[cfg(test)]
+use query::{merchant_destination, movement_metrics};
 
 pub(super) fn capabilities() -> ClientResponseBodyDto {
     let capabilities = LocalRuntime::capabilities();
@@ -53,6 +54,9 @@ pub(super) fn capabilities() -> ClientResponseBodyDto {
     if capabilities.combat() {
         features.push(ClientFeatureDto::Combat);
     }
+    if capabilities.cities() {
+        features.push(ClientFeatureDto::Cities);
+    }
     if capabilities.save_game() {
         features.push(ClientFeatureDto::SaveGame);
     }
@@ -77,80 +81,9 @@ pub(super) fn snapshot(value: &PlayerViewSnapshot) -> PlayerViewSnapshotDto {
         turn: value.turn(),
         turn_lifecycle: turn_lifecycle(*value.turn_lifecycle()),
         pending_action: value.pending_action().map(pending_action),
+        city_founding_draft: value.city_founding_draft().map(founding_draft),
         units: value.units().iter().map(unit).collect(),
-    }
-}
-
-pub(super) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
-    match value {
-        RuntimeQueryResult::CombatPreview {
-            stamp: value_stamp,
-            preview,
-        } => ClientQueryResultDto::CombatPreview {
-            stamp: stamp(*value_stamp),
-            preview: combat_preview(preview),
-        },
-        RuntimeQueryResult::Reachable(value) => ClientQueryResultDto::Reachable {
-            stamp: stamp(value.stamp),
-            unit_id: value.unit_id.as_str().to_owned(),
-            available_movement_units: value.available_movement.get(),
-            tiles: value
-                .tiles
-                .iter()
-                .map(|tile| ReachableTileViewDto {
-                    coordinate: coordinate(tile.coordinate),
-                    cost_units: tile.cost.get(),
-                    exhausts_movement: tile.exhausts_movement,
-                })
-                .collect(),
-        },
-        RuntimeQueryResult::RoutePlan(value) => ClientQueryResultDto::RoutePlan {
-            stamp: stamp(value.stamp),
-            unit_id: value.unit_id.as_str().to_owned(),
-            target: coordinate(value.target),
-            destination: coordinate(value.destination),
-            total_cost_units: value.total_cost.get(),
-            available_movement_units: value.available_movement.get(),
-            remaining_movement_units: value.remaining_movement.get(),
-            steps: value
-                .steps
-                .iter()
-                .map(|step| MovementStepViewDto {
-                    coordinate: coordinate(step.coordinate),
-                    enter_cost_units: step.enter_cost.get(),
-                    cumulative_cost_units: step.cumulative_cost.get(),
-                })
-                .collect(),
-        },
-        RuntimeQueryResult::UnitLogisticsOptions(value) => {
-            ClientQueryResultDto::UnitLogisticsOptions {
-                stamp: stamp(value.stamp),
-                unit_id: value.unit_id.as_str().to_owned(),
-                auto_explore: value.auto_explore.map(|option| AutoExploreOptionDto {
-                    target: coordinate(option.target),
-                    total_cost_units: option.total_cost.get(),
-                    search_metrics: movement_metrics(option.search_metrics),
-                }),
-                merchant_route_destinations: value
-                    .merchant_route_destinations
-                    .iter()
-                    .map(merchant_destination)
-                    .collect(),
-                merchant_travel_destinations: value
-                    .merchant_travel_destinations
-                    .iter()
-                    .map(merchant_destination)
-                    .collect(),
-                detachments: value
-                    .detachments
-                    .iter()
-                    .map(|option| DetachmentOptionDto {
-                        troop_kind: encode_troop(option.troop_kind),
-                        destination: coordinate(option.destination),
-                    })
-                    .collect(),
-            }
-        }
+        cities: value.cities().iter().map(city).collect(),
     }
 }
 
@@ -303,6 +236,41 @@ const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto
         CommandRejectionCode::AttackCityHasNoHealth => {
             ClientCommandRejectionCodeDto::AttackCityHasNoHealth
         }
+        CommandRejectionCode::CityFounderNotFound => {
+            ClientCommandRejectionCodeDto::CityFounderNotFound
+        }
+        CommandRejectionCode::CityFounderNotControlled => {
+            ClientCommandRejectionCodeDto::CityFounderNotControlled
+        }
+        CommandRejectionCode::CityFounderBusy => ClientCommandRejectionCodeDto::CityFounderBusy,
+        CommandRejectionCode::CityFounderInvalid => {
+            ClientCommandRejectionCodeDto::CityFounderInvalid
+        }
+        CommandRejectionCode::CityFounderNoSettlers => {
+            ClientCommandRejectionCodeDto::CityFounderNoSettlers
+        }
+        CommandRejectionCode::CitySiteInvalid => ClientCommandRejectionCodeDto::CitySiteInvalid,
+        CommandRejectionCode::CityCenterOccupied => {
+            ClientCommandRejectionCodeDto::CityCenterOccupied
+        }
+        CommandRejectionCode::CityCenterClaimed => ClientCommandRejectionCodeDto::CityCenterClaimed,
+        CommandRejectionCode::CityCenterTooClose => {
+            ClientCommandRejectionCodeDto::CityCenterTooClose
+        }
+        CommandRejectionCode::CityControlledHexesInvalid => {
+            ClientCommandRejectionCodeDto::CityControlledHexesInvalid
+        }
+        CommandRejectionCode::CityNotFound => ClientCommandRejectionCodeDto::CityNotFound,
+        CommandRejectionCode::CityNotControlled => ClientCommandRejectionCodeDto::CityNotControlled,
+        CommandRejectionCode::WorkedHexUnavailable => {
+            ClientCommandRejectionCodeDto::WorkedHexUnavailable
+        }
+        CommandRejectionCode::WorkedHexLimitReached => {
+            ClientCommandRejectionCodeDto::WorkedHexLimitReached
+        }
+        CommandRejectionCode::CityExpansionHexUnavailable => {
+            ClientCommandRejectionCodeDto::CityExpansionHexUnavailable
+        }
     }
 }
 
@@ -329,6 +297,46 @@ fn unit(value: &PlayerUnitView) -> PlayerUnitViewDto {
     }
 }
 
+fn city(value: &PlayerCityView) -> PlayerCityViewDto {
+    PlayerCityViewDto {
+        id: value.id().as_str().to_owned(),
+        owner_player_id: value.owner_player_id().as_str().to_owned(),
+        name: value.name().to_owned(),
+        center: coordinate(value.center()),
+        visible_controlled_hexes: value
+            .visible_controlled_hexes()
+            .iter()
+            .copied()
+            .map(coordinate)
+            .collect(),
+        owned_planning: value
+            .owned_planning()
+            .map(|planning| OwnedCityPlanningViewDto {
+                population: planning.population(),
+                worked_hexes: planning
+                    .worked_hexes()
+                    .iter()
+                    .copied()
+                    .map(coordinate)
+                    .collect(),
+                preferred_expansion_hex: planning.preferred_expansion_hex().map(coordinate),
+            }),
+    }
+}
+
+fn founding_draft(value: &CityFoundingDraftView) -> CityFoundingDraftViewDto {
+    CityFoundingDraftViewDto {
+        founder_unit_id: value.founder_unit_id().as_str().to_owned(),
+        center: coordinate(value.center()),
+        controlled_hexes: value
+            .controlled_hexes()
+            .iter()
+            .copied()
+            .map(coordinate)
+            .collect(),
+    }
+}
+
 fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
     PlayerViewPatchDto {
         from_revision: value.from_revision,
@@ -340,7 +348,14 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
             .iter()
             .map(|id| id.as_str().to_owned())
             .collect(),
+        upserted_cities: value.upserted_cities.iter().map(city).collect(),
+        removed_city_ids: value
+            .removed_city_ids
+            .iter()
+            .map(|id| id.as_str().to_owned())
+            .collect(),
         pending_action: value.pending_action.as_ref().map(pending_action),
+        city_founding_draft: value.city_founding_draft.as_ref().map(founding_draft),
     }
 }
 
@@ -392,23 +407,6 @@ fn pending_action(value: &PendingActionView) -> PendingActionViewDto {
                 unit_id: unit_id.as_str().to_owned(),
             }
         }
-    }
-}
-
-fn movement_metrics(value: aonw_engine::MovementSearchMetrics) -> MovementSearchMetricsDto {
-    MovementSearchMetricsDto {
-        frontier_pops: value.frontier_pops(),
-        expanded_tiles: value.expanded_tiles(),
-        examined_edges: value.examined_edges(),
-        heap_pushes: value.heap_pushes(),
-        route_records: value.route_records(),
-    }
-}
-
-fn merchant_destination(value: &crate::MerchantDestinationView) -> MerchantDestinationOptionDto {
-    MerchantDestinationOptionDto {
-        city_id: value.city_id.as_str().to_owned(),
-        total_cost_units: value.total_cost.get(),
     }
 }
 

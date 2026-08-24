@@ -1,8 +1,8 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_contract_mapping::{decode_game_state, decode_troop, encode_game_state};
 use aonw_contracts::{
-    MAX_REPLAY_ENTRY_COUNT, ReplayCommandDto, ReplayContextDto, ReplayEntryDto, ReplayLogDto,
-    ReplayRecordDto, ReplayResultDto, ReplaySystemCommandDto, SaveGameDto,
+    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, ReplayCommandDto, ReplayContextDto, ReplayEntryDto,
+    ReplayLogDto, ReplayRecordDto, ReplayResultDto, ReplaySystemCommandDto, SaveGameDto,
 };
 use aonw_domain::{CityConquestAction, CityId, PlayerId, UnitId, UtcTimestamp};
 use aonw_engine::GameEngine;
@@ -12,8 +12,9 @@ use crate::persistence_validation::{validate_replay_header, validate_save_header
 use crate::session::Session;
 use crate::{
     AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest,
-    FinalizeTimedOutTurnRequest, KickParticipantRequest, LocalRuntime, MerchantCityRequest,
-    MoveUnitRequest, OpenSession, SessionStamp, TurnCommandRequest, UnitActionRequest,
+    FinalizeTimedOutTurnRequest, FoundCityRequest, KickParticipantRequest, LocalRuntime,
+    MerchantCityRequest, MoveUnitRequest, OpenSession, SelectCityExpansionHexRequest, SessionStamp,
+    ToggleWorkedHexRequest, TurnCommandRequest, UnitActionRequest,
 };
 
 mod evidence;
@@ -180,6 +181,13 @@ impl LocalRuntime {
                 return Err(PersistenceError::ReplayContextMismatch { entry: entry_index });
             }
             let result = match decode_record(&entry.record)? {
+                ReplayRuntimeCommand::FoundCity(command) => runtime.found_city(&command),
+                ReplayRuntimeCommand::ToggleWorkedHex(command) => {
+                    runtime.toggle_worked_hex(&command)
+                }
+                ReplayRuntimeCommand::SelectCityExpansionHex(command) => {
+                    runtime.select_city_expansion_hex(&command)
+                }
                 ReplayRuntimeCommand::Attack(command) => runtime.attack_hex(&command),
                 ReplayRuntimeCommand::Move(command) => runtime.dispatch(&command),
                 ReplayRuntimeCommand::AutoExplore(command) => runtime.auto_explore_unit(&command),
@@ -256,6 +264,9 @@ fn replay_result(result: &CommandResult, session: &Session) -> ReplayResultDto {
 }
 
 enum ReplayRuntimeCommand {
+    FoundCity(FoundCityRequest),
+    ToggleWorkedHex(ToggleWorkedHexRequest),
+    SelectCityExpansionHex(SelectCityExpansionHexRequest),
     Attack(AttackHexRequest),
     Move(MoveUnitRequest),
     AutoExplore(AutoExploreUnitRequest),
@@ -280,6 +291,24 @@ fn decode_record(record: &ReplayRecordDto) -> Result<ReplayRuntimeCommand, Persi
 
 fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, PersistenceError> {
     match command {
+        ReplayCommandDto::FoundCity {
+            expected_revision,
+            founder_unit_id,
+            controlled_hexes,
+        } => decode_found_city(*expected_revision, founder_unit_id, controlled_hexes)
+            .map(ReplayRuntimeCommand::FoundCity),
+        ReplayCommandDto::ToggleWorkedHex {
+            expected_revision,
+            city_id,
+            target,
+        } => decode_toggle_worked_hex(*expected_revision, city_id, *target)
+            .map(ReplayRuntimeCommand::ToggleWorkedHex),
+        ReplayCommandDto::SelectCityExpansionHex {
+            expected_revision,
+            city_id,
+            target,
+        } => decode_select_city_expansion_hex(*expected_revision, city_id, *target)
+            .map(ReplayRuntimeCommand::SelectCityExpansionHex),
         ReplayCommandDto::AttackHex {
             expected_revision,
             attacker_unit_id,
@@ -355,6 +384,46 @@ fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, Pe
             }))
         }
     }
+}
+
+fn decode_found_city(
+    expected_revision: u64,
+    founder_unit_id: &str,
+    controlled_hexes: &[CoordinateDto],
+) -> Result<FoundCityRequest, PersistenceError> {
+    Ok(FoundCityRequest {
+        expected_revision,
+        founder_unit_id: UnitId::new(founder_unit_id.to_owned())
+            .map_err(PersistenceError::InvalidUnit)?,
+        controlled_hexes: controlled_hexes
+            .iter()
+            .map(|coordinate| aonw_domain::HexCoord::new(coordinate.col, coordinate.row))
+            .collect(),
+    })
+}
+
+fn decode_toggle_worked_hex(
+    expected_revision: u64,
+    city_id: &str,
+    target: CoordinateDto,
+) -> Result<ToggleWorkedHexRequest, PersistenceError> {
+    Ok(ToggleWorkedHexRequest {
+        expected_revision,
+        city_id: CityId::new(city_id.to_owned()).map_err(PersistenceError::InvalidCity)?,
+        target: aonw_domain::HexCoord::new(target.col, target.row),
+    })
+}
+
+fn decode_select_city_expansion_hex(
+    expected_revision: u64,
+    city_id: &str,
+    target: CoordinateDto,
+) -> Result<SelectCityExpansionHexRequest, PersistenceError> {
+    Ok(SelectCityExpansionHexRequest {
+        expected_revision,
+        city_id: CityId::new(city_id.to_owned()).map_err(PersistenceError::InvalidCity)?,
+        target: aonw_domain::HexCoord::new(target.col, target.row),
+    })
 }
 
 fn decode_system_command(

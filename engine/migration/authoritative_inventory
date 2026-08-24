@@ -44,12 +44,12 @@
 oracle-tree b83e4a513901403ab24e9d447feb5086edbdf9b9
 expected-domain-count 39
 expected-system-count 2
-expected-query-count 4
+expected-query-count 7
 expected-event-count 40
 expected-native-event-count 4
 expected-evidence-count 1
 expected-native-evidence-count 3
-expected-projection-type-count 3
+expected-projection-type-count 6
 expected-projection-variant-count 9
 dart-domain-root packages/aonw_core/lib/game/domain/command/game_command.dart
 dart-system-source packages/aonw_core/lib/game/application/engine/system_command.dart
@@ -81,7 +81,7 @@ domain DeclareWarCommand diplomacy reference-only - packages/aonw_core/lib/game/
 domain DetachTroopCommand movement runtime-ready DetachTroop packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain EndTurnCommand turn turn-kernel-ready EndTurn packages/aonw_core/lib/game/domain/command/turn_commands.dart
 domain FortifyUnitCommand unit-action engine-parity FortifyUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
-domain FoundCityCommand city reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
+domain FoundCityCommand city runtime-ready FoundCity packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain MoveMerchantToCityCommand movement runtime-ready MoveMerchantToCity packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain MoveUnitCommand movement engine-parity MoveUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain OpenResourceExchangeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
@@ -89,7 +89,7 @@ domain OpenResourceTradeCommand artifact-resource-trade reference-only - package
 domain RespondDiplomaticMessageCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RespondDiplomaticProposalCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RushProductionCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
-domain SelectCityExpansionHexCommand city reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
+domain SelectCityExpansionHexCommand city runtime-ready SelectCityExpansionHex packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SelectTechnologyCommand research reference-only - packages/aonw_core/lib/game/domain/command/research_commands.dart
 domain SelectWorkerImprovementCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain SendDiplomaticMessageCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
@@ -104,7 +104,7 @@ domain StartUnitProductionCommand production reference-only - packages/aonw_core
 domain StartWonderCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain StoreArtifactInCityCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
 domain SubmitTurnCommand turn turn-kernel-ready SubmitTurn packages/aonw_core/lib/game/domain/command/turn_commands.dart
-domain ToggleWorkedHexCommand city reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
+domain ToggleWorkedHexCommand city runtime-ready ToggleWorkedHex packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain TradeArtifactCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
 
 system FinalizeTimedOutTurn system-lifecycle turn-kernel-ready FinalizeTimedOutTurn packages/aonw_core/lib/game/application/engine/system_command.dart
@@ -113,6 +113,9 @@ system KickParticipant system-lifecycle turn-kernel-ready KickParticipant packag
 query PlanRoute Route RoutePlan movement characterized
 query Reachable Reachable Reachable movement characterized
 query CombatPreview CombatPreview CombatPreview combat runtime-ready
+query CityExpansionOptions CityExpansionOptions CityExpansionOptions city runtime-ready
+query CityFoundingOptions CityFoundingOptions CityFoundingOptions city runtime-ready
+query CityWorkedHexOptions CityWorkedHexOptions CityWorkedHexOptions city runtime-ready
 query UnitLogisticsOptions UnitLogisticsOptions UnitLogisticsOptions movement runtime-ready
 
 event ArtifactCarriedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
@@ -125,7 +128,7 @@ event CityBuiltWonderEvent city reference-only - packages/aonw_core/lib/game/dom
 event CityCapturedEvent combat runtime-ready CityCaptured packages/aonw_core/lib/game/domain/event/combat_events.dart
 event CityClaimedHexEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityDestroyedEvent combat runtime-ready CityDestroyed packages/aonw_core/lib/game/domain/event/combat_events.dart
-event CityFoundedEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
+event CityFoundedEvent city runtime-ready CityFounded packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityProducedUnitEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event CivilizationMetEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
 event CombatResolvedEvent combat runtime-ready CombatResolved packages/aonw_core/lib/game/domain/event/combat_events.dart
@@ -167,6 +170,9 @@ native-evidence CombatExecution combat runtime-ready Combat engine/crates/aonw_e
 native-evidence TurnKernelExecution turn turn-kernel-ready TurnKernel engine/crates/aonw_engine/src/application/turn.rs
 
 projection-type PlayerUnitView visible-entity characterized PlayerUnitViewDto engine/crates/aonw_local_runtime/src/player_view.rs
+projection-type CityFoundingDraftView recipient-workflow runtime-ready CityFoundingDraftViewDto engine/crates/aonw_local_runtime/src/player_view/city.rs
+projection-type OwnedCityPlanningView private-city-planning runtime-ready OwnedCityPlanningViewDto engine/crates/aonw_local_runtime/src/player_view/city.rs
+projection-type PlayerCityView visible-entity runtime-ready PlayerCityViewDto engine/crates/aonw_local_runtime/src/player_view/city.rs
 projection-type PlayerViewPatch recipient-patch characterized PlayerViewPatchDto engine/crates/aonw_local_runtime/src/command_dispatch.rs
 projection-type PlayerViewSnapshot recipient-snapshot characterized PlayerViewSnapshotDto engine/crates/aonw_local_runtime/src/player_view.rs
 

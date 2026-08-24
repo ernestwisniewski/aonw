@@ -141,6 +141,11 @@ fn serialization_failure() -> String {
 
 fn dispatch_command(runtime: &mut LocalRuntime, command: DecodedCommand) -> ClientResponseDto {
     let result = match command {
+        DecodedCommand::FoundCity(command) => runtime.found_city(&command),
+        DecodedCommand::ToggleWorkedHex(command) => runtime.toggle_worked_hex(&command),
+        DecodedCommand::SelectCityExpansionHex(command) => {
+            runtime.select_city_expansion_hex(&command)
+        }
         DecodedCommand::Attack(command) => runtime.attack_hex(&command),
         DecodedCommand::Move(command) => runtime.dispatch(&command),
         DecodedCommand::AutoExplore(command) => runtime.auto_explore_unit(&command),

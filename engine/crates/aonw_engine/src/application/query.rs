@@ -1,14 +1,22 @@
 use aonw_domain::GameState;
 
 use crate::{
-    CombatPreview, CombatPreviewQuery, EngineContext, GameEngine, MovementSearchWorkspace,
-    ReachableMovement, ReachableMovementQuery, TerrainMovementPlan, TerrainMovementQuery,
-    TerrainMovementQueryError, UnitLogisticsOptions, UnitLogisticsOptionsQuery,
+    CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions, CityFoundingOptionsQuery,
+    CityWorkedHexOptions, CityWorkedHexOptionsQuery, CombatPreview, CombatPreviewQuery,
+    EngineContext, GameEngine, MovementSearchWorkspace, ReachableMovement, ReachableMovementQuery,
+    TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitLogisticsOptions,
+    UnitLogisticsOptionsQuery,
 };
 
 /// Read-only game query family.
 #[derive(Clone, Copy, Debug)]
 pub enum GameQuery<'query> {
+    /// Returns founding legality and engine-owned initial territory choices.
+    CityFoundingOptions(CityFoundingOptionsQuery<'query>),
+    /// Returns controlled/manual/effective worked coordinates.
+    CityWorkedHexOptions(CityWorkedHexOptionsQuery<'query>),
+    /// Returns deterministically ranked expansion candidates.
+    CityExpansionOptions(CityExpansionOptionsQuery<'query>),
     /// Recipient-safe combat preview without seed or rolls.
     CombatPreview(CombatPreviewQuery<'query>),
     /// Route preview for one target.
@@ -22,6 +30,12 @@ pub enum GameQuery<'query> {
 /// Typed query result.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum QueryResult {
+    /// Legal initial territory for one founder.
+    CityFoundingOptions(CityFoundingOptions),
+    /// Legal worked-hex state for one city.
+    CityWorkedHexOptions(CityWorkedHexOptions),
+    /// Legal preferred-expansion candidates for one city.
+    CityExpansionOptions(CityExpansionOptions),
     /// Effective combat statistics and damage bounds.
     CombatPreview(CombatPreview),
     /// Planned route.
@@ -35,6 +49,10 @@ pub enum QueryResult {
 /// Failure from a canonical read-only query.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CanonicalQueryError {
+    /// City query was rejected by deterministic city rules.
+    City(crate::CommandRejectionCode),
+    /// City query referenced incomplete technology content.
+    Technology(crate::TechnologyQueryError),
     /// Combat preview was rejected without disclosing hidden target state.
     Combat(crate::CommandRejectionCode),
     /// Query was rejected by deterministic rules.
@@ -48,7 +66,8 @@ impl CanonicalQueryError {
     #[must_use]
     pub const fn code(&self) -> &'static str {
         match self {
-            Self::Combat(rejection) => rejection.as_str(),
+            Self::Technology(_) => "technology_query_invalid",
+            Self::City(rejection) | Self::Combat(rejection) => rejection.as_str(),
             Self::Rejected(rejection) => rejection.code().as_str(),
             Self::Logistics(rejection) => rejection.code().as_str(),
         }
@@ -58,7 +77,8 @@ impl CanonicalQueryError {
 impl core::fmt::Display for CanonicalQueryError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::Combat(source) => source.fmt(formatter),
+            Self::Technology(source) => source.fmt(formatter),
+            Self::City(source) | Self::Combat(source) => source.fmt(formatter),
             Self::Rejected(source) => source.fmt(formatter),
             Self::Logistics(source) => source.fmt(formatter),
         }
@@ -95,6 +115,21 @@ impl GameEngine {
     ) -> Result<QueryResult, CanonicalQueryError> {
         let context = context.with_world(state);
         match query {
+            GameQuery::CityFoundingOptions(query) => {
+                crate::city::query_founding(state, context, query)
+                    .map(QueryResult::CityFoundingOptions)
+                    .map_err(city_query_error)
+            }
+            GameQuery::CityWorkedHexOptions(query) => {
+                crate::city::query_worked_hexes(state, context, query)
+                    .map(QueryResult::CityWorkedHexOptions)
+                    .map_err(city_query_error)
+            }
+            GameQuery::CityExpansionOptions(query) => {
+                crate::city::query_expansion(state, context, query)
+                    .map(QueryResult::CityExpansionOptions)
+                    .map_err(city_query_error)
+            }
             GameQuery::CombatPreview(query) => crate::combat::preview(state, context, query)
                 .map(QueryResult::CombatPreview)
                 .map_err(CanonicalQueryError::Combat),
@@ -112,6 +147,13 @@ impl GameEngine {
                     .map_err(CanonicalQueryError::Logistics)
             }
         }
+    }
+}
+
+fn city_query_error(error: crate::city::CityRuleError) -> CanonicalQueryError {
+    match error {
+        crate::city::CityRuleError::Rejected(code) => CanonicalQueryError::City(code),
+        crate::city::CityRuleError::Technology(error) => CanonicalQueryError::Technology(error),
     }
 }
 

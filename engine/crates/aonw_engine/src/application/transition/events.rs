@@ -1,6 +1,32 @@
-use aonw_domain::{PlayerId, UnitId};
+use aonw_domain::{CityId, PlayerId, UnitId};
 
 use crate::CombatTarget;
+
+/// Accepted fact that a city-founding job completed.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CityFoundedEvent {
+    city_id: CityId,
+    owner_player_id: PlayerId,
+}
+
+impl CityFoundedEvent {
+    pub(crate) const fn new(city_id: CityId, owner_player_id: PlayerId) -> Self {
+        Self {
+            city_id,
+            owner_player_id,
+        }
+    }
+    /// Returns the new city identity.
+    #[must_use]
+    pub const fn city_id(&self) -> &CityId {
+        &self.city_id
+    }
+    /// Returns the founding player.
+    #[must_use]
+    pub const fn owner_player_id(&self) -> &PlayerId {
+        &self.owner_player_id
+    }
+}
 
 /// Recipient-safe score change emitted by combat diplomacy.
 #[derive(Clone, Debug, Eq, PartialEq)]

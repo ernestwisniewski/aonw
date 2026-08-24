@@ -15,6 +15,10 @@ use aonw_engine::{
 #[allow(clippy::too_many_lines)]
 pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
     match event {
+        DomainEvent::CityFounded(value) => ReplayEventDto::CityFounded {
+            city_id: value.city_id().as_str().to_owned(),
+            owner_player_id: value.owner_player_id().as_str().to_owned(),
+        },
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
             ReplayEventDto::UnitAttacked {
                 attacker_unit_id,
@@ -146,6 +150,11 @@ pub(super) fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto
                 .processors()
                 .iter()
                 .map(|processor| processor.as_str().to_owned())
+                .collect(),
+            founded_city_ids: execution
+                .founded_city_ids()
+                .iter()
+                .map(|city| city.as_str().to_owned())
                 .collect(),
             combat_executions: execution
                 .combat_executions()

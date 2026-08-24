@@ -16,19 +16,22 @@ mod turn_dispatch;
 
 pub use client_protocol::ClientProtocol;
 pub use command_dispatch::{
-    AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest,
-    MerchantCityRequest, MoveUnitRequest, PlayerViewPatch, UnitActionRequest,
+    AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest, FoundCityRequest,
+    MerchantCityRequest, MoveUnitRequest, PlayerViewPatch, SelectCityExpansionHexRequest,
+    ToggleWorkedHexRequest, UnitActionRequest,
 };
 pub use persistence::{PersistenceError, ReplayVerification};
 pub use player_view::{
-    PendingActionView, PlayerTurnLifecycleView, PlayerUnitView, PlayerViewSnapshot,
+    CityFoundingDraftView, OwnedCityPlanningView, PendingActionView, PlayerCityView,
+    PlayerTurnLifecycleView, PlayerUnitView, PlayerViewSnapshot,
 };
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{
-    AutoExploreOptionView, CombatPreviewRequest, DetachmentOptionView, MerchantDestinationView,
-    MovementStepView, ReachableRequest, ReachableResult, ReachableTileView, RoutePlanRequest,
-    RoutePlanResult, RuntimeQuery, RuntimeQueryResult, UnitLogisticsOptionsRequest,
-    UnitLogisticsOptionsResult,
+    AutoExploreOptionView, CityExpansionOptionsRequest, CityFoundingOptionsRequest,
+    CityWorkedHexOptionsRequest, CombatPreviewRequest, DetachmentOptionView,
+    MerchantDestinationView, MovementStepView, ReachableRequest, ReachableResult,
+    ReachableTileView, RoutePlanRequest, RoutePlanResult, RuntimeQuery, RuntimeQueryResult,
+    UnitLogisticsOptionsRequest, UnitLogisticsOptionsResult,
 };
 pub use session::{
     LocalRuntime, OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, SessionStamp,

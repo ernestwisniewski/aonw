@@ -7,11 +7,16 @@ use crate::{
 
 use super::MapViewDto;
 
+mod city;
 mod event;
 mod logistics;
 mod rejection;
 mod session;
 
+pub use city::{
+    CityExpansionCandidateDto, CityFoundingDraftViewDto, OwnedCityPlanningViewDto,
+    PlayerCityViewDto,
+};
 pub use event::ClientEventDto;
 pub use logistics::{
     AutoExploreOptionDto, ClientLogisticsEvidenceDto, DetachmentOptionDto,
@@ -118,6 +123,8 @@ pub enum ClientResponseBodyDto {
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ClientFeatureDto {
+    /// City founding, worked territory, expansion, and city projections.
+    Cities,
     /// Combat preview and authoritative visible attacks.
     Combat,
     /// Stateless strict map inspection.
@@ -168,8 +175,12 @@ pub struct PlayerViewSnapshotDto {
     pub turn_lifecycle: PlayerTurnLifecycleViewDto,
     /// Action currently awaiting input from this recipient.
     pub pending_action: Option<PendingActionViewDto>,
+    /// Recipient-owned city-founding workflow, when one is persisted.
+    pub city_founding_draft: Option<CityFoundingDraftViewDto>,
     /// Units currently visible to the recipient.
     pub units: Vec<PlayerUnitViewDto>,
+    /// Cities currently known to the recipient.
+    pub cities: Vec<PlayerCityViewDto>,
 }
 
 /// Recipient-safe lifecycle projection with no per-opponent readiness map.
@@ -260,8 +271,14 @@ pub struct PlayerViewPatchDto {
     pub upserted_units: Vec<PlayerUnitViewDto>,
     /// Units no longer visible.
     pub removed_unit_ids: Vec<String>,
+    /// New or changed recipient-safe cities.
+    pub upserted_cities: Vec<PlayerCityViewDto>,
+    /// Cities no longer known to the recipient.
+    pub removed_city_ids: Vec<String>,
     /// Current action awaiting input from this recipient.
     pub pending_action: Option<PendingActionViewDto>,
+    /// Current recipient-owned founding workflow; null clears it.
+    pub city_founding_draft: Option<CityFoundingDraftViewDto>,
 }
 
 /// Result of one authoritative command.
@@ -330,6 +347,8 @@ pub enum ClientEvidenceDto {
     TurnKernel {
         /// Processors executed in canonical order.
         processors: Vec<String>,
+        /// Cities founded during the pipeline and visible to the recipient.
+        founded_city_ids: Vec<String>,
         /// Exact intended-attack resolutions in execution order.
         combat_executions: Vec<CombatExecutionDto>,
         /// Units whose movement allowance was reset.
@@ -364,6 +383,55 @@ pub struct MovementStepViewDto {
     deny_unknown_fields
 )]
 pub enum ClientQueryResultDto {
+    /// Legal initial territory choices for one founder.
+    CityFoundingOptions {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Queried founder.
+        founder_unit_id: String,
+        /// Immutable prospective center.
+        center: CoordinateDto,
+        /// Canonically ordered current draft selection.
+        selected_controlled_hexes: Vec<CoordinateDto>,
+        /// Legal next selections owned by the engine.
+        available_controlled_hexes: Vec<CoordinateDto>,
+        /// Required exact non-center territory count.
+        required_controlled_hexes: u32,
+        /// Maximum founding radius.
+        maximum_radius: u32,
+    },
+    /// Controlled, manual, and effective worked-city coordinates.
+    CityWorkedHexOptions {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Queried city.
+        city_id: String,
+        /// City center.
+        center: CoordinateDto,
+        /// Canonically ordered non-center territory.
+        controlled_hexes: Vec<CoordinateDto>,
+        /// Coordinates accepted by the toggle command.
+        available_hexes: Vec<CoordinateDto>,
+        /// Canonically ordered manual selection.
+        selected_hexes: Vec<CoordinateDto>,
+        /// Manual selection plus deterministic automatic fill.
+        effective_hexes: Vec<CoordinateDto>,
+        /// Population-based worked-hex limit.
+        limit: u32,
+    },
+    /// Engine-ranked preferred-expansion choices.
+    CityExpansionOptions {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Queried city.
+        city_id: String,
+        /// Canonically ordered non-center territory.
+        controlled_hexes: Vec<CoordinateDto>,
+        /// Persisted preferred coordinate.
+        preferred_hex: Option<CoordinateDto>,
+        /// Current deterministic candidate ranking.
+        candidates: Vec<CityExpansionCandidateDto>,
+    },
     /// Recipient-safe combat preview.
     CombatPreview {
         /// Identity of the queried state.

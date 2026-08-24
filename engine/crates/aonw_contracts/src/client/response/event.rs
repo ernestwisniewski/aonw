@@ -11,6 +11,13 @@ use crate::{CombatTargetDto, CoordinateDto, DiplomaticScoreChangeReasonDto, Troo
     deny_unknown_fields
 )]
 pub enum ClientEventDto {
+    /// One city-founding job completed for a visible city.
+    CityFounded {
+        /// New city identity.
+        city_id: String,
+        /// Founding player.
+        owner_player_id: String,
+    },
     /// A visible attacker engaged a visible target.
     UnitAttacked {
         /// Attacking unit identity.
