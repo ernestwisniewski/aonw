@@ -16,8 +16,8 @@ mod turn_dispatch;
 
 pub use client_protocol::ClientProtocol;
 pub use command_dispatch::{
-    AutoExploreUnitRequest, CommandResult, DetachTroopRequest, MerchantCityRequest,
-    MoveUnitRequest, PlayerViewPatch, UnitActionRequest,
+    AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest,
+    MerchantCityRequest, MoveUnitRequest, PlayerViewPatch, UnitActionRequest,
 };
 pub use persistence::{PersistenceError, ReplayVerification};
 pub use player_view::{
@@ -25,9 +25,10 @@ pub use player_view::{
 };
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{
-    AutoExploreOptionView, DetachmentOptionView, MerchantDestinationView, MovementStepView,
-    ReachableRequest, ReachableResult, ReachableTileView, RoutePlanRequest, RoutePlanResult,
-    RuntimeQuery, RuntimeQueryResult, UnitLogisticsOptionsRequest, UnitLogisticsOptionsResult,
+    AutoExploreOptionView, CombatPreviewRequest, DetachmentOptionView, MerchantDestinationView,
+    MovementStepView, ReachableRequest, ReachableResult, ReachableTileView, RoutePlanRequest,
+    RoutePlanResult, RuntimeQuery, RuntimeQueryResult, UnitLogisticsOptionsRequest,
+    UnitLogisticsOptionsResult,
 };
 pub use session::{
     LocalRuntime, OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, SessionStamp,

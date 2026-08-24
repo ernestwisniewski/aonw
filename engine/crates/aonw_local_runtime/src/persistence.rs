@@ -4,16 +4,16 @@ use aonw_contracts::{
     MAX_REPLAY_ENTRY_COUNT, ReplayCommandDto, ReplayContextDto, ReplayEntryDto, ReplayLogDto,
     ReplayRecordDto, ReplayResultDto, ReplaySystemCommandDto, SaveGameDto,
 };
-use aonw_domain::{CityId, PlayerId, UnitId, UtcTimestamp};
+use aonw_domain::{CityConquestAction, CityId, PlayerId, UnitId, UtcTimestamp};
 use aonw_engine::GameEngine;
 
 pub use crate::persistence_error::PersistenceError;
 use crate::persistence_validation::{validate_replay_header, validate_save_header};
 use crate::session::Session;
 use crate::{
-    AutoExploreUnitRequest, CommandResult, DetachTroopRequest, FinalizeTimedOutTurnRequest,
-    KickParticipantRequest, LocalRuntime, MerchantCityRequest, MoveUnitRequest, OpenSession,
-    SessionStamp, TurnCommandRequest, UnitActionRequest,
+    AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest,
+    FinalizeTimedOutTurnRequest, KickParticipantRequest, LocalRuntime, MerchantCityRequest,
+    MoveUnitRequest, OpenSession, SessionStamp, TurnCommandRequest, UnitActionRequest,
 };
 
 mod evidence;
@@ -180,6 +180,7 @@ impl LocalRuntime {
                 return Err(PersistenceError::ReplayContextMismatch { entry: entry_index });
             }
             let result = match decode_record(&entry.record)? {
+                ReplayRuntimeCommand::Attack(command) => runtime.attack_hex(&command),
                 ReplayRuntimeCommand::Move(command) => runtime.dispatch(&command),
                 ReplayRuntimeCommand::AutoExplore(command) => runtime.auto_explore_unit(&command),
                 ReplayRuntimeCommand::AssignMerchantRoute(command) => {
@@ -255,6 +256,7 @@ fn replay_result(result: &CommandResult, session: &Session) -> ReplayResultDto {
 }
 
 enum ReplayRuntimeCommand {
+    Attack(AttackHexRequest),
     Move(MoveUnitRequest),
     AutoExplore(AutoExploreUnitRequest),
     AssignMerchantRoute(MerchantCityRequest),
@@ -278,6 +280,21 @@ fn decode_record(record: &ReplayRecordDto) -> Result<ReplayRuntimeCommand, Persi
 
 fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, PersistenceError> {
     match command {
+        ReplayCommandDto::AttackHex {
+            expected_revision,
+            attacker_unit_id,
+            defender,
+            city_conquest_action,
+        } => Ok(ReplayRuntimeCommand::Attack(AttackHexRequest {
+            expected_revision: *expected_revision,
+            attacker_unit_id: UnitId::new(attacker_unit_id.clone())
+                .map_err(PersistenceError::InvalidUnit)?,
+            defender: aonw_domain::HexCoord::new(defender.col, defender.row),
+            city_conquest_action: match city_conquest_action {
+                aonw_contracts::CityConquestActionDto::Capture => CityConquestAction::Capture,
+                aonw_contracts::CityConquestActionDto::Destroy => CityConquestAction::Destroy,
+            },
+        })),
         ReplayCommandDto::MoveUnit {
             expected_revision,
             unit_id,

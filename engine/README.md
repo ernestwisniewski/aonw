@@ -22,7 +22,7 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_map_compiler_cli` | Thin filesystem adapter that writes compiled terrain as OpenEXR, raw R16, and a strict manifest. |
 | `aonw_contracts` | Current-only shared client API plus strict bounded canonical state, save, and replay codecs. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
-| `aonw_engine` | Authoritative movement, unit actions, logistics, DP/TG policy queries, and the capability-gated turn kernel with a separate trusted lifecycle boundary. |
+| `aonw_engine` | Authoritative movement, unit actions, logistics, combat, DP/TG policy queries, and the capability-gated turn kernel with a separate trusted lifecycle boundary. |
 | `aonw_local_runtime` | Transactional local sessions, player/system replay records, recipient-safe lifecycle snapshots/patches, and query/command dispatch. |
 | `aonw_godot` | Thin GDExtension translating Godot calls into the framework-neutral local runtime. |
 | `aonw_flutter` | Panic-contained C ABI exposing the same client protocol to Flutter Native Assets. |
@@ -101,15 +101,19 @@ participant removal, client JSON submit, and exact replay verification at
 1/64/512 units. Run its complete focused gate with `make
 rust-turn-kernel-check`. U2 adds 21 allocation/work-counter workloads for
 auto-explore apply/options and long merchant routes at the same scales; run its
-focused gate with `make rust-movement-logistics-check`.
+focused gate with `make rust-movement-logistics-check`. C3 adds 20 workloads
+for combat preview/apply, bounded mass-turn resolution, runtime dispatch, and
+client JSON at 10/64/512-unit scales. The mass workload resolves at most 32
+attacker/defender pairs per turn, and its complete focused gate is `make
+rust-combat-check`.
 
 The migration inventory under [`migration/`](migration/README.md) closes the
 authoritative surface before new Rust behavior is added. `p0-check` runs its
 dependency-free source census and negative fixtures; the analyzer-backed Dart
 AST census and exact field ledger run through
 `rust-engine-inventory-ast-check`. Together they compare 39 player commands,
-two trusted system commands, three queries, 40 mapped plus four native domain
-events, one mapped plus two native evidence types, recipient projections, 30
+two trusted system commands, four queries, 40 mapped plus four native domain
+events, one mapped plus three native evidence types, recipient projections, 30
 Dart `DomainState` fields, 10 boundary
 envelopes, and all 120 reducer fixtures. The inventory remains migration
 evidence; active Rust execution gates use only typed current contracts and do
@@ -128,9 +132,9 @@ case to have either current structural round-trip evidence or an explicit
 future checkpoint, and rejects any Rust source that reads the old corpus.
 `make rust-corpus-parity-check` executes only the nine root cases whose current
 canonical artifacts and four player-command capabilities are promoted to
-`engine-parity`; 99 remain blocked `reference-only`, while 12 U2 cases are
-historical `reference-only` superseded by separately reviewed current
-contracts. No Rust reader parses their historical envelope.
+`engine-parity`; 96 remain blocked `reference-only`, while 12 U2 and three C3
+cases are historical `reference-only` superseded by separately reviewed
+current contracts. No Rust reader parses their historical envelope.
 
 ## Greenfield compatibility policy
 
@@ -158,10 +162,11 @@ alias is retained.
 
 T1 advertises `turn-kernel-ready`, not full turn parity. CP8/U2 extends its
 ordered processors with queued movement, merchant routes, and scout
-auto-exploration. Worker automation, combat, economy, diplomacy, research,
-agreements, and objectives remain explicitly disabled; states requiring them
-fail closed with `turn_processor_unsupported`. The full integrated turn remains
-an O9 capability.
+auto-exploration. CP9/C3 adds deterministic intended-attack resolution for
+simultaneous multiplayer turns. Worker automation, economy, diplomatic turn
+processing, research, agreements, and objectives remain explicitly disabled;
+states requiring them fail closed with `turn_processor_unsupported`. The full
+integrated turn remains an O9 capability.
 
 The DP policy foundation exposes one pure `DiplomacyPolicyQuery` for hostility,
 foreign city and territory entry, attack protection, automation, trade, and
@@ -303,6 +308,26 @@ outside the logical map. Unit HP/XP/army and city HP/founding ownership remain
 owned by their complete entity sections; all of these combat-relevant fields
 are preserved by current transitions, save, replay, and the state digest.
 
+CP9/C3 makes that state executable through one current-only combat path.
+`CombatPreview` and `AttackHex` share the same prepared legality and statistic
+calculation, including visibility, range, `DiplomacyPolicyQuery`, terrain,
+army composition, artifacts, and `TechnologyUnlockQuery` modifiers. The RNG
+ports the oracle's UTF-16 FNV seed derivation and xorshift draws for
+`turn + attacker + defender`; ordered rolls and the derived outcome are stored
+as typed evidence rather than as a mutable global RNG counter. Apply handles
+damage, retaliation, retreat, XP, casualties, city capture/destruction,
+artifact loss, fog/contact updates, and diplomatic consequences.
+
+Direct attacks and simultaneous intended attacks use the same resolver.
+Authoritative replay retains the complete event/evidence record, while the
+client encoder filters combat, unit events, identifiers, rolls, and turn-kernel
+executions through a recipient disclosure snapshot taken before transition.
+A third-party observer therefore cannot learn a hidden attacker, defender, or
+seed. Nine strict current C3 fixtures and mutation tests cover exact preview /
+apply identity, rejection precedence, technology and artifact modifiers,
+conquest, intended-turn evidence, persistence, and single-roll/event/evidence
+tampering. They do not read or translate the historical reducer envelope.
+
 ## Movement foundation
 
 `GameState` is the canonical aggregate root for the implemented simulation
@@ -372,7 +397,7 @@ response carries revision, state digest, map hash, and ruleset hash. Full
 recipient-safe snapshots also carry the authoritative turn number.
 They expose a pending action only when it belongs to the snapshot recipient;
 the owner identifier is intentionally redundant and omitted. The runtime
-exposes reachable, route, and unit-logistics-options queries,
+exposes reachable, route, unit-logistics-options, and combat-preview queries,
 revision-bound commands, ordered events,
 exact execution evidence, and view patches including unit posture and the
 current recipient pending action, including an explicit `null` when it clears.
@@ -446,13 +471,14 @@ Flutter `LocalEnginePort` remains gated on lossless complete-state mapping.
 contains the complete `GameStateDto`, exact map and ruleset identities, actor,
 event offset, and canonical state digest. Restore is transactional and rejects
 mismatched content, state invariants, or digest before replacing an open
-session. Current commands are non-random, so saves do not carry a fabricated
-global RNG stream.
+session. Combat randomness is derived from named command inputs and recorded
+in its execution evidence, so saves do not carry a fabricated global RNG
+stream.
 
 The bounded replay segment stores its complete initial state and context, then
 each revision-bound command with pre-command context and the exact rejection,
 ordered events, execution evidence, event offset, revision, and resulting
-digest. A future random capability must add its named algorithm, exact seed
+digest. Every random capability must add its named algorithm, exact seed
 inputs, and ordered draw/roll evidence to its own command result; a generic
 pre/post RNG counter is forbidden. Verification executes every command again
 through `GameEngine` and fails on the first context or result drift. The

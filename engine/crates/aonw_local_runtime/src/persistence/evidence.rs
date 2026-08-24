@@ -1,12 +1,84 @@
-use aonw_contract_mapping::encode_troop;
+use aonw_contract_mapping::{encode_score_reason, encode_troop};
 use aonw_contracts::{
+    CombatExecutionDto, CombatModifierDto, CombatModifierKindDto, CombatOutcomeDto,
+    CombatPreviewDto, CombatRollDto, CombatStatTargetDto, CombatStatsDto, CombatTargetDto,
     CoordinateDto, MovementStepDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogisticsEvidenceDto,
     ReplayUnitMovementExecutionDto,
 };
-use aonw_engine::{DomainEvent, ExecutionEvidence, LogisticsExecution, UnitMovementExecution};
+use aonw_engine::{
+    CombatExecution, CombatModifierKind, CombatPreview, CombatStatTarget, CombatTarget,
+    DomainEvent, EffectiveCombatStats, ExecutionEvidence, LogisticsExecution,
+    UnitMovementExecution,
+};
 
+#[allow(clippy::too_many_lines)]
 pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
     match event {
+        DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
+            ReplayEventDto::UnitAttacked {
+                attacker_unit_id,
+                target,
+            }
+        }),
+        DomainEvent::CityAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
+            ReplayEventDto::CityAttacked {
+                attacker_unit_id,
+                target,
+            }
+        }),
+        DomainEvent::CombatResolved(value) => combat_event(value, |attacker_unit_id, target, _| {
+            ReplayEventDto::CombatResolved {
+                attacker_unit_id,
+                target,
+            }
+        }),
+        DomainEvent::DiplomaticScoreChanged(value) => ReplayEventDto::DiplomaticScoreChanged {
+            player_a_id: value.player_a_id().as_str().to_owned(),
+            player_b_id: value.player_b_id().as_str().to_owned(),
+            delta: value.delta(),
+            score_after: value.score_after(),
+            reason: encode_score_reason(value.reason()),
+            source_id: value.source_id().map(str::to_owned),
+        },
+        DomainEvent::UnitGainedExperience(value) => {
+            combat_event(value, |attacker_unit_id, target, subject_unit_id| {
+                ReplayEventDto::UnitGainedExperience {
+                    attacker_unit_id,
+                    target,
+                    subject_unit_id: subject_unit_id.expect("experience subject"),
+                }
+            })
+        }
+        DomainEvent::UnitKilled(value) => {
+            combat_event(value, |attacker_unit_id, target, subject_unit_id| {
+                ReplayEventDto::UnitKilled {
+                    attacker_unit_id,
+                    target,
+                    subject_unit_id: subject_unit_id.expect("casualty subject"),
+                }
+            })
+        }
+        DomainEvent::UnitRetreated(value) => {
+            combat_event(value, |attacker_unit_id, target, subject_unit_id| {
+                ReplayEventDto::UnitRetreated {
+                    attacker_unit_id,
+                    target,
+                    subject_unit_id: subject_unit_id.expect("retreat subject"),
+                }
+            })
+        }
+        DomainEvent::CityCaptured(value) => combat_event(value, |attacker_unit_id, target, _| {
+            ReplayEventDto::CityCaptured {
+                attacker_unit_id,
+                target,
+            }
+        }),
+        DomainEvent::CityDestroyed(value) => combat_event(value, |attacker_unit_id, target, _| {
+            ReplayEventDto::CityDestroyed {
+                attacker_unit_id,
+                target,
+            }
+        }),
         DomainEvent::UnitMoved(event) => ReplayEventDto::UnitMoved {
             unit_id: event.unit_id().as_str().to_owned(),
             from: coordinate(event.from()),
@@ -57,6 +129,9 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
 
 pub(super) fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto {
     match evidence {
+        ExecutionEvidence::Combat(value) => ReplayEvidenceDto::Combat {
+            execution: combat_execution(value),
+        },
         ExecutionEvidence::UnitMovement(execution) => ReplayEvidenceDto::UnitMovement {
             unit_id: execution.unit_id().as_str().to_owned(),
             from: coordinate(execution.from()),
@@ -70,6 +145,11 @@ pub(super) fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto
                 .processors()
                 .iter()
                 .map(|processor| processor.as_str().to_owned())
+                .collect(),
+            combat_executions: execution
+                .combat_executions()
+                .iter()
+                .map(combat_execution)
                 .collect(),
             reset_unit_ids: execution
                 .reset_unit_ids()
@@ -92,6 +172,94 @@ pub(super) fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto
                 .map(|unit| unit.as_str().to_owned())
                 .collect(),
         },
+    }
+}
+
+fn combat_event(
+    value: &aonw_engine::CombatEvent,
+    build: impl FnOnce(String, CombatTargetDto, Option<String>) -> ReplayEventDto,
+) -> ReplayEventDto {
+    build(
+        value.attacker_unit_id().as_str().to_owned(),
+        combat_target(value.target()),
+        value.subject_unit_id().map(|unit| unit.as_str().to_owned()),
+    )
+}
+
+fn combat_execution(value: &CombatExecution) -> CombatExecutionDto {
+    CombatExecutionDto {
+        seed: value.seed,
+        rolls: value
+            .rolls
+            .iter()
+            .map(|roll| CombatRollDto { value: roll.value })
+            .collect(),
+        preview: combat_preview(&value.preview),
+        outcome: CombatOutcomeDto {
+            attacker_hit_points: value.outcome.attacker_hit_points,
+            defender_hit_points: value.outcome.defender_hit_points,
+            attacker_killed: value.outcome.attacker_killed,
+            defender_killed: value.outcome.defender_killed,
+            defender_retreat: value.outcome.defender_retreat.map(coordinate),
+            outgoing_damage: value.outcome.outgoing_damage,
+            retaliation_damage: value.outcome.retaliation_damage,
+        },
+    }
+}
+
+fn combat_preview(value: &CombatPreview) -> CombatPreviewDto {
+    CombatPreviewDto {
+        attacker_unit_id: value.attacker_unit_id.as_str().to_owned(),
+        target: combat_target(&value.target),
+        distance: value.distance,
+        attacker: combat_stats(&value.attacker),
+        defender: combat_stats(&value.defender),
+        outgoing_damage_min: value.outgoing_damage.0,
+        outgoing_damage_max: value.outgoing_damage.1,
+        retaliation_damage_min: value.retaliation_damage.map(|bounds| bounds.0),
+        retaliation_damage_max: value.retaliation_damage.map(|bounds| bounds.1),
+    }
+}
+
+fn combat_target(value: &CombatTarget) -> CombatTargetDto {
+    match value {
+        CombatTarget::Unit(id) => CombatTargetDto::Unit {
+            unit_id: id.as_str().to_owned(),
+        },
+        CombatTarget::City(id) => CombatTargetDto::City {
+            city_id: id.as_str().to_owned(),
+        },
+    }
+}
+
+fn combat_stats(value: &EffectiveCombatStats) -> CombatStatsDto {
+    CombatStatsDto {
+        attack: value.attack,
+        defense: value.defense,
+        hit_points: value.hit_points,
+        range: value.range,
+        mobility: value.mobility,
+        modifiers: value
+            .modifiers
+            .iter()
+            .map(|modifier| CombatModifierDto {
+                kind: match modifier.kind {
+                    CombatModifierKind::Terrain => CombatModifierKindDto::Terrain,
+                    CombatModifierKind::Fortification => CombatModifierKindDto::Fortification,
+                    CombatModifierKind::Technology => CombatModifierKindDto::Technology,
+                    CombatModifierKind::Counter => CombatModifierKindDto::Counter,
+                    CombatModifierKind::TroopComposition => CombatModifierKindDto::TroopComposition,
+                    CombatModifierKind::Veterancy => CombatModifierKindDto::Veterancy,
+                },
+                label: modifier.label.to_string(),
+                target: match modifier.target {
+                    CombatStatTarget::Attack => CombatStatTargetDto::Attack,
+                    CombatStatTarget::Defense => CombatStatTargetDto::Defense,
+                    CombatStatTarget::HitPoints => CombatStatTargetDto::HitPoints,
+                },
+                delta: modifier.delta,
+            })
+            .collect(),
     }
 }
 
@@ -165,3 +333,6 @@ const fn coordinate(value: aonw_domain::HexCoord) -> CoordinateDto {
         row: value.row(),
     }
 }
+
+#[cfg(test)]
+mod tests;

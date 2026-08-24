@@ -181,7 +181,14 @@ fn trusted_timeout_and_kick_have_no_player_context() {
     )
     .expect("kick");
     assert!(kicked.is_accepted());
-    assert!(matches!(kicked.events(), [DomainEvent::PlayerKicked(_)]));
+    let [DomainEvent::PlayerKicked(kicked_event)] = kicked.events() else {
+        panic!("player kicked event")
+    };
+    assert_eq!(kicked_event.turn(), 8);
+    assert_eq!(kicked_event.player_id(), &p2);
+    assert_eq!(kicked_event.reason(), "turn_timeout");
+    assert_eq!(kicked_event.timeout_streak(), 3);
+    let _ = (kicked.map_hash(), kicked.ruleset_hash());
     let lifecycle = kicked.state().match_lifecycle().turn();
     assert!(lifecycle.kicked_player_ids().contains(&p2));
     assert!(lifecycle.afk_player_ids().contains(&p2));

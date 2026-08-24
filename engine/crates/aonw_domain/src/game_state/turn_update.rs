@@ -1,6 +1,28 @@
-use crate::{Diplomacy, FogOfWar, InteractionState, MatchLifecycle, StateRevision, Unit};
+use crate::{
+    City, CombatState, Diplomacy, FogOfWar, InteractionState, MatchLifecycle, StateRevision, Unit,
+    WorldArtifact,
+};
 
 use super::{GameState, GameStateBuildError};
+
+/// Complete replacement produced by one authoritative combat transition.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CombatStateUpdate {
+    /// Revision after the transition.
+    pub revision: StateRevision,
+    /// Canonical units after casualties, experience, and retreats.
+    pub units: Vec<Unit>,
+    /// Canonical cities after damage, capture, or destruction.
+    pub cities: Vec<City>,
+    /// Canonical artifact locations after combat losses.
+    pub artifacts: Vec<WorldArtifact>,
+    /// Pending intended attacks after the transition.
+    pub combat: CombatState,
+    /// Recipient visibility recomputed after the transition.
+    pub fog_of_war: FogOfWar,
+    /// Diplomacy after attack consequences and discovered contacts.
+    pub diplomacy: Diplomacy,
+}
 
 /// Canonical turn coordinates replaced atomically by the turn kernel.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -18,6 +40,23 @@ impl TurnAdvance {
 }
 
 impl GameState {
+    /// Consumes the aggregate and applies one complete combat update.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when any replacement collection violates aggregate invariants.
+    pub fn into_after_combat(self, update: CombatStateUpdate) -> Result<Self, GameStateBuildError> {
+        let mut builder = self.into_builder();
+        builder.revision = update.revision;
+        builder.units = update.units;
+        builder.cities = update.cities;
+        builder.artifacts = update.artifacts;
+        builder.combat = update.combat;
+        builder.fog_of_war = update.fog_of_war;
+        builder.diplomacy = update.diplomacy;
+        builder.try_build()
+    }
+
     /// Consumes the aggregate and applies a complete movement/logistics update.
     ///
     /// # Errors

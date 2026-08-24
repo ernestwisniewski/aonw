@@ -11,7 +11,11 @@ use aonw_domain::{
     CityId, FieldImprovementKind, HexCoord, MovementStep, MovementUnits, PlayerId, TroopKind,
     UnitId, UnitKind,
 };
-use aonw_engine::{CommandRejectionCode, ExecutionEvidence, LogisticsExecution};
+use aonw_engine::{
+    CombatExecution, CombatModifier, CombatModifierKind, CombatOutcome, CombatPreview, CombatRoll,
+    CombatStatTarget, CombatTarget, CommandRejectionCode, EffectiveCombatStats, ExecutionEvidence,
+    LogisticsExecution,
+};
 
 use crate::{ClientProtocol, LocalRuntime, OpenSession, PendingActionView};
 
@@ -216,6 +220,83 @@ fn encoder_maps_every_closed_enum_and_logistics_evidence_variant() {
     ];
     for execution in executions {
         let _ = super::evidence::evidence(&ExecutionEvidence::Logistics(execution));
+    }
+}
+
+#[test]
+fn encoder_maps_complete_combat_evidence_surface() {
+    let mut execution = combat_execution(CombatTarget::Unit(
+        UnitId::new("defender").expect("unit id"),
+    ));
+    let _ = super::evidence::evidence(&ExecutionEvidence::Combat(execution.clone()));
+
+    execution.preview.target = CombatTarget::City(CityId::new("defended-city").expect("city id"));
+    let _ = super::evidence::evidence(&ExecutionEvidence::Combat(execution));
+}
+
+#[test]
+fn encoder_maps_logistics_metrics_and_destination_values() {
+    let metrics = movement_metrics(aonw_engine::MovementSearchMetrics::default());
+    assert_eq!(metrics.frontier_pops, 0);
+    let destination = merchant_destination(&crate::MerchantDestinationView {
+        city_id: CityId::new("destination").expect("city id"),
+        total_cost: MovementUnits::new(7),
+    });
+    assert_eq!(destination.city_id, "destination");
+    assert_eq!(destination.total_cost_units, 7);
+}
+
+fn combat_execution(target: CombatTarget) -> CombatExecution {
+    let modifiers = [
+        (CombatModifierKind::Terrain, CombatStatTarget::Attack),
+        (CombatModifierKind::Fortification, CombatStatTarget::Defense),
+        (CombatModifierKind::Technology, CombatStatTarget::HitPoints),
+        (CombatModifierKind::Counter, CombatStatTarget::Attack),
+        (
+            CombatModifierKind::TroopComposition,
+            CombatStatTarget::Defense,
+        ),
+        (CombatModifierKind::Veterancy, CombatStatTarget::HitPoints),
+    ]
+    .into_iter()
+    .enumerate()
+    .map(|(index, (kind, target))| CombatModifier {
+        kind,
+        label: format!("modifier-{index}").into(),
+        target,
+        delta: i32::try_from(index + 1).expect("modifier delta"),
+    })
+    .collect::<Vec<_>>()
+    .into_boxed_slice();
+    let attacker = EffectiveCombatStats {
+        attack: 7,
+        defense: 6,
+        hit_points: 9,
+        range: 2,
+        mobility: 3,
+        modifiers,
+    };
+    CombatExecution {
+        seed: 17,
+        rolls: vec![CombatRoll { value: -1 }, CombatRoll { value: 2 }].into_boxed_slice(),
+        preview: CombatPreview {
+            attacker_unit_id: UnitId::new("attacker").expect("unit id"),
+            target,
+            distance: 2,
+            attacker: attacker.clone(),
+            defender: attacker,
+            outgoing_damage: (2, 6),
+            retaliation_damage: Some((1, 3)),
+        },
+        outcome: CombatOutcome {
+            attacker_hit_points: 4,
+            defender_hit_points: 1,
+            attacker_killed: false,
+            defender_killed: false,
+            defender_retreat: Some(HexCoord::new(2, 1)),
+            outgoing_damage: 5,
+            retaliation_damage: 2,
+        },
     }
 }
 

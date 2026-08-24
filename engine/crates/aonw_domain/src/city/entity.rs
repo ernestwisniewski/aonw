@@ -163,6 +163,15 @@ impl City {
     pub const fn hit_points(&self) -> Option<i64> {
         self.hit_points
     }
+
+    /// Applies an authoritative city-combat result.
+    #[must_use]
+    pub fn after_combat(&self, owner_player_id: PlayerId, hit_points: Option<i64>) -> Self {
+        let mut updated = self.clone();
+        updated.owner_player_id = owner_player_id;
+        updated.hit_points = hit_points;
+        updated
+    }
 }
 
 /// Builder owning all complete-city construction defaults.

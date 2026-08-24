@@ -21,7 +21,7 @@
     "maxEventsPerCommand": 1,
     "maxMeasuredPayloadBytes": 167475,
     "maxMeasuredAllocations": 22468,
-    "maxMeasuredAllocatedBytes": 3128716,
+    "maxMeasuredAllocatedBytes": 3128740,
     "maxWorkCounters": {
       "frontierPops": 5971,
       "expandedTiles": 5970,
@@ -63,9 +63,9 @@
       "timeout-invalid-scope-rejected"
     ],
     "maxEventsPerCommand": 4,
-    "maxMeasuredPayloadBytes": 210470,
-    "maxMeasuredAllocations": 24191,
-    "maxMeasuredAllocatedBytes": 4401065,
+    "maxMeasuredPayloadBytes": 210523,
+    "maxMeasuredAllocations": 25222,
+    "maxMeasuredAllocatedBytes": 4431993,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -100,7 +100,7 @@
     "maxEventsPerCommand": 2,
     "maxMeasuredPayloadBytes": 1,
     "maxMeasuredAllocations": 5291,
-    "maxMeasuredAllocatedBytes": 6601113,
+    "maxMeasuredAllocatedBytes": 6601209,
     "maxWorkCounters": {
       "frontierPops": 1200,
       "expandedTiles": 1200,
@@ -111,6 +111,40 @@
     "soakIterations": 20,
     "workloadPrefixes": [
       "engine/logistics_"
+    ]
+  },
+  "C3": {
+    "target": "rust-combat-check",
+    "capabilities": [
+      "AttackHex"
+    ],
+    "fixtureIds": [
+      "artifact-defense-and-loss",
+      "city-capture-destroy",
+      "exact-unit-preview-apply",
+      "hidden-target-recipient-safe",
+      "intended-turn-evidence",
+      "mutation-roll-event-evidence",
+      "rejection-precedence",
+      "save-reopen-replay-exact",
+      "technology-modifiers"
+    ],
+    "maxEventsPerCommand": 7,
+    "maxMeasuredPayloadBytes": 1880,
+    "maxMeasuredAllocations": 139205,
+    "maxMeasuredAllocatedBytes": 100466364,
+    "maxWorkCounters": {
+      "frontierPops": 0,
+      "expandedTiles": 0,
+      "examinedEdges": 0,
+      "heapPushes": 0,
+      "routeRecords": 0
+    },
+    "soakIterations": 20,
+    "workloadPrefixes": [
+      "engine/combat_",
+      "runtime/client_json_combat_",
+      "runtime/runtime_combat_"
     ]
   }
 }

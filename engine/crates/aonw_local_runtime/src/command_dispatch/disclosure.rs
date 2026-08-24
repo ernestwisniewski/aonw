@@ -1,0 +1,113 @@
+use aonw_domain::{CityId, FogVisibility, GameState, PlayerId, UnitId};
+use aonw_engine::{CombatExecution, CombatTarget, DomainEvent, ExecutionEvidence};
+
+use crate::player_view::PlayerUnitView;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct RecipientDisclosure {
+    actor: PlayerId,
+    unit_ids: Box<[UnitId]>,
+    combats: Box<[(UnitId, CombatTarget)]>,
+}
+
+impl RecipientDisclosure {
+    pub(crate) fn new(
+        actor: PlayerId,
+        visible_units: &[PlayerUnitView],
+        visible_city_ids: &[CityId],
+        evidence: Option<&ExecutionEvidence>,
+    ) -> Self {
+        let mut combats = Vec::new();
+        match evidence {
+            Some(ExecutionEvidence::Combat(execution)) => {
+                push_visible_combat(&mut combats, execution, visible_units, visible_city_ids);
+            }
+            Some(ExecutionEvidence::TurnKernel(execution)) => {
+                for combat in execution.combat_executions() {
+                    push_visible_combat(&mut combats, combat, visible_units, visible_city_ids);
+                }
+            }
+            Some(ExecutionEvidence::UnitMovement(_) | ExecutionEvidence::Logistics(_)) | None => {}
+        }
+        Self {
+            actor,
+            unit_ids: visible_units.iter().map(|unit| unit.id().clone()).collect(),
+            combats: combats.into_boxed_slice(),
+        }
+    }
+
+    pub(crate) fn allows_unit(&self, unit_id: &UnitId) -> bool {
+        self.unit_ids.contains(unit_id)
+    }
+
+    pub(crate) fn allows_combat(&self, execution: &CombatExecution) -> bool {
+        self.allows(
+            &execution.preview.attacker_unit_id,
+            &execution.preview.target,
+        )
+    }
+
+    pub(crate) fn allows_event(&self, event: &DomainEvent) -> bool {
+        match event {
+            DomainEvent::UnitAttacked(value)
+            | DomainEvent::CityAttacked(value)
+            | DomainEvent::CombatResolved(value)
+            | DomainEvent::UnitGainedExperience(value)
+            | DomainEvent::UnitKilled(value)
+            | DomainEvent::UnitRetreated(value)
+            | DomainEvent::CityCaptured(value)
+            | DomainEvent::CityDestroyed(value) => {
+                self.allows(value.attacker_unit_id(), value.target())
+            }
+            DomainEvent::DiplomaticScoreChanged(value) => {
+                value.player_a_id() == &self.actor || value.player_b_id() == &self.actor
+            }
+            DomainEvent::UnitMoved(value) => self.allows_unit(value.unit_id()),
+            DomainEvent::AutoExplorePlanned(value) => self.allows_unit(value.unit_id()),
+            DomainEvent::MerchantRouteAssigned(value) => self.allows_unit(value.unit_id()),
+            DomainEvent::MerchantTravelQueued(value) => self.allows_unit(value.unit_id()),
+            DomainEvent::TroopDetached(value) => self.allows_unit(value.source_unit_id()),
+            DomainEvent::TurnEnded(_)
+            | DomainEvent::AllPlayersSubmitted(_)
+            | DomainEvent::PlayerTimedOut(_)
+            | DomainEvent::PlayerKicked(_) => true,
+        }
+    }
+
+    fn allows(&self, attacker: &UnitId, target: &CombatTarget) -> bool {
+        self.combats
+            .iter()
+            .any(|candidate| &candidate.0 == attacker && &candidate.1 == target)
+    }
+}
+
+fn push_visible_combat(
+    output: &mut Vec<(UnitId, CombatTarget)>,
+    execution: &CombatExecution,
+    visible_units: &[PlayerUnitView],
+    visible_city_ids: &[CityId],
+) {
+    let preview = &execution.preview;
+    let attacker_visible = visible_units
+        .iter()
+        .any(|unit| unit.id() == &preview.attacker_unit_id);
+    let target_visible = match &preview.target {
+        CombatTarget::Unit(id) => visible_units.iter().any(|unit| unit.id() == id),
+        CombatTarget::City(id) => visible_city_ids.contains(id),
+    };
+    if attacker_visible && target_visible {
+        output.push((preview.attacker_unit_id.clone(), preview.target.clone()));
+    }
+}
+
+pub(crate) fn visible_city_ids(state: &GameState, actor: &PlayerId) -> Vec<CityId> {
+    state
+        .cities()
+        .iter()
+        .filter(|city| {
+            city.owner_player_id() == actor
+                || state.fog_of_war().visibility(actor, city.center()) == FogVisibility::Visible
+        })
+        .map(|city| city.id().clone())
+        .collect()
+}

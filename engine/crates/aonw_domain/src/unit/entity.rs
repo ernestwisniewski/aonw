@@ -258,6 +258,25 @@ impl Unit {
         }
         updated
     }
+
+    /// Applies one authoritative combat result while preserving non-combat state.
+    #[must_use]
+    pub fn after_combat(
+        &self,
+        position: HexCoord,
+        hit_points: Option<u32>,
+        experience_points: u32,
+        consume_movement: bool,
+    ) -> Self {
+        let mut updated = self.clone();
+        updated.position = position;
+        updated.hit_points = hit_points;
+        updated.experience_points = experience_points;
+        if consume_movement {
+            updated.movement_units = MovementUnits::ZERO;
+        }
+        updated
+    }
 }
 
 /// Builder for the complete unit entity.

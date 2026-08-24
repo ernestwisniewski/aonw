@@ -1,16 +1,18 @@
 use aonw_content::{MapDefinition, MapDocument, RulesetDefinition, ScenarioDefinition};
+use aonw_contracts::CityConquestActionDto;
 use aonw_contracts::client::{ClientCommandDto, ClientQueryDto};
-use aonw_domain::{CityId, HexCoord, PlayerId, UnitId};
+use aonw_domain::{CityConquestAction, CityId, HexCoord, PlayerId, UnitId};
 
 use crate::{
-    AutoExploreUnitRequest, DetachTroopRequest, MerchantCityRequest, MoveUnitRequest, OpenSession,
-    ReachableRequest, RoutePlanRequest, RuntimeQuery, TurnCommandRequest, UnitActionRequest,
-    UnitLogisticsOptionsRequest,
+    AttackHexRequest, AutoExploreUnitRequest, DetachTroopRequest, MerchantCityRequest,
+    MoveUnitRequest, OpenSession, ReachableRequest, RoutePlanRequest, RuntimeQuery,
+    TurnCommandRequest, UnitActionRequest, UnitLogisticsOptionsRequest,
 };
 
 use super::ClientDecodeError;
 
 pub(super) enum DecodedCommand {
+    Attack(AttackHexRequest),
     Move(MoveUnitRequest),
     AutoExplore(AutoExploreUnitRequest),
     AssignMerchantRoute(MerchantCityRequest),
@@ -49,6 +51,15 @@ pub(super) fn map_document(document: &str) -> Result<MapDocument, ClientDecodeEr
 
 pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeError> {
     match query {
+        ClientQueryDto::CombatPreview {
+            expected_revision,
+            attacker_unit_id,
+            defender,
+        } => Ok(RuntimeQuery::CombatPreview(crate::CombatPreviewRequest {
+            expected_revision,
+            attacker_unit_id: decode_unit_id(attacker_unit_id)?,
+            defender: HexCoord::new(defender.col, defender.row),
+        })),
         ClientQueryDto::Reachable {
             expected_revision,
             unit_id,
@@ -79,6 +90,20 @@ pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeE
 
 pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, ClientDecodeError> {
     match command {
+        ClientCommandDto::AttackHex {
+            expected_revision,
+            attacker_unit_id,
+            defender,
+            city_conquest_action,
+        } => Ok(DecodedCommand::Attack(AttackHexRequest {
+            expected_revision,
+            attacker_unit_id: decode_unit_id(attacker_unit_id)?,
+            defender: HexCoord::new(defender.col, defender.row),
+            city_conquest_action: match city_conquest_action {
+                CityConquestActionDto::Capture => CityConquestAction::Capture,
+                CityConquestActionDto::Destroy => CityConquestAction::Destroy,
+            },
+        })),
         ClientCommandDto::MoveUnit {
             expected_revision,
             unit_id,

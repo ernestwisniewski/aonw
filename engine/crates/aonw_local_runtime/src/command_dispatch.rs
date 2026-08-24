@@ -1,12 +1,29 @@
 use core::cmp::Ordering;
 
 use aonw_contracts::{ReplayCommandDto, ReplayRecordDto};
-use aonw_domain::{CityId, HexCoord, TroopKind, UnitId};
+use aonw_domain::{CityConquestAction, CityId, HexCoord, TroopKind, UnitId};
 use aonw_engine::{
-    AssignMerchantTradeRouteCommand, AutoExploreUnitCommand, CommandRejectionCode,
-    DetachTroopCommand, DomainEvent, ExecutionEvidence, GameEngine, MoveMerchantToCityCommand,
-    MoveUnitCommand, PlayerCommand, UnitActionCommand,
+    AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand,
+    CommandRejectionCode, DetachTroopCommand, DomainEvent, ExecutionEvidence, GameEngine,
+    MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand, UnitActionCommand,
 };
+
+mod disclosure;
+
+pub(crate) use disclosure::{RecipientDisclosure, visible_city_ids};
+
+/// Current revision-bound visible attack.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AttackHexRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled attacking unit.
+    pub attacker_unit_id: UnitId,
+    /// Target coordinate.
+    pub defender: HexCoord,
+    /// Requested defeated-city disposition.
+    pub city_conquest_action: CityConquestAction,
+}
 
 use crate::persistence::{replay_context, replay_entry};
 use crate::player_view::{
@@ -103,6 +120,7 @@ pub struct CommandResult {
     pub evidence: Option<ExecutionEvidence>,
     /// Recipient-safe presentation delta.
     pub view_patch: PlayerViewPatch,
+    pub(crate) recipient_disclosure: RecipientDisclosure,
 }
 
 impl CommandResult {
@@ -134,6 +152,37 @@ pub(crate) fn dispatch_move(
         )),
         ReplayRecordDto::Player {
             command: replay_command,
+        },
+    )
+}
+
+pub(crate) fn dispatch_attack(
+    session: &mut Session,
+    command: &AttackHexRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::AttackHex(
+            AttackHexCommand::new(
+                command.expected_revision,
+                &command.attacker_unit_id,
+                command.defender,
+            )
+            .with_city_conquest_action(command.city_conquest_action),
+        ),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::AttackHex {
+                expected_revision: command.expected_revision,
+                attacker_unit_id: command.attacker_unit_id.as_str().to_owned(),
+                defender: aonw_contracts::CoordinateDto {
+                    col: command.defender.col(),
+                    row: command.defender.row(),
+                },
+                city_conquest_action: match command.city_conquest_action {
+                    CityConquestAction::Capture => aonw_contracts::CityConquestActionDto::Capture,
+                    CityConquestAction::Destroy => aonw_contracts::CityConquestActionDto::Destroy,
+                },
+            },
         },
     )
 }
@@ -270,6 +319,7 @@ pub(crate) fn dispatch_player(
     let before_revision = session.state().revision().get();
     let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
+    let before_visible_city_ids = visible_city_ids(session.state(), session.actor());
     let state = session.take_state();
     let transition = GameEngine::apply_player_owned(state, session.context(), command)
         .map_err(RuntimeError::Engine)?;
@@ -282,6 +332,12 @@ pub(crate) fn dispatch_player(
     let after_view = visible_units(session.state(), session.actor());
     let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());
+    let recipient_disclosure = RecipientDisclosure::new(
+        session.actor().clone(),
+        &before_view,
+        &before_visible_city_ids,
+        evidence.as_ref(),
+    );
     let view_patch = diff_view(
         before_revision,
         session.state().revision().get(),
@@ -297,6 +353,7 @@ pub(crate) fn dispatch_player(
         events,
         evidence,
         view_patch,
+        recipient_disclosure,
     };
     let replay = replay_entry(session, replay_record, before_context, &result);
     session.push_replay(replay);

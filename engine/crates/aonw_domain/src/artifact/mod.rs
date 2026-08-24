@@ -14,6 +14,22 @@ pub enum WorldArtifactType {
     QueensMirror,
 }
 
+impl WorldArtifactType {
+    /// Returns the city defense and hit-point bonus while stored in a city.
+    #[must_use]
+    pub const fn stored_city_defense_bonus(self) -> i32 {
+        match self {
+            Self::AncientImperialCrown | Self::TempleReliquary => 1,
+            Self::AstronomersTablets
+            | Self::ProphetMask
+            | Self::HeroSword
+            | Self::MerchantsSeal
+            | Self::FirstPeoplesChronicle
+            | Self::QueensMirror => 0,
+        }
+    }
+}
+
 /// Canonical location of one world artifact.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum WorldArtifactLocation {
@@ -84,6 +100,27 @@ impl WorldArtifact {
     #[must_use]
     pub const fn location(&self) -> &WorldArtifactLocation {
         &self.location
+    }
+
+    /// Drops an artifact when its combat carrier or storage city was defeated.
+    #[must_use]
+    pub fn after_combat_loss(
+        &self,
+        unit_id: Option<&UnitId>,
+        city_id: Option<&CityId>,
+        coordinate: HexCoord,
+    ) -> Self {
+        let should_drop = match &self.location {
+            WorldArtifactLocation::Carried(value)
+            | WorldArtifactLocation::Excavation { unit_id: value, .. } => unit_id == Some(value),
+            WorldArtifactLocation::Stored(value) => city_id == Some(value),
+            WorldArtifactLocation::Map(_) => false,
+        };
+        let mut updated = self.clone();
+        if should_drop {
+            updated.location = WorldArtifactLocation::Map(coordinate);
+        }
+        updated
     }
 
     pub(crate) fn restore_excavation(&mut self, unit_id: &UnitId) {

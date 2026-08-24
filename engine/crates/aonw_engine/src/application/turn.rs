@@ -138,10 +138,14 @@ impl SystemCommand<'_> {
                 let skipped_count =
                     u64::try_from(command.skipped_player_ids().len()).unwrap_or(u64::MAX);
                 let unit_count = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
+                let combat = u64::try_from(state.combat().intended_attacks().len())
+                    .unwrap_or(u64::MAX)
+                    .saturating_mul(7);
                 EventBudget::new(
                     player_count
                         .saturating_add(skipped_count)
                         .saturating_add(unit_count)
+                        .saturating_add(combat)
                         .saturating_add(1),
                 )
             }
@@ -214,9 +218,10 @@ impl TurnKernelCapabilities {
     /// Capability label used by current fixtures and runtime clients.
     pub const LABEL: &'static str = "turn-kernel-ready";
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 7] = [
+    pub const ENABLED: [TurnProcessor; 8] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
+        TurnProcessor::Combat,
         TurnProcessor::MovementReset,
         TurnProcessor::QueuedMovement,
         TurnProcessor::TradeRoutes,
@@ -224,9 +229,8 @@ impl TurnKernelCapabilities {
         TurnProcessor::ReversibleSkipCleanup,
     ];
     /// Later turn processors that are intentionally unavailable.
-    pub const DISABLED: [TurnProcessor; 7] = [
+    pub const DISABLED: [TurnProcessor; 6] = [
         TurnProcessor::WorkerAutomation,
-        TurnProcessor::Combat,
         TurnProcessor::Economy,
         TurnProcessor::Diplomacy,
         TurnProcessor::Research,
@@ -241,6 +245,7 @@ impl TurnKernelCapabilities {
             processor,
             TurnProcessor::Submission
                 | TurnProcessor::Lifecycle
+                | TurnProcessor::Combat
                 | TurnProcessor::MovementReset
                 | TurnProcessor::QueuedMovement
                 | TurnProcessor::TradeRoutes
@@ -254,6 +259,7 @@ impl TurnKernelCapabilities {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TurnKernelExecution {
     processors: Box<[TurnProcessor]>,
+    combat_executions: Box<[crate::CombatExecution]>,
     reset_unit_ids: Box<[UnitId]>,
     movement_executions: Box<[UnitMovementExecution]>,
     invalidated_order_unit_ids: Box<[UnitId]>,
@@ -267,6 +273,7 @@ impl TurnKernelExecution {
     ) -> Self {
         Self {
             processors: processors.into(),
+            combat_executions: Box::new([]),
             reset_unit_ids: reset_unit_ids.into(),
             movement_executions: Box::new([]),
             invalidated_order_unit_ids: Box::new([]),
@@ -274,8 +281,9 @@ impl TurnKernelExecution {
         }
     }
 
-    pub(crate) fn with_movement(
+    pub(crate) fn with_phases(
         processors: impl Into<Box<[TurnProcessor]>>,
+        combat_executions: impl Into<Box<[crate::CombatExecution]>>,
         reset_unit_ids: impl Into<Box<[UnitId]>>,
         movement_executions: impl Into<Box<[UnitMovementExecution]>>,
         invalidated_order_unit_ids: impl Into<Box<[UnitId]>>,
@@ -283,6 +291,7 @@ impl TurnKernelExecution {
     ) -> Self {
         Self {
             processors: processors.into(),
+            combat_executions: combat_executions.into(),
             reset_unit_ids: reset_unit_ids.into(),
             movement_executions: movement_executions.into(),
             invalidated_order_unit_ids: invalidated_order_unit_ids.into(),
@@ -294,6 +303,12 @@ impl TurnKernelExecution {
     #[must_use]
     pub const fn processors(&self) -> &[TurnProcessor] {
         &self.processors
+    }
+
+    /// Returns exact combat resolutions in intended-attack execution order.
+    #[must_use]
+    pub const fn combat_executions(&self) -> &[crate::CombatExecution] {
+        &self.combat_executions
     }
 
     /// Returns units whose movement phase began, in canonical unit order.

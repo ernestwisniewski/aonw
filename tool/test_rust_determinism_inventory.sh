@@ -39,6 +39,7 @@ write_baseline() {
     "${fixture_root}/engine/crates/aonw_contract_mapping/src" \
     "${fixture_root}/engine/crates/aonw_contracts/src" \
     "${fixture_root}/engine/crates/aonw_local_runtime/src"
+  printf '%s\n' 'pub struct CombatRng;' >"${fixture_root}/engine/crates/aonw_engine/src/combat_rng.rs"
   printf '%s\n' 'pub struct ReplayLogDto;' >"${fixture_root}/engine/crates/aonw_contracts/src/persistence.rs"
 }
 

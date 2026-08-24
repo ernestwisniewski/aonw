@@ -113,7 +113,7 @@ fn golden_command_response_is_stable_and_strict() {
         api_version: CLIENT_API_VERSION,
         outcome: ClientOutcomeDto::Success {
             response: Box::new(ClientResponseBodyDto::Command {
-                result: command_result(),
+                result: Box::new(command_result()),
             }),
         },
     };
@@ -319,10 +319,10 @@ fn every_current_response_variant_round_trips() {
         },
         logistics_response(),
         ClientResponseBodyDto::Command {
-            result: command_result(),
+            result: Box::new(command_result()),
         },
         ClientResponseBodyDto::Command {
-            result: rejected_command,
+            result: Box::new(rejected_command),
         },
         ClientResponseBodyDto::SaveExported {
             document: "save".to_owned(),

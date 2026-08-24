@@ -4,9 +4,7 @@ use aonw_domain::{MovementUnits, TechnologyId, UnitKind, UnitMovementDomain, Uni
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
-use crate::{
-    ContentHash, TechnologyCostBalance, TechnologyDefinition, technology::STANDARD_TECHNOLOGIES,
-};
+use crate::{ContentHash, TechnologyCostBalance, TechnologyDefinition};
 
 /// Capabilities fixed by a ruleset for one unit kind.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
@@ -81,6 +79,7 @@ pub struct UnitDefinition {
     maximum_movement_units: u32,
     artifact_movement_units: u32,
     capabilities: UnitCapabilities,
+    combat: CombatStats,
 }
 
 impl UnitDefinition {
@@ -94,6 +93,11 @@ impl UnitDefinition {
     pub const fn capabilities(self) -> UnitCapabilities {
         self.capabilities
     }
+    /// Returns canonical base combat statistics.
+    #[must_use]
+    pub const fn combat(self) -> CombatStats {
+        self.combat
+    }
     /// Returns movement allowance for the current carried-artifact state.
     #[must_use]
     pub const fn maximum_movement(self, carries_artifact: bool) -> MovementUnits {
@@ -102,6 +106,90 @@ impl UnitDefinition {
         } else {
             self.maximum_movement_units
         })
+    }
+}
+
+/// Immutable base combat statistics for one unit kind.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CombatStats {
+    attack: i32,
+    defense: i32,
+    hit_points: u32,
+    range: u32,
+    mobility: u32,
+}
+
+impl CombatStats {
+    /// Returns base attack strength.
+    #[must_use]
+    pub const fn attack(self) -> i32 {
+        self.attack
+    }
+    /// Returns base defense strength.
+    #[must_use]
+    pub const fn defense(self) -> i32 {
+        self.defense
+    }
+    /// Returns maximum hit points.
+    #[must_use]
+    pub const fn hit_points(self) -> u32 {
+        self.hit_points
+    }
+    /// Returns maximum attack range in hexes.
+    #[must_use]
+    pub const fn range(self) -> u32 {
+        self.range
+    }
+    /// Returns combat mobility used by retreat rules.
+    #[must_use]
+    pub const fn mobility(self) -> u32 {
+        self.mobility
+    }
+}
+
+/// Immutable standard combat balance shared by preview and resolution.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CombatBalance {
+    variance: u32,
+    ranged_retaliation_percent: u32,
+    retreat_threshold_percent: u32,
+    defended_city_unit_defense_bonus: i32,
+    mixed_commander_army_attack_bonus: i32,
+    city: CombatStats,
+}
+
+impl CombatBalance {
+    /// Returns symmetric random damage variance.
+    #[must_use]
+    pub const fn variance(self) -> u32 {
+        self.variance
+    }
+    /// Returns ranged retaliation strength in percent.
+    #[must_use]
+    pub const fn ranged_retaliation_percent(self) -> u32 {
+        self.ranged_retaliation_percent
+    }
+    /// Returns the strict retreat threshold in percent of maximum health.
+    #[must_use]
+    pub const fn retreat_threshold_percent(self) -> u32 {
+        self.retreat_threshold_percent
+    }
+    /// Returns the bonus for a unit defending an owned city center.
+    #[must_use]
+    pub const fn defended_city_unit_defense_bonus(self) -> i32 {
+        self.defended_city_unit_defense_bonus
+    }
+    /// Returns the commander bonus for a mixed warrior/archer army.
+    #[must_use]
+    pub const fn mixed_commander_army_attack_bonus(self) -> i32 {
+        self.mixed_commander_army_attack_bonus
+    }
+    /// Returns canonical city combat statistics.
+    #[must_use]
+    pub const fn city(self) -> CombatStats {
+        self.city
     }
 }
 
@@ -160,6 +248,7 @@ pub struct RulesetDefinition {
     schema_version: u16,
     ruleset_id: &'static str,
     occupancy_policy: UnitOccupancyPolicyValue,
+    combat: CombatBalance,
     unit_definitions: &'static [UnitDefinition],
     technology_cost_balance: TechnologyCostBalance,
     technology_definitions: &'static [TechnologyDefinition],
@@ -182,6 +271,12 @@ impl RulesetDefinition {
     #[must_use]
     pub const fn occupancy_policy(&self) -> UnitOccupancyPolicy {
         self.occupancy_policy.domain()
+    }
+
+    /// Returns immutable combat balance.
+    #[must_use]
+    pub const fn combat(&self) -> CombatBalance {
+        self.combat
     }
 
     /// Finds a definition by canonical kind.
@@ -290,184 +385,11 @@ impl Write for HashWriter {
     }
 }
 
-const fn caps(domain: UnitMovementDomainValue, flags: u8) -> UnitCapabilities {
-    UnitCapabilities {
-        movement_domain: domain,
-        flags,
-    }
-}
-const fn unit(kind: UnitKindValue, points: u32, capabilities: UnitCapabilities) -> UnitDefinition {
-    UnitDefinition {
-        kind,
-        maximum_movement_units: points * MovementUnits::PER_POINT,
-        artifact_movement_units: 2 * MovementUnits::PER_POINT,
-        capabilities,
-    }
-}
-const PRODUCIBLE: u8 = UnitCapabilities::PRODUCIBLE;
-const EXPERIENCE: u8 = UnitCapabilities::GAINS_EXPERIENCE;
-const MILITARY: u8 = UnitCapabilities::MILITARY;
-const RECON: u8 = UnitCapabilities::RECON;
-const TRADE: u8 = UnitCapabilities::USES_TRADE_ROUTES;
-const LAND_MILITARY: UnitCapabilities = caps(
-    UnitMovementDomainValue::Land,
-    PRODUCIBLE | EXPERIENCE | MILITARY,
-);
-const LAND_CIVILIAN: UnitCapabilities = caps(UnitMovementDomainValue::Land, PRODUCIBLE);
-const LAND_RECON: UnitCapabilities = caps(
-    UnitMovementDomainValue::Land,
-    PRODUCIBLE | EXPERIENCE | MILITARY | RECON,
-);
-const NAVAL_MILITARY: UnitCapabilities = caps(
-    UnitMovementDomainValue::Naval,
-    PRODUCIBLE | EXPERIENCE | MILITARY,
-);
-const NAVAL_RECON: UnitCapabilities = caps(
-    UnitMovementDomainValue::Naval,
-    PRODUCIBLE | EXPERIENCE | MILITARY | RECON,
-);
-const AIR_RECON: UnitCapabilities = caps(
-    UnitMovementDomainValue::Air,
-    PRODUCIBLE | EXPERIENCE | MILITARY | RECON,
-);
-static STANDARD_RULESET: RulesetDefinition = RulesetDefinition {
-    schema_version: 1,
-    ruleset_id: "aonw-standard",
-    occupancy_policy: UnitOccupancyPolicyValue::FriendlyStacking,
-    unit_definitions: &STANDARD_UNITS,
-    technology_cost_balance: TechnologyCostBalance::STANDARD,
-    technology_definitions: &STANDARD_TECHNOLOGIES,
-};
-const STANDARD_UNITS: [UnitDefinition; 17] = [
-    unit(UnitKindValue::Commander, 5, LAND_MILITARY),
-    unit(UnitKindValue::Warrior, 3, LAND_MILITARY),
-    unit(UnitKindValue::Archer, 3, LAND_MILITARY),
-    unit(UnitKindValue::Settler, 3, LAND_CIVILIAN),
-    unit(UnitKindValue::Worker, 3, LAND_CIVILIAN),
-    unit(
-        UnitKindValue::Merchant,
-        3,
-        caps(UnitMovementDomainValue::Land, PRODUCIBLE | TRADE),
-    ),
-    unit(UnitKindValue::Scout, 3, LAND_RECON),
-    unit(UnitKindValue::Spearman, 3, LAND_MILITARY),
-    unit(UnitKindValue::Cavalry, 5, LAND_MILITARY),
-    unit(UnitKindValue::Catapult, 2, LAND_MILITARY),
-    unit(UnitKindValue::HeavyInfantry, 3, LAND_MILITARY),
-    unit(UnitKindValue::FieldCannon, 2, LAND_MILITARY),
-    unit(UnitKindValue::Rifleman, 3, LAND_MILITARY),
-    unit(UnitKindValue::Tank, 5, LAND_MILITARY),
-    unit(UnitKindValue::ScoutShip, 5, NAVAL_RECON),
-    unit(UnitKindValue::Warship, 5, NAVAL_MILITARY),
-    unit(UnitKindValue::ReconPlane, 7, AIR_RECON),
-];
+mod standard;
+
+use standard::STANDARD_RULESET;
+#[cfg(test)]
+use standard::STANDARD_UNITS;
 
 #[cfg(test)]
-mod tests {
-    use std::collections::BTreeSet;
-
-    use super::RulesetDefinition;
-    use aonw_domain::{MovementUnits, TechnologyId, UnitKind, UnitMovementDomain};
-
-    #[test]
-    fn standard_ruleset_owns_movement_balance_and_capabilities() {
-        let ruleset = RulesetDefinition::standard();
-        let merchant = ruleset
-            .unit(UnitKind::Merchant)
-            .expect("merchant definition");
-        let plane = ruleset
-            .unit(UnitKind::ReconPlane)
-            .expect("plane definition");
-        assert!(merchant.capabilities().uses_trade_routes());
-        assert_eq!(
-            plane.capabilities().movement_domain.domain(),
-            UnitMovementDomain::Air
-        );
-        assert_eq!(plane.maximum_movement(false), MovementUnits::new(14));
-        assert_eq!(plane.maximum_movement(true), MovementUnits::new(4));
-    }
-
-    #[test]
-    fn standard_ruleset_hash_is_stable() {
-        let first = RulesetDefinition::standard().content_hash().expect("hash");
-        let second = RulesetDefinition::standard().content_hash().expect("hash");
-        assert_eq!(first, second);
-        assert_eq!(
-            first.to_string(),
-            "e37d5db8e6a532afaaf1496b238cda3778b23bf609ec97505416bc7525443709"
-        );
-    }
-
-    #[test]
-    fn standard_technology_catalog_is_complete_and_stable() {
-        let ruleset = RulesetDefinition::standard();
-        assert_eq!(ruleset.technologies().len(), 54);
-        for key in crate::TechnologyKey::ALL {
-            assert!(
-                ruleset
-                    .technology(key.domain())
-                    .is_some_and(|value| value.id() == key.domain())
-            );
-        }
-        let mut unique_unlocks = BTreeSet::new();
-        let mut counts = [0_u32; 5];
-        for unlock in ruleset
-            .technologies()
-            .iter()
-            .flat_map(|definition| definition.unlocks())
-        {
-            let (category, value, index) = match unlock {
-                crate::TechnologyUnlock::Building(value) => {
-                    let _ = value.domain();
-                    ("building", format!("{value:?}"), 0)
-                }
-                crate::TechnologyUnlock::Improvement(value) => {
-                    let _ = value.domain();
-                    ("improvement", format!("{value:?}"), 1)
-                }
-                crate::TechnologyUnlock::ResourceVisibility(value) => {
-                    let _ = value.domain();
-                    ("resource", format!("{value:?}"), 2)
-                }
-                crate::TechnologyUnlock::Unit(value) => {
-                    let _ = value.domain();
-                    ("unit", format!("{value:?}"), 3)
-                }
-                crate::TechnologyUnlock::Wonder(value) => {
-                    let _ = value.domain();
-                    ("wonder", format!("{value:?}"), 4)
-                }
-            };
-            assert!(unique_unlocks.insert((category, value)));
-            counts[index] += 1;
-        }
-        assert_eq!(counts, [58, 19, 5, 13, 11]);
-        assert_eq!(
-            ruleset
-                .technology_cost_balance()
-                .default_boost_discount_basis_points(),
-            2_500
-        );
-        for boost in ruleset
-            .technologies()
-            .iter()
-            .flat_map(|definition| definition.boosts())
-        {
-            let _ = boost.condition();
-        }
-        assert_eq!(
-            ruleset
-                .technology_catalog_hash()
-                .expect("catalog hash")
-                .to_string(),
-            "be48beb6ec5f8fd457439b78d2b89355b20e88236ecef78e09d60bd2fab2af4b"
-        );
-        assert_eq!(
-            ruleset
-                .technology(TechnologyId::NuclearPhysics)
-                .expect("nuclear physics")
-                .base_cost(),
-            48
-        );
-    }
-}
+mod tests;

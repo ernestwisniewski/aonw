@@ -9,6 +9,7 @@
 
 mod canonical;
 pub mod client;
+mod combat;
 mod limits;
 mod persistence;
 
@@ -33,6 +34,10 @@ pub use canonical::{
     WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
+pub use combat::{
+    CombatExecutionDto, CombatModifierDto, CombatModifierKindDto, CombatOutcomeDto,
+    CombatPreviewDto, CombatRollDto, CombatStatTargetDto, CombatStatsDto, CombatTargetDto,
+};
 pub use limits::{
     MAX_GAME_STATE_UNIT_COUNT, MAX_MOVEMENT_BALANCE_UNITS, MAX_QUEUED_PATH_STEP_COUNT,
 };

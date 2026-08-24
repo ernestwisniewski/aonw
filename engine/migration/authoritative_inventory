@@ -22,6 +22,7 @@
 #   rust-evidence-source <repo-relative-path>
 #   rust-persistence-source <repo-relative-path>
 #   rust-client-command-source <repo-relative-path>
+#   rust-client-event-source <repo-relative-path>
 #   rust-client-response-source <repo-relative-path>
 #   rust-projection-source <repo-relative-path>
 #   partial-parity-mode <opaque-splice|full-state>
@@ -43,11 +44,11 @@
 oracle-tree b83e4a513901403ab24e9d447feb5086edbdf9b9
 expected-domain-count 39
 expected-system-count 2
-expected-query-count 3
+expected-query-count 4
 expected-event-count 40
 expected-native-event-count 4
 expected-evidence-count 1
-expected-native-evidence-count 2
+expected-native-evidence-count 3
 expected-projection-type-count 3
 expected-projection-variant-count 9
 dart-domain-root packages/aonw_core/lib/game/domain/command/game_command.dart
@@ -61,13 +62,14 @@ rust-event-source engine/crates/aonw_engine/src/application/transition.rs
 rust-evidence-source engine/crates/aonw_engine/src/application/transition.rs
 rust-persistence-source engine/crates/aonw_contracts/src/persistence.rs
 rust-client-command-source engine/crates/aonw_contracts/src/client/request.rs
+rust-client-event-source engine/crates/aonw_contracts/src/client/response/event.rs
 rust-client-response-source engine/crates/aonw_contracts/src/client/response.rs
 rust-projection-source engine/crates/aonw_local_runtime/src/player_view.rs
 partial-parity-mode full-state
 
 domain AssignMerchantTradeRouteCommand movement runtime-ready AssignMerchantTradeRoute packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain AssignWorkerToHexCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
-domain AttackHexCommand combat reference-only - packages/aonw_core/lib/game/domain/command/combat_commands.dart
+domain AttackHexCommand combat runtime-ready AttackHex packages/aonw_core/lib/game/domain/command/combat_commands.dart
 domain AutoExploreUnitCommand movement runtime-ready AutoExploreUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain AutomateWorkerCommand movement reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain BuildRoadCommand infrastructure reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
@@ -110,22 +112,23 @@ system KickParticipant system-lifecycle turn-kernel-ready KickParticipant packag
 
 query PlanRoute Route RoutePlan movement characterized
 query Reachable Reachable Reachable movement characterized
+query CombatPreview CombatPreview CombatPreview combat runtime-ready
 query UnitLogisticsOptions UnitLogisticsOptions UnitLogisticsOptions movement runtime-ready
 
 event ArtifactCarriedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event ArtifactExcavationStartedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event ArtifactStoredEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event AllPlayersSubmittedEvent system-lifecycle turn-kernel-ready AllPlayersSubmitted packages/aonw_core/lib/game/domain/event/system_events.dart
-event CityAttackedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
+event CityAttackedEvent combat runtime-ready CityAttacked packages/aonw_core/lib/game/domain/event/combat_events.dart
 event CityBuiltBuildingEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityBuiltWonderEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
-event CityCapturedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
+event CityCapturedEvent combat runtime-ready CityCaptured packages/aonw_core/lib/game/domain/event/combat_events.dart
 event CityClaimedHexEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
-event CityDestroyedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
+event CityDestroyedEvent combat runtime-ready CityDestroyed packages/aonw_core/lib/game/domain/event/combat_events.dart
 event CityFoundedEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityProducedUnitEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event CivilizationMetEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
-event CombatResolvedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
+event CombatResolvedEvent combat runtime-ready CombatResolved packages/aonw_core/lib/game/domain/event/combat_events.dart
 event DiplomaticMessageRespondedEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticMessageSentEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticPromiseBrokenEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
@@ -133,7 +136,7 @@ event DiplomaticProposalExpiredEvent diplomacy reference-only - packages/aonw_co
 event DiplomaticProposalRespondedEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticProposalSentEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticRelationChangedEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
-event DiplomaticScoreChangedEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
+event DiplomaticScoreChangedEvent diplomacy runtime-ready DiplomaticScoreChanged packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DominationThresholdReachedEvent turn reference-only - packages/aonw_core/lib/game/domain/event/turn_events.dart
 event FortifiedUnitThreatenedEvent unit-action reference-only - packages/aonw_core/lib/game/domain/event/unit_events.dart
 event MapObjectiveSecuredEvent objective reference-only - packages/aonw_core/lib/game/domain/event/objective_events.dart
@@ -145,11 +148,11 @@ event StrategicResourceDiscoveredEvent resource reference-only - packages/aonw_c
 event TechnologyResearchedEvent research reference-only - packages/aonw_core/lib/game/domain/event/research_events.dart
 event TurnAutoResolvedEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
 event TurnEndedEvent turn turn-kernel-ready TurnEnded packages/aonw_core/lib/game/domain/event/turn_events.dart
-event UnitAttackedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
-event UnitGainedExperienceEvent unit-action reference-only - packages/aonw_core/lib/game/domain/event/unit_events.dart
-event UnitKilledEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
+event UnitAttackedEvent combat runtime-ready UnitAttacked packages/aonw_core/lib/game/domain/event/combat_events.dart
+event UnitGainedExperienceEvent unit-action runtime-ready UnitGainedExperience packages/aonw_core/lib/game/domain/event/unit_events.dart
+event UnitKilledEvent combat runtime-ready UnitKilled packages/aonw_core/lib/game/domain/event/combat_events.dart
 event UnitMovedEvent movement engine-parity UnitMoved packages/aonw_core/lib/game/domain/event/unit_events.dart
-event UnitRetreatedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
+event UnitRetreatedEvent combat runtime-ready UnitRetreated packages/aonw_core/lib/game/domain/event/combat_events.dart
 event WonderProductionRefundedEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event WorkerCompletedJobEvent turn reference-only - packages/aonw_core/lib/game/domain/event/turn_events.dart
 
@@ -160,6 +163,7 @@ native-event TroopDetachedEvent movement runtime-ready TroopDetached engine/crat
 
 evidence MovementCommandExecution movement engine-parity UnitMovement packages/aonw_core/lib/game/domain/movement/movement_command_execution.dart
 native-evidence LogisticsExecution movement runtime-ready Logistics engine/crates/aonw_engine/src/application/logistics.rs
+native-evidence CombatExecution combat runtime-ready Combat engine/crates/aonw_engine/src/combat/model.rs
 native-evidence TurnKernelExecution turn turn-kernel-ready TurnKernel engine/crates/aonw_engine/src/application/turn.rs
 
 projection-type PlayerUnitView visible-entity characterized PlayerUnitViewDto engine/crates/aonw_local_runtime/src/player_view.rs

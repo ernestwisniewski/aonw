@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, GameStateDto, MovementStepDto, TroopKindDto};
+use crate::{
+    CombatExecutionDto, CombatTargetDto, CoordinateDto, GameStateDto, MovementStepDto, TroopKindDto,
+};
 
 mod command;
 mod logistics;
@@ -83,6 +85,83 @@ pub struct ReplayContextDto {
     deny_unknown_fields
 )]
 pub enum ReplayEventDto {
+    /// A visible attacker engaged a visible target.
+    UnitAttacked {
+        /// Attacking unit identity.
+        attacker_unit_id: String,
+        /// Visible target identity.
+        target: CombatTargetDto,
+    },
+    /// A visible attacker engaged a city.
+    CityAttacked {
+        /// Attacking unit identity.
+        attacker_unit_id: String,
+        /// Visible target identity.
+        target: CombatTargetDto,
+    },
+    /// Exact combat resolution occurred.
+    CombatResolved {
+        /// Attacking unit identity.
+        attacker_unit_id: String,
+        /// Visible target identity.
+        target: CombatTargetDto,
+    },
+    /// A known observer applied a city-attack reputation penalty.
+    DiplomaticScoreChanged {
+        /// Canonical first participant.
+        player_a_id: String,
+        /// Canonical second participant.
+        player_b_id: String,
+        /// Applied score delta.
+        delta: i64,
+        /// Score after the change.
+        score_after: i64,
+        /// Canonical reason.
+        reason: crate::DiplomaticScoreChangeReasonDto,
+        /// Deterministic source identity.
+        source_id: Option<String>,
+    },
+    /// A combat participant gained experience.
+    UnitGainedExperience {
+        /// Attacking unit identity.
+        attacker_unit_id: String,
+        /// Visible target identity.
+        target: CombatTargetDto,
+        /// Unit receiving experience.
+        subject_unit_id: String,
+    },
+    /// A combat participant was removed.
+    UnitKilled {
+        /// Attacking unit identity.
+        attacker_unit_id: String,
+        /// Visible target identity.
+        target: CombatTargetDto,
+        /// Unit removed by the resolution.
+        subject_unit_id: String,
+    },
+    /// A defender retreated.
+    UnitRetreated {
+        /// Attacking unit identity.
+        attacker_unit_id: String,
+        /// Visible target identity.
+        target: CombatTargetDto,
+        /// Unit that changed position.
+        subject_unit_id: String,
+    },
+    /// A city changed owner.
+    CityCaptured {
+        /// Attacking unit identity.
+        attacker_unit_id: String,
+        /// Visible target identity.
+        target: CombatTargetDto,
+    },
+    /// A city was removed.
+    CityDestroyed {
+        /// Attacking unit identity.
+        attacker_unit_id: String,
+        /// Visible target identity.
+        target: CombatTargetDto,
+    },
     /// One unit changed map position.
     UnitMoved {
         /// Moved unit.
@@ -167,6 +246,11 @@ pub enum ReplayEventDto {
     deny_unknown_fields
 )]
 pub enum ReplayEvidenceDto {
+    /// Exact combat evidence.
+    Combat {
+        /// Exact combat execution.
+        execution: CombatExecutionDto,
+    },
     /// Executed movement prefix.
     UnitMovement {
         /// Moved unit.
@@ -185,6 +269,8 @@ pub enum ReplayEvidenceDto {
     TurnKernel {
         /// Processor names in execution order.
         processors: Vec<String>,
+        /// Exact intended-attack resolutions in execution order.
+        combat_executions: Vec<CombatExecutionDto>,
         /// Units whose movement phase began, in canonical unit order.
         reset_unit_ids: Vec<String>,
         /// Exact movements performed by turn processors.
@@ -376,52 +462,4 @@ where
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{MAX_SAVE_GAME_JSON_BYTES, ReplayCommandDto, ReplayLogDto, SaveGameDto};
-
-    #[test]
-    fn strict_save_codec_rejects_unknown_duplicate_and_oversized_input() {
-        let base = r#"{"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","eventOffset":0,"stateDigest":"d","state":{"revision":0,"turn":0,"matchIdentity":{"matchRules":{"gameLength":{"kind":"unlimited","targetMinutes":null,"turnLimit":null,"paceProfile":"unlimited","scoreFallbackEnabled":false},"victory":{"conquestEnabled":true,"dominationEnabled":true,"dominationControlPercent":60,"dominationHoldTurns":5,"scoreFallbackEnabled":false,"turnLimit":null,"hardTimeLimitMinutes":null,"culturalEnabled":true,"culturalRequiredArtifacts":6,"culturalHoldTurns":5},"balance":{}},"participants":[],"gameMode":"hotSeat"},"turnLifecycle":{"turnStatesByPlayerId":{},"requiredSubmissionPlayerIds":[],"submittedPlayerIds":[],"timeoutStreaksByPlayerId":{},"afkPlayerIds":[],"kickedPlayerIds":[],"turnStartedAt":null},"economy":{"playerGold":{},"playerWarWeariness":{},"playerStabilityNet":{},"strategicResources":{},"initialResourceDistribution":{"seed":0,"placements":[]}},"research":{"players":{}},"wonderRegistry":{},"intendedAttacks":[],"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"fieldImprovements":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomacy":{"contacts":[],"relations":[],"pendingProposals":[],"messages":[],"scoreHistory":[]},"resourceTradeAgreements":[],"dominationHoldTurnsByPlayerId":{},"culturalVictoryHoldTurnsByPlayerId":{},"mapObjectiveHoldStates":[],"transportNetwork":[]}}"#;
-        assert!(SaveGameDto::from_json(base).is_ok());
-        let unknown = base.replacen("\"state\":", "\"extra\":true,\"state\":", 1);
-        assert!(SaveGameDto::from_json(&unknown).is_err());
-        let duplicate = base.replacen("\"mapId\":\"m\",", "\"mapId\":\"m\",\"mapId\":\"m\",", 1);
-        assert!(SaveGameDto::from_json(&duplicate).is_err());
-        assert!(SaveGameDto::from_json(&"x".repeat(MAX_SAVE_GAME_JSON_BYTES + 1)).is_err());
-    }
-
-    #[test]
-    fn strict_replay_codec_rejects_unknown_and_duplicate_fields() {
-        let base = r#"{"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialEventOffset":0,"initialStateDigest":"d","initialState":{"revision":0,"turn":0,"matchIdentity":{"matchRules":{"gameLength":{"kind":"unlimited","targetMinutes":null,"turnLimit":null,"paceProfile":"unlimited","scoreFallbackEnabled":false},"victory":{"conquestEnabled":true,"dominationEnabled":true,"dominationControlPercent":60,"dominationHoldTurns":5,"scoreFallbackEnabled":false,"turnLimit":null,"hardTimeLimitMinutes":null,"culturalEnabled":true,"culturalRequiredArtifacts":6,"culturalHoldTurns":5},"balance":{}},"participants":[],"gameMode":"hotSeat"},"turnLifecycle":{"turnStatesByPlayerId":{},"requiredSubmissionPlayerIds":[],"submittedPlayerIds":[],"timeoutStreaksByPlayerId":{},"afkPlayerIds":[],"kickedPlayerIds":[],"turnStartedAt":null},"economy":{"playerGold":{},"playerWarWeariness":{},"playerStabilityNet":{},"strategicResources":{},"initialResourceDistribution":{"seed":0,"placements":[]}},"research":{"players":{}},"wonderRegistry":{},"intendedAttacks":[],"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"fieldImprovements":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomacy":{"contacts":[],"relations":[],"pendingProposals":[],"messages":[],"scoreHistory":[]},"resourceTradeAgreements":[],"dominationHoldTurnsByPlayerId":{},"culturalVictoryHoldTurnsByPlayerId":{},"mapObjectiveHoldStates":[],"transportNetwork":[]},"entries":[]}"#;
-        assert!(ReplayLogDto::from_json(base).is_ok());
-        let unknown = base.replacen("\"entries\":", "\"extra\":true,\"entries\":", 1);
-        assert!(ReplayLogDto::from_json(&unknown).is_err());
-        let duplicate = base.replacen("\"mapId\":\"m\",", "\"mapId\":\"m\",\"mapId\":\"m\",", 1);
-        assert!(ReplayLogDto::from_json(&duplicate).is_err());
-    }
-
-    #[test]
-    fn every_current_unit_action_command_has_a_strict_wire_shape() {
-        for kind in ["cancelUnitAction", "skipUnitTurn", "fortifyUnit"] {
-            let json = format!(r#"{{"type":"{kind}","expectedRevision":7,"unitId":"unit-1"}}"#);
-            assert!(serde_json::from_str::<ReplayCommandDto>(&json).is_ok());
-            let unknown = json.replacen('}', ",\"unknown\":true}", 1);
-            assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
-        }
-    }
-
-    #[test]
-    fn every_current_logistics_command_has_a_strict_wire_shape() {
-        let commands = [
-            r#"{"type":"autoExploreUnit","expectedRevision":7,"unitId":"scout-1"}"#,
-            r#"{"type":"assignMerchantTradeRoute","expectedRevision":7,"unitId":"merchant-1","destinationCityId":"city-2"}"#,
-            r#"{"type":"moveMerchantToCity","expectedRevision":7,"unitId":"merchant-1","destinationCityId":"city-2"}"#,
-            r#"{"type":"detachTroop","expectedRevision":7,"unitId":"army-1","troopKind":"archer"}"#,
-        ];
-        for json in commands {
-            assert!(serde_json::from_str::<ReplayCommandDto>(json).is_ok());
-            let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
-            assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
-        }
-    }
-}
+mod tests;

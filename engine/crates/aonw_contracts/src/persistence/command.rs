@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, TroopKindDto};
+use crate::{CityConquestActionDto, CoordinateDto, TroopKindDto};
 
 /// One revision-bound command stored in a replay.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -11,6 +11,17 @@ use crate::{CoordinateDto, TroopKindDto};
     deny_unknown_fields
 )]
 pub enum ReplayCommandDto {
+    /// Visible unit or city attack.
+    AttackHex {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Attacking unit.
+        attacker_unit_id: String,
+        /// Target coordinate.
+        defender: CoordinateDto,
+        /// Requested city disposition.
+        city_conquest_action: CityConquestActionDto,
+    },
     /// Manual movement command.
     MoveUnit {
         /// Expected canonical revision.

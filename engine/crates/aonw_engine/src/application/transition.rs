@@ -1,10 +1,17 @@
 use aonw_content::ContentHash;
-use aonw_domain::{GameState, PlayerId, StateRevision};
+use aonw_domain::{GameState, StateRevision};
 
 use crate::{
-    AutoExplorePlannedEvent, LogisticsExecution, MerchantRouteAssignedEvent,
+    AutoExplorePlannedEvent, CombatExecution, LogisticsExecution, MerchantRouteAssignedEvent,
     MerchantTravelQueuedEvent, StateDigest, TroopDetachedEvent, TurnKernelExecution,
     UnitMovedEvent, UnitMovementExecution,
+};
+
+mod events;
+
+pub use events::{
+    AllPlayersSubmittedEvent, CombatEvent, DiplomaticScoreChangedEvent, PlayerKickedEvent,
+    PlayerTimedOutEvent, TurnEndedEvent,
 };
 
 /// Stable command rejection shared by every authoritative command family.
@@ -88,11 +95,37 @@ pub enum CommandRejectionCode {
     TurnProcessorUnsupported,
     /// The next turn number cannot be represented.
     TurnNumberOverflow,
+    /// The requested attacking unit does not exist.
+    AttackerNotFound,
+    /// The actor cannot command the requested attacker.
+    AttackerNotControlled,
+    /// Current activity prevents the attacker from acting.
+    AttackerUnavailable,
+    /// The attacker has no movement remaining.
+    AttackerExhausted,
+    /// The attacker position is outside the canonical map.
+    AttackerOutOfBounds,
+    /// The attacking unit has no positive attack strength.
+    AttackerCannotAttack,
+    /// The target coordinate is not currently visible to the actor.
+    AttackTargetNotVisible,
+    /// The target coordinate is outside the canonical map.
+    AttackTargetOutOfBounds,
+    /// No unit or city occupies the target coordinate.
+    AttackTargetNotFound,
+    /// The target belongs to the attacking player.
+    AttackTargetNotEnemy,
+    /// A friendly or truce relation protects the target.
+    AttackTargetProtectedByTreaty,
+    /// The target exceeds the effective attack range.
+    AttackTargetOutOfRange,
+    /// A target city has no positive current health.
+    AttackCityHasNoHealth,
 }
 
 impl CommandRejectionCode {
     /// Complete stable rejection surface exposed to current clients.
-    pub const ALL: [Self; 39] = [
+    pub const ALL: [Self; 52] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -132,6 +165,19 @@ impl CommandRejectionCode {
         Self::TurnScopeInvalid,
         Self::TurnProcessorUnsupported,
         Self::TurnNumberOverflow,
+        Self::AttackerNotFound,
+        Self::AttackerNotControlled,
+        Self::AttackerUnavailable,
+        Self::AttackerExhausted,
+        Self::AttackerOutOfBounds,
+        Self::AttackerCannotAttack,
+        Self::AttackTargetNotVisible,
+        Self::AttackTargetOutOfBounds,
+        Self::AttackTargetNotFound,
+        Self::AttackTargetNotEnemy,
+        Self::AttackTargetProtectedByTreaty,
+        Self::AttackTargetOutOfRange,
+        Self::AttackCityHasNoHealth,
     ];
 
     /// Returns the stable language-neutral wire value.
@@ -177,6 +223,19 @@ impl CommandRejectionCode {
             Self::TurnScopeInvalid => "turn_scope_invalid",
             Self::TurnProcessorUnsupported => "turn_processor_unsupported",
             Self::TurnNumberOverflow => "turn_number_overflow",
+            Self::AttackerNotFound => "attacker_not_found",
+            Self::AttackerNotControlled => "attacker_not_controlled",
+            Self::AttackerUnavailable => "attacker_unavailable",
+            Self::AttackerExhausted => "attacker_exhausted",
+            Self::AttackerOutOfBounds => "attacker_out_of_bounds",
+            Self::AttackerCannotAttack => "attacker_cannot_attack",
+            Self::AttackTargetNotVisible => "attack_target_not_visible",
+            Self::AttackTargetOutOfBounds => "attack_target_out_of_bounds",
+            Self::AttackTargetNotFound => "attack_target_not_found",
+            Self::AttackTargetNotEnemy => "attack_target_not_enemy",
+            Self::AttackTargetProtectedByTreaty => "attack_target_protected_by_treaty",
+            Self::AttackTargetOutOfRange => "attack_target_out_of_range",
+            Self::AttackCityHasNoHealth => "attack_city_has_no_health",
         }
     }
 }
@@ -222,6 +281,24 @@ pub enum DomainEvent {
     PlayerTimedOut(PlayerTimedOutEvent),
     /// The trusted host removed one participant from active lifecycle.
     PlayerKicked(PlayerKickedEvent),
+    /// A visible attacker engaged a visible target.
+    UnitAttacked(CombatEvent),
+    /// A visible attacker engaged a visible city.
+    CityAttacked(CombatEvent),
+    /// Exact authoritative combat resolution occurred.
+    CombatResolved(CombatEvent),
+    /// A known observer applied a city-attack reputation penalty.
+    DiplomaticScoreChanged(DiplomaticScoreChangedEvent),
+    /// A surviving unit gained combat experience.
+    UnitGainedExperience(CombatEvent),
+    /// A defeated unit was removed.
+    UnitKilled(CombatEvent),
+    /// A surviving defender changed position.
+    UnitRetreated(CombatEvent),
+    /// A defeated city changed owner.
+    CityCaptured(CombatEvent),
+    /// A defeated city was removed.
+    CityDestroyed(CombatEvent),
 }
 
 /// Exact evidence used by clients for deterministic presentation.
@@ -233,126 +310,8 @@ pub enum ExecutionEvidence {
     Logistics(LogisticsExecution),
     /// Exact capability-gated processors executed by the T1 turn kernel.
     TurnKernel(TurnKernelExecution),
-}
-
-/// Accepted fact that one participant completed its sequential turn.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TurnEndedEvent {
-    player_id: PlayerId,
-}
-
-impl TurnEndedEvent {
-    pub(crate) const fn new(player_id: PlayerId) -> Self {
-        Self { player_id }
-    }
-
-    /// Returns the participant ending its turn.
-    #[must_use]
-    pub const fn player_id(&self) -> &PlayerId {
-        &self.player_id
-    }
-}
-
-/// Accepted fact that a simultaneous submission scope completed.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct AllPlayersSubmittedEvent {
-    turn: u32,
-    player_ids: Box<[PlayerId]>,
-}
-
-impl AllPlayersSubmittedEvent {
-    pub(crate) fn new(turn: u32, player_ids: impl Into<Box<[PlayerId]>>) -> Self {
-        Self {
-            turn,
-            player_ids: player_ids.into(),
-        }
-    }
-
-    /// Returns the finalized turn.
-    #[must_use]
-    pub const fn turn(&self) -> u32 {
-        self.turn
-    }
-
-    /// Returns participants in canonical turn order.
-    #[must_use]
-    pub const fn player_ids(&self) -> &[PlayerId] {
-        &self.player_ids
-    }
-}
-
-/// Accepted timeout fact emitted before finalization events.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PlayerTimedOutEvent {
-    turn: u32,
-    player_id: PlayerId,
-}
-
-impl PlayerTimedOutEvent {
-    pub(crate) const fn new(turn: u32, player_id: PlayerId) -> Self {
-        Self { turn, player_id }
-    }
-
-    /// Returns the timed-out turn.
-    #[must_use]
-    pub const fn turn(&self) -> u32 {
-        self.turn
-    }
-
-    /// Returns the timed-out participant.
-    #[must_use]
-    pub const fn player_id(&self) -> &PlayerId {
-        &self.player_id
-    }
-}
-
-/// Accepted participant-removal fact.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PlayerKickedEvent {
-    turn: u32,
-    player_id: PlayerId,
-    reason: Box<str>,
-    timeout_streak: i64,
-}
-
-impl PlayerKickedEvent {
-    pub(crate) fn new(
-        turn: u32,
-        player_id: PlayerId,
-        reason: impl Into<Box<str>>,
-        timeout_streak: i64,
-    ) -> Self {
-        Self {
-            turn,
-            player_id,
-            reason: reason.into(),
-            timeout_streak,
-        }
-    }
-
-    /// Returns the turn during which removal occurred.
-    #[must_use]
-    pub const fn turn(&self) -> u32 {
-        self.turn
-    }
-
-    /// Returns the removed participant.
-    #[must_use]
-    pub const fn player_id(&self) -> &PlayerId {
-        &self.player_id
-    }
-
-    /// Returns the stable host-owned reason.
-    #[must_use]
-    pub const fn reason(&self) -> &str {
-        &self.reason
-    }
-
-    /// Returns the host-observed timeout streak.
-    #[must_use]
-    pub const fn timeout_streak(&self) -> i64 {
-        self.timeout_streak
-    }
+    /// Exact seed, rolls, modifiers, damage and retreat result for one attack.
+    Combat(CombatExecution),
 }
 
 /// Complete authoritative outcome of one command.

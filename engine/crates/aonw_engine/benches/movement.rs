@@ -15,6 +15,8 @@ use stats_alloc::{INSTRUMENTED_SYSTEM, StatsAlloc};
 #[global_allocator]
 static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
+#[path = "movement/combat.rs"]
+mod combat;
 #[path = "movement/logistics.rs"]
 mod logistics;
 #[path = "movement/support.rs"]
@@ -79,6 +81,7 @@ fn benchmark_map(cols: u16, rows: u16, unit_counts: &[usize]) {
     for &unit_count in unit_counts {
         benchmark_movement(&map, cols, rows, unit_count);
         logistics::benchmark(&map, cols, rows, unit_count);
+        combat::benchmark(&map, cols, rows, unit_count);
     }
 }
 
@@ -387,7 +390,9 @@ fn reachable(
 ) -> Result<ReachableMovement, CanonicalQueryError> {
     match GameEngine::query(state, context, GameQuery::Reachable(query))? {
         QueryResult::Reachable(result) => Ok(result),
-        QueryResult::Route(_) | QueryResult::UnitLogisticsOptions(_) => {
+        QueryResult::CombatPreview(_)
+        | QueryResult::Route(_)
+        | QueryResult::UnitLogisticsOptions(_) => {
             unreachable!("reachable query returned another result")
         }
     }
@@ -402,7 +407,9 @@ fn reachable_with_workspace(
     match GameEngine::query_with_workspace(state, context, GameQuery::Reachable(query), workspace)?
     {
         QueryResult::Reachable(result) => Ok(result),
-        QueryResult::Route(_) | QueryResult::UnitLogisticsOptions(_) => {
+        QueryResult::CombatPreview(_)
+        | QueryResult::Route(_)
+        | QueryResult::UnitLogisticsOptions(_) => {
             unreachable!("reachable query returned another result")
         }
     }
@@ -415,7 +422,9 @@ fn route(
 ) -> Result<TerrainMovementPlan, CanonicalQueryError> {
     match GameEngine::query(state, context, GameQuery::PlanRoute(query))? {
         QueryResult::Route(result) => Ok(result),
-        QueryResult::Reachable(_) | QueryResult::UnitLogisticsOptions(_) => {
+        QueryResult::CombatPreview(_)
+        | QueryResult::Reachable(_)
+        | QueryResult::UnitLogisticsOptions(_) => {
             unreachable!("route query returned another result")
         }
     }

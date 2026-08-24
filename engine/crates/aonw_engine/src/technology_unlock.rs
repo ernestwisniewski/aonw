@@ -6,6 +6,10 @@ use aonw_domain::{
     UnitKind, WonderType,
 };
 
+mod effect;
+
+use effect::{apply_effect, push_combat_modifier, scaled_combat_delta};
+
 const BASIS_POINTS: u128 = 10_000;
 
 /// Read-only availability of one technology for a player.
@@ -42,6 +46,28 @@ pub struct TechnologyEffectSummary {
     pub max_controlled_hexes_bonus: i32,
     /// Flat science bonus per city.
     pub city_science_bonus: i32,
+}
+
+/// Combat statistic changed by one ruleset-owned technology effect.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TechnologyCombatStat {
+    /// Attack strength.
+    Attack,
+    /// Defense strength.
+    Defense,
+    /// Maximum hit points.
+    HitPoints,
+}
+
+/// One exact ordered technology modifier consumed by combat.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TechnologyCombatModifier {
+    /// Oracle-compatible stable label.
+    pub label: Box<str>,
+    /// Affected combat statistic.
+    pub target: TechnologyCombatStat,
+    /// Signed additive delta after any fixed-point scaling.
+    pub delta: i32,
 }
 
 /// Invalid technology-query input or incomplete ruleset content.
@@ -292,6 +318,89 @@ impl<'query> TechnologyUnlockQuery<'query> {
         Ok(summary)
     }
 
+    /// Returns exact per-technology combat modifiers in canonical label order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if unlocked content is missing or scaled strength
+    /// exceeds the canonical integer range.
+    pub fn combat_modifiers(
+        self,
+        base_attack: i32,
+        army_unit: bool,
+        include_city_defense: bool,
+    ) -> Result<Vec<TechnologyCombatModifier>, TechnologyQueryError> {
+        let mut definitions = self
+            .research
+            .unlocked_technology_ids()
+            .iter()
+            .map(|technology| self.definition(*technology))
+            .collect::<Result<Vec<_>, _>>()?;
+        definitions.sort_unstable_by_key(|definition| definition.label());
+        let mut modifiers = Vec::new();
+        for definition in definitions {
+            for effect in definition.effects() {
+                match *effect {
+                    TechnologyEffect::ArmyStrengthMultiplier { basis_points } => {
+                        let delta =
+                            scaled_combat_delta(base_attack, basis_points, definition.id())?;
+                        push_combat_modifier(
+                            &mut modifiers,
+                            definition.label(),
+                            "armyStrength",
+                            TechnologyCombatStat::Attack,
+                            delta,
+                        );
+                    }
+                    TechnologyEffect::CityDefenseBonus { amount } if include_city_defense => {
+                        push_combat_modifier(
+                            &mut modifiers,
+                            definition.label(),
+                            "cityDefense",
+                            TechnologyCombatStat::Defense,
+                            amount,
+                        );
+                    }
+                    TechnologyEffect::ArmyCombatStatsBonus {
+                        attack,
+                        defense,
+                        hit_points,
+                    } if army_unit => {
+                        push_combat_modifier(
+                            &mut modifiers,
+                            definition.label(),
+                            "armyAttack",
+                            TechnologyCombatStat::Attack,
+                            attack,
+                        );
+                        push_combat_modifier(
+                            &mut modifiers,
+                            definition.label(),
+                            "armyDefense",
+                            TechnologyCombatStat::Defense,
+                            defense,
+                        );
+                        push_combat_modifier(
+                            &mut modifiers,
+                            definition.label(),
+                            "armyHitPoints",
+                            TechnologyCombatStat::HitPoints,
+                            hit_points,
+                        );
+                    }
+                    TechnologyEffect::StrategicResourceProduction { .. }
+                    | TechnologyEffect::GlobalGoldMultiplier { .. }
+                    | TechnologyEffect::CityDefenseBonus { .. }
+                    | TechnologyEffect::ArmyProductionMultiplier { .. }
+                    | TechnologyEffect::ArmyCombatStatsBonus { .. }
+                    | TechnologyEffect::MaxControlledHexesBonus { .. }
+                    | TechnologyEffect::CityScienceBonus { .. } => {}
+                }
+            }
+        }
+        Ok(modifiers)
+    }
+
     fn definition(
         self,
         technology_id: TechnologyId,
@@ -320,76 +429,4 @@ impl<'query> TechnologyUnlockQuery<'query> {
                 .then(|| definition.id())
         })
     }
-}
-
-fn apply_effect(
-    summary: &mut TechnologyEffectSummary,
-    technology_id: TechnologyId,
-    effect: TechnologyEffect,
-) -> Result<(), TechnologyQueryError> {
-    let overflow = || TechnologyQueryError::EffectOverflow(technology_id);
-    match effect {
-        TechnologyEffect::StrategicResourceProduction { resource, amount } => {
-            let current = summary
-                .strategic_resource_production
-                .entry(resource.domain())
-                .or_default();
-            *current = current.checked_add(amount).ok_or_else(overflow)?;
-        }
-        TechnologyEffect::GlobalGoldMultiplier { basis_points } => {
-            summary.global_gold_multiplier_basis_points = summary
-                .global_gold_multiplier_basis_points
-                .checked_add(basis_points)
-                .ok_or_else(overflow)?;
-        }
-        TechnologyEffect::CityDefenseBonus { amount } => {
-            summary.city_defense_bonus = summary
-                .city_defense_bonus
-                .checked_add(amount)
-                .ok_or_else(overflow)?;
-        }
-        TechnologyEffect::ArmyProductionMultiplier { basis_points } => {
-            summary.army_production_multiplier_basis_points = summary
-                .army_production_multiplier_basis_points
-                .checked_add(basis_points)
-                .ok_or_else(overflow)?;
-        }
-        TechnologyEffect::ArmyStrengthMultiplier { basis_points } => {
-            summary.army_strength_multiplier_basis_points = summary
-                .army_strength_multiplier_basis_points
-                .checked_add(basis_points)
-                .ok_or_else(overflow)?;
-        }
-        TechnologyEffect::ArmyCombatStatsBonus {
-            attack,
-            defense,
-            hit_points,
-        } => {
-            summary.army_attack_bonus = summary
-                .army_attack_bonus
-                .checked_add(attack)
-                .ok_or_else(overflow)?;
-            summary.army_defense_bonus = summary
-                .army_defense_bonus
-                .checked_add(defense)
-                .ok_or_else(overflow)?;
-            summary.army_hit_points_bonus = summary
-                .army_hit_points_bonus
-                .checked_add(hit_points)
-                .ok_or_else(overflow)?;
-        }
-        TechnologyEffect::MaxControlledHexesBonus { amount } => {
-            summary.max_controlled_hexes_bonus = summary
-                .max_controlled_hexes_bonus
-                .checked_add(amount)
-                .ok_or_else(overflow)?;
-        }
-        TechnologyEffect::CityScienceBonus { amount } => {
-            summary.city_science_bonus = summary
-                .city_science_bonus
-                .checked_add(amount)
-                .ok_or_else(overflow)?;
-        }
-    }
-    Ok(())
 }

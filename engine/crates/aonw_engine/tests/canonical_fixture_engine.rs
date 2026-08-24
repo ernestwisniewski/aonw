@@ -10,11 +10,11 @@ use aonw_contract_mapping::{
     canonicalize_game_state, decode_game_state, decode_troop, encode_game_state,
 };
 use aonw_contracts::{GameStateDto, ReplayCommandDto};
-use aonw_domain::{CityId, HexCoord, PlayerId, UnitId};
+use aonw_domain::{CityConquestAction, CityId, HexCoord, PlayerId, UnitId};
 use aonw_engine::{
-    AssignMerchantTradeRouteCommand, AutoExploreUnitCommand, DetachTroopCommand, EngineContext,
-    GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand, TurnCommand,
-    UnitActionCommand,
+    AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand, DetachTroopCommand,
+    EngineContext, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand,
+    TurnCommand, UnitActionCommand,
 };
 use aonw_testkit::{
     CanonicalFixtureExecutor, CanonicalFixtureInput, CanonicalFixtureLoader,
@@ -74,12 +74,38 @@ impl CanonicalFixtureExecutor for CanonicalRustEngineExecutor {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 fn apply_command(
     state: aonw_domain::GameState,
     context: EngineContext<'_>,
     command: &ReplayCommandDto,
 ) -> Result<aonw_engine::DomainTransition, ExecutionError> {
     match command {
+        ReplayCommandDto::AttackHex {
+            expected_revision,
+            attacker_unit_id,
+            defender,
+            city_conquest_action,
+        } => {
+            let attacker_unit_id = UnitId::new(attacker_unit_id.as_str()).map_err(display_error)?;
+            let action = match city_conquest_action {
+                aonw_contracts::CityConquestActionDto::Capture => CityConquestAction::Capture,
+                aonw_contracts::CityConquestActionDto::Destroy => CityConquestAction::Destroy,
+            };
+            GameEngine::apply_player_owned(
+                state,
+                context,
+                PlayerCommand::AttackHex(
+                    AttackHexCommand::new(
+                        *expected_revision,
+                        &attacker_unit_id,
+                        HexCoord::new(defender.col, defender.row),
+                    )
+                    .with_city_conquest_action(action),
+                ),
+            )
+            .map_err(display_error)
+        }
         ReplayCommandDto::MoveUnit {
             expected_revision,
             unit_id,
@@ -423,6 +449,7 @@ fn reviewed_execution_disposition(line: &str) -> Option<ReviewedExecutionDisposi
 
 const fn command_name(command: &ReplayCommandDto) -> &'static str {
     match command {
+        ReplayCommandDto::AttackHex { .. } => "AttackHex",
         ReplayCommandDto::MoveUnit { .. } => "MoveUnit",
         ReplayCommandDto::AutoExploreUnit { .. } => "AutoExploreUnit",
         ReplayCommandDto::AssignMerchantTradeRoute { .. } => "AssignMerchantTradeRoute",

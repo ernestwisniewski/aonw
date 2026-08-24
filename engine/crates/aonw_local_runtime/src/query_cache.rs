@@ -6,6 +6,7 @@ use crate::{RuntimeQuery, RuntimeQueryResult, SessionStamp};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum QueryKind {
+    CombatPreview(HexCoord),
     Reachable,
     RoutePlan(HexCoord),
     UnitLogisticsOptions,
@@ -25,6 +26,11 @@ struct QueryCacheKey {
 impl QueryCacheKey {
     fn new(stamp: SessionStamp, request: &RuntimeQuery) -> Self {
         let (expected_revision, unit_id, kind) = match request {
+            RuntimeQuery::CombatPreview(request) => (
+                request.expected_revision,
+                request.attacker_unit_id.clone(),
+                QueryKind::CombatPreview(request.defender),
+            ),
             RuntimeQuery::Reachable(request) => (
                 request.expected_revision,
                 request.unit_id.clone(),

@@ -67,11 +67,11 @@ void main() {
   });
 
   test('migration manifest closes queries, events, and evidence', () {
-    expect(manifest.queryEntries, hasLength(3));
+    expect(manifest.queryEntries, hasLength(4));
     expect(manifest.eventEntries, hasLength(40));
     expect(manifest.nativeEventEntries, hasLength(4));
     expect(manifest.evidenceEntries, hasLength(1));
-    expect(manifest.nativeEvidenceEntries, hasLength(2));
+    expect(manifest.nativeEvidenceEntries, hasLength(3));
 
     expect(_rustEnumVariants(manifest.rustQuerySource, 'GameQuery'), {
       for (final entry in manifest.queryEntries) entry.queryVariant,
@@ -118,7 +118,7 @@ void main() {
       rustEventVariants,
     );
     expect(
-      _rustEnumVariants(manifest.rustClientResponseSource, 'ClientEventDto'),
+      _rustEnumVariants(manifest.rustClientEventSource, 'ClientEventDto'),
       rustEventVariants,
     );
 
@@ -193,6 +193,7 @@ void main() {
       },
       const {
         'AssignMerchantTradeRouteCommand': 'runtime-ready',
+        'AttackHexCommand': 'runtime-ready',
         'AutoExploreUnitCommand': 'runtime-ready',
         'CancelUnitActionCommand': 'engine-parity',
         'DetachTroopCommand': 'runtime-ready',
@@ -200,7 +201,16 @@ void main() {
         'MoveMerchantToCityCommand': 'runtime-ready',
         'MoveUnitCommand': 'engine-parity',
         'SkipUnitTurnCommand': 'engine-parity',
+        'CityAttackedEvent': 'runtime-ready',
+        'CityCapturedEvent': 'runtime-ready',
+        'CityDestroyedEvent': 'runtime-ready',
+        'CombatResolvedEvent': 'runtime-ready',
+        'DiplomaticScoreChangedEvent': 'runtime-ready',
+        'UnitAttackedEvent': 'runtime-ready',
+        'UnitGainedExperienceEvent': 'runtime-ready',
+        'UnitKilledEvent': 'runtime-ready',
         'UnitMovedEvent': 'engine-parity',
+        'UnitRetreatedEvent': 'runtime-ready',
         'MovementCommandExecution': 'engine-parity',
       },
       reason: 'every promotion requires reviewed full-state parity evidence',

@@ -210,8 +210,10 @@ def parse_csv(source: str, scope: str, header: list[str]) -> tuple[dict[str, Any
 
 def load_stages(path: Path) -> dict[str, dict[str, Any]]:
     raw = read_json(path, "stage budgets")
-    if not isinstance(raw, dict) or set(raw) != {"E0", "T1", "U2"}:
-        raise PerformanceFailure("stage budgets must contain exactly active stages E0, T1 and U2")
+    if not isinstance(raw, dict) or set(raw) != {"E0", "T1", "U2", "C3"}:
+        raise PerformanceFailure(
+            "stage budgets must contain exactly active stages E0, T1, U2 and C3"
+        )
     expected = {
         "E0": {
             "target": "rust-foundation-check",
@@ -242,6 +244,11 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
                 "MoveMerchantToCity",
             ],
             "fixtureCount": 7,
+        },
+        "C3": {
+            "target": "rust-combat-check",
+            "capabilities": ["AttackHex"],
+            "fixtureCount": 9,
         },
     }
     stages: dict[str, dict[str, Any]] = {}
@@ -369,12 +376,33 @@ def validate_u2_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("U2 event budget cannot cover auto-exploration")
 
 
+def validate_c3_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
+    manifest = read_json(
+        repo_root / "engine/fixtures/combat/manifest.json",
+        "C3 fixture manifest",
+    )
+    if not isinstance(manifest, dict) or manifest.get("capability") != "combat-ready":
+        raise PerformanceFailure("C3 fixture manifest capability differs")
+    cases = manifest.get("cases")
+    if not isinstance(cases, list) or sorted(cases) != stage["fixtureIds"]:
+        raise PerformanceFailure("C3 fixture IDs differ from the stage budget")
+    if manifest.get("commands") != ["attackHex"]:
+        raise PerformanceFailure("C3 command inventory differs")
+    if manifest.get("queries") != ["combatPreview"]:
+        raise PerformanceFailure("C3 query inventory differs")
+    if manifest.get("turnProcessors") != ["combat"]:
+        raise PerformanceFailure("C3 turn processor inventory differs")
+    if stage["maxEventsPerCommand"] < 7:
+        raise PerformanceFailure("C3 event budget cannot cover combat resolution")
+
+
 def validate_stages(
     stages: dict[str, dict[str, Any]], stable: dict[str, Any], repo_root: Path
 ) -> None:
     validate_e0_fixtures(stages["E0"], repo_root)
     validate_t1_fixtures(stages["T1"], repo_root)
     validate_u2_fixtures(stages["U2"], repo_root)
+    validate_c3_fixtures(stages["C3"], repo_root)
     for name, stage in stages.items():
         selected = {
             key: workload
@@ -451,7 +479,7 @@ def build_report(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
     validate_stages(stages, stable, repo_root)
     return {
         "provenance": provenance(),
-        "stage": "U2",
+        "stage": "C3",
         "stable": dict(sorted(stable.items())),
         "diagnosticTimings": dict(sorted({**engine_timings, **runtime_timings}.items())),
     }

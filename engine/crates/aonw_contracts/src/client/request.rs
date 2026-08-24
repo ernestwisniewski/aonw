@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, TroopKindDto};
+use crate::{CityConquestActionDto, CoordinateDto, TroopKindDto};
 
 /// One current client protocol request.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -80,6 +80,17 @@ pub enum ClientRequestBodyDto {
     deny_unknown_fields
 )]
 pub enum ClientCommandDto {
+    /// Resolves one visible unit or city attack.
+    AttackHex {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Controlled attacking unit.
+        attacker_unit_id: String,
+        /// Target coordinate.
+        defender: CoordinateDto,
+        /// Requested disposition when a city is defeated.
+        city_conquest_action: CityConquestActionDto,
+    },
     /// Moves one controlled unit toward a map coordinate.
     MoveUnit {
         /// Revision observed by the client.
@@ -165,6 +176,15 @@ pub enum ClientCommandDto {
     deny_unknown_fields
 )]
 pub enum ClientQueryDto {
+    /// Returns effective combat stats and damage bounds without RNG evidence.
+    CombatPreview {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Controlled attacking unit.
+        attacker_unit_id: String,
+        /// Visible target coordinate.
+        defender: CoordinateDto,
+    },
     /// Returns every current-turn reachable coordinate.
     Reachable {
         /// Revision observed by the client.

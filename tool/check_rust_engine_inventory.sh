@@ -99,6 +99,7 @@ rust_event_source=""
 rust_evidence_source=""
 rust_persistence_source=""
 rust_client_command_source=""
+rust_client_event_source=""
 rust_client_response_source=""
 rust_projection_source=""
 partial_parity_mode=""
@@ -125,7 +126,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
   [[ "${#fields[@]}" -gt 0 ]] || continue
   key="${fields[0]}"
   case "${key}" in
-    oracle-tree|expected-domain-count|expected-system-count|expected-query-count|expected-event-count|expected-native-event-count|expected-evidence-count|expected-native-evidence-count|expected-projection-type-count|expected-projection-variant-count|dart-domain-root|dart-system-source|dart-event-root|dart-evidence-source|rust-domain-source|rust-system-source|rust-query-source|rust-event-source|rust-evidence-source|rust-persistence-source|rust-client-command-source|rust-client-response-source|rust-projection-source|partial-parity-mode)
+    oracle-tree|expected-domain-count|expected-system-count|expected-query-count|expected-event-count|expected-native-event-count|expected-evidence-count|expected-native-evidence-count|expected-projection-type-count|expected-projection-variant-count|dart-domain-root|dart-system-source|dart-event-root|dart-evidence-source|rust-domain-source|rust-system-source|rust-query-source|rust-event-source|rust-evidence-source|rust-persistence-source|rust-client-command-source|rust-client-event-source|rust-client-response-source|rust-projection-source|partial-parity-mode)
       [[ "${#fields[@]}" -eq 2 ]] || fail "${manifest}:${line_number}: ${key} requires exactly one value"
       value="${fields[1]}"
       case "${key}" in
@@ -150,6 +151,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
         rust-evidence-source) [[ -z "${rust_evidence_source}" ]] || fail "duplicate rust-evidence-source"; rust_evidence_source="${value}" ;;
         rust-persistence-source) [[ -z "${rust_persistence_source}" ]] || fail "duplicate rust-persistence-source"; rust_persistence_source="${value}" ;;
         rust-client-command-source) [[ -z "${rust_client_command_source}" ]] || fail "duplicate rust-client-command-source"; rust_client_command_source="${value}" ;;
+        rust-client-event-source) [[ -z "${rust_client_event_source}" ]] || fail "duplicate rust-client-event-source"; rust_client_event_source="${value}" ;;
         rust-client-response-source) [[ -z "${rust_client_response_source}" ]] || fail "duplicate rust-client-response-source"; rust_client_response_source="${value}" ;;
         rust-projection-source) [[ -z "${rust_projection_source}" ]] || fail "duplicate rust-projection-source"; rust_projection_source="${value}" ;;
         partial-parity-mode) [[ -z "${partial_parity_mode}" ]] || fail "duplicate partial-parity-mode"; partial_parity_mode="${value}" ;;
@@ -300,6 +302,7 @@ require_repo_file "${rust_event_source}"
 require_repo_file "${rust_evidence_source}"
 require_repo_file "${rust_persistence_source}"
 require_repo_file "${rust_client_command_source}"
+require_repo_file "${rust_client_event_source}"
 require_repo_file "${rust_client_response_source}"
 require_repo_file "${rust_projection_source}"
 
@@ -479,7 +482,7 @@ census_rust_enum "${rust_query_source}" "QueryResult" "${query_result_actual}"
 census_rust_enum "${rust_client_response_source}" "ClientQueryResultDto" "${client_query_result_actual}"
 census_rust_enum "${rust_event_source}" "DomainEvent" "${rust_event_actual}"
 census_rust_enum "${rust_persistence_source}" "ReplayEventDto" "${replay_event_actual}"
-census_rust_enum "${rust_client_response_source}" "ClientEventDto" "${client_event_actual}"
+census_rust_enum "${rust_client_event_source}" "ClientEventDto" "${client_event_actual}"
 census_rust_enum "${rust_evidence_source}" "ExecutionEvidence" "${rust_evidence_actual}"
 census_rust_enum "${rust_persistence_source}" "ReplayEvidenceDto" "${replay_evidence_actual}"
 census_rust_enum "${rust_client_response_source}" "ClientEvidenceDto" "${client_evidence_actual}"

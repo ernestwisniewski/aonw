@@ -146,6 +146,11 @@ impl TechnologyDefinition {
     pub const fn id(self) -> TechnologyId {
         self.id.domain()
     }
+    /// Returns the canonical technology label used by exact rule evidence.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        self.id.as_str()
+    }
     /// Returns the cost era.
     #[must_use]
     pub const fn era(self) -> TechnologyEra {

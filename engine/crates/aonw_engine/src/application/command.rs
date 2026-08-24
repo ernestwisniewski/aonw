@@ -1,18 +1,22 @@
 use aonw_content::ContentHash;
-use aonw_domain::{GameState, GameStateBuildError, TurnLifecycleBuildError};
+use aonw_domain::{
+    DiplomacyStateBuildError, GameState, GameStateBuildError, TurnLifecycleBuildError,
+};
 
 use super::{DomainEvent, DomainTransition, ExecutionEvidence};
 use crate::movement::{merge_discovered_contacts, recompute_after_move};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
 use crate::{
-    AssignMerchantTradeRouteCommand, AutoExploreUnitCommand, DetachTroopCommand, EngineContext,
-    GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, StateDigest, TurnCommand,
-    UnitActionCommand,
+    AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand, DetachTroopCommand,
+    EngineContext, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, StateDigest,
+    TurnCommand, UnitActionCommand,
 };
 
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
 pub enum PlayerCommand<'command> {
+    /// Resolves one visible unit or city attack.
+    AttackHex(AttackHexCommand<'command>),
     /// Revision-bound manual unit movement.
     MoveUnit(MoveUnitCommand<'command>),
     /// Starts or continues deterministic scout auto-exploration.
@@ -73,6 +77,7 @@ impl PlayerCommand<'_> {
     #[must_use]
     pub fn event_budget(self, state: &GameState) -> EventBudget {
         match self {
+            Self::AttackHex(_) => EventBudget::new(7),
             Self::AutoExploreUnit(_) => EventBudget::new(2),
             Self::MoveUnit(_)
             | Self::AssignMerchantTradeRoute(_)
@@ -90,7 +95,15 @@ impl PlayerCommand<'_> {
                     u64::try_from(state.match_lifecycle().identity().participants().len())
                         .unwrap_or(u64::MAX);
                 let units = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
-                EventBudget::new(participants.saturating_add(units).saturating_add(1))
+                let combat = u64::try_from(state.combat().intended_attacks().len())
+                    .unwrap_or(u64::MAX)
+                    .saturating_mul(7);
+                EventBudget::new(
+                    participants
+                        .saturating_add(units)
+                        .saturating_add(combat)
+                        .saturating_add(1),
+                )
             }
         }
     }
@@ -105,6 +118,8 @@ pub enum CanonicalEngineError {
     State(GameStateBuildError),
     /// Applying a lifecycle result violates lifecycle invariants.
     TurnLifecycle(TurnLifecycleBuildError),
+    /// Applying combat diplomacy violates diplomacy invariants.
+    Diplomacy(DiplomacyStateBuildError),
 }
 
 impl core::fmt::Display for CanonicalEngineError {
@@ -113,6 +128,7 @@ impl core::fmt::Display for CanonicalEngineError {
             Self::ContentHash(source) => write!(formatter, "content hash failed: {source}"),
             Self::State(source) => source.fmt(formatter),
             Self::TurnLifecycle(source) => source.fmt(formatter),
+            Self::Diplomacy(source) => source.fmt(formatter),
         }
     }
 }
@@ -134,6 +150,10 @@ impl GameEngine {
         let (map_hash, ruleset_hash) = content_hashes(context)?;
         let map = context.map();
         match command {
+            PlayerCommand::AttackHex(command) => {
+                let update = crate::combat::apply(&state, context, command);
+                apply_combat(state, update, map_hash, ruleset_hash)
+            }
             PlayerCommand::MoveUnit(command) => {
                 let movement =
                     GameEngine::apply_move_unit(&state, context.with_world(&state), command);
@@ -213,6 +233,46 @@ impl GameEngine {
     pub fn state_digest(state: &GameState) -> StateDigest {
         crate::state_digest::digest_state(state)
     }
+}
+
+fn apply_combat(
+    state: GameState,
+    update: Result<crate::combat::CombatUpdate, crate::combat::CombatApplyError>,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let update = match update {
+        Ok(value) => value,
+        Err(crate::combat::CombatApplyError::Rejected(rejection)) => {
+            return Ok(DomainTransition::rejected(
+                state,
+                rejection,
+                map_hash,
+                ruleset_hash,
+            ));
+        }
+        Err(crate::combat::CombatApplyError::Diplomacy(error)) => {
+            return Err(CanonicalEngineError::Diplomacy(error));
+        }
+    };
+    let next = state
+        .into_after_combat(aonw_domain::CombatStateUpdate {
+            revision: update.revision,
+            units: update.units,
+            cities: update.cities,
+            artifacts: update.artifacts,
+            combat: update.combat,
+            fog_of_war: update.fog_of_war,
+            diplomacy: update.diplomacy,
+        })
+        .map_err(CanonicalEngineError::State)?;
+    Ok(DomainTransition::accepted(
+        next,
+        update.events,
+        Some(ExecutionEvidence::Combat(update.evidence)),
+        map_hash,
+        ruleset_hash,
+    ))
 }
 
 fn apply_movement_logistics<Command>(
@@ -388,10 +448,11 @@ fn apply_move(
 #[cfg(test)]
 mod tests {
     use aonw_domain::{
-        GameState, HexCoord, HexGridBounds, StateRevision, UnitId, UnitOccupancyPolicy,
+        DiplomacyStateBuildError, GameState, GameStateBuildError, HexCoord, HexGridBounds,
+        PlayerId, StateRevision, TurnLifecycleBuildError, UnitId, UnitOccupancyPolicy,
     };
 
-    use super::{EventBudget, PlayerCommand};
+    use super::{CanonicalEngineError, EventBudget, PlayerCommand};
     use crate::{MoveUnitCommand, UnitActionCommand};
 
     #[test]
@@ -415,5 +476,19 @@ mod tests {
             PlayerCommand::FortifyUnit(UnitActionCommand::new(0, &unit_id)).event_budget(&state),
             EventBudget::NONE
         );
+    }
+
+    #[test]
+    fn canonical_engine_error_formats_every_current_source_family() {
+        let player = PlayerId::new("player").expect("player id");
+        let unit = UnitId::new("unit").expect("unit id");
+        for error in [
+            CanonicalEngineError::ContentHash("hash".into()),
+            CanonicalEngineError::State(GameStateBuildError::UnitNotFound(unit)),
+            CanonicalEngineError::TurnLifecycle(TurnLifecycleBuildError::UnknownPlayer(player)),
+            CanonicalEngineError::Diplomacy(DiplomacyStateBuildError::EmptyId),
+        ] {
+            assert!(!error.to_string().is_empty());
+        }
     }
 }

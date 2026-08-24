@@ -1,18 +1,19 @@
 /// Runtime capabilities independent of session state.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RuntimeCapabilities {
-    features: u8,
+    features: u16,
 }
 
 impl RuntimeCapabilities {
-    const ROUTE_PLAN: u8 = 1 << 0;
-    const REACHABLE: u8 = 1 << 1;
-    const MOVE_UNIT: u8 = 1 << 2;
-    const SAVE_GAME: u8 = 1 << 3;
-    const REPLAY_VERIFICATION: u8 = 1 << 4;
-    const UNIT_ACTIONS: u8 = 1 << 5;
-    const TURN_KERNEL: u8 = 1 << 6;
-    const MOVEMENT_LOGISTICS: u8 = 1 << 7;
+    const ROUTE_PLAN: u16 = 1 << 0;
+    const REACHABLE: u16 = 1 << 1;
+    const MOVE_UNIT: u16 = 1 << 2;
+    const SAVE_GAME: u16 = 1 << 3;
+    const REPLAY_VERIFICATION: u16 = 1 << 4;
+    const UNIT_ACTIONS: u16 = 1 << 5;
+    const TURN_KERNEL: u16 = 1 << 6;
+    const MOVEMENT_LOGISTICS: u16 = 1 << 7;
+    const COMBAT: u16 = 1 << 8;
 
     pub(super) const CURRENT: Self = Self {
         features: Self::ROUTE_PLAN
@@ -22,7 +23,8 @@ impl RuntimeCapabilities {
             | Self::REPLAY_VERIFICATION
             | Self::UNIT_ACTIONS
             | Self::TURN_KERNEL
-            | Self::MOVEMENT_LOGISTICS,
+            | Self::MOVEMENT_LOGISTICS
+            | Self::COMBAT,
     };
 
     /// Returns whether route planning is available.
@@ -71,5 +73,11 @@ impl RuntimeCapabilities {
     #[must_use]
     pub const fn movement_logistics(self) -> bool {
         self.features & Self::MOVEMENT_LOGISTICS != 0
+    }
+
+    /// Returns whether combat preview and visible attacks are available.
+    #[must_use]
+    pub const fn combat(self) -> bool {
+        self.features & Self::COMBAT != 0
     }
 }

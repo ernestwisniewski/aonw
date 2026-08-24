@@ -8,7 +8,7 @@ use aonw_domain::{
     CityBuildingType, FieldImprovementKind, PlayerResearchState, ResourceType, TechnologyId,
     UnitKind, WonderType,
 };
-use aonw_engine::{TechnologyAvailability, TechnologyUnlockQuery};
+use aonw_engine::{TechnologyAvailability, TechnologyCombatStat, TechnologyUnlockQuery};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -105,6 +105,55 @@ fn catalog_hash_prerequisites_costs_and_unlock_breakdowns_match_oracle() {
             .collect();
         assert_eq!(actual, case.expected_unlocks, "{}", case.id);
     }
+}
+
+#[test]
+fn combat_modifiers_preserve_per_technology_labels_and_oracle_order() {
+    let research = PlayerResearchState::try_new(
+        [
+            TechnologyId::Tactics,
+            TechnologyId::Strategy,
+            TechnologyId::Fortifications,
+        ],
+        None,
+        [],
+        0,
+    )
+    .expect("research");
+    let modifiers = TechnologyUnlockQuery::new(RulesetDefinition::standard(), &research)
+        .combat_modifiers(4, true, true)
+        .expect("combat modifiers");
+    let actual = modifiers
+        .iter()
+        .map(|modifier| (modifier.label.as_ref(), modifier.target, modifier.delta))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        actual,
+        [
+            (
+                "tech.fortifications.cityDefense",
+                TechnologyCombatStat::Defense,
+                2,
+            ),
+            (
+                "tech.strategy.armyStrength",
+                TechnologyCombatStat::Attack,
+                1,
+            ),
+            (
+                "tech.strategy.armyDefense",
+                TechnologyCombatStat::Defense,
+                1,
+            ),
+            (
+                "tech.strategy.armyHitPoints",
+                TechnologyCombatStat::HitPoints,
+                2,
+            ),
+            ("tech.tactics.armyAttack", TechnologyCombatStat::Attack, 1,),
+            ("tech.tactics.armyDefense", TechnologyCombatStat::Defense, 1,),
+        ]
+    );
 }
 
 #[test]

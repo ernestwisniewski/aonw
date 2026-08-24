@@ -115,6 +115,9 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
         [[ "${rust_symbol}" == "-" ]] || fail "reference-only ${id} cannot claim a Rust symbol"
       else
         [[ "${rust_symbol}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || fail "Rust-backed ${id} requires a Rust symbol"
+        rg -q "(struct|enum|fn)[[:space:]]+${rust_symbol}([[:space:]<{(;]|$)" \
+          "${repo_root}/engine/crates" --glob '*.rs' || \
+          fail "Rust symbol not found for ${id}: ${rust_symbol}"
       fi
       printf '%s\n' "${id}" >>"${randomness_ids}"
       if [[ "${kind}" == "rng-class" ]]; then

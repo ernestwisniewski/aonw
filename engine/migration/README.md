@@ -53,11 +53,12 @@ returned by the engine, so `partial-parity-mode` is `full-state`. The historical
 opaque splice adapter and its execution gate have been removed. State
 representation is `state-contract-ready`; command/query surfaces remain at
 their independently evidenced status until their own parity gate is met.
-The current T1+U2 lifecycle surface is `turn-kernel-ready`: submission,
+The current T1+U2+C3 lifecycle surface is `turn-kernel-ready`: submission,
 lifecycle progression, movement reset, reversible-skip cleanup, queued
-movement, merchant routes, and scout auto-exploration are implemented. Worker
-automation, combat, economy, diplomacy, research, agreements, and objectives
-remain disabled and fail closed when their state is detected. The five
+movement, merchant routes, scout auto-exploration, and multiplayer intended
+combat are implemented. Worker automation, economy, diplomatic turn
+processing, research, agreements, and objectives remain disabled and fail
+closed when their state is detected. The five
 historical integrated-turn fixtures therefore remain blocked until the
 complete O9 pipeline; they are
 not reclassified as full `engine-parity` by the smaller greenfield kernel.
@@ -78,6 +79,17 @@ accepted/rejected manifest is exercised by `make rust-tech-gate-check`.
 R7; no legacy reader, fallback, local unlock table, or internal version was
 introduced.
 
+The CP9/C3 surface is `runtime-ready`. `AttackHex`, `CombatPreview`, direct
+apply, and simultaneous intended attacks share one deterministic resolver,
+DP/TG policy inputs, ordered events, and typed execution evidence. Three frozen
+combat reducer cases are `historical/reference-only` and point to nine strict
+current C3 fixtures; no Rust code parses their old envelope. Save/reopen/replay
+re-executes exact rolls and detects single-roll, event, or evidence drift.
+Recipient client encoding filters hidden combat identifiers and canonical
+rolls, while the authoritative replay keeps the complete evidence. C3 adds no
+legacy reader, upcaster, fallback, compatibility alias, or internal version;
+the shared client API version remains unchanged.
+
 The file deliberately has no `v1` suffix or schema-version field. The engine
 and greenfield clients update this one current contract atomically. A format
 version is introduced only after a concrete independently deployed reader or
@@ -92,6 +104,7 @@ make rust-engine-inventory-test
 make rust-determinism-check
 make rust-corpus-parity-check
 make rust-tech-gate-check
+make rust-combat-check
 ```
 
 The analyzer-backed AST census is a separate evidence gate because the small

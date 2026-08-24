@@ -14,8 +14,8 @@ authoritative-inventory engine/migration/authoritative_inventory
 expected-case-count 120
 expected-round-trip-count 9
 expected-engine-parity-count 9
-expected-blocked-count 99
-expected-historical-count 12
+expected-blocked-count 96
+expected-historical-count 15
 
 case artifact-city-slot-full-rejected artifacts StoreArtifactInCity rejected city_artifact_slot_full blocked reference-only CP12 awaits-independent-current-contract-review -
 case artifact-excavation-accepted artifacts StartArtifactExcavation accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
@@ -91,9 +91,9 @@ case city-worked-hex-add-accepted city-worked-hex ToggleWorkedHex accepted - blo
 case city-worked-hex-limit-reached-rejected city-worked-hex ToggleWorkedHex rejected worked_hex_limit_reached blocked reference-only CP10 awaits-independent-current-contract-review -
 case city-worked-hex-remove-accepted city-worked-hex ToggleWorkedHex accepted - blocked reference-only CP10 awaits-independent-current-contract-review -
 case city-worked-hex-wrong-actor-rejected city-worked-hex ToggleWorkedHex rejected city_not_controlled blocked reference-only CP10 awaits-independent-current-contract-review -
-case combat-target-not-found-rejected combat AttackHex rejected attack_target_not_found blocked reference-only CP9 awaits-independent-current-contract-review -
-case combat-visible-unit-accepted combat AttackHex accepted - blocked reference-only CP9 awaits-independent-current-contract-review -
-case combat-wrong-actor-rejected combat AttackHex rejected attacker_not_controlled blocked reference-only CP9 awaits-independent-current-contract-review -
+case combat-target-not-found-rejected combat AttackHex rejected attack_target_not_found historical reference-only current superseded-by-current-contract -
+case combat-visible-unit-accepted combat AttackHex accepted - historical reference-only current superseded-by-current-contract -
+case combat-wrong-actor-rejected combat AttackHex rejected attacker_not_controlled historical reference-only current superseded-by-current-contract -
 case detachment-no-visible-destination-rejected detachment DetachTroop rejected detachment_destination_unavailable historical reference-only current superseded-by-current-contract -
 case detachment-source-out-of-bounds-rejected detachment DetachTroop rejected detachment_source_out_of_bounds historical reference-only current superseded-by-current-contract -
 case detachment-visible-accepted detachment DetachTroop accepted - historical reference-only current superseded-by-current-contract -

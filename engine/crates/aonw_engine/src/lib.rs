@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 mod application;
+mod combat;
 mod context;
 mod diplomacy_policy;
 mod movement;
@@ -18,11 +19,17 @@ use aonw_domain::GameState;
 
 pub use application::{
     AllPlayersSubmittedEvent, AutoExplorePlannedEvent, CanonicalEngineError, CanonicalQueryError,
-    CommandRejectionCode, DomainEvent, DomainRejection, DomainTransition, DomainTransitionParts,
-    EventBudget, ExecutionEvidence, FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand,
-    LogisticsExecution, MerchantRouteAssignedEvent, MerchantTravelQueuedEvent, PlayerCommand,
-    PlayerKickedEvent, PlayerTimedOutEvent, QueryResult, SystemCommand, TroopDetachedEvent,
-    TurnCommand, TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
+    CombatEvent, CommandRejectionCode, DiplomaticScoreChangedEvent, DomainEvent, DomainRejection,
+    DomainTransition, DomainTransitionParts, EventBudget, ExecutionEvidence,
+    FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand, LogisticsExecution,
+    MerchantRouteAssignedEvent, MerchantTravelQueuedEvent, PlayerCommand, PlayerKickedEvent,
+    PlayerTimedOutEvent, QueryResult, SystemCommand, TroopDetachedEvent, TurnCommand,
+    TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
+};
+pub use combat::{
+    AttackHexCommand, CombatExecution, CombatModifier, CombatModifierKind, CombatOutcome,
+    CombatPreview, CombatPreviewQuery, CombatRng, CombatRoll, CombatStatTarget, CombatTarget,
+    EffectiveCombatStats,
 };
 pub use context::{EngineContext, SystemContext};
 pub use diplomacy_policy::{
@@ -41,7 +48,8 @@ pub use movement::{
 };
 pub use state_digest::StateDigest;
 pub use technology_unlock::{
-    TechnologyAvailability, TechnologyEffectSummary, TechnologyQueryError, TechnologyUnlockQuery,
+    TechnologyAvailability, TechnologyCombatModifier, TechnologyCombatStat,
+    TechnologyEffectSummary, TechnologyQueryError, TechnologyUnlockQuery,
 };
 pub use unit_action::{UnitActionCommand, UnitActionError};
 

@@ -82,11 +82,37 @@ pub enum ClientCommandRejectionCodeDto {
     TurnProcessorUnsupported,
     /// The next turn number cannot be represented.
     TurnNumberOverflow,
+    /// The requested attacking unit does not exist.
+    AttackerNotFound,
+    /// The actor cannot command the requested attacker.
+    AttackerNotControlled,
+    /// Current activity prevents the attacker from acting.
+    AttackerUnavailable,
+    /// The attacker has no movement remaining.
+    AttackerExhausted,
+    /// The attacker position is outside the map.
+    AttackerOutOfBounds,
+    /// The attacker has no positive attack strength.
+    AttackerCannotAttack,
+    /// The target is not visible.
+    AttackTargetNotVisible,
+    /// The target coordinate is outside the map.
+    AttackTargetOutOfBounds,
+    /// No target occupies the coordinate.
+    AttackTargetNotFound,
+    /// The target belongs to the actor.
+    AttackTargetNotEnemy,
+    /// A treaty protects the target.
+    AttackTargetProtectedByTreaty,
+    /// The target exceeds attack range.
+    AttackTargetOutOfRange,
+    /// The target city has no health.
+    AttackCityHasNoHealth,
 }
 
 impl ClientCommandRejectionCodeDto {
     /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 39] = [
+    pub const ALL: [Self; 52] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -126,6 +152,19 @@ impl ClientCommandRejectionCodeDto {
         Self::TurnScopeInvalid,
         Self::TurnProcessorUnsupported,
         Self::TurnNumberOverflow,
+        Self::AttackerNotFound,
+        Self::AttackerNotControlled,
+        Self::AttackerUnavailable,
+        Self::AttackerExhausted,
+        Self::AttackerOutOfBounds,
+        Self::AttackerCannotAttack,
+        Self::AttackTargetNotVisible,
+        Self::AttackTargetOutOfBounds,
+        Self::AttackTargetNotFound,
+        Self::AttackTargetNotEnemy,
+        Self::AttackTargetProtectedByTreaty,
+        Self::AttackTargetOutOfRange,
+        Self::AttackCityHasNoHealth,
     ];
 
     /// Returns the stable snake-case wire value.
@@ -171,6 +210,19 @@ impl ClientCommandRejectionCodeDto {
             Self::TurnScopeInvalid => "turn_scope_invalid",
             Self::TurnProcessorUnsupported => "turn_processor_unsupported",
             Self::TurnNumberOverflow => "turn_number_overflow",
+            Self::AttackerNotFound => "attacker_not_found",
+            Self::AttackerNotControlled => "attacker_not_controlled",
+            Self::AttackerUnavailable => "attacker_unavailable",
+            Self::AttackerExhausted => "attacker_exhausted",
+            Self::AttackerOutOfBounds => "attacker_out_of_bounds",
+            Self::AttackerCannotAttack => "attacker_cannot_attack",
+            Self::AttackTargetNotVisible => "attack_target_not_visible",
+            Self::AttackTargetOutOfBounds => "attack_target_out_of_bounds",
+            Self::AttackTargetNotFound => "attack_target_not_found",
+            Self::AttackTargetNotEnemy => "attack_target_not_enemy",
+            Self::AttackTargetProtectedByTreaty => "attack_target_protected_by_treaty",
+            Self::AttackTargetOutOfRange => "attack_target_out_of_range",
+            Self::AttackCityHasNoHealth => "attack_city_has_no_health",
         }
     }
 }

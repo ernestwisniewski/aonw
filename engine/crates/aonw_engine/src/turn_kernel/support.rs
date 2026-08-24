@@ -89,6 +89,51 @@ pub(super) fn next_active_player(
         .cloned()
 }
 
+pub(super) struct SequentialProgress {
+    pub(super) states: BTreeMap<PlayerId, PlayerTurnState>,
+    pub(super) next_turn: u32,
+    pub(super) reset_scope: Vec<PlayerId>,
+    pub(super) round_complete: bool,
+}
+
+pub(super) fn sequential_progress(
+    state: &GameState,
+    player_id: &PlayerId,
+) -> Result<SequentialProgress, CommandRejectionCode> {
+    let mut states = state
+        .match_lifecycle()
+        .turn()
+        .turn_states_by_player_id()
+        .clone();
+    states.insert(player_id.clone(), PlayerTurnState::Finished);
+    let active_scope = ordered_active_scope(state);
+    let round_complete = active_scope
+        .iter()
+        .all(|player| states.get(player) == Some(&PlayerTurnState::Finished));
+    let next_turn = if round_complete {
+        state
+            .turn()
+            .checked_add(1)
+            .ok_or(CommandRejectionCode::TurnNumberOverflow)?
+    } else {
+        state.turn()
+    };
+    if round_complete {
+        for player in &active_scope {
+            states.insert(player.clone(), PlayerTurnState::Active);
+        }
+    }
+    let reset_scope = next_active_player(&active_scope, player_id, &states)
+        .into_iter()
+        .collect();
+    Ok(SequentialProgress {
+        states,
+        next_turn,
+        reset_scope,
+        round_complete,
+    })
+}
+
 pub(super) fn unsupported_processor_for_scope(
     state: &GameState,
     player_ids: &[PlayerId],
@@ -104,7 +149,9 @@ pub(super) fn unsupported_processor_for_scope(
             UnitPosture::Active | UnitPosture::Fortified | UnitPosture::AutoExploring => {}
         }
     }
-    if !state.combat().intended_attacks().is_empty() {
+    if state.match_lifecycle().identity().game_mode() != aonw_domain::GameMode::Multiplayer
+        && !state.combat().intended_attacks().is_empty()
+    {
         return Some(TurnProcessor::Combat);
     }
     None
@@ -211,8 +258,9 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
     ))
 }
 
-pub(super) fn transition_with_movement_evidence(
+pub(super) fn transition_with_phase_evidence(
     transition: DomainTransition,
+    combat_executions: Vec<crate::CombatExecution>,
     reset_unit_ids: Vec<aonw_domain::UnitId>,
     movement_executions: Vec<UnitMovementExecution>,
     invalidated_order_unit_ids: Vec<aonw_domain::UnitId>,
@@ -227,8 +275,9 @@ pub(super) fn transition_with_movement_evidence(
         parts.state,
         parts.events,
         Some(ExecutionEvidence::TurnKernel(
-            TurnKernelExecution::with_movement(
+            TurnKernelExecution::with_phases(
                 processors,
+                combat_executions,
                 reset_unit_ids,
                 movement_executions,
                 invalidated_order_unit_ids,

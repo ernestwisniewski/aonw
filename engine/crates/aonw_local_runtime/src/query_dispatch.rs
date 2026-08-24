@@ -1,8 +1,20 @@
 use aonw_domain::{CityId, HexCoord, MovementUnits, TroopKind, UnitId};
 use aonw_engine::{
-    GameEngine, GameQuery, MovementSearchMetrics, MovementSearchWorkspace, QueryResult,
-    ReachableMovementQuery, TerrainMovementQuery, UnitLogisticsOptionsQuery,
+    CombatPreview, CombatPreviewQuery, GameEngine, GameQuery, MovementSearchMetrics,
+    MovementSearchWorkspace, QueryResult, ReachableMovementQuery, TerrainMovementQuery,
+    UnitLogisticsOptionsQuery,
 };
+
+/// Current recipient-safe combat preview request.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CombatPreviewRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled attacking unit.
+    pub attacker_unit_id: UnitId,
+    /// Visible target coordinate.
+    pub defender: HexCoord,
+}
 
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
@@ -39,6 +51,8 @@ pub struct UnitLogisticsOptionsRequest {
 /// Versioned local query family.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RuntimeQuery {
+    /// Effective combat stats and damage bounds without RNG evidence.
+    CombatPreview(CombatPreviewRequest),
     /// Current-turn reachable overlay.
     Reachable(ReachableRequest),
     /// Deterministic complete route preview.
@@ -152,6 +166,13 @@ pub struct UnitLogisticsOptionsResult {
 /// Versioned local query response family.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RuntimeQueryResult {
+    /// Recipient-safe combat preview.
+    CombatPreview {
+        /// Version and authoritative identity metadata.
+        stamp: SessionStamp,
+        /// Engine-owned preview.
+        preview: CombatPreview,
+    },
     /// Reachable overlay.
     Reachable(ReachableResult),
     /// Route preview.
@@ -166,6 +187,26 @@ pub(crate) fn dispatch_query(
     workspace: &mut MovementSearchWorkspace,
 ) -> Result<RuntimeQueryResult, RuntimeError> {
     match request {
+        RuntimeQuery::CombatPreview(request) => {
+            let result = GameEngine::query_with_workspace(
+                session.state(),
+                session.context(),
+                GameQuery::CombatPreview(CombatPreviewQuery::new(
+                    request.expected_revision,
+                    &request.attacker_unit_id,
+                    request.defender,
+                )),
+                workspace,
+            )
+            .map_err(RuntimeError::Query)?;
+            let QueryResult::CombatPreview(preview) = result else {
+                unreachable!("combat preview returns combat response")
+            };
+            Ok(RuntimeQueryResult::CombatPreview {
+                stamp: session.stamp(),
+                preview,
+            })
+        }
         RuntimeQuery::Reachable(request) => {
             let result = GameEngine::query_with_workspace(
                 session.state(),

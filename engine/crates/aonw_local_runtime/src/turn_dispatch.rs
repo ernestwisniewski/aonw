@@ -6,7 +6,9 @@ use aonw_engine::{
 };
 
 use crate::RuntimeError;
-use crate::command_dispatch::{CommandResult, diff_view, dispatch_player};
+use crate::command_dispatch::{
+    CommandResult, RecipientDisclosure, diff_view, dispatch_player, visible_city_ids,
+};
 use crate::persistence::{replay_context, replay_entry};
 use crate::player_view::{PlayerTurnLifecycleView, pending_action, visible_units};
 use crate::session::Session;
@@ -137,6 +139,7 @@ fn dispatch_system(
     let before_revision = session.state().revision().get();
     let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
+    let before_visible_city_ids = visible_city_ids(session.state(), session.actor());
     let state = session.take_state();
     let transition = GameEngine::apply_system_owned(state, session.system_context(), command)
         .map_err(RuntimeError::Engine)?;
@@ -149,6 +152,12 @@ fn dispatch_system(
     let after_view = visible_units(session.state(), session.actor());
     let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());
+    let recipient_disclosure = RecipientDisclosure::new(
+        session.actor().clone(),
+        &before_view,
+        &before_visible_city_ids,
+        evidence.as_ref(),
+    );
     let result = CommandResult {
         stamp: session.stamp(),
         rejection,
@@ -163,6 +172,7 @@ fn dispatch_system(
             after_view,
             after_pending,
         ),
+        recipient_disclosure,
     };
     let replay = replay_entry(
         session,

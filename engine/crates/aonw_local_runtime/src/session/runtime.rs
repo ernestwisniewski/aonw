@@ -1,7 +1,7 @@
 use aonw_engine::MovementSearchWorkspace;
 
 use crate::command_dispatch::{
-    RuntimeUnitActionKind, dispatch_assign_merchant_route, dispatch_auto_explore,
+    RuntimeUnitActionKind, dispatch_assign_merchant_route, dispatch_attack, dispatch_auto_explore,
     dispatch_detach_troop, dispatch_move, dispatch_move_merchant_to_city, dispatch_unit_action,
 };
 use crate::player_view::PlayerViewSnapshot;
@@ -12,8 +12,8 @@ use crate::turn_dispatch::{
     dispatch_kick, dispatch_timeout, dispatch_turn,
 };
 use crate::{
-    AutoExploreUnitRequest, CommandResult, DetachTroopRequest, MerchantCityRequest,
-    MoveUnitRequest, RuntimeQuery, RuntimeQueryResult, UnitActionRequest,
+    AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest,
+    MerchantCityRequest, MoveUnitRequest, RuntimeQuery, RuntimeQueryResult, UnitActionRequest,
 };
 
 use super::{
@@ -29,6 +29,22 @@ pub struct LocalRuntime {
 }
 
 impl LocalRuntime {
+    /// Resolves one visible unit or city attack.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn attack_hex(
+        &mut self,
+        command: &AttackHexRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_attack(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
     /// Returns supported operations and versions.
     #[must_use]
     pub const fn capabilities() -> RuntimeCapabilities {

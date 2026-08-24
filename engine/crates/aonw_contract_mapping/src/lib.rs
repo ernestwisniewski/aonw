@@ -13,10 +13,45 @@ pub use game_state_mapping::{
     encode_game_state, encode_improvement, encode_troop,
 };
 
-use aonw_contracts::{MovementStepDto, QueuedMovePathDto, UnitKindDto, UnitPostureDto};
-use aonw_domain::{
-    HexCoord, MovementPathError, MovementStep, MovementUnits, QueuedMovePath, UnitKind, UnitPosture,
+use aonw_contracts::{
+    DiplomaticScoreChangeReasonDto, MovementStepDto, QueuedMovePathDto, UnitKindDto, UnitPostureDto,
 };
+use aonw_domain::{
+    DiplomaticScoreChangeReason, HexCoord, MovementPathError, MovementStep, MovementUnits,
+    QueuedMovePath, UnitKind, UnitPosture,
+};
+
+/// Converts a canonical diplomacy score reason into its stable wire value.
+#[must_use]
+pub const fn encode_score_reason(
+    value: DiplomaticScoreChangeReason,
+) -> DiplomaticScoreChangeReasonDto {
+    match value {
+        DiplomaticScoreChangeReason::Manual => DiplomaticScoreChangeReasonDto::Manual,
+        DiplomaticScoreChangeReason::UnitAttack => DiplomaticScoreChangeReasonDto::UnitAttack,
+        DiplomaticScoreChangeReason::CityAttack => DiplomaticScoreChangeReasonDto::CityAttack,
+        DiplomaticScoreChangeReason::DeclarationOfWar => {
+            DiplomaticScoreChangeReasonDto::DeclarationOfWar
+        }
+        DiplomaticScoreChangeReason::WarmongerPenalty => {
+            DiplomaticScoreChangeReasonDto::WarmongerPenalty
+        }
+        DiplomaticScoreChangeReason::ProposalAccepted => {
+            DiplomaticScoreChangeReasonDto::ProposalAccepted
+        }
+        DiplomaticScoreChangeReason::ProposalRejected => {
+            DiplomaticScoreChangeReasonDto::ProposalRejected
+        }
+        DiplomaticScoreChangeReason::MessageResponse => {
+            DiplomaticScoreChangeReasonDto::MessageResponse
+        }
+        DiplomaticScoreChangeReason::CommonEnemyCooperation => {
+            DiplomaticScoreChangeReasonDto::CommonEnemyCooperation
+        }
+        DiplomaticScoreChangeReason::GoldGift => DiplomaticScoreChangeReasonDto::GoldGift,
+        DiplomaticScoreChangeReason::PromiseBroken => DiplomaticScoreChangeReasonDto::PromiseBroken,
+    }
+}
 
 const fn decode_unit_kind(kind: UnitKindDto) -> UnitKind {
     match kind {
@@ -116,3 +151,6 @@ fn encode_queued_path(path: &QueuedMovePath) -> QueuedMovePathDto {
             .collect(),
     }
 }
+
+#[cfg(test)]
+mod tests;

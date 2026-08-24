@@ -25,6 +25,8 @@ use stats_alloc::{INSTRUMENTED_SYSTEM, Region, Stats, StatsAlloc};
 #[global_allocator]
 static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
+#[path = "runtime/combat_support.rs"]
+mod combat_support;
 #[path = "runtime/turn_support.rs"]
 mod turn_support;
 
@@ -39,6 +41,7 @@ fn main() {
     for unit_count in [1, 64, 512] {
         benchmark_runtime(unit_count);
         benchmark_turn_kernel(unit_count);
+        combat_support::benchmark(unit_count);
     }
 }
 

@@ -1,6 +1,6 @@
 mod support;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 use aonw_content::{ContentHash, MapDefinition, RulesetDefinition};
 use aonw_domain::{GameMode, GameState, MatchLifecycle, PlayerId, PlayerTurnState, UtcTimestamp};
@@ -14,10 +14,10 @@ use crate::{
 };
 
 use self::support::{
-    InteractionStateUpdate, accept_identity, apply_update, next_active_player,
-    ordered_active_scope, ordered_submission_scope, rebuild_lifecycle, reject,
-    system_content_hashes, transition_with_movement_evidence, unsupported_processor_for_scope,
-    valid_system_scope, validate_player_command,
+    InteractionStateUpdate, accept_identity, apply_update, ordered_submission_scope,
+    rebuild_lifecycle, reject, sequential_progress, system_content_hashes,
+    transition_with_phase_evidence, unsupported_processor_for_scope, valid_system_scope,
+    validate_player_command,
 };
 
 impl GameEngine {
@@ -193,58 +193,14 @@ pub(crate) fn apply_end_turn(
         ruleset_hash,
     )
     .map(|transition| {
-        transition_with_movement_evidence(
+        transition_with_phase_evidence(
             transition,
+            Vec::new(),
             reset_unit_ids,
             executions,
             invalidated_order_unit_ids,
             finished_auto_explore_unit_ids,
         )
-    })
-}
-
-struct SequentialProgress {
-    states: BTreeMap<PlayerId, PlayerTurnState>,
-    next_turn: u32,
-    reset_scope: Vec<PlayerId>,
-    round_complete: bool,
-}
-
-fn sequential_progress(
-    state: &GameState,
-    player_id: &PlayerId,
-) -> Result<SequentialProgress, CommandRejectionCode> {
-    let mut states = state
-        .match_lifecycle()
-        .turn()
-        .turn_states_by_player_id()
-        .clone();
-    states.insert(player_id.clone(), PlayerTurnState::Finished);
-    let active_scope = ordered_active_scope(state);
-    let round_complete = active_scope
-        .iter()
-        .all(|player| states.get(player) == Some(&PlayerTurnState::Finished));
-    let next_turn = if round_complete {
-        state
-            .turn()
-            .checked_add(1)
-            .ok_or(CommandRejectionCode::TurnNumberOverflow)?
-    } else {
-        state.turn()
-    };
-    if round_complete {
-        for player in &active_scope {
-            states.insert(player.clone(), PlayerTurnState::Active);
-        }
-    }
-    let reset_scope = next_active_player(&active_scope, player_id, &states)
-        .into_iter()
-        .collect();
-    Ok(SequentialProgress {
-        states,
-        next_turn,
-        reset_scope,
-        round_complete,
     })
 }
 
@@ -394,18 +350,31 @@ fn finalize_simultaneous(
         next_turn_started_at,
         track_timeout_streaks,
     )?;
-    let movement = match advance_turn_movement(&state, map, ruleset, scope) {
+    let current_turn = state.turn();
+    let combat =
+        crate::combat::resolve_intended_attacks(state, map, ruleset).map_err(
+            |error| match error {
+                crate::combat::CombatPhaseError::Diplomacy(source) => {
+                    CanonicalEngineError::Diplomacy(source)
+                }
+                crate::combat::CombatPhaseError::State(source) => {
+                    CanonicalEngineError::State(source)
+                }
+            },
+        )?;
+    let movement = match advance_turn_movement(&combat.state, map, ruleset, scope) {
         Ok(movement) => movement,
-        Err(code) => return Ok(reject(state, code, map_hash, ruleset_hash)),
+        Err(code) => return Ok(reject(combat.state, code, map_hash, ruleset_hash)),
     };
     let mut events = skipped
         .iter()
         .cloned()
-        .map(|player| DomainEvent::PlayerTimedOut(PlayerTimedOutEvent::new(state.turn(), player)))
+        .map(|player| DomainEvent::PlayerTimedOut(PlayerTimedOutEvent::new(current_turn, player)))
         .collect::<Vec<_>>();
     events.push(DomainEvent::AllPlayersSubmitted(
-        AllPlayersSubmittedEvent::new(state.turn(), scope.to_vec()),
+        AllPlayersSubmittedEvent::new(current_turn, scope.to_vec()),
     ));
+    events.extend(combat.events.iter().cloned());
     events.extend(
         scope
             .iter()
@@ -426,7 +395,7 @@ fn finalize_simultaneous(
     } = movement;
     events.extend(movement_events);
     apply_update(
-        state,
+        combat.state,
         lifecycle,
         Some(next_turn),
         units,
@@ -437,6 +406,7 @@ fn finalize_simultaneous(
         [
             TurnProcessor::Submission,
             TurnProcessor::Lifecycle,
+            TurnProcessor::Combat,
             TurnProcessor::MovementReset,
             TurnProcessor::QueuedMovement,
             TurnProcessor::TradeRoutes,
@@ -447,8 +417,9 @@ fn finalize_simultaneous(
         ruleset_hash,
     )
     .map(|transition| {
-        transition_with_movement_evidence(
+        transition_with_phase_evidence(
             transition,
+            combat.executions.into_vec(),
             reset_unit_ids,
             executions,
             invalidated_order_unit_ids,

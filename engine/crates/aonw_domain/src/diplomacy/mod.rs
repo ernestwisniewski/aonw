@@ -1,3 +1,4 @@
+mod attack;
 mod model;
 
 use std::collections::BTreeSet;
@@ -243,6 +244,9 @@ impl Diplomacy {
     }
 }
 
+#[cfg(test)]
+use attack::attack_status_severity;
+
 /// Structural diplomacy-state validation failure.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DiplomacyStateBuildError {
@@ -407,3 +411,6 @@ fn ensure_unique_ids<T>(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;

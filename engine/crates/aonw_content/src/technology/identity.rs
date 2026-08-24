@@ -121,6 +121,67 @@ impl TechnologyKey {
         Self::NuclearPhysics,
     ];
 
+    /// Returns the canonical lower-camel identity used by rule evidence.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Agriculture => "agriculture",
+            Self::Woodworking => "woodworking",
+            Self::Mining => "mining",
+            Self::AnimalHusbandry => "animalHusbandry",
+            Self::Hunting => "hunting",
+            Self::Fishing => "fishing",
+            Self::Craftsmanship => "craftsmanship",
+            Self::Trade => "trade",
+            Self::Storage => "storage",
+            Self::WaterEngineering => "waterEngineering",
+            Self::Stoneworking => "stoneworking",
+            Self::MilitaryOrganization => "militaryOrganization",
+            Self::AdvancedTrade => "advancedTrade",
+            Self::Construction => "construction",
+            Self::Navigation => "navigation",
+            Self::Irrigation => "irrigation",
+            Self::Banking => "banking",
+            Self::Engineering => "engineering",
+            Self::Metallurgy => "metallurgy",
+            Self::HorsebackRiding => "horsebackRiding",
+            Self::IronWorking => "ironWorking",
+            Self::CoalMining => "coalMining",
+            Self::Machinery => "machinery",
+            Self::Administration => "administration",
+            Self::Logistics => "logistics",
+            Self::Shipbuilding => "shipbuilding",
+            Self::Tactics => "tactics",
+            Self::Economy => "economy",
+            Self::Urbanization => "urbanization",
+            Self::Fortifications => "fortifications",
+            Self::Strategy => "strategy",
+            Self::Specialization => "specialization",
+            Self::Writing => "writing",
+            Self::Mathematics => "mathematics",
+            Self::Medicine => "medicine",
+            Self::CivilService => "civilService",
+            Self::Siegecraft => "siegecraft",
+            Self::Cartography => "cartography",
+            Self::Guilds => "guilds",
+            Self::Law => "law",
+            Self::Education => "education",
+            Self::UrbanPlanning => "urbanPlanning",
+            Self::NavalDoctrine => "navalDoctrine",
+            Self::Steel => "steel",
+            Self::Bureaucracy => "bureaucracy",
+            Self::Nationalism => "nationalism",
+            Self::ScientificMethod => "scientificMethod",
+            Self::SteamPower => "steamPower",
+            Self::Electricity => "electricity",
+            Self::Combustion => "combustion",
+            Self::Flight => "flight",
+            Self::MassProduction => "massProduction",
+            Self::Radio => "radio",
+            Self::NuclearPhysics => "nuclearPhysics",
+        }
+    }
+
     /// Maps content identity to the framework-independent domain value.
     #[must_use]
     pub const fn domain(self) -> TechnologyId {

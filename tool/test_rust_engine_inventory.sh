@@ -128,6 +128,7 @@ write_baseline() {
     'rust-evidence-source engine/crates/aonw_engine/src/application/transition.rs' \
     'rust-persistence-source engine/crates/aonw_contracts/src/persistence.rs' \
     'rust-client-command-source engine/crates/aonw_contracts/src/client/request.rs' \
+    'rust-client-event-source engine/crates/aonw_contracts/src/client/response.rs' \
     'rust-client-response-source engine/crates/aonw_contracts/src/client/response.rs' \
     'rust-projection-source engine/crates/aonw_local_runtime/src/player_view.rs' \
     'partial-parity-mode opaque-splice' \

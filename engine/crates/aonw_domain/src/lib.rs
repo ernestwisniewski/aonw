@@ -47,7 +47,8 @@ pub use economy::{
 };
 pub use fog::{FogOfWar, FogVisibility, PlayerFog};
 pub use game_state::{
-    GameState, GameStateBuildError, GameStateBuilder, UnitOccupancyPolicy, turn_update::TurnAdvance,
+    GameState, GameStateBuildError, GameStateBuilder, UnitOccupancyPolicy,
+    turn_update::{CombatStateUpdate, TurnAdvance},
 };
 pub use hex_coord::HexCoord;
 pub use hex_grid::{HexGridBounds, HexTileIndex};
