@@ -1,5 +1,6 @@
 //! Diagnostic local-runtime and JSON-adapter baseline without a timing gate.
 
+use std::alloc::System;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -16,13 +17,19 @@ use aonw_domain::{
 };
 use aonw_local_runtime::{ClientProtocol, LocalRuntime, MoveUnitRequest, OpenSession};
 use serde_json::json;
+use stats_alloc::{INSTRUMENTED_SYSTEM, Region, Stats, StatsAlloc};
+
+#[global_allocator]
+static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
 const COLS: u16 = 40;
 const ROWS: u16 = 30;
 const ITERATIONS: usize = 20;
 
 fn main() {
-    println!("workload,tiles,units,iterations,median_ns,p95_ns,signature");
+    println!(
+        "workload,tiles,units,iterations,allocations,reallocations,allocated_bytes,payload_bytes,signature,median_ns,p95_ns"
+    );
     for unit_count in [1, 64, 512] {
         benchmark_runtime(unit_count);
     }
@@ -42,7 +49,7 @@ fn benchmark_runtime(unit_count: usize) {
         |request| {
             let mut runtime = LocalRuntime::default();
             let stamp = runtime.open(request).expect("open runtime");
-            stamp_signature(&stamp)
+            (stamp_signature(&stamp), 0)
         },
     );
 
@@ -58,7 +65,7 @@ fn benchmark_runtime(unit_count: usize) {
         || base.clone(),
         |mut runtime| {
             let result = runtime.dispatch(&accepted).expect("dispatch");
-            command_signature(&result)
+            (command_signature(&result), 0)
         },
     );
     let rejected = MoveUnitRequest {
@@ -71,20 +78,22 @@ fn benchmark_runtime(unit_count: usize) {
         || base.clone(),
         |mut runtime| {
             let result = runtime.dispatch(&rejected).expect("dispatch");
-            command_signature(&result)
+            (command_signature(&result), 0)
         },
     );
 
-    let hidden_base = opened(hidden_open(map.clone(), ruleset.clone(), actor));
-    report_with_setup(
-        "runtime_dispatch_hidden_noop",
-        2,
-        || hidden_base.clone(),
-        |mut runtime| {
-            let result = runtime.dispatch(&accepted).expect("dispatch");
-            command_signature(&result)
-        },
-    );
+    if unit_count == 1 {
+        let hidden_base = opened(hidden_open(map.clone(), ruleset.clone(), actor));
+        report_with_setup(
+            "runtime_dispatch_hidden_noop",
+            2,
+            || hidden_base.clone(),
+            |mut runtime| {
+                let result = runtime.dispatch(&accepted).expect("dispatch");
+                (command_signature(&result), 0)
+            },
+        );
+    }
 
     let accepted_json = client_request(ClientRequestBodyDto::Dispatch {
         command: ClientCommandDto::MoveUnit {
@@ -97,7 +106,10 @@ fn benchmark_runtime(unit_count: usize) {
         "client_json_dispatch_accepted",
         unit_count,
         || base.clone(),
-        |mut runtime| signature_bytes(&ClientProtocol::dispatch_json(&mut runtime, &accepted_json)),
+        |mut runtime| {
+            let response = ClientProtocol::dispatch_json(&mut runtime, &accepted_json);
+            (signature_bytes(&response), response.len())
+        },
     );
     let open_json = client_request(ClientRequestBodyDto::OpenSession {
         map_document: MapDocument::try_new(map, 1.0)
@@ -111,7 +123,10 @@ fn benchmark_runtime(unit_count: usize) {
         "client_json_open",
         unit_count,
         LocalRuntime::default,
-        |mut runtime| signature_bytes(&ClientProtocol::dispatch_json(&mut runtime, &open_json)),
+        |mut runtime| {
+            let response = ClientProtocol::dispatch_json(&mut runtime, &open_json);
+            (signature_bytes(&response), response.len())
+        },
     );
 }
 
@@ -119,25 +134,43 @@ fn report_with_setup<T>(
     workload: &str,
     units: usize,
     mut setup: impl FnMut() -> T,
-    mut operation: impl FnMut(T) -> u64,
+    mut operation: impl FnMut(T) -> (u64, usize),
 ) {
     for _ in 0..3 {
         black_box(operation(setup()));
     }
     let mut samples = Vec::with_capacity(ITERATIONS);
     let mut signature = 0;
+    let mut payload_bytes = 0;
+    let mut allocation_stats: Option<Stats> = None;
     for _ in 0..ITERATIONS {
         let input = setup();
+        let region = Region::new(GLOBAL);
         let started = Instant::now();
-        signature = black_box(operation(input));
+        let output = black_box(operation(input));
         samples.push(started.elapsed().as_nanos());
+        let observed = region.change();
+        if let Some(expected) = allocation_stats {
+            assert_eq!(
+                observed, expected,
+                "allocation sample drifted for {workload}"
+            );
+        } else {
+            allocation_stats = Some(observed);
+        }
+        signature = output.0;
+        payload_bytes = output.1;
     }
+    let allocations = allocation_stats.expect("at least one allocation sample");
     samples.sort_unstable();
     let median = samples[samples.len() / 2];
     let p95 = samples[(samples.len() * 95 / 100).min(samples.len() - 1)];
     println!(
-        "{workload},{},{units},{ITERATIONS},{median},{p95},{signature:016x}",
+        "{workload},{},{units},{ITERATIONS},{},{},{},{payload_bytes},{signature:016x},{median},{p95}",
         usize::from(COLS) * usize::from(ROWS),
+        allocations.allocations,
+        allocations.reallocations,
+        allocations.bytes_allocated,
     );
 }
 

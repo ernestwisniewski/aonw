@@ -1,0 +1,34 @@
+{
+  "E0": {
+    "target": "rust-foundation-check",
+    "capabilities": [
+      "CancelUnitAction",
+      "FortifyUnit",
+      "MoveUnit",
+      "SkipUnitTurn"
+    ],
+    "fixtureIds": [
+      "movement-adjacent-accepted",
+      "movement-out-of-bounds-rejected",
+      "movement-wrong-actor-rejected",
+      "unit-action-cancel-orders-accepted",
+      "unit-action-cancel-skipped-accepted",
+      "unit-action-fortify-busy-rejected",
+      "unit-action-fortify-unrelated-pending-accepted",
+      "unit-action-skip-accepted",
+      "unit-action-wrong-actor-rejected"
+    ],
+    "maxEventsPerCommand": 1,
+    "maxMeasuredPayloadBytes": 167475,
+    "maxMeasuredAllocations": 22468,
+    "maxMeasuredAllocatedBytes": 3128692,
+    "maxWorkCounters": {
+      "frontierPops": 5971,
+      "expandedTiles": 5970,
+      "examinedEdges": 34482,
+      "heapPushes": 5987,
+      "routeRecords": 5987
+    },
+    "soakIterations": 20
+  }
+}

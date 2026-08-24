@@ -1,5 +1,6 @@
 //! Diagnostic map and movement baseline without a timing gate.
 
+use std::alloc::System;
 use std::hint::black_box;
 
 use aonw_content::{MapDefinition, MapDocument};
@@ -9,6 +10,10 @@ use aonw_engine::{
     MoveUnitCommand, MovementSearchMetrics, MovementSearchWorkspace, PlayerCommand, QueryResult,
     ReachableMovement, ReachableMovementQuery, TerrainMovementPlan, TerrainMovementQuery,
 };
+use stats_alloc::{INSTRUMENTED_SYSTEM, StatsAlloc};
+
+#[global_allocator]
+static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
 #[path = "movement/support.rs"]
 mod support;
@@ -20,7 +25,7 @@ use support::{
 
 fn main() {
     println!(
-        "workload,tiles,units,iterations,median_ns,p95_ns,frontier_pops,expanded_tiles,examined_edges,heap_pushes,route_records,signature"
+        "workload,tiles,units,iterations,allocations,reallocations,allocated_bytes,payload_bytes,frontier_pops,expanded_tiles,examined_edges,heap_pushes,route_records,signature,median_ns,p95_ns"
     );
     for (cols, rows, unit_counts) in [
         (10, 10, &[1, 10][..]),
@@ -41,6 +46,7 @@ fn benchmark_map(cols: u16, rows: u16, unit_counts: &[usize]) {
         rows,
         0,
         MovementSearchMetrics::default(),
+        json.len(),
         || {
             let opened = MapDocument::from_json(black_box(json.as_bytes())).expect("open map");
             signature_bytes(
@@ -58,6 +64,7 @@ fn benchmark_map(cols: u16, rows: u16, unit_counts: &[usize]) {
         rows,
         0,
         MovementSearchMetrics::default(),
+        0,
         || {
             signature_bytes(
                 black_box(&map)
@@ -138,7 +145,7 @@ fn benchmark_reachable(
                 )
             })
     };
-    report("reachable", cols, rows, units, metrics, || {
+    report("reachable", cols, rows, units, metrics, 0, || {
         reachable(
             black_box(state),
             context,
@@ -150,7 +157,7 @@ fn benchmark_reachable(
         )
     });
     let mut workspace = MovementSearchWorkspace::default();
-    report("prepared_reachable", cols, rows, units, metrics, || {
+    report("prepared_reachable", cols, rows, units, metrics, 0, || {
         reachable_with_workspace(
             black_box(state),
             prepared_context,
@@ -175,7 +182,7 @@ fn benchmark_routes(
 ) {
     let (cols, rows, units) = dimensions;
     for (name, selected_context) in [("route", context), ("prepared_route", prepared_context)] {
-        report(name, cols, rows, units, metrics, || {
+        report(name, cols, rows, units, metrics, 0, || {
             route(
                 black_box(state),
                 selected_context,
@@ -201,6 +208,7 @@ fn benchmark_routes(
         rows,
         units + 1,
         occupied_metrics,
+        0,
         || {
             route(black_box(&occupied_state), prepared_context, query()).map_or_else(
                 |error| signature_bytes(error.code().as_bytes()),
@@ -224,7 +232,7 @@ fn benchmark_apply(
     metrics: MovementSearchMetrics,
 ) {
     let (cols, rows, units) = dimensions;
-    report("apply", cols, rows, units, metrics, || {
+    report("apply", cols, rows, units, metrics, 0, || {
         GameEngine::apply_player_owned(
             black_box(state.clone()),
             context,
@@ -239,7 +247,7 @@ fn benchmark_apply(
             |result| transition_signature(&result, mover_id),
         )
     });
-    report("prepared_apply", cols, rows, units, metrics, || {
+    report("prepared_apply", cols, rows, units, metrics, 0, || {
         GameEngine::apply_player_owned(
             black_box(state.clone()),
             prepared_context,
@@ -260,6 +268,7 @@ fn benchmark_apply(
         rows,
         units,
         MovementSearchMetrics::default(),
+        0,
         || {
             GameEngine::apply_player_owned(
                 black_box(state.clone()),
@@ -276,29 +285,32 @@ fn benchmark_apply(
             )
         },
     );
-    let hidden = hidden_blocker_state(cols, rows, context.actor_player_id());
-    report(
-        "prepared_apply_hidden_noop",
-        cols,
-        rows,
-        units + 1,
-        MovementSearchMetrics::default(),
-        || {
-            GameEngine::apply_player_owned(
-                black_box(hidden.clone()),
-                prepared_context,
-                PlayerCommand::MoveUnit(MoveUnitCommand::new(
-                    hidden.revision().get(),
-                    mover_id,
-                    HexCoord::new(1, 0),
-                )),
-            )
-            .map_or_else(
-                |error| signature_bytes(error.to_string().as_bytes()),
-                |result| transition_signature(&result, mover_id),
-            )
-        },
-    );
+    if units == 1 {
+        let hidden = hidden_blocker_state(cols, rows, context.actor_player_id());
+        report(
+            "prepared_apply_hidden_noop",
+            cols,
+            rows,
+            units + 1,
+            MovementSearchMetrics::default(),
+            0,
+            || {
+                GameEngine::apply_player_owned(
+                    black_box(hidden.clone()),
+                    prepared_context,
+                    PlayerCommand::MoveUnit(MoveUnitCommand::new(
+                        hidden.revision().get(),
+                        mover_id,
+                        HexCoord::new(1, 0),
+                    )),
+                )
+                .map_or_else(
+                    |error| signature_bytes(error.to_string().as_bytes()),
+                    |result| transition_signature(&result, mover_id),
+                )
+            },
+        );
+    }
 }
 
 fn transition_signature(result: &aonw_engine::DomainTransition, mover_id: &UnitId) -> u64 {

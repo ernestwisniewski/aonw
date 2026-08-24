@@ -2,6 +2,12 @@ SHELL := /bin/sh
 
 RUST_WORKSPACE ?= engine
 RUST_CARGO ?= $(if $(wildcard $(HOME)/.cargo/bin/cargo),$(HOME)/.cargo/bin/cargo,cargo)
+RUST_DEPENDENCY_REPORT_PATH ?= /tmp/aonw-rust-dependencies.json
+RUST_COVERAGE_REPORT_PATH ?= /tmp/aonw-rust-coverage.json
+RUST_COVERAGE_LCOV_PATH ?= /tmp/aonw-rust-coverage.lcov
+RUST_COVERAGE_SNAPSHOT_PATH ?= /tmp/aonw-rust-coverage-baseline.json
+RUST_PERFORMANCE_REPORT_PATH ?= /tmp/aonw-rust-performance.json
+RUST_PERFORMANCE_SNAPSHOT_PATH ?= /tmp/aonw-rust-performance-baseline.json
 GODOT_PROJECT ?= clients/aonw_godot
 GODOT_PINNED_VERSION := $(strip $(shell cat .godot-version 2>/dev/null))
 GODOT_BOOTSTRAPPED_BIN := $(CURDIR)/.toolchains/godot/$(GODOT_PINNED_VERSION)/godot
@@ -229,7 +235,8 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test rust-engine-inventory-ast-check rust-determinism-inventory-check rust-determinism-inventory-test rust-determinism-check rust-fixture-disposition-check rust-fixture-disposition-test rust-corpus-parity-check rust-check rust-format-check rust-clippy rust-test rust-doc rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-coverage-report successor-flutter-device-test successor-flutter-fm4-pilot successor-flutter-fm5-baseline successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence
+.PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test rust-engine-inventory-ast-check rust-determinism-inventory-check rust-determinism-inventory-test rust-determinism-check rust-fixture-disposition-check rust-fixture-disposition-test rust-corpus-parity-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-coverage-report successor-flutter-device-test successor-flutter-fm4-pilot successor-flutter-fm5-baseline successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence
+.PHONY: rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check successor-engine-check successor-engine-evidence-check successor-engine-quality-check successor-engine-deep-check
 
 help:
 	@echo "AONW deploy helpers"
@@ -254,6 +261,13 @@ help:
 	@echo "  make rust-check   LOCAL: format, lint, test, and document the Rust workspace"
 	@echo "  make rust-determinism-check LOCAL: verify named inputs and debug/release replay parity"
 	@echo "  make rust-corpus-parity-check LOCAL: verify reviewed 120-case dispositions and active Rust parity"
+	@echo "  make rust-architecture-check LOCAL: verify Rust crate edges, pure boundaries, unsafe census and source ratchet"
+	@echo "  make rust-dependency-check LOCAL: verify pinned Rust licenses, sources and duplicate ratchet"
+	@echo "  make rust-coverage-check LOCAL: generate LCOV/JSON and enforce the per-crate Rust ratchet"
+	@echo "  make rust-performance-check LOCAL: enforce Rust signatures, work, payload and allocation ceilings"
+	@echo "  make successor-engine-check LOCAL: run the fast successor engine quality gate"
+	@echo "  make successor-engine-evidence-check LOCAL: generate parity, coverage and performance evidence"
+	@echo "  make successor-engine-deep-check LOCAL: run scheduled release-mode successor checks"
 	@echo "  make rust-benchmark LOCAL: report Rust map and movement baseline timings"
 	@echo "  make rust-flutter-test LOCAL: test Flutter package_ffi stub and Rust adapter"
 	@echo "  make rust-godot-build LOCAL: build the Rust GDExtension for Godot"
@@ -527,6 +541,69 @@ rust-fixture-disposition-test:
 rust-corpus-parity-check: rust-fixture-disposition-check rust-fixture-disposition-test
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test canonical_fixture_engine reviewed_reducer_dispositions_gate_execution_by_capability -- --exact
 
+rust-architecture-policy-check:
+	@tool/check_rust_architecture.py
+
+rust-architecture-policy-test:
+	@tool/test_rust_architecture.py
+
+rust-architecture-check: rust-architecture-policy-check rust-architecture-policy-test
+
+rust-dependency-policy-check:
+	@tool/check_rust_dependencies.py --report "$(RUST_DEPENDENCY_REPORT_PATH)"
+
+rust-dependency-policy-test:
+	@tool/test_rust_dependencies.py
+
+rust-dependency-check: rust-dependency-policy-check rust-dependency-policy-test
+
+rust-coverage-policy-test:
+	@tool/test_rust_coverage.py
+
+rust-coverage-report: rust-evidence-tool-versions
+	@tool/check_rust_coverage.py report --report "$(RUST_COVERAGE_REPORT_PATH)" --lcov "$(RUST_COVERAGE_LCOV_PATH)"
+
+rust-coverage-check: rust-coverage-policy-test rust-evidence-tool-versions
+	@tool/check_rust_coverage.py check --report "$(RUST_COVERAGE_REPORT_PATH)" --lcov "$(RUST_COVERAGE_LCOV_PATH)"
+
+rust-coverage-snapshot: rust-evidence-tool-versions
+	@tool/check_rust_coverage.py snapshot --report "$(RUST_COVERAGE_REPORT_PATH)" --lcov "$(RUST_COVERAGE_LCOV_PATH)" --snapshot "$(RUST_COVERAGE_SNAPSHOT_PATH)"
+
+rust-performance-policy-test:
+	@tool/test_rust_performance.py
+
+rust-performance-report:
+	@tool/check_rust_performance.py report --report "$(RUST_PERFORMANCE_REPORT_PATH)"
+
+rust-performance-check: rust-performance-policy-test
+	@tool/check_rust_performance.py check --report "$(RUST_PERFORMANCE_REPORT_PATH)"
+
+rust-performance-snapshot:
+	@tool/check_rust_performance.py snapshot --report "$(RUST_PERFORMANCE_REPORT_PATH)" --snapshot "$(RUST_PERFORMANCE_SNAPSHOT_PATH)"
+
+rust-tool-versions:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) --version
+	@cd "$(RUST_WORKSPACE)" && rustc --version
+	@cargo-deny --version
+
+rust-evidence-tool-versions:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) --version
+	@cd "$(RUST_WORKSPACE)" && rustc --version
+	@cd "$(RUST_WORKSPACE)" && cargo llvm-cov --version
+
+rust-native-assets-contract-test: root-dependencies
+	@dart test packages/aonw_rust_client/test/build_hook_test.dart
+
+rust-foundation-check: rust-corpus-parity-check rust-performance-check
+
+successor-engine-check: rust-tool-versions p0-check rust-check rust-architecture-check rust-dependency-check rust-determinism-check
+
+successor-engine-evidence-check: rust-evidence-tool-versions rust-engine-inventory-ast-check rust-corpus-parity-check rust-coverage-check rust-performance-check
+
+successor-engine-quality-check: successor-engine-check successor-engine-evidence-check rust-native-assets-contract-test
+
+successor-engine-deep-check: successor-engine-check rust-test-release rust-foundation-check
+
 successor-map-contract-test: root-dependencies successor-flutter-dependencies
 	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/presentation/geometry/odd_q_flat_top_geometry_test.dart
 	@flutter test --no-pub test/tool/map_asset_bundle_compiler_test.dart
@@ -597,19 +674,25 @@ successor-flutter-fm5-baseline: successor-flutter-dependencies
 successor-flutter-run: successor-flutter-dependencies
 	@cd clients/aonw_flutter && flutter run --no-pub -d macos
 
-rust-check: rust-format-check rust-clippy rust-test rust-doc
+rust-check: rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke
 
 rust-format-check:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) fmt --all -- --check
 
 rust-clippy:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) clippy --locked --workspace --all-targets -- -D warnings
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) clippy --locked --workspace --all-targets --all-features -- -D warnings
 
 rust-test:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --workspace
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --workspace --all-features
+
+rust-test-release:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --release --workspace --all-features
 
 rust-doc:
-	@cd "$(RUST_WORKSPACE)" && RUSTDOCFLAGS="-D warnings" $(RUST_CARGO) doc --locked --workspace --no-deps
+	@cd "$(RUST_WORKSPACE)" && RUSTDOCFLAGS="-D warnings" $(RUST_CARGO) doc --locked --workspace --all-features --no-deps
+
+rust-release-compile-smoke:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked --release --all-features -p aonw_flutter -p aonw_godot
 
 rust-benchmark:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_engine --bench movement
@@ -675,7 +758,7 @@ client-dependencies: toolchain-check
 server-dependencies: toolchain-check
 	@cd server && dart pub get --enforce-lockfile
 
-ci: generated-code-check format-check analyze architecture-check mutation-check performance-check coverage-check client-test
+ci: successor-engine-quality-check generated-code-check format-check analyze architecture-check mutation-check performance-check coverage-check client-test
 
 format-check: dependencies
 	@files=$$(git ls-files -- '*.dart' \

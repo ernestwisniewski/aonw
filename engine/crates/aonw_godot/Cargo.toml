@@ -21,12 +21,5 @@ godot.workspace = true
 [dev-dependencies]
 serde_json.workspace = true
 
-[lints.clippy]
-all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
-module_name_repetitions = "allow"
-
-[lints.rust]
-missing_docs = "warn"
-unreachable_pub = "warn"
-unsafe_code = "deny"
+[lints]
+workspace = true

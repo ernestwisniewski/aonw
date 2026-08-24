@@ -7,6 +7,9 @@ use aonw_domain::{
     StateRevision, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
 };
 use aonw_engine::MovementSearchMetrics;
+use stats_alloc::{Region, Stats};
+
+use crate::GLOBAL;
 
 const ITERATIONS: usize = 20;
 
@@ -16,6 +19,7 @@ pub(crate) fn report(
     rows: u16,
     units: usize,
     metrics: MovementSearchMetrics,
+    payload_bytes: usize,
     mut operation: impl FnMut() -> u64,
 ) {
     for _ in 0..3 {
@@ -23,17 +27,32 @@ pub(crate) fn report(
     }
     let mut samples = Vec::with_capacity(ITERATIONS);
     let mut signature = 0;
+    let mut allocation_stats: Option<Stats> = None;
     for _ in 0..ITERATIONS {
+        let region = Region::new(GLOBAL);
         let started = Instant::now();
         signature = black_box(operation());
         samples.push(started.elapsed().as_nanos());
+        let observed = region.change();
+        if let Some(expected) = allocation_stats {
+            assert_eq!(
+                observed, expected,
+                "allocation sample drifted for {workload}"
+            );
+        } else {
+            allocation_stats = Some(observed);
+        }
     }
+    let allocations = allocation_stats.expect("at least one allocation sample");
     samples.sort_unstable();
     let median = samples[samples.len() / 2];
     let p95 = samples[(samples.len() * 95 / 100).min(samples.len() - 1)];
     println!(
-        "{workload},{},{units},{ITERATIONS},{median},{p95},{},{},{},{},{},{signature:016x}",
+        "{workload},{},{units},{ITERATIONS},{},{},{},{payload_bytes},{},{},{},{},{},{signature:016x},{median},{p95}",
         usize::from(cols) * usize::from(rows),
+        allocations.allocations,
+        allocations.reallocations,
+        allocations.bytes_allocated,
         metrics.frontier_pops(),
         metrics.expanded_tiles(),
         metrics.examined_edges(),

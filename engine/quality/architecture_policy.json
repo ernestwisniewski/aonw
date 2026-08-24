@@ -1,0 +1,120 @@
+{
+  "provenance": {
+    "reviewedDate": "2026-08-24",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+    "methodology": "exact-crate-edges-pure-source-unsafe-and-line-ratchet"
+  },
+  "workspaceManifest": "engine/Cargo.toml",
+  "crateDependencies": {
+    "aonw_content": [
+      "normal:aonw_domain"
+    ],
+    "aonw_contract_mapping": [
+      "normal:aonw_contracts",
+      "normal:aonw_domain"
+    ],
+    "aonw_contracts": [],
+    "aonw_domain": [],
+    "aonw_engine": [
+      "dev:aonw_contract_mapping",
+      "dev:aonw_contracts",
+      "dev:aonw_testkit",
+      "normal:aonw_content",
+      "normal:aonw_domain"
+    ],
+    "aonw_flutter": [
+      "normal:aonw_contracts",
+      "normal:aonw_local_runtime"
+    ],
+    "aonw_godot": [
+      "normal:aonw_contracts",
+      "normal:aonw_local_runtime",
+      "normal:aonw_map_workbench"
+    ],
+    "aonw_local_runtime": [
+      "normal:aonw_content",
+      "normal:aonw_contract_mapping",
+      "normal:aonw_contracts",
+      "normal:aonw_domain",
+      "normal:aonw_engine"
+    ],
+    "aonw_map_authoring": [
+      "normal:aonw_content",
+      "normal:aonw_domain"
+    ],
+    "aonw_map_compiler": [
+      "normal:aonw_content",
+      "normal:aonw_domain",
+      "normal:aonw_map_authoring"
+    ],
+    "aonw_map_compiler_cli": [
+      "normal:aonw_content",
+      "normal:aonw_map_authoring",
+      "normal:aonw_map_compiler"
+    ],
+    "aonw_map_workbench": [
+      "normal:aonw_content",
+      "normal:aonw_domain",
+      "normal:aonw_map_authoring"
+    ],
+    "aonw_testkit": [
+      "normal:aonw_content",
+      "normal:aonw_contracts"
+    ]
+  },
+  "pureCrates": [
+    "aonw_content",
+    "aonw_contract_mapping",
+    "aonw_contracts",
+    "aonw_domain",
+    "aonw_engine",
+    "aonw_map_authoring",
+    "aonw_map_compiler",
+    "aonw_map_workbench"
+  ],
+  "forbiddenPureDependencies": [
+    "async-std",
+    "diesel",
+    "flutter_rust_bridge",
+    "getrandom",
+    "godot",
+    "libc",
+    "rand",
+    "rayon",
+    "reqwest",
+    "rusqlite",
+    "serverpod",
+    "sqlx",
+    "tokio"
+  ],
+  "forbiddenPureSourcePatterns": {
+    "background-thread": "\\b(?:std::)?thread::spawn\\b",
+    "database": "\\b(?:diesel|rusqlite|serverpod|sqlx)(?:::|\\b)",
+    "filesystem": "\\bstd::fs\\b",
+    "framework": "\\b(?:flutter_rust_bridge|godot|serverpod)::",
+    "network": "\\bstd::net\\b",
+    "system-randomness": "\\b(?:getrandom|rand)::",
+    "wall-clock": "\\b(?:SystemTime|Instant::now|Utc::now|Local::now)\\b"
+  },
+  "unsafeAllowlist": {
+    "engine/crates/aonw_flutter/src/lib.rs": {
+      "occurrences": 28,
+      "normalizedLineSha256": "ccf3220c99b325179fa1b73ed96e6b409a311da64102061da1708dd85e39ee85"
+    },
+    "engine/crates/aonw_godot/src/lib.rs": {
+      "occurrences": 1,
+      "normalizedLineSha256": "d84aac4854ef08350eb4dcab62b124eed2deb5ca2a9b627283911b990a056ab3"
+    }
+  },
+  "maxNewRustLines": 500,
+  "lineExceptions": {
+    "engine/crates/aonw_content/src/model.rs": 657,
+    "engine/crates/aonw_content/tests/map_validation.rs": 537,
+    "engine/crates/aonw_contract_mapping/tests/game_state_contract.rs": 1286,
+    "engine/crates/aonw_domain/src/diplomacy/model.rs": 548,
+    "engine/crates/aonw_domain/src/game_state/mod.rs": 689,
+    "engine/crates/aonw_engine/src/state_digest/tests/state_completeness.rs": 640,
+    "engine/crates/aonw_local_runtime/tests/local_session.rs": 510
+  }
+}

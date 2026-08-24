@@ -139,6 +139,46 @@ No active server match may remain pinned to Dart. Historical formats need a Rust
 
 Only after retirement should the repository be reorganized mechanically into final client/service directories. Do not mix that move with behavior migration.
 
+## Rust quality baseline
+
+The successor engine has three deliberately separate quality layers. `make
+successor-engine-check` is the fast merge gate and combines the frozen-boundary
+checks, all-feature Rust format/Clippy/test/doc/build checks, the exact crate and
+unsafe architecture census, pinned license/source/duplicate policy, and
+debug/release determinism. `make successor-engine-evidence-check` runs the
+current capability-gated parity corpus and publishes LLVM coverage JSON, LCOV,
+and structural performance evidence. `make successor-engine-deep-check` adds
+release-mode workspace tests on its scheduled pinned Linux runner. Native
+adapter/platform smokes remain separate jobs because unsupported rows must be
+reported as unsupported, never replaced with a successful stub.
+
+Coverage measurement is delegated to pinned `cargo-llvm-cov 0.9.0`. The local
+checker supplies repository policy that the measurement tool does not know:
+the complete crate-role census, explicit exclusions, per-authoritative-crate
+and local-runtime ratios, uncovered-line ceilings, and a missing-file set that
+may only shrink. Adapter coverage is deliberately not folded into the Linux
+pure-engine denominator.
+
+Structural performance measurement uses pinned `stats_alloc 0.1.10` around a
+single-threaded measured region after setup and warm-up. The gate ratchets exact
+result signatures, work counters, allocations, allocated bytes, payload bytes,
+and soak count. Host-local timing remains diagnostic. Criterion and Divan are
+appropriate for statistical timing exploration, while Iai-Callgrind may later
+add Linux-only instruction/cache diagnostics to the deep workflow; none of
+them replaces the portable domain counters and allocation contract required
+for this migration.
+
+Dependency policy uses `cargo-deny 0.20.2` from crates.io. Licenses and sources
+fail closed. The only current duplicate exception is the exact `syn` 2/3 pair
+introduced by the EXR/zerocopy and serde proc-macro chains; it is owned by the
+engine foundation, expires on 2027-08-24, and must be removed or re-reviewed at
+expiry. OSV continues to scan every committed lockfile independently.
+
+These quality artifacts describe the single current greenfield engine and
+successor-client contract. They introduce no legacy reader, adapter, upcaster,
+or redundant internal format version. Shared API, map, fixture, and other real
+multi-component versions remain unchanged.
+
 ## Verification and fixtures
 
 Historical reducer corpora under `test/fixtures/` are frozen, read-only

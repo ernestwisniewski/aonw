@@ -19,6 +19,7 @@ aonw_contract_mapping = { path = "../aonw_contract_mapping" }
 aonw_contracts = { path = "../aonw_contracts" }
 aonw_testkit = { path = "../aonw_testkit" }
 serde_json.workspace = true
+stats_alloc.workspace = true
 
 [[bench]]
 name = "movement"

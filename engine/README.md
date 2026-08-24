@@ -71,9 +71,30 @@ Run the complete standalone Rust gate from the repository root:
 make rust-check
 ```
 
-The component targets are `rust-format-check`, `rust-clippy`, `rust-test`, and
-`rust-doc`. They are intentionally independent of the existing Dart/Flutter
-`make ci` target during this migration phase.
+The component targets are `rust-format-check`, `rust-clippy`, `rust-test`,
+`rust-doc`, and the release compile-smoke for both native adapters. The required
+fast aggregate is `make successor-engine-check`; `make
+successor-engine-evidence-check` separately generates parity, LLVM coverage,
+and structural-performance evidence. Both are included in the repository-wide
+`make ci`/`make release-check` path, while the release-mode deep aggregate is a
+separate scheduled workflow.
+
+`cargo-llvm-cov 0.9.0` performs source instrumentation and exports LCOV plus
+LLVM JSON. The repository checker adds only the project-specific crate census
+and historical ratchet: authoritative and local-runtime ratios cannot fall,
+uncovered lines cannot grow, and missing production files can only disappear.
+Adapter, authoring, generated, platform, test, and testkit scopes are classified
+separately rather than diluted into one host-dependent denominator.
+
+The performance harness uses `stats_alloc 0.1.10` as its counting allocator.
+Setup and three warm-up runs occur outside the single-threaded measured region;
+twenty identical allocation samples are required before a workload is accepted.
+The hard gate covers result signatures, domain work counters, allocations,
+allocated bytes, and payload bytes. Wall-clock medians and p95 values remain
+diagnostic because ordinary CI runners are not stable timing references.
+Criterion/Divan would improve host-local timing analysis but would not replace
+these structural metrics. Iai-Callgrind remains a possible future Linux-only
+deep diagnostic, not a substitute for the portable E0 gate.
 
 The migration inventory under [`migration/`](migration/README.md) closes the
 authoritative surface before new Rust behavior is added. `p0-check` runs its
@@ -134,7 +155,8 @@ It reports map open/hash plus raw and prepared reachable/route, occupied-target
 approach, owned apply, direct local-runtime dispatch, and shared client JSON
 workloads. Movement cases cover 1, 10, 64, and 512 units, including accepted,
 rejected, and hidden no-op commands. Wall-clock values are diagnostic; stable
-result signatures and search-work counters are test gates.
+result signatures, search-work counters, payload sizes, and allocation ceilings
+are test gates.
 
 The 2026-08-14 reference run on the development Mac kept the 40×30, 512-unit
 accepted runtime dispatch at about 1.46 ms p95, including state digest, replay
