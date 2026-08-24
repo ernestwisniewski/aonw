@@ -94,27 +94,28 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         dto.field_improvements,
         dto.transport_network,
     )?;
-    GameState::try_new_with_world_and_state_sections(
+    GameState::builder(
         StateRevision::new(dto.revision),
         dto.turn,
-        match_lifecycle,
-        economy,
-        knowledge,
-        combat,
-        objectives,
         bounds,
         match dto.occupancy_policy {
             UnitOccupancyPolicyDto::Exclusive => UnitOccupancyPolicy::Exclusive,
             UnitOccupancyPolicyDto::FriendlyStacking => UnitOccupancyPolicy::FriendlyStacking,
         },
         units,
-        cities,
-        artifacts,
-        interaction,
-        fog,
-        diplomacy,
-        infrastructure,
     )
+    .with_match_lifecycle(match_lifecycle)
+    .with_economy(economy)
+    .with_knowledge(knowledge)
+    .with_combat(combat)
+    .with_objectives(objectives)
+    .with_cities(cities)
+    .with_artifacts(artifacts)
+    .with_interaction(interaction)
+    .with_fog_of_war(fog)
+    .with_diplomacy(diplomacy)
+    .with_infrastructure(infrastructure)
+    .try_build()
     .map_err(|error| GameStateMappingError::new("$", error.to_string()))
 }
 

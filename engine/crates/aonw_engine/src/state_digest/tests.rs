@@ -1,7 +1,6 @@
 use aonw_domain::{
-    Diplomacy, FogOfWar, GameState, HexCoord, HexGridBounds, InteractionState, MovementUnits,
-    PendingInteraction, PlayerId, StateRevision, TransportNetwork, Unit, UnitId, UnitKind,
-    UnitOccupancyPolicy,
+    GameState, HexCoord, HexGridBounds, InteractionState, MovementUnits, PendingInteraction,
+    PlayerId, StateRevision, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
 };
 
 use super::digest_state;
@@ -77,26 +76,22 @@ fn digest_includes_reversible_skip_balance() {
         [base],
     )
     .expect("base state");
-    let skipped_state = GameState::try_new_with_world(
+    let skipped_state = GameState::builder(
         StateRevision::new(1),
         2,
         bounds,
         UnitOccupancyPolicy::Exclusive,
         [skipped],
-        [],
-        [],
-        InteractionState::new(
-            None,
-            Some(PendingInteraction::UnitTurnSkip {
-                owner_player_id: PlayerId::new("player-1").expect("player"),
-                unit_id: UnitId::new("unit").expect("unit"),
-                restore_movement: MovementUnits::new(10),
-            }),
-        ),
-        FogOfWar::default(),
-        Diplomacy::default(),
-        TransportNetwork::default(),
     )
+    .with_interaction(InteractionState::new(
+        None,
+        Some(PendingInteraction::UnitTurnSkip {
+            owner_player_id: PlayerId::new("player-1").expect("player"),
+            unit_id: UnitId::new("unit").expect("unit"),
+            restore_movement: MovementUnits::new(10),
+        }),
+    ))
+    .try_build()
     .expect("skipped state");
 
     assert_ne!(digest_state(&base_state), digest_state(&skipped_state));

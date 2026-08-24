@@ -2,9 +2,9 @@
 
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
-    ArmyTroop, City, CityId, Diplomacy, FogOfWar, GameState, HexCoord, MovementUnits, PlayerFog,
-    PlayerId, StateRevision, TransportCondition, TransportNetwork, TransportSegment, TroopKind,
-    Unit, UnitId, UnitKind, UnitOccupancyPolicy,
+    ArmyTroop, City, CityId, FogOfWar, GameState, HexCoord, MovementUnits, PlayerFog, PlayerId,
+    StateRevision, TransportCondition, TransportNetwork, TransportSegment, TroopKind, Unit, UnitId,
+    UnitKind, UnitOccupancyPolicy,
 };
 use aonw_engine::{
     CompiledMovementMap, DomainCommand, EngineContext, ExecutionEvidence, GameEngine, GameQuery,
@@ -58,19 +58,17 @@ fn world(
     fog: FogOfWar,
     transport: TransportNetwork,
 ) -> GameState {
-    GameState::try_new_with_world(
+    GameState::builder(
         StateRevision::new(4),
         2,
         map().bounds(),
         UnitOccupancyPolicy::FriendlyStacking,
         units,
-        cities,
-        [],
-        aonw_domain::InteractionState::default(),
-        fog,
-        Diplomacy::default(),
-        transport,
     )
+    .with_cities(cities)
+    .with_fog_of_war(fog)
+    .with_transport_network(transport)
+    .try_build()
     .expect("state")
 }
 

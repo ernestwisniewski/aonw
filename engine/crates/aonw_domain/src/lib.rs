@@ -46,7 +46,7 @@ pub use economy::{
     ResourceType, StrategicResourceStockpile,
 };
 pub use fog::{FogOfWar, FogVisibility, PlayerFog};
-pub use game_state::{GameState, GameStateBuildError, UnitOccupancyPolicy};
+pub use game_state::{GameState, GameStateBuildError, GameStateBuilder, UnitOccupancyPolicy};
 pub use hex_coord::HexCoord;
 pub use hex_grid::{HexGridBounds, HexTileIndex};
 pub use identifier::{ArtifactId, CityId, IdentifierError, PlayerId, UnitId};

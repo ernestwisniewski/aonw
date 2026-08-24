@@ -223,9 +223,8 @@ pub(crate) fn visible_units(state: &GameState, actor: &PlayerId) -> Vec<PlayerUn
 #[cfg(test)]
 mod tests {
     use aonw_domain::{
-        Diplomacy, FogOfWar, GameState, HexCoord, HexGridBounds, InteractionState, MovementUnits,
-        PlayerFog, PlayerId, StateRevision, TransportNetwork, Unit, UnitId, UnitKind,
-        UnitOccupancyPolicy,
+        FogOfWar, GameState, HexCoord, HexGridBounds, InteractionState, MovementUnits, PlayerFog,
+        PlayerId, StateRevision, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
     };
 
     use super::{PendingActionView, pending_action, visible_units};
@@ -263,7 +262,7 @@ mod tests {
         let foreign_hidden = HexCoord::new(5, 1);
         let fog = FogOfWar::try_new([PlayerFog::new(actor.clone(), [discovered], [visible])])
             .expect("fog");
-        let state = GameState::try_new_with_world(
+        let state = GameState::builder(
             StateRevision::INITIAL,
             0,
             HexGridBounds::new(6, 4).expect("bounds"),
@@ -274,13 +273,9 @@ mod tests {
                 unit("foreign-discovered", &foreign, discovered),
                 unit("foreign-hidden", &foreign, foreign_hidden),
             ],
-            [],
-            [],
-            InteractionState::default(),
-            fog,
-            Diplomacy::default(),
-            TransportNetwork::default(),
         )
+        .with_fog_of_war(fog)
+        .try_build()
         .expect("state");
 
         let identifiers = visible_units(&state, &actor)
@@ -295,24 +290,20 @@ mod tests {
     fn pending_action_is_visible_only_to_its_owner() {
         let actor = PlayerId::new("player-1").expect("actor id");
         let foreign = PlayerId::new("player-2").expect("foreign id");
-        let state = GameState::try_new_with_world(
+        let state = GameState::builder(
             StateRevision::INITIAL,
             1,
             HexGridBounds::new(2, 2).expect("bounds"),
             UnitOccupancyPolicy::Exclusive,
             [],
-            [],
-            [],
-            InteractionState::new(
-                None,
-                Some(aonw_domain::PendingInteraction::ResearchSelection {
-                    owner_player_id: actor.clone(),
-                }),
-            ),
-            FogOfWar::default(),
-            Diplomacy::default(),
-            TransportNetwork::default(),
         )
+        .with_interaction(InteractionState::new(
+            None,
+            Some(aonw_domain::PendingInteraction::ResearchSelection {
+                owner_player_id: actor.clone(),
+            }),
+        ))
+        .try_build()
         .expect("state");
 
         assert_eq!(

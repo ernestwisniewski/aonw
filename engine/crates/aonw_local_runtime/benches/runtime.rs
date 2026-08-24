@@ -12,8 +12,7 @@ use aonw_contracts::client::{
     CLIENT_API_VERSION, ClientCommandDto, ClientRequestBodyDto, ClientRequestDto,
 };
 use aonw_domain::{
-    Diplomacy, FogOfWar, GameState, HexCoord, InteractionState, PlayerFog, PlayerId, StateRevision,
-    TransportNetwork, Unit, UnitId, UnitKind,
+    FogOfWar, GameState, HexCoord, PlayerFog, PlayerId, StateRevision, Unit, UnitId, UnitKind,
 };
 use aonw_local_runtime::{ClientProtocol, LocalRuntime, MoveUnitRequest, OpenSession};
 use serde_json::json;
@@ -244,7 +243,7 @@ fn hidden_open(map: MapDefinition, ruleset: RulesetDefinition, actor: PlayerId) 
         .expect("unit")
     };
     let fog = FogOfWar::try_new([PlayerFog::new(actor.clone(), [], [])]).expect("fog");
-    let state = GameState::try_new_with_world(
+    let state = GameState::builder(
         StateRevision::INITIAL,
         0,
         map.bounds(),
@@ -257,13 +256,9 @@ fn hidden_open(map: MapDefinition, ruleset: RulesetDefinition, actor: PlayerId) 
                 HexCoord::new(1, 0),
             ),
         ],
-        [],
-        [],
-        InteractionState::default(),
-        fog,
-        Diplomacy::default(),
-        TransportNetwork::default(),
     )
+    .with_fog_of_war(fog)
+    .try_build()
     .expect("state");
     OpenSession::from_state(map, ruleset, state, actor)
 }

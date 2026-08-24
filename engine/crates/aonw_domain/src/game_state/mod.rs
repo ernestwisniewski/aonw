@@ -250,7 +250,196 @@ pub struct GameState {
     infrastructure: InfrastructureState,
 }
 
+/// Incrementally assembles one canonical state without exposing a partially
+/// validated [`GameState`].
+#[must_use = "the state is not validated until try_build is called"]
+pub struct GameStateBuilder {
+    revision: StateRevision,
+    turn: u32,
+    match_lifecycle: MatchLifecycle,
+    economy: EconomyState,
+    knowledge: KnowledgeState,
+    combat: CombatState,
+    objectives: ObjectiveState,
+    bounds: HexGridBounds,
+    occupancy_policy: UnitOccupancyPolicy,
+    units: Vec<Unit>,
+    cities: Vec<City>,
+    artifacts: Vec<WorldArtifact>,
+    interaction: InteractionState,
+    fog_of_war: FogOfWar,
+    diplomacy: Diplomacy,
+    infrastructure: InfrastructureState,
+}
+
+impl GameStateBuilder {
+    fn new(
+        revision: StateRevision,
+        turn: u32,
+        bounds: HexGridBounds,
+        occupancy_policy: UnitOccupancyPolicy,
+        units: impl IntoIterator<Item = Unit>,
+    ) -> Self {
+        Self {
+            revision,
+            turn,
+            match_lifecycle: MatchLifecycle::default(),
+            economy: EconomyState::default(),
+            knowledge: KnowledgeState::default(),
+            combat: CombatState::default(),
+            objectives: ObjectiveState::default(),
+            bounds,
+            occupancy_policy,
+            units: units.into_iter().collect(),
+            cities: Vec::new(),
+            artifacts: Vec::new(),
+            interaction: InteractionState::default(),
+            fog_of_war: FogOfWar::default(),
+            diplomacy: Diplomacy::default(),
+            infrastructure: InfrastructureState::default(),
+        }
+    }
+
+    /// Replaces the default match identity and turn lifecycle.
+    pub fn with_match_lifecycle(mut self, value: MatchLifecycle) -> Self {
+        self.match_lifecycle = value;
+        self
+    }
+
+    /// Replaces the default economy section.
+    pub fn with_economy(mut self, value: EconomyState) -> Self {
+        self.economy = value;
+        self
+    }
+
+    /// Replaces the default research and wonder section.
+    pub fn with_knowledge(mut self, value: KnowledgeState) -> Self {
+        self.knowledge = value;
+        self
+    }
+
+    /// Replaces the default pending-combat section.
+    pub fn with_combat(mut self, value: CombatState) -> Self {
+        self.combat = value;
+        self
+    }
+
+    /// Replaces the default objective-progress section.
+    pub fn with_objectives(mut self, value: ObjectiveState) -> Self {
+        self.objectives = value;
+        self
+    }
+
+    /// Replaces the empty city collection.
+    pub fn with_cities(mut self, values: impl IntoIterator<Item = City>) -> Self {
+        self.cities = values.into_iter().collect();
+        self
+    }
+
+    /// Replaces the empty artifact collection.
+    pub fn with_artifacts(mut self, values: impl IntoIterator<Item = WorldArtifact>) -> Self {
+        self.artifacts = values.into_iter().collect();
+        self
+    }
+
+    /// Replaces the default interaction state.
+    pub fn with_interaction(mut self, value: InteractionState) -> Self {
+        self.interaction = value;
+        self
+    }
+
+    /// Replaces the default fog state.
+    pub fn with_fog_of_war(mut self, value: FogOfWar) -> Self {
+        self.fog_of_war = value;
+        self
+    }
+
+    /// Replaces the default diplomacy state.
+    pub fn with_diplomacy(mut self, value: Diplomacy) -> Self {
+        self.diplomacy = value;
+        self
+    }
+
+    /// Replaces the default infrastructure section.
+    pub fn with_infrastructure(mut self, value: InfrastructureState) -> Self {
+        self.infrastructure = value;
+        self
+    }
+
+    /// Uses a transport-only infrastructure section.
+    pub fn with_transport_network(mut self, value: TransportNetwork) -> Self {
+        self.infrastructure = InfrastructureState::from_transport(value);
+        self
+    }
+
+    /// Validates every local and cross-section invariant and constructs the
+    /// canonical aggregate atomically.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`GameStateBuildError`] when any aggregate invariant is
+    /// violated. No partially validated [`GameState`] is returned.
+    pub fn try_build(self) -> Result<GameState, GameStateBuildError> {
+        let unit_indices_by_id = unit_indices(self.bounds, self.occupancy_policy, &self.units)?;
+        let city_indices_by_id = city_indices(self.bounds, &self.cities)?;
+        let artifact_indices_by_id = artifact_indices(&self.artifacts)?;
+        validate_artifacts(self.bounds, &self.units, &self.cities, &self.artifacts)?;
+        validate_interaction(self.bounds, &self.units, &self.cities, &self.interaction)?;
+        validate_environment(
+            self.bounds,
+            self.match_lifecycle.identity(),
+            &self.cities,
+            &self.fog_of_war,
+            &self.infrastructure,
+        )?;
+        self.economy
+            .validate_for(self.match_lifecycle.identity(), self.bounds)
+            .map_err(GameStateBuildError::InvalidEconomy)?;
+        self.knowledge
+            .validate_for(self.match_lifecycle.identity())
+            .map_err(GameStateBuildError::InvalidKnowledge)?;
+        self.combat
+            .validate_for(self.match_lifecycle.identity(), self.bounds, &self.units)
+            .map_err(GameStateBuildError::InvalidCombat)?;
+        self.objectives
+            .validate_for(self.match_lifecycle.identity())
+            .map_err(GameStateBuildError::InvalidObjectives)?;
+        Ok(GameState {
+            revision: self.revision,
+            turn: self.turn,
+            match_lifecycle: self.match_lifecycle,
+            economy: self.economy,
+            knowledge: self.knowledge,
+            combat: self.combat,
+            objectives: self.objectives,
+            bounds: self.bounds,
+            occupancy_policy: self.occupancy_policy,
+            units: self.units.into_boxed_slice(),
+            unit_indices_by_id: unit_indices_by_id.into_boxed_slice(),
+            cities: self.cities.into_boxed_slice(),
+            city_indices_by_id: city_indices_by_id.into_boxed_slice(),
+            artifacts: self.artifacts.into_boxed_slice(),
+            artifact_indices_by_id: artifact_indices_by_id.into_boxed_slice(),
+            interaction: self.interaction,
+            fog_of_war: self.fog_of_war,
+            diplomacy: self.diplomacy,
+            infrastructure: self.infrastructure,
+        })
+    }
+}
+
 impl GameState {
+    /// Starts an aggregate builder with required identity, topology and units.
+    pub fn builder(
+        revision: StateRevision,
+        turn: u32,
+        bounds: HexGridBounds,
+        occupancy_policy: UnitOccupancyPolicy,
+        units: impl IntoIterator<Item = Unit>,
+    ) -> GameStateBuilder {
+        GameStateBuilder::new(revision, turn, bounds, occupancy_policy, units)
+    }
+
     /// Validates map bounds, unique identifiers and one-unit occupancy.
     ///
     /// # Errors
@@ -263,132 +452,7 @@ impl GameState {
         occupancy_policy: UnitOccupancyPolicy,
         units: impl IntoIterator<Item = Unit>,
     ) -> Result<Self, GameStateBuildError> {
-        Self::try_new_with_world(
-            revision,
-            turn,
-            bounds,
-            occupancy_policy,
-            units,
-            [],
-            [],
-            InteractionState::default(),
-            FogOfWar::default(),
-            Diplomacy::default(),
-            TransportNetwork::default(),
-        )
-    }
-
-    /// Validates and constructs all movement-authoritative world slices.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`GameStateBuildError`] when an aggregate invariant is violated.
-    #[allow(clippy::too_many_arguments)]
-    pub fn try_new_with_world(
-        revision: StateRevision,
-        turn: u32,
-        bounds: HexGridBounds,
-        occupancy_policy: UnitOccupancyPolicy,
-        units: impl IntoIterator<Item = Unit>,
-        cities: impl IntoIterator<Item = City>,
-        artifacts: impl IntoIterator<Item = WorldArtifact>,
-        interaction: InteractionState,
-        fog_of_war: FogOfWar,
-        diplomacy: Diplomacy,
-        transport_network: TransportNetwork,
-    ) -> Result<Self, GameStateBuildError> {
-        Self::try_new_with_world_and_state_sections(
-            revision,
-            turn,
-            MatchLifecycle::default(),
-            EconomyState::default(),
-            KnowledgeState::default(),
-            CombatState::default(),
-            ObjectiveState::default(),
-            bounds,
-            occupancy_policy,
-            units,
-            cities,
-            artifacts,
-            interaction,
-            fog_of_war,
-            diplomacy,
-            InfrastructureState::from_transport(transport_network),
-        )
-    }
-
-    /// Validates and constructs a complete world with canonical state sections.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`GameStateBuildError`] when an aggregate invariant is violated.
-    #[allow(clippy::too_many_arguments)]
-    pub fn try_new_with_world_and_state_sections(
-        revision: StateRevision,
-        turn: u32,
-        match_lifecycle: MatchLifecycle,
-        economy: EconomyState,
-        knowledge: KnowledgeState,
-        combat: CombatState,
-        objectives: ObjectiveState,
-        bounds: HexGridBounds,
-        occupancy_policy: UnitOccupancyPolicy,
-        units: impl IntoIterator<Item = Unit>,
-        cities: impl IntoIterator<Item = City>,
-        artifacts: impl IntoIterator<Item = WorldArtifact>,
-        interaction: InteractionState,
-        fog_of_war: FogOfWar,
-        diplomacy: Diplomacy,
-        infrastructure: InfrastructureState,
-    ) -> Result<Self, GameStateBuildError> {
-        let units = units.into_iter().collect::<Vec<_>>();
-        let unit_indices_by_id = unit_indices(bounds, occupancy_policy, &units)?;
-        let cities = cities.into_iter().collect::<Vec<_>>();
-        let city_indices_by_id = city_indices(bounds, &cities)?;
-        let artifacts = artifacts.into_iter().collect::<Vec<_>>();
-        let artifact_indices_by_id = artifact_indices(&artifacts)?;
-        validate_artifacts(bounds, &units, &cities, &artifacts)?;
-        validate_interaction(bounds, &units, &cities, &interaction)?;
-        validate_environment(
-            bounds,
-            match_lifecycle.identity(),
-            &cities,
-            &fog_of_war,
-            &infrastructure,
-        )?;
-        economy
-            .validate_for(match_lifecycle.identity(), bounds)
-            .map_err(GameStateBuildError::InvalidEconomy)?;
-        knowledge
-            .validate_for(match_lifecycle.identity())
-            .map_err(GameStateBuildError::InvalidKnowledge)?;
-        combat
-            .validate_for(match_lifecycle.identity(), bounds, &units)
-            .map_err(GameStateBuildError::InvalidCombat)?;
-        objectives
-            .validate_for(match_lifecycle.identity())
-            .map_err(GameStateBuildError::InvalidObjectives)?;
-        Ok(Self {
-            revision,
-            turn,
-            match_lifecycle,
-            economy,
-            knowledge,
-            combat,
-            objectives,
-            bounds,
-            occupancy_policy,
-            units: units.into_boxed_slice(),
-            unit_indices_by_id: unit_indices_by_id.into_boxed_slice(),
-            cities: cities.into_boxed_slice(),
-            city_indices_by_id: city_indices_by_id.into_boxed_slice(),
-            artifacts: artifacts.into_boxed_slice(),
-            artifact_indices_by_id: artifact_indices_by_id.into_boxed_slice(),
-            interaction,
-            fog_of_war,
-            diplomacy,
-            infrastructure,
-        })
+        Self::builder(revision, turn, bounds, occupancy_policy, units).try_build()
     }
 
     /// Returns the state revision.
@@ -522,6 +586,27 @@ impl GameState {
         self.cities.iter().find(|city| city.center() == coordinate)
     }
 
+    fn into_builder(self) -> GameStateBuilder {
+        GameStateBuilder {
+            revision: self.revision,
+            turn: self.turn,
+            match_lifecycle: self.match_lifecycle,
+            economy: self.economy,
+            knowledge: self.knowledge,
+            combat: self.combat,
+            objectives: self.objectives,
+            bounds: self.bounds,
+            occupancy_policy: self.occupancy_policy,
+            units: self.units.into_vec(),
+            cities: self.cities.into_vec(),
+            artifacts: self.artifacts.into_vec(),
+            interaction: self.interaction,
+            fog_of_war: self.fog_of_war,
+            diplomacy: self.diplomacy,
+            infrastructure: self.infrastructure,
+        }
+    }
+
     /// Rebuilds the aggregate after a movement transition.
     ///
     /// # Errors
@@ -555,26 +640,12 @@ impl GameState {
             .binary_search_by(|index| self.units[*index].id().cmp(unit.id()))
             .map(|source_index| self.unit_indices_by_id[source_index])
             .map_err(|_| GameStateBuildError::UnitNotFound(unit.id().clone()))?;
-        let mut units = self.units.into_vec();
-        units[index] = unit;
-        Self::try_new_with_world_and_state_sections(
-            revision,
-            self.turn,
-            self.match_lifecycle,
-            self.economy,
-            self.knowledge,
-            self.combat,
-            self.objectives,
-            self.bounds,
-            self.occupancy_policy,
-            units,
-            self.cities.into_vec(),
-            self.artifacts.into_vec(),
-            self.interaction,
-            fog_of_war,
-            diplomacy,
-            self.infrastructure,
-        )
+        let mut builder = self.into_builder();
+        builder.units[index] = unit;
+        builder.revision = revision;
+        builder.fog_of_war = fog_of_war;
+        builder.diplomacy = diplomacy;
+        builder.try_build()
     }
 
     /// Consumes the aggregate and applies one complete unit-action update.
@@ -594,34 +665,19 @@ impl GameState {
             .binary_search_by(|index| self.units[*index].id().cmp(unit.id()))
             .map(|source_index| self.unit_indices_by_id[source_index])
             .map_err(|_| GameStateBuildError::UnitNotFound(unit.id().clone()))?;
-        let mut units = self.units.into_vec();
+        let mut builder = self.into_builder();
         let unit_id = unit.id().clone();
-        units[index] = unit;
-        let mut artifacts = self.artifacts.into_vec();
+        builder.units[index] = unit;
         if let Some(artifact_id) = cancelled_excavation
-            && let Some(artifact) = artifacts
+            && let Some(artifact) = builder
+                .artifacts
                 .iter_mut()
                 .find(|artifact| artifact.id() == &artifact_id)
         {
             artifact.restore_excavation(&unit_id);
         }
-        Self::try_new_with_world_and_state_sections(
-            revision,
-            self.turn,
-            self.match_lifecycle,
-            self.economy,
-            self.knowledge,
-            self.combat,
-            self.objectives,
-            self.bounds,
-            self.occupancy_policy,
-            units,
-            self.cities.into_vec(),
-            artifacts,
-            interaction,
-            self.fog_of_war,
-            self.diplomacy,
-            self.infrastructure,
-        )
+        builder.revision = revision;
+        builder.interaction = interaction;
+        builder.try_build()
     }
 }

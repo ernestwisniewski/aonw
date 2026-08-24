@@ -1,6 +1,7 @@
 use crate::{
-    GameState, GameStateBuildError, HexCoord, HexGridBounds, MovementUnits, PlayerId,
-    StateRevision, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
+    ArtifactId, GameState, GameStateBuildError, HexCoord, HexGridBounds, MovementUnits, PlayerId,
+    StateRevision, Unit, UnitId, UnitKind, UnitOccupancyPolicy, WorldArtifact,
+    WorldArtifactLocation, WorldArtifactType,
 };
 
 fn unit(id: &str, position: HexCoord) -> Unit {
@@ -79,4 +80,31 @@ fn friendly_stacking_is_an_explicit_policy() {
         [unit("one", position), unit("two", position)],
     );
     assert!(state.is_ok());
+}
+
+#[test]
+fn builder_validates_cross_section_references_only_when_constructing_state() {
+    let missing_unit_id = UnitId::new("missing").expect("unit id");
+    let artifact_id = ArtifactId::new("artifact-1").expect("artifact id");
+    let state = GameState::builder(
+        StateRevision::INITIAL,
+        1,
+        HexGridBounds::new(2, 2).expect("bounds"),
+        UnitOccupancyPolicy::Exclusive,
+        [unit("unit-1", HexCoord::new(0, 0))],
+    )
+    .with_artifacts([WorldArtifact::new(
+        artifact_id.clone(),
+        WorldArtifactType::HeroSword,
+        WorldArtifactLocation::Carried(missing_unit_id.clone()),
+    )])
+    .try_build();
+
+    assert_eq!(
+        state,
+        Err(GameStateBuildError::ArtifactUnitNotFound {
+            artifact_id,
+            unit_id: missing_unit_id,
+        })
+    );
 }
