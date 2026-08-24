@@ -10,6 +10,7 @@ mod context;
 mod diplomacy_policy;
 mod movement;
 mod state_digest;
+mod technology_unlock;
 mod turn_kernel;
 mod unit_action;
 
@@ -35,6 +36,9 @@ pub use movement::{
     terrain_entry_cost,
 };
 pub use state_digest::StateDigest;
+pub use technology_unlock::{
+    TechnologyAvailability, TechnologyEffectSummary, TechnologyQueryError, TechnologyUnlockQuery,
+};
 pub use unit_action::{UnitActionCommand, UnitActionError};
 
 /// Stateless deterministic engine facade.

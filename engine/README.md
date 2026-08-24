@@ -320,11 +320,17 @@ activity slots may coexist in current game state. Manual movement availability
 is derived from them; it is not a client-supplied canonical boolean.
 
 `RulesetDefinition` owns all 17 unit movement allowances, movement domains,
-capabilities, artifact allowance, and occupancy policy. `ScenarioDefinition`
-links exact map and ruleset hashes to validated starting placements and can
-bootstrap a revision-zero, turn-one `GameState`, matching the established game
-semantics. Map, ruleset, and scenario identities
-are separate SHA-256 hashes with golden vectors.
+capabilities, artifact allowance, occupancy policy, and the complete immutable
+54-node technology catalog. The catalog contains prerequisites, costs, boosts,
+unlocks and effects, has its own canonical SHA-256 identity, and also
+participates in the whole-ruleset hash. `TechnologyUnlockQuery` is the single
+read-only source for availability, fixed-point research costs, effect summaries,
+and building/improvement/resource/unit/wonder gates. Research selection and
+turn progression remain disabled until their later parity stage.
+`ScenarioDefinition` links exact map and ruleset hashes to validated starting
+placements and can bootstrap a revision-zero, turn-one `GameState`, matching
+the established game semantics. Map, ruleset, technology-catalog, and scenario
+identities use stable SHA-256 golden vectors.
 
 Movement planning borrows `GameState` and canonical `Unit` entities directly.
 There is no partial movement state contract or copied unit projection. The

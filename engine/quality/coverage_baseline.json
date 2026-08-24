@@ -1,12 +1,15 @@
 {
   "crates": {
     "aonw_content": {
-      "countedLines": 1519,
-      "coveredLines": 1180,
+      "countedLines": 1876,
+      "coveredLines": 1485,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_content/src/lib.rs",
-        "crates/aonw_content/src/scenario/mod.rs"
+        "crates/aonw_content/src/scenario/mod.rs",
+        "crates/aonw_content/src/technology/catalog/foundation.rs",
+        "crates/aonw_content/src/technology/catalog/specialization.rs",
+        "crates/aonw_content/src/technology/catalog/strategy.rs"
       ],
       "sourceFiles": [
         "crates/aonw_content/src/canonical.rs",
@@ -25,9 +28,16 @@
         "crates/aonw_content/src/scenario/error.rs",
         "crates/aonw_content/src/scenario/mod.rs",
         "crates/aonw_content/src/scenario/model.rs",
+        "crates/aonw_content/src/technology/catalog.rs",
+        "crates/aonw_content/src/technology/catalog/foundation.rs",
+        "crates/aonw_content/src/technology/catalog/specialization.rs",
+        "crates/aonw_content/src/technology/catalog/strategy.rs",
+        "crates/aonw_content/src/technology/identity.rs",
+        "crates/aonw_content/src/technology/mod.rs",
+        "crates/aonw_content/src/technology/unlock.rs",
         "crates/aonw_content/src/validation.rs"
       ],
-      "uncoveredLines": 339
+      "uncoveredLines": 391
     },
     "aonw_contract_mapping": {
       "countedLines": 2378,
@@ -158,8 +168,8 @@
       "uncoveredLines": 487
     },
     "aonw_engine": {
-      "countedLines": 4215,
-      "coveredLines": 3562,
+      "countedLines": 4460,
+      "coveredLines": 3795,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_engine/src/application/mod.rs",
@@ -203,11 +213,12 @@
         "crates/aonw_engine/src/state_digest/objective.rs",
         "crates/aonw_engine/src/state_digest/research.rs",
         "crates/aonw_engine/src/state_digest/writer.rs",
+        "crates/aonw_engine/src/technology_unlock.rs",
         "crates/aonw_engine/src/turn_kernel.rs",
         "crates/aonw_engine/src/turn_kernel/support.rs",
         "crates/aonw_engine/src/unit_action.rs"
       ],
-      "uncoveredLines": 653
+      "uncoveredLines": 665
     },
     "aonw_local_runtime": {
       "countedLines": 1977,

@@ -1,10 +1,12 @@
 use std::io::{self, Write};
 
-use aonw_domain::{MovementUnits, UnitKind, UnitMovementDomain, UnitOccupancyPolicy};
+use aonw_domain::{MovementUnits, TechnologyId, UnitKind, UnitMovementDomain, UnitOccupancyPolicy};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
-use crate::ContentHash;
+use crate::{
+    ContentHash, TechnologyCostBalance, TechnologyDefinition, technology::STANDARD_TECHNOLOGIES,
+};
 
 /// Capabilities fixed by a ruleset for one unit kind.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
@@ -159,6 +161,8 @@ pub struct RulesetDefinition {
     ruleset_id: &'static str,
     occupancy_policy: UnitOccupancyPolicyValue,
     unit_definitions: &'static [UnitDefinition],
+    technology_cost_balance: TechnologyCostBalance,
+    technology_definitions: &'static [TechnologyDefinition],
 }
 
 impl RulesetDefinition {
@@ -189,6 +193,27 @@ impl RulesetDefinition {
             .find(|definition| definition.kind() == kind)
     }
 
+    /// Returns every technology in canonical catalog order.
+    #[must_use]
+    pub const fn technologies(&self) -> &'static [TechnologyDefinition] {
+        self.technology_definitions
+    }
+
+    /// Finds a technology definition by canonical identity.
+    #[must_use]
+    pub fn technology(&self, id: TechnologyId) -> Option<TechnologyDefinition> {
+        self.technology_definitions
+            .iter()
+            .copied()
+            .find(|definition| definition.id() == id)
+    }
+
+    /// Returns deterministic research-cost balance.
+    #[must_use]
+    pub const fn technology_cost_balance(&self) -> TechnologyCostBalance {
+        self.technology_cost_balance
+    }
+
     /// Returns the configured movement allowance for one unit.
     #[must_use]
     pub fn maximum_movement(
@@ -210,6 +235,30 @@ impl RulesetDefinition {
         serde_json::to_writer(&mut writer, self)?;
         Ok(ContentHash(writer.0.finalize().into()))
     }
+
+    /// Computes SHA-256 over the canonical technology balance and catalog.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if canonical serialization fails.
+    pub fn technology_catalog_hash(&self) -> Result<ContentHash, serde_json::Error> {
+        let mut writer = HashWriter(Sha256::new());
+        serde_json::to_writer(
+            &mut writer,
+            &CanonicalTechnologyCatalog {
+                cost_balance: self.technology_cost_balance,
+                definitions: self.technology_definitions,
+            },
+        )?;
+        Ok(ContentHash(writer.0.finalize().into()))
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CanonicalTechnologyCatalog {
+    cost_balance: TechnologyCostBalance,
+    definitions: &'static [TechnologyDefinition],
 }
 
 /// Stable serialized occupancy policy owned by content.
@@ -286,6 +335,8 @@ static STANDARD_RULESET: RulesetDefinition = RulesetDefinition {
     ruleset_id: "aonw-standard",
     occupancy_policy: UnitOccupancyPolicyValue::FriendlyStacking,
     unit_definitions: &STANDARD_UNITS,
+    technology_cost_balance: TechnologyCostBalance::STANDARD,
+    technology_definitions: &STANDARD_TECHNOLOGIES,
 };
 const STANDARD_UNITS: [UnitDefinition; 17] = [
     unit(UnitKindValue::Commander, 5, LAND_MILITARY),
@@ -313,8 +364,10 @@ const STANDARD_UNITS: [UnitDefinition; 17] = [
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeSet;
+
     use super::RulesetDefinition;
-    use aonw_domain::{MovementUnits, UnitKind, UnitMovementDomain};
+    use aonw_domain::{MovementUnits, TechnologyId, UnitKind, UnitMovementDomain};
 
     #[test]
     fn standard_ruleset_owns_movement_balance_and_capabilities() {
@@ -341,7 +394,80 @@ mod tests {
         assert_eq!(first, second);
         assert_eq!(
             first.to_string(),
-            "7761411e712570d6f21303d5c3d62b26fa897364341078189cee5e8f3b16337b"
+            "e37d5db8e6a532afaaf1496b238cda3778b23bf609ec97505416bc7525443709"
+        );
+    }
+
+    #[test]
+    fn standard_technology_catalog_is_complete_and_stable() {
+        let ruleset = RulesetDefinition::standard();
+        assert_eq!(ruleset.technologies().len(), 54);
+        for key in crate::TechnologyKey::ALL {
+            assert!(
+                ruleset
+                    .technology(key.domain())
+                    .is_some_and(|value| value.id() == key.domain())
+            );
+        }
+        let mut unique_unlocks = BTreeSet::new();
+        let mut counts = [0_u32; 5];
+        for unlock in ruleset
+            .technologies()
+            .iter()
+            .flat_map(|definition| definition.unlocks())
+        {
+            let (category, value, index) = match unlock {
+                crate::TechnologyUnlock::Building(value) => {
+                    let _ = value.domain();
+                    ("building", format!("{value:?}"), 0)
+                }
+                crate::TechnologyUnlock::Improvement(value) => {
+                    let _ = value.domain();
+                    ("improvement", format!("{value:?}"), 1)
+                }
+                crate::TechnologyUnlock::ResourceVisibility(value) => {
+                    let _ = value.domain();
+                    ("resource", format!("{value:?}"), 2)
+                }
+                crate::TechnologyUnlock::Unit(value) => {
+                    let _ = value.domain();
+                    ("unit", format!("{value:?}"), 3)
+                }
+                crate::TechnologyUnlock::Wonder(value) => {
+                    let _ = value.domain();
+                    ("wonder", format!("{value:?}"), 4)
+                }
+            };
+            assert!(unique_unlocks.insert((category, value)));
+            counts[index] += 1;
+        }
+        assert_eq!(counts, [58, 19, 5, 13, 11]);
+        assert_eq!(
+            ruleset
+                .technology_cost_balance()
+                .default_boost_discount_basis_points(),
+            2_500
+        );
+        for boost in ruleset
+            .technologies()
+            .iter()
+            .flat_map(|definition| definition.boosts())
+        {
+            let _ = boost.condition();
+        }
+        assert_eq!(
+            ruleset
+                .technology_catalog_hash()
+                .expect("catalog hash")
+                .to_string(),
+            "be48beb6ec5f8fd457439b78d2b89355b20e88236ecef78e09d60bd2fab2af4b"
+        );
+        assert_eq!(
+            ruleset
+                .technology(TechnologyId::NuclearPhysics)
+                .expect("nuclear physics")
+                .base_cost(),
+            48
         );
     }
 }

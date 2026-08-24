@@ -67,6 +67,16 @@ recipient disclosure, and its accepted/rejected/hidden manifest is exercised
 by `make rust-diplomacy-policy-check`. All diplomatic mutation commands and
 events retain their existing `reference-only` inventory status until D8.
 
+The CP7/TG read-only substrate is also `state-contract-ready` rather than
+research-command parity. The immutable ruleset owns all 54 technology nodes and
+their canonical catalog hash. One `TechnologyUnlockQuery` supplies prerequisite
+availability, deterministic fixed-point costs, unlock breakdowns, accumulated
+combat/economy modifiers, and production/worker/resource gates. Its strict
+accepted/rejected manifest is exercised by `make rust-tech-gate-check`.
+`SelectTechnology` and research turn progression remain `reference-only` until
+R7; no legacy reader, fallback, local unlock table, or internal version was
+introduced.
+
 The file deliberately has no `v1` suffix or schema-version field. The engine
 and greenfield clients update this one current contract atomically. A format
 version is introduced only after a concrete independently deployed reader or
@@ -80,6 +90,7 @@ make rust-engine-inventory-check
 make rust-engine-inventory-test
 make rust-determinism-check
 make rust-corpus-parity-check
+make rust-tech-gate-check
 ```
 
 The analyzer-backed AST census is a separate evidence gate because the small

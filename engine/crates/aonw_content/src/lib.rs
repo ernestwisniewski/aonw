@@ -16,6 +16,7 @@ mod model;
 mod raw;
 mod ruleset;
 mod scenario;
+mod technology;
 mod validation;
 
 pub use catalog::{GridLayout, MapObjectiveType, ResourceType, TerrainType};
@@ -30,6 +31,11 @@ pub use ruleset::{RulesetDefinition, UnitCapabilities, UnitDefinition, UnitMovem
 pub use scenario::{
     ScenarioBootstrapError, ScenarioDefinition, ScenarioLoadError, ScenarioUnitDefinition,
     ScenarioValidationError,
+};
+pub use technology::{
+    TechnologyBoost, TechnologyBoostCondition, TechnologyBuilding, TechnologyCostBalance,
+    TechnologyDefinition, TechnologyEffect, TechnologyEra, TechnologyImprovement, TechnologyKey,
+    TechnologyResource, TechnologyUnit, TechnologyUnlock, TechnologyWonder,
 };
 pub use validation::{MapValidationError, validate_map_id};
 
