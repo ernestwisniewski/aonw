@@ -9,7 +9,7 @@ import '../support/localized_test_app.dart';
 import '../support/map_test_fixture.dart';
 
 void main() {
-  testWidgets('embeds one clipped idle Flame world below Flutter semantics', (
+  testWidgets('embeds one clipped interactive Flame world with semantics', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
@@ -36,12 +36,10 @@ void main() {
     expect(games, hasLength(1));
     expect(games.single.debugMountCount, 1);
     expect(games.single.world.debugScene?.map.mapId, 'test-map');
-    expect(
-      games.single.inputSurface,
-      isNull,
-      reason: 'the production Canvas oracle owns pointer input until FM5',
-    );
-    expect(games.single.paused, isTrue, reason: 'the empty world stays idle');
+    expect(games.single.inputSurface.isMounted, isTrue);
+    expect(games.single.inputSurface.isEnabled, isTrue);
+    expect(games.single.world.terrainLayer.isVisible, isTrue);
+    expect(games.single.paused, isTrue, reason: 'the loaded world stays idle');
     expect(find.byKey(const ValueKey('flame-viewport-clip')), findsOneWidget);
     expect(
       find.byKey(const ValueKey('flame-viewport-repaint-boundary')),
@@ -55,9 +53,9 @@ void main() {
     final gameWidget = tester.widget<GameWidget<AonwFlameGame>>(gameFinder);
     expect(gameWidget.game, same(games.single));
     expect(gameWidget.autofocus, isFalse);
-    expect(gameWidget.focusNode?.canRequestFocus, isFalse);
+    expect(gameWidget.focusNode, isNull);
     expect(gameWidget.addRepaintBoundary, isFalse);
-    expect(gameWidget.behavior, HitTestBehavior.deferToChild);
+    expect(gameWidget.behavior, HitTestBehavior.opaque);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -104,7 +102,10 @@ void main() {
     expect(games.first.debugDisposed, isTrue);
     expect(games.last.debugMountCount, 1);
     expect(find.byKey(const ValueKey('flame-load-error')), findsNothing);
-    expect(find.byKey(const ValueKey('map-canvas')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('flame-viewport-repaint-boundary')),
+      findsOneWidget,
+    );
   });
 }
 

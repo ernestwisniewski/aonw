@@ -1,5 +1,7 @@
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
+import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
+import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
@@ -15,23 +17,12 @@ void main() {
     final loaded = await loadStarterMapGoldenFixture(tester);
     final map = loaded.map;
     final reference = loaded.reference;
-    final game = AonwFlameGame(renderStaticLayers: true);
+    final game = AonwFlameGame();
     await tester.binding.setSurfaceSize(const Size(660, 728));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     game.sceneSink.replaceScene(
-      MapRenderSnapshot(
-        map: map,
-        interaction: const MapInteractionState(referenceVisible: false),
-        reference: reference,
-        player: PlayerMapView(
-          actorPlayerId: 'preview-player',
-          stamp: starterMapGoldenStamp(map.contentHash),
-          turn: 1,
-          pendingAction: null,
-          units: const [],
-        ),
-      ),
+      _staticSnapshot(map, reference, referenceVisible: false),
     );
     await tester.pumpWidget(
       Directionality(
@@ -68,18 +59,7 @@ void main() {
     );
 
     game.sceneSink.replaceScene(
-      MapRenderSnapshot(
-        map: map,
-        interaction: const MapInteractionState(),
-        reference: reference,
-        player: PlayerMapView(
-          actorPlayerId: 'preview-player',
-          stamp: starterMapGoldenStamp(map.contentHash),
-          turn: 1,
-          pendingAction: null,
-          units: const [],
-        ),
-      ),
+      _staticSnapshot(map, reference, referenceVisible: true),
     );
     await tester.pump();
     expect(game.world.terrainLayer.debugCacheUpdateCount, 1);
@@ -91,56 +71,7 @@ void main() {
       matchesGoldenFile('goldens/flame_starter_map_reference.png'),
     );
 
-    game.sceneSink.replaceScene(
-      MapRenderSnapshot(
-        map: map,
-        interaction: MapInteractionState(
-          hovered: (col: 1, row: 1),
-          selected: (col: 2, row: 1),
-          selectedUnitId: 'preview-commander',
-          reachable: testReachableView(
-            tiles: const [
-              ReachableTileView(
-                coordinate: (col: 2, row: 1),
-                costUnits: 4,
-                exhaustsMovement: false,
-              ),
-              ReachableTileView(
-                coordinate: (col: 3, row: 1),
-                costUnits: 8,
-                exhaustsMovement: false,
-              ),
-              ReachableTileView(
-                coordinate: (col: 2, row: 2),
-                costUnits: 8,
-                exhaustsMovement: false,
-              ),
-            ],
-          ),
-          route: testRoutePlanView(
-            origin: (col: 2, row: 1),
-            target: (col: 3, row: 1),
-          ),
-          referenceVisible: false,
-        ),
-        reference: reference,
-        player: PlayerMapView(
-          actorPlayerId: 'preview-player',
-          stamp: starterMapGoldenStamp(map.contentHash),
-          turn: 1,
-          pendingAction: null,
-          units: [
-            testVisibleUnit(coordinate: (col: 2, row: 1)),
-            testVisibleUnit(id: 'preview-scout', coordinate: (col: 4, row: 2)),
-            testVisibleUnit(
-              id: 'foreign-warrior',
-              ownerPlayerId: 'foreign-player',
-              coordinate: (col: 3, row: 3),
-            ),
-          ],
-        ),
-      ),
-    );
+    game.sceneSink.replaceScene(_gameplaySnapshot(map, reference));
     game.stepEngine(stepTime: 0);
     await tester.pump();
     await expectLater(
@@ -152,3 +83,72 @@ void main() {
     await tester.pump();
   });
 }
+
+MapRenderSnapshot _staticSnapshot(
+  MapView map,
+  MapReferenceBundle reference, {
+  required bool referenceVisible,
+}) => MapRenderSnapshot(
+  map: map,
+  interaction: MapInteractionState(referenceVisible: referenceVisible),
+  reference: reference,
+  player: _player(map),
+);
+
+MapRenderSnapshot _gameplaySnapshot(
+  MapView map,
+  MapReferenceBundle reference,
+) => MapRenderSnapshot(
+  map: map,
+  interaction: MapInteractionState(
+    hovered: (col: 1, row: 1),
+    selected: (col: 2, row: 1),
+    selectedUnitId: 'preview-commander',
+    reachable: testReachableView(
+      tiles: const [
+        ReachableTileView(
+          coordinate: (col: 2, row: 1),
+          costUnits: 4,
+          exhaustsMovement: false,
+        ),
+        ReachableTileView(
+          coordinate: (col: 3, row: 1),
+          costUnits: 8,
+          exhaustsMovement: false,
+        ),
+        ReachableTileView(
+          coordinate: (col: 2, row: 2),
+          costUnits: 8,
+          exhaustsMovement: false,
+        ),
+      ],
+    ),
+    route: testRoutePlanView(
+      origin: (col: 2, row: 1),
+      target: (col: 3, row: 1),
+    ),
+    referenceVisible: false,
+  ),
+  reference: reference,
+  player: _player(
+    map,
+    units: [
+      testVisibleUnit(coordinate: (col: 2, row: 1)),
+      testVisibleUnit(id: 'preview-scout', coordinate: (col: 4, row: 2)),
+      testVisibleUnit(
+        id: 'foreign-warrior',
+        ownerPlayerId: 'foreign-player',
+        coordinate: (col: 3, row: 3),
+      ),
+    ],
+  ),
+);
+
+PlayerMapView _player(MapView map, {List<VisibleUnitView> units = const []}) =>
+    PlayerMapView(
+      actorPlayerId: 'preview-player',
+      stamp: starterMapGoldenStamp(map.contentHash),
+      turn: 1,
+      pendingAction: null,
+      units: units,
+    );

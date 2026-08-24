@@ -83,10 +83,7 @@ void main() {
   final coalescedIntents = <MapHexIntent>[];
   testWithGame<AonwFlameGame>(
     'coalesces hover pan and scale without rebuilding static resources',
-    () => AonwFlameGame(
-      renderStaticLayers: true,
-      onHexIntent: coalescedIntents.add,
-    ),
+    () => AonwFlameGame(onHexIntent: coalescedIntents.add),
     (game) async {
       coalescedIntents.clear();
       final scene = testMapScene(cols: 40, rows: 30);
@@ -94,7 +91,7 @@ void main() {
       game.sceneSink.replaceScene(_snapshot(scene));
       game.setViewportActive(true);
       await game.ready();
-      final surface = game.inputSurface!;
+      final surface = game.inputSurface;
       final center = game.debugScreenForHex((col: 20, row: 15))!;
       final point = Vector2(center.x, center.y);
 
@@ -165,9 +162,9 @@ void main() {
     await tester.pump();
     await tester.runAsync(game.ready);
     await tester.pump(const Duration(milliseconds: 10));
-    expect(game.inputSurface!.isMounted, isTrue);
-    expect(game.inputSurface!.size.x, closeTo(900, 1e-9));
-    expect(game.inputSurface!.size.y, closeTo(800, 1e-9));
+    expect(game.inputSurface.isMounted, isTrue);
+    expect(game.inputSurface.size.x, closeTo(900, 1e-9));
+    expect(game.inputSurface.size.y, closeTo(800, 1e-9));
     final screen = game.debugScreenForHex((col: 3, row: 3))!;
     final gameWidget = find.byType(GameWidget<AonwFlameGame>);
     await tester.tapAt(

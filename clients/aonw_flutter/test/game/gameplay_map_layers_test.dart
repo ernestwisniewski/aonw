@@ -12,7 +12,7 @@ import '../support/map_test_fixture.dart';
 void main() {
   testWithGame<AonwFlameGame>(
     'reconciles stable unit IDs and keeps shared render resources',
-    () => AonwFlameGame(renderStaticLayers: true),
+    AonwFlameGame.new,
     (game) async {
       final stable = testVisibleUnit(id: 'stable');
       final changing = testVisibleUnit(
@@ -72,7 +72,7 @@ void main() {
     'animates an accepted authoritative endpoint without emitting input',
     () {
       final intents = <Object>[];
-      return AonwFlameGame(renderStaticLayers: true, onHexIntent: intents.add)
+      return AonwFlameGame(onHexIntent: intents.add)
         ..add(_IntentProbe(intents));
     },
     (game) async {
@@ -136,7 +136,7 @@ void main() {
 
   testWithGame<AonwFlameGame>(
     'skip reduced motion and speed only alter presentation effects',
-    () => AonwFlameGame(renderStaticLayers: true),
+    AonwFlameGame.new,
     (game) async {
       final scene = testMapScene(units: [testVisibleUnit()]);
       game.replaceScene(
@@ -198,7 +198,7 @@ void main() {
 
   testWithGame<AonwFlameGame>(
     '40 by 30 workload remains indexed by units rather than map cells',
-    () => AonwFlameGame(renderStaticLayers: true),
+    AonwFlameGame.new,
     (game) async {
       final units = [
         for (var index = 0; index < 120; index++)

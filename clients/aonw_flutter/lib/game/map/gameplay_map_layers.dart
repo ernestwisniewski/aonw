@@ -13,13 +13,10 @@ import '../presentation/flame_scene_patch.dart';
 import 'static_map_layers.dart';
 
 final class MapReachableLayerComponent extends Component with HasVisibility {
-  MapReachableLayerComponent({required bool renderEnabled})
-    : _renderEnabled = renderEnabled,
-      super(priority: 30) {
+  MapReachableLayerComponent() : super(priority: 30) {
     isVisible = false;
   }
 
-  final bool _renderEnabled;
   static final ui.Paint _paint = ui.Paint()
     ..color = MapPalette.reachable
     ..style = ui.PaintingStyle.fill;
@@ -46,7 +43,7 @@ final class MapReachableLayerComponent extends Component with HasVisibility {
     }
     _path = path;
     _pathBuildCount += 1;
-    isVisible = _renderEnabled;
+    isVisible = true;
   }
 
   void clearLayer() {
@@ -63,13 +60,10 @@ final class MapReachableLayerComponent extends Component with HasVisibility {
 }
 
 final class MapRouteLayerComponent extends Component with HasVisibility {
-  MapRouteLayerComponent({required bool renderEnabled})
-    : _renderEnabled = renderEnabled,
-      super(priority: 40) {
+  MapRouteLayerComponent() : super(priority: 40) {
     isVisible = false;
   }
 
-  final bool _renderEnabled;
   static final ui.Paint _paint = ui.Paint()
     ..color = MapPalette.route
     ..style = ui.PaintingStyle.stroke
@@ -105,7 +99,7 @@ final class MapRouteLayerComponent extends Component with HasVisibility {
     }
     _path = path;
     _pathBuildCount += 1;
-    isVisible = _renderEnabled;
+    isVisible = true;
   }
 
   void clearLayer() {
@@ -122,13 +116,10 @@ final class MapRouteLayerComponent extends Component with HasVisibility {
 }
 
 final class MapUnitLayerComponent extends Component with HasVisibility {
-  MapUnitLayerComponent({required bool renderEnabled})
-    : _renderEnabled = renderEnabled,
-      super(priority: 50) {
-    isVisible = renderEnabled;
+  MapUnitLayerComponent() : super(priority: 50) {
+    isVisible = false;
   }
 
-  final bool _renderEnabled;
   final _unitsById = <String, MapUnitComponent>{};
   var _createdCount = 0;
   var _updatedCount = 0;
@@ -187,7 +178,7 @@ final class MapUnitLayerComponent extends Component with HasVisibility {
         _updatedCount += 1;
       }
     }
-    isVisible = _renderEnabled && _unitsById.isNotEmpty;
+    isVisible = _unitsById.isNotEmpty;
   }
 
   void clearLayer() {
@@ -277,16 +268,12 @@ final class MapUnitComponent extends PositionComponent {
 }
 
 final class MapSelectionLayerComponent extends Component with HasVisibility {
-  MapSelectionLayerComponent({
-    required bool renderEnabled,
-    required MapUnitLayerComponent units,
-  }) : _renderEnabled = renderEnabled,
-       _units = units,
-       super(priority: 60) {
+  MapSelectionLayerComponent({required MapUnitLayerComponent units})
+    : _units = units,
+      super(priority: 60) {
     isVisible = false;
   }
 
-  final bool _renderEnabled;
   final MapUnitLayerComponent _units;
   static final ui.Paint _hoverPaint = ui.Paint()
     ..color = MapPalette.hover
@@ -320,10 +307,7 @@ final class MapSelectionLayerComponent extends Component with HasVisibility {
     _selectedUnitId = interaction.selectedUnitId;
     _updateCount += 1;
     isVisible =
-        _renderEnabled &&
-        (_hoverPath != null ||
-            _selectionPath != null ||
-            _selectedUnitId != null);
+        _hoverPath != null || _selectionPath != null || _selectedUnitId != null;
   }
 
   void clearLayer() {

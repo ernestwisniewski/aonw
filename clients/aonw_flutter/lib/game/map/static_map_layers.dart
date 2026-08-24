@@ -69,13 +69,10 @@ final class MapStaticRenderCache {
 }
 
 final class MapTerrainLayerComponent extends Component with HasVisibility {
-  MapTerrainLayerComponent({required bool renderEnabled})
-    : _renderEnabled = renderEnabled,
-      super(priority: 0) {
-    isVisible = renderEnabled;
+  MapTerrainLayerComponent() : super(priority: 0) {
+    isVisible = false;
   }
 
-  final bool _renderEnabled;
   final _paints = <MapTerrain, ui.Paint>{
     for (final terrain in MapTerrain.values)
       terrain: ui.Paint()..color = MapPalette.terrain(terrain),
@@ -93,7 +90,7 @@ final class MapTerrainLayerComponent extends Component with HasVisibility {
     if (_cache?.identity == cache.identity) return;
     _cache = cache;
     _cacheUpdateCount += 1;
-    isVisible = _renderEnabled;
+    isVisible = true;
   }
 
   void clearCache() {
@@ -113,15 +110,12 @@ final class MapTerrainLayerComponent extends Component with HasVisibility {
 
 final class MapReferenceLayerComponent extends Component
     with HasGameReference<FlameGame>, HasVisibility {
-  MapReferenceLayerComponent({required bool renderEnabled})
-    : _renderEnabled = renderEnabled,
-      super(priority: 10) {
+  MapReferenceLayerComponent() : super(priority: 10) {
     isVisible = false;
   }
 
   static const _opacity = 0.52;
 
-  final bool _renderEnabled;
   final _paint = ui.Paint()
     ..color = const ui.Color.fromRGBO(255, 255, 255, _opacity)
     ..filterQuality = ui.FilterQuality.medium;
@@ -162,7 +156,7 @@ final class MapReferenceLayerComponent extends Component
     if (_referenceVisible != visible || identityChanged) {
       _referenceVisible = visible;
       _visibilityUpdateCount += 1;
-      isVisible = _renderEnabled && visible;
+      isVisible = visible;
       _refreshGameWidget();
     }
   }
@@ -255,13 +249,10 @@ final class MapReferenceLayerComponent extends Component
 }
 
 final class MapGridLayerComponent extends Component with HasVisibility {
-  MapGridLayerComponent({required bool renderEnabled})
-    : _renderEnabled = renderEnabled,
-      super(priority: 20) {
-    isVisible = renderEnabled;
+  MapGridLayerComponent() : super(priority: 20) {
+    isVisible = false;
   }
 
-  final bool _renderEnabled;
   final _paint = ui.Paint()
     ..color = MapPalette.grid
     ..style = ui.PaintingStyle.stroke
@@ -279,7 +270,7 @@ final class MapGridLayerComponent extends Component with HasVisibility {
     if (_cache?.identity == cache.identity) return;
     _cache = cache;
     _cacheUpdateCount += 1;
-    isVisible = _renderEnabled;
+    isVisible = true;
   }
 
   void clearCache() {

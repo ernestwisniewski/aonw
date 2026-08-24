@@ -19,23 +19,14 @@ import 'presentation/flame_scene_sink.dart';
 typedef AonwFlameGameFactory = AonwFlameGame Function();
 
 final class AonwWorld extends World implements FlameSceneSink {
-  AonwWorld({bool renderStaticLayers = false})
-    : terrainLayer = MapTerrainLayerComponent(
-        renderEnabled: renderStaticLayers,
-      ),
-      referenceLayer = MapReferenceLayerComponent(
-        renderEnabled: renderStaticLayers,
-      ),
-      gridLayer = MapGridLayerComponent(renderEnabled: renderStaticLayers) {
-    unitLayer = MapUnitLayerComponent(renderEnabled: renderStaticLayers);
-    reachableLayer = MapReachableLayerComponent(
-      renderEnabled: renderStaticLayers,
-    );
-    routeLayer = MapRouteLayerComponent(renderEnabled: renderStaticLayers);
-    selectionLayer = MapSelectionLayerComponent(
-      renderEnabled: renderStaticLayers,
-      units: unitLayer,
-    );
+  AonwWorld()
+    : terrainLayer = MapTerrainLayerComponent(),
+      referenceLayer = MapReferenceLayerComponent(),
+      gridLayer = MapGridLayerComponent() {
+    unitLayer = MapUnitLayerComponent();
+    reachableLayer = MapReachableLayerComponent();
+    routeLayer = MapRouteLayerComponent();
+    selectionLayer = MapSelectionLayerComponent(units: unitLayer);
     effectHost = MapEffectHostComponent(units: unitLayer);
     addAll([
       terrainLayer,
@@ -130,29 +121,23 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
   AonwFlameGame({
     AonwWorld? world,
     CameraComponent? camera,
-    bool renderStaticLayers = false,
     MapHexIntentSink? onHexIntent,
-  }) : super(
-         world: world ?? AonwWorld(renderStaticLayers: renderStaticLayers),
-         camera: camera ?? CameraComponent(),
-       ) {
+  }) : super(world: world ?? AonwWorld(), camera: camera ?? CameraComponent()) {
     // Route and application visibility are coordinated by the Flutter owner.
     pauseWhenBackgrounded = false;
     pauseEngine();
     _hexIntentSink = onHexIntent;
     mapCamera = FlameMapCameraController(this.camera);
-    inputSurface = onHexIntent == null
-        ? null
-        : FlameMapInputSurface(
-            onIntent: _handleViewportIntent,
-            requestFrame: _requestInputFrame,
-          );
-    if (inputSurface case final surface?) add(surface);
+    inputSurface = FlameMapInputSurface(
+      onIntent: _handleViewportIntent,
+      requestFrame: _requestInputFrame,
+    );
+    this.camera.viewport.add(inputSurface);
     this.world.effectHost.onActivityChanged = _handleEffectActivity;
   }
 
   late final FlameMapCameraController mapCamera;
-  late final FlameMapInputSurface? inputSurface;
+  late final FlameMapInputSurface inputSurface;
   MapHexIntentSink? _hexIntentSink;
   MapHexCoordinate? _lastHoveredHex;
   var _hasHoveredHex = false;
@@ -214,7 +199,7 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
   void setViewportActive(bool active) {
     if (_disposed || active == _viewportActive) return;
     _viewportActive = active;
-    inputSurface?.setEnabled(active);
+    inputSurface.setEnabled(active);
     _synchronizeGameLoop();
   }
 
@@ -222,6 +207,16 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
     if (_disposed || enabled == _continuousRendering) return;
     _continuousRendering = enabled;
     _synchronizeGameLoop();
+  }
+
+  void setHexIntentSink(MapHexIntentSink? sink) {
+    if (_disposed) return;
+    _hexIntentSink = sink;
+  }
+
+  void setCameraSensitivity(double sensitivity) {
+    if (_disposed) return;
+    inputSurface.setCameraSensitivity(sensitivity);
   }
 
   void _synchronizeGameLoop() {
@@ -262,12 +257,22 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    inputSurface?.resize(size);
+    inputSurface.resize(size);
     mapCamera.resize(size);
   }
 
   @override
   Color backgroundColor() => const Color(0x00000000);
+
+  @override
+  void onAttach() {
+    super.onAttach();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (_disposed || !isAttached) return;
+      if (paused) update(0);
+      _synchronizeGameLoop();
+    });
+  }
 
   @override
   void onMount() {
@@ -294,24 +299,17 @@ base class AonwFlameGame extends FlameGame<AonwWorld>
   void _handleViewportIntent(MapViewportIntent intent) {
     if (!_viewportActive) return;
     mapCamera.applyIntent(intent);
-    final coordinate = switch (intent) {
-      MapHoverIntent(:final screenPosition) ||
-      MapSelectIntent(
-        :final screenPosition,
-      ) => mapCamera.hexAtScreen(screenPosition),
-      MapViewportFrameIntent(:final hoverScreenPosition) =>
-        hoverScreenPosition == null
-            ? null
-            : mapCamera.hexAtScreen(hoverScreenPosition),
-      MapPanIntent() || MapZoomIntent() => null,
-    };
     switch (intent) {
-      case MapHoverIntent():
-        _emitHover(coordinate);
-      case MapSelectIntent():
-        _hexIntentSink?.call(MapHexSelectIntent(coordinate));
+      case MapHoverIntent(:final screenPosition):
+        _emitHover(mapCamera.hexAtScreen(screenPosition));
+      case MapSelectIntent(:final screenPosition):
+        _hexIntentSink?.call(
+          MapHexSelectIntent(mapCamera.hexAtScreen(screenPosition)),
+        );
       case MapViewportFrameIntent(:final hoverScreenPosition):
-        if (hoverScreenPosition != null) _emitHover(coordinate);
+        if (hoverScreenPosition != null) {
+          _emitHover(mapCamera.hexAtScreen(hoverScreenPosition));
+        }
       case MapPanIntent() || MapZoomIntent():
         break;
     }

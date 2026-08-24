@@ -16,14 +16,14 @@ import 'package:integration_test/integration_test.dart';
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('keeps the FM4 40 by 30 Flame workload within pilot budget', (
+  testWidgets('keeps the FM5 production Flame workload within its budget', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1280, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final rssBefore = ProcessInfo.currentRss;
     final snapshot = _largeSnapshot();
-    final game = AonwFlameGame(renderStaticLayers: true);
+    final game = AonwFlameGame();
     final startup = Stopwatch()..start();
 
     await tester.pumpWidget(
@@ -56,12 +56,12 @@ void main() {
       for (var frame = 0; frame < 60; frame++) {
         await tester.pump(const Duration(microseconds: 16667));
       }
-    }, reportKey: 'fm4FrameTimes');
+    }, reportKey: 'fm5FrameTimes');
     game.setContinuousRendering(false);
     expect(game.paused, isTrue);
 
     final frameTimes =
-        binding.reportData!['fm4FrameTimes']! as Map<String, dynamic>;
+        binding.reportData!['fm5FrameTimes']! as Map<String, dynamic>;
     final buildP99 =
         frameTimes['99th_percentile_frame_build_time_millis']! as num;
     final rasterP99 =
@@ -86,7 +86,7 @@ void main() {
         'flame': '1.38.0',
       },
       'workload': {
-        'mapId': 'fm4-pilot-40x30',
+        'mapId': 'fm5-cutover-40x30',
         'dimensions': {'cols': 40, 'rows': 30},
         'visibleUnits': 120,
         'warmupFrames': 12,
@@ -102,7 +102,7 @@ void main() {
         'frameTimes': frameTimes,
       },
       'policy': {
-        'classification': 'hard-fm4-pilot',
+        'classification': 'hard-fm5-cutover',
         'owner': 'Flutter client',
         'buildP99MillisMax': 16.667,
         'rasterP99MillisMax': 16.667,
@@ -110,9 +110,9 @@ void main() {
         'residentMemoryDeltaBytesMax': 192 * 1024 * 1024,
       },
     };
-    // Stable marker copied into the reviewed FM4 performance record.
+    // Stable marker copied into the reviewed FM5 performance record.
     // ignore: avoid_print
-    print('AONW_FM4_PILOT ${jsonEncode(record)}');
+    print('AONW_FM5_BASELINE ${jsonEncode(record)}');
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -157,7 +157,7 @@ MapRenderSnapshot _largeSnapshot() {
   );
   final bounds = geometry.bounds;
   final map = MapView(
-    mapId: 'fm4-pilot-40x30',
+    mapId: 'fm5-cutover-40x30',
     contentHash: contentHash,
     gridLayout: MapGridLayout.oddQFlatTop,
     cols: cols,

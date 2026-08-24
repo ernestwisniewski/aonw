@@ -34,7 +34,10 @@ void main() {
     await tester.pumpWidget(AppComposition.production().root);
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('map-canvas')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('flame-viewport-repaint-boundary')),
+      findsOneWidget,
+    );
     expect(find.text('Map unavailable'), findsNothing);
   });
 }

@@ -47,6 +47,7 @@ final class FlameMapCameraController {
 
   void resize(Vector2 viewport) {
     if (viewport.x <= 0 || viewport.y <= 0) return;
+    if (_viewport.x == viewport.x && _viewport.y == viewport.y) return;
     _viewport = viewport.clone();
     final transform = _transform;
     if (transform == null) {
@@ -88,22 +89,33 @@ final class FlameMapCameraController {
         :final zoomFocalPoint,
         :final zoomFactor,
       ):
-        var next = transform;
-        if (screenPanDelta.x != 0 || screenPanDelta.y != 0) {
-          next = next.panByScreen(screenPanDelta);
-        }
-        if (zoomFocalPoint != null && zoomFactor != 1) {
-          next = next.zoomAtScreen(
-            focalPoint: zoomFocalPoint,
-            factor: zoomFactor,
-          );
-        }
-        if (identical(next, transform)) return false;
-        _apply(next);
-        return true;
+        return _applyFrameIntent(
+          transform,
+          screenPanDelta: screenPanDelta,
+          zoomFocalPoint: zoomFocalPoint,
+          zoomFactor: zoomFactor,
+        );
       case MapHoverIntent() || MapSelectIntent():
         return false;
     }
+  }
+
+  bool _applyFrameIntent(
+    MapCameraTransform transform, {
+    required AonwPoint screenPanDelta,
+    required AonwPoint? zoomFocalPoint,
+    required double zoomFactor,
+  }) {
+    var next = transform;
+    if (screenPanDelta.x != 0 || screenPanDelta.y != 0) {
+      next = next.panByScreen(screenPanDelta);
+    }
+    if (zoomFocalPoint != null && zoomFactor != 1) {
+      next = next.zoomAtScreen(focalPoint: zoomFocalPoint, factor: zoomFactor);
+    }
+    if (identical(next, transform)) return false;
+    _apply(next);
+    return true;
   }
 
   void _initializeIfReady() {

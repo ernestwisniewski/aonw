@@ -76,7 +76,7 @@ final class RustMapRepository implements MapRepository {
     await _verifyCapabilities(candidate);
     final document = await _assets.loadString(assets.document);
     final scenario = await _assets.loadString(assets.scenarioDocument);
-    final map = await _inspectMap(candidate, document);
+    final map = await _inspectMap(candidate, document, _mapper);
     final player = await _openPlayer(
       candidate,
       mapDocument: document,
@@ -89,47 +89,6 @@ final class RustMapRepository implements MapRepository {
       map: map,
     );
     return MapScene(map: map, reference: reference, player: player);
-  }
-
-  Future<void> _verifyCapabilities(AonwRustSession candidate) async {
-    final response = await candidate.send(AonwClientRequest.capabilities());
-    if (!response.isSuccess) {
-      final error = response.error!;
-      throw MapLoadException(
-        code: 'rust_capability_mismatch',
-        message: 'The native game adapter is incompatible with this client.',
-        diagnosticCause: error,
-        diagnosticStackTrace: StackTrace.current,
-      );
-    }
-    final capabilities = response.require<AonwCapabilitiesResponse>();
-    final missing = _requiredClientFeatures.difference(
-      capabilities.features.toSet(),
-    );
-    if (missing.isEmpty) return;
-    throw MapLoadException(
-      code: 'rust_capability_mismatch',
-      message: 'The native game adapter is incompatible with this client.',
-      diagnosticCause: StateError(
-        'Missing Rust client capabilities: '
-        '${missing.map((feature) => feature.name).join(', ')}',
-      ),
-      diagnosticStackTrace: StackTrace.current,
-    );
-  }
-
-  Future<MapView> _inspectMap(
-    AonwRustSession candidate,
-    String document,
-  ) async {
-    final response = await candidate.send(
-      AonwClientRequest.inspectMap(mapDocument: document),
-    );
-    final inspected = _loadResponse<AonwMapInspectedResponse>(
-      response,
-      'The map could not be opened.',
-    );
-    return _mapper.fromWire(inspected.map);
   }
 
   Future<PlayerMapView> _openPlayer(
@@ -390,6 +349,48 @@ final class RustMapRepository implements MapRepository {
     diagnosticCause: error,
     diagnosticStackTrace: stackTrace,
   );
+}
+
+Future<void> _verifyCapabilities(AonwRustSession candidate) async {
+  final response = await candidate.send(AonwClientRequest.capabilities());
+  if (!response.isSuccess) {
+    final error = response.error!;
+    throw MapLoadException(
+      code: 'rust_capability_mismatch',
+      message: 'The native game adapter is incompatible with this client.',
+      diagnosticCause: error,
+      diagnosticStackTrace: StackTrace.current,
+    );
+  }
+  final capabilities = response.require<AonwCapabilitiesResponse>();
+  final missing = _requiredClientFeatures.difference(
+    capabilities.features.toSet(),
+  );
+  if (missing.isEmpty) return;
+  throw MapLoadException(
+    code: 'rust_capability_mismatch',
+    message: 'The native game adapter is incompatible with this client.',
+    diagnosticCause: StateError(
+      'Missing Rust client capabilities: '
+      '${missing.map((feature) => feature.name).join(', ')}',
+    ),
+    diagnosticStackTrace: StackTrace.current,
+  );
+}
+
+Future<MapView> _inspectMap(
+  AonwRustSession candidate,
+  String document,
+  MapViewMapper mapper,
+) async {
+  final response = await candidate.send(
+    AonwClientRequest.inspectMap(mapDocument: document),
+  );
+  final inspected = RustMapRepository._loadResponse<AonwMapInspectedResponse>(
+    response,
+    'The map could not be opened.',
+  );
+  return mapper.fromWire(inspected.map);
 }
 
 const _requiredClientFeatures = <AonwClientFeature>{

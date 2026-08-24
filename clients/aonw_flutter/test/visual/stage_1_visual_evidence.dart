@@ -2,11 +2,12 @@ import 'package:aonw_flutter/features/map/application/map_interaction_state.dart
 import 'package:aonw_flutter/features/map/infrastructure/map_view_mapper.dart';
 import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
-import 'package:aonw_flutter/features/map/presentation/widgets/map_canvas.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -57,6 +58,30 @@ Future<void> _captureEvidence(
   debugPrint('Flutter evidence: MapView loaded for $fileName');
   await tester.binding.setSurfaceSize(const Size(660, 728));
   addTearDown(() => tester.binding.setSurfaceSize(null));
+  final snapshot = MapRenderSnapshot(
+    map: loadedMap,
+    interaction: interaction,
+    reference: MapReferenceBundle(
+      mapId: loadedMap.mapId,
+      mapContentHash: loadedMap.contentHash,
+      worldWidth: bounds.width,
+      worldHeight: bounds.height,
+      pages: const [],
+    ),
+    player: PlayerMapView(
+      actorPlayerId: 'preview-player',
+      stamp: SessionStampView(
+        revision: 0,
+        stateDigest: 'b' * 64,
+        mapHash: loadedMap.contentHash,
+        rulesetHash: 'c' * 64,
+      ),
+      turn: 1,
+      pendingAction: null,
+      units: const [],
+    ),
+  );
+  final game = AonwFlameGame()..replaceScene(snapshot);
 
   await tester.pumpWidget(
     LocalizedTestApp(
@@ -64,38 +89,13 @@ Future<void> _captureEvidence(
         color: Colors.black,
         child: RepaintBoundary(
           key: _captureKey,
-          child: MapCanvas(
-            snapshot: MapRenderSnapshot(
-              map: loadedMap,
-              interaction: interaction,
-              reference: MapReferenceBundle(
-                mapId: loadedMap.mapId,
-                mapContentHash: loadedMap.contentHash,
-                worldWidth: bounds.width,
-                worldHeight: bounds.height,
-                pages: const [],
-              ),
-              player: PlayerMapView(
-                actorPlayerId: 'preview-player',
-                stamp: SessionStampView(
-                  revision: 0,
-                  stateDigest: 'b' * 64,
-                  mapHash: loadedMap.contentHash,
-                  rulesetHash: 'c' * 64,
-                ),
-                turn: 1,
-                pendingAction: null,
-                units: const [],
-              ),
-            ),
-            onHover: (_) {},
-            onSelect: (_) {},
-          ),
+          child: GameWidget<AonwFlameGame>(game: game, autofocus: false),
         ),
       ),
     ),
   );
-  await tester.pump();
+  await tester.runAsync(game.ready);
+  game.stepEngine(stepTime: 0);
   await tester.pump(const Duration(milliseconds: 200));
   debugPrint('Flutter evidence: $fileName rendered');
   await expectLater(
@@ -103,6 +103,8 @@ Future<void> _captureEvidence(
     matchesGoldenFile('../../../../docs/acceptance/stage-1/$fileName'),
   );
   debugPrint('Flutter evidence: $fileName complete');
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump();
 }
 
 Future<MapView?> _loadMap(WidgetTester tester) =>

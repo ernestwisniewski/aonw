@@ -15,7 +15,7 @@ void main() {
 
     await tester.pumpWidget(AonwApp(mapController: controller));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('map-canvas')), findsOneWidget);
+    expect(find.byKey(const ValueKey('map-viewport')), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('open-settings')));
     await tester.pumpAndSettle();
@@ -23,7 +23,7 @@ void main() {
     Navigator.of(tester.element(find.text('Settings'))).pop();
     await tester.pumpAndSettle();
 
-    final context = tester.element(find.byKey(const ValueKey('map-canvas')));
+    final context = tester.element(find.byKey(const ValueKey('map-viewport')));
     Navigator.of(context).pushNamed('/future-screen');
     await tester.pumpAndSettle();
 
@@ -49,7 +49,7 @@ void main() {
       findsOneWidget,
     );
 
-    final context = tester.element(find.byKey(const ValueKey('map-canvas')));
+    final context = tester.element(find.byKey(const ValueKey('map-viewport')));
     Navigator.of(context).pushNamed('/future-screen');
     await tester.pumpAndSettle();
 

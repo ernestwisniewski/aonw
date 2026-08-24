@@ -84,13 +84,77 @@ void main() {
       ),
     );
     expect(
+      _target(makefile, 'successor-flutter-coverage-report'),
+      const _Target(
+        prerequisites: ['successor-flutter-dependencies'],
+        recipes: [
+          '@cd clients/aonw_flutter && flutter test --coverage --no-pub',
+        ],
+      ),
+    );
+    expect(
+      _target(makefile, 'successor-flutter-fm5-baseline'),
+      const _Target(
+        prerequisites: ['successor-flutter-dependencies'],
+        recipes: [
+          '@cd clients/aonw_flutter && flutter test --no-dds --no-pub '
+              'integration_test/fm4_flame_gameplay_pilot_test.dart',
+        ],
+      ),
+    );
+    expect(
       _target(makefile, '.PHONY').prerequisites,
       containsAll({
         'successor-flutter-dependencies',
         'successor-flutter-analyze',
         'successor-flutter-test',
+        'successor-flutter-coverage-report',
+        'successor-flutter-fm5-baseline',
       }),
     );
+  });
+
+  test('production map renderer is Flame-only after the FM5 cutover', () {
+    const removedPaths = [
+      'clients/aonw_flutter/lib/features/map/presentation/camera/'
+          'map_initial_camera.dart',
+      'clients/aonw_flutter/lib/features/map/presentation/layers/'
+          'map_painters.dart',
+      'clients/aonw_flutter/lib/features/map/presentation/widgets/'
+          'map_canvas.dart',
+    ];
+    for (final path in removedPaths) {
+      expect(File(path).existsSync(), isFalse, reason: path);
+    }
+
+    final sources = Directory('clients/aonw_flutter/lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'));
+    for (final file in sources) {
+      final source = file.readAsStringSync();
+      for (final forbidden in [
+        'CustomPainter',
+        'InteractiveViewer',
+        'TransformationController',
+        'MapCanvas',
+        'renderStaticLayers',
+      ]) {
+        expect(source, isNot(contains(forbidden)), reason: file.path);
+      }
+    }
+
+    final mapScreen = File(
+      'clients/aonw_flutter/lib/features/map/presentation/widgets/'
+      'map_screen.dart',
+    ).readAsStringSync();
+    final viewport = File(
+      'clients/aonw_flutter/lib/features/map/presentation/widgets/'
+      'flame_map_viewport.dart',
+    ).readAsStringSync();
+    expect(mapScreen, contains('FlameMapViewport('));
+    expect(viewport, contains('GameWidget<AonwFlameGame>'));
+    expect(viewport, contains("ValueKey('map-viewport')"));
   });
 
   test('macOS gamepad support stays on the pinned CocoaPods path', () {
@@ -162,6 +226,56 @@ void main() {
       hasLength(frames['frameCount'] as int),
     );
     expect((baseline['policy'] as Map<String, dynamic>)['hardBudget'], isFalse);
+  });
+
+  test('FM5 Flame cutover keeps reviewed hard-budget evidence', () {
+    final baseline =
+        jsonDecode(
+              File(
+                'clients/aonw_flutter/performance/'
+                'fm5_flame_cutover_baseline.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final workload = baseline['workload'] as Map<String, dynamic>;
+    final metrics = baseline['metrics'] as Map<String, dynamic>;
+    final frames = metrics['frameTimes'] as Map<String, dynamic>;
+    final policy = baseline['policy'] as Map<String, dynamic>;
+    final comparison =
+        jsonDecode(
+              File(
+                'clients/aonw_flutter/performance/'
+                'fm5_cutover_comparison.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+
+    expect(baseline['schemaVersion'], 1);
+    expect(baseline['sourceCommand'], contains('successor-flutter-fm5-baseline'));
+    expect(workload['dimensions'], {'cols': 40, 'rows': 30});
+    expect(workload['visibleUnits'], 120);
+    expect(metrics['idleEffectUpdates'], 0);
+    expect(
+      frames['frameBuildTimesMicros'],
+      hasLength(workload['recordedFrames'] as int),
+    );
+    expect(
+      frames['frameRasterizerTimesMicros'],
+      hasLength(workload['recordedFrames'] as int),
+    );
+    expect(
+      frames['p99FrameBuildTimeMillis'] as num,
+      lessThanOrEqualTo(policy['buildP99MillisMax'] as num),
+    );
+    expect(
+      frames['p99FrameRasterizerTimeMillis'] as num,
+      lessThanOrEqualTo(policy['rasterP99MillisMax'] as num),
+    );
+    expect(comparison['decision'], 'accept-flame-cutover');
+    expect(
+      (comparison['acceptance'] as Map<String, dynamic>)['hardBudgetsPassed'],
+      isTrue,
+    );
   });
 }
 

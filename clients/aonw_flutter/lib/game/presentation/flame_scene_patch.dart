@@ -22,66 +22,17 @@ final class FlameScenePatch {
     MapRenderSnapshot next,
   ) {
     if (previous == null || !_sameMap(previous, next)) {
-      return FlameScenePatch._(
-        snapshot: next,
-        unitUpserts: next.player.units,
-        removedUnitIds:
-            previous?.player.units.map((unit) => unit.id).toList() ?? const [],
-        movements: const [],
-      );
+      return _replacement(previous, next);
     }
 
-    final previousUnits = {
-      for (final unit in previous.player.units) unit.id: unit,
-    };
-    final nextUnits = {for (final unit in next.player.units) unit.id: unit};
-    final actorChanged =
-        previous.player.actorPlayerId != next.player.actorPlayerId;
-    final unitUpserts = <VisibleUnitView>[];
-    for (final unit in next.player.units) {
-      final before = previousUnits[unit.id];
-      if (actorChanged || before == null || !_sameUnit(before, unit)) {
-        unitUpserts.add(unit);
-      }
-    }
-
-    final removedUnitIds = <String>[
-      for (final unit in previous.player.units)
-        if (!nextUnits.containsKey(unit.id)) unit.id,
-    ];
-
-    final movements = <FlameUnitMovementTransition>[];
-    final pendingUnitId = previous.interaction.movementPending
-        ? previous.interaction.selectedUnitId
-        : null;
-    final authoritativeAdvance =
-        next.player.stamp.revision > previous.player.stamp.revision &&
-        next.player.stamp.stateDigest != previous.player.stamp.stateDigest &&
-        next.player.stamp.mapHash == previous.player.stamp.mapHash &&
-        next.player.stamp.rulesetHash == previous.player.stamp.rulesetHash;
-    if (pendingUnitId != null && authoritativeAdvance) {
-      final before = previousUnits[pendingUnitId];
-      final after = nextUnits[pendingUnitId];
-      if (before != null &&
-          after != null &&
-          before.coordinate != after.coordinate) {
-        movements.add(
-          FlameUnitMovementTransition(
-            unitId: pendingUnitId,
-            from: before.coordinate,
-            to: after.coordinate,
-            fromRevision: previous.player.stamp.revision,
-            toRevision: next.player.stamp.revision,
-          ),
-        );
-      }
-    }
+    final previousUnits = _unitsById(previous);
+    final nextUnits = _unitsById(next);
 
     return FlameScenePatch._(
       snapshot: next,
-      unitUpserts: unitUpserts,
-      removedUnitIds: removedUnitIds,
-      movements: movements,
+      unitUpserts: _unitUpserts(previous, next, previousUnits),
+      removedUnitIds: _removedUnitIds(previous, nextUnits),
+      movements: _movementBetween(previous, next, previousUnits, nextUnits),
     );
   }
 
@@ -89,6 +40,83 @@ final class FlameScenePatch {
   final List<VisibleUnitView> unitUpserts;
   final List<String> removedUnitIds;
   final List<FlameUnitMovementTransition> movements;
+
+  static FlameScenePatch _replacement(
+    MapRenderSnapshot? previous,
+    MapRenderSnapshot next,
+  ) => FlameScenePatch._(
+    snapshot: next,
+    unitUpserts: next.player.units,
+    removedUnitIds:
+        previous?.player.units.map((unit) => unit.id).toList() ?? const [],
+    movements: const [],
+  );
+
+  static Map<String, VisibleUnitView> _unitsById(MapRenderSnapshot snapshot) =>
+      {for (final unit in snapshot.player.units) unit.id: unit};
+
+  static List<VisibleUnitView> _unitUpserts(
+    MapRenderSnapshot previous,
+    MapRenderSnapshot next,
+    Map<String, VisibleUnitView> previousUnits,
+  ) {
+    final actorChanged =
+        previous.player.actorPlayerId != next.player.actorPlayerId;
+    return [
+      for (final unit in next.player.units)
+        if (actorChanged || _unitChanged(previousUnits[unit.id], unit)) unit,
+    ];
+  }
+
+  static bool _unitChanged(VisibleUnitView? before, VisibleUnitView next) =>
+      before == null || !_sameUnit(before, next);
+
+  static List<String> _removedUnitIds(
+    MapRenderSnapshot previous,
+    Map<String, VisibleUnitView> nextUnits,
+  ) => [
+    for (final unit in previous.player.units)
+      if (!nextUnits.containsKey(unit.id)) unit.id,
+  ];
+
+  static List<FlameUnitMovementTransition> _movementBetween(
+    MapRenderSnapshot previous,
+    MapRenderSnapshot next,
+    Map<String, VisibleUnitView> previousUnits,
+    Map<String, VisibleUnitView> nextUnits,
+  ) {
+    final unitId = previous.interaction.movementPending
+        ? previous.interaction.selectedUnitId
+        : null;
+    if (unitId == null || !_isAuthoritativeAdvance(previous, next)) {
+      return const [];
+    }
+    final before = previousUnits[unitId];
+    final after = nextUnits[unitId];
+    if (before == null ||
+        after == null ||
+        before.coordinate == after.coordinate) {
+      return const [];
+    }
+    return [
+      FlameUnitMovementTransition(
+        unitId: unitId,
+        from: before.coordinate,
+        to: after.coordinate,
+        fromRevision: previous.player.stamp.revision,
+        toRevision: next.player.stamp.revision,
+      ),
+    ];
+  }
+
+  static bool _isAuthoritativeAdvance(
+    MapRenderSnapshot previous,
+    MapRenderSnapshot next,
+  ) =>
+      next.player.stamp.revision > previous.player.stamp.revision &&
+      next.player.stamp.stateDigest != previous.player.stamp.stateDigest &&
+      next.player.stamp.mapHash == previous.player.stamp.mapHash &&
+      next.player.stamp.rulesetHash == previous.player.stamp.rulesetHash;
 
   static bool _sameMap(MapRenderSnapshot previous, MapRenderSnapshot next) =>
       previous.map.mapId == next.map.mapId &&

@@ -29,7 +29,7 @@ void main() {
 
   testWithGame<AonwFlameGame>(
     'keeps three batched static layers before ordered gameplay layers',
-    () => AonwFlameGame(renderStaticLayers: true),
+    AonwFlameGame.new,
     (game) async {
       final scene = testMapScene(cols: 7, rows: 7);
       game.sceneSink.replaceScene(_snapshot(scene));
@@ -71,7 +71,7 @@ void main() {
 
   testWithGame<AonwFlameGame>(
     'reuses caches across visibility resize and idle updates',
-    () => AonwFlameGame(renderStaticLayers: true),
+    AonwFlameGame.new,
     (game) async {
       final scene = testMapScene(cols: 7, rows: 7);
       game.sceneSink.replaceScene(_snapshot(scene));

@@ -35,7 +35,23 @@ final class FlameMapInputSurface extends PositionComponent
   @visibleForTesting
   int get debugFlushCount => _flushCount;
 
+  @visibleForTesting
+  double get debugCameraSensitivity => _cameraSensitivity;
+
   bool get isEnabled => _enabled;
+
+  var _cameraSensitivity = 1.0;
+
+  void setCameraSensitivity(double sensitivity) {
+    if (!sensitivity.isFinite || sensitivity < 0.5 || sensitivity > 2) {
+      throw ArgumentError.value(
+        sensitivity,
+        'sensitivity',
+        'must be between 0.5 and 2',
+      );
+    }
+    _cameraSensitivity = sensitivity;
+  }
 
   void setEnabled(bool enabled) {
     _enabled = enabled;
@@ -122,7 +138,7 @@ final class FlameMapInputSurface extends PositionComponent
   void onScaleUpdate(ScaleUpdateEvent event) {
     final factor = event.scale / _lastScale;
     _lastScale = event.scale;
-    submitPan(event.focalPointDelta);
+    if (event.pointerCount > 1) submitPan(event.focalPointDelta);
     submitZoom(focalPoint: event.canvasEndPosition, factor: factor);
     super.onScaleUpdate(event);
   }
@@ -137,7 +153,7 @@ final class FlameMapInputSurface extends PositionComponent
   void onScroll(ScrollEvent event) {
     submitZoom(
       focalPoint: event.canvasPosition,
-      factor: math.exp(-event.scrollDelta.y / 500),
+      factor: math.exp(-event.scrollDelta.y * _cameraSensitivity / 500),
     );
     super.onScroll(event);
   }

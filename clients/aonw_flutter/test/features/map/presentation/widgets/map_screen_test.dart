@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
 import 'package:aonw_flutter/features/map/application/map_controller.dart';
 import 'package:aonw_flutter/features/map/application/map_repository.dart';
-import 'package:aonw_flutter/features/map/presentation/camera/map_viewport_projection.dart';
 import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_screen.dart';
@@ -25,11 +24,12 @@ void main() {
     tester,
   ) async {
     final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene(cols: 7, rows: 7)),
+      repository: FakeMapRepository.success(
+        testMapScene(cols: 7, rows: 7, defaultZoom: 1.2),
+      ),
     );
-    final camera = TransformationController();
+    final flameGame = AonwFlameGame();
     addTearDown(controller.dispose);
-    addTearDown(camera.dispose);
     await tester.binding.setSurfaceSize(const Size(900, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -38,34 +38,42 @@ void main() {
         home: Scaffold(
           body: MapScreen(
             controller: controller,
-            transformationController: camera,
+            flameGameFactory: () => flameGame,
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    const projection = MapViewportProjection(
-      AonwOddQFlatTopGeometry(cols: 7, rows: 7, radius: 60),
+    final viewport = find.byKey(const ValueKey('map-viewport'));
+    final flameViewport = find.byKey(const ValueKey(('flame-viewport', 0)));
+    final center = flameGame.debugScreenForHex((col: 3, row: 3))!;
+    await tester.tapAt(
+      tester.getTopLeft(viewport) + Offset(center.x, center.y),
     );
-    final canvas = find.byKey(const ValueKey('map-canvas'));
-    final center = projection.hexCenter((col: 3, row: 3));
-    await tester.tapAt(tester.getTopLeft(canvas) + Offset(center.x, center.y));
     await tester.pump();
     expect(find.text('Hex 3, 3'), findsOneWidget);
 
-    final beforePan = camera.value.clone();
-    await tester.drag(
-      find.byKey(const ValueKey('map-viewport')),
-      const Offset(60, 40),
-    );
+    final beforePan = flameGame.mapCamera.debugTransform!.worldCenter;
+    final beforePanUpdates = flameGame.mapCamera.debugTransformUpdateCount;
+    final beforePanFlushes = flameGame.inputSurface.debugFlushCount;
+    await tester.drag(flameViewport, const Offset(60, 40));
     await tester.pumpAndSettle();
-    expect(camera.value, isNot(equals(beforePan)));
-
-    final beforeZoom = camera.value.getMaxScaleOnAxis();
-    final viewportCenter = tester.getCenter(
-      find.byKey(const ValueKey('map-viewport')),
+    expect(
+      flameGame.inputSurface.debugFlushCount,
+      greaterThan(beforePanFlushes),
     );
+    expect(
+      flameGame.mapCamera.debugTransformUpdateCount,
+      greaterThan(beforePanUpdates),
+    );
+    expect(
+      flameGame.mapCamera.debugTransform!.worldCenter,
+      isNot(equals(beforePan)),
+    );
+
+    final beforeZoom = flameGame.mapCamera.debugTransform!.zoom;
+    final viewportCenter = tester.getCenter(flameViewport);
     final first = await tester.createGesture(pointer: 1);
     final second = await tester.createGesture(pointer: 2);
     await first.down(viewportCenter - const Offset(30, 0));
@@ -75,7 +83,7 @@ void main() {
     await first.up();
     await second.up();
     await tester.pumpAndSettle();
-    expect(camera.value.getMaxScaleOnAxis(), greaterThan(beforeZoom));
+    expect(flameGame.mapCamera.debugTransform!.zoom, greaterThan(beforeZoom));
 
     await tester.tap(find.byKey(const ValueKey('reference-toggle')));
     await tester.pump();
@@ -96,7 +104,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('map-canvas')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('flame-viewport-repaint-boundary')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -135,17 +146,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    const projection = MapViewportProjection(
-      AonwOddQFlatTopGeometry(cols: 3, rows: 2, radius: 60),
+    final viewport = find.byKey(const ValueKey('map-viewport'));
+    final origin = flameGame.debugScreenForHex((col: 0, row: 0))!;
+    await tester.tapAt(
+      tester.getTopLeft(viewport) + Offset(origin.x, origin.y),
     );
-    final canvas = find.byKey(const ValueKey('map-canvas'));
-    final origin = projection.hexCenter((col: 0, row: 0));
-    await tester.tapAt(tester.getTopLeft(canvas) + Offset(origin.x, origin.y));
     await tester.pumpAndSettle();
 
     expect(find.text('Unit preview-commander'), findsOneWidget);
-    expect(find.byKey(const ValueKey('movement-layer')), findsOneWidget);
-    expect(find.byKey(const ValueKey('unit-layer')), findsOneWidget);
+    expect(flameGame.world.reachableLayer.isVisible, isTrue);
+    expect(flameGame.world.unitLayer.debugUnitCount, 1);
 
     controller.select((col: 1, row: 0));
     await tester.pumpAndSettle();
@@ -178,9 +188,8 @@ void main() {
           testMapScene(cols: 7, rows: 7, defaultZoom: 1.2),
         ),
       );
-      final camera = TransformationController();
+      final flameGame = AonwFlameGame();
       addTearDown(controller.dispose);
-      addTearDown(camera.dispose);
       await tester.binding.setSurfaceSize(const Size(900, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -188,7 +197,7 @@ void main() {
         LocalizedTestApp(
           home: MapScreen(
             controller: controller,
-            transformationController: camera,
+            flameGameFactory: () => flameGame,
           ),
         ),
       );
@@ -196,42 +205,40 @@ void main() {
 
       const geometry = AonwOddQFlatTopGeometry(cols: 7, rows: 7, radius: 60);
       final fit = 800 / geometry.bounds.height;
-      expect(camera.value.getMaxScaleOnAxis(), closeTo(fit * 1.2, 1e-6));
-      final initialMatrix = List<double>.of(camera.value.storage);
-      final staticGrid = tester.renderObject(
-        find.byKey(const ValueKey('static-grid-layer')),
+      expect(
+        flameGame.mapCamera.debugTransform!.zoom,
+        closeTo(fit * 1.2, 1e-6),
       );
+      final initialTransform = flameGame.mapCamera.debugTransform;
+      final staticGrid = flameGame.world.gridLayer;
+      final staticGridUpdates = staticGrid.debugCacheUpdateCount;
 
       controller.hover((col: 2, row: 2));
       await tester.pump();
 
-      expect(camera.value.storage, orderedEquals(initialMatrix));
-      expect(
-        tester.renderObject(find.byKey(const ValueKey('static-grid-layer'))),
-        same(staticGrid),
-      );
-      expect(find.byKey(const ValueKey('interaction-layer')), findsOneWidget);
+      expect(flameGame.mapCamera.debugTransform, same(initialTransform));
+      expect(flameGame.world.gridLayer, same(staticGrid));
+      expect(staticGrid.debugCacheUpdateCount, staticGridUpdates);
+      expect(flameGame.world.selectionLayer.isVisible, isTrue);
     },
   );
 
-  testWidgets('accepts a replacement external camera controller', (
+  testWidgets('replaces the Flame game without retaining old camera state', (
     tester,
   ) async {
     final controller = MapController(
       repository: FakeMapRepository.success(testMapScene()),
     );
-    final firstCamera = TransformationController();
-    final secondCamera = TransformationController();
+    final firstGame = AonwFlameGame();
+    final secondGame = AonwFlameGame();
     addTearDown(controller.dispose);
-    addTearDown(firstCamera.dispose);
-    addTearDown(secondCamera.dispose);
     await controller.load();
 
     await tester.pumpWidget(
       LocalizedTestApp(
         home: MapScreen(
           controller: controller,
-          transformationController: firstCamera,
+          flameGameFactory: () => firstGame,
           autoLoad: false,
         ),
       ),
@@ -241,14 +248,16 @@ void main() {
       LocalizedTestApp(
         home: MapScreen(
           controller: controller,
-          transformationController: secondCamera,
+          flameGameFactory: () => secondGame,
           autoLoad: false,
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(secondCamera.value, isNot(equals(Matrix4.identity())));
+    expect(firstGame.debugDisposed, isTrue);
+    expect(secondGame.world.debugScene?.map.mapId, 'test-map');
+    expect(secondGame.mapCamera.debugTransform, isNotNull);
   });
 
   testWidgets('shows typed failure and retry action', (tester) async {
@@ -297,10 +306,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Map test-map, 3 by 2 hexes'), findsOneWidget);
-    final canvasContext = tester.element(
-      find.byKey(const ValueKey('map-canvas')),
+    final viewportContext = tester.element(
+      find.byKey(const ValueKey('map-viewport')),
     );
-    expect(MediaQuery.disableAnimationsOf(canvasContext), isTrue);
+    expect(MediaQuery.disableAnimationsOf(viewportContext), isTrue);
     expect(flameGame.world.effectHost.debugReducedMotion, isTrue);
     semantics.dispose();
   });
@@ -429,6 +438,7 @@ void main() {
     final controller = MapController(
       repository: FakeMapRepository.success(testMapScene()),
     );
+    final flameGame = AonwFlameGame();
     addTearDown(settings.dispose);
     addTearDown(controller.dispose);
 
@@ -436,16 +446,16 @@ void main() {
       LocalizedTestApp(
         home: ClientSettingsScope(
           controller: settings,
-          child: MapScreen(controller: controller),
+          child: MapScreen(
+            controller: controller,
+            flameGameFactory: () => flameGame,
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    final viewport = tester.widget<InteractiveViewer>(
-      find.byKey(const ValueKey('map-viewport')),
-    );
-    expect(viewport.scaleFactor, 100);
+    expect(flameGame.inputSurface.debugCameraSensitivity, 2);
   });
 }
 

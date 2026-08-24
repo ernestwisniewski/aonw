@@ -6,11 +6,12 @@ this package always builds the native Rust backend for the host target. There
 is no import of the legacy root application, `aonw_core`, or per-command Dart
 fallback.
 
-The first vertical slice renders the canonical `aonw2_starter` map with
-`CustomPainter`/Canvas, the generated reference bundle, grid, hover, selection,
-pan, and zoom. `GameSessionState` exposes loading, ready, and typed failure
-states. Its ready state composes the recipient-safe Rust view with local map
-interaction while keeping both distinct.
+The production viewport renders the canonical `aonw2_starter` map through
+Flame: batched terrain and grid, the generated reference bundle, recipient-safe
+units, movement overlays, hover, selection, camera pan and zoom. Flutter owns
+the surrounding HUD, loading and typed recovery states, focus and semantics.
+`GameSessionState` composes the recipient-safe Rust view with local interaction
+while keeping both distinct.
 
 Flame `1.38.0` is the pinned target for the viewport migration and
 `flame_test 2.3.0` is the matching component-test toolchain. Until the existing
@@ -50,34 +51,30 @@ an accessible diagnostic page. `AonwApp` owns theme and lifecycle but does not
 construct feature pages directly. New screens extend the route enum and router
 without adding navigation decisions to feature widgets.
 
-The map route owns exactly one `AonwFlameGame` instance for its lifetime. FM1
-mounts its transparent, clipped `GameWidget` above the unchanged Canvas oracle;
-terrain and input do not move to Flame before their later checkpoints. Flutter
-keeps loading/error recovery, focus and semantics. Route and application
-visibility are combined before changing the Flame lifecycle, while the empty
-turn-based world keeps its continuous loop paused. Covering the map route does
-not close the Rust session. Removing the application viewport disposes Flame
-caches and its presentation snapshot; the application controller independently
-closes the session when its owner is torn down.
+The map route owns exactly one `AonwFlameGame` instance for its lifetime and
+ships no alternate renderer or runtime renderer flag. Route and application
+visibility are combined before changing the Flame lifecycle; the turn-based
+world stays paused while idle and advances only for coalesced input or active
+effects. Covering the map route does not close the Rust session. Removing the
+viewport disposes Flame caches and its presentation snapshot; the application
+controller independently closes the session when its owner is torn down.
 
-FM2 keeps three coarse Flame components in fixed priority order: batched
+Static rendering uses three coarse components in fixed priority order: batched
 terrain, decoded reference pages and one combined grid path. Their shared cache
 is keyed by map id, content hash and dimensions; interaction-only snapshots and
-reference visibility changes reuse the terrain/grid paths. Reference images are
-owned by Flame's image cache and released with the world. The temporary
-`renderStaticLayers` constructor switch is enabled only by migration goldens;
-the shipped viewport still displays the Canvas oracle until FM5 removes both
-the switch and the old renderer in one cutover.
+reference visibility changes reuse terrain and grid resources. Recipient units
+are keyed components patched from immutable snapshots, while reachable, route,
+selection and movement effects remain presentation-only layers. Reference
+images are owned by Flame's image cache and released with the world.
 
-FM3 gives Flame one bounded `CameraComponent`/`Viewfinder` backed by the same
-framework-neutral fit and screen/world transform used by the Canvas oracle.
-A single viewport-sized input surface maps Flame tap, hover, drag, scale and
-scroll callbacks to typed intents; pointer bursts are coalesced into one camera
-mutation per rendered frame and hex picking remains one geometry lookup, never
-a hitbox per tile. That surface is installed only when a shadow/test intent
-sink is injected. The production `GameWidget` therefore registers no pointer
-callbacks and cannot intercept the still-authoritative `InteractiveViewer`
-before the FM5 cutover; there is no user-facing renderer or input flag.
+Flame owns one bounded `CameraComponent`/`Viewfinder` backed by a
+framework-neutral fit and screen/world transform. A viewport-sized screen-space
+component maps Flame tap, hover, drag, scale and scroll callbacks to typed
+intents. Pointer bursts are coalesced into one camera mutation per rendered
+frame and hex picking remains one geometry lookup, never a hitbox per tile.
+`flame_test` covers component lifecycle, cache identity, camera projection and
+scene patching; Flutter widget tests cover focus, semantics, HUD composition and
+route lifecycle.
 
 Bootstrap installs one typed process error boundary. Flutter framework errors
 and unhandled asynchronous platform errors are classified separately and sent
@@ -145,9 +142,10 @@ in parity.
 Run from the repository root:
 
     make successor-flutter-check
+    make successor-flutter-coverage-report
     make map-stage-1-check
     make successor-flutter-device-test
-    make successor-flutter-fm0-baseline
+    make successor-flutter-fm5-baseline
     make successor-flutter-run
 
 `map-stage-1-check` exports the Rust-backed semantic map probe to a temporary

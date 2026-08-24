@@ -5,11 +5,10 @@ import 'dart:io';
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
 import 'package:aonw_flutter/features/map/application/map_controller.dart';
 import 'package:aonw_flutter/features/map/infrastructure/gamepad_map_input_source.dart';
-import 'package:aonw_flutter/features/map/presentation/camera/map_viewport_projection.dart';
-import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_screen.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
+import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,10 +35,15 @@ void main() {
           testMapScene(cols: cols, rows: rows),
         ),
       );
+      final flameGame = AonwFlameGame();
       await tester.pumpWidget(
         LocalizedTestApp(
           home: Scaffold(
-            body: MapScreen(controller: controller, inputSource: input),
+            body: MapScreen(
+              controller: controller,
+              inputSource: input,
+              flameGameFactory: () => flameGame,
+            ),
           ),
         ),
       );
@@ -48,16 +52,9 @@ void main() {
       switch (inputCase['source']) {
         case 'pointer':
           final coordinate = _coordinate(inputCase['hex']);
-          final projection = MapViewportProjection(
-            AonwOddQFlatTopGeometry(
-              cols: cols,
-              rows: rows,
-              radius: aonwMapHexRadius,
-            ),
-          );
-          final center = projection.hexCenter(coordinate);
-          final canvas = find.byKey(const ValueKey('map-canvas'));
-          final renderBox = tester.renderObject<RenderBox>(canvas);
+          final center = flameGame.debugScreenForHex(coordinate)!;
+          final viewport = find.byKey(const ValueKey('map-viewport'));
+          final renderBox = tester.renderObject<RenderBox>(viewport);
           await tester.tapAt(
             renderBox.localToGlobal(Offset(center.x, center.y)),
           );
