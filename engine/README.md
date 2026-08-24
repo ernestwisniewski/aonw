@@ -92,6 +92,15 @@ guard rejects unregistered sources, system time/randomness in pure Rust engine
 crates, and generic persisted RNG state. `make rust-determinism-check` also
 proves the same canonical replay signature in debug and release builds.
 
+The 120-case reducer evidence has a separate reviewed disposition ledger. It
+does not restore a reader for that historical envelope: a dependency-free
+guard binds the corpus by filenames and aggregate blob identity, requires each
+case to have either current structural round-trip evidence or an explicit
+future checkpoint, and rejects any Rust source that reads the old corpus.
+`make rust-corpus-parity-check` executes only the nine root cases whose current
+canonical artifacts and four player-command capabilities are promoted to
+`engine-parity`; the other 111 remain honestly `reference-only`.
+
 ## Greenfield compatibility policy
 
 The engine and successor clients evolve one current contract atomically. New

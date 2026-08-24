@@ -19,3 +19,17 @@ corpus contains 44 fixtures: 43 migrated cases plus that native canonical case.
 The one-time rewrite code is not retained. Runtime, clients, testkit, and the
 committed artifacts have no reader, writer, alias, omission default, or output
 encoder for the former reducer format.
+
+## Reviewed 120-case dispositions
+
+The separate frozen `test/fixtures/reducer_parity` corpus is classified by
+`engine/migration/reducer_fixture_dispositions`. Nine cases for `MoveUnit`,
+`CancelUnitAction`, `SkipUnitTurn`, and `FortifyUnit` point to strict artifacts
+in `canonical_commands/`; their input and expected states round-trip through
+the complete current domain and their full outcomes execute through Rust.
+
+The remaining 111 cases do not receive synthetic defaults or an adapter. Each
+is `reference-only` with a named CP6/CP8-CP14 checkpoint and the blocker
+`awaits-independent-current-contract-review`. A future checkpoint must rewrite
+the case into the current canonical contract, review its full state and
+outcome, and atomically promote the matching capability before execution.

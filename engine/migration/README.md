@@ -24,6 +24,15 @@ contract: each future Rust capability must own its named deterministic inputs
 and exact replay evidence. Pure Rust engine crates are forbidden from reading
 the system clock or system randomness.
 
+`reducer_fixture_dispositions` binds the frozen 120-case Dart evidence corpus
+by filename census and aggregate Git blob OID without parsing its historical
+envelope. Every case records family, command, accepted/rejected oracle result,
+structural status, execution status, and either a strict current canonical
+artifact or a concrete future checkpoint with one explicit blocker. Rust
+crates are forbidden from reading the source corpus. Only cases backed by a
+current `GameStateDto` round-trip and complete canonical command fixture may be
+promoted to `engine-parity` and executed by the Rust evidence gate.
+
 The status vocabulary is closed:
 
 - `reference-only`
@@ -54,6 +63,7 @@ repository root:
 make rust-engine-inventory-check
 make rust-engine-inventory-test
 make rust-determinism-check
+make rust-corpus-parity-check
 ```
 
 The analyzer-backed AST census is a separate evidence gate because the small

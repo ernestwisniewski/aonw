@@ -65,17 +65,17 @@ domain AttackHexCommand combat reference-only - packages/aonw_core/lib/game/doma
 domain AutoExploreUnitCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain AutomateWorkerCommand movement reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain BuildRoadCommand infrastructure reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
-domain CancelUnitActionCommand movement characterized CancelUnitAction packages/aonw_core/lib/game/domain/command/unit_commands.dart
+domain CancelUnitActionCommand movement engine-parity CancelUnitAction packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain CancelWorkerAssignmentCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain CancelWorkerJobCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain ConfirmWorkerImprovementCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain DeclareWarCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain DetachTroopCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain EndTurnCommand turn reference-only - packages/aonw_core/lib/game/domain/command/turn_commands.dart
-domain FortifyUnitCommand unit-action characterized FortifyUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
+domain FortifyUnitCommand unit-action engine-parity FortifyUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain FoundCityCommand city reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain MoveMerchantToCityCommand movement reference-only - packages/aonw_core/lib/game/domain/command/unit_commands.dart
-domain MoveUnitCommand movement characterized MoveUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
+domain MoveUnitCommand movement engine-parity MoveUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain OpenResourceExchangeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain OpenResourceTradeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RespondDiplomaticMessageCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
@@ -88,7 +88,7 @@ domain SendDiplomaticMessageCommand diplomacy reference-only - packages/aonw_cor
 domain SendDiplomaticProposalCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SendGoldGiftCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SetCitySpecializationCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
-domain SkipUnitTurnCommand unit-action characterized SkipUnitTurn packages/aonw_core/lib/game/domain/command/unit_commands.dart
+domain SkipUnitTurnCommand unit-action engine-parity SkipUnitTurn packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain StartArtifactExcavationCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
 domain StartBuildingCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain StartCityProjectCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
@@ -141,12 +141,12 @@ event TurnEndedEvent turn reference-only - packages/aonw_core/lib/game/domain/ev
 event UnitAttackedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
 event UnitGainedExperienceEvent unit-action reference-only - packages/aonw_core/lib/game/domain/event/unit_events.dart
 event UnitKilledEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
-event UnitMovedEvent movement characterized UnitMoved packages/aonw_core/lib/game/domain/event/unit_events.dart
+event UnitMovedEvent movement engine-parity UnitMoved packages/aonw_core/lib/game/domain/event/unit_events.dart
 event UnitRetreatedEvent combat reference-only - packages/aonw_core/lib/game/domain/event/combat_events.dart
 event WonderProductionRefundedEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event WorkerCompletedJobEvent turn reference-only - packages/aonw_core/lib/game/domain/event/turn_events.dart
 
-evidence MovementCommandExecution movement characterized UnitMovement packages/aonw_core/lib/game/domain/movement/movement_command_execution.dart
+evidence MovementCommandExecution movement engine-parity UnitMovement packages/aonw_core/lib/game/domain/movement/movement_command_execution.dart
 
 projection-type PlayerUnitView visible-entity characterized PlayerUnitViewDto engine/crates/aonw_local_runtime/src/player_view.rs
 projection-type PlayerViewPatch recipient-patch characterized PlayerViewPatchDto engine/crates/aonw_local_runtime/src/command_dispatch.rs

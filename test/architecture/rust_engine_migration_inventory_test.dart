@@ -165,18 +165,35 @@ void main() {
     );
   });
 
-  test('full-state parity mode remains explicit after splice removal', () {
+  test('full-state parity promotions remain explicit after splice removal', () {
     expect(manifest.partialParityMode, 'full-state');
     expect(
-      manifest.entries.where(
-        (entry) => _requiresFullStateParity.contains(entry.status),
-      ),
-      isEmpty,
-      reason: 'individual surfaces require their own promotion evidence',
+      {
+        for (final entry in manifest.entries)
+          if (_requiresFullStateParity.contains(entry.status))
+            entry.dartType: entry.status,
+      },
+      const {
+        'CancelUnitActionCommand': 'engine-parity',
+        'FortifyUnitCommand': 'engine-parity',
+        'MoveUnitCommand': 'engine-parity',
+        'SkipUnitTurnCommand': 'engine-parity',
+        'UnitMovedEvent': 'engine-parity',
+        'MovementCommandExecution': 'engine-parity',
+      },
+      reason: 'every promotion requires reviewed full-state parity evidence',
     );
     expect(
-      manifest.domainEntries.where((entry) => entry.rustVariant != null),
-      hasLength(4),
+      {
+        for (final entry in manifest.domainEntries)
+          if (entry.status == 'engine-parity') entry.rustVariant,
+      },
+      const {
+        'CancelUnitAction',
+        'FortifyUnit',
+        'MoveUnit',
+        'SkipUnitTurn',
+      },
     );
   });
 
