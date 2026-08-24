@@ -7,6 +7,7 @@
 
 mod application;
 mod context;
+mod diplomacy_policy;
 mod movement;
 mod state_digest;
 mod turn_kernel;
@@ -22,6 +23,10 @@ pub use application::{
     TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
 };
 pub use context::{EngineContext, SystemContext};
+pub use diplomacy_policy::{
+    DiplomacyDisclosure, DiplomacyPolicy, DiplomacyPolicyError, DiplomacyPolicyPlayerRole,
+    DiplomacyPolicyQuery,
+};
 pub use movement::{
     CompiledMovementMap, CompiledMovementMapError, MoveUnitCommand, MoveUnitError, MovementCost,
     MovementSearchMetrics, MovementSearchWorkspace, MovementVisibility, ReachableMovement,

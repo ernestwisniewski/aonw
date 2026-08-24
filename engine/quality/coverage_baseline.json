@@ -158,8 +158,8 @@
       "uncoveredLines": 487
     },
     "aonw_engine": {
-      "countedLines": 4111,
-      "coveredLines": 3467,
+      "countedLines": 4215,
+      "coveredLines": 3562,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_engine/src/application/mod.rs",
@@ -174,6 +174,7 @@
         "crates/aonw_engine/src/application/transition.rs",
         "crates/aonw_engine/src/application/turn.rs",
         "crates/aonw_engine/src/context.rs",
+        "crates/aonw_engine/src/diplomacy_policy.rs",
         "crates/aonw_engine/src/lib.rs",
         "crates/aonw_engine/src/movement/balance.rs",
         "crates/aonw_engine/src/movement/compiled_map.rs",
@@ -206,7 +207,7 @@
         "crates/aonw_engine/src/turn_kernel/support.rs",
         "crates/aonw_engine/src/unit_action.rs"
       ],
-      "uncoveredLines": 644
+      "uncoveredLines": 653
     },
     "aonw_local_runtime": {
       "countedLines": 1977,

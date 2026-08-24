@@ -158,6 +158,15 @@ disabled. Manifests requiring them and canonical states that visibly need the
 first five processors fail closed with `turn_processor_unsupported`; the full
 integrated turn remains an O9 capability.
 
+The DP policy foundation exposes one pure `DiplomacyPolicyQuery` for hostility,
+foreign city and territory entry, attack protection, automation, trade, and
+recipient disclosure. Missing relations use the current neutral rule default,
+but remain hidden until contact; unknown participants fail closed with
+actor-first precedence. Movement city-center checks already call this policy.
+The six diplomatic mutation commands and their turn processing remain
+`reference-only` until D8; no compatibility adapter or client-side relation
+table is introduced.
+
 Run the diagnostic release baseline separately:
 
 ```sh

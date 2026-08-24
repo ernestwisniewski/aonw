@@ -61,6 +61,12 @@ closed when their state is detected. The five historical integrated-turn
 fixtures therefore remain blocked until the complete CP9 pipeline; they are
 not reclassified as full `engine-parity` by the smaller greenfield kernel.
 
+The CP7/DP read-only substrate is `state-contract-ready` rather than command
+parity. `DiplomacyPolicyQuery` centralizes relation-dependent legality and
+recipient disclosure, and its accepted/rejected/hidden manifest is exercised
+by `make rust-diplomacy-policy-check`. All diplomatic mutation commands and
+events retain their existing `reference-only` inventory status until D8.
+
 The file deliberately has no `v1` suffix or schema-version field. The engine
 and greenfield clients update this one current contract atomically. A format
 version is introduced only after a concrete independently deployed reader or

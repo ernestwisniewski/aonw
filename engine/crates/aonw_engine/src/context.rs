@@ -189,8 +189,20 @@ impl<'context> EngineContext<'context> {
 
     pub(crate) fn city_blocks(self, moving_unit: &Unit, coordinate: HexCoord) -> bool {
         self.world
-            .and_then(|world| world.city_at(coordinate))
-            .is_some_and(|city| city.owner_player_id() != moving_unit.owner_player_id())
+            .and_then(|world| {
+                world.city_at(coordinate).map(|city| {
+                    let policy = crate::DiplomacyPolicyQuery::between(
+                        world,
+                        moving_unit.owner_player_id(),
+                        city.owner_player_id(),
+                    );
+                    match policy {
+                        Ok(value) => !value.can_enter_city_center(),
+                        Err(_) => true,
+                    }
+                })
+            })
+            .unwrap_or(false)
     }
 
     pub(crate) fn city_block_is_known(self, moving_unit: &Unit, coordinate: HexCoord) -> bool {
