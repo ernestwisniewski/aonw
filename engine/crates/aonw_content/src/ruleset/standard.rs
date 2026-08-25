@@ -4,8 +4,8 @@ use crate::{TechnologyCostBalance, technology::STANDARD_TECHNOLOGIES};
 
 use super::{
     CityBalance, CityNameSet, CombatBalance, CombatStats, EconomyBalance, PlayerCountryValue,
-    RulesetDefinition, UnitCapabilities, UnitDefinition, UnitKindValue, UnitMovementDomainValue,
-    UnitOccupancyPolicyValue,
+    ProductionBalance, RulesetDefinition, UnitCapabilities, UnitDefinition, UnitKindValue,
+    UnitMovementDomainValue, UnitOccupancyPolicyValue,
 };
 
 const fn names(country: PlayerCountryValue, values: &'static [&'static str]) -> CityNameSet {
@@ -105,6 +105,7 @@ pub(super) static STANDARD_RULESET: RulesetDefinition = RulesetDefinition {
         worked_hexes_per_population: 1,
     },
     economy: EconomyBalance::STANDARD,
+    production: ProductionBalance::STANDARD,
     worker: super::WorkerBalance::STANDARD,
     city_name_sets: &STANDARD_CITY_NAMES,
     unit_definitions: &STANDARD_UNITS,

@@ -256,6 +256,7 @@ pub struct RulesetDefinition {
     combat: CombatBalance,
     city: CityBalance,
     economy: EconomyBalance,
+    production: ProductionBalance,
     worker: WorkerBalance,
     city_name_sets: &'static [CityNameSet],
     unit_definitions: &'static [UnitDefinition],
@@ -298,6 +299,12 @@ impl RulesetDefinition {
     #[must_use]
     pub const fn economy(&self) -> EconomyBalance {
         self.economy
+    }
+
+    /// Returns immutable production costs, requirements, and effects.
+    #[must_use]
+    pub const fn production(&self) -> ProductionBalance {
+        self.production
     }
 
     /// Returns immutable worker and infrastructure balance.
@@ -441,6 +448,12 @@ pub use city::{CityBalance, CityNameSet};
 
 mod economy;
 pub use economy::{EconomyBalance, EconomyYield, StabilityModifierDefinition};
+
+mod production;
+pub use production::{
+    BuildingProductionDefinition, ProductionBalance, ProductionRequirement, StrategicResourceCost,
+    UnitProductionDefinition, WonderProductionDefinition,
+};
 
 use standard::STANDARD_RULESET;
 #[cfg(test)]

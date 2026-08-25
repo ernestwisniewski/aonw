@@ -15,6 +15,16 @@ pub struct EconomyYield {
 
 #[allow(missing_docs)]
 impl EconomyYield {
+    /// Creates one exact integer yield value.
+    #[must_use]
+    pub const fn new(food: i64, production: i64, gold: i64, defense: i64) -> Self {
+        Self {
+            food,
+            production,
+            gold,
+            defense,
+        }
+    }
     #[must_use]
     pub const fn food(self) -> i64 {
         self.food

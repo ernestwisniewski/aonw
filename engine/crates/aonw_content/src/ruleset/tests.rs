@@ -1,6 +1,11 @@
 use std::collections::BTreeSet;
 
-use aonw_domain::{MovementUnits, TechnologyId, UnitKind, UnitMovementDomain};
+use aonw_domain::{
+    CityBuildingType, CitySpecializationType, MovementUnits, PaceProfile, TechnologyId, UnitKind,
+    UnitMovementDomain, WonderType,
+};
+
+use crate::{EconomyYield, ProductionRequirement, ResourceType, StrategicResourceCost};
 
 use super::{RulesetDefinition, STANDARD_UNITS};
 
@@ -29,8 +34,162 @@ fn standard_ruleset_hash_is_stable() {
     assert_eq!(first, second);
     assert_eq!(
         first.to_string(),
-        "1a22d981bcac87b6f116c757903d671c0fabfd84035e82f1ca57ee1919f93caa"
+        "214957b11581487635901b1f47d81ce0cc17a659061bc2aff99a520177c2e837"
     );
+}
+
+#[test]
+fn standard_production_catalog_is_complete_and_total() {
+    let production = RulesetDefinition::standard().production();
+    assert_eq!(production.buildings().len(), 59);
+    assert_eq!(production.units().len(), 17);
+    assert_eq!(production.wonders().len(), 11);
+
+    let mut identities = BTreeSet::new();
+    for definition in production.buildings() {
+        assert!(identities.insert(format!("building:{:?}", definition.building())));
+        assert_eq!(
+            production.building(definition.building()),
+            Some(*definition)
+        );
+        assert!(definition.base_cost() > 0);
+    }
+    for definition in production.units() {
+        assert!(identities.insert(format!("unit:{:?}", definition.unit())));
+        assert_eq!(production.unit(definition.unit()), Some(*definition));
+        assert!(definition.base_cost() > 0);
+        assert!(definition.supply_cost() >= 0);
+    }
+    for definition in production.wonders() {
+        assert!(identities.insert(format!("wonder:{:?}", definition.wonder())));
+        assert_eq!(production.wonder(definition.wonder()), Some(*definition));
+        assert!(definition.base_cost() > 0);
+    }
+    assert_eq!(identities.len(), 87);
+}
+
+#[test]
+fn standard_production_balance_preserves_exact_fixed_point_rules() {
+    let production = RulesetDefinition::standard().production();
+    assert_eq!(
+        [
+            PaceProfile::Unlimited,
+            PaceProfile::Standard60,
+            PaceProfile::Normal90,
+            PaceProfile::Long120,
+        ]
+        .map(|pace| production.building_cost(100, pace)),
+        [Some(145), Some(85), Some(92), Some(100)]
+    );
+    assert_eq!(
+        [
+            PaceProfile::Unlimited,
+            PaceProfile::Standard60,
+            PaceProfile::Normal90,
+            PaceProfile::Long120,
+        ]
+        .map(|pace| production.unit_cost(100, pace)),
+        [Some(130), Some(80), Some(90), Some(100)]
+    );
+    assert_eq!(
+        production.building_cost(6, PaceProfile::Standard60),
+        Some(6)
+    );
+    assert_eq!(production.rush_gold_per_production(), 2);
+    assert_eq!(production.project_divisor(false), 2);
+    assert_eq!(production.project_divisor(true), 12);
+    assert_eq!(production.supply_density(), (22, 100));
+    assert_eq!(production.map_supply_bounds(), (12, 28));
+    assert_eq!(production.building_cost(0, PaceProfile::Long120), Some(0));
+    assert_eq!(
+        [
+            CitySpecializationType::Growth,
+            CitySpecializationType::Industry,
+            CitySpecializationType::Commerce,
+            CitySpecializationType::Science,
+            CitySpecializationType::Military,
+        ]
+        .map(|value| production.specialization_building(value)),
+        [
+            CityBuildingType::Granary,
+            CityBuildingType::Workshop,
+            CityBuildingType::MerchantHall,
+            CityBuildingType::Archive,
+            CityBuildingType::Barracks,
+        ]
+    );
+}
+
+#[test]
+fn standard_production_catalog_owns_requirements_reservations_and_effects() {
+    let production = RulesetDefinition::standard().production();
+    let water_mill = production
+        .building(CityBuildingType::WaterMill)
+        .expect("water mill");
+    assert_eq!(
+        water_mill.river_yield_per_hex(),
+        EconomyYield::new(1, 0, 0, 0)
+    );
+    assert_eq!(water_mill.max_river_applications(), 3);
+    assert!(water_mill.requirements().is_empty());
+    assert_eq!(water_mill.yield_delta(), EconomyYield::new(0, 0, 0, 0));
+    assert_eq!(water_mill.science_per_turn(), 0);
+    assert_eq!(water_mill.max_controlled_hexes_delta(), 0);
+    assert_eq!(
+        production
+            .building(CityBuildingType::Storehouse)
+            .expect("storehouse")
+            .food_deposit_basis_points(),
+        12_000
+    );
+
+    let cavalry = production.unit(UnitKind::Cavalry).expect("cavalry");
+    assert_eq!(cavalry.presence_resources(), &[ResourceType::Horses]);
+    let tank = production.unit(UnitKind::Tank).expect("tank");
+    assert_eq!(
+        tank.strategic_cost_options(),
+        &[StrategicResourceCost::new(2, 0)]
+    );
+    let plane = production.unit(UnitKind::ReconPlane).expect("recon plane");
+    assert_eq!(
+        plane.strategic_cost_options(),
+        &[
+            StrategicResourceCost::new(0, 1),
+            StrategicResourceCost::new(1, 0),
+        ]
+    );
+    assert_eq!(plane.strategic_cost_options()[0].oil(), 0);
+    assert_eq!(plane.strategic_cost_options()[0].aluminium(), 1);
+    assert!(!plane.strategic_cost_options()[0].is_empty());
+    assert!(StrategicResourceCost::default().is_empty());
+
+    let mother_factory = production
+        .wonder(WonderType::MotherFactory)
+        .expect("mother factory");
+    assert_eq!(
+        mother_factory.requirements(),
+        &[ProductionRequirement::ResourceAny(&[
+            ResourceType::Coal,
+            ResourceType::Iron,
+        ])]
+    );
+    assert_eq!(mother_factory.empire_production_basis_points(), 1_000);
+    assert_eq!(mother_factory.production_burst(), 80);
+    assert_eq!(mother_factory.host_yield(), EconomyYield::new(0, 0, 0, 0));
+    assert_eq!(
+        mother_factory.empire_yield_per_city(),
+        EconomyYield::new(0, 0, 0, 0)
+    );
+    assert_eq!(mother_factory.empire_science_per_city(), 0);
+    assert_eq!(mother_factory.empire_gold_basis_points(), 0);
+    assert_eq!(mother_factory.stability_delta(), 0);
+    assert!(!mother_factory.grants_free_active_technology());
+    assert_eq!(mother_factory.grant_gold(), 0);
+    let library = production
+        .wonder(WonderType::GreatLibrary)
+        .expect("great library");
+    assert_eq!(library.empire_science_per_city(), 1);
+    assert!(library.grants_free_active_technology());
 }
 
 #[test]
