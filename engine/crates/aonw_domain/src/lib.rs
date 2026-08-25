@@ -73,8 +73,8 @@ pub use movement_units::MovementUnits;
 pub use objective::{MapObjectiveHoldState, ObjectiveState, ObjectiveStateBuildError};
 pub use research::{
     KnowledgeState, KnowledgeStateValidationError, PlayerResearchState,
-    PlayerResearchStateBuildError, ResearchState, TechnologyId, WonderCompletionError,
-    WonderRegistry,
+    PlayerResearchStateBuildError, ResearchState, ResearchTransitionError, TechnologyId,
+    WonderCompletionError, WonderRegistry,
 };
 pub use shared::StateRevision;
 pub use transport::{TransportCondition, TransportKind, TransportNetwork, TransportSegment};

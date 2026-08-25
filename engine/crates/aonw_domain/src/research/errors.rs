@@ -2,6 +2,46 @@ use crate::{PlayerId, WonderType};
 
 use super::TechnologyId;
 
+/// Checked failure while changing one player's canonical research state.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ResearchTransitionError {
+    /// A completed technology cannot become active again.
+    TechnologyAlreadyUnlocked(TechnologyId),
+    /// Per-turn science must not be negative.
+    NegativeScience(i64),
+    /// Every selectable technology must have a positive effective cost.
+    ZeroEffectiveCost(TechnologyId),
+    /// Stored progress and newly applied science or overflow exceeded `i64`.
+    ProgressOverflow(TechnologyId),
+}
+
+impl core::fmt::Display for ResearchTransitionError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::TechnologyAlreadyUnlocked(technology) => {
+                write!(formatter, "technology is already unlocked: {technology:?}")
+            }
+            Self::NegativeScience(science) => {
+                write!(
+                    formatter,
+                    "research science must be non-negative: {science}"
+                )
+            }
+            Self::ZeroEffectiveCost(technology) => {
+                write!(
+                    formatter,
+                    "research cost must be positive for {technology:?}"
+                )
+            }
+            Self::ProgressOverflow(technology) => {
+                write!(formatter, "research progress overflow for {technology:?}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ResearchTransitionError {}
+
 /// Attempt to complete a world wonder that already has a canonical owner.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct WonderCompletionError {

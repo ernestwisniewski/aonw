@@ -5,7 +5,8 @@ use crate::{MatchIdentity, PlayerId, WonderType};
 mod errors;
 
 pub use errors::{
-    KnowledgeStateValidationError, PlayerResearchStateBuildError, WonderCompletionError,
+    KnowledgeStateValidationError, PlayerResearchStateBuildError, ResearchTransitionError,
+    WonderCompletionError,
 };
 
 /// Stable identity of one technology in the current ruleset.
@@ -155,6 +156,101 @@ impl PlayerResearchState {
         self.science_overflow
     }
 
+    /// Selects one incomplete technology and applies at most the supplied
+    /// amount of stored overflow to its existing progress.
+    ///
+    /// Applied overflow is consumed even when the cap is zero. Availability,
+    /// prerequisites, and the exact cap remain ruleset-owned engine decisions.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the technology is already unlocked or progress
+    /// addition exceeds the canonical integer range.
+    pub fn try_after_selecting(
+        &self,
+        technology: TechnologyId,
+        overflow_cap: i64,
+    ) -> Result<Self, ResearchTransitionError> {
+        if self.unlocked_technology_ids.contains(&technology) {
+            return Err(ResearchTransitionError::TechnologyAlreadyUnlocked(
+                technology,
+            ));
+        }
+        let applied_overflow = self.science_overflow.min(overflow_cap.max(0));
+        let current_progress = self
+            .progress_by_technology_id
+            .get(&technology)
+            .copied()
+            .unwrap_or(0);
+        let selected_progress = current_progress
+            .checked_add(applied_overflow)
+            .ok_or(ResearchTransitionError::ProgressOverflow(technology))?;
+        let mut updated = self.clone();
+        updated.active_technology_id = Some(technology);
+        updated.science_overflow = 0;
+        if selected_progress > 0 {
+            updated
+                .progress_by_technology_id
+                .insert(technology, selected_progress);
+        }
+        Ok(updated)
+    }
+
+    /// Clears an invalidated active selection while preserving its progress.
+    #[must_use]
+    pub fn without_active_technology(&self) -> Self {
+        let mut updated = self.clone();
+        updated.active_technology_id = None;
+        updated
+    }
+
+    /// Applies checked per-turn science to the current selection.
+    ///
+    /// Completion unlocks exactly one technology, clears its progress and
+    /// stores only the newly produced excess as overflow. With no active
+    /// selection or zero science the state is unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for negative science, a zero effective cost, or
+    /// progress arithmetic overflow.
+    pub fn try_after_science(
+        &self,
+        science: i64,
+        effective_cost: u32,
+    ) -> Result<(Self, Option<TechnologyId>), ResearchTransitionError> {
+        if science < 0 {
+            return Err(ResearchTransitionError::NegativeScience(science));
+        }
+        let Some(active) = self.active_technology_id else {
+            return Ok((self.clone(), None));
+        };
+        if effective_cost == 0 {
+            return Err(ResearchTransitionError::ZeroEffectiveCost(active));
+        }
+        if science == 0 {
+            return Ok((self.clone(), None));
+        }
+        let progress = self
+            .progress_by_technology_id
+            .get(&active)
+            .copied()
+            .unwrap_or(0)
+            .checked_add(science)
+            .ok_or(ResearchTransitionError::ProgressOverflow(active))?;
+        let cost = i64::from(effective_cost);
+        let mut updated = self.clone();
+        if progress < cost {
+            updated.progress_by_technology_id.insert(active, progress);
+            return Ok((updated, None));
+        }
+        updated.unlocked_technology_ids.insert(active);
+        updated.active_technology_id = None;
+        updated.progress_by_technology_id.remove(&active);
+        updated.science_overflow = progress - cost;
+        Ok((updated, Some(active)))
+    }
+
     /// Completes the selected technology while preserving unrelated progress.
     ///
     /// Returns the unchanged state and `None` when no technology is selected.
@@ -302,6 +398,15 @@ impl KnowledgeState {
         }
     }
 
+    /// Replaces per-player research while preserving global wonder ownership.
+    #[must_use]
+    pub fn with_research(&self, research: ResearchState) -> Self {
+        Self {
+            research,
+            wonder_registry: self.wonder_registry.clone(),
+        }
+    }
+
     /// Validates all player references against match identity.
     ///
     /// # Errors
@@ -331,96 +436,4 @@ impl KnowledgeState {
 }
 
 #[cfg(test)]
-mod tests {
-    use crate::{PlayerId, WonderType};
-
-    use super::{
-        KnowledgeState, PlayerResearchState, PlayerResearchStateBuildError, ResearchState,
-        TechnologyId, WonderRegistry,
-    };
-
-    #[test]
-    fn player_research_rejects_noncanonical_progress_and_unlocks() {
-        assert_eq!(
-            PlayerResearchState::try_new(
-                [TechnologyId::Agriculture],
-                Some(TechnologyId::Agriculture),
-                [],
-                0,
-            ),
-            Err(PlayerResearchStateBuildError::ActiveAlreadyUnlocked(
-                TechnologyId::Agriculture
-            ))
-        );
-        assert_eq!(
-            PlayerResearchState::try_new([], None, [(TechnologyId::Mining, 0)], 0,),
-            Err(PlayerResearchStateBuildError::NonPositiveProgress {
-                technology: TechnologyId::Mining,
-                amount: 0,
-            })
-        );
-    }
-
-    #[test]
-    fn wonder_completion_is_unique_and_preserves_research() {
-        let owner = PlayerId::new("owner").expect("owner");
-        let registry = WonderRegistry::default()
-            .try_with_completed(WonderType::GreatLibrary, owner.clone())
-            .expect("completion");
-        let error = registry
-            .try_with_completed(WonderType::GreatLibrary, owner.clone())
-            .expect_err("duplicate completion");
-        assert_eq!(error.wonder(), WonderType::GreatLibrary);
-        assert_eq!(error.existing_owner(), &owner);
-        assert!(error.to_string().contains("GreatLibrary"));
-
-        let knowledge = KnowledgeState::new(ResearchState::default(), WonderRegistry::default())
-            .with_wonder_registry(registry);
-        assert!(knowledge.research().players().is_empty());
-        assert_eq!(
-            knowledge
-                .wonder_registry()
-                .completed_by()
-                .get(&WonderType::GreatLibrary),
-            Some(&owner)
-        );
-    }
-
-    #[test]
-    fn active_technology_completion_is_explicit_and_preserves_other_progress() {
-        let player = PlayerId::new("player").expect("player");
-        let idle = PlayerResearchState::default();
-        assert_eq!(idle.after_unlocking_active(), (idle.clone(), None));
-
-        let selected = PlayerResearchState::try_new(
-            [TechnologyId::Agriculture],
-            Some(TechnologyId::Writing),
-            [(TechnologyId::Writing, 3), (TechnologyId::Mining, 2)],
-            1,
-        )
-        .expect("selected research");
-        let (completed, technology) = selected.after_unlocking_active();
-        assert_eq!(technology, Some(TechnologyId::Writing));
-        assert_eq!(completed.active_technology_id(), None);
-        assert!(
-            completed
-                .unlocked_technology_ids()
-                .contains(&TechnologyId::Writing)
-        );
-        assert_eq!(
-            completed
-                .progress_by_technology_id()
-                .get(&TechnologyId::Mining),
-            Some(&2)
-        );
-        assert!(
-            !completed
-                .progress_by_technology_id()
-                .contains_key(&TechnologyId::Writing)
-        );
-        assert_eq!(completed.science_overflow(), 1);
-
-        let research = ResearchState::default().updating_player(player.clone(), completed.clone());
-        assert_eq!(research.players().get(&player), Some(&completed));
-    }
-}
+mod tests;
