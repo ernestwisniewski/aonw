@@ -2,9 +2,11 @@ use std::collections::BTreeMap;
 
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
-    City, CityId, FogOfWar, GameMode, GameState, HexCoord, InteractionState, MatchIdentity,
-    MatchLifecycle, MatchRules, MovementUnits, Participant, PlayerCountry, PlayerId, PlayerKind,
-    PlayerTurnState, StateRevision, TurnLifecycle, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
+    City, CityId, EconomyState, FogOfWar, GameMode, GameState, HexCoord, InfrastructureState,
+    InitialResourceDistribution, InteractionState, KnowledgeState, MatchIdentity, MatchLifecycle,
+    MatchRules, MovementUnits, Participant, PlayerCountry, PlayerId, PlayerKind, PlayerTurnState,
+    ResearchState, StateRevision, TurnLifecycle, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
+    WonderRegistry, WorldArtifact,
 };
 
 pub(super) fn state(
@@ -12,6 +14,47 @@ pub(super) fn state(
     units: Vec<Unit>,
     cities: Vec<City>,
     interaction: InteractionState,
+) -> GameState {
+    state_with_economy_parts(
+        map,
+        units,
+        cities,
+        interaction,
+        InfrastructureState::default(),
+        Vec::new(),
+    )
+}
+
+pub(super) fn state_with_economy_parts(
+    map: &MapDefinition,
+    units: Vec<Unit>,
+    cities: Vec<City>,
+    interaction: InteractionState,
+    infrastructure: InfrastructureState,
+    artifacts: Vec<WorldArtifact>,
+) -> GameState {
+    state_with_resource_parts(
+        map,
+        units,
+        cities,
+        interaction,
+        infrastructure,
+        artifacts,
+        InitialResourceDistribution::default(),
+        ResearchState::default(),
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn state_with_resource_parts(
+    map: &MapDefinition,
+    units: Vec<Unit>,
+    cities: Vec<City>,
+    interaction: InteractionState,
+    infrastructure: InfrastructureState,
+    artifacts: Vec<WorldArtifact>,
+    initial_resource_distribution: InitialResourceDistribution,
+    research: ResearchState,
 ) -> GameState {
     let mut players = units
         .iter()
@@ -63,6 +106,16 @@ pub(super) fn state(
         None,
     )
     .expect("turn lifecycle");
+    let economy = EconomyState::try_new(
+        &identity,
+        map.bounds(),
+        BTreeMap::new(),
+        BTreeMap::new(),
+        BTreeMap::new(),
+        BTreeMap::new(),
+        initial_resource_distribution,
+    )
+    .expect("economy");
     GameState::builder(
         StateRevision::new(9),
         4,
@@ -71,6 +124,10 @@ pub(super) fn state(
         units,
     )
     .with_cities(cities)
+    .with_artifacts(artifacts)
+    .with_infrastructure(infrastructure)
+    .with_economy(economy)
+    .with_knowledge(KnowledgeState::new(research, WonderRegistry::default()))
     .with_fog_of_war(FogOfWar::default())
     .with_interaction(interaction)
     .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))

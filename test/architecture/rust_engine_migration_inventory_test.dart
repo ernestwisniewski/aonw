@@ -67,7 +67,7 @@ void main() {
   });
 
   test('migration manifest closes queries, events, and evidence', () {
-    expect(manifest.queryEntries, hasLength(8));
+    expect(manifest.queryEntries, hasLength(10));
     expect(manifest.eventEntries, hasLength(40));
     expect(manifest.nativeEventEntries, hasLength(4));
     expect(manifest.evidenceEntries, hasLength(1));

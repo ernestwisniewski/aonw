@@ -1,72 +1,38 @@
-use aonw_content::{ResourceType, TerrainType, TileDefinition};
+use aonw_content::{EconomyBalance, TileDefinition};
 
-pub(super) fn worked_score(tile: &TileDefinition) -> i32 {
-    let (food, production) = tile_yield(tile);
-    food.saturating_mul(100)
-        .saturating_add(production.saturating_mul(30))
+pub(super) fn worked_score(tile: &TileDefinition, balance: EconomyBalance) -> i32 {
+    clamp_score(base_score(tile, balance))
 }
 
-pub(super) fn expansion_score(tile: &TileDefinition) -> i32 {
-    let (food, production) = tile_yield(tile);
-    food.saturating_mul(100)
-        .saturating_add(production.saturating_mul(30))
-        .saturating_add(if tile.terrain_tags().contains(&TerrainType::River) {
-            10
-        } else {
-            0
-        })
-        .saturating_add(if tile.resources().is_empty() { 0 } else { 5 })
+pub(super) fn expansion_score(tile: &TileDefinition, balance: EconomyBalance) -> i32 {
+    let score = base_score(tile, balance)
+        .saturating_add(
+            if tile
+                .terrain_tags()
+                .contains(&aonw_content::TerrainType::River)
+            {
+                10
+            } else {
+                0
+            },
+        )
+        .saturating_add(if tile.resources().is_empty() { 0 } else { 5 });
+    clamp_score(score)
 }
 
-fn tile_yield(tile: &TileDefinition) -> (i32, i32) {
-    let (mut food, mut production) = match tile.yield_terrain() {
-        TerrainType::Grassland | TerrainType::Wetlands => (2, 0),
-        TerrainType::Plains | TerrainType::Forest => (1, 1),
-        TerrainType::Hills => (0, 2),
-        TerrainType::Tundra | TerrainType::Jungle | TerrainType::Coast | TerrainType::Lake => {
-            (1, 0)
-        }
-        TerrainType::Ocean
-        | TerrainType::Desert
-        | TerrainType::Snow
-        | TerrainType::Mountain
-        | TerrainType::River => (0, 0),
+fn base_score(tile: &TileDefinition, balance: EconomyBalance) -> i64 {
+    let Ok(value) = crate::economy::rules::tile_base_yield(tile, balance) else {
+        return i64::MIN;
     };
-    if tile.terrain_tags().contains(&TerrainType::River) {
-        food += 1;
-    }
-    for resource in tile.resources() {
-        match resource {
-            ResourceType::Wheat
-            | ResourceType::Fish
-            | ResourceType::Rice
-            | ResourceType::Apple
-            | ResourceType::Banana
-            | ResourceType::Citrus => food += 2,
-            ResourceType::Deer | ResourceType::Cow | ResourceType::Sheep => {
-                food += 1;
-                production += 1;
-            }
-            ResourceType::Iron | ResourceType::Marble => production += 2,
-            ResourceType::Gold
-            | ResourceType::Silver
-            | ResourceType::Gems
-            | ResourceType::Silk
-            | ResourceType::Spices
-            | ResourceType::Cotton
-            | ResourceType::Grapes
-            | ResourceType::Ivory
-            | ResourceType::Pearls
-            | ResourceType::Coffee
-            | ResourceType::Cocoa
-            | ResourceType::Tobacco
-            | ResourceType::Sugar
-            | ResourceType::Coal
-            | ResourceType::Oil
-            | ResourceType::Aluminium
-            | ResourceType::Uranium
-            | ResourceType::Horses => {}
-        }
-    }
-    (food, production)
+    value
+        .food
+        .saturating_mul(100)
+        .saturating_add(value.production.saturating_mul(30))
+        .saturating_add(value.gold.saturating_mul(10))
+        .saturating_add(value.defense)
+}
+
+fn clamp_score(score: i64) -> i32 {
+    i32::try_from(score.clamp(i64::from(i32::MIN), i64::from(i32::MAX)))
+        .expect("clamped city score fits i32")
 }

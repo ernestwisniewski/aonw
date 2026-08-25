@@ -5,9 +5,10 @@ use aonw_domain::{CityConquestAction, CityId, HexCoord, PlayerId, UnitId};
 
 use crate::{
     AttackHexRequest, AutoExploreUnitRequest, CityExpansionOptionsRequest,
-    CityFoundingOptionsRequest, CityWorkedHexOptionsRequest, DetachTroopRequest, FoundCityRequest,
-    MerchantCityRequest, MoveUnitRequest, OpenSession, ReachableRequest, RoutePlanRequest,
-    RuntimeQuery, SelectCityExpansionHexRequest, ToggleWorkedHexRequest, TurnCommandRequest,
+    CityFoundingOptionsRequest, CityWorkedHexOptionsRequest, CityYieldRequest, DetachTroopRequest,
+    FoundCityRequest, MerchantCityRequest, MoveUnitRequest, OpenSession, ReachableRequest,
+    RoutePlanRequest, RuntimeQuery, SelectCityExpansionHexRequest,
+    StrategicResourceProjectionRequest, ToggleWorkedHexRequest, TurnCommandRequest,
     UnitActionRequest, UnitLogisticsOptionsRequest, WorkerImprovementRequest, WorkerOptionsRequest,
     WorkerUnitRequest,
 };
@@ -91,6 +92,18 @@ pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeE
                 city_id: decode_city_id(city_id)?,
             },
         )),
+        ClientQueryDto::CityYield {
+            expected_revision,
+            city_id,
+        } => Ok(RuntimeQuery::CityYield(CityYieldRequest {
+            expected_revision,
+            city_id: decode_city_id(city_id)?,
+        })),
+        ClientQueryDto::StrategicResourceProjection { expected_revision } => {
+            Ok(RuntimeQuery::StrategicResourceProjection(
+                StrategicResourceProjectionRequest { expected_revision },
+            ))
+        }
         ClientQueryDto::WorkerOptions {
             expected_revision,
             unit_id,

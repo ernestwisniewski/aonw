@@ -3,9 +3,11 @@ use serde::{Deserialize, Serialize};
 use crate::{CombatExecutionDto, CombatPreviewDto, CoordinateDto, FieldImprovementKindDto};
 
 use super::{
-    AutoExploreOptionDto, CityExpansionCandidateDto, ClientLogisticsEvidenceDto,
-    ClientSessionStampDto, DetachmentOptionDto, MerchantDestinationOptionDto, MovementStepViewDto,
-    UnitMovementExecutionDto, WorkerAutomationOptionDto, WorkerImprovementOptionDto,
+    AutoExploreOptionDto, CityExpansionCandidateDto, CityYieldContributionDto,
+    ClientLogisticsEvidenceDto, ClientSessionStampDto, DetachmentOptionDto,
+    MerchantDestinationOptionDto, MovementStepViewDto, StrategicResourceAmountDto,
+    StrategicResourceSourceDto, UnitMovementExecutionDto, WorkerAutomationOptionDto,
+    WorkerImprovementOptionDto, YieldValueDto,
 };
 
 /// Recipient-owned action awaiting player input.
@@ -161,6 +163,28 @@ pub enum ClientQueryResultDto {
         preferred_hex: Option<CoordinateDto>,
         /// Current deterministic candidate ranking.
         candidates: Vec<CityExpansionCandidateDto>,
+    },
+    /// Display-ready checked city yield.
+    CityYield {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Queried city.
+        city_id: String,
+        /// Ordered exact contributions.
+        contributions: Vec<CityYieldContributionDto>,
+        /// Checked aggregate.
+        total: YieldValueDto,
+    },
+    /// Technology-gated strategic resource output owned by the recipient.
+    StrategicResourceProjection {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Recipient account.
+        player_id: String,
+        /// Positive output in canonical resource order.
+        output: Vec<StrategicResourceAmountDto>,
+        /// Exact controlled extraction sources.
+        sources: Vec<StrategicResourceSourceDto>,
     },
     /// Recipient-safe combat preview.
     CombatPreview {

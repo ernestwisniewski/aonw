@@ -2,10 +2,12 @@ use aonw_domain::GameState;
 
 use crate::{
     CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions, CityFoundingOptionsQuery,
-    CityWorkedHexOptions, CityWorkedHexOptionsQuery, CombatPreview, CombatPreviewQuery,
-    EngineContext, GameEngine, MovementSearchWorkspace, ReachableMovement, ReachableMovementQuery,
-    TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitLogisticsOptions,
-    UnitLogisticsOptionsQuery, WorkerOptions, WorkerOptionsQuery,
+    CityWorkedHexOptions, CityWorkedHexOptionsQuery, CityYieldBreakdown, CityYieldQuery,
+    CombatPreview, CombatPreviewQuery, EngineContext, GameEngine, MovementSearchWorkspace,
+    ReachableMovement, ReachableMovementQuery, StrategicResourceProjection,
+    StrategicResourceProjectionQuery, TerrainMovementPlan, TerrainMovementQuery,
+    TerrainMovementQueryError, UnitLogisticsOptions, UnitLogisticsOptionsQuery, WorkerOptions,
+    WorkerOptionsQuery,
 };
 
 /// Read-only game query family.
@@ -17,6 +19,10 @@ pub enum GameQuery<'query> {
     CityWorkedHexOptions(CityWorkedHexOptionsQuery<'query>),
     /// Returns deterministically ranked expansion candidates.
     CityExpansionOptions(CityExpansionOptionsQuery<'query>),
+    /// Returns a display-ready breakdown of tile-level city yield.
+    CityYield(CityYieldQuery<'query>),
+    /// Returns actor-owned strategic resource extraction after technology gates.
+    StrategicResourceProjection(StrategicResourceProjectionQuery),
     /// Recipient-safe combat preview without seed or rolls.
     CombatPreview(CombatPreviewQuery<'query>),
     /// Route preview for one target.
@@ -38,6 +44,10 @@ pub enum QueryResult {
     CityWorkedHexOptions(CityWorkedHexOptions),
     /// Legal preferred-expansion candidates for one city.
     CityExpansionOptions(CityExpansionOptions),
+    /// Checked tile-level city yield contributions.
+    CityYield(CityYieldBreakdown),
+    /// Checked strategic resource output and sources.
+    StrategicResourceProjection(StrategicResourceProjection),
     /// Effective combat statistics and damage bounds.
     CombatPreview(CombatPreview),
     /// Planned route.
@@ -65,6 +75,8 @@ pub enum CanonicalQueryError {
     Logistics(crate::MovementLogisticsError),
     /// Worker options were rejected by deterministic rules.
     Worker(crate::CommandRejectionCode),
+    /// Economy query failed or overflowed.
+    Economy(crate::EconomyQueryError),
 }
 
 impl CanonicalQueryError {
@@ -73,6 +85,7 @@ impl CanonicalQueryError {
     pub const fn code(&self) -> &'static str {
         match self {
             Self::Technology(_) => "technology_query_invalid",
+            Self::Economy(error) => error.code(),
             Self::City(rejection) | Self::Combat(rejection) | Self::Worker(rejection) => {
                 rejection.as_str()
             }
@@ -86,6 +99,7 @@ impl core::fmt::Display for CanonicalQueryError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Technology(source) => source.fmt(formatter),
+            Self::Economy(source) => source.fmt(formatter),
             Self::City(source) | Self::Combat(source) | Self::Worker(source) => {
                 source.fmt(formatter)
             }
@@ -139,6 +153,14 @@ impl GameEngine {
                 crate::city::query_expansion(state, context, query)
                     .map(QueryResult::CityExpansionOptions)
                     .map_err(city_query_error)
+            }
+            GameQuery::CityYield(query) => crate::economy::query_city_yield(state, context, query)
+                .map(QueryResult::CityYield)
+                .map_err(CanonicalQueryError::Economy),
+            GameQuery::StrategicResourceProjection(query) => {
+                crate::economy::query_strategic_resource_projection(state, context, query)
+                    .map(QueryResult::StrategicResourceProjection)
+                    .map_err(CanonicalQueryError::Economy)
             }
             GameQuery::CombatPreview(query) => crate::combat::preview(state, context, query)
                 .map(QueryResult::CombatPreview)

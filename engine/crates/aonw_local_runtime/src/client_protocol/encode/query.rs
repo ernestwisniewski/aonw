@@ -1,10 +1,15 @@
-use aonw_contract_mapping::{encode_improvement, encode_troop};
+use aonw_contract_mapping::{encode_improvement, encode_resource, encode_troop};
 use aonw_contracts::client::{
-    AutoExploreOptionDto, CityExpansionCandidateDto, ClientQueryResultDto, DetachmentOptionDto,
+    AutoExploreOptionDto, CityExpansionCandidateDto, CityYieldContributionDto,
+    CityYieldContributionKindDto, ClientQueryResultDto, DetachmentOptionDto,
     MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
-    ReachableTileViewDto, WorkerImprovementOptionDto,
+    ReachableTileViewDto, StrategicResourceAmountDto, StrategicResourceSourceDto,
+    WorkerImprovementOptionDto, YieldValueDto,
 };
-use aonw_engine::{CityExpansionOptions, CityFoundingOptions, CityWorkedHexOptions};
+use aonw_engine::{
+    CityExpansionOptions, CityFoundingOptions, CityWorkedHexOptions, CityYieldBreakdown,
+    CityYieldContributionKind, StrategicResourceProjection, YieldValue,
+};
 
 use crate::{RuntimeQueryResult, SessionStamp};
 
@@ -27,6 +32,14 @@ pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
             stamp: value_stamp,
             options,
         } => city_expansion_options(*value_stamp, options),
+        RuntimeQueryResult::CityYield {
+            stamp: value_stamp,
+            breakdown,
+        } => city_yield(*value_stamp, breakdown),
+        RuntimeQueryResult::StrategicResourceProjection {
+            stamp: value_stamp,
+            projection,
+        } => strategic_resource_projection(*value_stamp, projection),
         RuntimeQueryResult::CombatPreview {
             stamp: value_stamp,
             preview,
@@ -99,6 +112,73 @@ pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
             stamp: value_stamp,
             options,
         } => worker_options(*value_stamp, options),
+    }
+}
+
+fn city_yield(value_stamp: SessionStamp, value: &CityYieldBreakdown) -> ClientQueryResultDto {
+    ClientQueryResultDto::CityYield {
+        stamp: stamp(value_stamp),
+        city_id: value.city_id().as_str().to_owned(),
+        contributions: value
+            .contributions()
+            .iter()
+            .map(|contribution| CityYieldContributionDto {
+                kind: yield_kind(contribution.kind()),
+                coordinate: coordinate(contribution.coordinate()),
+                value: yield_value(contribution.value()),
+            })
+            .collect(),
+        total: yield_value(value.total()),
+    }
+}
+
+fn strategic_resource_projection(
+    value_stamp: SessionStamp,
+    value: &StrategicResourceProjection,
+) -> ClientQueryResultDto {
+    ClientQueryResultDto::StrategicResourceProjection {
+        stamp: stamp(value_stamp),
+        player_id: value.player_id().as_str().to_owned(),
+        output: value
+            .output()
+            .iter()
+            .map(|(resource, amount)| StrategicResourceAmountDto {
+                resource: encode_resource(*resource),
+                amount: *amount,
+            })
+            .collect(),
+        sources: value
+            .sources()
+            .iter()
+            .map(|source| StrategicResourceSourceDto {
+                city_id: source.city_id().as_str().to_owned(),
+                coordinate: coordinate(source.coordinate()),
+                resource: encode_resource(source.resource()),
+                improvement: encode_improvement(source.improvement()),
+                amount_per_turn: source.amount_per_turn(),
+            })
+            .collect(),
+    }
+}
+
+const fn yield_kind(value: CityYieldContributionKind) -> CityYieldContributionKindDto {
+    match value {
+        CityYieldContributionKind::Center => CityYieldContributionKindDto::Center,
+        CityYieldContributionKind::Population => CityYieldContributionKindDto::Population,
+        CityYieldContributionKind::Worker => CityYieldContributionKindDto::Worker,
+        CityYieldContributionKind::PassiveImprovement => {
+            CityYieldContributionKindDto::PassiveImprovement
+        }
+        CityYieldContributionKind::Artifact => CityYieldContributionKindDto::Artifact,
+    }
+}
+
+const fn yield_value(value: YieldValue) -> YieldValueDto {
+    YieldValueDto {
+        food: value.food,
+        production: value.production,
+        gold: value.gold,
+        defense: value.defense,
     }
 }
 
@@ -229,5 +309,42 @@ pub(super) fn merchant_destination(
     MerchantDestinationOptionDto {
         city_id: value.city_id.as_str().to_owned(),
         total_cost_units: value.total_cost.get(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use aonw_contracts::client::CityYieldContributionKindDto;
+    use aonw_engine::CityYieldContributionKind;
+
+    use super::yield_kind;
+
+    #[test]
+    fn city_yield_kind_mapping_is_total() {
+        let cases = [
+            (
+                CityYieldContributionKind::Center,
+                CityYieldContributionKindDto::Center,
+            ),
+            (
+                CityYieldContributionKind::Population,
+                CityYieldContributionKindDto::Population,
+            ),
+            (
+                CityYieldContributionKind::Worker,
+                CityYieldContributionKindDto::Worker,
+            ),
+            (
+                CityYieldContributionKind::PassiveImprovement,
+                CityYieldContributionKindDto::PassiveImprovement,
+            ),
+            (
+                CityYieldContributionKind::Artifact,
+                CityYieldContributionKindDto::Artifact,
+            ),
+        ];
+        for (source, expected) in cases {
+            assert_eq!(yield_kind(source), expected);
+        }
     }
 }

@@ -43,8 +43,9 @@ pub use diplomacy::{
     DiplomaticScoreChangeReason, DiplomaticScoreEntry, PlayerPair, ResourceTradeAgreement,
 };
 pub use economy::{
-    EconomyState, EconomyStateBuildError, InitialResourceDistribution, InitialResourcePlacement,
-    ResourceType, StrategicResourceStockpile,
+    EconomyAccountChange, EconomyAccountKind, EconomyState, EconomyStateBuildError,
+    InitialResourceDistribution, InitialResourcePlacement, ResourceType,
+    StrategicResourceStockpile,
 };
 pub use fog::{FogOfWar, FogVisibility, PlayerFog};
 pub use game_state::{

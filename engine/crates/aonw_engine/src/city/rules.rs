@@ -218,7 +218,13 @@ pub(crate) fn query_worked_hexes(
     let city = validate_city_control(state, context, query.city_id())?;
     let limit = context.ruleset().city().worked_hex_limit(city.population());
     let selected = normalized_manual_hexes(city, limit);
-    let effective = effective_worked_hexes(city, context.map(), &selected, limit);
+    let effective = effective_worked_hexes(
+        city,
+        context.map(),
+        &selected,
+        limit,
+        context.ruleset().economy(),
+    );
     let mut controlled = city.controlled_hexes().to_vec();
     controlled.sort_unstable();
     Ok(CityWorkedHexOptions::new(
@@ -271,7 +277,7 @@ fn validate_city_control<'state>(
     Ok(city)
 }
 
-fn normalized_manual_hexes(city: &City, limit: u32) -> Vec<HexCoord> {
+pub(crate) fn normalized_manual_hexes(city: &City, limit: u32) -> Vec<HexCoord> {
     let mut selected = city
         .worked_hexes()
         .iter()
@@ -284,11 +290,12 @@ fn normalized_manual_hexes(city: &City, limit: u32) -> Vec<HexCoord> {
     selected
 }
 
-fn effective_worked_hexes(
+pub(crate) fn effective_worked_hexes(
     city: &City,
     map: &MapDefinition,
     selected: &[HexCoord],
     limit: u32,
+    economy: aonw_content::EconomyBalance,
 ) -> Vec<HexCoord> {
     let limit = usize::try_from(limit).unwrap_or(usize::MAX);
     let mut effective = selected.to_vec();
@@ -301,7 +308,13 @@ fn effective_worked_hexes(
         .iter()
         .copied()
         .filter(|coordinate| !selected.contains(coordinate))
-        .map(|coordinate| (coordinate, map.tile_at(coordinate).map_or(0, worked_score)))
+        .map(|coordinate| {
+            (
+                coordinate,
+                map.tile_at(coordinate)
+                    .map_or(i32::MIN, |tile| worked_score(tile, economy)),
+            )
+        })
         .collect::<Vec<_>>();
     candidates
         .sort_unstable_by(|left, right| right.1.cmp(&left.1).then_with(|| left.0.cmp(&right.0)));
@@ -348,7 +361,7 @@ fn expansion_candidates(
                 .expect("claimable expansion has map tile");
             candidates.push(CityExpansionCandidate::new(
                 target,
-                expansion_score(tile),
+                expansion_score(tile, context.ruleset().economy()),
                 u32::try_from(city.center().distance_to(target)).unwrap_or(u32::MAX),
             ));
         }

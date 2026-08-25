@@ -5,6 +5,7 @@ use crate::{CoordinateDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto};
 use super::MapViewDto;
 
 mod city;
+mod economy;
 mod event;
 mod logistics;
 mod query;
@@ -15,6 +16,10 @@ mod worker;
 pub use city::{
     CityExpansionCandidateDto, CityFoundingDraftViewDto, OwnedCityPlanningViewDto,
     PlayerCityViewDto,
+};
+pub use economy::{
+    CityYieldContributionDto, CityYieldContributionKindDto, StrategicResourceAmountDto,
+    StrategicResourceSourceDto, YieldValueDto,
 };
 pub use event::ClientEventDto;
 pub use logistics::{

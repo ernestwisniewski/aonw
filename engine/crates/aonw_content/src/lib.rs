@@ -28,8 +28,9 @@ pub use model::{
     TerrainProfile, TileDefinition,
 };
 pub use ruleset::{
-    CityBalance, CityNameSet, RulesetDefinition, UnitCapabilities, UnitDefinition,
-    UnitMovementDomainValue, WorkerBalance, WorkerImprovementDefinition, WorkerYield,
+    CityBalance, CityNameSet, EconomyBalance, EconomyYield, RulesetDefinition,
+    StabilityModifierDefinition, UnitCapabilities, UnitDefinition, UnitMovementDomainValue,
+    WorkerBalance, WorkerImprovementDefinition, WorkerYield,
 };
 pub use scenario::{
     ScenarioBootstrapError, ScenarioDefinition, ScenarioLoadError, ScenarioUnitDefinition,

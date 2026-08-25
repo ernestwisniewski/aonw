@@ -13,6 +13,8 @@ use aonw_contracts::{
     CoordinateDto, FieldImprovementKindDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
 };
 
+#[path = "client_contract/economy.rs"]
+mod economy_contract;
 #[path = "client_contract/worker.rs"]
 mod worker_contract;
 
@@ -202,6 +204,17 @@ fn every_current_request_variant_round_trips() {
                 unit_id: "unit-1".to_owned(),
             },
         },
+        ClientRequestBodyDto::Query {
+            query: ClientQueryDto::CityYield {
+                expected_revision: 8,
+                city_id: "city-1".to_owned(),
+            },
+        },
+        ClientRequestBodyDto::Query {
+            query: ClientQueryDto::StrategicResourceProjection {
+                expected_revision: 8,
+            },
+        },
         ClientRequestBodyDto::Dispatch {
             command: ClientCommandDto::CancelUnitAction {
                 expected_revision: 8,
@@ -291,14 +304,44 @@ fn logistics_requests() -> [ClientRequestBodyDto; 4] {
 
 #[test]
 fn every_current_response_variant_round_trips() {
-    let query_stamp = stamp();
-    let mut rejected_command = command_result();
-    rejected_command.outcome = ClientCommandOutcomeDto::Rejected {
-        code: ClientCommandRejectionCodeDto::StaleRevision,
+    let responses = core_response_variants()
+        .into_iter()
+        .chain(economy_contract::responses())
+        .chain(remaining_response_variants());
+
+    for response in responses {
+        let envelope = ClientResponseDto {
+            api_version: CLIENT_API_VERSION,
+            outcome: ClientOutcomeDto::Success {
+                response: Box::new(response),
+            },
+        };
+        let encoded = envelope.to_json().expect("response JSON");
+        assert_eq!(
+            ClientResponseDto::from_json(&encoded).expect("response"),
+            envelope
+        );
+    }
+
+    let failure = ClientResponseDto {
+        api_version: CLIENT_API_VERSION,
+        outcome: ClientOutcomeDto::Failure {
+            error: ClientErrorDto {
+                code: "session_not_open".to_owned(),
+                message: "session is not open".to_owned(),
+            },
+        },
     };
-    rejected_command.events.clear();
-    rejected_command.evidence = None;
-    let responses = vec![
+    let encoded = failure.to_json().expect("failure JSON");
+    assert_eq!(
+        ClientResponseDto::from_json(&encoded).expect("failure"),
+        failure
+    );
+}
+
+fn core_response_variants() -> Vec<ClientResponseBodyDto> {
+    let query_stamp = stamp();
+    vec![
         ClientResponseBodyDto::Capabilities {
             features: vec![ClientFeatureDto::Snapshot, ClientFeatureDto::MoveUnit],
         },
@@ -335,6 +378,17 @@ fn every_current_response_variant_round_trips() {
                 }],
             },
         },
+    ]
+}
+
+fn remaining_response_variants() -> Vec<ClientResponseBodyDto> {
+    let mut rejected_command = command_result();
+    rejected_command.outcome = ClientCommandOutcomeDto::Rejected {
+        code: ClientCommandRejectionCodeDto::StaleRevision,
+    };
+    rejected_command.events.clear();
+    rejected_command.evidence = None;
+    vec![
         logistics_response(),
         worker_contract::response(),
         ClientResponseBodyDto::Command {
@@ -357,36 +411,7 @@ fn every_current_response_variant_round_trips() {
                 final_stamp: stamp(),
             },
         },
-    ];
-
-    for response in responses {
-        let envelope = ClientResponseDto {
-            api_version: CLIENT_API_VERSION,
-            outcome: ClientOutcomeDto::Success {
-                response: Box::new(response),
-            },
-        };
-        let encoded = envelope.to_json().expect("response JSON");
-        assert_eq!(
-            ClientResponseDto::from_json(&encoded).expect("response"),
-            envelope
-        );
-    }
-
-    let failure = ClientResponseDto {
-        api_version: CLIENT_API_VERSION,
-        outcome: ClientOutcomeDto::Failure {
-            error: ClientErrorDto {
-                code: "session_not_open".to_owned(),
-                message: "session is not open".to_owned(),
-            },
-        },
-    };
-    let encoded = failure.to_json().expect("failure JSON");
-    assert_eq!(
-        ClientResponseDto::from_json(&encoded).expect("failure"),
-        failure
-    );
+    ]
 }
 
 fn logistics_response() -> ClientResponseBodyDto {

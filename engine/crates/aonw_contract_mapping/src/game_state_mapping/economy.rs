@@ -173,7 +173,9 @@ fn decode_distribution(
 
 fn map_economy_error(error: &EconomyStateBuildError) -> GameStateMappingError {
     let path = match error {
-        EconomyStateBuildError::UnknownPlayer(_) => "$.economy".to_owned(),
+        EconomyStateBuildError::UnknownPlayer(_)
+        | EconomyStateBuildError::AccountOverflow { .. }
+        | EconomyStateBuildError::InsufficientBalance { .. } => "$.economy".to_owned(),
         EconomyStateBuildError::NegativeGold { player, .. } => {
             format!("$.economy.playerGold.{}", player.as_str())
         }
@@ -201,7 +203,9 @@ macro_rules! resource_mapping {
     };
 }
 
-pub(super) const fn decode_resource(value: ResourceTypeDto) -> ResourceType {
+/// Converts the current wire resource identity into the canonical domain value.
+#[must_use]
+pub const fn decode_resource(value: ResourceTypeDto) -> ResourceType {
     resource_mapping!(
         value,
         ResourceTypeDto::Wheat => ResourceType::Wheat,
@@ -236,7 +240,9 @@ pub(super) const fn decode_resource(value: ResourceTypeDto) -> ResourceType {
     )
 }
 
-pub(super) const fn encode_resource(value: ResourceType) -> ResourceTypeDto {
+/// Converts a canonical resource identity into the current wire value.
+#[must_use]
+pub const fn encode_resource(value: ResourceType) -> ResourceTypeDto {
     resource_mapping!(
         value,
         ResourceType::Wheat => ResourceTypeDto::Wheat,

@@ -13,16 +13,17 @@ pub use map::{
 pub use request::{ClientCommandDto, ClientQueryDto, ClientRequestBodyDto, ClientRequestDto};
 pub use response::{
     AutoExploreOptionDto, CityExpansionCandidateDto, CityFoundingDraftViewDto,
-    ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto,
-    ClientEventDto, ClientEvidenceDto, ClientFeatureDto, ClientLogisticsEvidenceDto,
-    ClientOutcomeDto, ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto,
-    ClientResponseDto, ClientSessionStampDto, DetachmentOptionDto, FieldImprovementViewDto,
+    CityYieldContributionDto, CityYieldContributionKindDto, ClientCommandOutcomeDto,
+    ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto, ClientEventDto,
+    ClientEvidenceDto, ClientFeatureDto, ClientLogisticsEvidenceDto, ClientOutcomeDto,
+    ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto, ClientResponseDto,
+    ClientSessionStampDto, DetachmentOptionDto, FieldImprovementViewDto,
     MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
     OwnedCityPlanningViewDto, PendingActionViewDto, PlayerCityViewDto, PlayerTurnLifecycleViewDto,
     PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
-    RoadViewDto, UnitMovementExecutionDto, WorkerAutomationActionDto, WorkerAutomationMetricsDto,
-    WorkerAutomationOptionDto, WorkerImprovementOptionDto, WorkerJobCompletionDto,
-    WorkerJobViewDto,
+    RoadViewDto, StrategicResourceAmountDto, StrategicResourceSourceDto, UnitMovementExecutionDto,
+    WorkerAutomationActionDto, WorkerAutomationMetricsDto, WorkerAutomationOptionDto,
+    WorkerImprovementOptionDto, WorkerJobCompletionDto, WorkerJobViewDto, YieldValueDto,
 };
 
 /// The only client protocol version accepted by this build.

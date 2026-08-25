@@ -9,6 +9,8 @@ enum QueryKind {
     CityFoundingOptions,
     CityWorkedHexOptions,
     CityExpansionOptions,
+    CityYield,
+    StrategicResourceProjection,
     CombatPreview(HexCoord),
     Reachable,
     RoutePlan(HexCoord),
@@ -18,6 +20,7 @@ enum QueryKind {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum QuerySubject {
+    Actor,
     Unit(UnitId),
     City(CityId),
 }
@@ -50,6 +53,16 @@ impl QueryCacheKey {
                 request.expected_revision,
                 QuerySubject::City(request.city_id.clone()),
                 QueryKind::CityExpansionOptions,
+            ),
+            RuntimeQuery::CityYield(request) => (
+                request.expected_revision,
+                QuerySubject::City(request.city_id.clone()),
+                QueryKind::CityYield,
+            ),
+            RuntimeQuery::StrategicResourceProjection(request) => (
+                request.expected_revision,
+                QuerySubject::Actor,
+                QueryKind::StrategicResourceProjection,
             ),
             RuntimeQuery::CombatPreview(request) => (
                 request.expected_revision,

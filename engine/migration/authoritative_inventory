@@ -44,7 +44,7 @@
 oracle-tree b83e4a513901403ab24e9d447feb5086edbdf9b9
 expected-domain-count 39
 expected-system-count 2
-expected-query-count 8
+expected-query-count 10
 expected-event-count 40
 expected-native-event-count 4
 expected-evidence-count 1
@@ -116,6 +116,8 @@ query CombatPreview CombatPreview CombatPreview combat runtime-ready
 query CityExpansionOptions CityExpansionOptions CityExpansionOptions city runtime-ready
 query CityFoundingOptions CityFoundingOptions CityFoundingOptions city runtime-ready
 query CityWorkedHexOptions CityWorkedHexOptions CityWorkedHexOptions city runtime-ready
+query CityYield CityYield CityYield economy runtime-ready
+query StrategicResourceProjection StrategicResourceProjection StrategicResourceProjection economy runtime-ready
 query UnitLogisticsOptions UnitLogisticsOptions UnitLogisticsOptions movement runtime-ready
 query WorkerOptions WorkerOptions WorkerOptions worker runtime-ready
 

@@ -3,8 +3,8 @@ use aonw_domain::MovementUnits;
 use crate::{TechnologyCostBalance, technology::STANDARD_TECHNOLOGIES};
 
 use super::{
-    CityBalance, CityNameSet, CombatBalance, CombatStats, PlayerCountryValue, RulesetDefinition,
-    UnitCapabilities, UnitDefinition, UnitKindValue, UnitMovementDomainValue,
+    CityBalance, CityNameSet, CombatBalance, CombatStats, EconomyBalance, PlayerCountryValue,
+    RulesetDefinition, UnitCapabilities, UnitDefinition, UnitKindValue, UnitMovementDomainValue,
     UnitOccupancyPolicyValue,
 };
 
@@ -104,6 +104,7 @@ pub(super) static STANDARD_RULESET: RulesetDefinition = RulesetDefinition {
         worked_hex_limit_base: 0,
         worked_hexes_per_population: 1,
     },
+    economy: EconomyBalance::STANDARD,
     worker: super::WorkerBalance::STANDARD,
     city_name_sets: &STANDARD_CITY_NAMES,
     unit_definitions: &STANDARD_UNITS,

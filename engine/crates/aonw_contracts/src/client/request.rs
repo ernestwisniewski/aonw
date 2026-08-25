@@ -264,6 +264,18 @@ pub enum ClientQueryDto {
         /// Controlled city.
         city_id: String,
     },
+    /// Returns a complete display-ready tile yield for one city.
+    CityYield {
+        /// Revision observed by the client.
+        expected_revision: u64,
+        /// Controlled city.
+        city_id: String,
+    },
+    /// Returns actor-owned strategic resource output after technology gates.
+    StrategicResourceProjection {
+        /// Revision observed by the client.
+        expected_revision: u64,
+    },
     /// Returns current worker actions and an engine-selected automation target.
     WorkerOptions {
         expected_revision: u64,

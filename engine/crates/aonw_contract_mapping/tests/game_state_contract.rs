@@ -312,31 +312,25 @@ fn economy() -> EconomyStateDto {
             ("player-1".to_owned(), 8),
             ("player-2".to_owned(), -11),
         ]),
-        strategic_resources: BTreeMap::from([
-            (
-                "player-1".to_owned(),
-                StrategicResourceStockpileDto(BTreeMap::from([
-                    (ResourceTypeDto::Oil, 13),
-                    (ResourceTypeDto::Aluminium, 5),
-                ])),
-            ),
-            (
-                "player-2".to_owned(),
-                StrategicResourceStockpileDto::default(),
-            ),
-        ]),
+        strategic_resources: BTreeMap::from([(
+            "player-1".to_owned(),
+            StrategicResourceStockpileDto(BTreeMap::from([
+                (ResourceTypeDto::Oil, 13),
+                (ResourceTypeDto::Aluminium, 5),
+            ])),
+        )]),
         initial_resource_distribution: InitialResourceDistributionDto {
             seed: -9_007_199_254_740_991,
             placements: vec![
                 InitialResourcePlacementDto {
-                    col: 4,
-                    row: 3,
-                    resource: ResourceTypeDto::Wheat,
-                },
-                InitialResourcePlacementDto {
                     col: 3,
                     row: 4,
                     resource: ResourceTypeDto::Oil,
+                },
+                InitialResourcePlacementDto {
+                    col: 4,
+                    row: 3,
+                    resource: ResourceTypeDto::Wheat,
                 },
             ],
         },
@@ -501,7 +495,7 @@ fn economy_round_trip_preserves_valid_accounts_stockpiles_and_ordered_placements
     );
     assert_eq!(
         economy.initial_resource_distribution().placements()[0].coordinate(),
-        HexCoord::new(4, 3)
+        HexCoord::new(3, 4)
     );
     assert_eq!(encode_game_state(&state), source);
 }

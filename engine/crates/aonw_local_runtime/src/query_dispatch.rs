@@ -1,13 +1,18 @@
 use aonw_domain::{CityId, HexCoord, MovementUnits, TroopKind, UnitId};
 use aonw_engine::{
     CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions, CityFoundingOptionsQuery,
-    CityWorkedHexOptions, CityWorkedHexOptionsQuery, CombatPreview, CombatPreviewQuery, GameEngine,
+    CityWorkedHexOptions, CityWorkedHexOptionsQuery, CityYieldBreakdown, CombatPreview, GameEngine,
     GameQuery, MovementSearchMetrics, MovementSearchWorkspace, QueryResult, ReachableMovementQuery,
-    TerrainMovementQuery, UnitLogisticsOptionsQuery, WorkerOptions,
+    StrategicResourceProjection, TerrainMovementQuery, UnitLogisticsOptionsQuery, WorkerOptions,
 };
 
+mod read_models;
 mod worker;
 
+pub use read_models::{CityYieldRequest, CombatPreviewRequest, StrategicResourceProjectionRequest};
+use read_models::{
+    dispatch_city_yield_query, dispatch_combat_preview_query, dispatch_strategic_resource_query,
+};
 use worker::dispatch_worker_query;
 
 /// Current city-founding-options request.
@@ -44,17 +49,6 @@ pub struct WorkerOptionsRequest {
     pub expected_revision: u64,
     /// Controlled worker.
     pub unit_id: UnitId,
-}
-
-/// Current recipient-safe combat preview request.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CombatPreviewRequest {
-    /// Expected canonical revision.
-    pub expected_revision: u64,
-    /// Controlled attacking unit.
-    pub attacker_unit_id: UnitId,
-    /// Visible target coordinate.
-    pub defender: HexCoord,
 }
 
 use crate::session::Session;
@@ -98,6 +92,10 @@ pub enum RuntimeQuery {
     CityWorkedHexOptions(CityWorkedHexOptionsRequest),
     /// Ranked current territory-expansion candidates.
     CityExpansionOptions(CityExpansionOptionsRequest),
+    /// Checked tile-level city yield.
+    CityYield(CityYieldRequest),
+    /// Technology-gated actor-owned extraction projection.
+    StrategicResourceProjection(StrategicResourceProjectionRequest),
     /// Improvement, assignment, road, and automation options.
     WorkerOptions(WorkerOptionsRequest),
     /// Effective combat stats and damage bounds without RNG evidence.
@@ -236,6 +234,20 @@ pub enum RuntimeQueryResult {
         /// Engine-owned query result.
         options: CityExpansionOptions,
     },
+    /// Engine-owned city yield.
+    CityYield {
+        /// Version and authoritative identity metadata.
+        stamp: SessionStamp,
+        /// Engine-owned query result.
+        breakdown: CityYieldBreakdown,
+    },
+    /// Engine-owned strategic resource projection.
+    StrategicResourceProjection {
+        /// Version and authoritative identity metadata.
+        stamp: SessionStamp,
+        /// Engine-owned query result.
+        projection: StrategicResourceProjection,
+    },
     /// Engine-owned worker options.
     WorkerOptions {
         /// Version and authoritative identity metadata.
@@ -273,26 +285,13 @@ pub(crate) fn dispatch_query(
         RuntimeQuery::CityExpansionOptions(request) => {
             dispatch_city_expansion_query(session, &request, workspace)
         }
+        RuntimeQuery::CityYield(request) => dispatch_city_yield_query(session, &request, workspace),
+        RuntimeQuery::StrategicResourceProjection(request) => {
+            dispatch_strategic_resource_query(session, request, workspace)
+        }
         RuntimeQuery::WorkerOptions(request) => dispatch_worker_query(session, &request, workspace),
         RuntimeQuery::CombatPreview(request) => {
-            let result = GameEngine::query_with_workspace(
-                session.state(),
-                session.context(),
-                GameQuery::CombatPreview(CombatPreviewQuery::new(
-                    request.expected_revision,
-                    &request.attacker_unit_id,
-                    request.defender,
-                )),
-                workspace,
-            )
-            .map_err(RuntimeError::Query)?;
-            let QueryResult::CombatPreview(preview) = result else {
-                unreachable!("combat preview returns combat response")
-            };
-            Ok(RuntimeQueryResult::CombatPreview {
-                stamp: session.stamp(),
-                preview,
-            })
+            dispatch_combat_preview_query(session, &request, workspace)
         }
         RuntimeQuery::Reachable(request) => {
             let result = GameEngine::query_with_workspace(

@@ -255,6 +255,7 @@ pub struct RulesetDefinition {
     occupancy_policy: UnitOccupancyPolicyValue,
     combat: CombatBalance,
     city: CityBalance,
+    economy: EconomyBalance,
     worker: WorkerBalance,
     city_name_sets: &'static [CityNameSet],
     unit_definitions: &'static [UnitDefinition],
@@ -291,6 +292,12 @@ impl RulesetDefinition {
     #[must_use]
     pub const fn city(&self) -> CityBalance {
         self.city
+    }
+
+    /// Returns immutable city economy and growth balance.
+    #[must_use]
+    pub const fn economy(&self) -> EconomyBalance {
+        self.economy
     }
 
     /// Returns immutable worker and infrastructure balance.
@@ -431,6 +438,9 @@ mod standard;
 mod city;
 use city::PlayerCountryValue;
 pub use city::{CityBalance, CityNameSet};
+
+mod economy;
+pub use economy::{EconomyBalance, EconomyYield, StabilityModifierDefinition};
 
 use standard::STANDARD_RULESET;
 #[cfg(test)]

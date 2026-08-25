@@ -1,156 +1,12 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use crate::{HexCoord, HexGridBounds, MatchIdentity, PlayerId};
 
-/// Resource identifier preserved by canonical economy state.
-#[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum ResourceType {
-    Wheat,
-    Fish,
-    Deer,
-    Sheep,
-    Rice,
-    Cow,
-    Apple,
-    Banana,
-    Citrus,
-    Gold,
-    Silver,
-    Gems,
-    Silk,
-    Spices,
-    Cotton,
-    Grapes,
-    Ivory,
-    Pearls,
-    Coffee,
-    Cocoa,
-    Tobacco,
-    Sugar,
-    Iron,
-    Coal,
-    Oil,
-    Aluminium,
-    Uranium,
-    Horses,
-    Marble,
-}
+mod resource;
 
-impl ResourceType {
-    /// Returns whether this resource uses a transferable stockpile.
-    #[must_use]
-    pub const fn is_stockpiled(self) -> bool {
-        matches!(self, Self::Oil | Self::Aluminium)
-    }
-}
-
-/// Positive stockpiled strategic resource amounts in stable resource order.
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct StrategicResourceStockpile(BTreeMap<ResourceType, i64>);
-
-impl StrategicResourceStockpile {
-    /// Validates stockpiled resource kinds and positive amounts.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error for non-stockpiled resources or non-positive values.
-    pub fn try_new(amounts: BTreeMap<ResourceType, i64>) -> Result<Self, EconomyStateBuildError> {
-        for (resource, amount) in &amounts {
-            if !resource.is_stockpiled() {
-                return Err(EconomyStateBuildError::ResourceNotStockpiled(*resource));
-            }
-            if *amount <= 0 {
-                return Err(EconomyStateBuildError::NonPositiveResourceAmount {
-                    resource: *resource,
-                    amount: *amount,
-                });
-            }
-        }
-        Ok(Self(amounts))
-    }
-
-    /// Returns positive amounts sorted by resource identity.
-    #[must_use]
-    pub const fn amounts(&self) -> &BTreeMap<ResourceType, i64> {
-        &self.0
-    }
-}
-
-/// One generated resource placement retained by canonical state.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct InitialResourcePlacement {
-    coordinate: HexCoord,
-    resource: ResourceType,
-}
-
-impl InitialResourcePlacement {
-    /// Constructs one placement.
-    #[must_use]
-    pub const fn new(coordinate: HexCoord, resource: ResourceType) -> Self {
-        Self {
-            coordinate,
-            resource,
-        }
-    }
-
-    /// Returns map coordinate.
-    #[must_use]
-    pub const fn coordinate(self) -> HexCoord {
-        self.coordinate
-    }
-
-    /// Returns placed resource.
-    #[must_use]
-    pub const fn resource(self) -> ResourceType {
-        self.resource
-    }
-}
-
-/// Persisted deterministic match-start resource placements.
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct InitialResourceDistribution {
-    seed: i64,
-    placements: Box<[InitialResourcePlacement]>,
-}
-
-impl InitialResourceDistribution {
-    /// Owns ordered placements and rejects duplicate coordinates.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when multiple resources use one coordinate.
-    pub fn try_new(
-        seed: i64,
-        placements: impl IntoIterator<Item = InitialResourcePlacement>,
-    ) -> Result<Self, EconomyStateBuildError> {
-        let placements = placements.into_iter().collect::<Vec<_>>();
-        let mut coordinates = BTreeSet::new();
-        for placement in &placements {
-            if !coordinates.insert(placement.coordinate()) {
-                return Err(EconomyStateBuildError::DuplicateInitialResource(
-                    placement.coordinate(),
-                ));
-            }
-        }
-        Ok(Self {
-            seed,
-            placements: placements.into_boxed_slice(),
-        })
-    }
-
-    /// Returns deterministic generator seed retained for evidence.
-    #[must_use]
-    pub const fn seed(&self) -> i64 {
-        self.seed
-    }
-
-    /// Returns placements in canonical contract order.
-    #[must_use]
-    pub const fn placements(&self) -> &[InitialResourcePlacement] {
-        &self.placements
-    }
-}
+pub use resource::{
+    InitialResourceDistribution, InitialResourcePlacement, ResourceType, StrategicResourceStockpile,
+};
 
 /// Canonical player economy accounts and initial resource distribution.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -174,9 +30,10 @@ impl EconomyState {
         player_gold: BTreeMap<PlayerId, i64>,
         player_war_weariness: BTreeMap<PlayerId, i64>,
         player_stability_net: BTreeMap<PlayerId, i64>,
-        strategic_resources: BTreeMap<PlayerId, StrategicResourceStockpile>,
+        mut strategic_resources: BTreeMap<PlayerId, StrategicResourceStockpile>,
         initial_resource_distribution: InitialResourceDistribution,
     ) -> Result<Self, EconomyStateBuildError> {
+        strategic_resources.retain(|_, stockpile| !stockpile.amounts().is_empty());
         let state = Self {
             player_gold,
             player_war_weariness,
@@ -186,6 +43,110 @@ impl EconomyState {
         };
         state.validate_for(identity, bounds)?;
         Ok(state)
+    }
+
+    /// Applies an ordered set of account deltas atomically using checked arithmetic.
+    ///
+    /// Zero strategic-resource balances are removed from canonical state. A
+    /// failure leaves the original state unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an unknown player, invalid resource, insufficient
+    /// balance, or integer overflow.
+    pub fn try_after_changes(
+        &self,
+        identity: &MatchIdentity,
+        bounds: HexGridBounds,
+        changes: impl IntoIterator<Item = EconomyAccountChange>,
+    ) -> Result<Self, EconomyStateBuildError> {
+        let mut updated = self.clone();
+        for change in changes {
+            updated.apply_change(identity, change)?;
+        }
+        updated.validate_for(identity, bounds)?;
+        Ok(updated)
+    }
+
+    fn apply_change(
+        &mut self,
+        identity: &MatchIdentity,
+        change: EconomyAccountChange,
+    ) -> Result<(), EconomyStateBuildError> {
+        let player = change.player();
+        if !identity.contains(player) {
+            return Err(EconomyStateBuildError::UnknownPlayer(player.clone()));
+        }
+        match change {
+            EconomyAccountChange::Gold { player, delta } => adjust_non_negative(
+                &mut self.player_gold,
+                player,
+                delta,
+                EconomyAccountKind::Gold,
+            ),
+            EconomyAccountChange::WarWeariness { player, delta } => adjust_non_negative(
+                &mut self.player_war_weariness,
+                player,
+                delta,
+                EconomyAccountKind::WarWeariness,
+            ),
+            EconomyAccountChange::Stability { player, delta } => {
+                let current = self.player_stability_net.get(&player).copied().unwrap_or(0);
+                let value = current.checked_add(delta).ok_or_else(|| {
+                    EconomyStateBuildError::AccountOverflow {
+                        player: player.clone(),
+                        account: EconomyAccountKind::Stability,
+                    }
+                })?;
+                self.player_stability_net.insert(player, value);
+                Ok(())
+            }
+            EconomyAccountChange::StrategicResource {
+                player,
+                resource,
+                delta,
+            } => {
+                if !resource.is_stockpiled() {
+                    return Err(EconomyStateBuildError::ResourceNotStockpiled(resource));
+                }
+                let current = self
+                    .strategic_resources
+                    .get(&player)
+                    .and_then(|stockpile| stockpile.amounts().get(&resource))
+                    .copied()
+                    .unwrap_or(0);
+                let value = current.checked_add(delta).ok_or_else(|| {
+                    EconomyStateBuildError::AccountOverflow {
+                        player: player.clone(),
+                        account: EconomyAccountKind::StrategicResource,
+                    }
+                })?;
+                if value < 0 {
+                    return Err(EconomyStateBuildError::InsufficientBalance {
+                        player,
+                        account: EconomyAccountKind::StrategicResource,
+                        available: current,
+                        requested: delta.saturating_neg(),
+                    });
+                }
+                let mut amounts = self
+                    .strategic_resources
+                    .get(&player)
+                    .map_or_else(BTreeMap::new, |stockpile| stockpile.amounts().clone());
+                if value == 0 {
+                    amounts.remove(&resource);
+                } else {
+                    amounts.insert(resource, value);
+                }
+                if amounts.is_empty() {
+                    self.strategic_resources.remove(&player);
+                } else {
+                    self.strategic_resources
+                        .insert(player, StrategicResourceStockpile::try_new(amounts)?);
+                }
+                Ok(())
+            }
+        }
     }
 
     pub(crate) fn validate_for(
@@ -257,6 +218,76 @@ impl EconomyState {
     }
 }
 
+fn adjust_non_negative(
+    accounts: &mut BTreeMap<PlayerId, i64>,
+    player: PlayerId,
+    delta: i64,
+    account: EconomyAccountKind,
+) -> Result<(), EconomyStateBuildError> {
+    let current = accounts.get(&player).copied().unwrap_or(0);
+    let value =
+        current
+            .checked_add(delta)
+            .ok_or_else(|| EconomyStateBuildError::AccountOverflow {
+                player: player.clone(),
+                account,
+            })?;
+    if value < 0 {
+        return Err(EconomyStateBuildError::InsufficientBalance {
+            player,
+            account,
+            available: current,
+            requested: delta.saturating_neg(),
+        });
+    }
+    accounts.insert(player, value);
+    Ok(())
+}
+
+/// One atomic delta applied to canonical economy accounts.
+#[allow(missing_docs)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum EconomyAccountChange {
+    Gold {
+        player: PlayerId,
+        delta: i64,
+    },
+    WarWeariness {
+        player: PlayerId,
+        delta: i64,
+    },
+    Stability {
+        player: PlayerId,
+        delta: i64,
+    },
+    StrategicResource {
+        player: PlayerId,
+        resource: ResourceType,
+        delta: i64,
+    },
+}
+
+impl EconomyAccountChange {
+    const fn player(&self) -> &PlayerId {
+        match self {
+            Self::Gold { player, .. }
+            | Self::WarWeariness { player, .. }
+            | Self::Stability { player, .. }
+            | Self::StrategicResource { player, .. } => player,
+        }
+    }
+}
+
+/// Stable economy account category used by checked-transition failures.
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum EconomyAccountKind {
+    Gold,
+    WarWeariness,
+    Stability,
+    StrategicResource,
+}
+
 /// Structural economy-state failure.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum EconomyStateBuildError {
@@ -289,6 +320,24 @@ pub enum EconomyStateBuildError {
     DuplicateInitialResource(HexCoord),
     /// A generated resource is outside logical map bounds.
     InitialResourceOutOfBounds(HexCoord),
+    /// A checked account addition exceeded the canonical integer range.
+    AccountOverflow {
+        /// Account owner.
+        player: PlayerId,
+        /// Account category.
+        account: EconomyAccountKind,
+    },
+    /// A debit would make a non-negative account negative.
+    InsufficientBalance {
+        /// Account owner.
+        player: PlayerId,
+        /// Account category.
+        account: EconomyAccountKind,
+        /// Current balance.
+        available: i64,
+        /// Positive requested debit.
+        requested: i64,
+    },
 }
 
 impl core::fmt::Display for EconomyStateBuildError {
@@ -326,6 +375,21 @@ impl core::fmt::Display for EconomyStateBuildError {
                 coordinate.col(),
                 coordinate.row()
             ),
+            Self::AccountOverflow { player, account } => {
+                write!(
+                    formatter,
+                    "economy account {account:?} overflows for {player}"
+                )
+            }
+            Self::InsufficientBalance {
+                player,
+                account,
+                available,
+                requested,
+            } => write!(
+                formatter,
+                "economy account {account:?} for {player} has {available}, cannot debit {requested}"
+            ),
         }
     }
 }
@@ -333,74 +397,5 @@ impl core::fmt::Display for EconomyStateBuildError {
 impl std::error::Error for EconomyStateBuildError {}
 
 #[cfg(test)]
-mod tests {
-    use std::collections::BTreeMap;
-
-    use crate::{
-        GameMode, HexGridBounds, MatchIdentity, MatchRules, Participant, PlayerCountry, PlayerId,
-        PlayerKind,
-    };
-
-    use super::{
-        EconomyState, EconomyStateBuildError, InitialResourceDistribution, ResourceType,
-        StrategicResourceStockpile,
-    };
-
-    #[test]
-    fn stockpiles_accept_only_positive_oil_and_aluminium() {
-        assert!(
-            StrategicResourceStockpile::try_new(BTreeMap::from([(ResourceType::Oil, 2)])).is_ok()
-        );
-        assert_eq!(
-            StrategicResourceStockpile::try_new(BTreeMap::from([(ResourceType::Iron, 2)])),
-            Err(EconomyStateBuildError::ResourceNotStockpiled(
-                ResourceType::Iron
-            ))
-        );
-        assert!(
-            StrategicResourceStockpile::try_new(BTreeMap::from([(ResourceType::Oil, 0)])).is_err()
-        );
-    }
-
-    #[test]
-    fn economy_rejects_negative_gold_and_war_weariness() {
-        let player = PlayerId::new("player").expect("player id");
-        let identity = MatchIdentity::try_new(
-            MatchRules::default(),
-            [Participant::try_new(
-                player.clone(),
-                "Player",
-                0xff00_0000,
-                PlayerCountry::Poland,
-                PlayerKind::Human,
-                None,
-            )
-            .expect("participant")],
-            GameMode::HotSeat,
-        )
-        .expect("identity");
-        let bounds = HexGridBounds::new(1, 1).expect("bounds");
-        let build = |gold, weariness| {
-            EconomyState::try_new(
-                &identity,
-                bounds,
-                BTreeMap::from([(player.clone(), gold)]),
-                BTreeMap::from([(player.clone(), weariness)]),
-                BTreeMap::new(),
-                BTreeMap::new(),
-                InitialResourceDistribution::default(),
-            )
-        };
-        assert_eq!(
-            build(-1, 0),
-            Err(EconomyStateBuildError::NegativeGold {
-                player: player.clone(),
-                value: -1,
-            })
-        );
-        assert_eq!(
-            build(0, -1),
-            Err(EconomyStateBuildError::NegativeWarWeariness { player, value: -1 })
-        );
-    }
-}
+#[path = "economy/tests.rs"]
+mod tests;

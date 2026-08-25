@@ -14,6 +14,7 @@ mod unit;
 mod value;
 mod world;
 
+pub use economy::{decode_resource, encode_resource};
 pub use error::GameStateMappingError;
 pub use state::{canonicalize_game_state, decode_game_state, encode_game_state};
 pub use value::{decode_improvement, decode_troop, encode_improvement, encode_troop};

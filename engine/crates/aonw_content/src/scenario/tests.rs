@@ -72,7 +72,7 @@ fn scenario_bootstraps_full_state_from_map_and_ruleset() {
     assert_ne!(scenario.ruleset_hash(), scenario.map_hash());
     assert_eq!(
         scenario.content_hash().expect("hash").to_string(),
-        "6edb45bffd8a0421f841b82cb215a9db8ea70ceb080c63c9ae7f2c5b76cc91ce"
+        "e69d3d0e2df23dfc4cdbd604f6b8d7ecf8281e688724a1a8228ad8aff88b9996"
     );
 }
 

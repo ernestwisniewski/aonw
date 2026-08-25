@@ -10,6 +10,7 @@ mod city;
 mod combat;
 mod context;
 mod diplomacy_policy;
+mod economy;
 mod movement;
 mod state_digest;
 mod technology_unlock;
@@ -43,6 +44,11 @@ pub use context::{EngineContext, SystemContext};
 pub use diplomacy_policy::{
     DiplomacyDisclosure, DiplomacyPolicy, DiplomacyPolicyError, DiplomacyPolicyPlayerRole,
     DiplomacyPolicyQuery,
+};
+pub use economy::{
+    CityYieldBreakdown, CityYieldContribution, CityYieldContributionKind, CityYieldQuery,
+    EconomyQueryError, StrategicResourceProjection, StrategicResourceProjectionQuery,
+    StrategicResourceSource, YieldValue,
 };
 pub use movement::{
     AssignMerchantTradeRouteCommand, AutoExploreOption, AutoExploreUnitCommand,

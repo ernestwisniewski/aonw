@@ -29,10 +29,11 @@ pub use player_view::{
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{
     AutoExploreOptionView, CityExpansionOptionsRequest, CityFoundingOptionsRequest,
-    CityWorkedHexOptionsRequest, CombatPreviewRequest, DetachmentOptionView,
+    CityWorkedHexOptionsRequest, CityYieldRequest, CombatPreviewRequest, DetachmentOptionView,
     MerchantDestinationView, MovementStepView, ReachableRequest, ReachableResult,
     ReachableTileView, RoutePlanRequest, RoutePlanResult, RuntimeQuery, RuntimeQueryResult,
-    UnitLogisticsOptionsRequest, UnitLogisticsOptionsResult, WorkerOptionsRequest,
+    StrategicResourceProjectionRequest, UnitLogisticsOptionsRequest, UnitLogisticsOptionsResult,
+    WorkerOptionsRequest,
 };
 pub use session::{
     LocalRuntime, OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, SessionStamp,
