@@ -1,8 +1,6 @@
 mod attack;
 mod model;
 
-use std::collections::BTreeSet;
-
 use crate::{MatchIdentity, PlayerId};
 
 pub use model::{
@@ -97,10 +95,6 @@ impl Diplomacy {
             Clone::clone,
             DiplomacyStateBuildError::DuplicateContact,
         )?;
-        for pair in &contacts {
-            validate_pair(identity, pair)?;
-        }
-        let contact_set = contacts.iter().cloned().collect::<BTreeSet<_>>();
 
         let mut relations = relations.into_iter().collect::<Vec<_>>();
         relations.sort_by(|left, right| left.pair().cmp(right.pair()));
@@ -109,32 +103,13 @@ impl Diplomacy {
             |value| value.pair().clone(),
             DiplomacyStateBuildError::DuplicateRelation,
         )?;
-        for relation in &relations {
-            validate_pair(identity, relation.pair())?;
-            require_contact(&contact_set, relation.pair())?;
-        }
-
         let mut pending_proposals = pending_proposals.into_iter().collect::<Vec<_>>();
         pending_proposals.sort_by(|left, right| left.id().cmp(right.id()));
         ensure_unique_ids(&pending_proposals, |value| value.id())?;
-        for value in &pending_proposals {
-            validate_directional_players(identity, value.from_player_id(), value.to_player_id())?;
-            require_contact(
-                &contact_set,
-                &pair(value.from_player_id(), value.to_player_id())?,
-            )?;
-        }
 
         let mut messages = messages.into_iter().collect::<Vec<_>>();
         messages.sort_by(|left, right| left.id().cmp(right.id()));
         ensure_unique_ids(&messages, |value| value.id())?;
-        for value in &messages {
-            validate_directional_players(identity, value.from_player_id(), value.to_player_id())?;
-            require_contact(
-                &contact_set,
-                &pair(value.from_player_id(), value.to_player_id())?,
-            )?;
-        }
 
         let mut score_history = score_history.into_iter().collect::<Vec<_>>();
         score_history.sort_by(|left, right| {
@@ -162,30 +137,63 @@ impl Diplomacy {
                 source_id,
             },
         )?;
-        for value in &score_history {
-            validate_pair(identity, value.pair())?;
-            require_contact(&contact_set, value.pair())?;
-        }
-
         let mut trades = resource_trade_agreements.into_iter().collect::<Vec<_>>();
         trades.sort_by(|left, right| left.id().cmp(right.id()));
         ensure_unique_ids(&trades, |value| value.id())?;
-        for value in &trades {
-            validate_directional_players(
-                identity,
-                value.exporter_player_id(),
-                value.importer_player_id(),
-            )?;
-        }
-
-        Ok(Self {
+        let state = Self {
             contacts: contacts.into_boxed_slice(),
             relations: relations.into_boxed_slice(),
             pending_proposals: pending_proposals.into_boxed_slice(),
             messages: messages.into_boxed_slice(),
             score_history: score_history.into_boxed_slice(),
             resource_trade_agreements: trades.into_boxed_slice(),
-        })
+        };
+        state.validate_for(identity)?;
+        Ok(state)
+    }
+
+    /// Revalidates every participant and contact reference against a match.
+    ///
+    /// This is required after aggregate-level composition because normalized
+    /// contact-only states can be assembled before the match identity is bound.
+    ///
+    /// # Errors
+    ///
+    /// Returns the first unknown-player or missing-contact violation.
+    pub fn validate_for(&self, identity: &MatchIdentity) -> Result<(), DiplomacyStateBuildError> {
+        for pair in &self.contacts {
+            validate_pair(identity, pair)?;
+        }
+        for relation in &self.relations {
+            validate_pair(identity, relation.pair())?;
+            require_contact(&self.contacts, relation.pair())?;
+        }
+        for value in &self.pending_proposals {
+            validate_directional_players(identity, value.from_player_id(), value.to_player_id())?;
+            require_contact(
+                &self.contacts,
+                &pair(value.from_player_id(), value.to_player_id())?,
+            )?;
+        }
+        for value in &self.messages {
+            validate_directional_players(identity, value.from_player_id(), value.to_player_id())?;
+            require_contact(
+                &self.contacts,
+                &pair(value.from_player_id(), value.to_player_id())?,
+            )?;
+        }
+        for value in &self.score_history {
+            validate_pair(identity, value.pair())?;
+            require_contact(&self.contacts, value.pair())?;
+        }
+        for value in &self.resource_trade_agreements {
+            validate_directional_players(
+                identity,
+                value.exporter_player_id(),
+                value.importer_player_id(),
+            )?;
+        }
+        Ok(())
     }
 
     /// Returns all contact pairs in deterministic order.
@@ -375,10 +383,10 @@ fn pair(left: &PlayerId, right: &PlayerId) -> Result<PlayerPair, DiplomacyStateB
 }
 
 fn require_contact(
-    contacts: &BTreeSet<PlayerPair>,
+    contacts: &[PlayerPair],
     pair: &PlayerPair,
 ) -> Result<(), DiplomacyStateBuildError> {
-    if contacts.contains(pair) {
+    if contacts.binary_search(pair).is_ok() {
         Ok(())
     } else {
         Err(DiplomacyStateBuildError::ContactRequired(pair.clone()))

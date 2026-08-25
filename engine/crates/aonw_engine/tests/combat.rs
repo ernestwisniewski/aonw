@@ -1,5 +1,7 @@
 //! Greenfield C3 combat command and preview acceptance tests.
 
+#[path = "combat/integrated_turn.rs"]
+mod integrated_turn;
 #[path = "combat/manifest.rs"]
 mod manifest;
 #[path = "combat/mechanics.rs"]
@@ -287,29 +289,7 @@ fn simultaneous_turn_resolves_intended_attacks_through_the_same_combat_evidence(
         CityConquestAction::Capture,
     )])
     .expect("intended attack");
-    let mut current = state_with_identity(
-        identity(),
-        vec![
-            unit(
-                "attacker",
-                &actor,
-                UnitKind::Warrior,
-                HexCoord::new(0, 0),
-                None,
-            ),
-            unit(
-                "defender",
-                &defender_owner,
-                UnitKind::Settler,
-                HexCoord::new(1, 0),
-                None,
-            ),
-        ],
-        Vec::new(),
-        FogOfWar::default(),
-        Diplomacy::default(),
-        intended,
-    );
+    let mut current = integrated_turn::state(&actor, &defender_owner, &third, intended);
     for (revision, submitting) in [(11, &actor), (12, &defender_owner)] {
         current = GameEngine::apply_player_owned(
             current,
@@ -330,6 +310,19 @@ fn simultaneous_turn_resolves_intended_attacks_through_the_same_combat_evidence(
     assert!(transition.is_accepted());
     assert!(transition.state().combat().intended_attacks().is_empty());
     assert!(transition.state().unit(&defender_id).is_none());
+    assert!(
+        transition
+            .state()
+            .city(&city_id("city_player_3_3_2"))
+            .is_some()
+    );
+    assert!(
+        transition
+            .state()
+            .transport_network()
+            .at(HexCoord::new(0, 2))
+            .is_some()
+    );
     assert!(matches!(
         transition.events(),
         [
@@ -338,6 +331,9 @@ fn simultaneous_turn_resolves_intended_attacks_through_the_same_combat_evidence(
             DomainEvent::CombatResolved(_),
             DomainEvent::UnitGainedExperience(_),
             DomainEvent::UnitKilled(_),
+            DomainEvent::CityFounded(_),
+            DomainEvent::WorkerCompletedJob(_),
+            DomainEvent::UnitMoved(_),
             DomainEvent::TurnEnded(_),
             DomainEvent::TurnEnded(_),
             DomainEvent::TurnEnded(_),
@@ -347,6 +343,8 @@ fn simultaneous_turn_resolves_intended_attacks_through_the_same_combat_evidence(
         panic!("turn evidence")
     };
     assert_eq!(evidence.combat_executions().len(), 1);
+    assert_eq!(evidence.founded_city_ids().len(), 1);
+    assert_eq!(evidence.movement_executions().len(), 1);
     assert_eq!(evidence.combat_executions()[0].seed, 2_280_806_018);
     assert_eq!(evidence.combat_executions()[0].rolls[0].value, 0);
 }

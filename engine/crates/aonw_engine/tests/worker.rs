@@ -396,14 +396,14 @@ fn turn_completion_emits_typed_events_updates_infrastructure_and_changes_routing
             .routing_fingerprint()
             .is_empty()
     );
-    assert_eq!(
-        transition
-            .events()
-            .iter()
-            .filter(|event| matches!(event, DomainEvent::WorkerCompletedJob(_)))
-            .count(),
-        2
-    );
+    assert!(matches!(
+        transition.events(),
+        [
+            DomainEvent::WorkerCompletedJob(_),
+            DomainEvent::WorkerCompletedJob(_),
+            DomainEvent::TurnEnded(_)
+        ]
+    ));
     assert_eq!(
         transition
             .state()

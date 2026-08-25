@@ -1,15 +1,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use aonw_content::ContentHash;
+use aonw_content::{ContentHash, MapDefinition};
 use aonw_domain::{
-    Diplomacy, FogOfWar, GameState, InteractionState, MatchLifecycle, PlayerId, PlayerTurnState,
-    TurnLifecycle, UtcTimestamp,
+    Diplomacy, FogOfWar, GameState, InteractionState, MatchLifecycle, PendingInteraction, PlayerId,
+    PlayerTurnState, TurnLifecycle, UnitPosture, UtcTimestamp,
 };
 
 use crate::{
     CanonicalEngineError, CommandRejectionCode, DomainEvent, DomainTransition, EngineContext,
-    ExecutionEvidence, SystemContext, TurnCommand, TurnKernelExecution, TurnProcessor,
-    UnitMovementExecution,
+    ExecutionEvidence, ProcessorRequirement, SystemContext, TurnCommand, TurnKernelCapabilities,
+    TurnKernelExecution, TurnProcessor, UnitMovementExecution,
 };
 
 pub(super) fn validate_player_command(
@@ -178,17 +178,135 @@ pub(super) fn sequential_progress(
 
 pub(super) fn unsupported_processor_for_scope(
     state: &GameState,
+    map: &MapDefinition,
     player_ids: &[PlayerId],
 ) -> Option<TurnProcessor> {
-    let scope = player_ids.iter().collect::<BTreeSet<_>>();
-    if state
+    TurnKernelCapabilities::ORDERED
+        .into_iter()
+        .map(|processor| (processor, processor.requirement(state, map, player_ids)))
+        .find_map(|(processor, requirement)| {
+            (requirement == ProcessorRequirement::RequiredButUnsupported).then_some(processor)
+        })
+}
+
+pub(crate) fn processor_is_required(
+    processor: TurnProcessor,
+    state: &GameState,
+    map: &MapDefinition,
+    player_ids: &[PlayerId],
+) -> bool {
+    let owns_scope = |player: &PlayerId| player_ids.contains(player);
+    match processor {
+        TurnProcessor::Submission | TurnProcessor::Lifecycle | TurnProcessor::MovementReset => {
+            !player_ids.is_empty()
+        }
+        TurnProcessor::Combat => state
+            .combat()
+            .intended_attacks()
+            .iter()
+            .any(|attack| owns_scope(attack.declaring_player_id())),
+        TurnProcessor::CityFounding => state.units().iter().any(|unit| {
+            owns_scope(unit.owner_player_id()) && unit.activity().city_founding_job().is_some()
+        }),
+        TurnProcessor::WorkerJobs => state.units().iter().any(|unit| {
+            owns_scope(unit.owner_player_id()) && unit.activity().worker_job().is_some()
+        }),
+        TurnProcessor::QueuedMovement => state
+            .units()
+            .iter()
+            .any(|unit| owns_scope(unit.owner_player_id()) && unit.queued_path().is_some()),
+        TurnProcessor::TradeRoutes => state.units().iter().any(|unit| {
+            owns_scope(unit.owner_player_id()) && unit.merchant_trade_route().is_some()
+        }),
+        TurnProcessor::WorkerAutomation => state.units().iter().any(|unit| {
+            owns_scope(unit.owner_player_id()) && unit.posture() == UnitPosture::AutoWorking
+        }),
+        TurnProcessor::AutoExplore => state.units().iter().any(|unit| {
+            owns_scope(unit.owner_player_id()) && unit.posture() == UnitPosture::AutoExploring
+        }),
+        TurnProcessor::ReversibleSkipCleanup => matches!(
+            state.interaction().pending(),
+            Some(PendingInteraction::UnitTurnSkip {
+                owner_player_id,
+                ..
+            }) if owns_scope(owner_player_id)
+        ),
+        TurnProcessor::Economy => economy_is_required(state, &owns_scope),
+        TurnProcessor::Research => state.research().players().iter().any(|(player, research)| {
+            owns_scope(player)
+                && (research.active_technology_id().is_some()
+                    || !research.progress_by_technology_id().is_empty()
+                    || research.science_overflow() > 0)
+        }),
+        TurnProcessor::Agreements => {
+            state
+                .diplomacy()
+                .resource_trade_agreements()
+                .iter()
+                .any(|agreement| {
+                    owns_scope(agreement.exporter_player_id())
+                        || owns_scope(agreement.importer_player_id())
+                })
+        }
+        TurnProcessor::Diplomacy => diplomacy_is_required(state, &owns_scope),
+        TurnProcessor::Objectives => {
+            !map.objectives().is_empty()
+                || state
+                    .objectives()
+                    .domination_hold_turns_by_player_id()
+                    .keys()
+                    .any(&owns_scope)
+                || state
+                    .objectives()
+                    .cultural_victory_hold_turns_by_player_id()
+                    .keys()
+                    .any(&owns_scope)
+                || state
+                    .objectives()
+                    .map_objective_hold_states()
+                    .iter()
+                    .any(|hold| owns_scope(hold.player_id()))
+        }
+    }
+}
+
+fn economy_is_required(state: &GameState, owns_scope: &impl Fn(&PlayerId) -> bool) -> bool {
+    state
         .cities()
         .iter()
-        .any(|city| scope.contains(city.owner_player_id()) && city.production_queue().is_some())
-    {
-        return Some(TurnProcessor::Economy);
-    }
-    None
+        .any(|city| owns_scope(city.owner_player_id()) && city.production_queue().is_some())
+        || state.economy().player_gold().keys().any(owns_scope)
+        || state
+            .economy()
+            .player_war_weariness()
+            .keys()
+            .any(owns_scope)
+        || state
+            .economy()
+            .player_stability_net()
+            .keys()
+            .any(owns_scope)
+        || state.economy().strategic_resources().keys().any(owns_scope)
+}
+
+fn diplomacy_is_required(state: &GameState, owns_scope: &impl Fn(&PlayerId) -> bool) -> bool {
+    let next_turn = state.turn().saturating_add(1);
+    let diplomacy = state.diplomacy();
+    diplomacy.relations().iter().any(|relation| {
+        (owns_scope(relation.pair().first()) || owns_scope(relation.pair().second()))
+            && relation
+                .status_expires_on_turn()
+                .is_some_and(|turn| turn <= next_turn)
+    }) || diplomacy.pending_proposals().iter().any(|proposal| {
+        (owns_scope(proposal.from_player_id()) || owns_scope(proposal.to_player_id()))
+            && proposal.expires_on_turn() <= next_turn
+    }) || diplomacy.messages().iter().any(|message| {
+        (owns_scope(message.from_player_id()) || owns_scope(message.to_player_id()))
+            && (message.expires_on_turn() <= next_turn
+                || message
+                    .promise_due_turn()
+                    .is_some_and(|turn| turn <= next_turn))
+    })
 }
 
 pub(super) fn valid_system_scope(
@@ -301,28 +419,21 @@ pub(super) fn transition_with_phase_evidence(
     finished_auto_explore_unit_ids: Vec<aonw_domain::UnitId>,
     founded_city_ids: Vec<aonw_domain::CityId>,
 ) -> DomainTransition {
-    let parts = transition.into_parts();
-    let processors = match parts.evidence {
+    let processors = match transition.evidence() {
         Some(ExecutionEvidence::TurnKernel(value)) => value.processors().to_vec(),
         _ => Vec::new(),
     };
-    DomainTransition::accepted(
-        parts.state,
-        parts.events,
-        Some(ExecutionEvidence::TurnKernel(
-            TurnKernelExecution::with_phases(
-                processors,
-                combat_executions,
-                reset_unit_ids,
-                movement_executions,
-                invalidated_order_unit_ids,
-                finished_auto_explore_unit_ids,
-                founded_city_ids,
-            ),
-        )),
-        parts.map_hash,
-        parts.ruleset_hash,
-    )
+    transition.with_evidence(Some(ExecutionEvidence::TurnKernel(
+        TurnKernelExecution::with_phases(
+            processors,
+            combat_executions,
+            reset_unit_ids,
+            movement_executions,
+            invalidated_order_unit_ids,
+            finished_auto_explore_unit_ids,
+            founded_city_ids,
+        ),
+    )))
 }
 
 pub(super) fn accept_identity<const PROCESSORS: usize>(

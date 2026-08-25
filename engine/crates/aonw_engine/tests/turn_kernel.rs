@@ -1,5 +1,8 @@
 //! Capability, transition ordering, and rejection tests for the T1 turn kernel.
 
+#[path = "turn_kernel/disabled_requirements.rs"]
+mod disabled_requirements;
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
@@ -237,6 +240,28 @@ fn fixture_manifest_rejects_unimplemented_processors() {
         .filter_map(serde_json::Value::as_str)
         .find(|required| !enabled.contains(required));
     assert_eq!(missing, Some(TurnProcessor::Economy.as_str()));
+
+    let state_requirements: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(
+            root.join("engine/fixtures/turn_kernel/unsupported-state-processors-manifest.json"),
+        )
+        .expect("state requirement manifest"),
+    )
+    .expect("strict JSON");
+    let required = state_requirements["fixtures"]
+        .as_array()
+        .expect("fixtures")
+        .iter()
+        .map(|fixture| {
+            fixture["requiredProcessor"]
+                .as_str()
+                .expect("required processor")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        required,
+        TurnKernelCapabilities::DISABLED.map(TurnProcessor::as_str)
+    );
 }
 
 #[test]

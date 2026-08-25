@@ -17,6 +17,6 @@ pub use transition::{
     TurnEndedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use turn::{
-    FinalizeTimedOutTurnCommand, KickParticipantCommand, SystemCommand, TurnCommand,
-    TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
+    FinalizeTimedOutTurnCommand, KickParticipantCommand, ProcessorRequirement, SystemCommand,
+    TurnCommand, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
 };

@@ -1,4 +1,5 @@
 mod city_phase;
+mod events;
 mod support;
 mod worker_phase;
 
@@ -9,10 +10,9 @@ use aonw_domain::{CityId, GameMode, GameState, PlayerId, PlayerTurnState, UtcTim
 
 use crate::movement::{TurnMovementUpdate, advance_turn_movement};
 use crate::{
-    AllPlayersSubmittedEvent, CanonicalEngineError, CommandRejectionCode, DomainEvent,
-    DomainTransition, EngineContext, FinalizeTimedOutTurnCommand, GameEngine,
-    KickParticipantCommand, PlayerKickedEvent, PlayerTimedOutEvent, SystemCommand, SystemContext,
-    TurnCommand, TurnEndedEvent, TurnProcessor,
+    CanonicalEngineError, CommandRejectionCode, DomainEvent, DomainTransition, EngineContext,
+    FinalizeTimedOutTurnCommand, GameEngine, KickParticipantCommand, PlayerKickedEvent,
+    SystemCommand, SystemContext, TurnCommand, TurnProcessor,
 };
 
 use self::support::{
@@ -22,7 +22,10 @@ use self::support::{
     validate_player_command,
 };
 use city_phase::advance_city_phase;
+use events::{sequential_phase_events, simultaneous_phase_events};
 use worker_phase::advance_worker_phase;
+
+pub(crate) use support::processor_is_required;
 
 struct SettlementPhase {
     state: GameState,
@@ -151,7 +154,7 @@ pub(crate) fn apply_end_turn(
         Ok(progress) => progress,
         Err(code) => return Ok(reject(state, code, map_hash, ruleset_hash)),
     };
-    if unsupported_processor_for_scope(&state, &progress.reset_scope).is_some() {
+    if unsupported_processor_for_scope(&state, context.map(), &progress.reset_scope).is_some() {
         return Ok(reject(
             state,
             CommandRejectionCode::TurnProcessorUnsupported,
@@ -203,9 +206,7 @@ pub(crate) fn apply_end_turn(
         invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     } = movement;
-    let mut events = sequential_turn_events(command.player_id());
-    events.extend(settlement.events);
-    events.extend(movement_events);
+    let events = sequential_phase_events(settlement.events, movement_events, command.player_id());
     apply_update(
         state,
         next_lifecycle,
@@ -214,7 +215,7 @@ pub(crate) fn apply_end_turn(
         Some(fog_of_war),
         Some(diplomacy),
         InteractionStateUpdate::Replace(interaction),
-        events.into_boxed_slice(),
+        events,
         [
             TurnProcessor::Lifecycle,
             TurnProcessor::CityFounding,
@@ -240,12 +241,6 @@ pub(crate) fn apply_end_turn(
             settlement.founded_city_ids,
         )
     })
-}
-
-fn sequential_turn_events(player_id: &PlayerId) -> Vec<DomainEvent> {
-    vec![DomainEvent::TurnEnded(TurnEndedEvent::new(
-        player_id.clone(),
-    ))]
 }
 
 fn apply_timeout_finalization(
@@ -371,7 +366,7 @@ fn finalize_simultaneous(
     map_hash: ContentHash,
     ruleset_hash: ContentHash,
 ) -> Result<DomainTransition, CanonicalEngineError> {
-    if unsupported_processor_for_scope(&state, scope).is_some() {
+    if unsupported_processor_for_scope(&state, map, scope).is_some() {
         return Ok(reject(
             state,
             CommandRejectionCode::TurnProcessorUnsupported,
@@ -402,23 +397,6 @@ fn finalize_simultaneous(
         Ok(movement) => movement,
         Err(code) => return Ok(reject(settlement.state, code, map_hash, ruleset_hash)),
     };
-    let mut events = skipped
-        .iter()
-        .cloned()
-        .map(|player| DomainEvent::PlayerTimedOut(PlayerTimedOutEvent::new(current_turn, player)))
-        .collect::<Vec<_>>();
-    events.push(DomainEvent::AllPlayersSubmitted(
-        AllPlayersSubmittedEvent::new(current_turn, scope.to_vec()),
-    ));
-    events.extend(combat.events.iter().cloned());
-    events.extend(settlement.events);
-    events.extend(
-        scope
-            .iter()
-            .cloned()
-            .map(TurnEndedEvent::new)
-            .map(DomainEvent::TurnEnded),
-    );
     let TurnMovementUpdate {
         units,
         fog_of_war,
@@ -430,7 +408,14 @@ fn finalize_simultaneous(
         invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     } = movement;
-    events.extend(movement_events);
+    let events = simultaneous_phase_events(
+        current_turn,
+        scope,
+        skipped,
+        combat.events,
+        settlement.events,
+        movement_events,
+    );
     apply_update(
         settlement.state,
         lifecycle,
@@ -439,7 +424,7 @@ fn finalize_simultaneous(
         Some(fog_of_war),
         Some(diplomacy),
         InteractionStateUpdate::Replace(interaction),
-        events.into_boxed_slice(),
+        events,
         [
             TurnProcessor::Submission,
             TurnProcessor::Lifecycle,

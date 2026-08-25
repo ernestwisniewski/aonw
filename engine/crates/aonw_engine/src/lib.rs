@@ -25,8 +25,8 @@ pub use application::{
     DomainRejection, DomainTransition, DomainTransitionParts, EventBudget, ExecutionEvidence,
     FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand, LogisticsExecution,
     MerchantRouteAssignedEvent, MerchantTravelQueuedEvent, PlayerCommand, PlayerKickedEvent,
-    PlayerTimedOutEvent, QueryResult, SystemCommand, TroopDetachedEvent, TurnCommand,
-    TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
+    PlayerTimedOutEvent, ProcessorRequirement, QueryResult, SystemCommand, TroopDetachedEvent,
+    TurnCommand, TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
     WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use city::{

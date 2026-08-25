@@ -3,8 +3,8 @@ use aonw_contracts::{
     UnitOccupancyPolicyDto,
 };
 use aonw_domain::{
-    City, FogOfWar, GameState, HexGridBounds, InfrastructureState, MatchIdentity, StateRevision,
-    TransportNetwork, UnitOccupancyPolicy,
+    City, FogOfWar, GameState, GameStateBuildError, HexGridBounds, InfrastructureState,
+    MatchIdentity, StateRevision, TransportNetwork, UnitOccupancyPolicy,
 };
 
 use super::artifact::{decode_artifact, encode_artifact};
@@ -116,7 +116,19 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
     .with_diplomacy(diplomacy)
     .with_infrastructure(infrastructure)
     .try_build()
-    .map_err(|error| GameStateMappingError::new("$", error.to_string()))
+    .map_err(|error| map_aggregate_error(&error))
+}
+
+fn map_aggregate_error(error: &GameStateBuildError) -> GameStateMappingError {
+    let path = match error {
+        GameStateBuildError::UnitPlayerNotFound { .. } => "$.units",
+        GameStateBuildError::CityPlayerNotFound { .. } => "$.cities",
+        GameStateBuildError::FogPlayerNotFound(_) => "$.fogOfWar",
+        GameStateBuildError::InteractionPlayerNotFound(_) => "$.interaction",
+        GameStateBuildError::InvalidDiplomacy(_) => "$.diplomacy",
+        _ => "$",
+    };
+    GameStateMappingError::new(path, error.to_string())
 }
 
 /// Validates and normalizes one typed canonical state document.
@@ -223,5 +235,90 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
             .iter()
             .map(encode_transport)
             .collect(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use aonw_contracts::{UnitActivityDto, UnitDto, UnitKindDto, UnitPostureDto};
+    use aonw_domain::{CityId, DiplomacyStateBuildError, PlayerId, UnitId};
+
+    use super::*;
+
+    #[test]
+    fn aggregate_player_reference_errors_retain_their_contract_family() {
+        let player = PlayerId::new("unknown").expect("player");
+        let cases = [
+            (
+                GameStateBuildError::UnitPlayerNotFound {
+                    unit_id: UnitId::new("unit").expect("unit"),
+                    player_id: player.clone(),
+                },
+                "$.units",
+            ),
+            (
+                GameStateBuildError::CityPlayerNotFound {
+                    city_id: CityId::new("city").expect("city"),
+                    player_id: player.clone(),
+                },
+                "$.cities",
+            ),
+            (
+                GameStateBuildError::FogPlayerNotFound(player.clone()),
+                "$.fogOfWar",
+            ),
+            (
+                GameStateBuildError::InteractionPlayerNotFound(player),
+                "$.interaction",
+            ),
+            (
+                GameStateBuildError::InvalidDiplomacy(DiplomacyStateBuildError::EmptyId),
+                "$.diplomacy",
+            ),
+        ];
+        for (error, expected_path) in cases {
+            assert_eq!(map_aggregate_error(&error).path(), expected_path);
+        }
+
+        let state = GameState::builder(
+            StateRevision::new(0),
+            0,
+            HexGridBounds::new(1, 1).expect("bounds"),
+            UnitOccupancyPolicy::Exclusive,
+            std::iter::empty(),
+        )
+        .try_build()
+        .expect("empty state");
+        assert_eq!(
+            encode_game_state(&state).occupancy_policy,
+            UnitOccupancyPolicyDto::Exclusive
+        );
+
+        let mut oversized = encode_game_state(&state);
+        oversized.units = vec![
+            UnitDto {
+                id: "unit".to_owned(),
+                owner_player_id: "player".to_owned(),
+                kind: UnitKindDto::Commander,
+                name: "unit".to_owned(),
+                col: 0,
+                row: 0,
+                movement_units: 0,
+                army: Vec::new(),
+                queued_path: None,
+                merchant_trade_route: None,
+                activity: UnitActivityDto::default(),
+                worker_build_charges: 0,
+                hit_points: None,
+                experience_points: 0,
+                posture: UnitPostureDto::Active,
+                carried_artifact_id: None,
+            };
+            MAX_GAME_STATE_UNIT_COUNT + 1
+        ];
+        assert_eq!(
+            validate_unit_count(&oversized).expect_err("limit").path(),
+            "$.units"
+        );
     }
 }

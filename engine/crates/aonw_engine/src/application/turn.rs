@@ -1,4 +1,5 @@
-use aonw_domain::{PlayerId, UnitId, UtcTimestamp};
+use aonw_content::MapDefinition;
+use aonw_domain::{GameState, PlayerId, UnitId, UtcTimestamp};
 
 use super::EventBudget;
 use crate::movement::UnitMovementExecution;
@@ -191,6 +192,18 @@ pub enum TurnProcessor {
     Objectives,
 }
 
+/// Whether one processor is needed by the exact turn scope and available in
+/// the current capability-gated kernel.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ProcessorRequirement {
+    /// The current state and content do not need this processor for the scope.
+    NotRequired,
+    /// The processor is needed and implemented by the current kernel.
+    RequiredAndSupported,
+    /// The processor is needed but must fail closed until its vertical slice exists.
+    RequiredButUnsupported,
+}
+
 impl TurnProcessor {
     /// Stable manifest value.
     #[must_use]
@@ -214,6 +227,22 @@ impl TurnProcessor {
             Self::Objectives => "objectives",
         }
     }
+
+    /// Classifies whether this processor is required for one exact turn scope.
+    #[must_use]
+    pub fn requirement(
+        self,
+        state: &GameState,
+        map: &MapDefinition,
+        scope: &[PlayerId],
+    ) -> ProcessorRequirement {
+        let required = crate::turn_kernel::processor_is_required(self, state, map, scope);
+        match (required, TurnKernelCapabilities::supports(self)) {
+            (false, _) => ProcessorRequirement::NotRequired,
+            (true, true) => ProcessorRequirement::RequiredAndSupported,
+            (true, false) => ProcessorRequirement::RequiredButUnsupported,
+        }
+    }
 }
 
 /// Explicit processor set implemented by the T1 kernel.
@@ -223,6 +252,25 @@ pub struct TurnKernelCapabilities;
 impl TurnKernelCapabilities {
     /// Capability label used by current fixtures and runtime clients.
     pub const LABEL: &'static str = "turn-kernel-ready";
+    /// Full canonical phase order, including slices that still fail closed.
+    pub const ORDERED: [TurnProcessor; 16] = [
+        TurnProcessor::Submission,
+        TurnProcessor::Lifecycle,
+        TurnProcessor::Combat,
+        TurnProcessor::CityFounding,
+        TurnProcessor::WorkerJobs,
+        TurnProcessor::Economy,
+        TurnProcessor::MovementReset,
+        TurnProcessor::QueuedMovement,
+        TurnProcessor::TradeRoutes,
+        TurnProcessor::WorkerAutomation,
+        TurnProcessor::AutoExplore,
+        TurnProcessor::ReversibleSkipCleanup,
+        TurnProcessor::Research,
+        TurnProcessor::Diplomacy,
+        TurnProcessor::Agreements,
+        TurnProcessor::Objectives,
+    ];
     /// Processors executed by the current kernel.
     pub const ENABLED: [TurnProcessor; 11] = [
         TurnProcessor::Submission,
@@ -240,8 +288,8 @@ impl TurnKernelCapabilities {
     /// Later turn processors that are intentionally unavailable.
     pub const DISABLED: [TurnProcessor; 5] = [
         TurnProcessor::Economy,
-        TurnProcessor::Diplomacy,
         TurnProcessor::Research,
+        TurnProcessor::Diplomacy,
         TurnProcessor::Agreements,
         TurnProcessor::Objectives,
     ];

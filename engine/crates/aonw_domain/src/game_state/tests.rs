@@ -1,7 +1,9 @@
 use crate::{
-    ArtifactId, GameState, GameStateBuildError, HexCoord, HexGridBounds, MovementUnits, PlayerId,
-    StateRevision, Unit, UnitId, UnitKind, UnitOccupancyPolicy, WorldArtifact,
-    WorldArtifactLocation, WorldArtifactType,
+    ArtifactId, City, CityId, Diplomacy, DiplomacyStateBuildError, FogOfWar, GameMode, GameState,
+    GameStateBuildError, HexCoord, HexGridBounds, InteractionState, MatchIdentity, MatchLifecycle,
+    MatchRules, MovementUnits, Participant, PendingInteraction, PlayerCountry, PlayerFog, PlayerId,
+    PlayerKind, PlayerPair, StateRevision, TurnLifecycle, Unit, UnitId, UnitKind,
+    UnitOccupancyPolicy, WorldArtifact, WorldArtifactLocation, WorldArtifactType,
 };
 
 fn unit(id: &str, position: HexCoord) -> Unit {
@@ -108,4 +110,110 @@ fn builder_validates_cross_section_references_only_when_constructing_state() {
             unit_id: missing_unit_id,
         })
     );
+}
+
+#[test]
+fn bound_aggregate_rejects_every_direct_player_reference_family() {
+    let known = PlayerId::new("known").expect("known player");
+    let unknown = PlayerId::new("unknown").expect("unknown player");
+    let lifecycle = bound_lifecycle(known.clone());
+    let bounds = HexGridBounds::new(2, 2).expect("bounds");
+
+    let unknown_unit = Unit::builder(
+        UnitId::new("unknown-unit").expect("unit id"),
+        unknown.clone(),
+        UnitKind::Commander,
+        "unknown unit",
+        HexCoord::new(0, 0),
+        MovementUnits::new(10),
+    )
+    .build()
+    .expect("unit");
+    assert!(matches!(
+        GameState::builder(
+            StateRevision::INITIAL,
+            1,
+            bounds,
+            UnitOccupancyPolicy::Exclusive,
+            [unknown_unit]
+        )
+        .with_match_lifecycle(lifecycle.clone())
+        .try_build(),
+        Err(GameStateBuildError::UnitPlayerNotFound { player_id, .. }) if player_id == unknown
+    ));
+
+    let unknown_city = City::new(
+        CityId::new("unknown-city").expect("city id"),
+        unknown.clone(),
+        HexCoord::new(0, 0),
+        [],
+    );
+    assert!(matches!(
+        empty_bound_builder(bounds, lifecycle.clone())
+            .with_cities([unknown_city])
+            .try_build(),
+        Err(GameStateBuildError::CityPlayerNotFound { player_id, .. }) if player_id == unknown
+    ));
+
+    let fog = FogOfWar::try_new([PlayerFog::new(unknown.clone(), [], [])]).expect("fog");
+    assert_eq!(
+        empty_bound_builder(bounds, lifecycle.clone())
+            .with_fog_of_war(fog)
+            .try_build(),
+        Err(GameStateBuildError::FogPlayerNotFound(unknown.clone()))
+    );
+
+    let interaction = InteractionState::new(
+        None,
+        Some(PendingInteraction::ResearchSelection {
+            owner_player_id: unknown.clone(),
+        }),
+    );
+    assert_eq!(
+        empty_bound_builder(bounds, lifecycle.clone())
+            .with_interaction(interaction)
+            .try_build(),
+        Err(GameStateBuildError::InteractionPlayerNotFound(
+            unknown.clone()
+        ))
+    );
+
+    let pair = PlayerPair::new(known, unknown.clone()).expect("player pair");
+    assert_eq!(
+        empty_bound_builder(bounds, lifecycle)
+            .with_diplomacy(Diplomacy::new([pair]))
+            .try_build(),
+        Err(GameStateBuildError::InvalidDiplomacy(
+            DiplomacyStateBuildError::PlayerNotFound(unknown)
+        ))
+    );
+}
+
+fn bound_lifecycle(player_id: PlayerId) -> MatchLifecycle {
+    let participant = Participant::try_new(
+        player_id,
+        "Known player",
+        0xff00_0000,
+        PlayerCountry::Poland,
+        PlayerKind::Human,
+        None,
+    )
+    .expect("participant");
+    let identity = MatchIdentity::try_new(MatchRules::default(), [participant], GameMode::HotSeat)
+        .expect("identity");
+    MatchLifecycle::new(identity, TurnLifecycle::default())
+}
+
+fn empty_bound_builder(
+    bounds: HexGridBounds,
+    lifecycle: MatchLifecycle,
+) -> super::GameStateBuilder {
+    GameState::builder(
+        StateRevision::INITIAL,
+        1,
+        bounds,
+        UnitOccupancyPolicy::Exclusive,
+        [],
+    )
+    .with_match_lifecycle(lifecycle)
 }

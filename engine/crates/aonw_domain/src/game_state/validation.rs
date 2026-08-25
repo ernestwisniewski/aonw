@@ -1,9 +1,71 @@
 use crate::{
-    City, FogOfWar, HexGridBounds, InfrastructureState, InteractionState, MatchIdentity,
-    PendingInteraction, Unit, UnitPosture, WorldArtifact, WorldArtifactLocation,
+    City, CityFoundingDraft, Diplomacy, FogOfWar, HexGridBounds, InfrastructureState,
+    InteractionState, MatchIdentity, PendingInteraction, Unit, UnitPosture, WorldArtifact,
+    WorldArtifactLocation,
 };
 
 use super::{GameStateBuildError, UnitOccupancyPolicy};
+
+pub(super) fn validate_player_references(
+    identity: &MatchIdentity,
+    units: &[Unit],
+    cities: &[City],
+    interaction: &InteractionState,
+    fog_of_war: &FogOfWar,
+    diplomacy: &Diplomacy,
+) -> Result<(), GameStateBuildError> {
+    // Scenario content is assembled before a runtime binds its match identity.
+    // Once any participants are bound, every aggregate reference is strict.
+    if identity.participants().is_empty() {
+        return Ok(());
+    }
+    for unit in units {
+        if !identity.contains(unit.owner_player_id()) {
+            return Err(GameStateBuildError::UnitPlayerNotFound {
+                unit_id: unit.id().clone(),
+                player_id: unit.owner_player_id().clone(),
+            });
+        }
+    }
+    for city in cities {
+        for player_id in
+            core::iter::once(city.owner_player_id()).chain(city.founding_owner_player_id())
+        {
+            if !identity.contains(player_id) {
+                return Err(GameStateBuildError::CityPlayerNotFound {
+                    city_id: city.id().clone(),
+                    player_id: player_id.clone(),
+                });
+            }
+        }
+    }
+    for player in fog_of_war.players() {
+        if !identity.contains(player.player_id()) {
+            return Err(GameStateBuildError::FogPlayerNotFound(
+                player.player_id().clone(),
+            ));
+        }
+    }
+    for player_id in interaction
+        .city_founding_draft()
+        .map(CityFoundingDraft::owner_player_id)
+        .into_iter()
+        .chain(
+            interaction
+                .pending()
+                .map(PendingInteraction::owner_player_id),
+        )
+    {
+        if !identity.contains(player_id) {
+            return Err(GameStateBuildError::InteractionPlayerNotFound(
+                player_id.clone(),
+            ));
+        }
+    }
+    diplomacy
+        .validate_for(identity)
+        .map_err(GameStateBuildError::InvalidDiplomacy)
+}
 
 pub(super) fn unit_indices(
     bounds: HexGridBounds,

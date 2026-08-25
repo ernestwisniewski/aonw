@@ -43,6 +43,11 @@ impl DomainTransition {
         }
     }
 
+    pub(crate) fn with_evidence(mut self, evidence: Option<ExecutionEvidence>) -> Self {
+        self.evidence = evidence;
+        self
+    }
+
     /// Returns whether the command was accepted.
     #[must_use]
     pub const fn is_accepted(&self) -> bool {

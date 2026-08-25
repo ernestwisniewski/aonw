@@ -1,0 +1,10 @@
+{
+  "capability": "turn-kernel-ready",
+  "fixtures": [
+    {"id": "economy-without-production", "requiredProcessor": "economy"},
+    {"id": "active-research", "requiredProcessor": "research"},
+    {"id": "expiring-diplomacy", "requiredProcessor": "diplomacy"},
+    {"id": "active-resource-agreement", "requiredProcessor": "agreements"},
+    {"id": "persisted-objective-progress", "requiredProcessor": "objectives"}
+  ]
+}

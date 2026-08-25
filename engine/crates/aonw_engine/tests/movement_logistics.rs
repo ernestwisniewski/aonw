@@ -477,6 +477,15 @@ fn turn_processors_advance_queued_trade_and_auto_units_together() {
     .expect("turn transition");
     assert!(transition.is_accepted());
     assert!(transition.events().len() >= 3);
+    assert!(matches!(
+        transition.events().last(),
+        Some(DomainEvent::TurnEnded(_))
+    ));
+    assert!(
+        transition.events()[..transition.events().len() - 1]
+            .iter()
+            .all(|event| !matches!(event, DomainEvent::TurnEnded(_)))
+    );
     let Some(ExecutionEvidence::TurnKernel(evidence)) = transition.evidence() else {
         panic!("turn evidence")
     };
