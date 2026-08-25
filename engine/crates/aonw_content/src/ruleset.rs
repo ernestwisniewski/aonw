@@ -8,6 +8,9 @@ use sha2::{Digest, Sha256};
 
 use crate::{ContentHash, TechnologyCostBalance, TechnologyDefinition};
 
+mod worker;
+pub use worker::{WorkerBalance, WorkerImprovementDefinition, WorkerYield};
+
 /// Capabilities fixed by a ruleset for one unit kind.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -252,6 +255,7 @@ pub struct RulesetDefinition {
     occupancy_policy: UnitOccupancyPolicyValue,
     combat: CombatBalance,
     city: CityBalance,
+    worker: WorkerBalance,
     city_name_sets: &'static [CityNameSet],
     unit_definitions: &'static [UnitDefinition],
     technology_cost_balance: TechnologyCostBalance,
@@ -287,6 +291,12 @@ impl RulesetDefinition {
     #[must_use]
     pub const fn city(&self) -> CityBalance {
         self.city
+    }
+
+    /// Returns immutable worker and infrastructure balance.
+    #[must_use]
+    pub const fn worker(&self) -> WorkerBalance {
+        self.worker
     }
 
     /// Returns a deterministic country name, cycling with a numeric suffix.

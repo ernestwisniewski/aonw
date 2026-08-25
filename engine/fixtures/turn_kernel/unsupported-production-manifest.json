@@ -1,0 +1,4 @@
+{
+  "capability": "turn-kernel-ready",
+  "requiredProcessors": ["submission", "lifecycle", "economy"]
+}

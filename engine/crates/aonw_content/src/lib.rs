@@ -29,7 +29,7 @@ pub use model::{
 };
 pub use ruleset::{
     CityBalance, CityNameSet, RulesetDefinition, UnitCapabilities, UnitDefinition,
-    UnitMovementDomainValue,
+    UnitMovementDomainValue, WorkerBalance, WorkerImprovementDefinition, WorkerYield,
 };
 pub use scenario::{
     ScenarioBootstrapError, ScenarioDefinition, ScenarioLoadError, ScenarioUnitDefinition,

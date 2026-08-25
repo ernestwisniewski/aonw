@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use aonw_content::ContentHash;
 use aonw_domain::{
     Diplomacy, FogOfWar, GameState, InteractionState, MatchLifecycle, PlayerId, PlayerTurnState,
-    TurnLifecycle, UnitPosture, UtcTimestamp,
+    TurnLifecycle, UtcTimestamp,
 };
 
 use crate::{
@@ -59,6 +59,48 @@ pub(super) fn ordered_submission_scope(state: &GameState) -> Vec<PlayerId> {
         })
         .cloned()
         .collect()
+}
+
+pub(super) fn simultaneous_lifecycle(
+    state: &GameState,
+    scope: &[PlayerId],
+    skipped: &[PlayerId],
+    next_turn_started_at: Option<UtcTimestamp>,
+    track_timeout_streaks: bool,
+) -> Result<MatchLifecycle, CanonicalEngineError> {
+    let current = state.match_lifecycle().turn();
+    let mut states = current.turn_states_by_player_id().clone();
+    for player in scope {
+        states.insert(player.clone(), PlayerTurnState::Active);
+    }
+    for player in current.kicked_player_ids() {
+        states.insert(player.clone(), PlayerTurnState::Finished);
+    }
+    let timeouts = if track_timeout_streaks {
+        skipped
+            .iter()
+            .map(|player| {
+                let previous = current
+                    .timeout_streaks_by_player_id()
+                    .get(player)
+                    .copied()
+                    .unwrap_or_default();
+                (player.clone(), previous.saturating_add(1))
+            })
+            .collect()
+    } else {
+        current.timeout_streaks_by_player_id().clone()
+    };
+    rebuild_lifecycle(
+        state,
+        states,
+        current.required_submission_player_ids().clone(),
+        BTreeSet::new(),
+        timeouts,
+        current.afk_player_ids().clone(),
+        current.kicked_player_ids().clone(),
+        next_turn_started_at.or_else(|| current.turn_started_at().cloned()),
+    )
 }
 
 pub(super) fn ordered_active_scope(state: &GameState) -> Vec<PlayerId> {
@@ -139,20 +181,12 @@ pub(super) fn unsupported_processor_for_scope(
     player_ids: &[PlayerId],
 ) -> Option<TurnProcessor> {
     let scope = player_ids.iter().collect::<BTreeSet<_>>();
-    for unit in state
-        .units()
+    if state
+        .cities()
         .iter()
-        .filter(|unit| scope.contains(unit.owner_player_id()))
+        .any(|city| scope.contains(city.owner_player_id()) && city.production_queue().is_some())
     {
-        match unit.posture() {
-            UnitPosture::AutoWorking => return Some(TurnProcessor::WorkerAutomation),
-            UnitPosture::Active | UnitPosture::Fortified | UnitPosture::AutoExploring => {}
-        }
-    }
-    if state.match_lifecycle().identity().game_mode() != aonw_domain::GameMode::Multiplayer
-        && !state.combat().intended_attacks().is_empty()
-    {
-        return Some(TurnProcessor::Combat);
+        return Some(TurnProcessor::Economy);
     }
     None
 }

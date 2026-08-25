@@ -9,10 +9,16 @@ use aonw_engine::{
 
 mod disclosure;
 mod view_diff;
+mod worker;
 
 pub(crate) use disclosure::{RecipientDisclosure, visible_city_ids};
 pub use view_diff::PlayerViewPatch;
 pub(crate) use view_diff::{ProjectedView, diff_view};
+pub(crate) use worker::{
+    RuntimeWorkerCommandKind, dispatch_confirm_worker_improvement,
+    dispatch_select_worker_improvement, dispatch_worker_unit,
+};
+pub use worker::{WorkerImprovementRequest, WorkerUnitRequest};
 
 /// Current revision-bound visible attack.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -29,7 +35,8 @@ pub struct AttackHexRequest {
 
 use crate::persistence::{replay_context, replay_entry};
 use crate::player_view::{
-    PlayerTurnLifecycleView, city_founding_draft, pending_action, visible_cities, visible_units,
+    PlayerTurnLifecycleView, city_founding_draft, pending_action, visible_cities,
+    visible_infrastructure, visible_units,
 };
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
@@ -414,6 +421,8 @@ pub(crate) fn dispatch_player(
     let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
     let before_city_view = visible_cities(session.state(), session.actor());
+    let (before_improvements, before_roads) =
+        visible_infrastructure(session.state(), session.actor());
     let before_visible_city_ids = visible_city_ids(session.state(), session.actor());
     let state = session.take_state();
     let transition = GameEngine::apply_player_owned(state, session.context(), command)
@@ -426,6 +435,8 @@ pub(crate) fn dispatch_player(
     session.replace_state(parts.state, parts.digest);
     let after_view = visible_units(session.state(), session.actor());
     let after_city_view = visible_cities(session.state(), session.actor());
+    let (after_improvements, after_roads) =
+        visible_infrastructure(session.state(), session.actor());
     let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());
     let after_founding_draft = city_founding_draft(session.state(), session.actor());
@@ -438,8 +449,20 @@ pub(crate) fn dispatch_player(
     let view_patch = diff_view(
         before_revision,
         session.state().revision().get(),
-        ProjectedView::new(before_turn, before_view, before_city_view),
-        ProjectedView::new(after_turn, after_view, after_city_view),
+        ProjectedView::new(
+            before_turn,
+            before_view,
+            before_city_view,
+            before_improvements,
+            before_roads,
+        ),
+        ProjectedView::new(
+            after_turn,
+            after_view,
+            after_city_view,
+            after_improvements,
+            after_roads,
+        ),
         after_pending,
         after_founding_draft,
     );

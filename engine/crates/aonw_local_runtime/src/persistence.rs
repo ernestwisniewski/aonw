@@ -1,10 +1,10 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
-use aonw_contract_mapping::{decode_game_state, decode_troop, encode_game_state};
+use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
-    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, ReplayCommandDto, ReplayContextDto, ReplayEntryDto,
-    ReplayLogDto, ReplayRecordDto, ReplayResultDto, ReplaySystemCommandDto, SaveGameDto,
+    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, ReplayContextDto, ReplayEntryDto, ReplayLogDto,
+    ReplayRecordDto, ReplayResultDto, ReplaySystemCommandDto, SaveGameDto,
 };
-use aonw_domain::{CityConquestAction, CityId, PlayerId, UnitId, UtcTimestamp};
+use aonw_domain::{CityId, PlayerId, UnitId, UtcTimestamp};
 use aonw_engine::GameEngine;
 
 pub use crate::persistence_error::PersistenceError;
@@ -14,12 +14,15 @@ use crate::{
     AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest,
     FinalizeTimedOutTurnRequest, FoundCityRequest, KickParticipantRequest, LocalRuntime,
     MerchantCityRequest, MoveUnitRequest, OpenSession, SelectCityExpansionHexRequest, SessionStamp,
-    ToggleWorkedHexRequest, TurnCommandRequest, UnitActionRequest,
+    ToggleWorkedHexRequest, TurnCommandRequest, UnitActionRequest, WorkerImprovementRequest,
+    WorkerUnitRequest,
 };
 
 mod evidence;
+mod player_decode;
 
 use evidence::{encode_event, encode_evidence};
+use player_decode::decode_command;
 
 /// Result of deterministic replay verification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -188,6 +191,23 @@ impl LocalRuntime {
                 ReplayRuntimeCommand::SelectCityExpansionHex(command) => {
                     runtime.select_city_expansion_hex(&command)
                 }
+                ReplayRuntimeCommand::SelectWorkerImprovement(command) => {
+                    runtime.select_worker_improvement(&command)
+                }
+                ReplayRuntimeCommand::ConfirmWorkerImprovement(command) => {
+                    runtime.confirm_worker_improvement(&command)
+                }
+                ReplayRuntimeCommand::CancelWorkerJob(command) => {
+                    runtime.cancel_worker_job(&command)
+                }
+                ReplayRuntimeCommand::AssignWorkerToHex(command) => {
+                    runtime.assign_worker_to_hex(&command)
+                }
+                ReplayRuntimeCommand::CancelWorkerAssignment(command) => {
+                    runtime.cancel_worker_assignment(&command)
+                }
+                ReplayRuntimeCommand::BuildRoad(command) => runtime.build_road(&command),
+                ReplayRuntimeCommand::AutomateWorker(command) => runtime.automate_worker(&command),
                 ReplayRuntimeCommand::Attack(command) => runtime.attack_hex(&command),
                 ReplayRuntimeCommand::Move(command) => runtime.dispatch(&command),
                 ReplayRuntimeCommand::AutoExplore(command) => runtime.auto_explore_unit(&command),
@@ -267,6 +287,13 @@ enum ReplayRuntimeCommand {
     FoundCity(FoundCityRequest),
     ToggleWorkedHex(ToggleWorkedHexRequest),
     SelectCityExpansionHex(SelectCityExpansionHexRequest),
+    SelectWorkerImprovement(WorkerImprovementRequest),
+    ConfirmWorkerImprovement(WorkerImprovementRequest),
+    CancelWorkerJob(WorkerUnitRequest),
+    AssignWorkerToHex(WorkerUnitRequest),
+    CancelWorkerAssignment(WorkerUnitRequest),
+    BuildRoad(WorkerUnitRequest),
+    AutomateWorker(WorkerUnitRequest),
     Attack(AttackHexRequest),
     Move(MoveUnitRequest),
     AutoExplore(AutoExploreUnitRequest),
@@ -286,103 +313,6 @@ fn decode_record(record: &ReplayRecordDto) -> Result<ReplayRuntimeCommand, Persi
     match record {
         ReplayRecordDto::Player { command } => decode_command(command),
         ReplayRecordDto::System { command } => decode_system_command(command),
-    }
-}
-
-fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, PersistenceError> {
-    match command {
-        ReplayCommandDto::FoundCity {
-            expected_revision,
-            founder_unit_id,
-            controlled_hexes,
-        } => decode_found_city(*expected_revision, founder_unit_id, controlled_hexes)
-            .map(ReplayRuntimeCommand::FoundCity),
-        ReplayCommandDto::ToggleWorkedHex {
-            expected_revision,
-            city_id,
-            target,
-        } => decode_toggle_worked_hex(*expected_revision, city_id, *target)
-            .map(ReplayRuntimeCommand::ToggleWorkedHex),
-        ReplayCommandDto::SelectCityExpansionHex {
-            expected_revision,
-            city_id,
-            target,
-        } => decode_select_city_expansion_hex(*expected_revision, city_id, *target)
-            .map(ReplayRuntimeCommand::SelectCityExpansionHex),
-        ReplayCommandDto::AttackHex {
-            expected_revision,
-            attacker_unit_id,
-            defender,
-            city_conquest_action,
-        } => Ok(ReplayRuntimeCommand::Attack(AttackHexRequest {
-            expected_revision: *expected_revision,
-            attacker_unit_id: UnitId::new(attacker_unit_id.clone())
-                .map_err(PersistenceError::InvalidUnit)?,
-            defender: aonw_domain::HexCoord::new(defender.col, defender.row),
-            city_conquest_action: match city_conquest_action {
-                aonw_contracts::CityConquestActionDto::Capture => CityConquestAction::Capture,
-                aonw_contracts::CityConquestActionDto::Destroy => CityConquestAction::Destroy,
-            },
-        })),
-        ReplayCommandDto::MoveUnit {
-            expected_revision,
-            unit_id,
-            target,
-        } => Ok(ReplayRuntimeCommand::Move(MoveUnitRequest {
-            expected_revision: *expected_revision,
-            unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
-            target: aonw_domain::HexCoord::new(target.col, target.row),
-        })),
-        ReplayCommandDto::AutoExploreUnit {
-            expected_revision,
-            unit_id,
-        } => Ok(ReplayRuntimeCommand::AutoExplore(AutoExploreUnitRequest {
-            expected_revision: *expected_revision,
-            unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
-        })),
-        ReplayCommandDto::AssignMerchantTradeRoute {
-            expected_revision,
-            unit_id,
-            destination_city_id,
-        } => decode_merchant_city(*expected_revision, unit_id, destination_city_id)
-            .map(ReplayRuntimeCommand::AssignMerchantRoute),
-        ReplayCommandDto::MoveMerchantToCity {
-            expected_revision,
-            unit_id,
-            destination_city_id,
-        } => decode_merchant_city(*expected_revision, unit_id, destination_city_id)
-            .map(ReplayRuntimeCommand::MoveMerchantToCity),
-        ReplayCommandDto::DetachTroop {
-            expected_revision,
-            unit_id,
-            troop_kind,
-        } => Ok(ReplayRuntimeCommand::DetachTroop(DetachTroopRequest {
-            expected_revision: *expected_revision,
-            unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
-            troop_kind: decode_troop(*troop_kind),
-        })),
-        ReplayCommandDto::CancelUnitAction {
-            expected_revision,
-            unit_id,
-        } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Cancel),
-        ReplayCommandDto::SkipUnitTurn {
-            expected_revision,
-            unit_id,
-        } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Skip),
-        ReplayCommandDto::FortifyUnit {
-            expected_revision,
-            unit_id,
-        } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Fortify),
-        ReplayCommandDto::EndTurn { expected_revision } => {
-            Ok(ReplayRuntimeCommand::EndTurn(TurnCommandRequest {
-                expected_revision: *expected_revision,
-            }))
-        }
-        ReplayCommandDto::SubmitTurn { expected_revision } => {
-            Ok(ReplayRuntimeCommand::SubmitTurn(TurnCommandRequest {
-                expected_revision: *expected_revision,
-            }))
-        }
     }
 }
 
@@ -478,6 +408,16 @@ fn decode_unit_action(
     unit_id: &str,
 ) -> Result<UnitActionRequest, PersistenceError> {
     Ok(UnitActionRequest {
+        expected_revision,
+        unit_id: UnitId::new(unit_id.to_owned()).map_err(PersistenceError::InvalidUnit)?,
+    })
+}
+
+fn decode_worker_unit(
+    expected_revision: u64,
+    unit_id: &str,
+) -> Result<WorkerUnitRequest, PersistenceError> {
+    Ok(WorkerUnitRequest {
         expected_revision,
         unit_id: UnitId::new(unit_id.to_owned()).map_err(PersistenceError::InvalidUnit)?,
     })

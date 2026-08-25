@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CityConquestActionDto, CoordinateDto, TroopKindDto};
+use crate::{CityConquestActionDto, CoordinateDto, FieldImprovementKindDto, TroopKindDto};
 
 /// One revision-bound command stored in a replay.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(
     tag = "type",
@@ -37,6 +38,43 @@ pub enum ReplayCommandDto {
         city_id: String,
         /// Preferred expansion coordinate.
         target: CoordinateDto,
+    },
+    /// Starts one explicitly selected field improvement.
+    SelectWorkerImprovement {
+        expected_revision: u64,
+        unit_id: String,
+        improvement: FieldImprovementKindDto,
+    },
+    /// Confirms an explicit or matching pending field improvement.
+    ConfirmWorkerImprovement {
+        expected_revision: u64,
+        unit_id: String,
+        improvement: Option<FieldImprovementKindDto>,
+    },
+    /// Cancels current worker construction.
+    CancelWorkerJob {
+        expected_revision: u64,
+        unit_id: String,
+    },
+    /// Assigns a worker to an improved coordinate.
+    AssignWorkerToHex {
+        expected_revision: u64,
+        unit_id: String,
+    },
+    /// Cancels a worker assignment.
+    CancelWorkerAssignment {
+        expected_revision: u64,
+        unit_id: String,
+    },
+    /// Starts road construction.
+    BuildRoad {
+        expected_revision: u64,
+        unit_id: String,
+    },
+    /// Starts or continues worker automation.
+    AutomateWorker {
+        expected_revision: u64,
+        unit_id: String,
     },
     /// Visible unit or city attack.
     AttackHex {

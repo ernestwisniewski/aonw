@@ -50,6 +50,64 @@ pub enum WorkerJob {
     },
 }
 
+impl WorkerJob {
+    /// Returns the coordinate on which work must remain.
+    #[must_use]
+    pub const fn target(&self) -> HexCoord {
+        match self {
+            Self::FieldImprovement { target, .. } | Self::RoadConstruction { target, .. } => {
+                *target
+            }
+        }
+    }
+    /// Returns turns still required.
+    #[must_use]
+    pub const fn remaining_turns(&self) -> u32 {
+        match self {
+            Self::FieldImprovement {
+                remaining_turns, ..
+            }
+            | Self::RoadConstruction {
+                remaining_turns, ..
+            } => *remaining_turns,
+        }
+    }
+    /// Returns the original duration.
+    #[must_use]
+    pub const fn total_turns(&self) -> u32 {
+        match self {
+            Self::FieldImprovement { total_turns, .. }
+            | Self::RoadConstruction { total_turns, .. } => *total_turns,
+        }
+    }
+    /// Returns the same job with updated remaining duration.
+    #[must_use]
+    pub const fn with_remaining_turns(&self, remaining_turns: u32) -> Self {
+        match self {
+            Self::FieldImprovement {
+                target,
+                improvement,
+                total_turns,
+                ..
+            } => Self::FieldImprovement {
+                target: *target,
+                improvement: *improvement,
+                remaining_turns,
+                total_turns: *total_turns,
+            },
+            Self::RoadConstruction {
+                target,
+                total_turns,
+                ..
+            } => Self::RoadConstruction {
+                target: *target,
+                remaining_turns,
+                total_turns: *total_turns,
+            },
+        }
+    }
+}
+
 /// City founding work retained by a settler.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CityFoundingJob {
@@ -178,6 +236,21 @@ impl UnitActivity {
             worker_job: self.worker_job.clone(),
             city_founding_job: job,
             worker_assignment: self.worker_assignment,
+            excavating_artifact_id: self.excavating_artifact_id.clone(),
+        }
+    }
+
+    /// Replaces worker work and assignment atomically.
+    #[must_use]
+    pub fn with_worker(
+        &self,
+        worker_job: Option<WorkerJob>,
+        worker_assignment: Option<HexCoord>,
+    ) -> Self {
+        Self {
+            worker_job,
+            city_founding_job: self.city_founding_job.clone(),
+            worker_assignment,
             excavating_artifact_id: self.excavating_artifact_id.clone(),
         }
     }

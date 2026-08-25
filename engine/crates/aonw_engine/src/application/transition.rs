@@ -4,7 +4,7 @@ use aonw_domain::GameState;
 use crate::{
     AutoExplorePlannedEvent, CombatExecution, LogisticsExecution, MerchantRouteAssignedEvent,
     MerchantTravelQueuedEvent, StateDigest, TroopDetachedEvent, TurnKernelExecution,
-    UnitMovedEvent, UnitMovementExecution,
+    UnitMovedEvent, UnitMovementExecution, WorkerAutomationExecution,
 };
 
 mod domain_transition;
@@ -12,7 +12,8 @@ mod events;
 
 pub use events::{
     AllPlayersSubmittedEvent, CityFoundedEvent, CombatEvent, DiplomaticScoreChangedEvent,
-    PlayerKickedEvent, PlayerTimedOutEvent, TurnEndedEvent,
+    PlayerKickedEvent, PlayerTimedOutEvent, TurnEndedEvent, WorkerCompletedJobEvent,
+    WorkerJobCompletion,
 };
 
 /// Stable command rejection shared by every authoritative command family.
@@ -152,11 +153,47 @@ pub enum CommandRejectionCode {
     WorkedHexLimitReached,
     /// The coordinate is not a legal current expansion candidate.
     CityExpansionHexUnavailable,
+    /// The requested worker does not exist or is not a worker.
+    WorkerNotFound,
+    /// The actor cannot command the requested worker.
+    WorkerNotControlled,
+    /// Current activity or posture prevents worker automation.
+    WorkerUnavailable,
+    /// The worker has no movement remaining.
+    WorkerNoMovementPoints,
+    /// A manual queued route prevents starting worker automation.
+    WorkerQueuedPathActive,
+    /// Confirmation omitted an explicit and matching pending selection.
+    WorkerImprovementNotSelected,
+    /// The pending worker selection belongs to another actor.
+    WorkerActionNotControlled,
+    /// The requested improvement is not currently legal.
+    WorkerImprovementUnavailable,
+    /// No worker job exists to cancel.
+    WorkerJobNotActive,
+    /// The current hex cannot receive a worker assignment.
+    WorkerAssignmentUnavailable,
+    /// No worker assignment exists to cancel.
+    WorkerAssignmentNotActive,
+    /// Generic road-construction readiness failure.
+    WorkerRoadUnavailable,
+    /// The coordinate already contains a road.
+    RoadConstructionExistingRoad,
+    /// City centers cannot receive road-construction jobs.
+    RoadConstructionCity,
+    /// Diplomacy policy forbids construction in this territory.
+    RoadConstructionEnemyTerritory,
+    /// Land movement cannot enter the construction coordinate.
+    RoadConstructionImpassableTerrain,
+    /// Automation continuation was requested for a non-automated worker.
+    WorkerAutomationNotActive,
+    /// No deterministic legal automation target exists.
+    WorkerAutomationNoTarget,
 }
 
 impl CommandRejectionCode {
     /// Complete stable rejection surface exposed to current clients.
-    pub const ALL: [Self; 67] = [
+    pub const ALL: [Self; 85] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -224,6 +261,24 @@ impl CommandRejectionCode {
         Self::WorkedHexUnavailable,
         Self::WorkedHexLimitReached,
         Self::CityExpansionHexUnavailable,
+        Self::WorkerNotFound,
+        Self::WorkerNotControlled,
+        Self::WorkerUnavailable,
+        Self::WorkerNoMovementPoints,
+        Self::WorkerQueuedPathActive,
+        Self::WorkerImprovementNotSelected,
+        Self::WorkerActionNotControlled,
+        Self::WorkerImprovementUnavailable,
+        Self::WorkerJobNotActive,
+        Self::WorkerAssignmentUnavailable,
+        Self::WorkerAssignmentNotActive,
+        Self::WorkerRoadUnavailable,
+        Self::RoadConstructionExistingRoad,
+        Self::RoadConstructionCity,
+        Self::RoadConstructionEnemyTerritory,
+        Self::RoadConstructionImpassableTerrain,
+        Self::WorkerAutomationNotActive,
+        Self::WorkerAutomationNoTarget,
     ];
 
     /// Returns the stable language-neutral wire value.
@@ -297,6 +352,24 @@ impl CommandRejectionCode {
             Self::WorkedHexUnavailable => "worked_hex_unavailable",
             Self::WorkedHexLimitReached => "worked_hex_limit_reached",
             Self::CityExpansionHexUnavailable => "city_expansion_hex_unavailable",
+            Self::WorkerNotFound => "worker_not_found",
+            Self::WorkerNotControlled => "worker_not_controlled",
+            Self::WorkerUnavailable => "worker_unavailable",
+            Self::WorkerNoMovementPoints => "worker_no_movement_points",
+            Self::WorkerQueuedPathActive => "worker_queued_path_active",
+            Self::WorkerImprovementNotSelected => "worker_improvement_not_selected",
+            Self::WorkerActionNotControlled => "worker_action_not_controlled",
+            Self::WorkerImprovementUnavailable => "worker_improvement_unavailable",
+            Self::WorkerJobNotActive => "worker_job_not_active",
+            Self::WorkerAssignmentUnavailable => "worker_assignment_unavailable",
+            Self::WorkerAssignmentNotActive => "worker_assignment_not_active",
+            Self::WorkerRoadUnavailable => "worker_road_unavailable",
+            Self::RoadConstructionExistingRoad => "road_construction_existingRoad",
+            Self::RoadConstructionCity => "road_construction_city",
+            Self::RoadConstructionEnemyTerritory => "road_construction_enemyTerritory",
+            Self::RoadConstructionImpassableTerrain => "road_construction_impassableTerrain",
+            Self::WorkerAutomationNotActive => "worker_automation_not_active",
+            Self::WorkerAutomationNoTarget => "worker_automation_no_target",
         }
     }
 }
@@ -362,6 +435,8 @@ pub enum DomainEvent {
     CityCaptured(CombatEvent),
     /// A defeated city was removed.
     CityDestroyed(CombatEvent),
+    /// One worker job completed successfully.
+    WorkerCompletedJob(WorkerCompletedJobEvent),
 }
 
 /// Exact evidence used by clients for deterministic presentation.
@@ -375,6 +450,8 @@ pub enum ExecutionEvidence {
     TurnKernel(TurnKernelExecution),
     /// Exact seed, rolls, modifiers, damage and retreat result for one attack.
     Combat(CombatExecution),
+    /// Exact target, bounded counters, and movement selected by worker automation.
+    WorkerAutomation(WorkerAutomationExecution),
 }
 
 /// Complete authoritative outcome of one command.

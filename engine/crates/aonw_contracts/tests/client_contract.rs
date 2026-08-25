@@ -13,6 +13,9 @@ use aonw_contracts::{
     CoordinateDto, FieldImprovementKindDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
 };
 
+#[path = "client_contract/worker.rs"]
+mod worker_contract;
+
 fn coordinate(col: i32, row: i32) -> CoordinateDto {
     CoordinateDto { col, row }
 }
@@ -35,6 +38,9 @@ fn unit() -> PlayerUnitViewDto {
         coordinate: coordinate(3, 4),
         movement_units: 8,
         posture: UnitPostureDto::Active,
+        worker_build_charges: 0,
+        worker_job: None,
+        worker_assignment: None,
     }
 }
 
@@ -55,6 +61,8 @@ fn player_snapshot() -> PlayerViewSnapshotDto {
         city_founding_draft: None,
         units: vec![unit()],
         cities: Vec::new(),
+        field_improvements: Vec::new(),
+        roads: Vec::new(),
     }
 }
 
@@ -84,6 +92,10 @@ fn command_result() -> ClientCommandResultDto {
             removed_unit_ids: Vec::new(),
             upserted_cities: Vec::new(),
             removed_city_ids: Vec::new(),
+            upserted_field_improvements: Vec::new(),
+            removed_field_improvement_coordinates: Vec::new(),
+            upserted_roads: Vec::new(),
+            removed_road_coordinates: Vec::new(),
             pending_action: None,
             city_founding_draft: None,
         },
@@ -230,6 +242,7 @@ fn every_current_request_variant_round_trips() {
         },
     ];
     requests.extend(logistics_requests());
+    requests.extend(worker_contract::requests());
 
     for request in requests {
         let envelope = ClientRequestDto {
@@ -323,6 +336,7 @@ fn every_current_response_variant_round_trips() {
             },
         },
         logistics_response(),
+        worker_contract::response(),
         ClientResponseBodyDto::Command {
             result: Box::new(command_result()),
         },
@@ -405,6 +419,7 @@ fn malformed_unknown_duplicate_and_future_documents_fail_closed() {
     let future = r#"{"apiVersion":6,"request":{"type":"snapshot"}}"#;
     let malformed_nested = r#"{"apiVersion":5,"request":{"type":"query","query":{"type":"reachable","expectedRevision":0,"unitId":"u","extra":true}}}"#;
     let malformed_logistics = r#"{"apiVersion":5,"request":{"type":"dispatch","command":{"type":"autoExploreUnit","expectedRevision":0,"unitId":"u","legacyPath":[]}}}"#;
+    let malformed_worker = r#"{"apiVersion":5,"request":{"type":"dispatch","command":{"type":"buildRoad","expectedRevision":0,"unitId":"u","legacyFallback":true}}}"#;
 
     for invalid in [
         unknown,
@@ -412,6 +427,7 @@ fn malformed_unknown_duplicate_and_future_documents_fail_closed() {
         future,
         malformed_nested,
         malformed_logistics,
+        malformed_worker,
     ] {
         assert!(ClientRequestDto::from_json(invalid).is_err());
     }

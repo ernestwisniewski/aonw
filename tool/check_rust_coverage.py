@@ -400,7 +400,7 @@ def snapshot_from(report: dict[str, Any]) -> dict[str, Any]:
     return {
         "provenance": {
             **report["provenance"],
-            "reviewedDate": "2026-08-24",
+            "reviewedDate": "2026-08-25",
         },
         "crates": crates,
     }

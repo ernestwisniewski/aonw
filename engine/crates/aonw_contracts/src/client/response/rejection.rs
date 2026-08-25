@@ -138,11 +138,50 @@ pub enum ClientCommandRejectionCodeDto {
     WorkedHexLimitReached,
     /// The expansion coordinate is unavailable.
     CityExpansionHexUnavailable,
+    /// The requested worker does not exist or is not a worker.
+    WorkerNotFound,
+    /// The actor cannot command the requested worker.
+    WorkerNotControlled,
+    /// Current activity prevents automation.
+    WorkerUnavailable,
+    /// The worker has no movement remaining.
+    WorkerNoMovementPoints,
+    /// A queued path prevents starting automation.
+    WorkerQueuedPathActive,
+    /// No improvement was supplied or pending.
+    WorkerImprovementNotSelected,
+    /// A pending action belongs to another actor.
+    WorkerActionNotControlled,
+    /// The requested improvement is unavailable.
+    WorkerImprovementUnavailable,
+    /// No worker job is active.
+    WorkerJobNotActive,
+    /// The current assignment is unavailable.
+    WorkerAssignmentUnavailable,
+    /// No worker assignment is active.
+    WorkerAssignmentNotActive,
+    /// Generic road readiness failure.
+    WorkerRoadUnavailable,
+    /// A road already occupies the coordinate.
+    #[serde(rename = "road_construction_existingRoad")]
+    RoadConstructionExistingRoad,
+    /// A city occupies the coordinate.
+    RoadConstructionCity,
+    /// Diplomacy policy forbids construction.
+    #[serde(rename = "road_construction_enemyTerritory")]
+    RoadConstructionEnemyTerritory,
+    /// Land movement cannot enter the coordinate.
+    #[serde(rename = "road_construction_impassableTerrain")]
+    RoadConstructionImpassableTerrain,
+    /// Worker automation is not active.
+    WorkerAutomationNotActive,
+    /// No deterministic worker target exists.
+    WorkerAutomationNoTarget,
 }
 
 impl ClientCommandRejectionCodeDto {
     /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 67] = [
+    pub const ALL: [Self; 85] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -210,6 +249,24 @@ impl ClientCommandRejectionCodeDto {
         Self::WorkedHexUnavailable,
         Self::WorkedHexLimitReached,
         Self::CityExpansionHexUnavailable,
+        Self::WorkerNotFound,
+        Self::WorkerNotControlled,
+        Self::WorkerUnavailable,
+        Self::WorkerNoMovementPoints,
+        Self::WorkerQueuedPathActive,
+        Self::WorkerImprovementNotSelected,
+        Self::WorkerActionNotControlled,
+        Self::WorkerImprovementUnavailable,
+        Self::WorkerJobNotActive,
+        Self::WorkerAssignmentUnavailable,
+        Self::WorkerAssignmentNotActive,
+        Self::WorkerRoadUnavailable,
+        Self::RoadConstructionExistingRoad,
+        Self::RoadConstructionCity,
+        Self::RoadConstructionEnemyTerritory,
+        Self::RoadConstructionImpassableTerrain,
+        Self::WorkerAutomationNotActive,
+        Self::WorkerAutomationNoTarget,
     ];
 
     /// Returns the stable snake-case wire value.
@@ -283,6 +340,24 @@ impl ClientCommandRejectionCodeDto {
             Self::WorkedHexUnavailable => "worked_hex_unavailable",
             Self::WorkedHexLimitReached => "worked_hex_limit_reached",
             Self::CityExpansionHexUnavailable => "city_expansion_hex_unavailable",
+            Self::WorkerNotFound => "worker_not_found",
+            Self::WorkerNotControlled => "worker_not_controlled",
+            Self::WorkerUnavailable => "worker_unavailable",
+            Self::WorkerNoMovementPoints => "worker_no_movement_points",
+            Self::WorkerQueuedPathActive => "worker_queued_path_active",
+            Self::WorkerImprovementNotSelected => "worker_improvement_not_selected",
+            Self::WorkerActionNotControlled => "worker_action_not_controlled",
+            Self::WorkerImprovementUnavailable => "worker_improvement_unavailable",
+            Self::WorkerJobNotActive => "worker_job_not_active",
+            Self::WorkerAssignmentUnavailable => "worker_assignment_unavailable",
+            Self::WorkerAssignmentNotActive => "worker_assignment_not_active",
+            Self::WorkerRoadUnavailable => "worker_road_unavailable",
+            Self::RoadConstructionExistingRoad => "road_construction_existingRoad",
+            Self::RoadConstructionCity => "road_construction_city",
+            Self::RoadConstructionEnemyTerritory => "road_construction_enemyTerritory",
+            Self::RoadConstructionImpassableTerrain => "road_construction_impassableTerrain",
+            Self::WorkerAutomationNotActive => "worker_automation_not_active",
+            Self::WorkerAutomationNoTarget => "worker_automation_no_target",
         }
     }
 }

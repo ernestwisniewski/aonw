@@ -412,6 +412,15 @@ census_rust_enum() {
   local source_path="$1"
   local enum_name="$2"
   local output_file="$3"
+  local source_file="${repo_root}/${source_path}"
+  local module_dir="${source_file%.rs}"
+  local sources=("${source_file}")
+  if [[ -d "${module_dir}" ]]; then
+    local module_source
+    while IFS= read -r module_source; do
+      sources+=("${module_source}")
+    done < <(find "${module_dir}" -type f -name '*.rs' -print | sort)
+  fi
   awk -v enum_name="${enum_name}" '
     $0 ~ "^[[:space:]]*pub enum " enum_name "([[:space:]]|<)" {
       inside = 1
@@ -428,7 +437,7 @@ census_rust_enum() {
         if (rest ~ /^[({,]/) print name
       }
     }
-  ' "${repo_root}/${source_path}" | sort >"${output_file}"
+  ' "${sources[@]}" | sort >"${output_file}"
 }
 
 require_dart_class() {

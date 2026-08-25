@@ -6,6 +6,7 @@ use super::CityFoundingJob;
 use super::{ArmyTroop, MerchantTradeRoute, TroopKind, UnitActivity, WorkerJob};
 
 mod logistics;
+mod worker;
 
 const MAX_UNIT_NAME_BYTES: usize = 256;
 

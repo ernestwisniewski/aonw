@@ -53,12 +53,12 @@ returned by the engine, so `partial-parity-mode` is `full-state`. The historical
 opaque splice adapter and its execution gate have been removed. State
 representation is `state-contract-ready`; command/query surfaces remain at
 their independently evidenced status until their own parity gate is met.
-The current T1+U2+C3 lifecycle surface is `turn-kernel-ready`: submission,
+The current T1+U2+C3+C4+W5 lifecycle surface is `turn-kernel-ready`: submission,
 lifecycle progression, movement reset, reversible-skip cleanup, queued
-movement, merchant routes, scout auto-exploration, and multiplayer intended
-combat are implemented. Worker automation, economy, diplomatic turn
-processing, research, agreements, and objectives remain disabled and fail
-closed when their state is detected. The five
+movement, merchant routes, scout auto-exploration, multiplayer intended combat,
+worker construction, and bounded worker automation are implemented. Economy,
+diplomatic turn processing, research, agreements, and objectives remain disabled
+and fail closed when their state is detected. The five
 historical integrated-turn fixtures therefore remain blocked until the
 complete O9 pipeline; they are
 not reclassified as full `engine-parity` by the smaller greenfield kernel.
@@ -90,6 +90,14 @@ rolls, while the authoritative replay keeps the complete evidence. C3 adds no
 legacy reader, upcaster, fallback, compatibility alias, or internal version;
 the shared client API version remains unchanged.
 
+The CP11/W5 surface is `runtime-ready`. Seven worker/infrastructure commands,
+`WorkerOptions`, worker-job and automation turn processors, recipient-filtered
+infrastructure projections, exact save/reopen/replay, and structural performance
+budgets use one current contract. Thirteen frozen worker/road reducer cases are
+`historical/reference-only` and point to the reviewed W5 manifest instead of a
+reader for their old envelope. The shared client API remains version 5; W5 adds
+no internal schema counter, legacy reader, adapter, upcaster, or fallback.
+
 The file deliberately has no `v1` suffix or schema-version field. The engine
 and greenfield clients update this one current contract atomically. A format
 version is introduced only after a concrete independently deployed reader or
@@ -105,6 +113,7 @@ make rust-determinism-check
 make rust-corpus-parity-check
 make rust-tech-gate-check
 make rust-combat-check
+make rust-worker-check
 ```
 
 The analyzer-backed AST census is a separate evidence gate because the small

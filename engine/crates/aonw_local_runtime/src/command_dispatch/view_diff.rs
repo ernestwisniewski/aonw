@@ -1,10 +1,10 @@
 use core::cmp::Ordering;
 
-use aonw_domain::{CityId, UnitId};
+use aonw_domain::{CityId, HexCoord, UnitId};
 
 use crate::player_view::{
-    CityFoundingDraftView, PendingActionView, PlayerCityView, PlayerTurnLifecycleView,
-    PlayerUnitView,
+    CityFoundingDraftView, PendingActionView, PlayerCityView, PlayerFieldImprovementView,
+    PlayerRoadView, PlayerTurnLifecycleView, PlayerUnitView,
 };
 
 /// Recipient-safe view delta produced by one dispatch.
@@ -24,6 +24,14 @@ pub struct PlayerViewPatch {
     pub upserted_cities: Box<[PlayerCityView]>,
     /// Cities no longer known to this recipient.
     pub removed_city_ids: Box<[CityId]>,
+    /// New or changed field improvements known to the recipient.
+    pub upserted_field_improvements: Box<[PlayerFieldImprovementView]>,
+    /// Field improvements no longer known to the recipient.
+    pub removed_field_improvement_coordinates: Box<[HexCoord]>,
+    /// New or changed roads known to the recipient.
+    pub upserted_roads: Box<[PlayerRoadView]>,
+    /// Roads no longer known to the recipient.
+    pub removed_road_coordinates: Box<[HexCoord]>,
     /// Current action awaiting input from this recipient.
     pub pending_action: Option<PendingActionView>,
     /// Current recipient-owned city-founding workflow.
@@ -34,6 +42,8 @@ pub(crate) struct ProjectedView {
     turn: PlayerTurnLifecycleView,
     units: Vec<PlayerUnitView>,
     cities: Vec<PlayerCityView>,
+    field_improvements: Vec<PlayerFieldImprovementView>,
+    roads: Vec<PlayerRoadView>,
 }
 
 impl ProjectedView {
@@ -41,11 +51,15 @@ impl ProjectedView {
         turn: PlayerTurnLifecycleView,
         units: Vec<PlayerUnitView>,
         cities: Vec<PlayerCityView>,
+        field_improvements: Vec<PlayerFieldImprovementView>,
+        roads: Vec<PlayerRoadView>,
     ) -> Self {
         Self {
             turn,
             units,
             cities,
+            field_improvements,
+            roads,
         }
     }
 }
@@ -74,6 +88,10 @@ pub(crate) fn diff_view(
     let after_turn = after.turn;
     let before_cities = before.cities;
     let after_cities = after.cities;
+    let before_improvements = before.field_improvements;
+    let after_improvements = after.field_improvements;
+    let before_roads = before.roads;
+    let after_roads = after.roads;
     let mut before = before.units.into_iter().peekable();
     let mut after = after.units.into_iter().peekable();
     let mut upserted_units = Vec::new();
@@ -102,6 +120,9 @@ pub(crate) fn diff_view(
     removed_unit_ids.extend(before.map(|unit| unit.id().clone()));
     upserted_units.extend(after);
     let (upserted_cities, removed_city_ids) = diff_cities(before_cities, after_cities);
+    let (upserted_field_improvements, removed_field_improvement_coordinates) =
+        diff_improvements(before_improvements, after_improvements);
+    let (upserted_roads, removed_road_coordinates) = diff_roads(before_roads, after_roads);
     PlayerViewPatch {
         from_revision,
         to_revision,
@@ -110,9 +131,54 @@ pub(crate) fn diff_view(
         removed_unit_ids: removed_unit_ids.into_boxed_slice(),
         upserted_cities,
         removed_city_ids,
+        upserted_field_improvements,
+        removed_field_improvement_coordinates,
+        upserted_roads,
+        removed_road_coordinates,
         pending_action,
         city_founding_draft,
     }
+}
+
+fn diff_improvements(
+    before: Vec<PlayerFieldImprovementView>,
+    after: Vec<PlayerFieldImprovementView>,
+) -> (Box<[PlayerFieldImprovementView]>, Box<[HexCoord]>) {
+    diff_coordinate_views(before, after, PlayerFieldImprovementView::coordinate)
+}
+
+fn diff_roads(
+    before: Vec<PlayerRoadView>,
+    after: Vec<PlayerRoadView>,
+) -> (Box<[PlayerRoadView]>, Box<[HexCoord]>) {
+    diff_coordinate_views(before, after, PlayerRoadView::coordinate)
+}
+
+fn diff_coordinate_views<View: Copy + Eq>(
+    before: Vec<View>,
+    after: Vec<View>,
+    coordinate: impl Fn(View) -> HexCoord,
+) -> (Box<[View]>, Box<[HexCoord]>) {
+    let mut before = before.into_iter().peekable();
+    let mut after = after.into_iter().peekable();
+    let mut upserted = Vec::new();
+    let mut removed = Vec::new();
+    while let (Some(previous), Some(current)) = (before.peek(), after.peek()) {
+        match coordinate(*previous).cmp(&coordinate(*current)) {
+            Ordering::Less => removed.push(coordinate(before.next().expect("previous view"))),
+            Ordering::Equal => {
+                let previous = before.next().expect("previous view");
+                let current = after.next().expect("current view");
+                if previous != current {
+                    upserted.push(current);
+                }
+            }
+            Ordering::Greater => upserted.push(after.next().expect("current view")),
+        }
+    }
+    removed.extend(before.map(coordinate));
+    upserted.extend(after);
+    (upserted.into_boxed_slice(), removed.into_boxed_slice())
 }
 
 fn diff_cities(
@@ -167,8 +233,8 @@ mod tests {
         let patch = diff_view(
             4,
             5,
-            ProjectedView::new(turn, before, Vec::new()),
-            ProjectedView::new(turn, after, Vec::new()),
+            ProjectedView::new(turn, before, Vec::new(), Vec::new(), Vec::new()),
+            ProjectedView::new(turn, after, Vec::new(), Vec::new(), Vec::new()),
             None,
             None,
         );
@@ -205,6 +271,6 @@ mod tests {
         )
         .build()
         .expect("unit");
-        PlayerUnitView::from_unit(&unit)
+        PlayerUnitView::from_unit(&unit, true)
     }
 }

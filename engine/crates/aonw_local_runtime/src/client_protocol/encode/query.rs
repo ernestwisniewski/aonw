@@ -1,8 +1,8 @@
-use aonw_contract_mapping::encode_troop;
+use aonw_contract_mapping::{encode_improvement, encode_troop};
 use aonw_contracts::client::{
     AutoExploreOptionDto, CityExpansionCandidateDto, ClientQueryResultDto, DetachmentOptionDto,
     MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
-    ReachableTileViewDto,
+    ReachableTileViewDto, WorkerImprovementOptionDto,
 };
 use aonw_engine::{CityExpansionOptions, CityFoundingOptions, CityWorkedHexOptions};
 
@@ -11,6 +11,7 @@ use crate::{RuntimeQueryResult, SessionStamp};
 use super::evidence::combat_preview;
 use super::map_view::coordinate;
 use super::stamp;
+use super::worker::automation_option;
 
 pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
     match value {
@@ -94,6 +95,32 @@ pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
                     .collect(),
             }
         }
+        RuntimeQueryResult::WorkerOptions {
+            stamp: value_stamp,
+            options,
+        } => worker_options(*value_stamp, options),
+    }
+}
+
+fn worker_options(
+    value_stamp: SessionStamp,
+    options: &aonw_engine::WorkerOptions,
+) -> ClientQueryResultDto {
+    ClientQueryResultDto::WorkerOptions {
+        stamp: stamp(value_stamp),
+        unit_id: options.unit_id().as_str().to_owned(),
+        coordinate: coordinate(options.coordinate()),
+        improvements: options
+            .improvements()
+            .iter()
+            .map(|option| WorkerImprovementOptionDto {
+                improvement: encode_improvement(option.kind()),
+                build_turns: option.build_turns(),
+            })
+            .collect(),
+        can_assign: options.can_assign(),
+        can_build_road: options.can_build_road(),
+        automation: options.automation().map(automation_option),
     }
 }
 

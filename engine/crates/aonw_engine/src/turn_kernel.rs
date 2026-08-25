@@ -1,10 +1,11 @@
 mod city_phase;
 mod support;
+mod worker_phase;
 
 use std::collections::BTreeSet;
 
 use aonw_content::{ContentHash, MapDefinition, RulesetDefinition};
-use aonw_domain::{GameMode, GameState, MatchLifecycle, PlayerId, PlayerTurnState, UtcTimestamp};
+use aonw_domain::{CityId, GameMode, GameState, PlayerId, PlayerTurnState, UtcTimestamp};
 
 use crate::movement::{TurnMovementUpdate, advance_turn_movement};
 use crate::{
@@ -16,11 +17,36 @@ use crate::{
 
 use self::support::{
     InteractionStateUpdate, accept_identity, apply_update, ordered_submission_scope,
-    rebuild_lifecycle, reject, sequential_progress, system_content_hashes,
+    rebuild_lifecycle, reject, sequential_progress, simultaneous_lifecycle, system_content_hashes,
     transition_with_phase_evidence, unsupported_processor_for_scope, valid_system_scope,
     validate_player_command,
 };
 use city_phase::advance_city_phase;
+use worker_phase::advance_worker_phase;
+
+struct SettlementPhase {
+    state: GameState,
+    events: Vec<DomainEvent>,
+    founded_city_ids: Vec<CityId>,
+}
+
+fn advance_settlement_phase(
+    state: GameState,
+    map: &MapDefinition,
+    ruleset: &RulesetDefinition,
+    scope: &[PlayerId],
+) -> Result<SettlementPhase, CanonicalEngineError> {
+    let city = advance_city_phase(state, map, ruleset, scope)?;
+    let mut events = city.events;
+    let founded_city_ids = city.founded_city_ids;
+    let worker = advance_worker_phase(city.state, map, ruleset, scope)?;
+    events.extend(worker.events);
+    Ok(SettlementPhase {
+        state: worker.state,
+        events,
+        founded_city_ids,
+    })
+}
 
 impl GameEngine {
     /// Applies one host-owned lifecycle command through a boundary that has no player identity.
@@ -133,13 +159,13 @@ pub(crate) fn apply_end_turn(
             ruleset_hash,
         ));
     }
-    let city = advance_city_phase(
+    let settlement = advance_settlement_phase(
         state,
         context.map(),
         context.ruleset(),
         &progress.reset_scope,
     )?;
-    let state = city.state;
+    let state = settlement.state;
     let movement = match advance_turn_movement(
         &state,
         context.map(),
@@ -177,10 +203,8 @@ pub(crate) fn apply_end_turn(
         invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     } = movement;
-    let mut events = vec![DomainEvent::TurnEnded(TurnEndedEvent::new(
-        command.player_id().clone(),
-    ))];
-    events.extend(city.events);
+    let mut events = sequential_turn_events(command.player_id());
+    events.extend(settlement.events);
     events.extend(movement_events);
     apply_update(
         state,
@@ -194,9 +218,11 @@ pub(crate) fn apply_end_turn(
         [
             TurnProcessor::Lifecycle,
             TurnProcessor::CityFounding,
+            TurnProcessor::WorkerJobs,
             TurnProcessor::MovementReset,
             TurnProcessor::QueuedMovement,
             TurnProcessor::TradeRoutes,
+            TurnProcessor::WorkerAutomation,
             TurnProcessor::AutoExplore,
             TurnProcessor::ReversibleSkipCleanup,
         ],
@@ -211,9 +237,15 @@ pub(crate) fn apply_end_turn(
             executions,
             invalidated_order_unit_ids,
             finished_auto_explore_unit_ids,
-            city.founded_city_ids,
+            settlement.founded_city_ids,
         )
     })
+}
+
+fn sequential_turn_events(player_id: &PlayerId) -> Vec<DomainEvent> {
+    vec![DomainEvent::TurnEnded(TurnEndedEvent::new(
+        player_id.clone(),
+    ))]
 }
 
 fn apply_timeout_finalization(
@@ -365,11 +397,10 @@ fn finalize_simultaneous(
     let current_turn = state.turn();
     let combat =
         crate::combat::resolve_intended_attacks(state, map, ruleset).map_err(combat_phase_error)?;
-    let city = advance_city_phase(combat.state, map, ruleset, scope)?;
-    let state_after_city = city.state;
-    let movement = match advance_turn_movement(&state_after_city, map, ruleset, scope) {
+    let settlement = advance_settlement_phase(combat.state, map, ruleset, scope)?;
+    let movement = match advance_turn_movement(&settlement.state, map, ruleset, scope) {
         Ok(movement) => movement,
-        Err(code) => return Ok(reject(state_after_city, code, map_hash, ruleset_hash)),
+        Err(code) => return Ok(reject(settlement.state, code, map_hash, ruleset_hash)),
     };
     let mut events = skipped
         .iter()
@@ -380,7 +411,7 @@ fn finalize_simultaneous(
         AllPlayersSubmittedEvent::new(current_turn, scope.to_vec()),
     ));
     events.extend(combat.events.iter().cloned());
-    events.extend(city.events);
+    events.extend(settlement.events);
     events.extend(
         scope
             .iter()
@@ -401,7 +432,7 @@ fn finalize_simultaneous(
     } = movement;
     events.extend(movement_events);
     apply_update(
-        state_after_city,
+        settlement.state,
         lifecycle,
         Some(next_turn),
         units,
@@ -414,9 +445,11 @@ fn finalize_simultaneous(
             TurnProcessor::Lifecycle,
             TurnProcessor::Combat,
             TurnProcessor::CityFounding,
+            TurnProcessor::WorkerJobs,
             TurnProcessor::MovementReset,
             TurnProcessor::QueuedMovement,
             TurnProcessor::TradeRoutes,
+            TurnProcessor::WorkerAutomation,
             TurnProcessor::AutoExplore,
             TurnProcessor::ReversibleSkipCleanup,
         ],
@@ -431,7 +464,7 @@ fn finalize_simultaneous(
             executions,
             invalidated_order_unit_ids,
             finished_auto_explore_unit_ids,
-            city.founded_city_ids,
+            settlement.founded_city_ids,
         )
     })
 }
@@ -443,46 +476,4 @@ fn combat_phase_error(error: crate::combat::CombatPhaseError) -> CanonicalEngine
         }
         crate::combat::CombatPhaseError::State(source) => CanonicalEngineError::State(source),
     }
-}
-
-fn simultaneous_lifecycle(
-    state: &GameState,
-    scope: &[PlayerId],
-    skipped: &[PlayerId],
-    next_turn_started_at: Option<UtcTimestamp>,
-    track_timeout_streaks: bool,
-) -> Result<MatchLifecycle, CanonicalEngineError> {
-    let current = state.match_lifecycle().turn();
-    let mut states = current.turn_states_by_player_id().clone();
-    for player in scope {
-        states.insert(player.clone(), PlayerTurnState::Active);
-    }
-    for player in current.kicked_player_ids() {
-        states.insert(player.clone(), PlayerTurnState::Finished);
-    }
-    let timeouts = if track_timeout_streaks {
-        skipped
-            .iter()
-            .map(|player| {
-                let previous = current
-                    .timeout_streaks_by_player_id()
-                    .get(player)
-                    .copied()
-                    .unwrap_or_default();
-                (player.clone(), previous.saturating_add(1))
-            })
-            .collect()
-    } else {
-        current.timeout_streaks_by_player_id().clone()
-    };
-    rebuild_lifecycle(
-        state,
-        states,
-        current.required_submission_player_ids().clone(),
-        BTreeSet::new(),
-        timeouts,
-        current.afk_player_ids().clone(),
-        current.kicked_player_ids().clone(),
-        next_turn_started_at.or_else(|| current.turn_started_at().cloned()),
-    )
 }

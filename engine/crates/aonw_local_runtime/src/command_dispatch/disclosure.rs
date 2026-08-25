@@ -28,7 +28,12 @@ impl RecipientDisclosure {
                     push_visible_combat(&mut combats, combat, visible_units, visible_city_ids);
                 }
             }
-            Some(ExecutionEvidence::UnitMovement(_) | ExecutionEvidence::Logistics(_)) | None => {}
+            Some(
+                ExecutionEvidence::UnitMovement(_)
+                | ExecutionEvidence::Logistics(_)
+                | ExecutionEvidence::WorkerAutomation(_),
+            )
+            | None => {}
         }
         Self {
             actor,
@@ -76,6 +81,7 @@ impl RecipientDisclosure {
             DomainEvent::MerchantRouteAssigned(value) => self.allows_unit(value.unit_id()),
             DomainEvent::MerchantTravelQueued(value) => self.allows_unit(value.unit_id()),
             DomainEvent::TroopDetached(value) => self.allows_unit(value.source_unit_id()),
+            DomainEvent::WorkerCompletedJob(value) => self.allows_unit(value.unit_id()),
             DomainEvent::TurnEnded(_)
             | DomainEvent::AllPlayersSubmitted(_)
             | DomainEvent::PlayerTimedOut(_)

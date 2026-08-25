@@ -9,8 +9,8 @@
 mod game_state_mapping;
 
 pub use game_state_mapping::{
-    GameStateMappingError, canonicalize_game_state, decode_game_state, decode_troop,
-    encode_game_state, encode_improvement, encode_troop,
+    GameStateMappingError, canonicalize_game_state, decode_game_state, decode_improvement,
+    decode_troop, encode_game_state, encode_improvement, encode_troop,
 };
 
 use aonw_contracts::{

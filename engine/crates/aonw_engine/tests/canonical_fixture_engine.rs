@@ -25,8 +25,10 @@ use aonw_testkit::{
 mod city;
 #[path = "canonical_fixture_engine/encoding.rs"]
 mod encoding;
+#[path = "canonical_fixture_engine/worker.rs"]
+mod worker;
 
-use encoding::{encode_event, encode_evidence};
+use encoding::{command_name, encode_event, encode_evidence};
 
 #[derive(Debug)]
 struct ExecutionError(String);
@@ -104,6 +106,13 @@ fn apply_command(
             city_id,
             target,
         } => city::apply_select_expansion(state, context, *expected_revision, city_id, *target),
+        command @ (ReplayCommandDto::SelectWorkerImprovement { .. }
+        | ReplayCommandDto::ConfirmWorkerImprovement { .. }
+        | ReplayCommandDto::CancelWorkerJob { .. }
+        | ReplayCommandDto::AssignWorkerToHex { .. }
+        | ReplayCommandDto::CancelWorkerAssignment { .. }
+        | ReplayCommandDto::BuildRoad { .. }
+        | ReplayCommandDto::AutomateWorker { .. }) => worker::apply(state, context, command),
         ReplayCommandDto::AttackHex {
             expected_revision,
             attacker_unit_id,
@@ -468,23 +477,4 @@ fn reviewed_execution_disposition(line: &str) -> Option<ReviewedExecutionDisposi
         rejection,
         canonical_artifact: fields[10].into(),
     })
-}
-
-const fn command_name(command: &ReplayCommandDto) -> &'static str {
-    match command {
-        ReplayCommandDto::FoundCity { .. } => "FoundCity",
-        ReplayCommandDto::ToggleWorkedHex { .. } => "ToggleWorkedHex",
-        ReplayCommandDto::SelectCityExpansionHex { .. } => "SelectCityExpansionHex",
-        ReplayCommandDto::AttackHex { .. } => "AttackHex",
-        ReplayCommandDto::MoveUnit { .. } => "MoveUnit",
-        ReplayCommandDto::AutoExploreUnit { .. } => "AutoExploreUnit",
-        ReplayCommandDto::AssignMerchantTradeRoute { .. } => "AssignMerchantTradeRoute",
-        ReplayCommandDto::MoveMerchantToCity { .. } => "MoveMerchantToCity",
-        ReplayCommandDto::DetachTroop { .. } => "DetachTroop",
-        ReplayCommandDto::CancelUnitAction { .. } => "CancelUnitAction",
-        ReplayCommandDto::SkipUnitTurn { .. } => "SkipUnitTurn",
-        ReplayCommandDto::FortifyUnit { .. } => "FortifyUnit",
-        ReplayCommandDto::EndTurn { .. } => "EndTurn",
-        ReplayCommandDto::SubmitTurn { .. } => "SubmitTurn",
-    }
 }

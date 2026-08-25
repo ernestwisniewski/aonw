@@ -2,6 +2,52 @@ use aonw_domain::{CityId, PlayerId, UnitId};
 
 use crate::CombatTarget;
 
+/// Kind of completed worker construction.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum WorkerJobCompletion {
+    /// A field improvement was completed.
+    FieldImprovement(aonw_domain::FieldImprovementKind),
+    /// A road segment was completed.
+    Road,
+}
+
+/// Accepted fact that one worker job completed successfully.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct WorkerCompletedJobEvent {
+    unit_id: UnitId,
+    target: aonw_domain::HexCoord,
+    completion: WorkerJobCompletion,
+}
+
+impl WorkerCompletedJobEvent {
+    pub(crate) const fn new(
+        unit_id: UnitId,
+        target: aonw_domain::HexCoord,
+        completion: WorkerJobCompletion,
+    ) -> Self {
+        Self {
+            unit_id,
+            target,
+            completion,
+        }
+    }
+    /// Returns the worker identity before charge consumption.
+    #[must_use]
+    pub const fn unit_id(&self) -> &UnitId {
+        &self.unit_id
+    }
+    /// Returns the completed coordinate.
+    #[must_use]
+    pub const fn target(&self) -> aonw_domain::HexCoord {
+        self.target
+    }
+    /// Returns the completed construction kind.
+    #[must_use]
+    pub const fn completion(&self) -> WorkerJobCompletion {
+        self.completion
+    }
+}
+
 /// Accepted fact that a city-founding job completed.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CityFoundedEvent {

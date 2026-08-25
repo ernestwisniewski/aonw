@@ -1,7 +1,7 @@
 use aonw_contract_mapping::{encode_score_reason, encode_troop};
 use aonw_contracts::client::{
     ClientEventDto, ClientEvidenceDto, ClientLogisticsEvidenceDto, MovementStepViewDto,
-    UnitMovementExecutionDto,
+    UnitMovementExecutionDto, WorkerJobCompletionDto,
 };
 use aonw_contracts::{
     CombatExecutionDto, CombatModifierDto, CombatModifierKindDto, CombatOutcomeDto,
@@ -16,6 +16,7 @@ use aonw_engine::{
 use crate::command_dispatch::RecipientDisclosure;
 
 use super::coordinate;
+use super::worker::automation_option;
 
 #[allow(clippy::too_many_lines)]
 pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
@@ -134,6 +135,18 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
             reason: value.reason().to_owned(),
             timeout_streak: value.timeout_streak(),
         },
+        DomainEvent::WorkerCompletedJob(value) => ClientEventDto::WorkerCompletedJob {
+            unit_id: value.unit_id().as_str().to_owned(),
+            target: coordinate(value.target()),
+            completion: match value.completion() {
+                aonw_engine::WorkerJobCompletion::FieldImprovement(improvement) => {
+                    WorkerJobCompletionDto::FieldImprovement {
+                        improvement: aonw_contract_mapping::encode_improvement(improvement),
+                    }
+                }
+                aonw_engine::WorkerJobCompletion::Road => WorkerJobCompletionDto::Road,
+            },
+        },
     }
 }
 
@@ -218,6 +231,13 @@ fn encode_evidence(
                 .map(|unit| unit.as_str().to_owned())
                 .collect(),
         }),
+        ExecutionEvidence::WorkerAutomation(value) => {
+            allows_unit(value.unit_id()).then(|| ClientEvidenceDto::WorkerAutomation {
+                unit_id: value.unit_id().as_str().to_owned(),
+                option: automation_option(value.option()),
+                movement: value.movement().map(movement_execution),
+            })
+        }
     }
 }
 

@@ -201,7 +201,7 @@ pub(crate) fn plan_terrain_route(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn plan_route_for_unit(
+pub(crate) fn plan_route_for_unit(
     revision: u64,
     units: &[Unit],
     context: EngineContext<'_>,

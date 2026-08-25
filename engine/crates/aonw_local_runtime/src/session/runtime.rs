@@ -1,9 +1,11 @@
 use aonw_engine::MovementSearchWorkspace;
 
 use crate::command_dispatch::{
-    RuntimeUnitActionKind, dispatch_assign_merchant_route, dispatch_attack, dispatch_auto_explore,
+    RuntimeUnitActionKind, RuntimeWorkerCommandKind, dispatch_assign_merchant_route,
+    dispatch_attack, dispatch_auto_explore, dispatch_confirm_worker_improvement,
     dispatch_detach_troop, dispatch_found_city, dispatch_move, dispatch_move_merchant_to_city,
-    dispatch_select_city_expansion_hex, dispatch_toggle_worked_hex, dispatch_unit_action,
+    dispatch_select_city_expansion_hex, dispatch_select_worker_improvement,
+    dispatch_toggle_worked_hex, dispatch_unit_action, dispatch_worker_unit,
 };
 use crate::player_view::PlayerViewSnapshot;
 use crate::query_cache::{QueryCache, QueryCacheStats};
@@ -16,6 +18,7 @@ use crate::{
     AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest, FoundCityRequest,
     MerchantCityRequest, MoveUnitRequest, RuntimeQuery, RuntimeQueryResult,
     SelectCityExpansionHexRequest, ToggleWorkedHexRequest, UnitActionRequest,
+    WorkerImprovementRequest, WorkerUnitRequest,
 };
 
 use super::{
@@ -77,6 +80,98 @@ impl LocalRuntime {
             dispatch_select_city_expansion_hex(session, command)
         };
         self.complete_dispatch(result)
+    }
+
+    /// Starts one explicitly selected field improvement.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn select_worker_improvement(
+        &mut self,
+        command: &WorkerImprovementRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_select_worker_improvement(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Confirms an explicit or matching pending field improvement.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn confirm_worker_improvement(
+        &mut self,
+        command: &WorkerImprovementRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_confirm_worker_improvement(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Cancels current worker construction.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn cancel_worker_job(
+        &mut self,
+        command: &WorkerUnitRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_worker(command, RuntimeWorkerCommandKind::CancelJob)
+    }
+
+    /// Assigns a worker to its current improved coordinate.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn assign_worker_to_hex(
+        &mut self,
+        command: &WorkerUnitRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_worker(command, RuntimeWorkerCommandKind::Assign)
+    }
+
+    /// Cancels a worker assignment.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn cancel_worker_assignment(
+        &mut self,
+        command: &WorkerUnitRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_worker(command, RuntimeWorkerCommandKind::CancelAssignment)
+    }
+
+    /// Starts road construction at the current coordinate.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn build_road(
+        &mut self,
+        command: &WorkerUnitRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_worker(command, RuntimeWorkerCommandKind::BuildRoad)
+    }
+
+    /// Starts or continues deterministic worker automation.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn automate_worker(
+        &mut self,
+        command: &WorkerUnitRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_worker(command, RuntimeWorkerCommandKind::Automate)
     }
 
     /// Resolves one visible unit or city attack.
@@ -361,6 +456,18 @@ impl LocalRuntime {
         let result = {
             let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
             dispatch_unit_action(session, command, kind)
+        };
+        self.complete_dispatch(result)
+    }
+
+    fn dispatch_worker(
+        &mut self,
+        command: &WorkerUnitRequest,
+        kind: RuntimeWorkerCommandKind,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_worker_unit(session, command, kind)
         };
         self.complete_dispatch(result)
     }

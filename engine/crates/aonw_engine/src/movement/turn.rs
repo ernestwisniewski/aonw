@@ -48,6 +48,7 @@ pub(crate) fn advance_turn_movement(
     let mut workspace = MovementSearchWorkspace::default();
     let mut finished_auto_explore_unit_ids = Vec::new();
     let mut interaction = state.interaction().clone().expire_turn_skip_for(&scope);
+    advance_worker_automation(state, map, ruleset, &scope, &mut progress, &mut interaction)?;
     for index in 0..progress.units.len() {
         let scout = progress.units[index].clone();
         if !scope.contains(scout.owner_player_id())
@@ -127,6 +128,71 @@ pub(crate) fn advance_turn_movement(
         invalidated_order_unit_ids: progress.invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     })
+}
+
+fn advance_worker_automation(
+    state: &GameState,
+    map: &MapDefinition,
+    ruleset: &RulesetDefinition,
+    scope: &BTreeSet<PlayerId>,
+    progress: &mut MovementProgress,
+    interaction: &mut InteractionState,
+) -> Result<(), crate::CommandRejectionCode> {
+    let worker_ids = progress
+        .units
+        .iter()
+        .filter(|unit| {
+            scope.contains(unit.owner_player_id())
+                && unit.kind() == UnitKind::Worker
+                && unit.posture() == UnitPosture::AutoWorking
+        })
+        .map(|unit| unit.id().clone())
+        .collect::<Vec<_>>();
+    for worker_id in worker_ids {
+        let current = progress
+            .units
+            .iter()
+            .find(|unit| unit.id() == &worker_id)
+            .cloned()
+            .ok_or(crate::CommandRejectionCode::WorkerNotFound)?;
+        let temporary = state
+            .clone()
+            .into_after_worker(
+                state.revision(),
+                progress.units.clone(),
+                state.infrastructure().clone(),
+                interaction.clone(),
+                progress.fog.clone(),
+                progress.diplomacy.clone(),
+            )
+            .map_err(|_| crate::CommandRejectionCode::InvalidUnit)?;
+        let context = EngineContext::canonical(current.owner_player_id(), map, ruleset);
+        let command = crate::AutomateWorkerCommand::new(state.revision().get(), &worker_id);
+        let mutation = crate::worker::apply_automation(&temporary, context, command);
+        let Ok(crate::worker::WorkerMutation::Update(update)) = mutation else {
+            let replacement = current.after_worker_automation_finished();
+            if let Some(target) = progress
+                .units
+                .iter_mut()
+                .find(|unit| unit.id() == &worker_id)
+            {
+                *target = replacement;
+            }
+            *interaction = interaction.clone().without_unit(&worker_id);
+            continue;
+        };
+        progress.units = update.units;
+        progress.fog = update.fog_of_war;
+        progress.diplomacy = update.diplomacy;
+        *interaction = update.interaction;
+        progress.events.extend(update.events);
+        if let Some(crate::ExecutionEvidence::WorkerAutomation(execution)) = update.evidence
+            && let Some(movement) = execution.movement().cloned()
+        {
+            progress.executions.push(movement);
+        }
+    }
+    Ok(())
 }
 
 fn reset_and_advance_orders(

@@ -1,6 +1,6 @@
 use crate::{
-    City, CombatState, Diplomacy, FogOfWar, InteractionState, MatchLifecycle, StateRevision, Unit,
-    WorldArtifact,
+    City, CombatState, Diplomacy, FogOfWar, InfrastructureState, InteractionState, MatchLifecycle,
+    StateRevision, Unit, WorldArtifact,
 };
 
 use super::{GameState, GameStateBuildError};
@@ -101,6 +101,30 @@ impl GameState {
         builder.fog_of_war = fog_of_war;
         builder.diplomacy = diplomacy;
         builder.interaction = interaction;
+        builder.try_build()
+    }
+
+    /// Consumes the aggregate and applies a worker/infrastructure command update.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when units or infrastructure violate aggregate invariants.
+    pub fn into_after_worker(
+        self,
+        revision: StateRevision,
+        units: Vec<Unit>,
+        infrastructure: InfrastructureState,
+        interaction: InteractionState,
+        fog_of_war: FogOfWar,
+        diplomacy: Diplomacy,
+    ) -> Result<Self, GameStateBuildError> {
+        let mut builder = self.into_builder();
+        builder.revision = revision;
+        builder.units = units;
+        builder.infrastructure = infrastructure;
+        builder.interaction = interaction;
+        builder.fog_of_war = fog_of_war;
+        builder.diplomacy = diplomacy;
         builder.try_build()
     }
 

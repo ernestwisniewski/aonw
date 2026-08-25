@@ -6,22 +6,56 @@ use aonw_domain::{
     FogOfWar, GameState, HexCoord, HexGridBounds, MovementUnits, PlayerFog, PlayerId,
     StateRevision, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
 };
-use aonw_engine::MovementSearchMetrics;
+use aonw_engine::{MovementSearchMetrics, WorkerAutomationMetrics};
 use stats_alloc::{Region, Stats};
 
 use crate::GLOBAL;
 
 const ITERATIONS: usize = 20;
 
+#[derive(Clone, Copy, Default)]
+pub(crate) struct WorkCounters {
+    frontier_pops: u64,
+    expanded_tiles: u64,
+    examined_edges: u64,
+    heap_pushes: u64,
+    route_records: u64,
+}
+
+impl WorkCounters {
+    pub(crate) const fn worker(metrics: WorkerAutomationMetrics) -> Self {
+        Self {
+            frontier_pops: 0,
+            expanded_tiles: metrics.tiles_examined() as u64,
+            examined_edges: metrics.legality_evaluations() as u64,
+            heap_pushes: 0,
+            route_records: metrics.routes_planned() as u64,
+        }
+    }
+}
+
+impl From<MovementSearchMetrics> for WorkCounters {
+    fn from(metrics: MovementSearchMetrics) -> Self {
+        Self {
+            frontier_pops: metrics.frontier_pops(),
+            expanded_tiles: metrics.expanded_tiles(),
+            examined_edges: metrics.examined_edges(),
+            heap_pushes: metrics.heap_pushes(),
+            route_records: metrics.route_records(),
+        }
+    }
+}
+
 pub(crate) fn report(
     workload: &str,
     cols: u16,
     rows: u16,
     units: usize,
-    metrics: MovementSearchMetrics,
+    metrics: impl Into<WorkCounters>,
     payload_bytes: usize,
     mut operation: impl FnMut() -> u64,
 ) {
+    let metrics = metrics.into();
     for _ in 0..3 {
         black_box(operation());
     }
@@ -53,11 +87,11 @@ pub(crate) fn report(
         allocations.allocations,
         allocations.reallocations,
         allocations.bytes_allocated,
-        metrics.frontier_pops(),
-        metrics.expanded_tiles(),
-        metrics.examined_edges(),
-        metrics.heap_pushes(),
-        metrics.route_records(),
+        metrics.frontier_pops,
+        metrics.expanded_tiles,
+        metrics.examined_edges,
+        metrics.heap_pushes,
+        metrics.route_records,
     );
 }
 

@@ -16,10 +16,13 @@ pub use response::{
     ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto,
     ClientEventDto, ClientEvidenceDto, ClientFeatureDto, ClientLogisticsEvidenceDto,
     ClientOutcomeDto, ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto,
-    ClientResponseDto, ClientSessionStampDto, DetachmentOptionDto, MerchantDestinationOptionDto,
-    MovementSearchMetricsDto, MovementStepViewDto, OwnedCityPlanningViewDto, PendingActionViewDto,
-    PlayerCityViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
-    PlayerViewSnapshotDto, ReachableTileViewDto, UnitMovementExecutionDto,
+    ClientResponseDto, ClientSessionStampDto, DetachmentOptionDto, FieldImprovementViewDto,
+    MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
+    OwnedCityPlanningViewDto, PendingActionViewDto, PlayerCityViewDto, PlayerTurnLifecycleViewDto,
+    PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
+    RoadViewDto, UnitMovementExecutionDto, WorkerAutomationActionDto, WorkerAutomationMetricsDto,
+    WorkerAutomationOptionDto, WorkerImprovementOptionDto, WorkerJobCompletionDto,
+    WorkerJobViewDto,
 };
 
 /// The only client protocol version accepted by this build.

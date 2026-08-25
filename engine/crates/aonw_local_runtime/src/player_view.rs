@@ -1,14 +1,17 @@
 use aonw_domain::{
     CityId, FieldImprovementKind, FogVisibility, GameState, HexCoord, PendingInteraction, PlayerId,
-    PlayerTurnState, Unit, UnitId, UnitKind, UnitPosture,
+    PlayerTurnState, Unit, UnitId, UnitKind, UnitPosture, WorkerJob,
 };
 
 use crate::SessionStamp;
 
 mod city;
+mod infrastructure;
 
 pub use city::{CityFoundingDraftView, OwnedCityPlanningView, PlayerCityView};
 pub(crate) use city::{city_founding_draft, visible_cities};
+pub(crate) use infrastructure::visible_infrastructure;
+pub use infrastructure::{PlayerFieldImprovementView, PlayerRoadView};
 
 /// Recipient-safe unit view for local presentation.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -21,10 +24,13 @@ pub struct PlayerUnitView {
     row: i32,
     movement_units: u32,
     posture: UnitPosture,
+    worker_build_charges: u32,
+    worker_job: Option<WorkerJob>,
+    worker_assignment: Option<HexCoord>,
 }
 
 impl PlayerUnitView {
-    pub(crate) fn from_unit(unit: &Unit) -> Self {
+    pub(crate) fn from_unit(unit: &Unit, disclose_worker: bool) -> Self {
         Self {
             id: unit.id().clone(),
             owner_player_id: unit.owner_player_id().clone(),
@@ -34,6 +40,17 @@ impl PlayerUnitView {
             row: unit.position().row(),
             movement_units: unit.movement_units().get(),
             posture: unit.posture(),
+            worker_build_charges: if disclose_worker {
+                unit.worker_build_charges()
+            } else {
+                0
+            },
+            worker_job: disclose_worker
+                .then(|| unit.activity().worker_job().cloned())
+                .flatten(),
+            worker_assignment: disclose_worker
+                .then(|| unit.activity().worker_assignment())
+                .flatten(),
         }
     }
 
@@ -76,6 +93,21 @@ impl PlayerUnitView {
     #[must_use]
     pub const fn posture(&self) -> UnitPosture {
         self.posture
+    }
+    /// Returns remaining worker construction charges.
+    #[must_use]
+    pub const fn worker_build_charges(&self) -> u32 {
+        self.worker_build_charges
+    }
+    /// Returns current worker construction when recipient-owned.
+    #[must_use]
+    pub const fn worker_job(&self) -> Option<&WorkerJob> {
+        self.worker_job.as_ref()
+    }
+    /// Returns current worker assignment when recipient-owned.
+    #[must_use]
+    pub const fn worker_assignment(&self) -> Option<HexCoord> {
+        self.worker_assignment
     }
 }
 
@@ -123,10 +155,13 @@ pub struct PlayerViewSnapshot {
     city_founding_draft: Option<CityFoundingDraftView>,
     units: Box<[PlayerUnitView]>,
     cities: Box<[PlayerCityView]>,
+    field_improvements: Box<[PlayerFieldImprovementView]>,
+    roads: Box<[PlayerRoadView]>,
 }
 
 impl PlayerViewSnapshot {
     pub(crate) fn new(stamp: SessionStamp, state: &GameState, actor: &PlayerId) -> Self {
+        let (field_improvements, roads) = visible_infrastructure(state, actor);
         Self {
             stamp,
             turn: state.turn(),
@@ -135,6 +170,8 @@ impl PlayerViewSnapshot {
             city_founding_draft: city_founding_draft(state, actor),
             units: visible_units(state, actor).into_boxed_slice(),
             cities: visible_cities(state, actor).into_boxed_slice(),
+            field_improvements: field_improvements.into_boxed_slice(),
+            roads: roads.into_boxed_slice(),
         }
     }
 
@@ -172,6 +209,16 @@ impl PlayerViewSnapshot {
     #[must_use]
     pub const fn cities(&self) -> &[PlayerCityView] {
         &self.cities
+    }
+    /// Returns field improvements known to this recipient.
+    #[must_use]
+    pub const fn field_improvements(&self) -> &[PlayerFieldImprovementView] {
+        &self.field_improvements
+    }
+    /// Returns roads known to this recipient.
+    #[must_use]
+    pub const fn roads(&self) -> &[PlayerRoadView] {
+        &self.roads
     }
 }
 
@@ -302,7 +349,7 @@ pub(crate) fn visible_units(state: &GameState, actor: &PlayerId) -> Vec<PlayerUn
             unit.owner_player_id() == actor
                 || state.fog_of_war().visibility(actor, unit.position()) == FogVisibility::Visible
         })
-        .map(PlayerUnitView::from_unit)
+        .map(|unit| PlayerUnitView::from_unit(unit, unit.owner_player_id() == actor))
         .collect::<Vec<_>>();
     units.sort_unstable_by(|left, right| left.id().cmp(right.id()));
     units

@@ -14,7 +14,7 @@ pub use transition::{
     AllPlayersSubmittedEvent, CityFoundedEvent, CombatEvent, CommandRejectionCode,
     DiplomaticScoreChangedEvent, DomainEvent, DomainRejection, DomainTransition,
     DomainTransitionParts, ExecutionEvidence, PlayerKickedEvent, PlayerTimedOutEvent,
-    TurnEndedEvent,
+    TurnEndedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use turn::{
     FinalizeTimedOutTurnCommand, KickParticipantCommand, SystemCommand, TurnCommand,

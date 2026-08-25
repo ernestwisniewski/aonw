@@ -7,15 +7,19 @@ use super::{DomainEvent, DomainTransition, ExecutionEvidence};
 use crate::movement::{merge_discovered_contacts, recompute_after_move};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
 use crate::{
-    AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand, DetachTroopCommand,
-    EngineContext, FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
-    SelectCityExpansionHexCommand, StateDigest, ToggleWorkedHexCommand, TurnCommand,
-    UnitActionCommand,
+    AssignMerchantTradeRouteCommand, AssignWorkerToHexCommand, AttackHexCommand,
+    AutoExploreUnitCommand, AutomateWorkerCommand, BuildRoadCommand, CancelWorkerAssignmentCommand,
+    CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DetachTroopCommand, EngineContext,
+    FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
+    SelectCityExpansionHexCommand, SelectWorkerImprovementCommand, StateDigest,
+    ToggleWorkedHexCommand, TurnCommand, UnitActionCommand,
 };
 
+mod budget;
 mod canonical_transition;
 
-use canonical_transition::{apply_city, apply_combat};
+pub use budget::EventBudget;
+use canonical_transition::{apply_city, apply_combat, apply_worker};
 
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
@@ -26,6 +30,20 @@ pub enum PlayerCommand<'command> {
     ToggleWorkedHex(ToggleWorkedHexCommand<'command>),
     /// Selects the preferred next territory expansion.
     SelectCityExpansionHex(SelectCityExpansionHexCommand<'command>),
+    /// Starts one explicitly selected field improvement.
+    SelectWorkerImprovement(SelectWorkerImprovementCommand<'command>),
+    /// Confirms an explicit or matching pending field improvement.
+    ConfirmWorkerImprovement(ConfirmWorkerImprovementCommand<'command>),
+    /// Cancels current worker construction.
+    CancelWorkerJob(CancelWorkerJobCommand<'command>),
+    /// Assigns a worker to its current improved coordinate.
+    AssignWorkerToHex(AssignWorkerToHexCommand<'command>),
+    /// Cancels a worker assignment.
+    CancelWorkerAssignment(CancelWorkerAssignmentCommand<'command>),
+    /// Starts road construction at the current coordinate.
+    BuildRoad(BuildRoadCommand<'command>),
+    /// Starts or continues deterministic worker automation.
+    AutomateWorker(AutomateWorkerCommand<'command>),
     /// Resolves one visible unit or city attack.
     AttackHex(AttackHexCommand<'command>),
     /// Revision-bound manual unit movement.
@@ -50,79 +68,6 @@ pub enum PlayerCommand<'command> {
     SubmitTurn(TurnCommand<'command>),
 }
 
-/// Maximum number of authoritative events one player command may emit.
-///
-/// The runtime reserves this capacity before transferring ownership of the
-/// canonical state to the engine. This makes event-offset overflow fail before
-/// any transition can be applied.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct EventBudget {
-    maximum: u64,
-}
-
-impl EventBudget {
-    const NONE: Self = Self { maximum: 0 };
-    const SINGLE: Self = Self { maximum: 1 };
-
-    /// Constructs a bounded event allowance.
-    #[must_use]
-    pub const fn new(maximum: u64) -> Self {
-        Self { maximum }
-    }
-
-    /// Returns the largest permitted event count.
-    #[must_use]
-    pub const fn maximum(self) -> u64 {
-        self.maximum
-    }
-
-    /// Returns whether an actual transition stays within this command budget.
-    #[must_use]
-    pub const fn accepts(self, actual: u64) -> bool {
-        actual <= self.maximum
-    }
-}
-
-impl PlayerCommand<'_> {
-    /// Returns the reviewed upper event bound for this concrete command.
-    #[must_use]
-    pub fn event_budget(self, state: &GameState) -> EventBudget {
-        match self {
-            Self::AttackHex(_) => EventBudget::new(7),
-            Self::AutoExploreUnit(_) => EventBudget::new(2),
-            Self::MoveUnit(_)
-            | Self::AssignMerchantTradeRoute(_)
-            | Self::MoveMerchantToCity(_)
-            | Self::DetachTroop(_) => EventBudget::SINGLE,
-            Self::FoundCity(_)
-            | Self::ToggleWorkedHex(_)
-            | Self::SelectCityExpansionHex(_)
-            | Self::CancelUnitAction(_)
-            | Self::SkipUnitTurn(_)
-            | Self::FortifyUnit(_) => EventBudget::NONE,
-            Self::EndTurn(_) => {
-                let units = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
-                EventBudget::new(units.saturating_add(1))
-            }
-            Self::SubmitTurn(_) => {
-                let participants =
-                    u64::try_from(state.match_lifecycle().identity().participants().len())
-                        .unwrap_or(u64::MAX);
-                let units = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
-                let combat = u64::try_from(state.combat().intended_attacks().len())
-                    .unwrap_or(u64::MAX)
-                    .saturating_mul(7);
-                EventBudget::new(
-                    participants
-                        .saturating_add(units)
-                        .saturating_add(combat)
-                        .saturating_add(1),
-                )
-            }
-        }
-    }
-}
-
 /// Failure indicating corrupt internal state rather than a rejected command.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CanonicalEngineError {
@@ -138,6 +83,8 @@ pub enum CanonicalEngineError {
     Technology(crate::TechnologyQueryError),
     /// A validated city-founding job could not construct canonical state.
     CityFounding(Box<str>),
+    /// A validated worker job could not construct canonical infrastructure.
+    Worker(Box<str>),
 }
 
 impl core::fmt::Display for CanonicalEngineError {
@@ -149,6 +96,7 @@ impl core::fmt::Display for CanonicalEngineError {
             Self::Diplomacy(source) => source.fmt(formatter),
             Self::Technology(source) => source.fmt(formatter),
             Self::CityFounding(source) => write!(formatter, "city founding failed: {source}"),
+            Self::Worker(source) => write!(formatter, "worker progression failed: {source}"),
         }
     }
 }
@@ -162,6 +110,7 @@ impl GameEngine {
     ///
     /// Returns an error only when canonical state or an engine-produced update
     /// violates internal invariants.
+    #[allow(clippy::too_many_lines)]
     pub fn apply_player_owned(
         state: GameState,
         context: EngineContext<'_>,
@@ -182,6 +131,62 @@ impl GameEngine {
                 let mutation = crate::city::apply_select_expansion(&state, context, command);
                 apply_city(state, mutation, map_hash, ruleset_hash)
             }
+            PlayerCommand::SelectWorkerImprovement(command) => apply_worker_command(
+                state,
+                context,
+                command,
+                crate::worker::apply_select,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::ConfirmWorkerImprovement(command) => apply_worker_command(
+                state,
+                context,
+                command,
+                crate::worker::apply_confirm,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::CancelWorkerJob(command) => apply_worker_command(
+                state,
+                context,
+                command,
+                crate::worker::apply_cancel_job,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::AssignWorkerToHex(command) => apply_worker_command(
+                state,
+                context,
+                command,
+                crate::worker::apply_assign,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::CancelWorkerAssignment(command) => apply_worker_command(
+                state,
+                context,
+                command,
+                crate::worker::apply_cancel_assignment,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::BuildRoad(command) => apply_worker_command(
+                state,
+                context,
+                command,
+                crate::worker::apply_build_road,
+                map_hash,
+                ruleset_hash,
+            ),
+            PlayerCommand::AutomateWorker(command) => apply_worker_command(
+                state,
+                context,
+                command,
+                crate::worker::apply_automation,
+                map_hash,
+                ruleset_hash,
+            ),
             PlayerCommand::AttackHex(command) => {
                 let update = crate::combat::apply(&state, context, command);
                 apply_combat(state, update, map_hash, ruleset_hash)
@@ -265,6 +270,22 @@ impl GameEngine {
     pub fn state_digest(state: &GameState) -> StateDigest {
         crate::state_digest::digest_state(state)
     }
+}
+
+fn apply_worker_command<Command>(
+    state: GameState,
+    context: EngineContext<'_>,
+    command: Command,
+    resolve: impl FnOnce(
+        &GameState,
+        EngineContext<'_>,
+        Command,
+    ) -> Result<crate::worker::WorkerMutation, crate::worker::WorkerRuleError>,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let mutation = resolve(&state, context.with_world(&state), command);
+    apply_worker(state, mutation, map_hash, ruleset_hash)
 }
 
 fn apply_movement_logistics<Command>(
@@ -438,49 +459,4 @@ fn apply_move(
 }
 
 #[cfg(test)]
-mod tests {
-    use aonw_domain::{
-        DiplomacyStateBuildError, GameState, GameStateBuildError, HexCoord, HexGridBounds,
-        PlayerId, StateRevision, TurnLifecycleBuildError, UnitId, UnitOccupancyPolicy,
-    };
-
-    use super::{CanonicalEngineError, EventBudget, PlayerCommand};
-    use crate::{MoveUnitCommand, UnitActionCommand};
-
-    #[test]
-    fn player_commands_publish_reviewed_event_budgets() {
-        let unit_id = UnitId::new("unit-1").expect("unit id");
-        let state = GameState::try_new(
-            StateRevision::INITIAL,
-            1,
-            HexGridBounds::new(1, 1).expect("bounds"),
-            UnitOccupancyPolicy::Exclusive,
-            [],
-        )
-        .expect("state");
-
-        assert_eq!(
-            PlayerCommand::MoveUnit(MoveUnitCommand::new(0, &unit_id, HexCoord::new(1, 0)))
-                .event_budget(&state),
-            EventBudget::SINGLE
-        );
-        assert_eq!(
-            PlayerCommand::FortifyUnit(UnitActionCommand::new(0, &unit_id)).event_budget(&state),
-            EventBudget::NONE
-        );
-    }
-
-    #[test]
-    fn canonical_engine_error_formats_every_current_source_family() {
-        let player = PlayerId::new("player").expect("player id");
-        let unit = UnitId::new("unit").expect("unit id");
-        for error in [
-            CanonicalEngineError::ContentHash("hash".into()),
-            CanonicalEngineError::State(GameStateBuildError::UnitNotFound(unit)),
-            CanonicalEngineError::TurnLifecycle(TurnLifecycleBuildError::UnknownPlayer(player)),
-            CanonicalEngineError::Diplomacy(DiplomacyStateBuildError::EmptyId),
-        ] {
-            assert!(!error.to_string().is_empty());
-        }
-    }
-}
+mod tests;

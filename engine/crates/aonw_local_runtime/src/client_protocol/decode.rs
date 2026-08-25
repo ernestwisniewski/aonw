@@ -8,7 +8,8 @@ use crate::{
     CityFoundingOptionsRequest, CityWorkedHexOptionsRequest, DetachTroopRequest, FoundCityRequest,
     MerchantCityRequest, MoveUnitRequest, OpenSession, ReachableRequest, RoutePlanRequest,
     RuntimeQuery, SelectCityExpansionHexRequest, ToggleWorkedHexRequest, TurnCommandRequest,
-    UnitActionRequest, UnitLogisticsOptionsRequest,
+    UnitActionRequest, UnitLogisticsOptionsRequest, WorkerImprovementRequest, WorkerOptionsRequest,
+    WorkerUnitRequest,
 };
 
 use super::ClientDecodeError;
@@ -17,6 +18,13 @@ pub(super) enum DecodedCommand {
     FoundCity(FoundCityRequest),
     ToggleWorkedHex(ToggleWorkedHexRequest),
     SelectCityExpansionHex(SelectCityExpansionHexRequest),
+    SelectWorkerImprovement(WorkerImprovementRequest),
+    ConfirmWorkerImprovement(WorkerImprovementRequest),
+    CancelWorkerJob(WorkerUnitRequest),
+    AssignWorkerToHex(WorkerUnitRequest),
+    CancelWorkerAssignment(WorkerUnitRequest),
+    BuildRoad(WorkerUnitRequest),
+    AutomateWorker(WorkerUnitRequest),
     Attack(AttackHexRequest),
     Move(MoveUnitRequest),
     AutoExplore(AutoExploreUnitRequest),
@@ -83,6 +91,13 @@ pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeE
                 city_id: decode_city_id(city_id)?,
             },
         )),
+        ClientQueryDto::WorkerOptions {
+            expected_revision,
+            unit_id,
+        } => Ok(RuntimeQuery::WorkerOptions(WorkerOptionsRequest {
+            expected_revision,
+            unit_id: decode_unit_id(unit_id)?,
+        })),
         ClientQueryDto::CombatPreview {
             expected_revision,
             attacker_unit_id,
@@ -120,6 +135,7 @@ pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeE
     }
 }
 
+#[allow(clippy::too_many_lines)]
 pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, ClientDecodeError> {
     match command {
         ClientCommandDto::FoundCity {
@@ -140,6 +156,48 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, Clien
             target,
         } => select_city_expansion_hex(expected_revision, city_id, target)
             .map(DecodedCommand::SelectCityExpansionHex),
+        ClientCommandDto::SelectWorkerImprovement {
+            expected_revision,
+            unit_id,
+            improvement,
+        } => Ok(DecodedCommand::SelectWorkerImprovement(
+            WorkerImprovementRequest {
+                expected_revision,
+                unit_id: decode_unit_id(unit_id)?,
+                improvement: Some(aonw_contract_mapping::decode_improvement(improvement)),
+            },
+        )),
+        ClientCommandDto::ConfirmWorkerImprovement {
+            expected_revision,
+            unit_id,
+            improvement,
+        } => Ok(DecodedCommand::ConfirmWorkerImprovement(
+            WorkerImprovementRequest {
+                expected_revision,
+                unit_id: decode_unit_id(unit_id)?,
+                improvement: improvement.map(aonw_contract_mapping::decode_improvement),
+            },
+        )),
+        ClientCommandDto::CancelWorkerJob {
+            expected_revision,
+            unit_id,
+        } => worker_unit(expected_revision, unit_id).map(DecodedCommand::CancelWorkerJob),
+        ClientCommandDto::AssignWorkerToHex {
+            expected_revision,
+            unit_id,
+        } => worker_unit(expected_revision, unit_id).map(DecodedCommand::AssignWorkerToHex),
+        ClientCommandDto::CancelWorkerAssignment {
+            expected_revision,
+            unit_id,
+        } => worker_unit(expected_revision, unit_id).map(DecodedCommand::CancelWorkerAssignment),
+        ClientCommandDto::BuildRoad {
+            expected_revision,
+            unit_id,
+        } => worker_unit(expected_revision, unit_id).map(DecodedCommand::BuildRoad),
+        ClientCommandDto::AutomateWorker {
+            expected_revision,
+            unit_id,
+        } => worker_unit(expected_revision, unit_id).map(DecodedCommand::AutomateWorker),
         ClientCommandDto::AttackHex {
             expected_revision,
             attacker_unit_id,
@@ -260,6 +318,16 @@ fn unit_action(
     unit_id: String,
 ) -> Result<UnitActionRequest, ClientDecodeError> {
     Ok(UnitActionRequest {
+        expected_revision,
+        unit_id: decode_unit_id(unit_id)?,
+    })
+}
+
+fn worker_unit(
+    expected_revision: u64,
+    unit_id: String,
+) -> Result<WorkerUnitRequest, ClientDecodeError> {
+    Ok(WorkerUnitRequest {
         expected_revision,
         unit_id: decode_unit_id(unit_id)?,
     })

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::client::{WorkerAutomationOptionDto, WorkerJobCompletionDto};
 use crate::{
     CombatExecutionDto, CombatTargetDto, CoordinateDto, GameStateDto, MovementStepDto, TroopKindDto,
 };
@@ -242,6 +243,15 @@ pub enum ReplayEventDto {
         /// Timeout streak observed by the host.
         timeout_streak: i64,
     },
+    /// One worker job completed successfully.
+    WorkerCompletedJob {
+        /// Worker identity before charge consumption.
+        unit_id: String,
+        /// Completed coordinate.
+        target: CoordinateDto,
+        /// Completed construction kind.
+        completion: WorkerJobCompletionDto,
+    },
 }
 
 /// Exact execution evidence stored in a replay result.
@@ -288,6 +298,15 @@ pub enum ReplayEvidenceDto {
         invalidated_order_unit_ids: Vec<String>,
         /// Scouts whose auto-exploration ended without another target.
         finished_auto_explore_unit_ids: Vec<String>,
+    },
+    /// Exact worker automation execution.
+    WorkerAutomation {
+        /// Worker receiving the command.
+        unit_id: String,
+        /// Selected action and deterministic counters.
+        option: WorkerAutomationOptionDto,
+        /// Executed movement prefix, when any.
+        movement: Option<ReplayUnitMovementExecutionDto>,
     },
 }
 

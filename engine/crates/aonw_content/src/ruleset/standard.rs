@@ -104,6 +104,7 @@ pub(super) static STANDARD_RULESET: RulesetDefinition = RulesetDefinition {
         worked_hex_limit_base: 0,
         worked_hexes_per_population: 1,
     },
+    worker: super::WorkerBalance::STANDARD,
     city_name_sets: &STANDARD_CITY_NAMES,
     unit_definitions: &STANDARD_UNITS,
     technology_cost_balance: TechnologyCostBalance::STANDARD,

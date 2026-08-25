@@ -78,7 +78,7 @@ bool _inheritsFrom(
 }
 
 Set<String> _rustEnumVariants(String sourcePath, String enumName) {
-  final source = File(sourcePath).readAsStringSync();
+  final source = _rustModuleTreeSource(sourcePath);
   final header = RegExp(
     'pub enum $enumName(?:<[^>]+>)?\\s*\\{',
   ).firstMatch(source);
@@ -161,7 +161,7 @@ Set<String> _dartPublicFinalFields(String sourcePath, String className) {
 }
 
 Set<String> _rustStructFields(String sourcePath, String structName) {
-  final source = File(sourcePath).readAsStringSync();
+  final source = _rustModuleTreeSource(sourcePath);
   final header = RegExp('pub struct $structName\\s*\\{').firstMatch(source);
   expect(header, isNotNull, reason: '$structName missing from $sourcePath');
   final bodyEnd = source.indexOf('\n}', header!.end);

@@ -46,10 +46,12 @@ pub(crate) use fog::{merge_discovered_contacts, recompute_after_move};
 pub(crate) use logistics::MovementLogisticsUpdate;
 pub(crate) use merchant::{apply_assign_route, apply_move_to_city};
 pub(crate) use options::query_logistics_options;
+pub(crate) use query::plan_route_for_unit;
 pub(crate) use query::plan_terrain_route;
 #[cfg(test)]
 pub(crate) use reachable::find_reachable_tiles;
 pub(crate) use reachable::find_reachable_tiles_with_workspace;
 pub(crate) use transition::MovementTransition;
 pub(crate) use transition::apply_move_unit;
+pub(crate) use transition::{movement_from_plan, reachable_path_hits_hidden_blocker};
 pub(crate) use turn::{TurnMovementUpdate, advance_turn_movement};

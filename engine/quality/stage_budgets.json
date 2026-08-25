@@ -63,9 +63,9 @@
       "timeout-invalid-scope-rejected"
     ],
     "maxEventsPerCommand": 4,
-    "maxMeasuredPayloadBytes": 210578,
-    "maxMeasuredAllocations": 25225,
-    "maxMeasuredAllocatedBytes": 4432359,
+    "maxMeasuredPayloadBytes": 210610,
+    "maxMeasuredAllocations": 25231,
+    "maxMeasuredAllocatedBytes": 4514505,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -130,9 +130,9 @@
       "technology-modifiers"
     ],
     "maxEventsPerCommand": 7,
-    "maxMeasuredPayloadBytes": 1945,
+    "maxMeasuredPayloadBytes": 2127,
     "maxMeasuredAllocations": 139205,
-    "maxMeasuredAllocatedBytes": 100466366,
+    "maxMeasuredAllocatedBytes": 100466370,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -181,6 +181,52 @@
     "soakIterations": 20,
     "workloadPrefixes": [
       "engine/city_"
+    ]
+  },
+  "W5": {
+    "target": "rust-worker-check",
+    "capabilities": [
+      "AssignWorkerToHex",
+      "AutomateWorker",
+      "BuildRoad",
+      "CancelWorkerAssignment",
+      "CancelWorkerJob",
+      "ConfirmWorkerImprovement",
+      "SelectWorkerImprovement"
+    ],
+    "fixtureIds": [
+      "all-seven-command-revision-precedence",
+      "assignment-cancel",
+      "assignment-capacity",
+      "automation-assignment-fallback",
+      "automation-deterministic-tie-break",
+      "automation-work-budget",
+      "foreign-road-rejection",
+      "improvement-charge-consumption",
+      "improvement-technology-gate",
+      "pending-confirm-ownership",
+      "query-command-shared-legality",
+      "recipient-infrastructure-projection",
+      "road-cache-invalidation",
+      "road-routing-fingerprint",
+      "save-reopen-mid-job",
+      "turn-job-completion-event",
+      "typed-replay-exactness"
+    ],
+    "maxEventsPerCommand": 1200,
+    "maxMeasuredPayloadBytes": 1,
+    "maxMeasuredAllocations": 16866,
+    "maxMeasuredAllocatedBytes": 7382001,
+    "maxWorkCounters": {
+      "frontierPops": 0,
+      "expandedTiles": 1200,
+      "examinedEdges": 24000,
+      "heapPushes": 0,
+      "routeRecords": 1200
+    },
+    "soakIterations": 20,
+    "workloadPrefixes": [
+      "engine/worker_"
     ]
   }
 }

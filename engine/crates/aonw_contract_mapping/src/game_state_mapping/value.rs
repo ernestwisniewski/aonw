@@ -58,7 +58,9 @@ macro_rules! improvement_mapping {
     };
 }
 
-pub(super) const fn decode_improvement(kind: FieldImprovementKindDto) -> FieldImprovementKind {
+/// Converts one current wire improvement identity into the domain value.
+#[must_use]
+pub const fn decode_improvement(kind: FieldImprovementKindDto) -> FieldImprovementKind {
     improvement_mapping!(
         kind,
         FieldImprovementKindDto::Farm => FieldImprovementKind::Farm,

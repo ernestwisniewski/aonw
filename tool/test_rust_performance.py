@@ -192,6 +192,22 @@ class Fixture:
                 "soakIterations": 20,
             }
         )
+        self.stage["W5"].update(
+            {
+                "workloadPrefixes": ["engine/apply"],
+                "maxMeasuredPayloadBytes": 20,
+                "maxMeasuredAllocations": 20,
+                "maxMeasuredAllocatedBytes": 200,
+                "maxWorkCounters": {
+                    "frontierPops": 10,
+                    "expandedTiles": 1200,
+                    "examinedEdges": 24000,
+                    "heapPushes": 10,
+                    "routeRecords": 10,
+                },
+                "soakIterations": 20,
+            }
+        )
         self.baseline = {
             "provenance": {
                 "rustc": "fixture rustc",
@@ -209,7 +225,7 @@ class Fixture:
                 },
                 "reviewedDate": "2099-01-01",
             },
-            "stage": "C4",
+            "stage": "W5",
             "columns": COLUMNS,
             "ceilings": {
                 "engine/apply/1200/1": [

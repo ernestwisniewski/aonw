@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CityConquestActionDto, CoordinateDto, TroopKindDto};
+use crate::{CityConquestActionDto, CoordinateDto, FieldImprovementKindDto, TroopKindDto};
 
 /// One current client protocol request.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ClientRequestDto {
@@ -72,6 +73,7 @@ pub enum ClientRequestBodyDto {
 }
 
 /// Authoritative commands available to local clients.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(
     tag = "type",
@@ -106,6 +108,43 @@ pub enum ClientCommandDto {
         city_id: String,
         /// Current engine-ranked expansion candidate.
         target: CoordinateDto,
+    },
+    /// Starts one explicitly selected field improvement.
+    SelectWorkerImprovement {
+        expected_revision: u64,
+        unit_id: String,
+        improvement: FieldImprovementKindDto,
+    },
+    /// Confirms an explicit or matching pending field improvement.
+    ConfirmWorkerImprovement {
+        expected_revision: u64,
+        unit_id: String,
+        improvement: Option<FieldImprovementKindDto>,
+    },
+    /// Cancels current worker construction.
+    CancelWorkerJob {
+        expected_revision: u64,
+        unit_id: String,
+    },
+    /// Assigns a worker to its current improved coordinate.
+    AssignWorkerToHex {
+        expected_revision: u64,
+        unit_id: String,
+    },
+    /// Cancels a worker assignment.
+    CancelWorkerAssignment {
+        expected_revision: u64,
+        unit_id: String,
+    },
+    /// Starts road construction at the worker coordinate.
+    BuildRoad {
+        expected_revision: u64,
+        unit_id: String,
+    },
+    /// Starts or continues deterministic worker automation.
+    AutomateWorker {
+        expected_revision: u64,
+        unit_id: String,
     },
     /// Resolves one visible unit or city attack.
     AttackHex {
@@ -195,6 +234,7 @@ pub enum ClientCommandDto {
 }
 
 /// Read-only queries available to local clients.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(
     tag = "type",
@@ -223,6 +263,11 @@ pub enum ClientQueryDto {
         expected_revision: u64,
         /// Controlled city.
         city_id: String,
+    },
+    /// Returns current worker actions and an engine-selected automation target.
+    WorkerOptions {
+        expected_revision: u64,
+        unit_id: String,
     },
     /// Returns effective combat stats and damage bounds without RNG evidence.
     CombatPreview {

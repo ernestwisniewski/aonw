@@ -1,16 +1,46 @@
-use aonw_contract_mapping::{encode_score_reason, encode_troop};
+use aonw_contract_mapping::{encode_improvement, encode_score_reason, encode_troop};
+use aonw_contracts::client::{
+    WorkerAutomationActionDto, WorkerAutomationMetricsDto, WorkerAutomationOptionDto,
+    WorkerJobCompletionDto,
+};
 use aonw_contracts::{
     CombatExecutionDto, CombatModifierDto, CombatModifierKindDto, CombatOutcomeDto,
     CombatPreviewDto, CombatRollDto, CombatStatTargetDto, CombatStatsDto, CombatTargetDto,
-    CoordinateDto, MovementStepDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogisticsEvidenceDto,
-    ReplayUnitMovementExecutionDto,
+    CoordinateDto, MovementStepDto, ReplayCommandDto, ReplayEventDto, ReplayEvidenceDto,
+    ReplayLogisticsEvidenceDto, ReplayUnitMovementExecutionDto,
 };
 use aonw_domain::HexCoord;
 use aonw_engine::{
     CombatExecution, CombatModifierKind, CombatPreview, CombatStatTarget, CombatTarget,
     DomainEvent, EffectiveCombatStats, ExecutionEvidence, LogisticsExecution,
-    UnitMovementExecution,
+    UnitMovementExecution, WorkerAutomationAction, WorkerAutomationOption,
 };
+
+pub(super) const fn command_name(command: &ReplayCommandDto) -> &'static str {
+    match command {
+        ReplayCommandDto::FoundCity { .. } => "FoundCity",
+        ReplayCommandDto::ToggleWorkedHex { .. } => "ToggleWorkedHex",
+        ReplayCommandDto::SelectCityExpansionHex { .. } => "SelectCityExpansionHex",
+        ReplayCommandDto::SelectWorkerImprovement { .. } => "SelectWorkerImprovement",
+        ReplayCommandDto::ConfirmWorkerImprovement { .. } => "ConfirmWorkerImprovement",
+        ReplayCommandDto::CancelWorkerJob { .. } => "CancelWorkerJob",
+        ReplayCommandDto::AssignWorkerToHex { .. } => "AssignWorkerToHex",
+        ReplayCommandDto::CancelWorkerAssignment { .. } => "CancelWorkerAssignment",
+        ReplayCommandDto::BuildRoad { .. } => "BuildRoad",
+        ReplayCommandDto::AutomateWorker { .. } => "AutomateWorker",
+        ReplayCommandDto::AttackHex { .. } => "AttackHex",
+        ReplayCommandDto::MoveUnit { .. } => "MoveUnit",
+        ReplayCommandDto::AutoExploreUnit { .. } => "AutoExploreUnit",
+        ReplayCommandDto::AssignMerchantTradeRoute { .. } => "AssignMerchantTradeRoute",
+        ReplayCommandDto::MoveMerchantToCity { .. } => "MoveMerchantToCity",
+        ReplayCommandDto::DetachTroop { .. } => "DetachTroop",
+        ReplayCommandDto::CancelUnitAction { .. } => "CancelUnitAction",
+        ReplayCommandDto::SkipUnitTurn { .. } => "SkipUnitTurn",
+        ReplayCommandDto::FortifyUnit { .. } => "FortifyUnit",
+        ReplayCommandDto::EndTurn { .. } => "EndTurn",
+        ReplayCommandDto::SubmitTurn { .. } => "SubmitTurn",
+    }
+}
 
 #[allow(clippy::too_many_lines)]
 pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
@@ -129,6 +159,18 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
             reason: event.reason().to_owned(),
             timeout_streak: event.timeout_streak(),
         },
+        DomainEvent::WorkerCompletedJob(event) => ReplayEventDto::WorkerCompletedJob {
+            unit_id: event.unit_id().as_str().to_owned(),
+            target: coordinate(event.target()),
+            completion: match event.completion() {
+                aonw_engine::WorkerJobCompletion::FieldImprovement(improvement) => {
+                    WorkerJobCompletionDto::FieldImprovement {
+                        improvement: encode_improvement(improvement),
+                    }
+                }
+                aonw_engine::WorkerJobCompletion::Road => WorkerJobCompletionDto::Road,
+            },
+        },
     }
 }
 
@@ -181,6 +223,30 @@ pub(super) fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto
                 .iter()
                 .map(|unit| unit.as_str().to_owned())
                 .collect(),
+        },
+        ExecutionEvidence::WorkerAutomation(execution) => ReplayEvidenceDto::WorkerAutomation {
+            unit_id: execution.unit_id().as_str().to_owned(),
+            option: worker_option(execution.option()),
+            movement: execution.movement().map(encode_movement_execution),
+        },
+    }
+}
+
+fn worker_option(value: WorkerAutomationOption) -> WorkerAutomationOptionDto {
+    let metrics = value.metrics();
+    WorkerAutomationOptionDto {
+        target: coordinate(value.target()),
+        action: match value.action() {
+            WorkerAutomationAction::Improve(improvement) => WorkerAutomationActionDto::Improve {
+                improvement: encode_improvement(improvement),
+            },
+            WorkerAutomationAction::Assign => WorkerAutomationActionDto::Assign,
+        },
+        movement_cost_units: value.movement_cost_units(),
+        metrics: WorkerAutomationMetricsDto {
+            tiles_examined: metrics.tiles_examined(),
+            legality_evaluations: metrics.legality_evaluations(),
+            routes_planned: metrics.routes_planned(),
         },
     }
 }

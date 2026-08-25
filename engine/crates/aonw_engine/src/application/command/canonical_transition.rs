@@ -4,6 +4,47 @@ use aonw_domain::GameState;
 use super::CanonicalEngineError;
 use crate::application::{DomainTransition, ExecutionEvidence};
 
+pub(super) fn apply_worker(
+    state: GameState,
+    mutation: Result<crate::worker::WorkerMutation, crate::worker::WorkerRuleError>,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let mutation = match mutation {
+        Ok(value) => value,
+        Err(crate::worker::WorkerRuleError::Rejected(code)) => {
+            return Ok(DomainTransition::rejected(
+                state,
+                code,
+                map_hash,
+                ruleset_hash,
+            ));
+        }
+    };
+    let (next, events, evidence) = match mutation {
+        crate::worker::WorkerMutation::Update(update) => {
+            let next = state
+                .into_after_worker(
+                    update.revision,
+                    update.units,
+                    update.infrastructure,
+                    update.interaction,
+                    update.fog_of_war,
+                    update.diplomacy,
+                )
+                .map_err(CanonicalEngineError::State)?;
+            (next, update.events, update.evidence)
+        }
+    };
+    Ok(DomainTransition::accepted(
+        next,
+        events,
+        evidence,
+        map_hash,
+        ruleset_hash,
+    ))
+}
+
 pub(super) fn apply_city(
     state: GameState,
     mutation: Result<crate::city::CityMutation, crate::city::CityRuleError>,

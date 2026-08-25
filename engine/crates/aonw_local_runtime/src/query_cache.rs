@@ -13,6 +13,7 @@ enum QueryKind {
     Reachable,
     RoutePlan(HexCoord),
     UnitLogisticsOptions,
+    WorkerOptions,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -69,6 +70,11 @@ impl QueryCacheKey {
                 request.expected_revision,
                 QuerySubject::Unit(request.unit_id.clone()),
                 QueryKind::UnitLogisticsOptions,
+            ),
+            RuntimeQuery::WorkerOptions(request) => (
+                request.expected_revision,
+                QuerySubject::Unit(request.unit_id.clone()),
+                QueryKind::WorkerOptions,
             ),
         };
         Self {

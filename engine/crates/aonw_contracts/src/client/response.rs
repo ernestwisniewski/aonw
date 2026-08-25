@@ -1,17 +1,16 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    CombatExecutionDto, CombatPreviewDto, CoordinateDto, FieldImprovementKindDto,
-    PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
-};
+use crate::{CoordinateDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto};
 
 use super::MapViewDto;
 
 mod city;
 mod event;
 mod logistics;
+mod query;
 mod rejection;
 mod session;
+mod worker;
 
 pub use city::{
     CityExpansionCandidateDto, CityFoundingDraftViewDto, OwnedCityPlanningViewDto,
@@ -22,8 +21,16 @@ pub use logistics::{
     AutoExploreOptionDto, ClientLogisticsEvidenceDto, DetachmentOptionDto,
     MerchantDestinationOptionDto, MovementSearchMetricsDto, UnitMovementExecutionDto,
 };
+pub use query::{
+    ClientEvidenceDto, ClientQueryResultDto, PendingActionViewDto, ReachableTileViewDto,
+};
 pub use rejection::ClientCommandRejectionCodeDto;
 pub use session::{ClientErrorDto, ClientReplayVerificationDto};
+pub use worker::{
+    FieldImprovementViewDto, RoadViewDto, WorkerAutomationActionDto, WorkerAutomationMetricsDto,
+    WorkerAutomationOptionDto, WorkerImprovementOptionDto, WorkerJobCompletionDto,
+    WorkerJobViewDto,
+};
 
 /// One current client protocol response.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -147,6 +154,8 @@ pub enum ClientFeatureDto {
     ReplayVerification,
     /// Auto-exploration, merchant routing, and troop detachment.
     MovementLogistics,
+    /// Worker improvements, assignments, roads, automation, and progression.
+    Workers,
 }
 
 /// Identity metadata returned with state-dependent results.
@@ -181,6 +190,10 @@ pub struct PlayerViewSnapshotDto {
     pub units: Vec<PlayerUnitViewDto>,
     /// Cities currently known to the recipient.
     pub cities: Vec<PlayerCityViewDto>,
+    /// Field improvements currently known to the recipient.
+    pub field_improvements: Vec<FieldImprovementViewDto>,
+    /// Roads currently known to the recipient.
+    pub roads: Vec<RoadViewDto>,
 }
 
 /// Recipient-safe lifecycle projection with no per-opponent readiness map.
@@ -195,46 +208,6 @@ pub struct PlayerTurnLifecycleViewDto {
     pub required_submission_count: u32,
     /// Number of required submissions received, without participant identities.
     pub submitted_count: u32,
-}
-
-/// Recipient-owned action awaiting player input.
-#[allow(missing_docs)]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum PendingActionViewDto {
-    ResearchSelection,
-    CityWorkedHexSelection {
-        city_id: String,
-    },
-    CityExpansionSelection {
-        city_id: String,
-    },
-    WorkerActionSelection {
-        unit_id: String,
-        improvement: Option<FieldImprovementKindDto>,
-    },
-    MerchantTradeRouteSelection {
-        unit_id: String,
-    },
-    MerchantMoveToCitySelection {
-        unit_id: String,
-    },
-    UnitTurnSkip {
-        unit_id: String,
-        restore_movement_units: u32,
-    },
-    AttackTargeting {
-        unit_id: String,
-        defender: Option<CoordinateDto>,
-    },
-    CommanderMergeSelection {
-        unit_id: String,
-    },
 }
 
 /// Recipient-safe unit read model.
@@ -255,6 +228,12 @@ pub struct PlayerUnitViewDto {
     pub movement_units: u32,
     /// Persistent unit posture.
     pub posture: UnitPostureDto,
+    /// Remaining improvement charges for workers.
+    pub worker_build_charges: u32,
+    /// Current worker construction, when visible.
+    pub worker_job: Option<WorkerJobViewDto>,
+    /// Current worker assignment, when visible.
+    pub worker_assignment: Option<CoordinateDto>,
 }
 
 /// Recipient-safe view update produced by one command.
@@ -275,6 +254,14 @@ pub struct PlayerViewPatchDto {
     pub upserted_cities: Vec<PlayerCityViewDto>,
     /// Cities no longer known to the recipient.
     pub removed_city_ids: Vec<String>,
+    /// New or changed known field improvements.
+    pub upserted_field_improvements: Vec<FieldImprovementViewDto>,
+    /// Field-improvement coordinates no longer known.
+    pub removed_field_improvement_coordinates: Vec<CoordinateDto>,
+    /// New or changed known roads.
+    pub upserted_roads: Vec<RoadViewDto>,
+    /// Road coordinates no longer known.
+    pub removed_road_coordinates: Vec<CoordinateDto>,
     /// Current action awaiting input from this recipient.
     pub pending_action: Option<PendingActionViewDto>,
     /// Current recipient-owned founding workflow; null clears it.
@@ -315,53 +302,6 @@ pub enum ClientCommandOutcomeDto {
     },
 }
 
-/// Exact client-visible execution evidence.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum ClientEvidenceDto {
-    /// Exact combat seed, rolls, modifiers and result.
-    Combat {
-        /// Exact combat execution.
-        execution: CombatExecutionDto,
-    },
-    /// Exact executed movement prefix.
-    UnitMovement {
-        /// Moved unit.
-        unit_id: String,
-        /// Position before execution.
-        from: CoordinateDto,
-        /// Executed steps excluding the origin.
-        steps: Vec<MovementStepViewDto>,
-    },
-    /// Exact auto-exploration, merchant, or detachment execution.
-    Logistics {
-        /// Typed logistics execution.
-        execution: ClientLogisticsEvidenceDto,
-    },
-    /// Exact capability-gated turn processors executed.
-    TurnKernel {
-        /// Processors executed in canonical order.
-        processors: Vec<String>,
-        /// Cities founded during the pipeline and visible to the recipient.
-        founded_city_ids: Vec<String>,
-        /// Exact intended-attack resolutions in execution order.
-        combat_executions: Vec<CombatExecutionDto>,
-        /// Units whose movement allowance was reset.
-        reset_unit_ids: Vec<String>,
-        /// Exact movements performed by queued, merchant, and auto processors.
-        movement_executions: Vec<UnitMovementExecutionDto>,
-        /// Units whose stored movement order became invalid.
-        invalidated_order_unit_ids: Vec<String>,
-        /// Scouts whose auto-exploration ended without another target.
-        finished_auto_explore_unit_ids: Vec<String>,
-    },
-}
-
 /// One movement step exposed by a query or command result.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -372,128 +312,4 @@ pub struct MovementStepViewDto {
     pub enter_cost_units: u32,
     /// Fixed-point cumulative cost.
     pub cumulative_cost_units: u32,
-}
-
-/// Recipient-safe query result.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum ClientQueryResultDto {
-    /// Legal initial territory choices for one founder.
-    CityFoundingOptions {
-        /// Identity of the queried state.
-        stamp: ClientSessionStampDto,
-        /// Queried founder.
-        founder_unit_id: String,
-        /// Immutable prospective center.
-        center: CoordinateDto,
-        /// Canonically ordered current draft selection.
-        selected_controlled_hexes: Vec<CoordinateDto>,
-        /// Legal next selections owned by the engine.
-        available_controlled_hexes: Vec<CoordinateDto>,
-        /// Required exact non-center territory count.
-        required_controlled_hexes: u32,
-        /// Maximum founding radius.
-        maximum_radius: u32,
-    },
-    /// Controlled, manual, and effective worked-city coordinates.
-    CityWorkedHexOptions {
-        /// Identity of the queried state.
-        stamp: ClientSessionStampDto,
-        /// Queried city.
-        city_id: String,
-        /// City center.
-        center: CoordinateDto,
-        /// Canonically ordered non-center territory.
-        controlled_hexes: Vec<CoordinateDto>,
-        /// Coordinates accepted by the toggle command.
-        available_hexes: Vec<CoordinateDto>,
-        /// Canonically ordered manual selection.
-        selected_hexes: Vec<CoordinateDto>,
-        /// Manual selection plus deterministic automatic fill.
-        effective_hexes: Vec<CoordinateDto>,
-        /// Population-based worked-hex limit.
-        limit: u32,
-    },
-    /// Engine-ranked preferred-expansion choices.
-    CityExpansionOptions {
-        /// Identity of the queried state.
-        stamp: ClientSessionStampDto,
-        /// Queried city.
-        city_id: String,
-        /// Canonically ordered non-center territory.
-        controlled_hexes: Vec<CoordinateDto>,
-        /// Persisted preferred coordinate.
-        preferred_hex: Option<CoordinateDto>,
-        /// Current deterministic candidate ranking.
-        candidates: Vec<CityExpansionCandidateDto>,
-    },
-    /// Recipient-safe combat preview.
-    CombatPreview {
-        /// Identity of the queried state.
-        stamp: ClientSessionStampDto,
-        /// Engine-owned preview.
-        preview: CombatPreviewDto,
-    },
-    /// Current-turn reachable overlay.
-    Reachable {
-        /// Identity of the queried state.
-        stamp: ClientSessionStampDto,
-        /// Queried unit.
-        unit_id: String,
-        /// Movement available at query time.
-        available_movement_units: u32,
-        /// Stable row-major reachable tiles.
-        tiles: Vec<ReachableTileViewDto>,
-    },
-    /// Deterministic route preview.
-    RoutePlan {
-        /// Identity of the queried state.
-        stamp: ClientSessionStampDto,
-        /// Queried unit.
-        unit_id: String,
-        /// Requested target.
-        target: CoordinateDto,
-        /// Planned destination.
-        destination: CoordinateDto,
-        /// Fixed-point total route cost.
-        total_cost_units: u32,
-        /// Movement available at query time.
-        available_movement_units: u32,
-        /// Movement remaining after the executable prefix.
-        remaining_movement_units: u32,
-        /// Ordered route including the origin.
-        steps: Vec<MovementStepViewDto>,
-    },
-    /// Complete engine-owned logistics options.
-    UnitLogisticsOptions {
-        /// Identity of the queried state.
-        stamp: ClientSessionStampDto,
-        /// Queried unit.
-        unit_id: String,
-        /// Selected auto-exploration action, when legal.
-        auto_explore: Option<AutoExploreOptionDto>,
-        /// Valid cyclic merchant-route destinations.
-        merchant_route_destinations: Vec<MerchantDestinationOptionDto>,
-        /// Valid explicit merchant-travel destinations.
-        merchant_travel_destinations: Vec<MerchantDestinationOptionDto>,
-        /// Exact legal troop-detachment actions.
-        detachments: Vec<DetachmentOptionDto>,
-    },
-}
-
-/// One current-turn reachable map tile.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ReachableTileViewDto {
-    /// Tile coordinate.
-    pub coordinate: CoordinateDto,
-    /// Fixed-point route cost.
-    pub cost_units: u32,
-    /// Whether entry consumes remaining current-turn movement.
-    pub exhausts_movement: bool,
 }

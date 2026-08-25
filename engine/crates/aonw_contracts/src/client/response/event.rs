@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use super::WorkerJobCompletionDto;
 use crate::{CombatTargetDto, CoordinateDto, DiplomaticScoreChangeReasonDto, TroopKindDto};
 
 /// Presentation-safe authoritative event.
@@ -167,5 +168,14 @@ pub enum ClientEventDto {
         reason: String,
         /// Timeout streak observed by the host.
         timeout_streak: i64,
+    },
+    /// One worker job completed successfully.
+    WorkerCompletedJob {
+        /// Worker identity before charge consumption.
+        unit_id: String,
+        /// Completed coordinate.
+        target: CoordinateDto,
+        /// Completed construction kind.
+        completion: WorkerJobCompletionDto,
     },
 }

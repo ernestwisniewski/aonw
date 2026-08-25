@@ -94,8 +94,9 @@ The hard gate covers result signatures, domain work counters, allocations,
 allocated bytes, and payload bytes. Wall-clock medians and p95 values remain
 diagnostic because ordinary CI runners are not stable timing references.
 Criterion/Divan would improve host-local timing analysis but would not replace
-these structural metrics. Iai-Callgrind remains a possible future Linux-only
-deep diagnostic, not a substitute for the portable E0/T1/U2 gate. T1 adds
+these structural metrics. Gungraun (formerly Iai-Callgrind) remains a possible
+future Linux-only deep diagnostic, not a substitute for the portable structural
+gate. T1 adds
 allocation/payload workloads for partial submit, trusted timeout finalization,
 participant removal, client JSON submit, and exact replay verification at
 1/64/512 units. Run its complete focused gate with `make
@@ -105,16 +106,19 @@ focused gate with `make rust-movement-logistics-check`. C3 adds 20 workloads
 for combat preview/apply, bounded mass-turn resolution, runtime dispatch, and
 client JSON at 10/64/512-unit scales. The mass workload resolves at most 32
 attacker/defender pairs per turn, and its complete focused gate is `make
-rust-combat-check`.
+rust-combat-check`. C4 adds city founding and territory workloads. W5 brings the
+reviewed census to 174 workloads and adds nine worker cases: options, automation
+apply, and mass job completion on 100/600/1200-tile maps with up to 1199
+workers. Its focused gate is `make rust-worker-check`.
 
 The migration inventory under [`migration/`](migration/README.md) closes the
 authoritative surface before new Rust behavior is added. `p0-check` runs its
 dependency-free source census and negative fixtures; the analyzer-backed Dart
 AST census and exact field ledger run through
 `rust-engine-inventory-ast-check`. Together they compare 39 player commands,
-two trusted system commands, four queries, 40 mapped plus four native domain
-events, one mapped plus three native evidence types, recipient projections, 30
-Dart `DomainState` fields, 10 boundary
+two trusted system commands, eight queries, 40 mapped plus four native domain
+events, one mapped plus four native evidence types, eight recipient projection
+types and nine pending-action variants, 30 Dart `DomainState` fields, 10 boundary
 envelopes, and all 120 reducer fixtures. The inventory remains migration
 evidence; active Rust execution gates use only typed current contracts and do
 not preserve opaque Dart JSON.
@@ -132,9 +136,9 @@ case to have either current structural round-trip evidence or an explicit
 future checkpoint, and rejects any Rust source that reads the old corpus.
 `make rust-corpus-parity-check` executes only the nine root cases whose current
 canonical artifacts and four player-command capabilities are promoted to
-`engine-parity`; 96 remain blocked `reference-only`, while 12 U2 and three C3
-cases are historical `reference-only` superseded by separately reviewed
-current contracts. No Rust reader parses their historical envelope.
+`engine-parity`; 72 remain blocked `reference-only`, while 39 are historical
+`reference-only` cases superseded by separately reviewed current contracts
+through U2, C3, C4, and W5. No Rust reader parses their historical envelope.
 
 ## Greenfield compatibility policy
 
@@ -163,10 +167,11 @@ alias is retained.
 T1 advertises `turn-kernel-ready`, not full turn parity. CP8/U2 extends its
 ordered processors with queued movement, merchant routes, and scout
 auto-exploration. CP9/C3 adds deterministic intended-attack resolution for
-simultaneous multiplayer turns. Worker automation, economy, diplomatic turn
-processing, research, agreements, and objectives remain explicitly disabled;
-states requiring them fail closed with `turn_processor_unsupported`. The full
-integrated turn remains an O9 capability.
+simultaneous multiplayer turns. CP11/W5 adds worker construction completion and
+bounded deterministic automation. Economy, diplomatic turn processing,
+research, agreements, and objectives remain explicitly disabled; states
+requiring them fail closed with `turn_processor_unsupported`. The full integrated
+turn remains an O9 capability.
 
 The DP policy foundation exposes one pure `DiplomacyPolicyQuery` for hostility,
 foreign city and territory entry, attack protection, automation, trade, and
@@ -184,12 +189,11 @@ make rust-benchmark
 ```
 
 It reports map open/hash plus raw and prepared reachable/route, occupied-target
-approach, owned apply, direct local-runtime dispatch, and shared client JSON
-workloads. Movement and T1 lifecycle cases cover 1, 10, 64, and 512 units as
-applicable, including accepted, rejected, hidden no-op, trusted system, JSON,
-and replay-verification paths. Wall-clock values are diagnostic; stable result
-signatures, search-work counters, payload sizes, and allocation ceilings are
-test gates.
+approach, owned apply, city, combat, logistics, worker, direct local-runtime
+dispatch, and shared client JSON workloads. Movement and T1 lifecycle cases
+cover 1, 10, 64, and 512 units as applicable; the worker ceiling reaches 1199
+units. Wall-clock values are diagnostic; stable result signatures, work
+counters, payload sizes, and allocation ceilings are test gates.
 
 The 2026-08-14 reference run on the development Mac kept the 40×30, 512-unit
 accepted runtime dispatch at about 1.46 ms p95, including state digest, replay
@@ -382,7 +386,15 @@ occupancy, route search, and `DiplomacyPolicyQuery` as manual movement; clients
 never calculate a private route. Four native logistics events and typed
 `LogisticsExecution` evidence are persisted and encoded through the current
 client API. Save/reopen/replay tests compare exact state, event order, evidence,
-and fog-safe recipient views. Worker automation remains disabled until W5.
+and fog-safe recipient views.
+
+The W5 worker surface adds seven authoritative commands and the recipient-safe
+`WorkerOptions` query. Manual actions, query options, bounded automation, and
+turn processors share one legality implementation and the same TG unlock
+source. Improvements and roads are canonical infrastructure; completed jobs
+emit typed events, update routing identity, invalidate affected runtime query
+caches, and survive exact current-only save/reopen/replay. Infrastructure views
+are recipient-filtered, and no historical worker or road envelope is parsed.
 
 `CancelUnitAction`, `SkipUnitTurn`, and `FortifyUnit` use the same full-state
 boundary and rejection semantics. Skip records its restorable movement inside
@@ -397,8 +409,8 @@ response carries revision, state digest, map hash, and ruleset hash. Full
 recipient-safe snapshots also carry the authoritative turn number.
 They expose a pending action only when it belongs to the snapshot recipient;
 the owner identifier is intentionally redundant and omitted. The runtime
-exposes reachable, route, unit-logistics-options, and combat-preview queries,
-revision-bound commands, ordered events,
+exposes reachable, route, unit-logistics-options, combat-preview, three
+city-planning, and worker-options queries, revision-bound commands, ordered events,
 exact execution evidence, and view patches including unit posture and the
 current recipient pending action, including an explicit `null` when it clears.
 Recipient unit views are sorted by stable unit identifier before snapshots and

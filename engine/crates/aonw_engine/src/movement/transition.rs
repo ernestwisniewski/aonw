@@ -280,7 +280,7 @@ pub(crate) fn apply_move_unit(
     })
 }
 
-pub(super) fn reachable_path_hits_hidden_blocker(
+pub(crate) fn reachable_path_hits_hidden_blocker(
     units: &[Unit],
     moving_unit: &Unit,
     reachable_steps: &[MovementStep],
@@ -302,7 +302,7 @@ pub(super) fn reachable_path_hits_hidden_blocker(
     })
 }
 
-pub(super) fn movement_from_plan(
+pub(crate) fn movement_from_plan(
     unit: &Unit,
     plan: &super::TerrainMovementPlan,
     revision: StateRevision,

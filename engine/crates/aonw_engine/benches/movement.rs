@@ -23,6 +23,8 @@ mod combat;
 mod logistics;
 #[path = "movement/support.rs"]
 mod support;
+#[path = "movement/worker.rs"]
+mod worker;
 
 use support::{
     hidden_blocker_state, map, mix, movement_state, occupied_target_state, report, signature_bytes,
@@ -86,6 +88,7 @@ fn benchmark_map(cols: u16, rows: u16, unit_counts: &[usize]) {
         combat::benchmark(&map, cols, rows, unit_count);
         city::benchmark(&map, cols, rows, unit_count);
     }
+    worker::benchmark(&map, cols, rows);
 }
 
 fn benchmark_movement(map: &MapDefinition, cols: u16, rows: u16, unit_count: usize) {
@@ -398,7 +401,8 @@ fn reachable(
         | QueryResult::CityExpansionOptions(_)
         | QueryResult::CombatPreview(_)
         | QueryResult::Route(_)
-        | QueryResult::UnitLogisticsOptions(_) => {
+        | QueryResult::UnitLogisticsOptions(_)
+        | QueryResult::WorkerOptions(_) => {
             unreachable!("reachable query returned another result")
         }
     }
@@ -418,7 +422,8 @@ fn reachable_with_workspace(
         | QueryResult::CityExpansionOptions(_)
         | QueryResult::CombatPreview(_)
         | QueryResult::Route(_)
-        | QueryResult::UnitLogisticsOptions(_) => {
+        | QueryResult::UnitLogisticsOptions(_)
+        | QueryResult::WorkerOptions(_) => {
             unreachable!("reachable query returned another result")
         }
     }
@@ -436,7 +441,8 @@ fn route(
         | QueryResult::CityExpansionOptions(_)
         | QueryResult::CombatPreview(_)
         | QueryResult::Reachable(_)
-        | QueryResult::UnitLogisticsOptions(_) => {
+        | QueryResult::UnitLogisticsOptions(_)
+        | QueryResult::WorkerOptions(_) => {
             unreachable!("route query returned another result")
         }
     }

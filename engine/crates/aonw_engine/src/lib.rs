@@ -15,6 +15,7 @@ mod state_digest;
 mod technology_unlock;
 mod turn_kernel;
 mod unit_action;
+mod worker;
 
 use aonw_domain::GameState;
 
@@ -26,6 +27,7 @@ pub use application::{
     MerchantRouteAssignedEvent, MerchantTravelQueuedEvent, PlayerCommand, PlayerKickedEvent,
     PlayerTimedOutEvent, QueryResult, SystemCommand, TroopDetachedEvent, TurnCommand,
     TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
+    WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use city::{
     CityExpansionCandidate, CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions,
@@ -58,6 +60,13 @@ pub use technology_unlock::{
     TechnologyEffectSummary, TechnologyQueryError, TechnologyUnlockQuery,
 };
 pub use unit_action::{UnitActionCommand, UnitActionError};
+pub use worker::{
+    AssignWorkerToHexCommand, AutomateWorkerCommand, BuildRoadCommand,
+    CancelWorkerAssignmentCommand, CancelWorkerJobCommand, ConfirmWorkerImprovementCommand,
+    SelectWorkerImprovementCommand, WorkerAutomationAction, WorkerAutomationExecution,
+    WorkerAutomationMetrics, WorkerAutomationOption, WorkerImprovementOption, WorkerOptions,
+    WorkerOptionsQuery,
+};
 
 /// Stateless deterministic engine facade.
 #[derive(Clone, Copy, Debug, Default)]

@@ -14,8 +14,8 @@ authoritative-inventory engine/migration/authoritative_inventory
 expected-case-count 120
 expected-round-trip-count 9
 expected-engine-parity-count 9
-expected-blocked-count 85
-expected-historical-count 26
+expected-blocked-count 72
+expected-historical-count 39
 
 case artifact-city-slot-full-rejected artifacts StoreArtifactInCity rejected city_artifact_slot_full blocked reference-only CP12 awaits-independent-current-contract-review -
 case artifact-excavation-accepted artifacts StartArtifactExcavation accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
@@ -113,9 +113,9 @@ case resource-trade-exchange-accepted resource-trade OpenResourceExchange accept
 case resource-trade-export-unavailable-rejected resource-trade OpenResourceTrade rejected resource_trade_export_unavailable blocked reference-only CP14 awaits-independent-current-contract-review -
 case resource-trade-gold-accepted resource-trade OpenResourceTrade accepted - blocked reference-only CP14 awaits-independent-current-contract-review -
 case resource-trade-wrong-actor-rejected resource-trade OpenResourceTrade rejected resource_trade_player_not_controlled blocked reference-only CP14 awaits-independent-current-contract-review -
-case road-construction-accepted infrastructure BuildRoad accepted - blocked reference-only CP11 awaits-independent-current-contract-review -
-case road-construction-existing-road-rejected infrastructure BuildRoad rejected road_construction_existingRoad blocked reference-only CP11 awaits-independent-current-contract-review -
-case road-construction-wrong-actor-rejected infrastructure BuildRoad rejected worker_not_controlled blocked reference-only CP11 awaits-independent-current-contract-review -
+case road-construction-accepted infrastructure BuildRoad accepted - historical reference-only current superseded-by-current-contract -
+case road-construction-existing-road-rejected infrastructure BuildRoad rejected road_construction_existingRoad historical reference-only current superseded-by-current-contract -
+case road-construction-wrong-actor-rejected infrastructure BuildRoad rejected worker_not_controlled historical reference-only current superseded-by-current-contract -
 case turn-final-submit-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP9 awaits-full-turn-pipeline -
 case turn-first-submit-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP9 awaits-full-turn-pipeline -
 case turn-inactive-player-rejected turn-finalization SubmitTurn rejected turn_player_not_active blocked reference-only CP9 awaits-full-turn-pipeline -
@@ -127,13 +127,13 @@ case unit-action-fortify-busy-rejected unit-actions FortifyUnit rejected unit_bu
 case unit-action-fortify-unrelated-pending-accepted unit-actions FortifyUnit accepted - round-trip engine-parity current - engine/fixtures/canonical_commands/unit-action-fortify-unrelated-pending-accepted.json
 case unit-action-skip-accepted unit-actions SkipUnitTurn accepted - round-trip engine-parity current - engine/fixtures/canonical_commands/unit-action-skip-accepted.json
 case unit-action-wrong-actor-rejected unit-actions SkipUnitTurn rejected unit_not_controlled round-trip engine-parity current - engine/fixtures/canonical_commands/unit-action-wrong-actor-rejected.json
-case worker-assign-accepted worker AssignWorkerToHex accepted - blocked reference-only CP11 awaits-independent-current-contract-review -
-case worker-automation-accepted worker AutomateWorker accepted - blocked reference-only CP11 awaits-independent-current-contract-review -
-case worker-automation-wrong-actor-rejected worker AutomateWorker rejected worker_not_controlled blocked reference-only CP11 awaits-independent-current-contract-review -
-case worker-cancel-assignment-accepted worker CancelWorkerAssignment accepted - blocked reference-only CP11 awaits-independent-current-contract-review -
-case worker-cancel-job-accepted worker CancelWorkerJob accepted - blocked reference-only CP11 awaits-independent-current-contract-review -
-case worker-confirm-matching-pending-accepted worker ConfirmWorkerImprovement accepted - blocked reference-only CP11 awaits-independent-current-contract-review -
-case worker-select-accepted worker SelectWorkerImprovement accepted - blocked reference-only CP11 awaits-independent-current-contract-review -
-case worker-self-contained-accepted worker ConfirmWorkerImprovement accepted - blocked reference-only CP11 awaits-independent-current-contract-review -
-case worker-technology-locked-rejected worker ConfirmWorkerImprovement rejected worker_improvement_unavailable blocked reference-only CP11 awaits-independent-current-contract-review -
-case worker-wrong-actor-rejected worker ConfirmWorkerImprovement rejected worker_not_controlled blocked reference-only CP11 awaits-independent-current-contract-review -
+case worker-assign-accepted worker AssignWorkerToHex accepted - historical reference-only current superseded-by-current-contract -
+case worker-automation-accepted worker AutomateWorker accepted - historical reference-only current superseded-by-current-contract -
+case worker-automation-wrong-actor-rejected worker AutomateWorker rejected worker_not_controlled historical reference-only current superseded-by-current-contract -
+case worker-cancel-assignment-accepted worker CancelWorkerAssignment accepted - historical reference-only current superseded-by-current-contract -
+case worker-cancel-job-accepted worker CancelWorkerJob accepted - historical reference-only current superseded-by-current-contract -
+case worker-confirm-matching-pending-accepted worker ConfirmWorkerImprovement accepted - historical reference-only current superseded-by-current-contract -
+case worker-select-accepted worker SelectWorkerImprovement accepted - historical reference-only current superseded-by-current-contract -
+case worker-self-contained-accepted worker ConfirmWorkerImprovement accepted - historical reference-only current superseded-by-current-contract -
+case worker-technology-locked-rejected worker ConfirmWorkerImprovement rejected worker_improvement_unavailable historical reference-only current superseded-by-current-contract -
+case worker-wrong-actor-rejected worker ConfirmWorkerImprovement rejected worker_not_controlled historical reference-only current superseded-by-current-contract -

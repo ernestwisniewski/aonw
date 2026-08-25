@@ -5,8 +5,9 @@ use std::path::{Path, PathBuf};
 
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
-    GameMode, GameState, HexCoord, MatchIdentity, MatchLifecycle, MatchRules, MovementUnits,
-    Participant, PlayerCountry, PlayerId, PlayerKind, PlayerTurnState, StateRevision,
+    City, CityId, CityProductionQueue, CityProductionTarget, CityProjectType, GameMode, GameState,
+    HexCoord, MatchIdentity, MatchLifecycle, MatchRules, MovementUnits, Participant, PlayerCountry,
+    PlayerId, PlayerKind, PlayerTurnState, StateRevision, StrategicResourceStockpile,
     TurnLifecycle, Unit, UnitId, UnitKind, UnitOccupancyPolicy, UnitPosture, UtcTimestamp,
 };
 use aonw_engine::{
@@ -223,8 +224,10 @@ fn fixture_manifest_rejects_unimplemented_processors() {
     }
 
     let unsupported: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(root.join("engine/fixtures/turn_kernel/unsupported-worker-manifest.json"))
-            .expect("negative manifest"),
+        &std::fs::read(
+            root.join("engine/fixtures/turn_kernel/unsupported-production-manifest.json"),
+        )
+        .expect("negative manifest"),
     )
     .expect("strict JSON");
     let missing = unsupported["requiredProcessors"]
@@ -233,7 +236,7 @@ fn fixture_manifest_rejects_unimplemented_processors() {
         .iter()
         .filter_map(serde_json::Value::as_str)
         .find(|required| !enabled.contains(required));
-    assert_eq!(missing, Some(TurnProcessor::WorkerAutomation.as_str()));
+    assert_eq!(missing, Some(TurnProcessor::Economy.as_str()));
 }
 
 #[test]
@@ -242,12 +245,7 @@ fn finalization_fails_closed_when_state_requires_disabled_processor() {
     let rules = RulesetDefinition::standard();
     let p1 = player("player-1");
     let p2 = player("player-2");
-    let initial = state_with_posture(
-        GameMode::Multiplayer,
-        [p1],
-        None,
-        Some(UnitPosture::AutoWorking),
-    );
+    let initial = state_with_posture(GameMode::Multiplayer, [p1], None, None, true);
     let before = GameEngine::state_digest(&initial);
 
     let transition = GameEngine::apply_player_owned(
@@ -269,7 +267,7 @@ fn state(
     submitted: impl IntoIterator<Item = PlayerId>,
     started: Option<UtcTimestamp>,
 ) -> GameState {
-    state_with_posture(mode, submitted, started, None)
+    state_with_posture(mode, submitted, started, None, false)
 }
 
 fn state_with_posture(
@@ -277,6 +275,7 @@ fn state_with_posture(
     submitted: impl IntoIterator<Item = PlayerId>,
     started: Option<UtcTimestamp>,
     second_unit_posture: Option<UnitPosture>,
+    with_production: bool,
 ) -> GameState {
     let p1 = player("player-1");
     let p2 = player("player-2");
@@ -332,6 +331,24 @@ fn state_with_posture(
     } else {
         aonw_domain::InteractionState::default()
     };
+    let cities = with_production.then(|| {
+        City::builder(
+            CityId::new("city-2").expect("city id"),
+            p2.clone(),
+            "Queued city",
+            HexCoord::new(1, 0),
+        )
+        .with_production(
+            Some(CityProductionQueue::new(
+                CityProductionTarget::Project(CityProjectType::Wealth),
+                0,
+                StrategicResourceStockpile::default(),
+            )),
+            0,
+        )
+        .build()
+        .expect("city")
+    });
     GameState::builder(
         StateRevision::new(7),
         7,
@@ -340,6 +357,7 @@ fn state_with_posture(
         units,
     )
     .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
+    .with_cities(cities)
     .with_interaction(interaction)
     .try_build()
     .expect("state")

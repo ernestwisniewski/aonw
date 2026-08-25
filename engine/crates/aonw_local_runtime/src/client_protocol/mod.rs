@@ -146,6 +146,19 @@ fn dispatch_command(runtime: &mut LocalRuntime, command: DecodedCommand) -> Clie
         DecodedCommand::SelectCityExpansionHex(command) => {
             runtime.select_city_expansion_hex(&command)
         }
+        DecodedCommand::SelectWorkerImprovement(command) => {
+            runtime.select_worker_improvement(&command)
+        }
+        DecodedCommand::ConfirmWorkerImprovement(command) => {
+            runtime.confirm_worker_improvement(&command)
+        }
+        DecodedCommand::CancelWorkerJob(command) => runtime.cancel_worker_job(&command),
+        DecodedCommand::AssignWorkerToHex(command) => runtime.assign_worker_to_hex(&command),
+        DecodedCommand::CancelWorkerAssignment(command) => {
+            runtime.cancel_worker_assignment(&command)
+        }
+        DecodedCommand::BuildRoad(command) => runtime.build_road(&command),
+        DecodedCommand::AutomateWorker(command) => runtime.automate_worker(&command),
         DecodedCommand::Attack(command) => runtime.attack_hex(&command),
         DecodedCommand::Move(command) => runtime.dispatch(&command),
         DecodedCommand::AutoExplore(command) => runtime.auto_explore_unit(&command),

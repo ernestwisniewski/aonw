@@ -3,8 +3,12 @@ use aonw_engine::{
     CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions, CityFoundingOptionsQuery,
     CityWorkedHexOptions, CityWorkedHexOptionsQuery, CombatPreview, CombatPreviewQuery, GameEngine,
     GameQuery, MovementSearchMetrics, MovementSearchWorkspace, QueryResult, ReachableMovementQuery,
-    TerrainMovementQuery, UnitLogisticsOptionsQuery,
+    TerrainMovementQuery, UnitLogisticsOptionsQuery, WorkerOptions,
 };
+
+mod worker;
+
+use worker::dispatch_worker_query;
 
 /// Current city-founding-options request.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -31,6 +35,15 @@ pub struct CityExpansionOptionsRequest {
     pub expected_revision: u64,
     /// Controlled city.
     pub city_id: CityId,
+}
+
+/// Current engine-owned worker-options request.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct WorkerOptionsRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled worker.
+    pub unit_id: UnitId,
 }
 
 /// Current recipient-safe combat preview request.
@@ -85,6 +98,8 @@ pub enum RuntimeQuery {
     CityWorkedHexOptions(CityWorkedHexOptionsRequest),
     /// Ranked current territory-expansion candidates.
     CityExpansionOptions(CityExpansionOptionsRequest),
+    /// Improvement, assignment, road, and automation options.
+    WorkerOptions(WorkerOptionsRequest),
     /// Effective combat stats and damage bounds without RNG evidence.
     CombatPreview(CombatPreviewRequest),
     /// Current-turn reachable overlay.
@@ -221,6 +236,13 @@ pub enum RuntimeQueryResult {
         /// Engine-owned query result.
         options: CityExpansionOptions,
     },
+    /// Engine-owned worker options.
+    WorkerOptions {
+        /// Version and authoritative identity metadata.
+        stamp: SessionStamp,
+        /// Engine-owned query result.
+        options: WorkerOptions,
+    },
     /// Recipient-safe combat preview.
     CombatPreview {
         /// Version and authoritative identity metadata.
@@ -251,6 +273,7 @@ pub(crate) fn dispatch_query(
         RuntimeQuery::CityExpansionOptions(request) => {
             dispatch_city_expansion_query(session, &request, workspace)
         }
+        RuntimeQuery::WorkerOptions(request) => dispatch_worker_query(session, &request, workspace),
         RuntimeQuery::CombatPreview(request) => {
             let result = GameEngine::query_with_workspace(
                 session.state(),

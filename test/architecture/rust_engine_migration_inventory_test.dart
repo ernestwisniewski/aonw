@@ -67,11 +67,11 @@ void main() {
   });
 
   test('migration manifest closes queries, events, and evidence', () {
-    expect(manifest.queryEntries, hasLength(7));
+    expect(manifest.queryEntries, hasLength(8));
     expect(manifest.eventEntries, hasLength(40));
     expect(manifest.nativeEventEntries, hasLength(4));
     expect(manifest.evidenceEntries, hasLength(1));
-    expect(manifest.nativeEvidenceEntries, hasLength(3));
+    expect(manifest.nativeEvidenceEntries, hasLength(4));
 
     expect(_rustEnumVariants(manifest.rustQuerySource, 'GameQuery'), {
       for (final entry in manifest.queryEntries) entry.queryVariant,
@@ -155,7 +155,7 @@ void main() {
   });
 
   test('migration manifest closes recipient projection variants', () {
-    expect(manifest.projectionTypes, hasLength(6));
+    expect(manifest.projectionTypes, hasLength(8));
     expect(manifest.projectionVariants, hasLength(9));
     for (final entry in manifest.projectionTypes) {
       expect(
@@ -193,15 +193,22 @@ void main() {
       },
       const {
         'AssignMerchantTradeRouteCommand': 'runtime-ready',
+        'AssignWorkerToHexCommand': 'runtime-ready',
         'AttackHexCommand': 'runtime-ready',
         'AutoExploreUnitCommand': 'runtime-ready',
+        'AutomateWorkerCommand': 'runtime-ready',
+        'BuildRoadCommand': 'runtime-ready',
         'CancelUnitActionCommand': 'engine-parity',
+        'CancelWorkerAssignmentCommand': 'runtime-ready',
+        'CancelWorkerJobCommand': 'runtime-ready',
+        'ConfirmWorkerImprovementCommand': 'runtime-ready',
         'DetachTroopCommand': 'runtime-ready',
         'FortifyUnitCommand': 'engine-parity',
         'FoundCityCommand': 'runtime-ready',
         'MoveMerchantToCityCommand': 'runtime-ready',
         'MoveUnitCommand': 'engine-parity',
         'SelectCityExpansionHexCommand': 'runtime-ready',
+        'SelectWorkerImprovementCommand': 'runtime-ready',
         'SkipUnitTurnCommand': 'engine-parity',
         'ToggleWorkedHexCommand': 'runtime-ready',
         'CityAttackedEvent': 'runtime-ready',
@@ -215,6 +222,7 @@ void main() {
         'UnitKilledEvent': 'runtime-ready',
         'UnitMovedEvent': 'engine-parity',
         'UnitRetreatedEvent': 'runtime-ready',
+        'WorkerCompletedJobEvent': 'runtime-ready',
         'MovementCommandExecution': 'engine-parity',
       },
       reason: 'every promotion requires reviewed full-state parity evidence',

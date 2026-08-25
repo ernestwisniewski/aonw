@@ -5,7 +5,7 @@ use crate::{
     CityWorkedHexOptions, CityWorkedHexOptionsQuery, CombatPreview, CombatPreviewQuery,
     EngineContext, GameEngine, MovementSearchWorkspace, ReachableMovement, ReachableMovementQuery,
     TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitLogisticsOptions,
-    UnitLogisticsOptionsQuery,
+    UnitLogisticsOptionsQuery, WorkerOptions, WorkerOptionsQuery,
 };
 
 /// Read-only game query family.
@@ -25,6 +25,8 @@ pub enum GameQuery<'query> {
     Reachable(ReachableMovementQuery<'query>),
     /// Complete engine-owned logistics options for one unit.
     UnitLogisticsOptions(UnitLogisticsOptionsQuery<'query>),
+    /// Complete legal worker options and deterministic automation target.
+    WorkerOptions(WorkerOptionsQuery<'query>),
 }
 
 /// Typed query result.
@@ -44,6 +46,8 @@ pub enum QueryResult {
     Reachable(ReachableMovement),
     /// Auto-explore, merchant, and detachment options.
     UnitLogisticsOptions(UnitLogisticsOptions),
+    /// Improvement, assignment, road, and automation options.
+    WorkerOptions(WorkerOptions),
 }
 
 /// Failure from a canonical read-only query.
@@ -59,6 +63,8 @@ pub enum CanonicalQueryError {
     Rejected(TerrainMovementQueryError),
     /// Logistics options were rejected by deterministic rules.
     Logistics(crate::MovementLogisticsError),
+    /// Worker options were rejected by deterministic rules.
+    Worker(crate::CommandRejectionCode),
 }
 
 impl CanonicalQueryError {
@@ -67,7 +73,9 @@ impl CanonicalQueryError {
     pub const fn code(&self) -> &'static str {
         match self {
             Self::Technology(_) => "technology_query_invalid",
-            Self::City(rejection) | Self::Combat(rejection) => rejection.as_str(),
+            Self::City(rejection) | Self::Combat(rejection) | Self::Worker(rejection) => {
+                rejection.as_str()
+            }
             Self::Rejected(rejection) => rejection.code().as_str(),
             Self::Logistics(rejection) => rejection.code().as_str(),
         }
@@ -78,7 +86,9 @@ impl core::fmt::Display for CanonicalQueryError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Technology(source) => source.fmt(formatter),
-            Self::City(source) | Self::Combat(source) => source.fmt(formatter),
+            Self::City(source) | Self::Combat(source) | Self::Worker(source) => {
+                source.fmt(formatter)
+            }
             Self::Rejected(source) => source.fmt(formatter),
             Self::Logistics(source) => source.fmt(formatter),
         }
@@ -146,7 +156,16 @@ impl GameEngine {
                     .map(QueryResult::UnitLogisticsOptions)
                     .map_err(CanonicalQueryError::Logistics)
             }
+            GameQuery::WorkerOptions(query) => crate::worker::query_options(state, context, query)
+                .map(QueryResult::WorkerOptions)
+                .map_err(worker_query_error),
         }
+    }
+}
+
+fn worker_query_error(error: crate::worker::WorkerRuleError) -> CanonicalQueryError {
+    match error {
+        crate::worker::WorkerRuleError::Rejected(code) => CanonicalQueryError::Worker(code),
     }
 }
 

@@ -171,6 +171,8 @@ pub enum TurnProcessor {
     TradeRoutes,
     /// Worker automation continuation.
     WorkerAutomation,
+    /// Worker construction and infrastructure completion.
+    WorkerJobs,
     /// Scout auto-exploration continuation.
     AutoExplore,
     /// Simultaneous combat resolution.
@@ -201,6 +203,7 @@ impl TurnProcessor {
             Self::QueuedMovement => "queuedMovement",
             Self::TradeRoutes => "tradeRoutes",
             Self::WorkerAutomation => "workerAutomation",
+            Self::WorkerJobs => "workerJobs",
             Self::AutoExplore => "autoExplore",
             Self::Combat => "combat",
             Self::CityFounding => "cityFounding",
@@ -221,20 +224,21 @@ impl TurnKernelCapabilities {
     /// Capability label used by current fixtures and runtime clients.
     pub const LABEL: &'static str = "turn-kernel-ready";
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 9] = [
+    pub const ENABLED: [TurnProcessor; 11] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
         TurnProcessor::CityFounding,
+        TurnProcessor::WorkerJobs,
         TurnProcessor::MovementReset,
         TurnProcessor::QueuedMovement,
         TurnProcessor::TradeRoutes,
+        TurnProcessor::WorkerAutomation,
         TurnProcessor::AutoExplore,
         TurnProcessor::ReversibleSkipCleanup,
     ];
     /// Later turn processors that are intentionally unavailable.
-    pub const DISABLED: [TurnProcessor; 6] = [
-        TurnProcessor::WorkerAutomation,
+    pub const DISABLED: [TurnProcessor; 5] = [
         TurnProcessor::Economy,
         TurnProcessor::Diplomacy,
         TurnProcessor::Research,
@@ -251,9 +255,11 @@ impl TurnKernelCapabilities {
                 | TurnProcessor::Lifecycle
                 | TurnProcessor::Combat
                 | TurnProcessor::CityFounding
+                | TurnProcessor::WorkerJobs
                 | TurnProcessor::MovementReset
                 | TurnProcessor::QueuedMovement
                 | TurnProcessor::TradeRoutes
+                | TurnProcessor::WorkerAutomation
                 | TurnProcessor::AutoExplore
                 | TurnProcessor::ReversibleSkipCleanup
         )

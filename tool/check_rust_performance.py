@@ -210,9 +210,9 @@ def parse_csv(source: str, scope: str, header: list[str]) -> tuple[dict[str, Any
 
 def load_stages(path: Path) -> dict[str, dict[str, Any]]:
     raw = read_json(path, "stage budgets")
-    if not isinstance(raw, dict) or set(raw) != {"E0", "T1", "U2", "C3", "C4"}:
+    if not isinstance(raw, dict) or set(raw) != {"E0", "T1", "U2", "C3", "C4", "W5"}:
         raise PerformanceFailure(
-            "stage budgets must contain exactly active stages E0, T1, U2, C3 and C4"
+            "stage budgets must contain exactly active stages E0, T1, U2, C3, C4 and W5"
         )
     expected = {
         "E0": {
@@ -258,6 +258,19 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
                 "ToggleWorkedHex",
             ],
             "fixtureCount": 11,
+        },
+        "W5": {
+            "target": "rust-worker-check",
+            "capabilities": [
+                "AssignWorkerToHex",
+                "AutomateWorker",
+                "BuildRoad",
+                "CancelWorkerAssignment",
+                "CancelWorkerJob",
+                "ConfirmWorkerImprovement",
+                "SelectWorkerImprovement",
+            ],
+            "fixtureCount": 17,
         },
     }
     stages: dict[str, dict[str, Any]] = {}
@@ -433,6 +446,42 @@ def validate_c4_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("C4 event budget cannot cover founding completion")
 
 
+def validate_w5_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
+    manifest = read_json(
+        repo_root / "engine/fixtures/worker/manifest.json",
+        "W5 fixture manifest",
+    )
+    if not isinstance(manifest, dict) or manifest.get("capability") != "worker-infrastructure-ready":
+        raise PerformanceFailure("W5 fixture manifest capability differs")
+    cases = manifest.get("cases")
+    if not isinstance(cases, list) or sorted(cases) != stage["fixtureIds"]:
+        raise PerformanceFailure("W5 fixture IDs differ from the stage budget")
+    commands = {
+        "assignWorkerToHex": "AssignWorkerToHex",
+        "automateWorker": "AutomateWorker",
+        "buildRoad": "BuildRoad",
+        "cancelWorkerAssignment": "CancelWorkerAssignment",
+        "cancelWorkerJob": "CancelWorkerJob",
+        "confirmWorkerImprovement": "ConfirmWorkerImprovement",
+        "selectWorkerImprovement": "SelectWorkerImprovement",
+    }
+    inventory = manifest.get("commands")
+    if not isinstance(inventory, list) or sorted(commands.get(value, "") for value in inventory) != stage["capabilities"]:
+        raise PerformanceFailure("W5 command inventory differs")
+    if manifest.get("queries") != ["workerOptions"]:
+        raise PerformanceFailure("W5 query inventory differs")
+    if manifest.get("turnProcessors") != ["workerJobs", "workerAutomation"]:
+        raise PerformanceFailure("W5 turn processor inventory differs")
+    if manifest.get("automationTileBudget") != stage["maxWorkCounters"]["expandedTiles"]:
+        raise PerformanceFailure("W5 tile work budget differs")
+    if manifest.get("automationLegalityBudget") != stage["maxWorkCounters"]["examinedEdges"]:
+        raise PerformanceFailure("W5 legality work budget differs")
+    if manifest.get("clientApiVersion") != 5 or manifest.get("legacyPaths") is not False:
+        raise PerformanceFailure("W5 current-only protocol policy differs")
+    if stage["maxEventsPerCommand"] < 1_200:
+        raise PerformanceFailure("W5 event budget cannot cover the maximum worker turn")
+
+
 def validate_stages(
     stages: dict[str, dict[str, Any]], stable: dict[str, Any], repo_root: Path
 ) -> None:
@@ -441,6 +490,7 @@ def validate_stages(
     validate_u2_fixtures(stages["U2"], repo_root)
     validate_c3_fixtures(stages["C3"], repo_root)
     validate_c4_fixtures(stages["C4"], repo_root)
+    validate_w5_fixtures(stages["W5"], repo_root)
     for name, stage in stages.items():
         selected = {
             key: workload
@@ -453,14 +503,19 @@ def validate_stages(
             if workload["iterations"] < stage["soakIterations"]:
                 raise PerformanceFailure(f"soak iterations below {name} budget for {key}")
             if workload["payloadBytes"] > stage["maxMeasuredPayloadBytes"]:
-                raise PerformanceFailure(f"payload budget exceeded for {name} workload {key}")
+                raise PerformanceFailure(
+                    f"payload budget exceeded for {name} workload {key}: "
+                    f"{workload['payloadBytes']} > {stage['maxMeasuredPayloadBytes']}"
+                )
             if workload["allocations"] > stage["maxMeasuredAllocations"]:
                 raise PerformanceFailure(
-                    f"allocation count budget exceeded for {name} workload {key}"
+                    f"allocation count budget exceeded for {name} workload {key}: "
+                    f"{workload['allocations']} > {stage['maxMeasuredAllocations']}"
                 )
             if workload["allocatedBytes"] > stage["maxMeasuredAllocatedBytes"]:
                 raise PerformanceFailure(
-                    f"allocated byte budget exceeded for {name} workload {key}"
+                    f"allocated byte budget exceeded for {name} workload {key}: "
+                    f"{workload['allocatedBytes']} > {stage['maxMeasuredAllocatedBytes']}"
                 )
             for counter, value in workload["workCounters"].items():
                 if value > stage["maxWorkCounters"][counter]:
@@ -517,7 +572,7 @@ def build_report(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
     validate_stages(stages, stable, repo_root)
     return {
         "provenance": provenance(),
-        "stage": "C4",
+        "stage": "W5",
         "stable": dict(sorted(stable.items())),
         "diagnosticTimings": dict(sorted({**engine_timings, **runtime_timings}.items())),
     }
@@ -567,7 +622,7 @@ def make_snapshot(report: dict[str, Any]) -> dict[str, Any]:
             "cargo": report["provenance"]["cargo"],
             "allocator": report["provenance"]["allocator"],
             "measurement": report["provenance"]["measurement"],
-            "reviewedDate": "2026-08-24",
+            "reviewedDate": "2026-08-25",
         },
         "stage": report["stage"],
         "columns": BASELINE_COLUMNS,

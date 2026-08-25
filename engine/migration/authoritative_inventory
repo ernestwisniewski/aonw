@@ -44,12 +44,12 @@
 oracle-tree b83e4a513901403ab24e9d447feb5086edbdf9b9
 expected-domain-count 39
 expected-system-count 2
-expected-query-count 7
+expected-query-count 8
 expected-event-count 40
 expected-native-event-count 4
 expected-evidence-count 1
-expected-native-evidence-count 3
-expected-projection-type-count 6
+expected-native-evidence-count 4
+expected-projection-type-count 8
 expected-projection-variant-count 9
 dart-domain-root packages/aonw_core/lib/game/domain/command/game_command.dart
 dart-system-source packages/aonw_core/lib/game/application/engine/system_command.dart
@@ -68,15 +68,15 @@ rust-projection-source engine/crates/aonw_local_runtime/src/player_view.rs
 partial-parity-mode full-state
 
 domain AssignMerchantTradeRouteCommand movement runtime-ready AssignMerchantTradeRoute packages/aonw_core/lib/game/domain/command/unit_commands.dart
-domain AssignWorkerToHexCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
+domain AssignWorkerToHexCommand worker runtime-ready AssignWorkerToHex packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain AttackHexCommand combat runtime-ready AttackHex packages/aonw_core/lib/game/domain/command/combat_commands.dart
 domain AutoExploreUnitCommand movement runtime-ready AutoExploreUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
-domain AutomateWorkerCommand movement reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
-domain BuildRoadCommand infrastructure reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
+domain AutomateWorkerCommand movement runtime-ready AutomateWorker packages/aonw_core/lib/game/domain/command/worker_commands.dart
+domain BuildRoadCommand infrastructure runtime-ready BuildRoad packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain CancelUnitActionCommand movement engine-parity CancelUnitAction packages/aonw_core/lib/game/domain/command/unit_commands.dart
-domain CancelWorkerAssignmentCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
-domain CancelWorkerJobCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
-domain ConfirmWorkerImprovementCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
+domain CancelWorkerAssignmentCommand worker runtime-ready CancelWorkerAssignment packages/aonw_core/lib/game/domain/command/worker_commands.dart
+domain CancelWorkerJobCommand worker runtime-ready CancelWorkerJob packages/aonw_core/lib/game/domain/command/worker_commands.dart
+domain ConfirmWorkerImprovementCommand worker runtime-ready ConfirmWorkerImprovement packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain DeclareWarCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain DetachTroopCommand movement runtime-ready DetachTroop packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain EndTurnCommand turn turn-kernel-ready EndTurn packages/aonw_core/lib/game/domain/command/turn_commands.dart
@@ -91,7 +91,7 @@ domain RespondDiplomaticProposalCommand diplomacy reference-only - packages/aonw
 domain RushProductionCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SelectCityExpansionHexCommand city runtime-ready SelectCityExpansionHex packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SelectTechnologyCommand research reference-only - packages/aonw_core/lib/game/domain/command/research_commands.dart
-domain SelectWorkerImprovementCommand worker reference-only - packages/aonw_core/lib/game/domain/command/worker_commands.dart
+domain SelectWorkerImprovementCommand worker runtime-ready SelectWorkerImprovement packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain SendDiplomaticMessageCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SendDiplomaticProposalCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SendGoldGiftCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
@@ -117,6 +117,7 @@ query CityExpansionOptions CityExpansionOptions CityExpansionOptions city runtim
 query CityFoundingOptions CityFoundingOptions CityFoundingOptions city runtime-ready
 query CityWorkedHexOptions CityWorkedHexOptions CityWorkedHexOptions city runtime-ready
 query UnitLogisticsOptions UnitLogisticsOptions UnitLogisticsOptions movement runtime-ready
+query WorkerOptions WorkerOptions WorkerOptions worker runtime-ready
 
 event ArtifactCarriedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event ArtifactExcavationStartedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
@@ -157,7 +158,7 @@ event UnitKilledEvent combat runtime-ready UnitKilled packages/aonw_core/lib/gam
 event UnitMovedEvent movement engine-parity UnitMoved packages/aonw_core/lib/game/domain/event/unit_events.dart
 event UnitRetreatedEvent combat runtime-ready UnitRetreated packages/aonw_core/lib/game/domain/event/combat_events.dart
 event WonderProductionRefundedEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
-event WorkerCompletedJobEvent turn reference-only - packages/aonw_core/lib/game/domain/event/turn_events.dart
+event WorkerCompletedJobEvent turn runtime-ready WorkerCompletedJob packages/aonw_core/lib/game/domain/event/turn_events.dart
 
 native-event AutoExplorePlannedEvent movement runtime-ready AutoExplorePlanned engine/crates/aonw_engine/src/application/logistics.rs
 native-event MerchantRouteAssignedEvent movement runtime-ready MerchantRouteAssigned engine/crates/aonw_engine/src/application/logistics.rs
@@ -168,13 +169,16 @@ evidence MovementCommandExecution movement engine-parity UnitMovement packages/a
 native-evidence LogisticsExecution movement runtime-ready Logistics engine/crates/aonw_engine/src/application/logistics.rs
 native-evidence CombatExecution combat runtime-ready Combat engine/crates/aonw_engine/src/combat/model.rs
 native-evidence TurnKernelExecution turn turn-kernel-ready TurnKernel engine/crates/aonw_engine/src/application/turn.rs
+native-evidence WorkerAutomationExecution worker runtime-ready WorkerAutomation engine/crates/aonw_engine/src/worker/model.rs
 
-projection-type PlayerUnitView visible-entity characterized PlayerUnitViewDto engine/crates/aonw_local_runtime/src/player_view.rs
+projection-type PlayerUnitView visible-entity runtime-ready PlayerUnitViewDto engine/crates/aonw_local_runtime/src/player_view.rs
 projection-type CityFoundingDraftView recipient-workflow runtime-ready CityFoundingDraftViewDto engine/crates/aonw_local_runtime/src/player_view/city.rs
 projection-type OwnedCityPlanningView private-city-planning runtime-ready OwnedCityPlanningViewDto engine/crates/aonw_local_runtime/src/player_view/city.rs
 projection-type PlayerCityView visible-entity runtime-ready PlayerCityViewDto engine/crates/aonw_local_runtime/src/player_view/city.rs
 projection-type PlayerViewPatch recipient-patch characterized PlayerViewPatchDto engine/crates/aonw_local_runtime/src/command_dispatch.rs
 projection-type PlayerViewSnapshot recipient-snapshot characterized PlayerViewSnapshotDto engine/crates/aonw_local_runtime/src/player_view.rs
+projection-type PlayerFieldImprovementView visible-infrastructure runtime-ready FieldImprovementViewDto engine/crates/aonw_local_runtime/src/player_view/infrastructure.rs
+projection-type PlayerRoadView visible-infrastructure runtime-ready RoadViewDto engine/crates/aonw_local_runtime/src/player_view/infrastructure.rs
 
 projection-variant AttackTargeting pending-action characterized AttackTargeting
 projection-variant CityExpansionSelection pending-action characterized CityExpansionSelection

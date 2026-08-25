@@ -1,31 +1,34 @@
 use aonw_contract_mapping::{encode_improvement, encode_unit_kind, encode_unit_posture};
-use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
     CityFoundingDraftViewDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
     ClientCommandResultDto, ClientFeatureDto, ClientReplayVerificationDto, ClientResponseBodyDto,
-    ClientSessionStampDto, OwnedCityPlanningViewDto, PendingActionViewDto, PlayerCityViewDto,
-    PlayerTurnLifecycleViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
+    ClientSessionStampDto, FieldImprovementViewDto, OwnedCityPlanningViewDto, PlayerCityViewDto,
+    PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, RoadViewDto, WorkerJobViewDto,
 };
-use aonw_domain::PlayerTurnState;
+use aonw_contracts::{CoordinateDto, TransportConditionDto};
+use aonw_domain::TransportCondition;
 use aonw_engine::CommandRejectionCode;
 
 use crate::{
-    CityFoundingDraftView, CommandResult, LocalRuntime, PendingActionView, PlayerCityView,
-    PlayerTurnLifecycleView, PlayerUnitView, PlayerViewPatch, PlayerViewSnapshot,
-    ReplayVerification, SessionStamp,
+    CityFoundingDraftView, CommandResult, LocalRuntime, PlayerCityView, PlayerFieldImprovementView,
+    PlayerRoadView, PlayerUnitView, PlayerViewPatch, PlayerViewSnapshot, ReplayVerification,
+    SessionStamp,
 };
 
 mod evidence;
 mod map_view;
+mod presentation;
 mod query;
 #[cfg(test)]
 mod tests;
+mod worker;
 
 use evidence::{event, recipient_evidence};
 use map_view::coordinate;
 pub(super) use map_view::map;
 #[cfg(test)]
 use map_view::{objective_type, resource, terrain};
+use presentation::{pending_action, turn_lifecycle};
 pub(super) use query::query_result;
 #[cfg(test)]
 use query::{merchant_destination, movement_metrics};
@@ -57,6 +60,9 @@ pub(super) fn capabilities() -> ClientResponseBodyDto {
     if capabilities.cities() {
         features.push(ClientFeatureDto::Cities);
     }
+    if capabilities.workers() {
+        features.push(ClientFeatureDto::Workers);
+    }
     if capabilities.save_game() {
         features.push(ClientFeatureDto::SaveGame);
     }
@@ -84,6 +90,13 @@ pub(super) fn snapshot(value: &PlayerViewSnapshot) -> PlayerViewSnapshotDto {
         city_founding_draft: value.city_founding_draft().map(founding_draft),
         units: value.units().iter().map(unit).collect(),
         cities: value.cities().iter().map(city).collect(),
+        field_improvements: value
+            .field_improvements()
+            .iter()
+            .copied()
+            .map(field_improvement)
+            .collect(),
+        roads: value.roads().iter().copied().map(road).collect(),
     }
 }
 
@@ -271,6 +284,56 @@ const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto
         CommandRejectionCode::CityExpansionHexUnavailable => {
             ClientCommandRejectionCodeDto::CityExpansionHexUnavailable
         }
+        CommandRejectionCode::WorkerNotFound => ClientCommandRejectionCodeDto::WorkerNotFound,
+        CommandRejectionCode::WorkerNotControlled => {
+            ClientCommandRejectionCodeDto::WorkerNotControlled
+        }
+        CommandRejectionCode::WorkerUnavailable => ClientCommandRejectionCodeDto::WorkerUnavailable,
+        CommandRejectionCode::WorkerNoMovementPoints => {
+            ClientCommandRejectionCodeDto::WorkerNoMovementPoints
+        }
+        CommandRejectionCode::WorkerQueuedPathActive => {
+            ClientCommandRejectionCodeDto::WorkerQueuedPathActive
+        }
+        CommandRejectionCode::WorkerImprovementNotSelected => {
+            ClientCommandRejectionCodeDto::WorkerImprovementNotSelected
+        }
+        CommandRejectionCode::WorkerActionNotControlled => {
+            ClientCommandRejectionCodeDto::WorkerActionNotControlled
+        }
+        CommandRejectionCode::WorkerImprovementUnavailable => {
+            ClientCommandRejectionCodeDto::WorkerImprovementUnavailable
+        }
+        CommandRejectionCode::WorkerJobNotActive => {
+            ClientCommandRejectionCodeDto::WorkerJobNotActive
+        }
+        CommandRejectionCode::WorkerAssignmentUnavailable => {
+            ClientCommandRejectionCodeDto::WorkerAssignmentUnavailable
+        }
+        CommandRejectionCode::WorkerAssignmentNotActive => {
+            ClientCommandRejectionCodeDto::WorkerAssignmentNotActive
+        }
+        CommandRejectionCode::WorkerRoadUnavailable => {
+            ClientCommandRejectionCodeDto::WorkerRoadUnavailable
+        }
+        CommandRejectionCode::RoadConstructionExistingRoad => {
+            ClientCommandRejectionCodeDto::RoadConstructionExistingRoad
+        }
+        CommandRejectionCode::RoadConstructionCity => {
+            ClientCommandRejectionCodeDto::RoadConstructionCity
+        }
+        CommandRejectionCode::RoadConstructionEnemyTerritory => {
+            ClientCommandRejectionCodeDto::RoadConstructionEnemyTerritory
+        }
+        CommandRejectionCode::RoadConstructionImpassableTerrain => {
+            ClientCommandRejectionCodeDto::RoadConstructionImpassableTerrain
+        }
+        CommandRejectionCode::WorkerAutomationNotActive => {
+            ClientCommandRejectionCodeDto::WorkerAutomationNotActive
+        }
+        CommandRejectionCode::WorkerAutomationNoTarget => {
+            ClientCommandRejectionCodeDto::WorkerAutomationNoTarget
+        }
     }
 }
 
@@ -294,6 +357,30 @@ fn unit(value: &PlayerUnitView) -> PlayerUnitViewDto {
         },
         movement_units: value.movement_units(),
         posture: encode_unit_posture(value.posture()),
+        worker_build_charges: value.worker_build_charges(),
+        worker_job: value.worker_job().map(|job| match job {
+            aonw_domain::WorkerJob::FieldImprovement {
+                target,
+                improvement,
+                remaining_turns,
+                total_turns,
+            } => WorkerJobViewDto::FieldImprovement {
+                target: coordinate(*target),
+                improvement: encode_improvement(*improvement),
+                remaining_turns: *remaining_turns,
+                total_turns: *total_turns,
+            },
+            aonw_domain::WorkerJob::RoadConstruction {
+                target,
+                remaining_turns,
+                total_turns,
+            } => WorkerJobViewDto::RoadConstruction {
+                target: coordinate(*target),
+                remaining_turns: *remaining_turns,
+                total_turns: *total_turns,
+            },
+        }),
+        worker_assignment: value.worker_assignment().map(coordinate),
     }
 }
 
@@ -354,70 +441,43 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
             .iter()
             .map(|id| id.as_str().to_owned())
             .collect(),
+        upserted_field_improvements: value
+            .upserted_field_improvements
+            .iter()
+            .copied()
+            .map(field_improvement)
+            .collect(),
+        removed_field_improvement_coordinates: value
+            .removed_field_improvement_coordinates
+            .iter()
+            .copied()
+            .map(coordinate)
+            .collect(),
+        upserted_roads: value.upserted_roads.iter().copied().map(road).collect(),
+        removed_road_coordinates: value
+            .removed_road_coordinates
+            .iter()
+            .copied()
+            .map(coordinate)
+            .collect(),
         pending_action: value.pending_action.as_ref().map(pending_action),
         city_founding_draft: value.city_founding_draft.as_ref().map(founding_draft),
     }
 }
 
-fn pending_action(value: &PendingActionView) -> PendingActionViewDto {
-    match value {
-        PendingActionView::ResearchSelection => PendingActionViewDto::ResearchSelection,
-        PendingActionView::CityWorkedHexSelection { city_id } => {
-            PendingActionViewDto::CityWorkedHexSelection {
-                city_id: city_id.as_str().to_owned(),
-            }
-        }
-        PendingActionView::CityExpansionSelection { city_id } => {
-            PendingActionViewDto::CityExpansionSelection {
-                city_id: city_id.as_str().to_owned(),
-            }
-        }
-        PendingActionView::WorkerActionSelection {
-            unit_id,
-            improvement,
-        } => PendingActionViewDto::WorkerActionSelection {
-            unit_id: unit_id.as_str().to_owned(),
-            improvement: (*improvement).map(encode_improvement),
-        },
-        PendingActionView::MerchantTradeRouteSelection { unit_id } => {
-            PendingActionViewDto::MerchantTradeRouteSelection {
-                unit_id: unit_id.as_str().to_owned(),
-            }
-        }
-        PendingActionView::MerchantMoveToCitySelection { unit_id } => {
-            PendingActionViewDto::MerchantMoveToCitySelection {
-                unit_id: unit_id.as_str().to_owned(),
-            }
-        }
-        PendingActionView::UnitTurnSkip {
-            unit_id,
-            restore_movement_units,
-        } => PendingActionViewDto::UnitTurnSkip {
-            unit_id: unit_id.as_str().to_owned(),
-            restore_movement_units: *restore_movement_units,
-        },
-        PendingActionView::AttackTargeting { unit_id, defender } => {
-            PendingActionViewDto::AttackTargeting {
-                unit_id: unit_id.as_str().to_owned(),
-                defender: (*defender).map(coordinate),
-            }
-        }
-        PendingActionView::CommanderMergeSelection { unit_id } => {
-            PendingActionViewDto::CommanderMergeSelection {
-                unit_id: unit_id.as_str().to_owned(),
-            }
-        }
+fn field_improvement(value: PlayerFieldImprovementView) -> FieldImprovementViewDto {
+    FieldImprovementViewDto {
+        coordinate: coordinate(value.coordinate()),
+        improvement: encode_improvement(value.improvement()),
     }
 }
 
-fn turn_lifecycle(value: PlayerTurnLifecycleView) -> PlayerTurnLifecycleViewDto {
-    PlayerTurnLifecycleViewDto {
-        own_state: value.own_state().map(|state| match state {
-            PlayerTurnState::Active => aonw_contracts::PlayerTurnStateDto::Active,
-            PlayerTurnState::Finished => aonw_contracts::PlayerTurnStateDto::Finished,
-        }),
-        own_submitted: value.own_submitted(),
-        required_submission_count: value.required_submission_count(),
-        submitted_count: value.submitted_count(),
+fn road(value: PlayerRoadView) -> RoadViewDto {
+    RoadViewDto {
+        coordinate: coordinate(value.coordinate()),
+        condition: match value.condition() {
+            TransportCondition::Operational => TransportConditionDto::Operational,
+            TransportCondition::Pillaged => TransportConditionDto::Pillaged,
+        },
     }
 }

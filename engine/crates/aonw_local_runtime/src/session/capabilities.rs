@@ -15,6 +15,7 @@ impl RuntimeCapabilities {
     const MOVEMENT_LOGISTICS: u16 = 1 << 7;
     const COMBAT: u16 = 1 << 8;
     const CITIES: u16 = 1 << 9;
+    const WORKERS: u16 = 1 << 10;
 
     pub(super) const CURRENT: Self = Self {
         features: Self::ROUTE_PLAN
@@ -26,7 +27,8 @@ impl RuntimeCapabilities {
             | Self::TURN_KERNEL
             | Self::MOVEMENT_LOGISTICS
             | Self::COMBAT
-            | Self::CITIES,
+            | Self::CITIES
+            | Self::WORKERS,
     };
 
     /// Returns whether route planning is available.
@@ -87,5 +89,10 @@ impl RuntimeCapabilities {
     #[must_use]
     pub const fn cities(self) -> bool {
         self.features & Self::CITIES != 0
+    }
+    /// Returns whether worker and infrastructure operations are available.
+    #[must_use]
+    pub const fn workers(self) -> bool {
+        self.features & Self::WORKERS != 0
     }
 }
