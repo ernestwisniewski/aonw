@@ -1,16 +1,20 @@
 import 'package:aonw_rust_client/src/protocol_coordinate.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
-import 'package:aonw_rust_client/src/protocol_pending_action.dart';
 
 enum AonwClientFeature {
+  cities,
+  combat,
   inspectMap,
   snapshot,
   reachable,
   routePlan,
   moveUnit,
   unitActions,
+  turnKernel,
   saveGame,
-  replayVerification;
+  replayVerification,
+  movementLogistics,
+  workers;
 
   factory AonwClientFeature.fromJson(Object? value) {
     final wire = readString(value, 'client feature');
@@ -92,131 +96,6 @@ final class AonwSessionStamp {
   final String stateDigest;
   final String mapHash;
   final String rulesetHash;
-}
-
-final class AonwPlayerUnitView {
-  const AonwPlayerUnitView({
-    required this.id,
-    required this.ownerPlayerId,
-    required this.kind,
-    required this.name,
-    required this.coordinate,
-    required this.movementUnits,
-    required this.posture,
-  });
-
-  factory AonwPlayerUnitView.fromJson(Object? source) {
-    final value = readObject(source, 'player unit view');
-    requireKeys(value, const {
-      'id',
-      'ownerPlayerId',
-      'kind',
-      'name',
-      'coordinate',
-      'movementUnits',
-      'posture',
-    }, 'player unit view');
-    return AonwPlayerUnitView(
-      id: readString(value['id'], 'unit id'),
-      ownerPlayerId: readString(value['ownerPlayerId'], 'unit owner'),
-      kind: AonwUnitKind.fromJson(value['kind']),
-      name: readString(value['name'], 'unit name'),
-      coordinate: AonwCoordinate.fromJson(value['coordinate']),
-      movementUnits: readUnsigned(value['movementUnits'], 'unit movement'),
-      posture: AonwUnitPosture.fromJson(value['posture']),
-    );
-  }
-
-  final String id;
-  final String ownerPlayerId;
-  final AonwUnitKind kind;
-  final String name;
-  final AonwCoordinate coordinate;
-  final int movementUnits;
-  final AonwUnitPosture posture;
-}
-
-final class AonwPlayerViewSnapshot {
-  const AonwPlayerViewSnapshot({
-    required this.stamp,
-    required this.turn,
-    required this.pendingAction,
-    required this.units,
-  });
-
-  factory AonwPlayerViewSnapshot.fromJson(Object? source) {
-    final value = readObject(source, 'player snapshot');
-    requireKeys(value, const {
-      'stamp',
-      'turn',
-      'pendingAction',
-      'units',
-    }, 'player snapshot');
-    return AonwPlayerViewSnapshot(
-      stamp: AonwSessionStamp.fromJson(value['stamp']),
-      turn: readUnsigned(value['turn'], 'snapshot turn'),
-      pendingAction: value['pendingAction'] == null
-          ? null
-          : AonwPendingActionView.fromJson(value['pendingAction']),
-      units: readList(
-        value['units'],
-        'snapshot units',
-        (item, _) => AonwPlayerUnitView.fromJson(item),
-      ),
-    );
-  }
-
-  final AonwSessionStamp stamp;
-  final int turn;
-  final AonwPendingActionView? pendingAction;
-  final List<AonwPlayerUnitView> units;
-}
-
-final class AonwPlayerViewPatch {
-  const AonwPlayerViewPatch({
-    required this.fromRevision,
-    required this.toRevision,
-    required this.upsertedUnits,
-    required this.removedUnitIds,
-    required this.pendingAction,
-  });
-
-  factory AonwPlayerViewPatch.fromJson(Object? source) {
-    final value = readObject(source, 'player view patch');
-    requireKeys(value, const {
-      'fromRevision',
-      'toRevision',
-      'upsertedUnits',
-      'removedUnitIds',
-      'pendingAction',
-    }, 'player view patch');
-    return AonwPlayerViewPatch(
-      fromRevision: readUnsigned(
-        value['fromRevision'],
-        'patch source revision',
-      ),
-      toRevision: readUnsigned(value['toRevision'], 'patch target revision'),
-      upsertedUnits: readList(
-        value['upsertedUnits'],
-        'upserted units',
-        (item, _) => AonwPlayerUnitView.fromJson(item),
-      ),
-      removedUnitIds: readList(
-        value['removedUnitIds'],
-        'removed unit ids',
-        (item, _) => readString(item, 'removed unit id'),
-      ),
-      pendingAction: value['pendingAction'] == null
-          ? null
-          : AonwPendingActionView.fromJson(value['pendingAction']),
-    );
-  }
-
-  final int fromRevision;
-  final int toRevision;
-  final List<AonwPlayerUnitView> upsertedUnits;
-  final List<String> removedUnitIds;
-  final AonwPendingActionView? pendingAction;
 }
 
 final class AonwMovementStep {

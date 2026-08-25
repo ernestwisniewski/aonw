@@ -6,7 +6,6 @@ import 'dart:isolate';
 import 'package:aonw_rust_client/aonw_rust_client_bindings.dart' as bindings;
 import 'package:aonw_rust_client/src/api.dart';
 import 'package:aonw_rust_client/src/native_identity.dart';
-import 'package:aonw_rust_client/src/protocol.dart';
 import 'package:ffi/ffi.dart';
 
 AonwNativeIdentity get aonwRustClientIdentity {

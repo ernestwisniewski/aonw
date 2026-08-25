@@ -11,7 +11,14 @@ void main() {
       'snapshot': {
         'stamp': _stamp,
         'turn': 7,
+        'turnLifecycle': {
+          'ownState': 'active',
+          'ownSubmitted': false,
+          'requiredSubmissionCount': 1,
+          'submittedCount': 0,
+        },
         'pendingAction': null,
+        'cityFoundingDraft': null,
         'units': [
           {
             'id': 'unit-1',
@@ -21,9 +28,15 @@ void main() {
             'coordinate': {'col': 1, 'row': 2},
             'movementUnits': 4,
             'posture': 'active',
+            'workerBuildCharges': 2,
+            'workerJob': null,
+            'workerAssignment': null,
             'unknown': true,
           },
         ],
+        'cities': <Object?>[],
+        'fieldImprovements': <Object?>[],
+        'roads': <Object?>[],
       },
     });
 
@@ -268,8 +281,16 @@ Map<String, Object?> _commandResult(Map<String, Object?> outcome) => {
   'viewPatch': const {
     'fromRevision': 7,
     'toRevision': 7,
+    'turnLifecycle': null,
     'upsertedUnits': <Object?>[],
     'removedUnitIds': <Object?>[],
+    'upsertedCities': <Object?>[],
+    'removedCityIds': <Object?>[],
+    'upsertedFieldImprovements': <Object?>[],
+    'removedFieldImprovementCoordinates': <Object?>[],
+    'upsertedRoads': <Object?>[],
+    'removedRoadCoordinates': <Object?>[],
     'pendingAction': null,
+    'cityFoundingDraft': null,
   },
 };

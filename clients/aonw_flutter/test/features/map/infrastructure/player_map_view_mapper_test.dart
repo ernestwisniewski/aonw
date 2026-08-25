@@ -48,8 +48,13 @@ void main() {
     final invalid = AonwPlayerViewSnapshot(
       stamp: snapshot.stamp,
       turn: 0,
+      turnLifecycle: snapshot.turnLifecycle,
       pendingAction: snapshot.pendingAction,
+      cityFoundingDraft: snapshot.cityFoundingDraft,
       units: snapshot.units,
+      cities: snapshot.cities,
+      fieldImprovements: snapshot.fieldImprovements,
+      roads: snapshot.roads,
     );
 
     expect(
@@ -158,8 +163,18 @@ AonwPlayerViewSnapshot _snapshot(
     rulesetHash: 'c' * 64,
   ),
   turn: 7,
+  turnLifecycle: const AonwPlayerTurnLifecycle(
+    ownState: AonwPlayerTurnState.active,
+    ownSubmitted: false,
+    requiredSubmissionCount: 1,
+    submittedCount: 0,
+  ),
   pendingAction: pendingAction,
+  cityFoundingDraft: null,
   units: units,
+  cities: const [],
+  fieldImprovements: const [],
+  roads: const [],
 );
 
 AonwPlayerUnitView _unit(String id, {int col = 0, int row = 0}) =>
@@ -171,4 +186,7 @@ AonwPlayerUnitView _unit(String id, {int col = 0, int row = 0}) =>
       coordinate: AonwCoordinate(col: col, row: row),
       movementUnits: 12,
       posture: AonwUnitPosture.active,
+      workerBuildCharges: 0,
+      workerJob: null,
+      workerAssignment: null,
     );

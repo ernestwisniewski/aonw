@@ -251,7 +251,10 @@ void main() {
             as Map<String, dynamic>;
 
     expect(baseline['schemaVersion'], 1);
-    expect(baseline['sourceCommand'], contains('successor-flutter-fm5-baseline'));
+    expect(
+      baseline['sourceCommand'],
+      contains('successor-flutter-fm5-baseline'),
+    );
     expect(workload['dimensions'], {'cols': 40, 'rows': 30});
     expect(workload['visibleUnits'], 120);
     expect(metrics['idleEffectUpdates'], 0);

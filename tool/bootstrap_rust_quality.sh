@@ -16,21 +16,34 @@ ensure_cargo_tool() {
   local binary="$1"
   local crate="$2"
   local expected="$3"
-  if command -v "${binary}" >/dev/null 2>&1 &&
-      [[ "$("${binary}" --version)" == "${binary} ${expected}" ]]; then
+  local cargo_subcommand="${4:-}"
+  local installed_version=""
+  if command -v "${binary}" >/dev/null 2>&1; then
+    if [[ -n "${cargo_subcommand}" ]]; then
+      installed_version="$("${binary}" "${cargo_subcommand}" --version)"
+    else
+      installed_version="$("${binary}" --version)"
+    fi
+  fi
+  if [[ "${installed_version}" == "${binary} ${expected}" ]]; then
     return
   fi
   (
     cd "${repo_root}/engine"
     cargo install --locked --force --version "${expected}" "${crate}"
   )
-  [[ "$("${binary}" --version)" == "${binary} ${expected}" ]] || {
+  if [[ -n "${cargo_subcommand}" ]]; then
+    installed_version="$("${binary}" "${cargo_subcommand}" --version)"
+  else
+    installed_version="$("${binary}" --version)"
+  fi
+  [[ "${installed_version}" == "${binary} ${expected}" ]] || {
     echo "${binary} ${expected} was not installed exactly." >&2
     exit 1
   }
 }
 
 ensure_cargo_tool cargo-deny cargo-deny 0.20.2
-ensure_cargo_tool cargo-llvm-cov cargo-llvm-cov 0.9.0
+ensure_cargo_tool cargo-llvm-cov cargo-llvm-cov 0.9.0 llvm-cov
 
 echo "Pinned Rust quality tools are installed."

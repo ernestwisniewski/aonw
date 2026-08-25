@@ -1,0 +1,17 @@
+{
+  "cols": 1,
+  "rows": 1,
+  "mapName": "legacy_fixture",
+  "tiles": [
+    {
+      "col": 0,
+      "row": 0,
+      "terrains": ["grassland"],
+      "displayTerrain": "grassland",
+      "yieldTerrain": "grassland",
+      "terrainTags": ["grassland"],
+      "resources": [],
+      "height": 1
+    }
+  ]
+}
