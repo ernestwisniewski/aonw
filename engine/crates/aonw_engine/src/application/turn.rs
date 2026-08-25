@@ -139,6 +139,7 @@ impl SystemCommand<'_> {
                 let skipped_count =
                     u64::try_from(command.skipped_player_ids().len()).unwrap_or(u64::MAX);
                 let unit_count = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
+                let city_count = u64::try_from(state.cities().len()).unwrap_or(u64::MAX);
                 let combat = u64::try_from(state.combat().intended_attacks().len())
                     .unwrap_or(u64::MAX)
                     .saturating_mul(7);
@@ -146,6 +147,8 @@ impl SystemCommand<'_> {
                     player_count
                         .saturating_add(skipped_count)
                         .saturating_add(unit_count)
+                        .saturating_add(city_count)
+                        .saturating_add(player_count)
                         .saturating_add(combat)
                         .saturating_add(1),
                 )
@@ -180,7 +183,9 @@ pub enum TurnProcessor {
     Combat,
     /// Completion or cancellation of scheduled city-founding jobs.
     CityFounding,
-    /// Economy and production progression.
+    /// Finite city production, continuous projects, and wonder races.
+    Production,
+    /// Economy-account, growth, upkeep, and stability progression.
     Economy,
     /// Diplomacy/contact progression.
     Diplomacy,
@@ -220,6 +225,7 @@ impl TurnProcessor {
             Self::AutoExplore => "autoExplore",
             Self::Combat => "combat",
             Self::CityFounding => "cityFounding",
+            Self::Production => "production",
             Self::Economy => "economy",
             Self::Diplomacy => "diplomacy",
             Self::Research => "research",
@@ -253,12 +259,13 @@ impl TurnKernelCapabilities {
     /// Capability label used by current fixtures and runtime clients.
     pub const LABEL: &'static str = "turn-kernel-ready";
     /// Full canonical phase order, including slices that still fail closed.
-    pub const ORDERED: [TurnProcessor; 16] = [
+    pub const ORDERED: [TurnProcessor; 17] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
         TurnProcessor::CityFounding,
         TurnProcessor::WorkerJobs,
+        TurnProcessor::Production,
         TurnProcessor::Economy,
         TurnProcessor::MovementReset,
         TurnProcessor::QueuedMovement,
@@ -272,12 +279,13 @@ impl TurnKernelCapabilities {
         TurnProcessor::Objectives,
     ];
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 11] = [
+    pub const ENABLED: [TurnProcessor; 12] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
         TurnProcessor::CityFounding,
         TurnProcessor::WorkerJobs,
+        TurnProcessor::Production,
         TurnProcessor::MovementReset,
         TurnProcessor::QueuedMovement,
         TurnProcessor::TradeRoutes,
@@ -304,6 +312,7 @@ impl TurnKernelCapabilities {
                 | TurnProcessor::Combat
                 | TurnProcessor::CityFounding
                 | TurnProcessor::WorkerJobs
+                | TurnProcessor::Production
                 | TurnProcessor::MovementReset
                 | TurnProcessor::QueuedMovement
                 | TurnProcessor::TradeRoutes

@@ -2,15 +2,16 @@
 
 #[path = "turn_kernel/disabled_requirements.rs"]
 mod disabled_requirements;
+#[path = "turn_kernel/production_phase.rs"]
+mod production_phase;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
-    City, CityId, CityProductionQueue, CityProductionTarget, CityProjectType, GameMode, GameState,
-    HexCoord, MatchIdentity, MatchLifecycle, MatchRules, MovementUnits, Participant, PlayerCountry,
-    PlayerId, PlayerKind, PlayerTurnState, StateRevision, StrategicResourceStockpile,
+    GameMode, GameState, HexCoord, MatchIdentity, MatchLifecycle, MatchRules, MovementUnits,
+    Participant, PlayerCountry, PlayerId, PlayerKind, PlayerTurnState, StateRevision,
     TurnLifecycle, Unit, UnitId, UnitKind, UnitOccupancyPolicy, UnitPosture, UtcTimestamp,
 };
 use aonw_engine::{
@@ -178,10 +179,17 @@ fn trusted_timeout_and_kick_have_no_player_context() {
         CommandRejectionCode::TurnScopeInvalid
     );
 
+    let kick = KickParticipantCommand::new(8, &p2, "turn_timeout", 3);
+    assert_eq!(
+        SystemCommand::KickParticipant(kick)
+            .event_budget(timeout.state())
+            .maximum(),
+        1
+    );
     let kicked = GameEngine::apply_system_owned(
         timeout.state().clone(),
         SystemContext::canonical(&map, rules),
-        SystemCommand::KickParticipant(KickParticipantCommand::new(8, &p2, "turn_timeout", 3)),
+        SystemCommand::KickParticipant(kick),
     )
     .expect("kick");
     assert!(kicked.is_accepted());
@@ -227,10 +235,8 @@ fn fixture_manifest_rejects_unimplemented_processors() {
     }
 
     let unsupported: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(
-            root.join("engine/fixtures/turn_kernel/unsupported-production-manifest.json"),
-        )
-        .expect("negative manifest"),
+        &std::fs::read(root.join("engine/fixtures/turn_kernel/unsupported-economy-manifest.json"))
+            .expect("negative manifest"),
     )
     .expect("strict JSON");
     let missing = unsupported["requiredProcessors"]
@@ -265,7 +271,7 @@ fn fixture_manifest_rejects_unimplemented_processors() {
 }
 
 #[test]
-fn finalization_fails_closed_when_state_requires_disabled_processor() {
+fn finalization_fails_closed_when_state_requires_disabled_economy() {
     let map = map();
     let rules = RulesetDefinition::standard();
     let p1 = player("player-1");
@@ -300,7 +306,7 @@ fn state_with_posture(
     submitted: impl IntoIterator<Item = PlayerId>,
     started: Option<UtcTimestamp>,
     second_unit_posture: Option<UnitPosture>,
-    with_production: bool,
+    with_economy: bool,
 ) -> GameState {
     let p1 = player("player-1");
     let p2 = player("player-2");
@@ -356,28 +362,19 @@ fn state_with_posture(
     } else {
         aonw_domain::InteractionState::default()
     };
-    let cities = with_production.then(|| {
-        City::builder(
-            CityId::new("city-2").expect("city id"),
-            p2.clone(),
-            "Queued city",
-            HexCoord::new(1, 0),
+    let economy = with_economy.then(|| {
+        aonw_domain::EconomyState::try_new(
+            &identity,
+            map().bounds(),
+            BTreeMap::from([(p2.clone(), 0)]),
+            BTreeMap::new(),
+            BTreeMap::new(),
+            BTreeMap::new(),
+            aonw_domain::InitialResourceDistribution::default(),
         )
-        .with_production(
-            Some(
-                CityProductionQueue::try_new(
-                    CityProductionTarget::Project(CityProjectType::Wealth),
-                    0,
-                    StrategicResourceStockpile::default(),
-                )
-                .expect("production queue"),
-            ),
-            0,
-        )
-        .build()
-        .expect("city")
+        .expect("economy")
     });
-    GameState::builder(
+    let mut builder = GameState::builder(
         StateRevision::new(7),
         7,
         map().bounds(),
@@ -385,10 +382,11 @@ fn state_with_posture(
         units,
     )
     .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
-    .with_cities(cities)
-    .with_interaction(interaction)
-    .try_build()
-    .expect("state")
+    .with_interaction(interaction);
+    if let Some(economy) = economy {
+        builder = builder.with_economy(economy);
+    }
+    builder.try_build().expect("state")
 }
 
 fn participant(id: PlayerId, name: &str) -> Participant {

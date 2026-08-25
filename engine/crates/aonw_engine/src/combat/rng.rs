@@ -83,6 +83,7 @@ mod tests {
     fn zero_seed_uses_non_absorbing_oracle_state() {
         let mut rng = CombatRng::new(0);
         assert_eq!(rng.seed(), 0);
+        assert_eq!(rng.signed(0), 0);
         assert!((-2..=2).contains(&rng.signed(2)));
     }
 }

@@ -107,6 +107,16 @@ contracts reject unknown fields, while save/reopen/replay executes the current
 command directly. The historical reducer documents remain reference evidence;
 no reader, adapter, upcaster, fallback, or internal format version was added.
 
+The CP12/E6.2 turn-production surface is `runtime-ready`. A distinct
+`production` turn processor advances scoped players in canonical player/city
+order, reuses the same yield, spawn, completion, and wonder resolvers as rush,
+and persists its typed events through client projection, save, and replay.
+Wealth projects convert current production through the content-owned divisor;
+research projects still require the separate fail-closed R7 processor. The
+general economy processor therefore remains unsupported instead of hiding
+growth, upkeep, or stability no-ops. No client API version or compatibility
+path was added.
+
 The file deliberately has no `v1` suffix or schema-version field. The engine
 and greenfield clients update this one current contract atomically. A format
 version is introduced only after a concrete independently deployed reader or

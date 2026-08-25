@@ -1,30 +1,35 @@
 use aonw_content::TerrainType;
-use aonw_domain::{City, GameState, Unit, UnitId, UnitKind, UnitMovementDomain};
+use aonw_domain::{City, Unit, UnitId, UnitKind, UnitMovementDomain, UnitOccupancyPolicy};
 
 use super::ProductionError;
 use super::support::{invalid, spawn_candidates};
 use crate::{EngineContext, MovementCost, maximum_movement_units, terrain_entry_cost};
 
 pub(super) fn produced_unit(
-    state: &GameState,
     context: EngineContext<'_>,
     city: &City,
     kind: UnitKind,
+    current_units: &[Unit],
+    occupancy_policy: UnitOccupancyPolicy,
 ) -> Result<Option<Unit>, ProductionError> {
     let definition = context
         .ruleset()
         .unit(kind)
         .ok_or_else(|| invalid("produced unit is absent from ruleset content"))?;
-    if !definition.capabilities().producible_by_cities() {
-        return Ok(None);
-    }
     let domain = definition.capabilities().movement_domain.domain();
     let position = spawn_candidates(context, city).find(|candidate| {
-        let occupied = state
-            .units()
+        let can_share_city_center = kind == UnitKind::Merchant
+            && *candidate == city.center()
+            && current_units
+                .iter()
+                .filter(|unit| unit.position() == *candidate)
+                .all(|unit| {
+                    occupancy_policy.permits(city.owner_player_id(), unit.owner_player_id())
+                });
+        let occupied = current_units
             .iter()
             .any(|unit| unit.position() == *candidate);
-        if occupied && !(kind == UnitKind::Merchant && *candidate == city.center()) {
+        if occupied && !can_share_city_center {
             return false;
         }
         can_spawn_at(context, *candidate, domain)
@@ -32,7 +37,7 @@ pub(super) fn produced_unit(
     let Some(position) = position else {
         return Ok(None);
     };
-    let id = next_unit_id(state, city, kind)?;
+    let id = next_unit_id(current_units, city, kind)?;
     let worker_charges = u32::from(kind == UnitKind::Worker);
     Unit::builder(
         id,
@@ -72,12 +77,12 @@ fn can_spawn_at(
     matches!(terrain_entry_cost(tile, domain), MovementCost::Passable(_))
 }
 
-fn next_unit_id(state: &GameState, city: &City, kind: UnitKind) -> Result<UnitId, ProductionError> {
+fn next_unit_id(units: &[Unit], city: &City, kind: UnitKind) -> Result<UnitId, ProductionError> {
     let prefix = format!("{}_{}", city.id().as_str(), unit_name(kind));
     for index in 1_u64..=u64::MAX {
         let candidate =
             UnitId::new(format!("{prefix}_{index}")).map_err(|error| invalid(error.to_string()))?;
-        if state.units().iter().all(|unit| unit.id() != &candidate) {
+        if units.iter().all(|unit| unit.id() != &candidate) {
             return Ok(candidate);
         }
     }

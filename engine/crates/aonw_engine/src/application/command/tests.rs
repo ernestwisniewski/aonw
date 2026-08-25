@@ -1,10 +1,12 @@
 use aonw_domain::{
-    DiplomacyStateBuildError, GameState, GameStateBuildError, HexCoord, HexGridBounds, PlayerId,
-    StateRevision, TurnLifecycleBuildError, UnitId, UnitOccupancyPolicy,
+    CityId, DiplomacyStateBuildError, GameState, GameStateBuildError, HexCoord, HexGridBounds,
+    PlayerId, StateRevision, TurnLifecycleBuildError, UnitId, UnitOccupancyPolicy,
 };
 
 use super::{CanonicalEngineError, EventBudget, PlayerCommand};
-use crate::{MoveUnitCommand, UnitActionCommand};
+use crate::{
+    MoveUnitCommand, SelectCityExpansionHexCommand, ToggleWorkedHexCommand, UnitActionCommand,
+};
 
 #[test]
 fn player_commands_publish_reviewed_event_budgets() {
@@ -25,6 +27,25 @@ fn player_commands_publish_reviewed_event_budgets() {
     );
     assert_eq!(
         PlayerCommand::FortifyUnit(UnitActionCommand::new(0, &unit_id)).event_budget(&state),
+        EventBudget::NONE
+    );
+    let city_id = CityId::new("city-1").expect("city id");
+    assert_eq!(
+        PlayerCommand::ToggleWorkedHex(ToggleWorkedHexCommand::new(
+            0,
+            &city_id,
+            HexCoord::new(0, 0),
+        ))
+        .event_budget(&state),
+        EventBudget::NONE
+    );
+    assert_eq!(
+        PlayerCommand::SelectCityExpansionHex(SelectCityExpansionHexCommand::new(
+            0,
+            &city_id,
+            HexCoord::new(0, 0),
+        ))
+        .event_budget(&state),
         EventBudget::NONE
     );
 }

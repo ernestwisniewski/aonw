@@ -26,10 +26,8 @@ pub(crate) fn apply_rush(
     let queue = city
         .production_queue()
         .ok_or(CommandRejectionCode::ProductionQueueEmpty)?;
-    if matches!(queue.target(), CityProductionTarget::Project(_)) {
-        return Err(CommandRejectionCode::ProjectCannotBeRushed.into());
-    }
-    let cost = target_cost(state, context, queue.target())?;
+    let target = finite_target(queue.target())?;
+    let cost = target_cost(state, context, target)?;
     let remaining = cost.saturating_sub(queue.invested_production());
     if remaining <= 0 {
         return Err(CommandRejectionCode::RushProductionUnavailable.into());
@@ -77,7 +75,7 @@ pub(crate) fn apply_rush(
         context,
         city,
         advanced_city: &advanced_city,
-        target: queue.target(),
+        target,
         invested,
         cost,
         cities,
@@ -111,7 +109,7 @@ struct CompletionInput<'state, 'context, 'city> {
     context: EngineContext<'context>,
     city: &'city City,
     advanced_city: &'city City,
-    target: CityProductionTarget,
+    target: FiniteProductionTarget,
     invested: i64,
     cost: i64,
     cities: Vec<City>,
@@ -146,7 +144,7 @@ fn complete_target(
     }
     let overflow = invested.saturating_sub(cost);
     match target {
-        CityProductionTarget::Building(building) => {
+        FiniteProductionTarget::Building(building) => {
             let definition = context
                 .ruleset()
                 .production()
@@ -164,8 +162,14 @@ fn complete_target(
                     building,
                 )));
         }
-        CityProductionTarget::Unit(kind) => {
-            if let Some(unit) = produced_unit(state, context, advanced_city, kind)? {
+        FiniteProductionTarget::Unit(kind) => {
+            if let Some(unit) = produced_unit(
+                context,
+                advanced_city,
+                kind,
+                &resolution.units,
+                state.occupancy_policy(),
+            )? {
                 let produced_id = unit.id().clone();
                 let owner = unit.owner_player_id().clone();
                 resolution.units.push(unit);
@@ -196,7 +200,7 @@ fn complete_target(
                 );
             }
         }
-        CityProductionTarget::Wonder(_) => {
+        FiniteProductionTarget::Wonder(_) => {
             let resolved = resolve_completed_for_player(
                 state,
                 context,
@@ -209,7 +213,6 @@ fn complete_target(
             resolution.knowledge = resolved.knowledge;
             resolution.events = resolved.events;
         }
-        CityProductionTarget::Project(_) => unreachable!("project rush rejected"),
     }
     Ok(resolution)
 }
@@ -217,20 +220,35 @@ fn complete_target(
 fn target_cost(
     state: &GameState,
     context: EngineContext<'_>,
-    target: CityProductionTarget,
+    target: FiniteProductionTarget,
 ) -> Result<i64, ProductionError> {
     let production = context.ruleset().production();
     match target {
-        CityProductionTarget::Building(building) => production
+        FiniteProductionTarget::Building(building) => production
             .building(building)
             .and_then(|definition| production.building_cost(definition.base_cost(), pace(state))),
-        CityProductionTarget::Unit(unit) => production
+        FiniteProductionTarget::Unit(unit) => production
             .unit(unit)
             .and_then(|definition| production.unit_cost(definition.base_cost(), pace(state))),
-        CityProductionTarget::Wonder(wonder) => production
+        FiniteProductionTarget::Wonder(wonder) => production
             .wonder(wonder)
             .and_then(|definition| production.building_cost(definition.base_cost(), pace(state))),
-        CityProductionTarget::Project(_) => None,
     }
     .ok_or_else(|| invalid("queued production target is absent or its cost overflowed"))
+}
+
+fn finite_target(target: CityProductionTarget) -> Result<FiniteProductionTarget, ProductionError> {
+    match target {
+        CityProductionTarget::Building(building) => Ok(FiniteProductionTarget::Building(building)),
+        CityProductionTarget::Unit(unit) => Ok(FiniteProductionTarget::Unit(unit)),
+        CityProductionTarget::Wonder(wonder) => Ok(FiniteProductionTarget::Wonder(wonder)),
+        CityProductionTarget::Project(_) => Err(CommandRejectionCode::ProjectCannotBeRushed.into()),
+    }
+}
+
+#[derive(Clone, Copy)]
+enum FiniteProductionTarget {
+    Building(aonw_domain::CityBuildingType),
+    Unit(aonw_domain::UnitKind),
+    Wonder(aonw_domain::WonderType),
 }

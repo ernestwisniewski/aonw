@@ -191,6 +191,7 @@
         "crates/aonw_domain/src/movement_units.rs",
         "crates/aonw_domain/src/objective.rs",
         "crates/aonw_domain/src/research.rs",
+        "crates/aonw_domain/src/research/errors.rs",
         "crates/aonw_domain/src/shared/mod.rs",
         "crates/aonw_domain/src/shared/state_revision.rs",
         "crates/aonw_domain/src/transport/mod.rs",
@@ -207,8 +208,8 @@
       "uncoveredLines": 520
     },
     "aonw_engine": {
-      "countedLines": 13037,
-      "coveredLines": 11966,
+      "countedLines": 13405,
+      "coveredLines": 12349,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_engine/src/application/mod.rs",
@@ -285,6 +286,7 @@
         "crates/aonw_engine/src/production/spawn.rs",
         "crates/aonw_engine/src/production/supply.rs",
         "crates/aonw_engine/src/production/support.rs",
+        "crates/aonw_engine/src/production/turn.rs",
         "crates/aonw_engine/src/production/wonder.rs",
         "crates/aonw_engine/src/production/yield_rules.rs",
         "crates/aonw_engine/src/state_digest.rs",
@@ -313,11 +315,11 @@
         "crates/aonw_engine/src/worker/score.rs",
         "crates/aonw_engine/src/worker/turn.rs"
       ],
-      "uncoveredLines": 1071
+      "uncoveredLines": 1056
     },
     "aonw_local_runtime": {
       "countedLines": 4840,
-      "coveredLines": 4016,
+      "coveredLines": 4021,
       "group": "runtime",
       "missingFiles": [
         "crates/aonw_local_runtime/src/lib.rs",
@@ -361,7 +363,7 @@
         "crates/aonw_local_runtime/src/session/state.rs",
         "crates/aonw_local_runtime/src/turn_dispatch.rs"
       ],
-      "uncoveredLines": 824
+      "uncoveredLines": 819
     }
   },
   "provenance": {

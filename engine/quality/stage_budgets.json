@@ -63,7 +63,7 @@
       "timeout-invalid-scope-rejected"
     ],
     "maxEventsPerCommand": 4,
-    "maxMeasuredPayloadBytes": 210610,
+    "maxMeasuredPayloadBytes": 210623,
     "maxMeasuredAllocations": 25231,
     "maxMeasuredAllocatedBytes": 4514505,
     "maxWorkCounters": {

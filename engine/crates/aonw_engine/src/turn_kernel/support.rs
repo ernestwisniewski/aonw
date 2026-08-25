@@ -211,6 +211,10 @@ pub(crate) fn processor_is_required(
         TurnProcessor::WorkerJobs => state.units().iter().any(|unit| {
             owns_scope(unit.owner_player_id()) && unit.activity().worker_job().is_some()
         }),
+        TurnProcessor::Production => state
+            .cities()
+            .iter()
+            .any(|city| owns_scope(city.owner_player_id()) && city.production_queue().is_some()),
         TurnProcessor::QueuedMovement => state
             .units()
             .iter()
@@ -232,12 +236,22 @@ pub(crate) fn processor_is_required(
             }) if owns_scope(owner_player_id)
         ),
         TurnProcessor::Economy => economy_is_required(state, &owns_scope),
-        TurnProcessor::Research => state.research().players().iter().any(|(player, research)| {
-            owns_scope(player)
-                && (research.active_technology_id().is_some()
-                    || !research.progress_by_technology_id().is_empty()
-                    || research.science_overflow() > 0)
-        }),
+        TurnProcessor::Research => {
+            state.research().players().iter().any(|(player, research)| {
+                owns_scope(player)
+                    && (research.active_technology_id().is_some()
+                        || !research.progress_by_technology_id().is_empty()
+                        || research.science_overflow() > 0)
+            }) || state.cities().iter().any(|city| {
+                owns_scope(city.owner_player_id())
+                    && city.production_queue().is_some_and(|queue| {
+                        queue.target()
+                            == aonw_domain::CityProductionTarget::Project(
+                                aonw_domain::CityProjectType::Research,
+                            )
+                    })
+            })
+        }
         TurnProcessor::Agreements => {
             state
                 .diplomacy()
@@ -271,11 +285,7 @@ pub(crate) fn processor_is_required(
 }
 
 fn economy_is_required(state: &GameState, owns_scope: &impl Fn(&PlayerId) -> bool) -> bool {
-    state
-        .cities()
-        .iter()
-        .any(|city| owns_scope(city.owner_player_id()) && city.production_queue().is_some())
-        || state.economy().player_gold().keys().any(owns_scope)
+    state.economy().player_gold().keys().any(owns_scope)
         || state
             .economy()
             .player_war_weariness()

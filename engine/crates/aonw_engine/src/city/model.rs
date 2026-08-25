@@ -378,3 +378,40 @@ impl CityExpansionOptions {
         &self.candidates
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use aonw_domain::{CityId, HexCoord, UnitId};
+
+    use super::{CityExpansionOptions, CityFoundingOptions, CityWorkedHexOptions};
+
+    #[test]
+    fn city_option_views_expose_their_stable_identity_and_location() {
+        let founder_id = UnitId::new("founder").expect("unit id");
+        let founding = CityFoundingOptions::new(
+            founder_id.clone(),
+            HexCoord::new(1, 2),
+            Vec::new(),
+            Vec::new(),
+            0,
+            0,
+        );
+        assert_eq!(founding.founder_unit_id(), &founder_id);
+
+        let city_id = CityId::new("city").expect("city id");
+        let worked = CityWorkedHexOptions::new(
+            city_id.clone(),
+            HexCoord::new(2, 3),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            0,
+        );
+        assert_eq!(worked.city_id(), &city_id);
+        assert_eq!(worked.center(), HexCoord::new(2, 3));
+
+        let expansion = CityExpansionOptions::new(city_id.clone(), Vec::new(), None, Vec::new());
+        assert_eq!(expansion.city_id(), &city_id);
+        assert_eq!(expansion.preferred_hex(), None);
+    }
+}

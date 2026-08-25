@@ -33,6 +33,12 @@ struct SettlementPhase {
     founded_city_ids: Vec<CityId>,
 }
 
+struct TurnPreparationPhase {
+    state: GameState,
+    events: Vec<DomainEvent>,
+    founded_city_ids: Vec<CityId>,
+}
+
 fn advance_settlement_phase(
     state: GameState,
     map: &MapDefinition,
@@ -48,6 +54,25 @@ fn advance_settlement_phase(
         state: worker.state,
         events,
         founded_city_ids,
+    })
+}
+
+fn advance_turn_preparation(
+    state: GameState,
+    map: &MapDefinition,
+    ruleset: &RulesetDefinition,
+    scope: &[PlayerId],
+) -> Result<TurnPreparationPhase, CanonicalEngineError> {
+    let settlement = advance_settlement_phase(state, map, ruleset, scope)?;
+    let production =
+        crate::production::advance_turn_production(settlement.state, map, ruleset, scope)
+            .map_err(CanonicalEngineError::Production)?;
+    let mut events = settlement.events;
+    events.extend(production.events);
+    Ok(TurnPreparationPhase {
+        state: production.state,
+        events,
+        founded_city_ids: settlement.founded_city_ids,
     })
 }
 
@@ -162,13 +187,13 @@ pub(crate) fn apply_end_turn(
             ruleset_hash,
         ));
     }
-    let settlement = advance_settlement_phase(
+    let preparation = advance_turn_preparation(
         state,
         context.map(),
         context.ruleset(),
         &progress.reset_scope,
     )?;
-    let state = settlement.state;
+    let state = preparation.state;
     let movement = match advance_turn_movement(
         &state,
         context.map(),
@@ -206,7 +231,7 @@ pub(crate) fn apply_end_turn(
         invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     } = movement;
-    let events = sequential_phase_events(settlement.events, movement_events, command.player_id());
+    let events = sequential_phase_events(preparation.events, movement_events, command.player_id());
     apply_update(
         state,
         next_lifecycle,
@@ -220,6 +245,7 @@ pub(crate) fn apply_end_turn(
             TurnProcessor::Lifecycle,
             TurnProcessor::CityFounding,
             TurnProcessor::WorkerJobs,
+            TurnProcessor::Production,
             TurnProcessor::MovementReset,
             TurnProcessor::QueuedMovement,
             TurnProcessor::TradeRoutes,
@@ -238,7 +264,7 @@ pub(crate) fn apply_end_turn(
             executions,
             invalidated_order_unit_ids,
             finished_auto_explore_unit_ids,
-            settlement.founded_city_ids,
+            preparation.founded_city_ids,
         )
     })
 }
@@ -392,10 +418,10 @@ fn finalize_simultaneous(
     let current_turn = state.turn();
     let combat =
         crate::combat::resolve_intended_attacks(state, map, ruleset).map_err(combat_phase_error)?;
-    let settlement = advance_settlement_phase(combat.state, map, ruleset, scope)?;
-    let movement = match advance_turn_movement(&settlement.state, map, ruleset, scope) {
+    let preparation = advance_turn_preparation(combat.state, map, ruleset, scope)?;
+    let movement = match advance_turn_movement(&preparation.state, map, ruleset, scope) {
         Ok(movement) => movement,
-        Err(code) => return Ok(reject(settlement.state, code, map_hash, ruleset_hash)),
+        Err(code) => return Ok(reject(preparation.state, code, map_hash, ruleset_hash)),
     };
     let TurnMovementUpdate {
         units,
@@ -413,11 +439,11 @@ fn finalize_simultaneous(
         scope,
         skipped,
         combat.events,
-        settlement.events,
+        preparation.events,
         movement_events,
     );
     apply_update(
-        settlement.state,
+        preparation.state,
         lifecycle,
         Some(next_turn),
         units,
@@ -431,6 +457,7 @@ fn finalize_simultaneous(
             TurnProcessor::Combat,
             TurnProcessor::CityFounding,
             TurnProcessor::WorkerJobs,
+            TurnProcessor::Production,
             TurnProcessor::MovementReset,
             TurnProcessor::QueuedMovement,
             TurnProcessor::TradeRoutes,
@@ -449,7 +476,7 @@ fn finalize_simultaneous(
             executions,
             invalidated_order_unit_ids,
             finished_auto_explore_unit_ids,
-            settlement.founded_city_ids,
+            preparation.founded_city_ids,
         )
     })
 }
