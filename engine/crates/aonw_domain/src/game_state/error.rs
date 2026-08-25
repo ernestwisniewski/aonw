@@ -78,6 +78,22 @@ pub enum GameStateBuildError {
         /// Referenced city.
         city_id: CityId,
     },
+    /// More than one artifact occupies the single canonical city slot.
+    CityArtifactSlotOccupied {
+        /// City with the duplicate storage slot.
+        city_id: CityId,
+        /// First artifact in canonical identifier order.
+        first_artifact_id: ArtifactId,
+        /// Second artifact in canonical identifier order.
+        second_artifact_id: ArtifactId,
+    },
+    /// Excavation duration is zero or its unit left the source coordinate.
+    InvalidArtifactExcavation {
+        /// Artifact carrying invalid excavation state.
+        artifact_id: ArtifactId,
+        /// Referenced excavating unit.
+        unit_id: UnitId,
+    },
     /// Unit and artifact ownership references differ.
     ArtifactUnitMismatch {
         /// Artifact carrying the invalid ownership.
@@ -204,6 +220,21 @@ impl core::fmt::Display for GameStateBuildError {
             } => write!(
                 formatter,
                 "artifact {artifact_id} references missing city {city_id}"
+            ),
+            Self::CityArtifactSlotOccupied {
+                city_id,
+                first_artifact_id,
+                second_artifact_id,
+            } => write!(
+                formatter,
+                "city {city_id} stores both artifacts {first_artifact_id} and {second_artifact_id}"
+            ),
+            Self::InvalidArtifactExcavation {
+                artifact_id,
+                unit_id,
+            } => write!(
+                formatter,
+                "artifact {artifact_id} has invalid excavation state for unit {unit_id}"
             ),
             Self::ArtifactUnitMismatch {
                 artifact_id,

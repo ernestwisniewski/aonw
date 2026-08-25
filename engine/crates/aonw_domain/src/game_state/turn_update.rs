@@ -5,6 +5,19 @@ use crate::{
 
 use super::{GameState, GameStateBuildError};
 
+/// Complete replacement produced by one authoritative artifact transition.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArtifactStateUpdate {
+    /// Revision after the transition.
+    pub revision: StateRevision,
+    /// Canonical units after excavation, carrying, or storage.
+    pub units: Vec<Unit>,
+    /// Canonical artifact locations after the transition.
+    pub artifacts: Vec<WorldArtifact>,
+    /// Economy after an atomic artifact-and-gold transfer.
+    pub economy: EconomyState,
+}
+
 /// Complete replacement produced by one authoritative combat transition.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CombatStateUpdate {
@@ -59,6 +72,22 @@ impl TurnAdvance {
 }
 
 impl GameState {
+    /// Consumes the aggregate and applies one complete artifact update.
+    ///
+    /// # Errors
+    /// Returns an error when unit, artifact, or economy invariants fail.
+    pub fn into_after_artifact(
+        self,
+        update: ArtifactStateUpdate,
+    ) -> Result<Self, GameStateBuildError> {
+        let mut builder = self.into_builder();
+        builder.revision = update.revision;
+        builder.units = update.units;
+        builder.artifacts = update.artifacts;
+        builder.economy = update.economy;
+        builder.try_build()
+    }
+
     /// Consumes the aggregate and applies one complete city command update.
     ///
     /// # Errors

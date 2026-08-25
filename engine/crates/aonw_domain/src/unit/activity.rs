@@ -254,4 +254,15 @@ impl UnitActivity {
             excavating_artifact_id: self.excavating_artifact_id.clone(),
         }
     }
+
+    /// Replaces artifact excavation while preserving independent activity slots.
+    #[must_use]
+    pub fn with_artifact_excavation(&self, artifact_id: Option<ArtifactId>) -> Self {
+        Self {
+            worker_job: self.worker_job.clone(),
+            city_founding_job: self.city_founding_job.clone(),
+            worker_assignment: self.worker_assignment,
+            excavating_artifact_id: artifact_id,
+        }
+    }
 }

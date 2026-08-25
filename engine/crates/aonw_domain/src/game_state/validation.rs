@@ -210,7 +210,11 @@ pub(super) fn validate_artifacts(
                     });
                 }
             }
-            WorldArtifactLocation::Excavation { unit_id, .. } => {
+            WorldArtifactLocation::Excavation {
+                unit_id,
+                coordinate,
+                remaining_turns,
+            } => {
                 let unit = find_unit(units, unit_id).ok_or_else(|| {
                     GameStateBuildError::ArtifactUnitNotFound {
                         artifact_id: artifact.id().clone(),
@@ -223,8 +227,29 @@ pub(super) fn validate_artifacts(
                         unit_id: unit_id.clone(),
                     });
                 }
+                if *remaining_turns == 0 || unit.position() != *coordinate {
+                    return Err(GameStateBuildError::InvalidArtifactExcavation {
+                        artifact_id: artifact.id().clone(),
+                        unit_id: unit_id.clone(),
+                    });
+                }
             }
         }
+    }
+    let mut stored = artifacts
+        .iter()
+        .filter_map(|artifact| match artifact.location() {
+            WorldArtifactLocation::Stored(city_id) => Some((city_id, artifact.id())),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    stored.sort_unstable();
+    if let Some(pair) = stored.windows(2).find(|pair| pair[0].0 == pair[1].0) {
+        return Err(GameStateBuildError::CityArtifactSlotOccupied {
+            city_id: pair[0].0.clone(),
+            first_artifact_id: pair[0].1.clone(),
+            second_artifact_id: pair[1].1.clone(),
+        });
     }
     for unit in units {
         validate_unit_artifacts(unit, artifacts)?;

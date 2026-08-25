@@ -145,8 +145,8 @@
       "uncoveredLines": 45
     },
     "aonw_domain": {
-      "countedLines": 4833,
-      "coveredLines": 4313,
+      "countedLines": 5157,
+      "coveredLines": 4642,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_domain/src/city/mod.rs",
@@ -198,6 +198,7 @@
         "crates/aonw_domain/src/unit/activity.rs",
         "crates/aonw_domain/src/unit/army.rs",
         "crates/aonw_domain/src/unit/entity.rs",
+        "crates/aonw_domain/src/unit/entity/artifact.rs",
         "crates/aonw_domain/src/unit/entity/logistics.rs",
         "crates/aonw_domain/src/unit/entity/worker.rs",
         "crates/aonw_domain/src/unit/merchant_route.rs",
@@ -205,7 +206,7 @@
         "crates/aonw_domain/src/unit_kind.rs",
         "crates/aonw_domain/src/unit_posture.rs"
       ],
-      "uncoveredLines": 520
+      "uncoveredLines": 515
     },
     "aonw_engine": {
       "countedLines": 13405,

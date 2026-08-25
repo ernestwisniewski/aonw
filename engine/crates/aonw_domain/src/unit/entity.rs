@@ -5,6 +5,7 @@ use crate::{
 use super::CityFoundingJob;
 use super::{ArmyTroop, MerchantTradeRoute, TroopKind, UnitActivity, WorkerJob};
 
+mod artifact;
 mod logistics;
 mod worker;
 

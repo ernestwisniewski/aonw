@@ -28,6 +28,12 @@ fn digest_changes_with_unit_identity_and_movement() {
         candidate.units[0].col = 1;
         candidate.units[0].row = 0;
         candidate.units[0].queued_path.as_mut().expect("path").steps[0] = movement_step(1, 0, 0, 0);
+        match &mut candidate.artifacts[0].location {
+            WorldArtifactLocationDto::Excavation { coordinate, .. } => {
+                *coordinate = super::fixture::coordinate(1, 0);
+            }
+            _ => panic!("artifact fixture should be under excavation"),
+        }
     });
     assert_unit_digest_change(&source, baseline, "movement balance", |candidate| {
         candidate.units[0].movement_units = 5;

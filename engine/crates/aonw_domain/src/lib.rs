@@ -29,7 +29,9 @@ mod unit;
 mod unit_kind;
 mod unit_posture;
 
-pub use artifact::{WorldArtifact, WorldArtifactLocation, WorldArtifactType};
+pub use artifact::{
+    ArtifactTransitionError, WorldArtifact, WorldArtifactLocation, WorldArtifactType,
+};
 pub use city::{
     City, CityBuildError, CityBuilder, CityBuildingType, CityProductionQueue,
     CityProductionQueueBuildError, CityProductionTarget, CityProjectType, CitySpecializationType,
@@ -50,7 +52,7 @@ pub use economy::{
 pub use fog::{FogOfWar, FogVisibility, PlayerFog};
 pub use game_state::{
     GameState, GameStateBuildError, GameStateBuilder, UnitOccupancyPolicy,
-    turn_update::{CombatStateUpdate, ProductionStateUpdate, TurnAdvance},
+    turn_update::{ArtifactStateUpdate, CombatStateUpdate, ProductionStateUpdate, TurnAdvance},
 };
 pub use hex_coord::HexCoord;
 pub use hex_grid::{HexGridBounds, HexTileIndex};
