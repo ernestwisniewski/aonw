@@ -1,10 +1,10 @@
 use core::cmp::Ordering;
 
-use aonw_domain::{CityId, HexCoord, UnitId};
+use aonw_domain::{ArtifactId, CityId, HexCoord, UnitId};
 
 use crate::player_view::{
-    CityFoundingDraftView, PendingActionView, PlayerCityView, PlayerFieldImprovementView,
-    PlayerRoadView, PlayerTurnLifecycleView, PlayerUnitView,
+    CityFoundingDraftView, PendingActionView, PlayerArtifactView, PlayerCityView,
+    PlayerFieldImprovementView, PlayerRoadView, PlayerTurnLifecycleView, PlayerUnitView,
 };
 
 /// Recipient-safe view delta produced by one dispatch.
@@ -24,6 +24,10 @@ pub struct PlayerViewPatch {
     pub upserted_cities: Box<[PlayerCityView]>,
     /// Cities no longer known to this recipient.
     pub removed_city_ids: Box<[CityId]>,
+    /// New or changed visible artifacts.
+    pub upserted_artifacts: Box<[PlayerArtifactView]>,
+    /// Artifacts no longer visible.
+    pub removed_artifact_ids: Box<[ArtifactId]>,
     /// New or changed field improvements known to the recipient.
     pub upserted_field_improvements: Box<[PlayerFieldImprovementView]>,
     /// Field improvements no longer known to the recipient.
@@ -42,6 +46,7 @@ pub(crate) struct ProjectedView {
     turn: PlayerTurnLifecycleView,
     units: Vec<PlayerUnitView>,
     cities: Vec<PlayerCityView>,
+    artifacts: Vec<PlayerArtifactView>,
     field_improvements: Vec<PlayerFieldImprovementView>,
     roads: Vec<PlayerRoadView>,
 }
@@ -51,6 +56,7 @@ impl ProjectedView {
         turn: PlayerTurnLifecycleView,
         units: Vec<PlayerUnitView>,
         cities: Vec<PlayerCityView>,
+        artifacts: Vec<PlayerArtifactView>,
         field_improvements: Vec<PlayerFieldImprovementView>,
         roads: Vec<PlayerRoadView>,
     ) -> Self {
@@ -58,6 +64,7 @@ impl ProjectedView {
             turn,
             units,
             cities,
+            artifacts,
             field_improvements,
             roads,
         }
@@ -88,6 +95,8 @@ pub(crate) fn diff_view(
     let after_turn = after.turn;
     let before_cities = before.cities;
     let after_cities = after.cities;
+    let before_artifacts = before.artifacts;
+    let after_artifacts = after.artifacts;
     let before_improvements = before.field_improvements;
     let after_improvements = after.field_improvements;
     let before_roads = before.roads;
@@ -120,6 +129,8 @@ pub(crate) fn diff_view(
     removed_unit_ids.extend(before.map(|unit| unit.id().clone()));
     upserted_units.extend(after);
     let (upserted_cities, removed_city_ids) = diff_cities(before_cities, after_cities);
+    let (upserted_artifacts, removed_artifact_ids) =
+        diff_artifacts(before_artifacts, after_artifacts);
     let (upserted_field_improvements, removed_field_improvement_coordinates) =
         diff_improvements(before_improvements, after_improvements);
     let (upserted_roads, removed_road_coordinates) = diff_roads(before_roads, after_roads);
@@ -131,6 +142,8 @@ pub(crate) fn diff_view(
         removed_unit_ids: removed_unit_ids.into_boxed_slice(),
         upserted_cities,
         removed_city_ids,
+        upserted_artifacts,
+        removed_artifact_ids,
         upserted_field_improvements,
         removed_field_improvement_coordinates,
         upserted_roads,
@@ -138,6 +151,32 @@ pub(crate) fn diff_view(
         pending_action,
         city_founding_draft,
     }
+}
+
+fn diff_artifacts(
+    before: Vec<PlayerArtifactView>,
+    after: Vec<PlayerArtifactView>,
+) -> (Box<[PlayerArtifactView]>, Box<[ArtifactId]>) {
+    let mut before = before.into_iter().peekable();
+    let mut after = after.into_iter().peekable();
+    let mut upserted = Vec::new();
+    let mut removed = Vec::new();
+    while let (Some(previous), Some(current)) = (before.peek(), after.peek()) {
+        match previous.id().cmp(current.id()) {
+            Ordering::Less => removed.push(before.next().expect("previous artifact").id().clone()),
+            Ordering::Equal => {
+                let previous = before.next().expect("previous artifact");
+                let current = after.next().expect("current artifact");
+                if previous != current {
+                    upserted.push(current);
+                }
+            }
+            Ordering::Greater => upserted.push(after.next().expect("current artifact")),
+        }
+    }
+    removed.extend(before.map(|artifact| artifact.id().clone()));
+    upserted.extend(after);
+    (upserted.into_boxed_slice(), removed.into_boxed_slice())
 }
 
 fn diff_improvements(
@@ -233,8 +272,8 @@ mod tests {
         let patch = diff_view(
             4,
             5,
-            ProjectedView::new(turn, before, Vec::new(), Vec::new(), Vec::new()),
-            ProjectedView::new(turn, after, Vec::new(), Vec::new(), Vec::new()),
+            ProjectedView::new(turn, before, Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+            ProjectedView::new(turn, after, Vec::new(), Vec::new(), Vec::new(), Vec::new()),
             None,
             None,
         );

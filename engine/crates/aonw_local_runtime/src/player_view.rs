@@ -5,9 +5,12 @@ use aonw_domain::{
 
 use crate::SessionStamp;
 
+mod artifact;
 mod city;
 mod infrastructure;
 
+pub(crate) use artifact::visible_artifacts;
+pub use artifact::{PlayerArtifactLocationView, PlayerArtifactView};
 pub use city::{CityFoundingDraftView, OwnedCityPlanningView, PlayerCityView};
 pub(crate) use city::{city_founding_draft, visible_cities};
 pub(crate) use infrastructure::visible_infrastructure;
@@ -27,6 +30,8 @@ pub struct PlayerUnitView {
     worker_build_charges: u32,
     worker_job: Option<WorkerJob>,
     worker_assignment: Option<HexCoord>,
+    carried_artifact_id: Option<aonw_domain::ArtifactId>,
+    excavating_artifact_id: Option<aonw_domain::ArtifactId>,
 }
 
 impl PlayerUnitView {
@@ -51,6 +56,8 @@ impl PlayerUnitView {
             worker_assignment: disclose_worker
                 .then(|| unit.activity().worker_assignment())
                 .flatten(),
+            carried_artifact_id: unit.carried_artifact_id().cloned(),
+            excavating_artifact_id: unit.activity().excavating_artifact_id().cloned(),
         }
     }
 
@@ -109,6 +116,16 @@ impl PlayerUnitView {
     pub const fn worker_assignment(&self) -> Option<HexCoord> {
         self.worker_assignment
     }
+    /// Returns the artifact carried by this visible unit.
+    #[must_use]
+    pub const fn carried_artifact_id(&self) -> Option<&aonw_domain::ArtifactId> {
+        self.carried_artifact_id.as_ref()
+    }
+    /// Returns the artifact currently excavated by this visible unit.
+    #[must_use]
+    pub const fn excavating_artifact_id(&self) -> Option<&aonw_domain::ArtifactId> {
+        self.excavating_artifact_id.as_ref()
+    }
 }
 
 /// Recipient-owned action currently awaiting player input.
@@ -155,6 +172,7 @@ pub struct PlayerViewSnapshot {
     city_founding_draft: Option<CityFoundingDraftView>,
     units: Box<[PlayerUnitView]>,
     cities: Box<[PlayerCityView]>,
+    artifacts: Box<[PlayerArtifactView]>,
     field_improvements: Box<[PlayerFieldImprovementView]>,
     roads: Box<[PlayerRoadView]>,
 }
@@ -170,6 +188,7 @@ impl PlayerViewSnapshot {
             city_founding_draft: city_founding_draft(state, actor),
             units: visible_units(state, actor).into_boxed_slice(),
             cities: visible_cities(state, actor).into_boxed_slice(),
+            artifacts: visible_artifacts(state, actor).into_boxed_slice(),
             field_improvements: field_improvements.into_boxed_slice(),
             roads: roads.into_boxed_slice(),
         }
@@ -209,6 +228,11 @@ impl PlayerViewSnapshot {
     #[must_use]
     pub const fn cities(&self) -> &[PlayerCityView] {
         &self.cities
+    }
+    /// Returns artifacts visible to this recipient.
+    #[must_use]
+    pub const fn artifacts(&self) -> &[PlayerArtifactView] {
+        &self.artifacts
     }
     /// Returns field improvements known to this recipient.
     #[must_use]

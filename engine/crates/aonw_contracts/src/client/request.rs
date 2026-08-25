@@ -85,6 +85,25 @@ pub enum ClientRequestBodyDto {
     deny_unknown_fields
 )]
 pub enum ClientCommandDto {
+    /// Starts excavating the artifact at one controlled unit.
+    StartArtifactExcavation {
+        expected_revision: u64,
+        unit_id: String,
+    },
+    /// Stores the artifact carried by one controlled unit.
+    StoreArtifactInCity {
+        expected_revision: u64,
+        unit_id: String,
+        /// Optional owned city; omission selects the city under the unit.
+        city_id: Option<String>,
+    },
+    /// Transfers one stored artifact and optional offered gold to another player.
+    TradeArtifact {
+        expected_revision: u64,
+        target_player_id: String,
+        offered_artifact_id: String,
+        offered_gold: i64,
+    },
     /// Schedules a validated city-founding job.
     FoundCity {
         /// Revision observed by the client.

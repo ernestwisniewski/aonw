@@ -4,6 +4,7 @@ use crate::{CoordinateDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto};
 
 use super::MapViewDto;
 
+mod artifact;
 mod city;
 mod economy;
 mod event;
@@ -14,6 +15,7 @@ mod rejection;
 mod session;
 mod worker;
 
+pub use artifact::{PlayerArtifactLocationViewDto, PlayerArtifactViewDto};
 pub use city::{
     CityExpansionCandidateDto, CityFoundingDraftViewDto, OwnedCityPlanningViewDto,
     PlayerCityViewDto,
@@ -137,6 +139,8 @@ pub enum ClientResponseBodyDto {
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ClientFeatureDto {
+    /// Artifact excavation, storage, trade, and recipient-safe projection.
+    Artifacts,
     /// City founding, worked territory, expansion, and city projections.
     Cities,
     /// Combat preview and authoritative visible attacks.
@@ -199,6 +203,8 @@ pub struct PlayerViewSnapshotDto {
     pub units: Vec<PlayerUnitViewDto>,
     /// Cities currently known to the recipient.
     pub cities: Vec<PlayerCityViewDto>,
+    /// Artifacts currently visible to the recipient.
+    pub artifacts: Vec<PlayerArtifactViewDto>,
     /// Field improvements currently known to the recipient.
     pub field_improvements: Vec<FieldImprovementViewDto>,
     /// Roads currently known to the recipient.
@@ -243,6 +249,10 @@ pub struct PlayerUnitViewDto {
     pub worker_job: Option<WorkerJobViewDto>,
     /// Current worker assignment, when visible.
     pub worker_assignment: Option<CoordinateDto>,
+    /// Artifact carried by this visible unit, when any.
+    pub carried_artifact_id: Option<String>,
+    /// Artifact currently excavated by this visible unit, when any.
+    pub excavating_artifact_id: Option<String>,
 }
 
 /// Recipient-safe view update produced by one command.
@@ -263,6 +273,10 @@ pub struct PlayerViewPatchDto {
     pub upserted_cities: Vec<PlayerCityViewDto>,
     /// Cities no longer known to the recipient.
     pub removed_city_ids: Vec<String>,
+    /// New or changed visible artifacts.
+    pub upserted_artifacts: Vec<PlayerArtifactViewDto>,
+    /// Artifacts no longer visible to the recipient.
+    pub removed_artifact_ids: Vec<String>,
     /// New or changed known field improvements.
     pub upserted_field_improvements: Vec<FieldImprovementViewDto>,
     /// Field-improvement coordinates no longer known.

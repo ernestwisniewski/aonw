@@ -3,38 +3,29 @@ use aonw_contract_mapping::{
     decode_improvement, decode_troop, decode_unit_kind,
 };
 use aonw_contracts::ReplayCommandDto;
-use aonw_domain::{CityConquestAction, CityId, UnitId};
+use aonw_domain::{ArtifactId, CityConquestAction, CityId, PlayerId, UnitId};
 
 use super::{
     PersistenceError, ReplayRuntimeCommand, decode_found_city, decode_merchant_city,
     decode_select_city_expansion_hex, decode_toggle_worked_hex, decode_unit_action,
     decode_worker_unit,
 };
-use crate::{AttackHexRequest, AutoExploreUnitRequest, DetachTroopRequest, MoveUnitRequest};
+use crate::{
+    ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, DetachTroopRequest,
+    MoveUnitRequest,
+};
 use crate::{ProductionCommandRequest, TurnCommandRequest};
 
 pub(super) fn decode_command(
     command: &ReplayCommandDto,
 ) -> Result<ReplayRuntimeCommand, PersistenceError> {
     match command {
-        ReplayCommandDto::FoundCity {
-            expected_revision,
-            founder_unit_id,
-            controlled_hexes,
-        } => decode_found_city(*expected_revision, founder_unit_id, controlled_hexes)
-            .map(ReplayRuntimeCommand::FoundCity),
-        ReplayCommandDto::ToggleWorkedHex {
-            expected_revision,
-            city_id,
-            target,
-        } => decode_toggle_worked_hex(*expected_revision, city_id, *target)
-            .map(ReplayRuntimeCommand::ToggleWorkedHex),
-        ReplayCommandDto::SelectCityExpansionHex {
-            expected_revision,
-            city_id,
-            target,
-        } => decode_select_city_expansion_hex(*expected_revision, city_id, *target)
-            .map(ReplayRuntimeCommand::SelectCityExpansionHex),
+        command @ (ReplayCommandDto::StartArtifactExcavation { .. }
+        | ReplayCommandDto::StoreArtifactInCity { .. }
+        | ReplayCommandDto::TradeArtifact { .. }) => decode_artifact_command(command),
+        command @ (ReplayCommandDto::FoundCity { .. }
+        | ReplayCommandDto::ToggleWorkedHex { .. }
+        | ReplayCommandDto::SelectCityExpansionHex { .. }) => decode_city_command(command),
         command @ (ReplayCommandDto::StartBuilding { .. }
         | ReplayCommandDto::StartUnitProduction { .. }
         | ReplayCommandDto::StartCityProject { .. }
@@ -116,6 +107,73 @@ pub(super) fn decode_command(
             Ok(decode_turn_command(command))
         }
     }
+}
+
+fn decode_city_command(
+    command: &ReplayCommandDto,
+) -> Result<ReplayRuntimeCommand, PersistenceError> {
+    match command {
+        ReplayCommandDto::FoundCity {
+            expected_revision,
+            founder_unit_id,
+            controlled_hexes,
+        } => decode_found_city(*expected_revision, founder_unit_id, controlled_hexes)
+            .map(ReplayRuntimeCommand::FoundCity),
+        ReplayCommandDto::ToggleWorkedHex {
+            expected_revision,
+            city_id,
+            target,
+        } => decode_toggle_worked_hex(*expected_revision, city_id, *target)
+            .map(ReplayRuntimeCommand::ToggleWorkedHex),
+        ReplayCommandDto::SelectCityExpansionHex {
+            expected_revision,
+            city_id,
+            target,
+        } => decode_select_city_expansion_hex(*expected_revision, city_id, *target)
+            .map(ReplayRuntimeCommand::SelectCityExpansionHex),
+        _ => unreachable!("city decoder received another command family"),
+    }
+}
+
+fn decode_artifact_command(
+    command: &ReplayCommandDto,
+) -> Result<ReplayRuntimeCommand, PersistenceError> {
+    let request = match command {
+        ReplayCommandDto::StartArtifactExcavation {
+            expected_revision,
+            unit_id,
+        } => ArtifactCommandRequest::StartExcavation {
+            expected_revision: *expected_revision,
+            unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
+        },
+        ReplayCommandDto::StoreArtifactInCity {
+            expected_revision,
+            unit_id,
+            city_id,
+        } => ArtifactCommandRequest::StoreInCity {
+            expected_revision: *expected_revision,
+            unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
+            city_id: city_id
+                .as_ref()
+                .map(|value| CityId::new(value.clone()).map_err(PersistenceError::InvalidCity))
+                .transpose()?,
+        },
+        ReplayCommandDto::TradeArtifact {
+            expected_revision,
+            target_player_id,
+            offered_artifact_id,
+            offered_gold,
+        } => ArtifactCommandRequest::Trade {
+            expected_revision: *expected_revision,
+            target_player_id: PlayerId::new(target_player_id.clone())
+                .map_err(PersistenceError::InvalidActor)?,
+            offered_artifact_id: ArtifactId::new(offered_artifact_id.clone())
+                .map_err(PersistenceError::InvalidArtifact)?,
+            offered_gold: *offered_gold,
+        },
+        _ => unreachable!("artifact decoder received another command family"),
+    };
+    Ok(ReplayRuntimeCommand::Artifact(request))
 }
 
 fn decode_production_command(

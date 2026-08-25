@@ -14,17 +14,17 @@ authoritative-inventory engine/migration/authoritative_inventory
 expected-case-count 120
 expected-round-trip-count 9
 expected-engine-parity-count 9
-expected-blocked-count 72
-expected-historical-count 39
+expected-blocked-count 64
+expected-historical-count 47
 
-case artifact-city-slot-full-rejected artifacts StoreArtifactInCity rejected city_artifact_slot_full blocked reference-only CP12 awaits-independent-current-contract-review -
-case artifact-excavation-accepted artifacts StartArtifactExcavation accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case artifact-not-found-rejected artifacts StartArtifactExcavation rejected artifact_not_found blocked reference-only CP12 awaits-independent-current-contract-review -
-case artifact-store-accepted artifacts StoreArtifactInCity accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case artifact-trade-accepted artifacts TradeArtifact accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case artifact-trade-invalid-actor-rejected artifacts TradeArtifact rejected invalid_artifact_trade_actor blocked reference-only CP12 awaits-independent-current-contract-review -
-case artifact-trade-requires-acceptance-rejected artifacts TradeArtifact rejected artifact_trade_requires_acceptance blocked reference-only CP12 awaits-independent-current-contract-review -
-case artifact-unit-not-controlled-rejected artifacts StartArtifactExcavation rejected unit_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
+case artifact-city-slot-full-rejected artifacts StoreArtifactInCity rejected city_artifact_slot_full historical reference-only current superseded-by-current-contract -
+case artifact-excavation-accepted artifacts StartArtifactExcavation accepted - historical reference-only current superseded-by-current-contract -
+case artifact-not-found-rejected artifacts StartArtifactExcavation rejected artifact_not_found historical reference-only current superseded-by-current-contract -
+case artifact-store-accepted artifacts StoreArtifactInCity accepted - historical reference-only current superseded-by-current-contract -
+case artifact-trade-accepted artifacts TradeArtifact accepted - historical reference-only current superseded-by-current-contract -
+case artifact-trade-invalid-actor-rejected artifacts TradeArtifact rejected invalid_artifact_trade_actor historical reference-only current superseded-by-current-contract -
+case artifact-trade-requires-acceptance-rejected artifacts TradeArtifact rejected artifact_trade_requires_acceptance historical reference-only current superseded-by-current-contract -
+case artifact-unit-not-controlled-rejected artifacts StartArtifactExcavation rejected unit_not_controlled historical reference-only current superseded-by-current-contract -
 case auto-explore-adjacent-accepted auto-explore AutoExploreUnit accepted - historical reference-only current superseded-by-current-contract -
 case auto-explore-no-target-rejected auto-explore AutoExploreUnit rejected auto_explore_no_target historical reference-only current superseded-by-current-contract -
 case auto-explore-wrong-actor-rejected auto-explore AutoExploreUnit rejected unit_not_controlled historical reference-only current superseded-by-current-contract -

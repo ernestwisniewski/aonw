@@ -1,5 +1,7 @@
 use aonw_engine::MovementSearchWorkspace;
 
+mod artifact;
+
 use crate::command_dispatch::{
     RuntimeUnitActionKind, RuntimeWorkerCommandKind, dispatch_assign_merchant_route,
     dispatch_attack, dispatch_auto_explore, dispatch_confirm_worker_improvement,

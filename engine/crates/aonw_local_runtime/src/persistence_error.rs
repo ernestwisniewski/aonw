@@ -27,6 +27,8 @@ pub enum PersistenceError {
     InvalidUnit(IdentifierError),
     /// Persisted command city identifier is invalid.
     InvalidCity(IdentifierError),
+    /// Persisted command artifact identifier is invalid.
+    InvalidArtifact(IdentifierError),
     /// Persisted trusted turn time is not canonical UTC.
     InvalidTurnTime(Box<str>),
     /// Canonical state contract violates domain invariants.
@@ -75,6 +77,7 @@ impl core::fmt::Display for PersistenceError {
             Self::InvalidActor(source) => write!(formatter, "invalid actor: {source}"),
             Self::InvalidUnit(source) => write!(formatter, "invalid unit: {source}"),
             Self::InvalidCity(source) => write!(formatter, "invalid city: {source}"),
+            Self::InvalidArtifact(source) => write!(formatter, "invalid artifact: {source}"),
             Self::InvalidTurnTime(source) => write!(formatter, "invalid turn time: {source}"),
             Self::State(source) => write!(formatter, "invalid canonical state: {source}"),
             Self::StateDigestMismatch => {

@@ -35,6 +35,9 @@ pub(crate) fn capabilities() -> ClientResponseBodyDto {
     if capabilities.production() {
         features.push(ClientFeatureDto::Production);
     }
+    if capabilities.artifacts() {
+        features.push(ClientFeatureDto::Artifacts);
+    }
     if capabilities.save_game() {
         features.push(ClientFeatureDto::SaveGame);
     }

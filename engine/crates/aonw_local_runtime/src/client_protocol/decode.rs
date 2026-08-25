@@ -1,10 +1,10 @@
 use aonw_content::{MapDefinition, MapDocument, RulesetDefinition, ScenarioDefinition};
 use aonw_contracts::client::{ClientCommandDto, ClientQueryDto};
 use aonw_contracts::{CityConquestActionDto, CoordinateDto};
-use aonw_domain::{CityConquestAction, CityId, HexCoord, PlayerId, UnitId};
+use aonw_domain::{ArtifactId, CityConquestAction, CityId, HexCoord, PlayerId, UnitId};
 
 use crate::{
-    AttackHexRequest, AutoExploreUnitRequest, CityExpansionOptionsRequest,
+    ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CityExpansionOptionsRequest,
     CityFoundingOptionsRequest, CityWorkedHexOptionsRequest, CityYieldRequest, DetachTroopRequest,
     FoundCityRequest, MerchantCityRequest, MoveUnitRequest, OpenSession, ProductionCommandRequest,
     ReachableRequest, RoutePlanRequest, RuntimeQuery, SelectCityExpansionHexRequest,
@@ -16,6 +16,7 @@ use crate::{
 use super::ClientDecodeError;
 
 pub(super) enum DecodedCommand {
+    Artifact(ArtifactCommandRequest),
     FoundCity(FoundCityRequest),
     ToggleWorkedHex(ToggleWorkedHexRequest),
     SelectCityExpansionHex(SelectCityExpansionHexRequest),
@@ -161,6 +162,39 @@ pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeE
 #[allow(clippy::too_many_lines)]
 pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, ClientDecodeError> {
     match command {
+        ClientCommandDto::StartArtifactExcavation {
+            expected_revision,
+            unit_id,
+        } => Ok(DecodedCommand::Artifact(
+            ArtifactCommandRequest::StartExcavation {
+                expected_revision,
+                unit_id: decode_unit_id(unit_id)?,
+            },
+        )),
+        ClientCommandDto::StoreArtifactInCity {
+            expected_revision,
+            unit_id,
+            city_id,
+        } => Ok(DecodedCommand::Artifact(
+            ArtifactCommandRequest::StoreInCity {
+                expected_revision,
+                unit_id: decode_unit_id(unit_id)?,
+                city_id: city_id.map(decode_city_id).transpose()?,
+            },
+        )),
+        ClientCommandDto::TradeArtifact {
+            expected_revision,
+            target_player_id,
+            offered_artifact_id,
+            offered_gold,
+        } => Ok(DecodedCommand::Artifact(ArtifactCommandRequest::Trade {
+            expected_revision,
+            target_player_id: PlayerId::new(target_player_id)
+                .map_err(|error| ClientDecodeError::new("invalid_target_player_id", error))?,
+            offered_artifact_id: ArtifactId::new(offered_artifact_id)
+                .map_err(|error| ClientDecodeError::new("invalid_artifact_id", error))?,
+            offered_gold,
+        })),
         ClientCommandDto::FoundCity {
             expected_revision,
             founder_unit_id,

@@ -19,12 +19,13 @@ pub use response::{
     ClientOutcomeDto, ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto,
     ClientResponseDto, ClientSessionStampDto, DetachmentOptionDto, FieldImprovementViewDto,
     MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
-    OwnedCityPlanningViewDto, PendingActionViewDto, PlayerCityViewDto, PlayerTurnLifecycleViewDto,
-    PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, ProductionOptionDto,
-    ReachableTileViewDto, RoadViewDto, StrategicResourceAmountDto, StrategicResourceSourceDto,
-    UnitMovementExecutionDto, UnitProductionOptionDto, WorkerAutomationActionDto,
-    WorkerAutomationMetricsDto, WorkerAutomationOptionDto, WorkerImprovementOptionDto,
-    WorkerJobCompletionDto, WorkerJobViewDto, YieldValueDto,
+    OwnedCityPlanningViewDto, PendingActionViewDto, PlayerArtifactLocationViewDto,
+    PlayerArtifactViewDto, PlayerCityViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto,
+    PlayerViewPatchDto, PlayerViewSnapshotDto, ProductionOptionDto, ReachableTileViewDto,
+    RoadViewDto, StrategicResourceAmountDto, StrategicResourceSourceDto, UnitMovementExecutionDto,
+    UnitProductionOptionDto, WorkerAutomationActionDto, WorkerAutomationMetricsDto,
+    WorkerAutomationOptionDto, WorkerImprovementOptionDto, WorkerJobCompletionDto,
+    WorkerJobViewDto, YieldValueDto,
 };
 
 /// The only client protocol version accepted by this build.

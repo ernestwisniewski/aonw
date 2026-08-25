@@ -1,17 +1,18 @@
 use aonw_contract_mapping::{encode_improvement, encode_unit_kind, encode_unit_posture};
 use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
-    CityFoundingDraftViewDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
-    ClientCommandResultDto, ClientSessionStampDto, OwnedCityPlanningViewDto, PlayerCityViewDto,
-    PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, WorkerJobViewDto,
+    ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto,
+    ClientSessionStampDto, OwnedCityPlanningViewDto, PlayerCityViewDto, PlayerUnitViewDto,
+    PlayerViewPatchDto, PlayerViewSnapshotDto, WorkerJobViewDto,
 };
 use aonw_engine::CommandRejectionCode;
 
 use crate::{
-    CityFoundingDraftView, CommandResult, PlayerCityView, PlayerUnitView, PlayerViewPatch,
-    PlayerViewSnapshot, SessionStamp,
+    CommandResult, PlayerCityView, PlayerUnitView, PlayerViewPatch, PlayerViewSnapshot,
+    SessionStamp,
 };
 
+mod artifact;
 mod capability;
 mod evidence;
 mod map_view;
@@ -32,6 +33,7 @@ use presentation::{pending_action, turn_lifecycle};
 pub(super) use query::query_result;
 #[cfg(test)]
 use query::{merchant_destination, movement_metrics};
+use simple::founding_draft;
 pub(super) use simple::replay_verification;
 use simple::{field_improvement, road};
 
@@ -53,6 +55,7 @@ pub(super) fn snapshot(value: &PlayerViewSnapshot) -> PlayerViewSnapshotDto {
         city_founding_draft: value.city_founding_draft().map(founding_draft),
         units: value.units().iter().map(unit).collect(),
         cities: value.cities().iter().map(city).collect(),
+        artifacts: value.artifacts().iter().map(artifact).collect(),
         field_improvements: value
             .field_improvements()
             .iter()
@@ -410,6 +413,10 @@ fn unit(value: &PlayerUnitView) -> PlayerUnitViewDto {
             },
         }),
         worker_assignment: value.worker_assignment().map(coordinate),
+        carried_artifact_id: value.carried_artifact_id().map(|id| id.as_str().to_owned()),
+        excavating_artifact_id: value
+            .excavating_artifact_id()
+            .map(|id| id.as_str().to_owned()),
     }
 }
 
@@ -440,19 +447,6 @@ fn city(value: &PlayerCityView) -> PlayerCityViewDto {
     }
 }
 
-fn founding_draft(value: &CityFoundingDraftView) -> CityFoundingDraftViewDto {
-    CityFoundingDraftViewDto {
-        founder_unit_id: value.founder_unit_id().as_str().to_owned(),
-        center: coordinate(value.center()),
-        controlled_hexes: value
-            .controlled_hexes()
-            .iter()
-            .copied()
-            .map(coordinate)
-            .collect(),
-    }
-}
-
 fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
     PlayerViewPatchDto {
         from_revision: value.from_revision,
@@ -467,6 +461,12 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
         upserted_cities: value.upserted_cities.iter().map(city).collect(),
         removed_city_ids: value
             .removed_city_ids
+            .iter()
+            .map(|id| id.as_str().to_owned())
+            .collect(),
+        upserted_artifacts: value.upserted_artifacts.iter().map(artifact).collect(),
+        removed_artifact_ids: value
+            .removed_artifact_ids
             .iter()
             .map(|id| id.as_str().to_owned())
             .collect(),
@@ -493,3 +493,4 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
         city_founding_draft: value.city_founding_draft.as_ref().map(founding_draft),
     }
 }
+use artifact::artifact;

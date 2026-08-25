@@ -49,7 +49,7 @@ expected-event-count 40
 expected-native-event-count 4
 expected-evidence-count 1
 expected-native-evidence-count 4
-expected-projection-type-count 8
+expected-projection-type-count 9
 expected-projection-variant-count 9
 dart-domain-root packages/aonw_core/lib/game/domain/command/game_command.dart
 dart-system-source packages/aonw_core/lib/game/application/engine/system_command.dart
@@ -97,15 +97,15 @@ domain SendDiplomaticProposalCommand diplomacy reference-only - packages/aonw_co
 domain SendGoldGiftCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SetCitySpecializationCommand production runtime-ready SetCitySpecialization packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SkipUnitTurnCommand unit-action engine-parity SkipUnitTurn packages/aonw_core/lib/game/domain/command/unit_commands.dart
-domain StartArtifactExcavationCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
+domain StartArtifactExcavationCommand artifact runtime-ready StartArtifactExcavation packages/aonw_core/lib/game/domain/command/artifact_commands.dart
 domain StartBuildingCommand production runtime-ready StartBuilding packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain StartCityProjectCommand production runtime-ready StartCityProject packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain StartUnitProductionCommand production runtime-ready StartUnitProduction packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain StartWonderCommand production runtime-ready StartWonder packages/aonw_core/lib/game/domain/command/city_commands.dart
-domain StoreArtifactInCityCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
+domain StoreArtifactInCityCommand artifact runtime-ready StoreArtifactInCity packages/aonw_core/lib/game/domain/command/artifact_commands.dart
 domain SubmitTurnCommand turn turn-kernel-ready SubmitTurn packages/aonw_core/lib/game/domain/command/turn_commands.dart
 domain ToggleWorkedHexCommand city runtime-ready ToggleWorkedHex packages/aonw_core/lib/game/domain/command/city_commands.dart
-domain TradeArtifactCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
+domain TradeArtifactCommand artifact runtime-ready TradeArtifact packages/aonw_core/lib/game/domain/command/artifact_commands.dart
 
 system FinalizeTimedOutTurn system-lifecycle turn-kernel-ready FinalizeTimedOutTurn packages/aonw_core/lib/game/application/engine/system_command.dart
 system KickParticipant system-lifecycle turn-kernel-ready KickParticipant packages/aonw_core/lib/game/application/engine/system_command.dart
@@ -122,9 +122,9 @@ query ProductionOptions ProductionOptions ProductionOptions production runtime-r
 query UnitLogisticsOptions UnitLogisticsOptions UnitLogisticsOptions movement runtime-ready
 query WorkerOptions WorkerOptions WorkerOptions worker runtime-ready
 
-event ArtifactCarriedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
-event ArtifactExcavationStartedEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
-event ArtifactStoredEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
+event ArtifactCarriedEvent artifact runtime-ready ArtifactCarried packages/aonw_core/lib/game/domain/event/artifact_events.dart
+event ArtifactExcavationStartedEvent artifact runtime-ready ArtifactExcavationStarted packages/aonw_core/lib/game/domain/event/artifact_events.dart
+event ArtifactStoredEvent artifact runtime-ready ArtifactStored packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event AllPlayersSubmittedEvent system-lifecycle turn-kernel-ready AllPlayersSubmitted packages/aonw_core/lib/game/domain/event/system_events.dart
 event CityAttackedEvent combat runtime-ready CityAttacked packages/aonw_core/lib/game/domain/event/combat_events.dart
 event CityBuiltBuildingEvent city runtime-ready CityBuiltBuilding packages/aonw_core/lib/game/domain/event/city_events.dart
@@ -175,6 +175,7 @@ native-evidence TurnKernelExecution turn turn-kernel-ready TurnKernel engine/cra
 native-evidence WorkerAutomationExecution worker runtime-ready WorkerAutomation engine/crates/aonw_engine/src/worker/model.rs
 
 projection-type PlayerUnitView visible-entity runtime-ready PlayerUnitViewDto engine/crates/aonw_local_runtime/src/player_view.rs
+projection-type PlayerArtifactView visible-entity runtime-ready PlayerArtifactViewDto engine/crates/aonw_local_runtime/src/player_view/artifact.rs
 projection-type CityFoundingDraftView recipient-workflow runtime-ready CityFoundingDraftViewDto engine/crates/aonw_local_runtime/src/player_view/city.rs
 projection-type OwnedCityPlanningView private-city-planning runtime-ready OwnedCityPlanningViewDto engine/crates/aonw_local_runtime/src/player_view/city.rs
 projection-type PlayerCityView visible-entity runtime-ready PlayerCityViewDto engine/crates/aonw_local_runtime/src/player_view/city.rs

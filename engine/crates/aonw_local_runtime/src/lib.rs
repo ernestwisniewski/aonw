@@ -16,16 +16,16 @@ mod turn_dispatch;
 
 pub use client_protocol::ClientProtocol;
 pub use command_dispatch::{
-    AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest, FoundCityRequest,
-    MerchantCityRequest, MoveUnitRequest, PlayerViewPatch, ProductionCommandRequest,
-    SelectCityExpansionHexRequest, ToggleWorkedHexRequest, UnitActionRequest,
-    WorkerImprovementRequest, WorkerUnitRequest,
+    ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CommandResult,
+    DetachTroopRequest, FoundCityRequest, MerchantCityRequest, MoveUnitRequest, PlayerViewPatch,
+    ProductionCommandRequest, SelectCityExpansionHexRequest, ToggleWorkedHexRequest,
+    UnitActionRequest, WorkerImprovementRequest, WorkerUnitRequest,
 };
 pub use persistence::{PersistenceError, ReplayVerification};
 pub use player_view::{
-    CityFoundingDraftView, OwnedCityPlanningView, PendingActionView, PlayerCityView,
-    PlayerFieldImprovementView, PlayerRoadView, PlayerTurnLifecycleView, PlayerUnitView,
-    PlayerViewSnapshot,
+    CityFoundingDraftView, OwnedCityPlanningView, PendingActionView, PlayerArtifactLocationView,
+    PlayerArtifactView, PlayerCityView, PlayerFieldImprovementView, PlayerRoadView,
+    PlayerTurnLifecycleView, PlayerUnitView, PlayerViewSnapshot,
 };
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{

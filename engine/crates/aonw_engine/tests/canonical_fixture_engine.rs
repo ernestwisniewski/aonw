@@ -1,8 +1,7 @@
 //! Executes current canonical fixtures without a historical reducer adapter.
 
-use std::fmt;
-use std::fs;
 use std::path::{Path, PathBuf};
+use std::{fmt, fs};
 
 use aonw_content::RulesetDefinition;
 use aonw_contract_mapping::{
@@ -23,6 +22,8 @@ use aonw_testkit::{
     CanonicalFixtureOutput, verify_canonical_corpus,
 };
 
+#[path = "canonical_fixture_engine/artifact.rs"]
+mod artifact;
 #[path = "canonical_fixture_engine/city.rs"]
 mod city;
 #[path = "canonical_fixture_engine/encoding.rs"]
@@ -89,6 +90,9 @@ fn apply_command(
     command: &ReplayCommandDto,
 ) -> Result<aonw_engine::DomainTransition, ExecutionError> {
     match command {
+        command @ (ReplayCommandDto::StartArtifactExcavation { .. }
+        | ReplayCommandDto::StoreArtifactInCity { .. }
+        | ReplayCommandDto::TradeArtifact { .. }) => artifact::apply(state, context, command),
         ReplayCommandDto::FoundCity {
             expected_revision,
             founder_unit_id,

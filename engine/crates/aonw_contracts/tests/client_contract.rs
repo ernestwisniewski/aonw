@@ -13,6 +13,8 @@ use aonw_contracts::{
     CoordinateDto, FieldImprovementKindDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
 };
 
+#[path = "client_contract/artifact.rs"]
+mod artifact_contract;
 #[path = "client_contract/economy.rs"]
 mod economy_contract;
 #[path = "client_contract/production.rs"]
@@ -45,6 +47,8 @@ fn unit() -> PlayerUnitViewDto {
         worker_build_charges: 0,
         worker_job: None,
         worker_assignment: None,
+        carried_artifact_id: None,
+        excavating_artifact_id: None,
     }
 }
 
@@ -65,6 +69,7 @@ fn player_snapshot() -> PlayerViewSnapshotDto {
         city_founding_draft: None,
         units: vec![unit()],
         cities: Vec::new(),
+        artifacts: Vec::new(),
         field_improvements: Vec::new(),
         roads: Vec::new(),
     }
@@ -96,6 +101,8 @@ fn command_result() -> ClientCommandResultDto {
             removed_unit_ids: Vec::new(),
             upserted_cities: Vec::new(),
             removed_city_ids: Vec::new(),
+            upserted_artifacts: Vec::new(),
+            removed_artifact_ids: Vec::new(),
             upserted_field_improvements: Vec::new(),
             removed_field_improvement_coordinates: Vec::new(),
             upserted_roads: Vec::new(),
@@ -257,6 +264,7 @@ fn every_current_request_variant_round_trips() {
         },
     ];
     requests.extend(logistics_requests());
+    requests.extend(artifact_contract::requests());
     requests.extend(production_contract::requests());
     requests.extend(worker_contract::requests());
 
