@@ -47,8 +47,6 @@ fn unit() -> PlayerUnitViewDto {
         worker_build_charges: 0,
         worker_job: None,
         worker_assignment: None,
-        carried_artifact_id: None,
-        excavating_artifact_id: None,
     }
 }
 

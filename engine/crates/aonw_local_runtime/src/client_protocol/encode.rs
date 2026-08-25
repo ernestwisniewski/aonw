@@ -413,10 +413,6 @@ fn unit(value: &PlayerUnitView) -> PlayerUnitViewDto {
             },
         }),
         worker_assignment: value.worker_assignment().map(coordinate),
-        carried_artifact_id: value.carried_artifact_id().map(|id| id.as_str().to_owned()),
-        excavating_artifact_id: value
-            .excavating_artifact_id()
-            .map(|id| id.as_str().to_owned()),
     }
 }
 

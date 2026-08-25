@@ -30,8 +30,6 @@ pub struct PlayerUnitView {
     worker_build_charges: u32,
     worker_job: Option<WorkerJob>,
     worker_assignment: Option<HexCoord>,
-    carried_artifact_id: Option<aonw_domain::ArtifactId>,
-    excavating_artifact_id: Option<aonw_domain::ArtifactId>,
 }
 
 impl PlayerUnitView {
@@ -56,8 +54,6 @@ impl PlayerUnitView {
             worker_assignment: disclose_worker
                 .then(|| unit.activity().worker_assignment())
                 .flatten(),
-            carried_artifact_id: unit.carried_artifact_id().cloned(),
-            excavating_artifact_id: unit.activity().excavating_artifact_id().cloned(),
         }
     }
 
@@ -115,16 +111,6 @@ impl PlayerUnitView {
     #[must_use]
     pub const fn worker_assignment(&self) -> Option<HexCoord> {
         self.worker_assignment
-    }
-    /// Returns the artifact carried by this visible unit.
-    #[must_use]
-    pub const fn carried_artifact_id(&self) -> Option<&aonw_domain::ArtifactId> {
-        self.carried_artifact_id.as_ref()
-    }
-    /// Returns the artifact currently excavated by this visible unit.
-    #[must_use]
-    pub const fn excavating_artifact_id(&self) -> Option<&aonw_domain::ArtifactId> {
-        self.excavating_artifact_id.as_ref()
     }
 }
 

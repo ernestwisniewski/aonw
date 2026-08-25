@@ -249,10 +249,6 @@ pub struct PlayerUnitViewDto {
     pub worker_job: Option<WorkerJobViewDto>,
     /// Current worker assignment, when visible.
     pub worker_assignment: Option<CoordinateDto>,
-    /// Artifact carried by this visible unit, when any.
-    pub carried_artifact_id: Option<String>,
-    /// Artifact currently excavated by this visible unit, when any.
-    pub excavating_artifact_id: Option<String>,
 }
 
 /// Recipient-safe view update produced by one command.

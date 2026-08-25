@@ -3,19 +3,24 @@
 use std::collections::BTreeMap;
 
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
-use aonw_contracts::SaveGameDto;
 use aonw_contracts::client::{
     CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto, ClientFeatureDto,
     ClientOutcomeDto, ClientRequestBodyDto, ClientRequestDto, ClientResponseBodyDto,
     ClientResponseDto, PlayerArtifactLocationViewDto,
 };
+use aonw_contracts::{SaveGameDto, WorldArtifactTypeDto};
 use aonw_domain::{
     ArtifactId, City, CityId, FogOfWar, GameMode, GameState, HexCoord, MatchIdentity,
     MatchLifecycle, MatchRules, MovementUnits, Participant, PlayerCountry, PlayerFog, PlayerId,
     PlayerKind, PlayerTurnState, StateRevision, TurnLifecycle, Unit, UnitId, UnitKind,
     WorldArtifact, WorldArtifactLocation, WorldArtifactType,
 };
-use aonw_local_runtime::{ClientProtocol, LocalRuntime, OpenSession};
+use aonw_local_runtime::{ClientProtocol, LocalRuntime, OpenSession, PersistenceError};
+
+#[path = "artifact_runtime/catalog.rs"]
+mod catalog;
+
+use catalog::artifact_catalog;
 
 #[test]
 fn artifact_commands_projection_save_and_replay_are_exact() {
@@ -36,6 +41,10 @@ fn artifact_commands_projection_save_and_replay_are_exact() {
         panic!("capabilities response")
     };
     assert!(features.contains(&ClientFeatureDto::Artifacts));
+
+    assert_initial_artifact_snapshot(&mut runtime);
+    assert_protocol_failures(&mut runtime);
+    assert_foreign_carried_projection(map.clone(), rules.clone(), &runtime);
 
     let started = command(
         &mut runtime,
@@ -61,6 +70,7 @@ fn artifact_commands_projection_save_and_replay_are_exact() {
                     )
             })
     );
+    assert_mid_excavation_reopens(map.clone(), rules.clone(), &runtime);
 
     let stored = command(
         &mut runtime,
@@ -89,6 +99,7 @@ fn artifact_commands_projection_save_and_replay_are_exact() {
         },
     );
     assert_eq!(traded.outcome, ClientCommandOutcomeDto::Accepted);
+    assert_eq!(traded.view_patch.removed_artifact_ids, ["carried-artifact"]);
 
     let expected = runtime.snapshot().expect("artifact snapshot");
     let save = runtime.export_save_json().expect("artifact save");
@@ -111,6 +122,146 @@ fn artifact_commands_projection_save_and_replay_are_exact() {
     assert_eq!(
         verification.final_stamp.state_digest.to_string(),
         traded.stamp.state_digest
+    );
+}
+
+fn assert_initial_artifact_snapshot(runtime: &mut LocalRuntime) {
+    let ClientResponseBodyDto::Snapshot { snapshot } =
+        dispatch_client(runtime, ClientRequestBodyDto::Snapshot)
+    else {
+        panic!("artifact snapshot response")
+    };
+    assert_eq!(snapshot.artifacts.len(), 9);
+    assert!(
+        snapshot
+            .artifacts
+            .iter()
+            .any(|artifact| matches!(artifact.location, PlayerArtifactLocationViewDto::Map { .. }))
+    );
+    assert!(snapshot.artifacts.iter().any(|artifact| matches!(
+        artifact.location,
+        PlayerArtifactLocationViewDto::Carried { .. }
+    )));
+    for expected in [
+        WorldArtifactTypeDto::AncientImperialCrown,
+        WorldArtifactTypeDto::AstronomersTablets,
+        WorldArtifactTypeDto::ProphetMask,
+        WorldArtifactTypeDto::HeroSword,
+        WorldArtifactTypeDto::MerchantsSeal,
+        WorldArtifactTypeDto::FirstPeoplesChronicle,
+        WorldArtifactTypeDto::TempleReliquary,
+        WorldArtifactTypeDto::QueensMirror,
+    ] {
+        assert!(
+            snapshot
+                .artifacts
+                .iter()
+                .any(|artifact| artifact.artifact_type == expected),
+            "missing encoded artifact type {expected:?}"
+        );
+    }
+}
+
+fn assert_protocol_failures(runtime: &mut LocalRuntime) {
+    let unsupported = ClientProtocol::dispatch(
+        runtime,
+        ClientRequestDto {
+            api_version: CLIENT_API_VERSION + 1,
+            request: ClientRequestBodyDto::Capabilities,
+        },
+    );
+    assert_failure(unsupported, "unsupported_client_api_version");
+
+    let invalid_artifact = ClientProtocol::dispatch(
+        runtime,
+        ClientRequestDto {
+            api_version: CLIENT_API_VERSION,
+            request: ClientRequestBodyDto::Dispatch {
+                command: ClientCommandDto::TradeArtifact {
+                    expected_revision: 9,
+                    target_player_id: "player-2".to_owned(),
+                    offered_artifact_id: " ".to_owned(),
+                    offered_gold: 0,
+                },
+            },
+        },
+    );
+    assert_failure(invalid_artifact, "invalid_artifact_id");
+
+    let closed_snapshot = ClientProtocol::dispatch(
+        &mut LocalRuntime::default(),
+        ClientRequestDto {
+            api_version: CLIENT_API_VERSION,
+            request: ClientRequestBodyDto::Snapshot,
+        },
+    );
+    assert_failure(closed_snapshot, "session_not_open");
+
+    let closed_save = ClientProtocol::dispatch(
+        &mut LocalRuntime::default(),
+        ClientRequestDto {
+            api_version: CLIENT_API_VERSION,
+            request: ClientRequestBodyDto::ExportSave,
+        },
+    );
+    assert_failure(closed_save, "save_export_failed");
+
+    let invalid_id = ArtifactId::new(" ").expect_err("invalid artifact id");
+    assert!(
+        PersistenceError::InvalidArtifact(invalid_id)
+            .to_string()
+            .starts_with("invalid artifact:")
+    );
+}
+
+fn assert_failure(response: ClientResponseDto, expected_code: &str) {
+    let ClientOutcomeDto::Failure { error } = response.outcome else {
+        panic!("client failure response")
+    };
+    assert_eq!(error.code, expected_code);
+    assert!(!error.message.is_empty());
+}
+
+fn assert_mid_excavation_reopens(
+    map: MapDefinition,
+    rules: RulesetDefinition,
+    runtime: &LocalRuntime,
+) {
+    let expected = runtime.snapshot().expect("mid-excavation snapshot");
+    let save = runtime.export_save_json().expect("mid-excavation save");
+    let mut reopened = LocalRuntime::default();
+    reopened
+        .open_save_json(map, rules, &save)
+        .expect("reopen mid-excavation save");
+    assert_eq!(reopened.snapshot().expect("reopened excavation"), expected);
+}
+
+fn assert_foreign_carried_projection(
+    map: MapDefinition,
+    rules: RulesetDefinition,
+    runtime: &LocalRuntime,
+) {
+    let save = runtime.export_save_json().expect("initial artifact save");
+    let mut save = SaveGameDto::from_json(&save).expect("initial artifact save DTO");
+    "player-2".clone_into(&mut save.actor_player_id);
+    let mut foreign = LocalRuntime::default();
+    foreign
+        .open_save_json(map, rules, &save.to_json().expect("foreign carrier save"))
+        .expect("open foreign carrier view");
+    assert!(
+        foreign
+            .snapshot()
+            .expect("foreign carrier snapshot")
+            .artifacts()
+            .iter()
+            .any(|artifact| {
+                artifact.id().as_str() == "carried-artifact"
+                    && matches!(
+                        artifact.location(),
+                        aonw_local_runtime::PlayerArtifactLocationView::Carried(unit_id)
+                            if unit_id.as_str() == "carrier"
+                    )
+            })
     );
 }
 
@@ -194,6 +345,17 @@ fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {
         HexCoord::new(1, 0),
         Some(carrier_artifact.clone()),
     );
+    let mut artifacts = vec![
+        artifact(
+            "map-artifact",
+            WorldArtifactLocation::Map(HexCoord::new(0, 0)),
+        ),
+        artifact(
+            "carried-artifact",
+            WorldArtifactLocation::Carried(unit_id("carrier")),
+        ),
+    ];
+    artifacts.extend(artifact_catalog());
     let state = GameState::builder(
         StateRevision::new(9),
         4,
@@ -205,16 +367,7 @@ fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {
         city("source", &p1, HexCoord::new(1, 0)),
         city("target", &p2, HexCoord::new(2, 0)),
     ])
-    .with_artifacts([
-        artifact(
-            "map-artifact",
-            WorldArtifactLocation::Map(HexCoord::new(0, 0)),
-        ),
-        artifact(
-            "carried-artifact",
-            WorldArtifactLocation::Carried(unit_id("carrier")),
-        ),
-    ])
+    .with_artifacts(artifacts)
     .with_fog_of_war(
         FogOfWar::try_new([
             PlayerFog::new(
@@ -223,10 +376,10 @@ fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {
                 [
                     HexCoord::new(0, 0),
                     HexCoord::new(1, 0),
-                    HexCoord::new(2, 0),
+                    HexCoord::new(3, 0),
                 ],
             ),
-            PlayerFog::new(p2.clone(), [], [HexCoord::new(2, 0)]),
+            PlayerFog::new(p2.clone(), [], [HexCoord::new(1, 0), HexCoord::new(2, 0)]),
         ])
         .expect("fog"),
     )

@@ -3,12 +3,15 @@
 use aonw_content::RulesetDefinition;
 use aonw_domain::{HexCoord, MovementUnits, StateRevision, WorldArtifactLocation};
 use aonw_engine::{
-    CommandRejectionCode, DomainEvent, EngineContext, GameEngine, PlayerCommand,
-    StartArtifactExcavationCommand, StoreArtifactInCityCommand, TradeArtifactCommand, TurnCommand,
+    ArtifactError, CanonicalEngineError, CommandRejectionCode, DomainEvent, EngineContext,
+    GameEngine, PlayerCommand, StartArtifactExcavationCommand, StoreArtifactInCityCommand,
+    TradeArtifactCommand,
 };
 
 #[path = "artifact/support.rs"]
 mod support;
+#[path = "artifact/turn.rs"]
+mod turn;
 
 use support::*;
 
@@ -127,6 +130,30 @@ fn excavation_rejection_precedence_is_revision_control_then_artifact_state() {
         carrying.rejection().expect("rejection").code(),
         CommandRejectionCode::UnitAlreadyCarryingArtifact
     );
+
+    let fortified = support::unit("fortified", &p1, HexCoord::new(2, 0)).after_fortify();
+    let unavailable = GameEngine::apply_player_owned(
+        game_state(
+            vec![fortified],
+            Vec::new(),
+            vec![artifact(
+                "map-artifact",
+                WorldArtifactLocation::Map(HexCoord::new(2, 0)),
+            )],
+            None,
+            false,
+        ),
+        EngineContext::canonical(&p1, &map, RulesetDefinition::standard()),
+        PlayerCommand::StartArtifactExcavation(StartArtifactExcavationCommand::new(
+            9,
+            &unit_id("fortified"),
+        )),
+    )
+    .expect("unavailable rejection");
+    assert_eq!(
+        unavailable.rejection().expect("rejection").code(),
+        CommandRejectionCode::UnitUnavailable
+    );
 }
 
 #[test]
@@ -184,6 +211,8 @@ fn carried_artifact_stores_only_in_one_owned_city_slot() {
     };
     assert_eq!(event.source_unit_id(), Some(&carrier_id));
     assert_eq!(event.city_id(), &city_key);
+    assert_eq!(event.artifact_id(), &artifact_key);
+    assert_eq!(event.coordinate(), HexCoord::new(1, 0));
 
     let occupied = game_state(
         vec![carried_unit(
@@ -210,6 +239,52 @@ fn carried_artifact_stores_only_in_one_owned_city_slot() {
         rejected.rejection().expect("rejection").code(),
         CommandRejectionCode::CityArtifactSlotFull
     );
+}
+
+#[test]
+fn artifact_storage_requires_an_owned_city_below_the_carrier() {
+    let map = map();
+    let p1 = player("player-1");
+    let p2 = player("player-2");
+    for (city_owner, city_position, expected) in [
+        (
+            &p2,
+            HexCoord::new(1, 0),
+            CommandRejectionCode::CityNotControlled,
+        ),
+        (
+            &p1,
+            HexCoord::new(0, 0),
+            CommandRejectionCode::UnitNotInCity,
+        ),
+    ] {
+        let state = game_state(
+            vec![carried_unit(
+                "carrier",
+                &p1,
+                HexCoord::new(1, 0),
+                artifact_id("seal"),
+            )],
+            vec![city("selected", city_owner, city_position)],
+            vec![artifact(
+                "seal",
+                WorldArtifactLocation::Carried(unit_id("carrier")),
+            )],
+            None,
+            false,
+        );
+        let result = GameEngine::apply_player_owned(
+            state,
+            EngineContext::canonical(&p1, &map, RulesetDefinition::standard()),
+            PlayerCommand::StoreArtifactInCity(StoreArtifactInCityCommand::new(
+                9,
+                &unit_id("carrier"),
+                Some(&city_id("selected")),
+            )),
+        )
+        .expect("store rejection");
+        assert_eq!(result.rejection().expect("rejection").code(), expected);
+    }
 }
 
 #[test]
@@ -262,6 +337,8 @@ fn trade_uses_authenticated_actor_canonical_target_city_and_atomic_gold_transfer
     assert_eq!(event.owner_player_id(), &p2);
     assert_eq!(event.source_unit_id(), None);
     assert_eq!(event.city_id(), &city_id("target-a"));
+    assert_eq!(event.artifact_id(), &artifact_id);
+    assert_eq!(event.coordinate(), HexCoord::new(1, 0));
 }
 
 #[test]
@@ -312,84 +389,58 @@ fn trade_rejects_war_and_unavailable_gold_without_mutation() {
             .location(),
         &WorldArtifactLocation::Stored(city_id("source"))
     );
+
+    let invalid_target = GameEngine::apply_player_owned(
+        build(false),
+        EngineContext::canonical(&p1, &map, RulesetDefinition::standard()),
+        PlayerCommand::TradeArtifact(TradeArtifactCommand::new(9, &p1, &artifact_id, 0)),
+    )
+    .expect("target rejection");
+    assert_eq!(
+        invalid_target.rejection().expect("rejection").code(),
+        CommandRejectionCode::ArtifactTradeTargetInvalid
+    );
+    let invalid_gold = apply(build(false), -1);
+    assert_eq!(
+        invalid_gold.rejection().expect("rejection").code(),
+        CommandRejectionCode::ArtifactTradeGoldInvalid
+    );
+
+    for location in [
+        WorldArtifactLocation::Map(HexCoord::new(0, 0)),
+        WorldArtifactLocation::Stored(city_id("target")),
+    ] {
+        let rejected = apply(
+            game_state(
+                Vec::new(),
+                vec![
+                    city("source", &p1, HexCoord::new(0, 0)),
+                    city("target", &p2, HexCoord::new(1, 0)),
+                ],
+                vec![artifact("seal", location)],
+                Some((3, 0)),
+                false,
+            ),
+            0,
+        );
+        assert_eq!(
+            rejected.rejection().expect("rejection").code(),
+            CommandRejectionCode::OfferedArtifactUnavailable
+        );
+    }
 }
 
 #[test]
-fn artifact_turn_phase_decrements_then_completes_in_owner_scope() {
-    let map = map();
-    let p1 = player("player-1");
-    let p2 = player("player-2");
-    let artifact_id = artifact_id("sword");
-    let excavator_id = unit_id("excavator");
-    let excavator = excavating_unit("excavator", &p1, HexCoord::new(0, 0), artifact_id.clone());
-    let excavation = |remaining_turns| {
-        artifact(
-            "sword",
-            WorldArtifactLocation::Excavation {
-                unit_id: excavator_id.clone(),
-                coordinate: HexCoord::new(0, 0),
-                remaining_turns,
-            },
-        )
-    };
+fn artifact_error_surface_is_stable() {
+    let rejected = ArtifactError::from(CommandRejectionCode::ArtifactNotFound);
+    assert_eq!(rejected.code(), "artifact_not_found");
+    assert_eq!(rejected.to_string(), "artifact_not_found");
 
-    let partial = GameEngine::apply_player_owned(
-        state_with_active(
-            vec![excavator.clone()],
-            Vec::new(),
-            vec![excavation(2)],
-            None,
-            false,
-            &p2,
-        ),
-        EngineContext::canonical(&p2, &map, RulesetDefinition::standard()),
-        PlayerCommand::EndTurn(TurnCommand::new(9, &p2)),
-    )
-    .expect("partial excavation turn");
-    assert!(matches!(partial.events(), [DomainEvent::TurnEnded(_)]));
-    assert!(matches!(
-        partial
-            .state()
-            .artifact(&artifact_id)
-            .expect("artifact")
-            .location(),
-        WorldArtifactLocation::Excavation {
-            remaining_turns: 1,
-            ..
-        }
-    ));
-
-    let completed = GameEngine::apply_player_owned(
-        state_with_active(
-            vec![excavator],
-            Vec::new(),
-            vec![excavation(1)],
-            None,
-            false,
-            &p2,
-        ),
-        EngineContext::canonical(&p2, &map, RulesetDefinition::standard()),
-        PlayerCommand::EndTurn(TurnCommand::new(9, &p2)),
-    )
-    .expect("completed excavation turn");
-    assert!(matches!(
-        completed.events(),
-        [DomainEvent::ArtifactCarried(_), DomainEvent::TurnEnded(_)]
-    ));
+    let invalid = ArtifactError::InvalidState("invalid artifact state".into());
+    assert_eq!(invalid.code(), "artifact_state_invalid");
+    assert_eq!(invalid.to_string(), "invalid artifact state");
     assert_eq!(
-        completed
-            .state()
-            .unit(&excavator_id)
-            .expect("carrier")
-            .carried_artifact_id(),
-        Some(&artifact_id)
-    );
-    assert_eq!(
-        completed
-            .state()
-            .artifact(&artifact_id)
-            .expect("artifact")
-            .location(),
-        &WorldArtifactLocation::Carried(excavator_id)
+        CanonicalEngineError::Artifact(invalid).to_string(),
+        "artifact failed: invalid artifact state"
     );
 }

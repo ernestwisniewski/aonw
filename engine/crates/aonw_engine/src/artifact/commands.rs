@@ -318,3 +318,11 @@ fn replace_artifact(
 fn invalid(message: impl Into<Box<str>>) -> ArtifactError {
     ArtifactError::InvalidState(message.into())
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn invalid_state_helper_preserves_its_message() {
+        assert_eq!(super::invalid("broken").to_string(), "broken");
+    }
+}

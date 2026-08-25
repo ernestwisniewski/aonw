@@ -50,7 +50,7 @@
     },
     "aonw_contract_mapping": {
       "countedLines": 2532,
-      "coveredLines": 2262,
+      "coveredLines": 2277,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_contract_mapping/src/game_state_mapping/mod.rs"
@@ -74,11 +74,11 @@
         "crates/aonw_contract_mapping/src/game_state_mapping/world.rs",
         "crates/aonw_contract_mapping/src/lib.rs"
       ],
-      "uncoveredLines": 270
+      "uncoveredLines": 255
     },
     "aonw_contracts": {
-      "countedLines": 285,
-      "coveredLines": 240,
+      "countedLines": 297,
+      "coveredLines": 252,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_contracts/src/canonical/artifact.rs",
@@ -94,6 +94,7 @@
         "crates/aonw_contracts/src/client/mod.rs",
         "crates/aonw_contracts/src/client/request.rs",
         "crates/aonw_contracts/src/client/response.rs",
+        "crates/aonw_contracts/src/client/response/artifact.rs",
         "crates/aonw_contracts/src/client/response/city.rs",
         "crates/aonw_contracts/src/client/response/economy.rs",
         "crates/aonw_contracts/src/client/response/event.rs",
@@ -125,6 +126,7 @@
         "crates/aonw_contracts/src/client/mod.rs",
         "crates/aonw_contracts/src/client/request.rs",
         "crates/aonw_contracts/src/client/response.rs",
+        "crates/aonw_contracts/src/client/response/artifact.rs",
         "crates/aonw_contracts/src/client/response/city.rs",
         "crates/aonw_contracts/src/client/response/economy.rs",
         "crates/aonw_contracts/src/client/response/event.rs",
@@ -146,7 +148,7 @@
     },
     "aonw_domain": {
       "countedLines": 5157,
-      "coveredLines": 4642,
+      "coveredLines": 4658,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_domain/src/city/mod.rs",
@@ -206,15 +208,16 @@
         "crates/aonw_domain/src/unit_kind.rs",
         "crates/aonw_domain/src/unit_posture.rs"
       ],
-      "uncoveredLines": 515
+      "uncoveredLines": 499
     },
     "aonw_engine": {
-      "countedLines": 13405,
-      "coveredLines": 12349,
+      "countedLines": 13980,
+      "coveredLines": 12958,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_engine/src/application/mod.rs",
         "crates/aonw_engine/src/application/transition/outcome.rs",
+        "crates/aonw_engine/src/artifact/mod.rs",
         "crates/aonw_engine/src/city/mod.rs",
         "crates/aonw_engine/src/economy/mod.rs",
         "crates/aonw_engine/src/movement/mod.rs",
@@ -232,11 +235,17 @@
         "crates/aonw_engine/src/application/mod.rs",
         "crates/aonw_engine/src/application/query.rs",
         "crates/aonw_engine/src/application/transition.rs",
+        "crates/aonw_engine/src/application/transition/artifact_events.rs",
         "crates/aonw_engine/src/application/transition/domain_transition.rs",
         "crates/aonw_engine/src/application/transition/events.rs",
         "crates/aonw_engine/src/application/transition/outcome.rs",
         "crates/aonw_engine/src/application/transition/production_events.rs",
         "crates/aonw_engine/src/application/turn.rs",
+        "crates/aonw_engine/src/artifact/commands.rs",
+        "crates/aonw_engine/src/artifact/error.rs",
+        "crates/aonw_engine/src/artifact/mod.rs",
+        "crates/aonw_engine/src/artifact/model.rs",
+        "crates/aonw_engine/src/artifact/turn.rs",
         "crates/aonw_engine/src/city/mod.rs",
         "crates/aonw_engine/src/city/model.rs",
         "crates/aonw_engine/src/city/rules.rs",
@@ -316,11 +325,11 @@
         "crates/aonw_engine/src/worker/score.rs",
         "crates/aonw_engine/src/worker/turn.rs"
       ],
-      "uncoveredLines": 1056
+      "uncoveredLines": 1022
     },
     "aonw_local_runtime": {
-      "countedLines": 4840,
-      "coveredLines": 4021,
+      "countedLines": 5174,
+      "coveredLines": 4361,
       "group": "runtime",
       "missingFiles": [
         "crates/aonw_local_runtime/src/lib.rs",
@@ -329,14 +338,17 @@
       "sourceFiles": [
         "crates/aonw_local_runtime/src/client_protocol/decode.rs",
         "crates/aonw_local_runtime/src/client_protocol/encode.rs",
+        "crates/aonw_local_runtime/src/client_protocol/encode/artifact.rs",
         "crates/aonw_local_runtime/src/client_protocol/encode/capability.rs",
         "crates/aonw_local_runtime/src/client_protocol/encode/evidence.rs",
         "crates/aonw_local_runtime/src/client_protocol/encode/map_view.rs",
         "crates/aonw_local_runtime/src/client_protocol/encode/presentation.rs",
         "crates/aonw_local_runtime/src/client_protocol/encode/query.rs",
+        "crates/aonw_local_runtime/src/client_protocol/encode/simple.rs",
         "crates/aonw_local_runtime/src/client_protocol/encode/worker.rs",
         "crates/aonw_local_runtime/src/client_protocol/mod.rs",
         "crates/aonw_local_runtime/src/command_dispatch.rs",
+        "crates/aonw_local_runtime/src/command_dispatch/artifact.rs",
         "crates/aonw_local_runtime/src/command_dispatch/disclosure.rs",
         "crates/aonw_local_runtime/src/command_dispatch/production.rs",
         "crates/aonw_local_runtime/src/command_dispatch/view_diff.rs",
@@ -348,6 +360,7 @@
         "crates/aonw_local_runtime/src/persistence_error.rs",
         "crates/aonw_local_runtime/src/persistence_validation.rs",
         "crates/aonw_local_runtime/src/player_view.rs",
+        "crates/aonw_local_runtime/src/player_view/artifact.rs",
         "crates/aonw_local_runtime/src/player_view/city.rs",
         "crates/aonw_local_runtime/src/player_view/infrastructure.rs",
         "crates/aonw_local_runtime/src/prepared_world.rs",
@@ -361,10 +374,11 @@
         "crates/aonw_local_runtime/src/session/mod.rs",
         "crates/aonw_local_runtime/src/session/open.rs",
         "crates/aonw_local_runtime/src/session/runtime.rs",
+        "crates/aonw_local_runtime/src/session/runtime/artifact.rs",
         "crates/aonw_local_runtime/src/session/state.rs",
         "crates/aonw_local_runtime/src/turn_dispatch.rs"
       ],
-      "uncoveredLines": 819
+      "uncoveredLines": 813
     }
   },
   "provenance": {

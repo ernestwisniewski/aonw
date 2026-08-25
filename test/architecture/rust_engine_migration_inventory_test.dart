@@ -155,7 +155,7 @@ void main() {
   });
 
   test('migration manifest closes recipient projection variants', () {
-    expect(manifest.projectionTypes, hasLength(8));
+    expect(manifest.projectionTypes, hasLength(9));
     expect(manifest.projectionVariants, hasLength(9));
     for (final entry in manifest.projectionTypes) {
       expect(
@@ -212,11 +212,17 @@ void main() {
         'SelectWorkerImprovementCommand': 'runtime-ready',
         'SetCitySpecializationCommand': 'runtime-ready',
         'SkipUnitTurnCommand': 'engine-parity',
+        'StartArtifactExcavationCommand': 'runtime-ready',
         'StartBuildingCommand': 'runtime-ready',
         'StartCityProjectCommand': 'runtime-ready',
         'StartUnitProductionCommand': 'runtime-ready',
         'StartWonderCommand': 'runtime-ready',
+        'StoreArtifactInCityCommand': 'runtime-ready',
         'ToggleWorkedHexCommand': 'runtime-ready',
+        'TradeArtifactCommand': 'runtime-ready',
+        'ArtifactCarriedEvent': 'runtime-ready',
+        'ArtifactExcavationStartedEvent': 'runtime-ready',
+        'ArtifactStoredEvent': 'runtime-ready',
         'CityAttackedEvent': 'runtime-ready',
         'CityBuiltBuildingEvent': 'runtime-ready',
         'CityBuiltWonderEvent': 'runtime-ready',
@@ -269,7 +275,8 @@ void main() {
 
   test('command family counts remain explicit', () {
     expect(_familyCounts(manifest.domainEntries), const {
-      'artifact-resource-trade': 5,
+      'artifact': 3,
+      'artifact-resource-trade': 2,
       'city': 3,
       'combat': 1,
       'diplomacy': 6,

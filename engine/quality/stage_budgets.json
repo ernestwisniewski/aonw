@@ -63,8 +63,8 @@
       "timeout-invalid-scope-rejected"
     ],
     "maxEventsPerCommand": 4,
-    "maxMeasuredPayloadBytes": 210623,
-    "maxMeasuredAllocations": 25231,
+    "maxMeasuredPayloadBytes": 210635,
+    "maxMeasuredAllocations": 25234,
     "maxMeasuredAllocatedBytes": 4514505,
     "maxWorkCounters": {
       "frontierPops": 0,
@@ -130,7 +130,7 @@
       "technology-modifiers"
     ],
     "maxEventsPerCommand": 7,
-    "maxMeasuredPayloadBytes": 2127,
+    "maxMeasuredPayloadBytes": 2174,
     "maxMeasuredAllocations": 139205,
     "maxMeasuredAllocatedBytes": 100466370,
     "maxWorkCounters": {
