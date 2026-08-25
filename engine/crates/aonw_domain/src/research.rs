@@ -212,7 +212,61 @@ impl WonderRegistry {
     pub const fn completed_by(&self) -> &BTreeMap<WonderType, PlayerId> {
         &self.completed_by
     }
+
+    /// Records one globally unique wonder completion atomically.
+    ///
+    /// # Errors
+    ///
+    /// Returns the existing owner when the wonder was already completed.
+    pub fn try_with_completed(
+        &self,
+        wonder: WonderType,
+        player: PlayerId,
+    ) -> Result<Self, WonderCompletionError> {
+        if let Some(existing_owner) = self.completed_by.get(&wonder) {
+            return Err(WonderCompletionError {
+                wonder,
+                existing_owner: existing_owner.clone(),
+            });
+        }
+        let mut updated = self.clone();
+        updated.completed_by.insert(wonder, player);
+        Ok(updated)
+    }
 }
+
+/// Attempt to complete a world wonder that already has a canonical owner.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct WonderCompletionError {
+    wonder: WonderType,
+    existing_owner: PlayerId,
+}
+
+impl WonderCompletionError {
+    /// Returns the duplicated wonder identity.
+    #[must_use]
+    pub const fn wonder(&self) -> WonderType {
+        self.wonder
+    }
+
+    /// Returns the canonical owner that won the completion race.
+    #[must_use]
+    pub const fn existing_owner(&self) -> &PlayerId {
+        &self.existing_owner
+    }
+}
+
+impl core::fmt::Display for WonderCompletionError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            formatter,
+            "wonder {:?} was already completed by {}",
+            self.wonder, self.existing_owner
+        )
+    }
+}
+
+impl std::error::Error for WonderCompletionError {}
 
 /// Research and global wonder state validated as one canonical component.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -241,6 +295,15 @@ impl KnowledgeState {
     #[must_use]
     pub const fn wonder_registry(&self) -> &WonderRegistry {
         &self.wonder_registry
+    }
+
+    /// Replaces the globally completed-wonder registry.
+    #[must_use]
+    pub fn with_wonder_registry(&self, wonder_registry: WonderRegistry) -> Self {
+        Self {
+            research: self.research.clone(),
+            wonder_registry,
+        }
     }
 
     /// Validates all player references against match identity.
@@ -354,7 +417,12 @@ impl std::error::Error for KnowledgeStateValidationError {}
 
 #[cfg(test)]
 mod tests {
-    use super::{PlayerResearchState, PlayerResearchStateBuildError, TechnologyId};
+    use crate::{PlayerId, WonderType};
+
+    use super::{
+        KnowledgeState, PlayerResearchState, PlayerResearchStateBuildError, ResearchState,
+        TechnologyId, WonderRegistry,
+    };
 
     #[test]
     fn player_research_rejects_noncanonical_progress_and_unlocks() {
@@ -375,6 +443,31 @@ mod tests {
                 technology: TechnologyId::Mining,
                 amount: 0,
             })
+        );
+    }
+
+    #[test]
+    fn wonder_completion_is_unique_and_preserves_research() {
+        let owner = PlayerId::new("owner").expect("owner");
+        let registry = WonderRegistry::default()
+            .try_with_completed(WonderType::GreatLibrary, owner.clone())
+            .expect("completion");
+        let error = registry
+            .try_with_completed(WonderType::GreatLibrary, owner.clone())
+            .expect_err("duplicate completion");
+        assert_eq!(error.wonder(), WonderType::GreatLibrary);
+        assert_eq!(error.existing_owner(), &owner);
+        assert!(error.to_string().contains("GreatLibrary"));
+
+        let knowledge = KnowledgeState::new(ResearchState::default(), WonderRegistry::default())
+            .with_wonder_registry(registry);
+        assert!(knowledge.research().players().is_empty());
+        assert_eq!(
+            knowledge
+                .wonder_registry()
+                .completed_by()
+                .get(&WonderType::GreatLibrary),
+            Some(&owner)
         );
     }
 }

@@ -11,6 +11,10 @@ pub enum CityBuildError {
     NegativeStoredFood(i64),
     /// Territory capacity must remain positive.
     NonPositiveMaxHexes(i64),
+    /// A completion effect cannot reduce territory capacity.
+    NegativeMaxHexesDelta(i64),
+    /// Applying a completion effect exceeded the canonical integer range.
+    MaxHexesOverflow,
     /// Territory radius cannot be negative.
     NegativeTerritoryRadius(i64),
     /// Persisted production overflow cannot be negative.
@@ -43,6 +47,13 @@ impl core::fmt::Display for CityBuildError {
             Self::NonPositiveMaxHexes(value) => {
                 write!(formatter, "city max hexes must be positive, got {value}")
             }
+            Self::NegativeMaxHexesDelta(value) => {
+                write!(
+                    formatter,
+                    "city max hexes delta cannot be negative, got {value}"
+                )
+            }
+            Self::MaxHexesOverflow => formatter.write_str("city max hexes overflow"),
             Self::NegativeTerritoryRadius(value) => {
                 write!(
                     formatter,

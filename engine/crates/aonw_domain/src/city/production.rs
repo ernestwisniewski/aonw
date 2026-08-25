@@ -63,6 +63,22 @@ impl CityProductionQueue {
     pub const fn resource_allocation(&self) -> &StrategicResourceStockpile {
         &self.resource_allocation
     }
+
+    /// Replaces accumulated investment while preserving target and reservation.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the replacement investment is negative.
+    pub fn try_with_invested_production(
+        &self,
+        invested_production: i64,
+    ) -> Result<Self, CityProductionQueueBuildError> {
+        Self::try_new(
+            self.target,
+            invested_production,
+            self.resource_allocation.clone(),
+        )
+    }
 }
 
 /// Structural production-queue validation failure.

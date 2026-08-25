@@ -220,6 +220,70 @@ impl City {
         updated
     }
 
+    /// Replaces the authoritative production queue and non-negative overflow.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the resulting city violates a structural invariant.
+    pub fn try_with_production(
+        &self,
+        queue: Option<CityProductionQueue>,
+        overflow: i64,
+    ) -> Result<Self, CityBuildError> {
+        let mut updated = self.clone();
+        updated.production_queue = queue;
+        updated.production_overflow = overflow;
+        updated.validate()?;
+        Ok(updated)
+    }
+
+    /// Replaces the authoritative city specialization.
+    #[must_use]
+    pub fn with_specialization(&self, specialization: Option<CitySpecializationType>) -> Self {
+        let mut updated = self.clone();
+        updated.specialization = specialization;
+        updated
+    }
+
+    /// Records a completed building and applies its territory-capacity effect.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for a negative effect or checked-integer overflow.
+    pub fn try_with_completed_building(
+        &self,
+        building: CityBuildingType,
+        max_hexes_delta: i64,
+    ) -> Result<Self, CityBuildError> {
+        if self.buildings.contains(&building) {
+            return Err(CityBuildError::DuplicateBuilding(building));
+        }
+        if max_hexes_delta < 0 {
+            return Err(CityBuildError::NegativeMaxHexesDelta(max_hexes_delta));
+        }
+        let mut updated = self.clone();
+        updated.max_hexes = updated
+            .max_hexes
+            .checked_add(max_hexes_delta)
+            .ok_or(CityBuildError::MaxHexesOverflow)?;
+        updated.buildings.insert(building);
+        Ok(updated)
+    }
+
+    /// Records a completed world wonder in its hosting city.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the city already hosts the wonder.
+    pub fn try_with_completed_wonder(&self, wonder: WonderType) -> Result<Self, CityBuildError> {
+        if self.wonders.contains(&wonder) {
+            return Err(CityBuildError::DuplicateWonder(wonder));
+        }
+        let mut updated = self.clone();
+        updated.wonders.insert(wonder);
+        Ok(updated)
+    }
+
     /// Applies an authoritative city-combat result.
     #[must_use]
     pub fn after_combat(&self, owner_player_id: PlayerId, hit_points: Option<i64>) -> Self {

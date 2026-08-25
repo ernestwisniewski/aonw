@@ -1,8 +1,9 @@
 //! Public-boundary coverage for canonical city invariants.
 
 use aonw_domain::{
-    City, CityBuildError, CityBuilder, CityId, CityProductionQueue, CityProductionQueueBuildError,
-    CityProductionTarget, CityProjectType, HexCoord, PlayerId, StrategicResourceStockpile,
+    City, CityBuildError, CityBuilder, CityBuildingType, CityId, CityProductionQueue,
+    CityProductionQueueBuildError, CityProductionTarget, CityProjectType, CitySpecializationType,
+    HexCoord, PlayerId, StrategicResourceStockpile, WonderType,
 };
 
 fn city() -> CityBuilder {
@@ -75,5 +76,73 @@ fn production_queue_rejects_negative_investment() {
         Err(CityProductionQueueBuildError::NegativeInvestedProduction(
             -1
         ))
+    );
+}
+
+#[test]
+fn production_transition_helpers_preserve_canonical_city_state() {
+    let queue = CityProductionQueue::try_new(
+        CityProductionTarget::Project(CityProjectType::Research),
+        4,
+        StrategicResourceStockpile::default(),
+    )
+    .expect("queue");
+    let updated_queue = queue
+        .try_with_invested_production(9)
+        .expect("updated queue");
+    assert_eq!(updated_queue.target(), queue.target());
+    assert_eq!(updated_queue.invested_production(), 9);
+    assert_eq!(
+        updated_queue.resource_allocation(),
+        queue.resource_allocation()
+    );
+
+    let city = city().build().expect("city");
+    assert_eq!(
+        city.try_with_production(None, -1),
+        Err(CityBuildError::NegativeProductionOverflow(-1))
+    );
+    let city = city
+        .try_with_production(Some(updated_queue), 3)
+        .expect("production")
+        .with_specialization(Some(CitySpecializationType::Industry))
+        .try_with_completed_building(CityBuildingType::Marketplace, 2)
+        .expect("building")
+        .try_with_completed_wonder(WonderType::GreatLibrary)
+        .expect("wonder");
+    assert_eq!(city.production_overflow(), 3);
+    assert_eq!(
+        city.specialization(),
+        Some(CitySpecializationType::Industry)
+    );
+    assert!(city.buildings().contains(&CityBuildingType::Marketplace));
+    assert!(city.wonders().contains(&WonderType::GreatLibrary));
+    assert_eq!(city.max_hexes(), 8);
+    assert_eq!(
+        city.try_with_completed_building(CityBuildingType::Marketplace, 2),
+        Err(CityBuildError::DuplicateBuilding(
+            CityBuildingType::Marketplace
+        ))
+    );
+    assert_eq!(
+        city.try_with_completed_wonder(WonderType::GreatLibrary),
+        Err(CityBuildError::DuplicateWonder(WonderType::GreatLibrary))
+    );
+}
+
+#[test]
+fn building_completion_rejects_invalid_capacity_effects() {
+    let canonical_city = city().build().expect("city");
+    assert_eq!(
+        canonical_city.try_with_completed_building(CityBuildingType::Marketplace, -1),
+        Err(CityBuildError::NegativeMaxHexesDelta(-1))
+    );
+    let canonical_city = city()
+        .with_progression(3, 0, i64::MAX, 2)
+        .build()
+        .expect("large city");
+    assert_eq!(
+        canonical_city.try_with_completed_building(CityBuildingType::Marketplace, 1),
+        Err(CityBuildError::MaxHexesOverflow)
     );
 }

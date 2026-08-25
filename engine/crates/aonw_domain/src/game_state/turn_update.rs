@@ -1,6 +1,6 @@
 use crate::{
-    City, CombatState, Diplomacy, FogOfWar, InfrastructureState, InteractionState, MatchLifecycle,
-    StateRevision, Unit, WorldArtifact,
+    City, CombatState, Diplomacy, EconomyState, FogOfWar, InfrastructureState, InteractionState,
+    KnowledgeState, MatchLifecycle, StateRevision, Unit, WorldArtifact,
 };
 
 use super::{GameState, GameStateBuildError};
@@ -21,6 +21,25 @@ pub struct CombatStateUpdate {
     /// Recipient visibility recomputed after the transition.
     pub fog_of_war: FogOfWar,
     /// Diplomacy after attack consequences and discovered contacts.
+    pub diplomacy: Diplomacy,
+}
+
+/// Complete replacement produced by one authoritative production transition.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ProductionStateUpdate {
+    /// Revision after the transition.
+    pub revision: StateRevision,
+    /// Canonical units after deterministic production spawns.
+    pub units: Vec<Unit>,
+    /// Canonical cities after queue, overflow, specialization, and completions.
+    pub cities: Vec<City>,
+    /// Economy after rush payment, reservations, refunds, and completion effects.
+    pub economy: EconomyState,
+    /// Research and globally unique wonder ownership after completions.
+    pub knowledge: KnowledgeState,
+    /// Recipient visibility recomputed after spawned units.
+    pub fog_of_war: FogOfWar,
+    /// Diplomacy after contacts discovered by spawned units.
     pub diplomacy: Diplomacy,
 }
 
@@ -76,6 +95,26 @@ impl GameState {
         builder.cities = update.cities;
         builder.artifacts = update.artifacts;
         builder.combat = update.combat;
+        builder.fog_of_war = update.fog_of_war;
+        builder.diplomacy = update.diplomacy;
+        builder.try_build()
+    }
+
+    /// Consumes the aggregate and applies one complete production update.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when any replacement violates aggregate invariants.
+    pub fn into_after_production(
+        self,
+        update: ProductionStateUpdate,
+    ) -> Result<Self, GameStateBuildError> {
+        let mut builder = self.into_builder();
+        builder.revision = update.revision;
+        builder.units = update.units;
+        builder.cities = update.cities;
+        builder.economy = update.economy;
+        builder.knowledge = update.knowledge;
         builder.fog_of_war = update.fog_of_war;
         builder.diplomacy = update.diplomacy;
         builder.try_build()

@@ -50,7 +50,7 @@ pub use economy::{
 pub use fog::{FogOfWar, FogVisibility, PlayerFog};
 pub use game_state::{
     GameState, GameStateBuildError, GameStateBuilder, UnitOccupancyPolicy,
-    turn_update::{CombatStateUpdate, TurnAdvance},
+    turn_update::{CombatStateUpdate, ProductionStateUpdate, TurnAdvance},
 };
 pub use hex_coord::HexCoord;
 pub use hex_grid::{HexGridBounds, HexTileIndex};
@@ -71,7 +71,8 @@ pub use movement_units::MovementUnits;
 pub use objective::{MapObjectiveHoldState, ObjectiveState, ObjectiveStateBuildError};
 pub use research::{
     KnowledgeState, KnowledgeStateValidationError, PlayerResearchState,
-    PlayerResearchStateBuildError, ResearchState, TechnologyId, WonderRegistry,
+    PlayerResearchStateBuildError, ResearchState, TechnologyId, WonderCompletionError,
+    WonderRegistry,
 };
 pub use shared::StateRevision;
 pub use transport::{TransportCondition, TransportKind, TransportNetwork, TransportSegment};

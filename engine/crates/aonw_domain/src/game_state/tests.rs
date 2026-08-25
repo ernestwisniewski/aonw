@@ -1,8 +1,9 @@
 use crate::{
-    ArtifactId, City, CityId, Diplomacy, DiplomacyStateBuildError, FogOfWar, GameMode, GameState,
-    GameStateBuildError, HexCoord, HexGridBounds, InteractionState, MatchIdentity, MatchLifecycle,
-    MatchRules, MovementUnits, Participant, PendingInteraction, PlayerCountry, PlayerFog, PlayerId,
-    PlayerKind, PlayerPair, StateRevision, TurnLifecycle, Unit, UnitId, UnitKind,
+    ArtifactId, City, CityId, Diplomacy, DiplomacyStateBuildError, EconomyState, FogOfWar,
+    GameMode, GameState, GameStateBuildError, HexCoord, HexGridBounds, InteractionState,
+    KnowledgeState, MatchIdentity, MatchLifecycle, MatchRules, MovementUnits, Participant,
+    PendingInteraction, PlayerCountry, PlayerFog, PlayerId, PlayerKind, PlayerPair,
+    ProductionStateUpdate, StateRevision, TurnLifecycle, Unit, UnitId, UnitKind,
     UnitOccupancyPolicy, WorldArtifact, WorldArtifactLocation, WorldArtifactType,
 };
 
@@ -257,6 +258,38 @@ fn bound_aggregate_rejects_every_direct_player_reference_family() {
             DiplomacyStateBuildError::PlayerNotFound(unknown)
         ))
     );
+}
+
+#[test]
+fn production_update_rebuilds_every_affected_section_atomically() {
+    let owner = PlayerId::new("known").expect("owner");
+    let lifecycle = bound_lifecycle(owner.clone());
+    let bounds = HexGridBounds::new(2, 2).expect("bounds");
+    let city = City::new(
+        CityId::new("city").expect("city id"),
+        owner,
+        HexCoord::new(0, 0),
+        [],
+    );
+    let state = empty_bound_builder(bounds, lifecycle)
+        .with_cities([city.clone()])
+        .try_build()
+        .expect("state");
+    let updated = state
+        .into_after_production(ProductionStateUpdate {
+            revision: StateRevision::new(1),
+            units: Vec::new(),
+            cities: vec![city],
+            economy: EconomyState::default(),
+            knowledge: KnowledgeState::default(),
+            fog_of_war: FogOfWar::default(),
+            diplomacy: Diplomacy::default(),
+        })
+        .expect("production state");
+    assert_eq!(updated.revision(), StateRevision::new(1));
+    assert_eq!(updated.cities().len(), 1);
+    assert!(updated.economy().player_gold().is_empty());
+    assert!(updated.wonder_registry().completed_by().is_empty());
 }
 
 fn bound_lifecycle(player_id: PlayerId) -> MatchLifecycle {
