@@ -1,5 +1,5 @@
 use crate::{
-    ArtifactId, CityId, CombatStateValidationError, DiplomacyStateBuildError,
+    ArtifactId, CityBuildError, CityId, CombatStateValidationError, DiplomacyStateBuildError,
     EconomyStateBuildError, HexCoord, InfrastructureValidationError, KnowledgeStateValidationError,
     ObjectiveStateBuildError, PlayerId, UnitId,
 };
@@ -25,6 +25,22 @@ pub enum GameStateBuildError {
     },
     /// More than one city used an identifier.
     DuplicateCityId(CityId),
+    /// A city violates its entity-local numeric or topology invariants.
+    InvalidCity {
+        /// Invalid city.
+        city_id: CityId,
+        /// Local invariant failure.
+        error: CityBuildError,
+    },
+    /// Two cities claim the same center or controlled coordinate.
+    CityTerritoryOverlap {
+        /// Shared coordinate.
+        position: HexCoord,
+        /// First city in canonical identifier order.
+        first_city_id: CityId,
+        /// Second city in canonical identifier order.
+        second_city_id: CityId,
+    },
     /// More than one artifact used an identifier.
     DuplicateArtifactId(ArtifactId),
     /// A city center or controlled coordinate is outside the map.
@@ -137,6 +153,19 @@ impl core::fmt::Display for GameStateBuildError {
                 position.row()
             ),
             Self::DuplicateCityId(id) => write!(formatter, "duplicate city id: {id}"),
+            Self::InvalidCity { city_id, error } => {
+                write!(formatter, "city {city_id} is invalid: {error}")
+            }
+            Self::CityTerritoryOverlap {
+                position,
+                first_city_id,
+                second_city_id,
+            } => write!(
+                formatter,
+                "cities {first_city_id} and {second_city_id} overlap at ({}, {})",
+                position.col(),
+                position.row()
+            ),
             Self::DuplicateArtifactId(id) => write!(formatter, "duplicate artifact id: {id}"),
             Self::CityOutOfBounds { city_id, position } => write!(
                 formatter,

@@ -34,7 +34,7 @@ fn digest_changes_with_every_canonical_state_section() {
         candidate
             .economy
             .player_war_weariness
-            .insert("player-2".to_owned(), -7);
+            .insert("player-2".to_owned(), 7);
     });
     assert_digest_change(&source, "stability", |candidate| {
         candidate.economy.player_stability_net.clear();

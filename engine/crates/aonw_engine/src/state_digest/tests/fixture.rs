@@ -187,7 +187,7 @@ fn complete_city() -> CityDto {
         founding_owner_player_id: Some("player-2".to_owned()),
         name: "Warsaw".to_owned(),
         population: 7,
-        stored_food: -3,
+        stored_food: 3,
         max_hexes: 10,
         territory_radius: 3,
         center: coordinate(0, 0),
@@ -205,7 +205,7 @@ fn complete_city() -> CityDto {
                 2,
             )])),
         }),
-        production_overflow: -5,
+        production_overflow: 5,
         specialization: Some(CitySpecializationTypeDto::Science),
         preferred_expansion_hex: Some(coordinate(1, 0)),
         hit_points: Some(41),
@@ -237,7 +237,7 @@ fn secondary_city() -> CityDto {
 
 fn complete_economy() -> EconomyStateDto {
     EconomyStateDto {
-        player_gold: BTreeMap::from([("player-1".to_owned(), 100), ("player-2".to_owned(), -4)]),
+        player_gold: BTreeMap::from([("player-1".to_owned(), 100), ("player-2".to_owned(), 4)]),
         player_war_weariness: BTreeMap::from([("player-1".to_owned(), 3)]),
         player_stability_net: BTreeMap::from([("player-2".to_owned(), -2)]),
         strategic_resources: BTreeMap::from([(

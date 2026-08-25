@@ -2,7 +2,9 @@ use std::collections::BTreeSet;
 
 use crate::{CityId, HexCoord, PlayerId};
 
-use super::{CityBuildingType, CityProductionQueue, CitySpecializationType, WonderType};
+use super::{
+    CityBuildError, CityBuildingType, CityProductionQueue, CitySpecializationType, WonderType,
+};
 
 /// Complete canonical city state.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -170,6 +172,32 @@ impl City {
         self.center == coordinate || self.controlled_hexes.contains(&coordinate)
     }
 
+    pub(crate) fn validate(&self) -> Result<(), CityBuildError> {
+        validate_numeric_values(
+            self.population,
+            self.stored_food,
+            self.max_hexes,
+            self.territory_radius,
+            self.production_overflow,
+            self.hit_points,
+        )?;
+        if self.controlled_hexes.contains(&self.center) {
+            return Err(CityBuildError::CenterInControlledHexes);
+        }
+        if let Some(coordinate) = first_duplicate(&self.controlled_hexes) {
+            return Err(CityBuildError::DuplicateControlledHex(coordinate));
+        }
+        if let Some(coordinate) = first_duplicate(&self.worked_hexes) {
+            return Err(CityBuildError::DuplicateWorkedHex(coordinate));
+        }
+        for coordinate in &self.worked_hexes {
+            if *coordinate == self.center || !self.controlled_hexes.contains(coordinate) {
+                return Err(CityBuildError::WorkedHexNotControlled(*coordinate));
+            }
+        }
+        Ok(())
+    }
+
     /// Returns the center plus all controlled non-center coordinates.
     #[must_use]
     pub fn territory_hex_count(&self) -> usize {
@@ -327,12 +355,13 @@ impl CityBuilder {
         self
     }
 
-    /// Validates list/set topology and constructs a complete city.
+    /// Validates numeric state and list/set topology, then constructs a complete city.
     ///
     /// # Errors
     ///
     /// Returns an error for duplicated or inconsistent city collections.
     pub fn build(self) -> Result<City, CityBuildError> {
+        validate_numeric_state(&self)?;
         let controlled = unique_coordinates(
             self.controlled_hexes,
             CityBuildError::DuplicateControlledHex,
@@ -371,6 +400,57 @@ impl CityBuilder {
     }
 }
 
+fn validate_numeric_state(builder: &CityBuilder) -> Result<(), CityBuildError> {
+    validate_numeric_values(
+        builder.population,
+        builder.stored_food,
+        builder.max_hexes,
+        builder.territory_radius,
+        builder.production_overflow,
+        builder.hit_points,
+    )
+}
+
+fn validate_numeric_values(
+    population: i64,
+    stored_food: i64,
+    max_hexes: i64,
+    territory_radius: i64,
+    production_overflow: i64,
+    hit_points: Option<i64>,
+) -> Result<(), CityBuildError> {
+    if population <= 0 {
+        return Err(CityBuildError::NonPositivePopulation(population));
+    }
+    if stored_food < 0 {
+        return Err(CityBuildError::NegativeStoredFood(stored_food));
+    }
+    if max_hexes <= 0 {
+        return Err(CityBuildError::NonPositiveMaxHexes(max_hexes));
+    }
+    if territory_radius < 0 {
+        return Err(CityBuildError::NegativeTerritoryRadius(territory_radius));
+    }
+    if production_overflow < 0 {
+        return Err(CityBuildError::NegativeProductionOverflow(
+            production_overflow,
+        ));
+    }
+    if hit_points.is_some_and(|value| value <= 0) {
+        return Err(CityBuildError::NonPositiveHitPoints(
+            hit_points.unwrap_or_default(),
+        ));
+    }
+    Ok(())
+}
+
+fn first_duplicate<T: Copy + Eq>(values: &[T]) -> Option<T> {
+    values
+        .iter()
+        .enumerate()
+        .find_map(|(index, value)| values[..index].contains(value).then_some(*value))
+}
+
 fn unique_coordinates(
     values: Vec<HexCoord>,
     duplicate: impl Fn(HexCoord) -> CityBuildError,
@@ -395,85 +475,4 @@ fn unique_values<T: Copy + Ord>(
         }
     }
     Ok(unique)
-}
-
-/// Structural complete-city validation failure.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum CityBuildError {
-    /// A controlled coordinate occurred more than once.
-    DuplicateControlledHex(HexCoord),
-    /// The city center was repeated in controlled coordinates.
-    CenterInControlledHexes,
-    /// A worked coordinate occurred more than once.
-    DuplicateWorkedHex(HexCoord),
-    /// A worked coordinate was not a non-center controlled coordinate.
-    WorkedHexNotControlled(HexCoord),
-    /// A building identity occurred more than once.
-    DuplicateBuilding(CityBuildingType),
-    /// A wonder identity occurred more than once.
-    DuplicateWonder(WonderType),
-}
-
-impl core::fmt::Display for CityBuildError {
-    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::DuplicateControlledHex(value) => write!(
-                formatter,
-                "duplicate controlled hex: ({}, {})",
-                value.col(),
-                value.row()
-            ),
-            Self::CenterInControlledHexes => {
-                formatter.write_str("city center must not be repeated in controlled hexes")
-            }
-            Self::DuplicateWorkedHex(value) => write!(
-                formatter,
-                "duplicate worked hex: ({}, {})",
-                value.col(),
-                value.row()
-            ),
-            Self::WorkedHexNotControlled(value) => write!(
-                formatter,
-                "worked hex is not controlled: ({}, {})",
-                value.col(),
-                value.row()
-            ),
-            Self::DuplicateBuilding(value) => write!(formatter, "duplicate building: {value:?}"),
-            Self::DuplicateWonder(value) => write!(formatter, "duplicate wonder: {value:?}"),
-        }
-    }
-}
-
-impl std::error::Error for CityBuildError {}
-
-#[cfg(test)]
-mod tests {
-    use crate::{CityId, HexCoord, PlayerId};
-
-    use super::{City, CityBuildError};
-
-    #[test]
-    fn complete_city_rejects_duplicate_and_uncontrolled_coordinates() {
-        let city = || {
-            City::builder(
-                CityId::new("city").expect("city id"),
-                PlayerId::new("player").expect("player id"),
-                "City",
-                HexCoord::new(1, 1),
-            )
-        };
-        assert_eq!(
-            city()
-                .with_controlled_hexes([HexCoord::new(0, 1), HexCoord::new(0, 1)])
-                .build(),
-            Err(CityBuildError::DuplicateControlledHex(HexCoord::new(0, 1)))
-        );
-        assert_eq!(
-            city()
-                .with_controlled_hexes([HexCoord::new(0, 1)])
-                .with_worked_hexes([HexCoord::new(2, 1)])
-                .build(),
-            Err(CityBuildError::WorkedHexNotControlled(HexCoord::new(2, 1)))
-        );
-    }
 }

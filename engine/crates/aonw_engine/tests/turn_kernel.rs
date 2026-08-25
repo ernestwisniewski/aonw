@@ -364,11 +364,14 @@ fn state_with_posture(
             HexCoord::new(1, 0),
         )
         .with_production(
-            Some(CityProductionQueue::new(
-                CityProductionTarget::Project(CityProjectType::Wealth),
-                0,
-                StrategicResourceStockpile::default(),
-            )),
+            Some(
+                CityProductionQueue::try_new(
+                    CityProductionTarget::Project(CityProjectType::Wealth),
+                    0,
+                    StrategicResourceStockpile::default(),
+                )
+                .expect("production queue"),
+            ),
             0,
         )
         .build()

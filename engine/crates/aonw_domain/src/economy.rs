@@ -204,6 +204,22 @@ impl EconomyState {
                 return Err(EconomyStateBuildError::UnknownPlayer(player.clone()));
             }
         }
+        for (player, value) in &self.player_gold {
+            if *value < 0 {
+                return Err(EconomyStateBuildError::NegativeGold {
+                    player: player.clone(),
+                    value: *value,
+                });
+            }
+        }
+        for (player, value) in &self.player_war_weariness {
+            if *value < 0 {
+                return Err(EconomyStateBuildError::NegativeWarWeariness {
+                    player: player.clone(),
+                    value: *value,
+                });
+            }
+        }
         for placement in self.initial_resource_distribution.placements() {
             if !bounds.contains(placement.coordinate()) {
                 return Err(EconomyStateBuildError::InitialResourceOutOfBounds(
@@ -246,6 +262,20 @@ impl EconomyState {
 pub enum EconomyStateBuildError {
     /// Economy data references someone outside match participants.
     UnknownPlayer(PlayerId),
+    /// Gold accounts cannot contain debt in the canonical economy.
+    NegativeGold {
+        /// Account owner.
+        player: PlayerId,
+        /// Invalid balance.
+        value: i64,
+    },
+    /// War weariness is an accumulated non-negative pressure.
+    NegativeWarWeariness {
+        /// Account owner.
+        player: PlayerId,
+        /// Invalid accumulated value.
+        value: i64,
+    },
     /// A stockpile contains a resource using another economy mode.
     ResourceNotStockpiled(ResourceType),
     /// Canonical stockpiles contain positive entries only.
@@ -267,6 +297,16 @@ impl core::fmt::Display for EconomyStateBuildError {
             Self::UnknownPlayer(player) => {
                 write!(formatter, "economy player is not a participant: {player}")
             }
+            Self::NegativeGold { player, value } => {
+                write!(
+                    formatter,
+                    "gold for {player} cannot be negative, got {value}"
+                )
+            }
+            Self::NegativeWarWeariness { player, value } => write!(
+                formatter,
+                "war weariness for {player} cannot be negative, got {value}"
+            ),
             Self::ResourceNotStockpiled(resource) => {
                 write!(formatter, "resource is not stockpiled: {resource:?}")
             }
@@ -296,7 +336,15 @@ impl std::error::Error for EconomyStateBuildError {}
 mod tests {
     use std::collections::BTreeMap;
 
-    use super::{EconomyStateBuildError, ResourceType, StrategicResourceStockpile};
+    use crate::{
+        GameMode, HexGridBounds, MatchIdentity, MatchRules, Participant, PlayerCountry, PlayerId,
+        PlayerKind,
+    };
+
+    use super::{
+        EconomyState, EconomyStateBuildError, InitialResourceDistribution, ResourceType,
+        StrategicResourceStockpile,
+    };
 
     #[test]
     fn stockpiles_accept_only_positive_oil_and_aluminium() {
@@ -311,6 +359,48 @@ mod tests {
         );
         assert!(
             StrategicResourceStockpile::try_new(BTreeMap::from([(ResourceType::Oil, 0)])).is_err()
+        );
+    }
+
+    #[test]
+    fn economy_rejects_negative_gold_and_war_weariness() {
+        let player = PlayerId::new("player").expect("player id");
+        let identity = MatchIdentity::try_new(
+            MatchRules::default(),
+            [Participant::try_new(
+                player.clone(),
+                "Player",
+                0xff00_0000,
+                PlayerCountry::Poland,
+                PlayerKind::Human,
+                None,
+            )
+            .expect("participant")],
+            GameMode::HotSeat,
+        )
+        .expect("identity");
+        let bounds = HexGridBounds::new(1, 1).expect("bounds");
+        let build = |gold, weariness| {
+            EconomyState::try_new(
+                &identity,
+                bounds,
+                BTreeMap::from([(player.clone(), gold)]),
+                BTreeMap::from([(player.clone(), weariness)]),
+                BTreeMap::new(),
+                BTreeMap::new(),
+                InitialResourceDistribution::default(),
+            )
+        };
+        assert_eq!(
+            build(-1, 0),
+            Err(EconomyStateBuildError::NegativeGold {
+                player: player.clone(),
+                value: -1,
+            })
+        );
+        assert_eq!(
+            build(0, -1),
+            Err(EconomyStateBuildError::NegativeWarWeariness { player, value: -1 })
         );
     }
 }

@@ -108,6 +108,11 @@ pub(super) fn city_indices(
     cities: &[City],
 ) -> Result<Vec<usize>, GameStateBuildError> {
     for city in cities {
+        city.validate()
+            .map_err(|error| GameStateBuildError::InvalidCity {
+                city_id: city.id().clone(),
+                error,
+            })?;
         for position in core::iter::once(city.center())
             .chain(city.controlled_hexes().iter().copied())
             .chain(city.worked_hexes().iter().copied())
@@ -130,6 +135,22 @@ pub(super) fn city_indices(
         return Err(GameStateBuildError::DuplicateCityId(
             cities[pair[0]].id().clone(),
         ));
+    }
+    for (second_index, city) in cities.iter().enumerate() {
+        for position in
+            core::iter::once(city.center()).chain(city.controlled_hexes().iter().copied())
+        {
+            if let Some(first) = cities[..second_index]
+                .iter()
+                .find(|first| first.controls(position))
+            {
+                return Err(GameStateBuildError::CityTerritoryOverlap {
+                    position,
+                    first_city_id: first.id().clone(),
+                    second_city_id: city.id().clone(),
+                });
+            }
+        }
     }
     Ok(indices)
 }

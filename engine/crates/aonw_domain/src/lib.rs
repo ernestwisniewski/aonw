@@ -31,8 +31,9 @@ mod unit_posture;
 
 pub use artifact::{WorldArtifact, WorldArtifactLocation, WorldArtifactType};
 pub use city::{
-    City, CityBuildError, CityBuilder, CityBuildingType, CityProductionQueue, CityProductionTarget,
-    CityProjectType, CitySpecializationType, WonderType,
+    City, CityBuildError, CityBuilder, CityBuildingType, CityProductionQueue,
+    CityProductionQueueBuildError, CityProductionTarget, CityProjectType, CitySpecializationType,
+    WonderType,
 };
 pub use combat::{CityConquestAction, CombatState, CombatStateValidationError, IntendedAttack};
 pub use diplomacy::{

@@ -73,6 +73,76 @@ fn aggregate_rejects_out_of_bounds_and_colliding_units() {
 }
 
 #[test]
+fn aggregate_rejects_overlapping_city_territory() {
+    let owner = PlayerId::new("player-1").expect("player id");
+    let first = City::builder(
+        CityId::new("city-a").expect("city id"),
+        owner.clone(),
+        "First",
+        HexCoord::new(0, 0),
+    )
+    .with_controlled_hexes([HexCoord::new(1, 0)])
+    .build()
+    .expect("first city");
+    let second = City::builder(
+        CityId::new("city-b").expect("city id"),
+        owner,
+        "Second",
+        HexCoord::new(1, 0),
+    )
+    .build()
+    .expect("second city");
+
+    assert_eq!(
+        GameState::builder(
+            StateRevision::INITIAL,
+            0,
+            HexGridBounds::new(2, 1).expect("bounds"),
+            UnitOccupancyPolicy::Exclusive,
+            [],
+        )
+        .with_cities([second, first])
+        .try_build(),
+        Err(GameStateBuildError::CityTerritoryOverlap {
+            position: HexCoord::new(1, 0),
+            first_city_id: CityId::new("city-a").expect("city id"),
+            second_city_id: CityId::new("city-b").expect("city id"),
+        })
+    );
+}
+
+#[test]
+fn aggregate_revalidates_city_local_invariants_after_mutation() {
+    let city_id = CityId::new("city").expect("city id");
+    let city = City::builder(
+        city_id.clone(),
+        PlayerId::new("player-1").expect("player id"),
+        "City",
+        HexCoord::new(0, 0),
+    )
+    .with_controlled_hexes([HexCoord::new(1, 0)])
+    .build()
+    .expect("city")
+    .with_worked_hexes(vec![HexCoord::new(1, 0), HexCoord::new(1, 0)].into_boxed_slice());
+
+    assert_eq!(
+        GameState::builder(
+            StateRevision::INITIAL,
+            0,
+            HexGridBounds::new(2, 1).expect("bounds"),
+            UnitOccupancyPolicy::Exclusive,
+            [],
+        )
+        .with_cities([city])
+        .try_build(),
+        Err(GameStateBuildError::InvalidCity {
+            city_id,
+            error: crate::CityBuildError::DuplicateWorkedHex(HexCoord::new(1, 0)),
+        })
+    );
+}
+
+#[test]
 fn friendly_stacking_is_an_explicit_policy() {
     let position = HexCoord::new(1, 1);
     let state = GameState::try_new(

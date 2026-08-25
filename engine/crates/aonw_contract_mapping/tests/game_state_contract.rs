@@ -24,6 +24,9 @@ use aonw_contracts::{
 };
 use aonw_domain::{FogVisibility, HexCoord, PlayerId, PlayerPair, UnitId};
 
+#[path = "game_state_contract/numeric_invariant_contract.rs"]
+mod numeric_invariant_contract;
+
 fn contract() -> GameStateDto {
     GameStateDto {
         revision: 9,
@@ -270,7 +273,7 @@ fn city() -> CityDto {
         founding_owner_player_id: Some("player-2".to_owned()),
         name: "Warsaw".to_owned(),
         population: 7,
-        stored_food: -3,
+        stored_food: 3,
         max_hexes: 10,
         territory_radius: 3,
         center: CoordinateDto { col: 0, row: 0 },
@@ -288,7 +291,7 @@ fn city() -> CityDto {
                 2,
             )])),
         }),
-        production_overflow: -5,
+        production_overflow: 5,
         specialization: Some(CitySpecializationTypeDto::Science),
         preferred_expansion_hex: Some(CoordinateDto { col: 1, row: 0 }),
         hit_points: Some(41),
@@ -299,10 +302,10 @@ fn economy() -> EconomyStateDto {
     EconomyStateDto {
         player_gold: BTreeMap::from([
             ("player-1".to_owned(), 9_007_199_254_740_991),
-            ("player-2".to_owned(), -17),
+            ("player-2".to_owned(), 17),
         ]),
         player_war_weariness: BTreeMap::from([
-            ("player-1".to_owned(), -3),
+            ("player-1".to_owned(), 3),
             ("player-2".to_owned(), 14),
         ]),
         player_stability_net: BTreeMap::from([
@@ -487,14 +490,14 @@ fn identity_and_lifecycle_round_trip_preserves_typed_dart_values() {
 }
 
 #[test]
-fn economy_round_trip_preserves_signed_accounts_stockpiles_and_ordered_placements() {
+fn economy_round_trip_preserves_valid_accounts_stockpiles_and_ordered_placements() {
     let source = contract();
     let state = decode_game_state(source.clone()).expect("decode complete economy");
     let economy = state.economy();
 
     assert_eq!(
         economy.player_gold().values().copied().collect::<Vec<_>>(),
-        [9_007_199_254_740_991, -17]
+        [9_007_199_254_740_991, 17]
     );
     assert_eq!(
         economy.initial_resource_distribution().placements()[0].coordinate(),
@@ -515,7 +518,7 @@ fn complete_city_round_trip_preserves_progression_topology_production_and_planni
     );
     assert_eq!(city.name(), "Warsaw");
     assert_eq!(city.population(), 7);
-    assert_eq!(city.stored_food(), -3);
+    assert_eq!(city.stored_food(), 3);
     assert_eq!(city.worked_hexes(), [HexCoord::new(0, 1)]);
     assert_eq!(
         city.production_queue()
@@ -968,68 +971,6 @@ fn objectives_reject_invalid_and_duplicate_map_holds_with_paths() {
 }
 
 #[test]
-fn economy_rejects_unknown_players_invalid_stockpiles_and_invalid_placements_with_paths() {
-    let mut unknown = contract();
-    unknown.economy.player_gold.insert("player-3".to_owned(), 1);
-    assert_eq!(
-        decode_game_state(unknown)
-            .expect_err("unknown player")
-            .path(),
-        "$.economy.playerGold.player-3"
-    );
-
-    let mut invalid_stockpile = contract();
-    invalid_stockpile.economy.strategic_resources.insert(
-        "player-1".to_owned(),
-        StrategicResourceStockpileDto(BTreeMap::from([(ResourceTypeDto::Iron, 2)])),
-    );
-    assert_eq!(
-        decode_game_state(invalid_stockpile)
-            .expect_err("non-stockpiled resource")
-            .path(),
-        "$.economy.strategicResources.player-1"
-    );
-
-    let mut zero_stockpile = contract();
-    zero_stockpile.economy.strategic_resources.insert(
-        "player-1".to_owned(),
-        StrategicResourceStockpileDto(BTreeMap::from([(ResourceTypeDto::Oil, 0)])),
-    );
-    assert_eq!(
-        decode_game_state(zero_stockpile)
-            .expect_err("zero canonical entry")
-            .path(),
-        "$.economy.strategicResources.player-1"
-    );
-
-    let mut duplicate = contract();
-    duplicate
-        .economy
-        .initial_resource_distribution
-        .placements
-        .push(InitialResourcePlacementDto {
-            col: 4,
-            row: 3,
-            resource: ResourceTypeDto::Fish,
-        });
-    assert_eq!(
-        decode_game_state(duplicate)
-            .expect_err("duplicate placement")
-            .path(),
-        "$.economy.initialResourceDistribution.placements"
-    );
-
-    let mut outside = contract();
-    outside.economy.initial_resource_distribution.placements[0].col = 5;
-    assert_eq!(
-        decode_game_state(outside)
-            .expect_err("out-of-bounds placement")
-            .path(),
-        "$.economy.initialResourceDistribution.placements[0]"
-    );
-}
-
-#[test]
 fn city_rejects_unknown_owners_duplicates_and_invalid_resource_allocations_with_paths() {
     let mut unknown = contract();
     unknown.cities[0].founding_owner_player_id = Some("player-3".to_owned());
@@ -1092,6 +1033,17 @@ fn city_rejects_unknown_owners_duplicates_and_invalid_resource_allocations_with_
             .expect_err("out-of-bounds preferred expansion")
             .path(),
         "$.cities[0].preferredExpansionHex"
+    );
+
+    let mut overlapping = contract();
+    let mut second_city = overlapping.cities[0].clone();
+    second_city.id = "city-2".to_owned();
+    overlapping.cities.push(second_city);
+    assert_eq!(
+        decode_game_state(overlapping)
+            .expect_err("overlapping city territory")
+            .path(),
+        "$.cities"
     );
 }
 

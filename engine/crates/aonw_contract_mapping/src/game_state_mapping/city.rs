@@ -133,14 +133,17 @@ fn decode_queue(
     dto: CityProductionQueueDto,
     path: &str,
 ) -> Result<CityProductionQueue, GameStateMappingError> {
-    Ok(CityProductionQueue::new(
+    CityProductionQueue::try_new(
         decode_target(dto.target),
         dto.invested_production,
         decode_stockpile(
             dto.resource_allocation,
             &format!("{path}.resourceAllocation"),
         )?,
-    ))
+    )
+    .map_err(|error| {
+        GameStateMappingError::new(format!("{path}.investedProduction"), error.to_string())
+    })
 }
 
 fn encode_queue(value: &CityProductionQueue) -> CityProductionQueueDto {
@@ -225,6 +228,12 @@ fn require_in_bounds(
 
 fn map_city_error(path: &str, error: &CityBuildError) -> GameStateMappingError {
     let field = match error {
+        CityBuildError::NonPositivePopulation(_) => "population",
+        CityBuildError::NegativeStoredFood(_) => "storedFood",
+        CityBuildError::NonPositiveMaxHexes(_) => "maxHexes",
+        CityBuildError::NegativeTerritoryRadius(_) => "territoryRadius",
+        CityBuildError::NegativeProductionOverflow(_) => "productionOverflow",
+        CityBuildError::NonPositiveHitPoints(_) => "hitPoints",
         CityBuildError::DuplicateControlledHex(_) | CityBuildError::CenterInControlledHexes => {
             "controlledHexes"
         }

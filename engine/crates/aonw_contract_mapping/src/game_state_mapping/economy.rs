@@ -173,14 +173,20 @@ fn decode_distribution(
 
 fn map_economy_error(error: &EconomyStateBuildError) -> GameStateMappingError {
     let path = match error {
-        EconomyStateBuildError::UnknownPlayer(_) => "$.economy",
+        EconomyStateBuildError::UnknownPlayer(_) => "$.economy".to_owned(),
+        EconomyStateBuildError::NegativeGold { player, .. } => {
+            format!("$.economy.playerGold.{}", player.as_str())
+        }
+        EconomyStateBuildError::NegativeWarWeariness { player, .. } => {
+            format!("$.economy.playerWarWeariness.{}", player.as_str())
+        }
         EconomyStateBuildError::ResourceNotStockpiled(_)
         | EconomyStateBuildError::NonPositiveResourceAmount { .. } => {
-            "$.economy.strategicResources"
+            "$.economy.strategicResources".to_owned()
         }
         EconomyStateBuildError::DuplicateInitialResource(_)
         | EconomyStateBuildError::InitialResourceOutOfBounds(_) => {
-            "$.economy.initialResourceDistribution.placements"
+            "$.economy.initialResourceDistribution.placements".to_owned()
         }
     };
     GameStateMappingError::new(path, error.to_string())

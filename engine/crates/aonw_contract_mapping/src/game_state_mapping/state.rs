@@ -122,7 +122,9 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
 fn map_aggregate_error(error: &GameStateBuildError) -> GameStateMappingError {
     let path = match error {
         GameStateBuildError::UnitPlayerNotFound { .. } => "$.units",
-        GameStateBuildError::CityPlayerNotFound { .. } => "$.cities",
+        GameStateBuildError::CityPlayerNotFound { .. }
+        | GameStateBuildError::InvalidCity { .. }
+        | GameStateBuildError::CityTerritoryOverlap { .. } => "$.cities",
         GameStateBuildError::FogPlayerNotFound(_) => "$.fogOfWar",
         GameStateBuildError::InteractionPlayerNotFound(_) => "$.interaction",
         GameStateBuildError::InvalidDiplomacy(_) => "$.diplomacy",
@@ -241,7 +243,9 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
 #[cfg(test)]
 mod tests {
     use aonw_contracts::{UnitActivityDto, UnitDto, UnitKindDto, UnitPostureDto};
-    use aonw_domain::{CityId, DiplomacyStateBuildError, PlayerId, UnitId};
+    use aonw_domain::{
+        CityBuildError, CityId, DiplomacyStateBuildError, HexCoord, PlayerId, UnitId,
+    };
 
     use super::*;
 
@@ -260,6 +264,21 @@ mod tests {
                 GameStateBuildError::CityPlayerNotFound {
                     city_id: CityId::new("city").expect("city"),
                     player_id: player.clone(),
+                },
+                "$.cities",
+            ),
+            (
+                GameStateBuildError::InvalidCity {
+                    city_id: CityId::new("city").expect("city"),
+                    error: CityBuildError::NonPositivePopulation(0),
+                },
+                "$.cities",
+            ),
+            (
+                GameStateBuildError::CityTerritoryOverlap {
+                    position: HexCoord::new(0, 0),
+                    first_city_id: CityId::new("city-1").expect("city"),
+                    second_city_id: CityId::new("city-2").expect("city"),
                 },
                 "$.cities",
             ),

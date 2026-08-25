@@ -24,18 +24,26 @@ pub struct CityProductionQueue {
 }
 
 impl CityProductionQueue {
-    /// Constructs a typed production queue.
-    #[must_use]
-    pub const fn new(
+    /// Constructs a typed production queue with non-negative investment.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when persisted production investment is negative.
+    pub fn try_new(
         target: CityProductionTarget,
         invested_production: i64,
         resource_allocation: StrategicResourceStockpile,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, CityProductionQueueBuildError> {
+        if invested_production < 0 {
+            return Err(CityProductionQueueBuildError::NegativeInvestedProduction(
+                invested_production,
+            ));
+        }
+        Ok(Self {
             target,
             invested_production,
             resource_allocation,
-        }
+        })
     }
 
     /// Returns the current target.
@@ -56,3 +64,25 @@ impl CityProductionQueue {
         &self.resource_allocation
     }
 }
+
+/// Structural production-queue validation failure.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CityProductionQueueBuildError {
+    /// Accumulated production cannot be negative.
+    NegativeInvestedProduction(i64),
+}
+
+impl core::fmt::Display for CityProductionQueueBuildError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::NegativeInvestedProduction(value) => {
+                write!(
+                    formatter,
+                    "invested production cannot be negative, got {value}"
+                )
+            }
+        }
+    }
+}
+
+impl std::error::Error for CityProductionQueueBuildError {}
