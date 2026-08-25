@@ -21,6 +21,27 @@ use aonw_engine::{
 #[allow(clippy::too_many_lines)]
 pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
     match event {
+        DomainEvent::ArtifactExcavationStarted(value) => {
+            ReplayEventDto::ArtifactExcavationStarted {
+                artifact_id: value.artifact_id().as_str().to_owned(),
+                owner_player_id: value.owner_player_id().as_str().to_owned(),
+                unit_id: value.unit_id().as_str().to_owned(),
+                coordinate: coordinate(value.coordinate()),
+            }
+        }
+        DomainEvent::ArtifactCarried(value) => ReplayEventDto::ArtifactCarried {
+            artifact_id: value.artifact_id().as_str().to_owned(),
+            owner_player_id: value.owner_player_id().as_str().to_owned(),
+            unit_id: value.unit_id().as_str().to_owned(),
+            coordinate: coordinate(value.coordinate()),
+        },
+        DomainEvent::ArtifactStored(value) => ReplayEventDto::ArtifactStored {
+            artifact_id: value.artifact_id().as_str().to_owned(),
+            owner_player_id: value.owner_player_id().as_str().to_owned(),
+            source_unit_id: value.source_unit_id().map(|unit| unit.as_str().to_owned()),
+            city_id: value.city_id().as_str().to_owned(),
+            coordinate: coordinate(value.coordinate()),
+        },
         DomainEvent::CityFounded(value) => ReplayEventDto::CityFounded {
             city_id: value.city_id().as_str().to_owned(),
             owner_player_id: value.owner_player_id().as_str().to_owned(),

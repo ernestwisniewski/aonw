@@ -1,6 +1,7 @@
 use crate::{
-    AllPlayersSubmittedEvent, AutoExplorePlannedEvent, CityBuiltBuildingEvent,
-    CityBuiltWonderEvent, CityFoundedEvent, CityProducedUnitEvent, CombatEvent, CombatExecution,
+    AllPlayersSubmittedEvent, ArtifactCarriedEvent, ArtifactExcavationStartedEvent,
+    ArtifactStoredEvent, AutoExplorePlannedEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent,
+    CityFoundedEvent, CityProducedUnitEvent, CombatEvent, CombatExecution,
     DiplomaticScoreChangedEvent, LogisticsExecution, MerchantRouteAssignedEvent,
     MerchantTravelQueuedEvent, PlayerKickedEvent, PlayerTimedOutEvent, TechnologyResearchedEvent,
     TroopDetachedEvent, TurnEndedEvent, TurnKernelExecution, UnitMovedEvent, UnitMovementExecution,
@@ -10,6 +11,12 @@ use crate::{
 /// Ordered event emitted by an accepted transition.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DomainEvent {
+    /// One unit started excavating an artifact.
+    ArtifactExcavationStarted(ArtifactExcavationStartedEvent),
+    /// One completed excavation moved an artifact to its unit.
+    ArtifactCarried(ArtifactCarriedEvent),
+    /// One carried or traded artifact entered city storage.
+    ArtifactStored(ArtifactStoredEvent),
     /// One city-founding job completed.
     CityFounded(CityFoundedEvent),
     /// One city completed a building.

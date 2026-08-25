@@ -215,6 +215,9 @@ pub(crate) fn processor_is_required(
             .cities()
             .iter()
             .any(|city| owns_scope(city.owner_player_id()) && city.production_queue().is_some()),
+        TurnProcessor::Artifacts => state.units().iter().any(|unit| {
+            owns_scope(unit.owner_player_id()) && unit.activity().excavating_artifact_id().is_some()
+        }),
         TurnProcessor::QueuedMovement => state
             .units()
             .iter()

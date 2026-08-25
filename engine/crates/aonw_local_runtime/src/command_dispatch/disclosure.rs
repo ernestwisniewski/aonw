@@ -60,6 +60,15 @@ impl RecipientDisclosure {
 
     pub(crate) fn allows_event(&self, event: &DomainEvent) -> bool {
         match event {
+            DomainEvent::ArtifactExcavationStarted(value) => {
+                value.owner_player_id() == &self.actor || self.allows_unit(value.unit_id())
+            }
+            DomainEvent::ArtifactCarried(value) => {
+                value.owner_player_id() == &self.actor || self.allows_unit(value.unit_id())
+            }
+            DomainEvent::ArtifactStored(value) => {
+                value.owner_player_id() == &self.actor || self.allows_city(value.city_id())
+            }
             DomainEvent::CityFounded(value) => {
                 value.owner_player_id() == &self.actor || self.allows_city(value.city_id())
             }

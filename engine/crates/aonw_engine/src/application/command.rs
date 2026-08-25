@@ -10,9 +10,10 @@ use crate::{
     CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DetachTroopCommand, EngineContext,
     FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
     RushProductionCommand, SelectCityExpansionHexCommand, SelectWorkerImprovementCommand,
-    SetCitySpecializationCommand, StartBuildingCommand, StartCityProjectCommand,
-    StartUnitProductionCommand, StartWonderCommand, StateDigest, ToggleWorkedHexCommand,
-    TurnCommand, UnitActionCommand,
+    SetCitySpecializationCommand, StartArtifactExcavationCommand, StartBuildingCommand,
+    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, StateDigest,
+    StoreArtifactInCityCommand, ToggleWorkedHexCommand, TradeArtifactCommand, TurnCommand,
+    UnitActionCommand,
 };
 
 mod budget;
@@ -20,12 +21,20 @@ mod canonical_transition;
 mod error;
 
 pub use budget::EventBudget;
-use canonical_transition::{apply_city, apply_combat, apply_production, apply_worker};
+use canonical_transition::{
+    apply_artifact, apply_city, apply_combat, apply_production, apply_worker,
+};
 pub use error::CanonicalEngineError;
 
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
 pub enum PlayerCommand<'command> {
+    /// Starts excavating the artifact at one controlled unit.
+    StartArtifactExcavation(StartArtifactExcavationCommand<'command>),
+    /// Stores the artifact carried by one controlled unit.
+    StoreArtifactInCity(StoreArtifactInCityCommand<'command>),
+    /// Transfers one stored artifact and optional offered gold to another player.
+    TradeArtifact(TradeArtifactCommand<'command>),
     /// Schedules a validated city-founding job.
     FoundCity(FoundCityCommand<'command>),
     /// Toggles one manually worked controlled coordinate.
@@ -98,6 +107,18 @@ impl GameEngine {
         let (map_hash, ruleset_hash) = content_hashes(context)?;
         let map = context.map();
         match command {
+            PlayerCommand::StartArtifactExcavation(command) => {
+                let mutation = crate::artifact::apply_start_excavation(&state, context, command);
+                apply_artifact(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::StoreArtifactInCity(command) => {
+                let mutation = crate::artifact::apply_store_in_city(&state, context, command);
+                apply_artifact(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::TradeArtifact(command) => {
+                let mutation = crate::artifact::apply_trade(&state, context, command);
+                apply_artifact(state, mutation, map_hash, ruleset_hash)
+            }
             PlayerCommand::FoundCity(command) => {
                 let mutation = crate::city::apply_found_city(&state, context, command);
                 apply_city(state, mutation, map_hash, ruleset_hash)

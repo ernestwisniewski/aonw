@@ -1,11 +1,53 @@
 use aonw_content::ContentHash;
 use aonw_domain::{GameState, StateRevision};
 
-use super::{
-    CommandRejectionCode, DomainRejection, DomainTransition, DomainTransitionParts,
-    ExecutionEvidence,
-};
+use super::{CommandRejectionCode, DomainEvent, ExecutionEvidence};
 use crate::StateDigest;
+
+/// Stable command rejection independent of presentation language.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DomainRejection {
+    code: CommandRejectionCode,
+}
+
+impl DomainRejection {
+    /// Returns the stable wire code.
+    #[must_use]
+    pub const fn code(self) -> CommandRejectionCode {
+        self.code
+    }
+}
+
+/// Complete authoritative outcome of one command.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DomainTransition {
+    state: GameState,
+    rejection: Option<DomainRejection>,
+    events: Box<[DomainEvent]>,
+    evidence: Option<ExecutionEvidence>,
+    digest: StateDigest,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+}
+
+/// Owned components of one authoritative transition.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DomainTransitionParts {
+    /// Unchanged or next canonical state.
+    pub state: GameState,
+    /// Stable rejection code, absent when accepted.
+    pub rejection: Option<DomainRejection>,
+    /// Ordered authoritative events.
+    pub events: Box<[DomainEvent]>,
+    /// Exact execution evidence.
+    pub evidence: Option<ExecutionEvidence>,
+    /// Canonical identity of `state`.
+    pub digest: StateDigest,
+    /// Exact logical map identity.
+    pub map_hash: ContentHash,
+    /// Exact immutable ruleset identity.
+    pub ruleset_hash: ContentHash,
+}
 
 impl DomainTransition {
     pub(crate) fn accepted(

@@ -42,7 +42,10 @@ impl PlayerCommand<'_> {
         match self {
             Self::AttackHex(_) => EventBudget::new(7),
             Self::AutoExploreUnit(_) => EventBudget::new(2),
-            Self::AutomateWorker(_)
+            Self::StartArtifactExcavation(_)
+            | Self::StoreArtifactInCity(_)
+            | Self::TradeArtifact(_)
+            | Self::AutomateWorker(_)
             | Self::MoveUnit(_)
             | Self::AssignMerchantTradeRoute(_)
             | Self::MoveMerchantToCity(_)

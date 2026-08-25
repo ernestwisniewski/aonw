@@ -1,13 +1,13 @@
-use aonw_content::ContentHash;
-use aonw_domain::GameState;
-
-use crate::StateDigest;
-
+mod artifact_events;
 mod domain_transition;
 mod events;
 mod outcome;
 mod production_events;
 
+pub use artifact_events::{
+    ArtifactCarriedEvent, ArtifactExcavationStartedEvent, ArtifactStoredEvent,
+};
+pub use domain_transition::{DomainRejection, DomainTransition, DomainTransitionParts};
 pub use events::{
     AllPlayersSubmittedEvent, CityFoundedEvent, CombatEvent, DiplomaticScoreChangedEvent,
     PlayerKickedEvent, PlayerTimedOutEvent, TurnEndedEvent, WorkerCompletedJobEvent,
@@ -184,6 +184,30 @@ pub enum CommandRejectionCode {
     ProjectCannotBeRushed,
     /// No positive affordable rush quote exists.
     RushProductionUnavailable,
+    /// The controlled unit already carries an artifact.
+    UnitAlreadyCarryingArtifact,
+    /// No map artifact occupies the controlled unit's coordinate.
+    ArtifactNotFound,
+    /// The controlled unit does not carry an artifact.
+    UnitNotCarryingArtifact,
+    /// The controlled unit does not occupy the requested city center.
+    UnitNotInCity,
+    /// The requested city already stores an artifact.
+    CityArtifactSlotFull,
+    /// The authenticated actor cannot initiate an artifact trade.
+    ArtifactTradeActorUnavailable,
+    /// The artifact trade target is absent or equals the actor.
+    ArtifactTradeTargetInvalid,
+    /// Offered artifact-trade gold is negative.
+    ArtifactTradeGoldInvalid,
+    /// Current war policy blocks artifact trade.
+    ArtifactTradeBlockedByWar,
+    /// The offered gold cannot be transferred atomically.
+    ArtifactTradeGoldUnavailable,
+    /// The offered artifact is not stored in an actor-owned city.
+    OfferedArtifactUnavailable,
+    /// The target player has no empty city artifact slot.
+    TargetArtifactSlotUnavailable,
     /// The requested worker does not exist or is not a worker.
     WorkerNotFound,
     /// The actor cannot command the requested worker.
@@ -224,7 +248,7 @@ pub enum CommandRejectionCode {
 
 impl CommandRejectionCode {
     /// Complete stable rejection surface exposed to current clients.
-    pub const ALL: [Self; 99] = [
+    pub const ALL: [Self; 111] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -306,6 +330,18 @@ impl CommandRejectionCode {
         Self::ProductionQueueEmpty,
         Self::ProjectCannotBeRushed,
         Self::RushProductionUnavailable,
+        Self::UnitAlreadyCarryingArtifact,
+        Self::ArtifactNotFound,
+        Self::UnitNotCarryingArtifact,
+        Self::UnitNotInCity,
+        Self::CityArtifactSlotFull,
+        Self::ArtifactTradeActorUnavailable,
+        Self::ArtifactTradeTargetInvalid,
+        Self::ArtifactTradeGoldInvalid,
+        Self::ArtifactTradeBlockedByWar,
+        Self::ArtifactTradeGoldUnavailable,
+        Self::OfferedArtifactUnavailable,
+        Self::TargetArtifactSlotUnavailable,
         Self::WorkerNotFound,
         Self::WorkerNotControlled,
         Self::WorkerUnavailable,
@@ -414,6 +450,18 @@ impl CommandRejectionCode {
             Self::ProductionQueueEmpty => "production_queue_empty",
             Self::ProjectCannotBeRushed => "project_cannot_be_rushed",
             Self::RushProductionUnavailable => "rush_production_unavailable",
+            Self::UnitAlreadyCarryingArtifact => "unit_already_carrying_artifact",
+            Self::ArtifactNotFound => "artifact_not_found",
+            Self::UnitNotCarryingArtifact => "unit_not_carrying_artifact",
+            Self::UnitNotInCity => "unit_not_in_city",
+            Self::CityArtifactSlotFull => "city_artifact_slot_full",
+            Self::ArtifactTradeActorUnavailable => "artifact_trade_actor_unavailable",
+            Self::ArtifactTradeTargetInvalid => "artifact_trade_target_invalid",
+            Self::ArtifactTradeGoldInvalid => "artifact_trade_gold_invalid",
+            Self::ArtifactTradeBlockedByWar => "artifact_trade_blocked_by_war",
+            Self::ArtifactTradeGoldUnavailable => "artifact_trade_gold_unavailable",
+            Self::OfferedArtifactUnavailable => "offered_artifact_unavailable",
+            Self::TargetArtifactSlotUnavailable => "target_artifact_slot_unavailable",
             Self::WorkerNotFound => "worker_not_found",
             Self::WorkerNotControlled => "worker_not_controlled",
             Self::WorkerUnavailable => "worker_unavailable",
@@ -440,49 +488,4 @@ impl core::fmt::Display for CommandRejectionCode {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         formatter.write_str(self.as_str())
     }
-}
-
-/// Stable command rejection independent of presentation language.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct DomainRejection {
-    code: CommandRejectionCode,
-}
-
-impl DomainRejection {
-    /// Returns the stable wire code.
-    #[must_use]
-    pub const fn code(self) -> CommandRejectionCode {
-        self.code
-    }
-}
-
-/// Complete authoritative outcome of one command.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct DomainTransition {
-    state: GameState,
-    rejection: Option<DomainRejection>,
-    events: Box<[DomainEvent]>,
-    evidence: Option<ExecutionEvidence>,
-    digest: StateDigest,
-    map_hash: ContentHash,
-    ruleset_hash: ContentHash,
-}
-
-/// Owned components of one authoritative transition.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct DomainTransitionParts {
-    /// Unchanged or next canonical state.
-    pub state: GameState,
-    /// Stable rejection code, absent when accepted.
-    pub rejection: Option<DomainRejection>,
-    /// Ordered authoritative events.
-    pub events: Box<[DomainEvent]>,
-    /// Exact presentation evidence.
-    pub evidence: Option<ExecutionEvidence>,
-    /// Canonical identity of `state`.
-    pub digest: StateDigest,
-    /// Exact logical map identity.
-    pub map_hash: ContentHash,
-    /// Exact immutable ruleset identity.
-    pub ruleset_hash: ContentHash,
 }

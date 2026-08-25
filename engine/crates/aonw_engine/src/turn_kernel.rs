@@ -67,10 +67,13 @@ fn advance_turn_preparation(
     let production =
         crate::production::advance_turn_production(settlement.state, map, ruleset, scope)
             .map_err(CanonicalEngineError::Production)?;
+    let artifacts = crate::artifact::advance_turn_artifacts(production.state, scope)
+        .map_err(CanonicalEngineError::Artifact)?;
     let mut events = settlement.events;
     events.extend(production.events);
+    events.extend(artifacts.events);
     Ok(TurnPreparationPhase {
-        state: production.state,
+        state: artifacts.state,
         events,
         founded_city_ids: settlement.founded_city_ids,
     })
@@ -246,6 +249,7 @@ pub(crate) fn apply_end_turn(
             TurnProcessor::CityFounding,
             TurnProcessor::WorkerJobs,
             TurnProcessor::Production,
+            TurnProcessor::Artifacts,
             TurnProcessor::MovementReset,
             TurnProcessor::QueuedMovement,
             TurnProcessor::TradeRoutes,
@@ -458,6 +462,7 @@ fn finalize_simultaneous(
             TurnProcessor::CityFounding,
             TurnProcessor::WorkerJobs,
             TurnProcessor::Production,
+            TurnProcessor::Artifacts,
             TurnProcessor::MovementReset,
             TurnProcessor::QueuedMovement,
             TurnProcessor::TradeRoutes,

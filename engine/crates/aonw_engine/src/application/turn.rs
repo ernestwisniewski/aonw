@@ -185,6 +185,8 @@ pub enum TurnProcessor {
     CityFounding,
     /// Finite city production, continuous projects, and wonder races.
     Production,
+    /// Continuation and completion of artifact excavations.
+    Artifacts,
     /// Economy-account, growth, upkeep, and stability progression.
     Economy,
     /// Diplomacy/contact progression.
@@ -226,6 +228,7 @@ impl TurnProcessor {
             Self::Combat => "combat",
             Self::CityFounding => "cityFounding",
             Self::Production => "production",
+            Self::Artifacts => "artifacts",
             Self::Economy => "economy",
             Self::Diplomacy => "diplomacy",
             Self::Research => "research",
@@ -259,13 +262,14 @@ impl TurnKernelCapabilities {
     /// Capability label used by current fixtures and runtime clients.
     pub const LABEL: &'static str = "turn-kernel-ready";
     /// Full canonical phase order, including slices that still fail closed.
-    pub const ORDERED: [TurnProcessor; 17] = [
+    pub const ORDERED: [TurnProcessor; 18] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
         TurnProcessor::CityFounding,
         TurnProcessor::WorkerJobs,
         TurnProcessor::Production,
+        TurnProcessor::Artifacts,
         TurnProcessor::Economy,
         TurnProcessor::MovementReset,
         TurnProcessor::QueuedMovement,
@@ -279,13 +283,14 @@ impl TurnKernelCapabilities {
         TurnProcessor::Objectives,
     ];
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 12] = [
+    pub const ENABLED: [TurnProcessor; 13] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
         TurnProcessor::CityFounding,
         TurnProcessor::WorkerJobs,
         TurnProcessor::Production,
+        TurnProcessor::Artifacts,
         TurnProcessor::MovementReset,
         TurnProcessor::QueuedMovement,
         TurnProcessor::TradeRoutes,
@@ -313,6 +318,7 @@ impl TurnKernelCapabilities {
                 | TurnProcessor::CityFounding
                 | TurnProcessor::WorkerJobs
                 | TurnProcessor::Production
+                | TurnProcessor::Artifacts
                 | TurnProcessor::MovementReset
                 | TurnProcessor::QueuedMovement
                 | TurnProcessor::TradeRoutes

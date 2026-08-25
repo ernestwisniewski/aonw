@@ -19,6 +19,8 @@ pub enum CanonicalEngineError {
     Worker(Box<str>),
     /// A production transition violated current content or state invariants.
     Production(crate::ProductionError),
+    /// An artifact transition violated current state invariants.
+    Artifact(crate::ArtifactError),
 }
 
 impl core::fmt::Display for CanonicalEngineError {
@@ -32,6 +34,7 @@ impl core::fmt::Display for CanonicalEngineError {
             Self::CityFounding(source) => write!(formatter, "city founding failed: {source}"),
             Self::Worker(source) => write!(formatter, "worker progression failed: {source}"),
             Self::Production(source) => write!(formatter, "production failed: {source}"),
+            Self::Artifact(source) => write!(formatter, "artifact failed: {source}"),
         }
     }
 }

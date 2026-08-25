@@ -4,6 +4,36 @@ use aonw_domain::GameState;
 use super::CanonicalEngineError;
 use crate::application::{DomainTransition, ExecutionEvidence};
 
+pub(super) fn apply_artifact(
+    state: GameState,
+    mutation: Result<crate::artifact::ArtifactMutation, crate::ArtifactError>,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let mutation = match mutation {
+        Ok(value) => value,
+        Err(crate::ArtifactError::Rejected(code)) => {
+            return Ok(DomainTransition::rejected(
+                state,
+                code,
+                map_hash,
+                ruleset_hash,
+            ));
+        }
+        Err(error) => return Err(CanonicalEngineError::Artifact(error)),
+    };
+    let next = state
+        .into_after_artifact(mutation.update)
+        .map_err(CanonicalEngineError::State)?;
+    Ok(DomainTransition::accepted(
+        next,
+        mutation.events,
+        None,
+        map_hash,
+        ruleset_hash,
+    ))
+}
+
 pub(super) fn apply_worker(
     state: GameState,
     mutation: Result<crate::worker::WorkerMutation, crate::worker::WorkerRuleError>,

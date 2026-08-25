@@ -11,7 +11,8 @@ pub use logistics::{
 };
 pub use query::{CanonicalQueryError, GameQuery, QueryResult};
 pub use transition::{
-    AllPlayersSubmittedEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent, CityFoundedEvent,
+    AllPlayersSubmittedEvent, ArtifactCarriedEvent, ArtifactExcavationStartedEvent,
+    ArtifactStoredEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent, CityFoundedEvent,
     CityProducedUnitEvent, CombatEvent, CommandRejectionCode, DiplomaticScoreChangedEvent,
     DomainEvent, DomainRejection, DomainTransition, DomainTransitionParts, ExecutionEvidence,
     PlayerKickedEvent, PlayerTimedOutEvent, TechnologyResearchedEvent, TurnEndedEvent,

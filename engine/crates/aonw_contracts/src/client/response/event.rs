@@ -15,6 +15,41 @@ use crate::{
     deny_unknown_fields
 )]
 pub enum ClientEventDto {
+    /// One owned or visible unit started excavating an artifact.
+    ArtifactExcavationStarted {
+        /// Artifact identity.
+        artifact_id: String,
+        /// Player controlling the excavation.
+        owner_player_id: String,
+        /// Excavating unit.
+        unit_id: String,
+        /// Excavation coordinate.
+        coordinate: CoordinateDto,
+    },
+    /// One owned or visible unit completed an excavation.
+    ArtifactCarried {
+        /// Artifact identity.
+        artifact_id: String,
+        /// Player controlling the carrier.
+        owner_player_id: String,
+        /// Carrier unit.
+        unit_id: String,
+        /// Completion coordinate.
+        coordinate: CoordinateDto,
+    },
+    /// One artifact entered owned or visible city storage.
+    ArtifactStored {
+        /// Artifact identity.
+        artifact_id: String,
+        /// Player owning the destination city.
+        owner_player_id: String,
+        /// Direct carrier, absent for a city-to-city trade.
+        source_unit_id: Option<String>,
+        /// Destination city.
+        city_id: String,
+        /// Destination city center.
+        coordinate: CoordinateDto,
+    },
     /// One city-founding job completed for a visible city.
     CityFounded {
         /// New city identity.

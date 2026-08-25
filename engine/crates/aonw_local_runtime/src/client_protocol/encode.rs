@@ -1,18 +1,15 @@
 use aonw_contract_mapping::{encode_improvement, encode_unit_kind, encode_unit_posture};
+use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
     CityFoundingDraftViewDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
-    ClientCommandResultDto, ClientReplayVerificationDto, ClientSessionStampDto,
-    FieldImprovementViewDto, OwnedCityPlanningViewDto, PlayerCityViewDto, PlayerUnitViewDto,
-    PlayerViewPatchDto, PlayerViewSnapshotDto, RoadViewDto, WorkerJobViewDto,
+    ClientCommandResultDto, ClientSessionStampDto, OwnedCityPlanningViewDto, PlayerCityViewDto,
+    PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, WorkerJobViewDto,
 };
-use aonw_contracts::{CoordinateDto, TransportConditionDto};
-use aonw_domain::TransportCondition;
 use aonw_engine::CommandRejectionCode;
 
 use crate::{
-    CityFoundingDraftView, CommandResult, PlayerCityView, PlayerFieldImprovementView,
-    PlayerRoadView, PlayerUnitView, PlayerViewPatch, PlayerViewSnapshot, ReplayVerification,
-    SessionStamp,
+    CityFoundingDraftView, CommandResult, PlayerCityView, PlayerUnitView, PlayerViewPatch,
+    PlayerViewSnapshot, SessionStamp,
 };
 
 mod capability;
@@ -20,6 +17,7 @@ mod evidence;
 mod map_view;
 mod presentation;
 mod query;
+mod simple;
 #[cfg(test)]
 mod tests;
 mod worker;
@@ -34,6 +32,8 @@ use presentation::{pending_action, turn_lifecycle};
 pub(super) use query::query_result;
 #[cfg(test)]
 use query::{merchant_destination, movement_metrics};
+pub(super) use simple::replay_verification;
+use simple::{field_improvement, road};
 
 pub(super) fn stamp(value: SessionStamp) -> ClientSessionStampDto {
     ClientSessionStampDto {
@@ -289,6 +289,38 @@ const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto
         CommandRejectionCode::RushProductionUnavailable => {
             ClientCommandRejectionCodeDto::RushProductionUnavailable
         }
+        CommandRejectionCode::UnitAlreadyCarryingArtifact => {
+            ClientCommandRejectionCodeDto::UnitAlreadyCarryingArtifact
+        }
+        CommandRejectionCode::ArtifactNotFound => ClientCommandRejectionCodeDto::ArtifactNotFound,
+        CommandRejectionCode::UnitNotCarryingArtifact => {
+            ClientCommandRejectionCodeDto::UnitNotCarryingArtifact
+        }
+        CommandRejectionCode::UnitNotInCity => ClientCommandRejectionCodeDto::UnitNotInCity,
+        CommandRejectionCode::CityArtifactSlotFull => {
+            ClientCommandRejectionCodeDto::CityArtifactSlotFull
+        }
+        CommandRejectionCode::ArtifactTradeActorUnavailable => {
+            ClientCommandRejectionCodeDto::ArtifactTradeActorUnavailable
+        }
+        CommandRejectionCode::ArtifactTradeTargetInvalid => {
+            ClientCommandRejectionCodeDto::ArtifactTradeTargetInvalid
+        }
+        CommandRejectionCode::ArtifactTradeGoldInvalid => {
+            ClientCommandRejectionCodeDto::ArtifactTradeGoldInvalid
+        }
+        CommandRejectionCode::ArtifactTradeBlockedByWar => {
+            ClientCommandRejectionCodeDto::ArtifactTradeBlockedByWar
+        }
+        CommandRejectionCode::ArtifactTradeGoldUnavailable => {
+            ClientCommandRejectionCodeDto::ArtifactTradeGoldUnavailable
+        }
+        CommandRejectionCode::OfferedArtifactUnavailable => {
+            ClientCommandRejectionCodeDto::OfferedArtifactUnavailable
+        }
+        CommandRejectionCode::TargetArtifactSlotUnavailable => {
+            ClientCommandRejectionCodeDto::TargetArtifactSlotUnavailable
+        }
         CommandRejectionCode::WorkerNotFound => ClientCommandRejectionCodeDto::WorkerNotFound,
         CommandRejectionCode::WorkerNotControlled => {
             ClientCommandRejectionCodeDto::WorkerNotControlled
@@ -339,14 +371,6 @@ const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto
         CommandRejectionCode::WorkerAutomationNoTarget => {
             ClientCommandRejectionCodeDto::WorkerAutomationNoTarget
         }
-    }
-}
-
-pub(super) fn replay_verification(value: ReplayVerification) -> ClientReplayVerificationDto {
-    ClientReplayVerificationDto {
-        entry_count: u64::try_from(value.entry_count).unwrap_or(u64::MAX),
-        final_event_offset: value.final_event_offset,
-        final_stamp: stamp(value.final_stamp),
     }
 }
 
@@ -467,22 +491,5 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
             .collect(),
         pending_action: value.pending_action.as_ref().map(pending_action),
         city_founding_draft: value.city_founding_draft.as_ref().map(founding_draft),
-    }
-}
-
-fn field_improvement(value: PlayerFieldImprovementView) -> FieldImprovementViewDto {
-    FieldImprovementViewDto {
-        coordinate: coordinate(value.coordinate()),
-        improvement: encode_improvement(value.improvement()),
-    }
-}
-
-fn road(value: PlayerRoadView) -> RoadViewDto {
-    RoadViewDto {
-        coordinate: coordinate(value.coordinate()),
-        condition: match value.condition() {
-            TransportCondition::Operational => TransportConditionDto::Operational,
-            TransportCondition::Pillaged => TransportConditionDto::Pillaged,
-        },
     }
 }

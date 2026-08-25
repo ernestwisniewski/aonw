@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 mod application;
+mod artifact;
 mod city;
 mod combat;
 mod context;
@@ -22,7 +23,8 @@ mod worker;
 use aonw_domain::GameState;
 
 pub use application::{
-    AllPlayersSubmittedEvent, AutoExplorePlannedEvent, CanonicalEngineError, CanonicalQueryError,
+    AllPlayersSubmittedEvent, ArtifactCarriedEvent, ArtifactExcavationStartedEvent,
+    ArtifactStoredEvent, AutoExplorePlannedEvent, CanonicalEngineError, CanonicalQueryError,
     CityBuiltBuildingEvent, CityBuiltWonderEvent, CityFoundedEvent, CityProducedUnitEvent,
     CombatEvent, CommandRejectionCode, DiplomaticScoreChangedEvent, DomainEvent, DomainRejection,
     DomainTransition, DomainTransitionParts, EventBudget, ExecutionEvidence,
@@ -32,6 +34,9 @@ pub use application::{
     TechnologyResearchedEvent, TroopDetachedEvent, TurnCommand, TurnEndedEvent,
     TurnKernelCapabilities, TurnKernelExecution, TurnProcessor, WonderProductionRefundedEvent,
     WorkerCompletedJobEvent, WorkerJobCompletion,
+};
+pub use artifact::{
+    ArtifactError, StartArtifactExcavationCommand, StoreArtifactInCityCommand, TradeArtifactCommand,
 };
 pub use city::{
     CityExpansionCandidate, CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions,
