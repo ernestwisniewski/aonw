@@ -1,7 +1,5 @@
 use aonw_content::ContentHash;
-use aonw_domain::{
-    DiplomacyStateBuildError, GameState, GameStateBuildError, TurnLifecycleBuildError,
-};
+use aonw_domain::GameState;
 
 use super::{DomainEvent, DomainTransition, ExecutionEvidence};
 use crate::movement::{merge_discovered_contacts, recompute_after_move};
@@ -11,16 +9,19 @@ use crate::{
     AutoExploreUnitCommand, AutomateWorkerCommand, BuildRoadCommand, CancelWorkerAssignmentCommand,
     CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DetachTroopCommand, EngineContext,
     FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
-    SelectCityExpansionHexCommand, SelectWorkerImprovementCommand, SetCitySpecializationCommand,
-    StartBuildingCommand, StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand,
-    StateDigest, ToggleWorkedHexCommand, TurnCommand, UnitActionCommand,
+    RushProductionCommand, SelectCityExpansionHexCommand, SelectWorkerImprovementCommand,
+    SetCitySpecializationCommand, StartBuildingCommand, StartCityProjectCommand,
+    StartUnitProductionCommand, StartWonderCommand, StateDigest, ToggleWorkedHexCommand,
+    TurnCommand, UnitActionCommand,
 };
 
 mod budget;
 mod canonical_transition;
+mod error;
 
 pub use budget::EventBudget;
 use canonical_transition::{apply_city, apply_combat, apply_production, apply_worker};
+pub use error::CanonicalEngineError;
 
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
@@ -41,6 +42,8 @@ pub enum PlayerCommand<'command> {
     StartWonder(StartWonderCommand<'command>),
     /// Selects one city specialization.
     SetCitySpecialization(SetCitySpecializationCommand<'command>),
+    /// Buys one bounded production increment.
+    RushProduction(RushProductionCommand<'command>),
     /// Starts one explicitly selected field improvement.
     SelectWorkerImprovement(SelectWorkerImprovementCommand<'command>),
     /// Confirms an explicit or matching pending field improvement.
@@ -78,44 +81,6 @@ pub enum PlayerCommand<'command> {
     /// Marks one simultaneous participant ready and finalizes when scope completes.
     SubmitTurn(TurnCommand<'command>),
 }
-
-/// Failure indicating corrupt internal state rather than a rejected command.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum CanonicalEngineError {
-    /// A referenced content identity could not be computed.
-    ContentHash(Box<str>),
-    /// Applying the result violates an aggregate invariant.
-    State(GameStateBuildError),
-    /// Applying a lifecycle result violates lifecycle invariants.
-    TurnLifecycle(TurnLifecycleBuildError),
-    /// Applying combat diplomacy violates diplomacy invariants.
-    Diplomacy(DiplomacyStateBuildError),
-    /// Technology content referenced by canonical city rules is incomplete.
-    Technology(crate::TechnologyQueryError),
-    /// A validated city-founding job could not construct canonical state.
-    CityFounding(Box<str>),
-    /// A validated worker job could not construct canonical infrastructure.
-    Worker(Box<str>),
-    /// A production transition violated current content or state invariants.
-    Production(crate::ProductionError),
-}
-
-impl core::fmt::Display for CanonicalEngineError {
-    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::ContentHash(source) => write!(formatter, "content hash failed: {source}"),
-            Self::State(source) => source.fmt(formatter),
-            Self::TurnLifecycle(source) => source.fmt(formatter),
-            Self::Diplomacy(source) => source.fmt(formatter),
-            Self::Technology(source) => source.fmt(formatter),
-            Self::CityFounding(source) => write!(formatter, "city founding failed: {source}"),
-            Self::Worker(source) => write!(formatter, "worker progression failed: {source}"),
-            Self::Production(source) => write!(formatter, "production failed: {source}"),
-        }
-    }
-}
-
-impl std::error::Error for CanonicalEngineError {}
 
 impl GameEngine {
     /// Applies a command while reusing owned canonical-state storage.
@@ -164,6 +129,10 @@ impl GameEngine {
             PlayerCommand::SetCitySpecialization(command) => {
                 let mutation =
                     crate::production::apply_set_specialization(&state, context, command);
+                apply_production(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::RushProduction(command) => {
+                let mutation = crate::production::apply_rush(&state, context, command);
                 apply_production(state, mutation, map_hash, ruleset_hash)
             }
             PlayerCommand::SelectWorkerImprovement(command) => apply_worker_command(

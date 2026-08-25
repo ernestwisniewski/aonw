@@ -63,6 +63,17 @@ impl RecipientDisclosure {
             DomainEvent::CityFounded(value) => {
                 value.owner_player_id() == &self.actor || self.allows_city(value.city_id())
             }
+            DomainEvent::CityBuiltBuilding(value) => self.allows_city(value.city_id()),
+            DomainEvent::CityProducedUnit(value) => {
+                self.allows_city(value.city_id()) || self.allows_unit(value.produced_unit_id())
+            }
+            DomainEvent::CityBuiltWonder(value) => {
+                value.owner_player_id() == &self.actor || self.allows_city(value.city_id())
+            }
+            DomainEvent::WonderProductionRefunded(value) => {
+                value.owner_player_id() == &self.actor || self.allows_city(value.city_id())
+            }
+            DomainEvent::TechnologyResearched(value) => value.player_id() == &self.actor,
             DomainEvent::UnitAttacked(value)
             | DomainEvent::CityAttacked(value)
             | DomainEvent::CombatResolved(value)

@@ -2,9 +2,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::client::{WorkerAutomationOptionDto, WorkerJobCompletionDto};
 use crate::{
-    CombatExecutionDto, CombatTargetDto, CoordinateDto, GameStateDto, MovementStepDto, TroopKindDto,
+    CityBuildingTypeDto, CombatExecutionDto, CombatTargetDto, CoordinateDto, GameStateDto,
+    MovementStepDto, TechnologyIdDto, TroopKindDto, UnitKindDto, WonderTypeDto,
 };
 
+mod codec;
 mod command;
 mod logistics;
 
@@ -92,6 +94,49 @@ pub enum ReplayEventDto {
         city_id: String,
         /// Founding player.
         owner_player_id: String,
+    },
+    /// One city completed a building.
+    CityBuiltBuilding {
+        /// City that completed the building.
+        city_id: String,
+        /// Completed building kind.
+        building_type: CityBuildingTypeDto,
+    },
+    /// One city produced a unit.
+    CityProducedUnit {
+        /// City that produced the unit.
+        city_id: String,
+        /// Produced unit kind.
+        unit_type: UnitKindDto,
+        /// New unit identity.
+        produced_unit_id: String,
+    },
+    /// One city won a globally unique wonder race.
+    CityBuiltWonder {
+        /// City that completed the wonder.
+        city_id: String,
+        /// Player that owns the completed wonder.
+        owner_player_id: String,
+        /// Completed wonder kind.
+        wonder_type: WonderTypeDto,
+    },
+    /// One losing wonder queue was converted to overflow.
+    WonderProductionRefunded {
+        /// City whose losing queue was cleared.
+        city_id: String,
+        /// Player that owns the refunded city.
+        owner_player_id: String,
+        /// Wonder kind lost in the global race.
+        wonder_type: WonderTypeDto,
+        /// Production returned to the city's overflow.
+        refunded_production: i64,
+    },
+    /// A completion effect unlocked the selected technology.
+    TechnologyResearched {
+        /// Player that completed the technology.
+        player_id: String,
+        /// Completed technology identity.
+        technology_id: TechnologyIdDto,
     },
     /// A visible attacker engaged a visible target.
     UnitAttacked {
@@ -408,86 +453,6 @@ impl core::fmt::Display for PersistenceCodecError {
 }
 
 impl std::error::Error for PersistenceCodecError {}
-
-impl SaveGameDto {
-    /// Parses a bounded strict save document.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error for oversized or structurally invalid input.
-    pub fn from_json(input: &str) -> Result<Self, PersistenceCodecError> {
-        parse_bounded(input, MAX_SAVE_GAME_JSON_BYTES)
-    }
-
-    /// Serializes compact save JSON.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if serialization fails.
-    pub fn to_json(&self) -> Result<String, PersistenceCodecError> {
-        serialize_bounded(self, MAX_SAVE_GAME_JSON_BYTES)
-    }
-}
-
-impl ReplayLogDto {
-    /// Parses a bounded strict replay document.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error for oversized, structurally invalid, or unbounded input.
-    pub fn from_json(input: &str) -> Result<Self, PersistenceCodecError> {
-        let replay: Self = parse_bounded(input, MAX_REPLAY_LOG_JSON_BYTES)?;
-        if replay.entries.len() > MAX_REPLAY_ENTRY_COUNT {
-            return Err(PersistenceCodecError::TooManyReplayEntries {
-                actual: replay.entries.len(),
-                maximum: MAX_REPLAY_ENTRY_COUNT,
-            });
-        }
-        Ok(replay)
-    }
-
-    /// Serializes compact replay JSON.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if serialization fails.
-    pub fn to_json(&self) -> Result<String, PersistenceCodecError> {
-        if self.entries.len() > MAX_REPLAY_ENTRY_COUNT {
-            return Err(PersistenceCodecError::TooManyReplayEntries {
-                actual: self.entries.len(),
-                maximum: MAX_REPLAY_ENTRY_COUNT,
-            });
-        }
-        serialize_bounded(self, MAX_REPLAY_LOG_JSON_BYTES)
-    }
-}
-
-fn parse_bounded<T>(input: &str, maximum: usize) -> Result<T, PersistenceCodecError>
-where
-    T: for<'input> Deserialize<'input>,
-{
-    if input.len() > maximum {
-        return Err(PersistenceCodecError::TooLarge {
-            actual: input.len(),
-            maximum,
-        });
-    }
-    serde_json::from_str(input).map_err(PersistenceCodecError::Json)
-}
-
-fn serialize_bounded<T>(value: &T, maximum: usize) -> Result<String, PersistenceCodecError>
-where
-    T: Serialize,
-{
-    let output = serde_json::to_string(value).map_err(PersistenceCodecError::Json)?;
-    if output.len() > maximum {
-        return Err(PersistenceCodecError::TooLarge {
-            actual: output.len(),
-            maximum,
-        });
-    }
-    Ok(output)
-}
 
 #[cfg(test)]
 mod tests;

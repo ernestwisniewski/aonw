@@ -1,4 +1,6 @@
-use super::{MAX_SAVE_GAME_JSON_BYTES, ReplayCommandDto, ReplayLogDto, SaveGameDto};
+use super::{
+    MAX_SAVE_GAME_JSON_BYTES, ReplayCommandDto, ReplayEventDto, ReplayLogDto, SaveGameDto,
+};
 
 #[test]
 fn strict_save_codec_rejects_unknown_duplicate_and_oversized_input() {
@@ -43,5 +45,38 @@ fn every_current_logistics_command_has_a_strict_wire_shape() {
         assert!(serde_json::from_str::<ReplayCommandDto>(json).is_ok());
         let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
         assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
+    }
+}
+
+#[test]
+fn every_current_production_command_has_a_strict_wire_shape() {
+    let commands = [
+        r#"{"type":"startBuilding","expectedRevision":7,"cityId":"city-1","building":"workshop"}"#,
+        r#"{"type":"startUnitProduction","expectedRevision":7,"cityId":"city-1","unit":"warrior","resourceOptionIndex":null}"#,
+        r#"{"type":"startCityProject","expectedRevision":7,"cityId":"city-1","project":"research"}"#,
+        r#"{"type":"startWonder","expectedRevision":7,"cityId":"city-1","wonder":"greatLibrary"}"#,
+        r#"{"type":"setCitySpecialization","expectedRevision":7,"cityId":"city-1","specialization":"industry"}"#,
+        r#"{"type":"rushProduction","expectedRevision":7,"cityId":"city-1"}"#,
+    ];
+    for json in commands {
+        assert!(serde_json::from_str::<ReplayCommandDto>(json).is_ok());
+        let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
+        assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
+    }
+}
+
+#[test]
+fn production_completion_events_have_current_strict_replay_shapes() {
+    let events = [
+        r#"{"type":"cityBuiltBuilding","cityId":"city-1","buildingType":"workshop"}"#,
+        r#"{"type":"cityProducedUnit","cityId":"city-1","unitType":"warrior","producedUnitId":"city-1_warrior_1"}"#,
+        r#"{"type":"cityBuiltWonder","cityId":"city-1","ownerPlayerId":"player-1","wonderType":"greatLibrary"}"#,
+        r#"{"type":"wonderProductionRefunded","cityId":"city-2","ownerPlayerId":"player-2","wonderType":"greatLibrary","refundedProduction":17}"#,
+        r#"{"type":"technologyResearched","playerId":"player-1","technologyId":"writing"}"#,
+    ];
+    for json in events {
+        assert!(serde_json::from_str::<ReplayEventDto>(json).is_ok());
+        let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
+        assert!(serde_json::from_str::<ReplayEventDto>(&unknown).is_err());
     }
 }

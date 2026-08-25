@@ -105,15 +105,18 @@ pub(super) fn apply_production(
         }
         Err(error) => return Err(CanonicalEngineError::Production(error)),
     };
-    let next = match mutation {
-        crate::production::ProductionMutation::Identity => state,
-        crate::production::ProductionMutation::Update(update) => state
-            .into_after_production(*update)
-            .map_err(CanonicalEngineError::State)?,
+    let (next, events) = match mutation {
+        crate::production::ProductionMutation::Identity => (state, Vec::new().into_boxed_slice()),
+        crate::production::ProductionMutation::Update { update, events } => (
+            state
+                .into_after_production(*update)
+                .map_err(CanonicalEngineError::State)?,
+            events,
+        ),
     };
     Ok(DomainTransition::accepted(
         next,
-        Box::new([]),
+        events,
         None,
         map_hash,
         ruleset_hash,

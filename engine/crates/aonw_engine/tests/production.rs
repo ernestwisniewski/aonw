@@ -24,6 +24,8 @@ use aonw_engine::{
 
 #[path = "production/constraints.rs"]
 mod constraints;
+#[path = "production/rush.rs"]
+mod rush;
 
 #[test]
 fn options_and_start_commands_share_costs_gates_and_idempotence() {

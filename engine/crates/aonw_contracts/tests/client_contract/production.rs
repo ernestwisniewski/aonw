@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 
 use aonw_contracts::client::{
-    CitySpecializationOptionDto, ClientCommandDto, ClientQueryDto, ClientQueryResultDto,
-    ClientRequestBodyDto, ClientResponseBodyDto, ProductionOptionDto, UnitProductionOptionDto,
+    CitySpecializationOptionDto, ClientCommandDto, ClientEventDto, ClientQueryDto,
+    ClientQueryResultDto, ClientRequestBodyDto, ClientResponseBodyDto, ProductionOptionDto,
+    UnitProductionOptionDto,
 };
 use aonw_contracts::{
     CityBuildingTypeDto, CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto,
@@ -45,7 +46,49 @@ pub(super) fn requests() -> Vec<ClientRequestBodyDto> {
             city_id: "city-1".to_owned(),
             specialization: CitySpecializationTypeDto::Industry,
         }),
+        dispatch(ClientCommandDto::RushProduction {
+            expected_revision: 8,
+            city_id: "city-1".to_owned(),
+        }),
     ]
+}
+
+#[test]
+fn production_completion_events_have_current_strict_wire_shapes() {
+    let events = vec![
+        ClientEventDto::CityBuiltBuilding {
+            city_id: "city-1".to_owned(),
+            building_type: CityBuildingTypeDto::Workshop,
+        },
+        ClientEventDto::CityProducedUnit {
+            city_id: "city-1".to_owned(),
+            unit_type: UnitKindDto::Warrior,
+            produced_unit_id: "city-1_warrior_1".to_owned(),
+        },
+        ClientEventDto::CityBuiltWonder {
+            city_id: "city-1".to_owned(),
+            owner_player_id: "player-1".to_owned(),
+            wonder_type: WonderTypeDto::GreatLibrary,
+        },
+        ClientEventDto::WonderProductionRefunded {
+            city_id: "city-2".to_owned(),
+            owner_player_id: "player-2".to_owned(),
+            wonder_type: WonderTypeDto::GreatLibrary,
+            refunded_production: 17,
+        },
+        ClientEventDto::TechnologyResearched {
+            player_id: "player-1".to_owned(),
+            technology_id: aonw_contracts::TechnologyIdDto::Writing,
+        },
+    ];
+
+    let encoded = serde_json::to_string(&events).expect("event JSON");
+    assert_eq!(
+        serde_json::from_str::<Vec<ClientEventDto>>(&encoded).expect("current events"),
+        events
+    );
+    let unknown = encoded.replacen("\"cityId\":", "\"legacyVersion\":1,\"cityId\":", 1);
+    assert!(serde_json::from_str::<Vec<ClientEventDto>>(&unknown).is_err());
 }
 
 pub(super) fn response() -> ClientResponseBodyDto {

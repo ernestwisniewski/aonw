@@ -7,8 +7,8 @@ use aonw_domain::{
     CityBuildingType, CityId, CityProjectType, CitySpecializationType, UnitKind, WonderType,
 };
 use aonw_engine::{
-    PlayerCommand, SetCitySpecializationCommand, StartBuildingCommand, StartCityProjectCommand,
-    StartUnitProductionCommand, StartWonderCommand,
+    PlayerCommand, RushProductionCommand, SetCitySpecializationCommand, StartBuildingCommand,
+    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand,
 };
 
 use super::{CommandResult, dispatch_player};
@@ -49,6 +49,11 @@ pub enum ProductionCommandRequest {
         expected_revision: u64,
         city_id: CityId,
         specialization: CitySpecializationType,
+    },
+    /// Buys one bounded production increment.
+    RushProduction {
+        expected_revision: u64,
+        city_id: CityId,
     },
 }
 
@@ -138,6 +143,16 @@ pub(crate) fn dispatch_production(
                 expected_revision: *expected_revision,
                 city_id: city_id.as_str().to_owned(),
                 specialization: encode_city_specialization(*specialization),
+            },
+        ),
+        ProductionCommandRequest::RushProduction {
+            expected_revision,
+            city_id,
+        } => (
+            PlayerCommand::RushProduction(RushProductionCommand::new(*expected_revision, city_id)),
+            ReplayCommandDto::RushProduction {
+                expected_revision: *expected_revision,
+                city_id: city_id.as_str().to_owned(),
             },
         ),
     };

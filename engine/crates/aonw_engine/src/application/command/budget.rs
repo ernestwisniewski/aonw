@@ -64,6 +64,10 @@ impl PlayerCommand<'_> {
             | Self::AssignWorkerToHex(_)
             | Self::CancelWorkerAssignment(_)
             | Self::BuildRoad(_) => EventBudget::NONE,
+            Self::RushProduction(_) => {
+                let cities = u64::try_from(state.cities().len()).unwrap_or(u64::MAX);
+                EventBudget::new(cities.saturating_add(2))
+            }
             Self::EndTurn(_) => {
                 let units = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
                 EventBudget::new(units.saturating_add(1))

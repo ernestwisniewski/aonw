@@ -11,10 +11,11 @@ pub use logistics::{
 };
 pub use query::{CanonicalQueryError, GameQuery, QueryResult};
 pub use transition::{
-    AllPlayersSubmittedEvent, CityFoundedEvent, CombatEvent, CommandRejectionCode,
-    DiplomaticScoreChangedEvent, DomainEvent, DomainRejection, DomainTransition,
-    DomainTransitionParts, ExecutionEvidence, PlayerKickedEvent, PlayerTimedOutEvent,
-    TurnEndedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
+    AllPlayersSubmittedEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent, CityFoundedEvent,
+    CityProducedUnitEvent, CombatEvent, CommandRejectionCode, DiplomaticScoreChangedEvent,
+    DomainEvent, DomainRejection, DomainTransition, DomainTransitionParts, ExecutionEvidence,
+    PlayerKickedEvent, PlayerTimedOutEvent, TechnologyResearchedEvent, TurnEndedEvent,
+    WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use turn::{
     FinalizeTimedOutTurnCommand, KickParticipantCommand, ProcessorRequirement, SystemCommand,

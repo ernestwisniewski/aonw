@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 use super::WorkerJobCompletionDto;
-use crate::{CombatTargetDto, CoordinateDto, DiplomaticScoreChangeReasonDto, TroopKindDto};
+use crate::{
+    CityBuildingTypeDto, CombatTargetDto, CoordinateDto, DiplomaticScoreChangeReasonDto,
+    TechnologyIdDto, TroopKindDto, UnitKindDto, WonderTypeDto,
+};
 
 /// Presentation-safe authoritative event.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -18,6 +21,49 @@ pub enum ClientEventDto {
         city_id: String,
         /// Founding player.
         owner_player_id: String,
+    },
+    /// One visible city completed a building.
+    CityBuiltBuilding {
+        /// City that completed the building.
+        city_id: String,
+        /// Completed building kind.
+        building_type: CityBuildingTypeDto,
+    },
+    /// One visible city produced a unit.
+    CityProducedUnit {
+        /// City that produced the unit.
+        city_id: String,
+        /// Produced unit kind.
+        unit_type: UnitKindDto,
+        /// New unit identity.
+        produced_unit_id: String,
+    },
+    /// One visible city won a globally unique wonder race.
+    CityBuiltWonder {
+        /// City that completed the wonder.
+        city_id: String,
+        /// Player that owns the completed wonder.
+        owner_player_id: String,
+        /// Completed wonder kind.
+        wonder_type: WonderTypeDto,
+    },
+    /// One owned or visible losing wonder queue was converted to overflow.
+    WonderProductionRefunded {
+        /// City whose losing queue was cleared.
+        city_id: String,
+        /// Player that owns the refunded city.
+        owner_player_id: String,
+        /// Wonder kind lost in the global race.
+        wonder_type: WonderTypeDto,
+        /// Production returned to the city's overflow.
+        refunded_production: i64,
+    },
+    /// A visible participant completed the selected technology.
+    TechnologyResearched {
+        /// Player that completed the technology.
+        player_id: String,
+        /// Completed technology identity.
+        technology_id: TechnologyIdDto,
     },
     /// A visible attacker engaged a visible target.
     UnitAttacked {

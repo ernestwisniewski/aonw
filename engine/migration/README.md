@@ -98,6 +98,15 @@ budgets use one current contract. Thirteen frozen worker/road reducer cases are
 reader for their old envelope. The shared client API remains version 5; W5 adds
 no internal schema counter, legacy reader, adapter, upcaster, or fallback.
 
+The CP12/E6.2 rush surface is `runtime-ready`. `RushProduction` uses the same
+current production balance and technology gates as production options, spends
+gold atomically, preserves a complete unit queue when deterministic spawn is
+blocked, resolves global wonder races in canonical city order, and emits
+recipient-filtered completion/refund events. Its strict client and replay
+contracts reject unknown fields, while save/reopen/replay executes the current
+command directly. The historical reducer documents remain reference evidence;
+no reader, adapter, upcaster, fallback, or internal format version was added.
+
 The file deliberately has no `v1` suffix or schema-version field. The engine
 and greenfield clients update this one current contract atomically. A format
 version is introduced only after a concrete independently deployed reader or

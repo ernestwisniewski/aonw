@@ -2,6 +2,12 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{MatchIdentity, PlayerId, WonderType};
 
+mod errors;
+
+pub use errors::{
+    KnowledgeStateValidationError, PlayerResearchStateBuildError, WonderCompletionError,
+};
+
 /// Stable identity of one technology in the current ruleset.
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -148,6 +154,21 @@ impl PlayerResearchState {
     pub const fn science_overflow(&self) -> i64 {
         self.science_overflow
     }
+
+    /// Completes the selected technology while preserving unrelated progress.
+    ///
+    /// Returns the unchanged state and `None` when no technology is selected.
+    #[must_use]
+    pub fn after_unlocking_active(&self) -> (Self, Option<TechnologyId>) {
+        let Some(active) = self.active_technology_id else {
+            return (self.clone(), None);
+        };
+        let mut updated = self.clone();
+        updated.unlocked_technology_ids.insert(active);
+        updated.active_technology_id = None;
+        updated.progress_by_technology_id.remove(&active);
+        (updated, Some(active))
+    }
 }
 
 /// Canonical research state keyed by player identity.
@@ -178,6 +199,14 @@ impl ResearchState {
     #[must_use]
     pub const fn players(&self) -> &BTreeMap<PlayerId, PlayerResearchState> {
         &self.players
+    }
+
+    /// Replaces one participant's canonical research state.
+    #[must_use]
+    pub fn updating_player(&self, player: PlayerId, research: PlayerResearchState) -> Self {
+        let mut players = self.players.clone();
+        players.insert(player, research);
+        Self { players }
     }
 }
 
@@ -234,39 +263,6 @@ impl WonderRegistry {
         Ok(updated)
     }
 }
-
-/// Attempt to complete a world wonder that already has a canonical owner.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct WonderCompletionError {
-    wonder: WonderType,
-    existing_owner: PlayerId,
-}
-
-impl WonderCompletionError {
-    /// Returns the duplicated wonder identity.
-    #[must_use]
-    pub const fn wonder(&self) -> WonderType {
-        self.wonder
-    }
-
-    /// Returns the canonical owner that won the completion race.
-    #[must_use]
-    pub const fn existing_owner(&self) -> &PlayerId {
-        &self.existing_owner
-    }
-}
-
-impl core::fmt::Display for WonderCompletionError {
-    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(
-            formatter,
-            "wonder {:?} was already completed by {}",
-            self.wonder, self.existing_owner
-        )
-    }
-}
-
-impl std::error::Error for WonderCompletionError {}
 
 /// Research and global wonder state validated as one canonical component.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -334,87 +330,6 @@ impl KnowledgeState {
     }
 }
 
-/// Structural player-research validation failure.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PlayerResearchStateBuildError {
-    /// An unlocked technology appeared more than once.
-    DuplicateUnlocked(TechnologyId),
-    /// The active selection was already unlocked.
-    ActiveAlreadyUnlocked(TechnologyId),
-    /// A progress entry appeared more than once.
-    DuplicateProgress(TechnologyId),
-    /// A progress entry was zero or negative.
-    NonPositiveProgress {
-        /// Technology carrying invalid progress.
-        technology: TechnologyId,
-        /// Invalid progress value.
-        amount: i64,
-    },
-    /// An unlocked technology retained progress.
-    ProgressForUnlocked(TechnologyId),
-    /// Science overflow was negative.
-    NegativeScienceOverflow(i64),
-}
-
-impl core::fmt::Display for PlayerResearchStateBuildError {
-    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::DuplicateUnlocked(value) => {
-                write!(formatter, "duplicate unlocked technology: {value:?}")
-            }
-            Self::ActiveAlreadyUnlocked(value) => write!(
-                formatter,
-                "active technology is already unlocked: {value:?}"
-            ),
-            Self::DuplicateProgress(value) => {
-                write!(formatter, "duplicate technology progress: {value:?}")
-            }
-            Self::NonPositiveProgress { technology, amount } => write!(
-                formatter,
-                "technology progress must be positive for {technology:?}: {amount}"
-            ),
-            Self::ProgressForUnlocked(value) => {
-                write!(formatter, "unlocked technology retains progress: {value:?}")
-            }
-            Self::NegativeScienceOverflow(value) => {
-                write!(formatter, "science overflow must be non-negative: {value}")
-            }
-        }
-    }
-}
-
-impl std::error::Error for PlayerResearchStateBuildError {}
-
-/// Cross-section knowledge-state validation failure.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum KnowledgeStateValidationError {
-    /// Research was keyed by a non-participant player.
-    ResearchPlayerNotFound(PlayerId),
-    /// A completed wonder was attributed to a non-participant player.
-    WonderOwnerNotFound {
-        /// Wonder carrying invalid attribution.
-        wonder: WonderType,
-        /// Player absent from match identity.
-        player_id: PlayerId,
-    },
-}
-
-impl core::fmt::Display for KnowledgeStateValidationError {
-    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::ResearchPlayerNotFound(player) => {
-                write!(formatter, "research references non-participant {player}")
-            }
-            Self::WonderOwnerNotFound { wonder, player_id } => write!(
-                formatter,
-                "wonder {wonder:?} references non-participant {player_id}"
-            ),
-        }
-    }
-}
-
-impl std::error::Error for KnowledgeStateValidationError {}
-
 #[cfg(test)]
 mod tests {
     use crate::{PlayerId, WonderType};
@@ -469,5 +384,43 @@ mod tests {
                 .get(&WonderType::GreatLibrary),
             Some(&owner)
         );
+    }
+
+    #[test]
+    fn active_technology_completion_is_explicit_and_preserves_other_progress() {
+        let player = PlayerId::new("player").expect("player");
+        let idle = PlayerResearchState::default();
+        assert_eq!(idle.after_unlocking_active(), (idle.clone(), None));
+
+        let selected = PlayerResearchState::try_new(
+            [TechnologyId::Agriculture],
+            Some(TechnologyId::Writing),
+            [(TechnologyId::Writing, 3), (TechnologyId::Mining, 2)],
+            1,
+        )
+        .expect("selected research");
+        let (completed, technology) = selected.after_unlocking_active();
+        assert_eq!(technology, Some(TechnologyId::Writing));
+        assert_eq!(completed.active_technology_id(), None);
+        assert!(
+            completed
+                .unlocked_technology_ids()
+                .contains(&TechnologyId::Writing)
+        );
+        assert_eq!(
+            completed
+                .progress_by_technology_id()
+                .get(&TechnologyId::Mining),
+            Some(&2)
+        );
+        assert!(
+            !completed
+                .progress_by_technology_id()
+                .contains_key(&TechnologyId::Writing)
+        );
+        assert_eq!(completed.science_overflow(), 1);
+
+        let research = ResearchState::default().updating_player(player.clone(), completed.clone());
+        assert_eq!(research.players().get(&player), Some(&completed));
     }
 }

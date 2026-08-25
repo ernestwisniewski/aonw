@@ -1,9 +1,10 @@
 use crate::{
-    AllPlayersSubmittedEvent, AutoExplorePlannedEvent, CityFoundedEvent, CombatEvent,
-    CombatExecution, DiplomaticScoreChangedEvent, LogisticsExecution, MerchantRouteAssignedEvent,
-    MerchantTravelQueuedEvent, PlayerKickedEvent, PlayerTimedOutEvent, TroopDetachedEvent,
-    TurnEndedEvent, TurnKernelExecution, UnitMovedEvent, UnitMovementExecution,
-    WorkerAutomationExecution, WorkerCompletedJobEvent,
+    AllPlayersSubmittedEvent, AutoExplorePlannedEvent, CityBuiltBuildingEvent,
+    CityBuiltWonderEvent, CityFoundedEvent, CityProducedUnitEvent, CombatEvent, CombatExecution,
+    DiplomaticScoreChangedEvent, LogisticsExecution, MerchantRouteAssignedEvent,
+    MerchantTravelQueuedEvent, PlayerKickedEvent, PlayerTimedOutEvent, TechnologyResearchedEvent,
+    TroopDetachedEvent, TurnEndedEvent, TurnKernelExecution, UnitMovedEvent, UnitMovementExecution,
+    WonderProductionRefundedEvent, WorkerAutomationExecution, WorkerCompletedJobEvent,
 };
 
 /// Ordered event emitted by an accepted transition.
@@ -11,6 +12,16 @@ use crate::{
 pub enum DomainEvent {
     /// One city-founding job completed.
     CityFounded(CityFoundedEvent),
+    /// One city completed a building.
+    CityBuiltBuilding(CityBuiltBuildingEvent),
+    /// One city produced a unit.
+    CityProducedUnit(CityProducedUnitEvent),
+    /// One city won a globally unique wonder race.
+    CityBuiltWonder(CityBuiltWonderEvent),
+    /// A losing wonder queue was converted to production overflow.
+    WonderProductionRefunded(WonderProductionRefundedEvent),
+    /// A completion effect unlocked the selected technology.
+    TechnologyResearched(TechnologyResearchedEvent),
     /// One unit changed map position.
     UnitMoved(UnitMovedEvent),
     /// Auto-exploration selected an engine-owned target.

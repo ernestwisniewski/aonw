@@ -4,6 +4,30 @@ use aonw_domain::{
 
 use crate::CommandRejectionCode;
 
+/// Buys one bounded production increment for a controlled city's finite queue.
+#[derive(Clone, Copy, Debug)]
+pub struct RushProductionCommand<'command> {
+    expected_revision: u64,
+    city_id: &'command CityId,
+}
+
+impl<'command> RushProductionCommand<'command> {
+    /// Creates the revision-bound command.
+    #[must_use]
+    pub const fn new(expected_revision: u64, city_id: &'command CityId) -> Self {
+        Self {
+            expected_revision,
+            city_id,
+        }
+    }
+    pub(crate) const fn expected_revision(self) -> u64 {
+        self.expected_revision
+    }
+    pub(crate) const fn city_id(self) -> &'command CityId {
+        self.city_id
+    }
+}
+
 /// Starts construction of one building in a controlled city.
 #[derive(Clone, Copy, Debug)]
 pub struct StartBuildingCommand<'command> {

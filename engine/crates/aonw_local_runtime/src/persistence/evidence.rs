@@ -1,4 +1,7 @@
-use aonw_contract_mapping::{encode_improvement, encode_score_reason, encode_troop};
+use aonw_contract_mapping::{
+    encode_city_building, encode_city_wonder, encode_improvement, encode_score_reason,
+    encode_technology, encode_troop, encode_unit_kind,
+};
 use aonw_contracts::client::{
     WorkerAutomationActionDto, WorkerAutomationMetricsDto, WorkerAutomationOptionDto,
     WorkerJobCompletionDto,
@@ -21,6 +24,30 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
         DomainEvent::CityFounded(value) => ReplayEventDto::CityFounded {
             city_id: value.city_id().as_str().to_owned(),
             owner_player_id: value.owner_player_id().as_str().to_owned(),
+        },
+        DomainEvent::CityBuiltBuilding(value) => ReplayEventDto::CityBuiltBuilding {
+            city_id: value.city_id().as_str().to_owned(),
+            building_type: encode_city_building(value.building()),
+        },
+        DomainEvent::CityProducedUnit(value) => ReplayEventDto::CityProducedUnit {
+            city_id: value.city_id().as_str().to_owned(),
+            unit_type: encode_unit_kind(value.unit()),
+            produced_unit_id: value.produced_unit_id().as_str().to_owned(),
+        },
+        DomainEvent::CityBuiltWonder(value) => ReplayEventDto::CityBuiltWonder {
+            city_id: value.city_id().as_str().to_owned(),
+            owner_player_id: value.owner_player_id().as_str().to_owned(),
+            wonder_type: encode_city_wonder(value.wonder()),
+        },
+        DomainEvent::WonderProductionRefunded(value) => ReplayEventDto::WonderProductionRefunded {
+            city_id: value.city_id().as_str().to_owned(),
+            owner_player_id: value.owner_player_id().as_str().to_owned(),
+            wonder_type: encode_city_wonder(value.wonder()),
+            refunded_production: value.refunded_production(),
+        },
+        DomainEvent::TechnologyResearched(value) => ReplayEventDto::TechnologyResearched {
+            player_id: value.player_id().as_str().to_owned(),
+            technology_id: encode_technology(value.technology()),
         },
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
             ReplayEventDto::UnitAttacked {

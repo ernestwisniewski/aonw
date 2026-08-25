@@ -4,18 +4,19 @@ use std::collections::BTreeMap;
 
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_contracts::client::{
-    CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto, ClientOutcomeDto,
-    ClientQueryDto, ClientQueryResultDto, ClientRequestBodyDto, ClientRequestDto,
+    CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto, ClientEventDto,
+    ClientOutcomeDto, ClientQueryDto, ClientQueryResultDto, ClientRequestBodyDto, ClientRequestDto,
     ClientResponseBodyDto, ClientResponseDto,
 };
 use aonw_contracts::{
     CityBuildingTypeDto, CityProjectTypeDto, CitySpecializationTypeDto, UnitKindDto, WonderTypeDto,
 };
 use aonw_domain::{
-    City, CityBuildingType, CityId, GameMode, GameState, HexCoord, KnowledgeState, MatchIdentity,
+    City, CityBuildingType, CityId, CityProductionQueue, CityProductionTarget, EconomyState,
+    GameMode, GameState, HexCoord, InitialResourceDistribution, KnowledgeState, MatchIdentity,
     MatchLifecycle, MatchRules, Participant, PlayerCountry, PlayerId, PlayerKind,
-    PlayerResearchState, PlayerTurnState, ResearchState, StateRevision, TechnologyId,
-    TurnLifecycle, WonderRegistry,
+    PlayerResearchState, PlayerTurnState, ProductionStateUpdate, ResearchState, StateRevision,
+    StrategicResourceStockpile, TechnologyId, TurnLifecycle, UnitKind, WonderRegistry, WonderType,
 };
 use aonw_local_runtime::{ClientProtocol, LocalRuntime, OpenSession};
 
@@ -79,10 +80,9 @@ fn production_protocol_query_commands_save_and_replay_are_current_and_exact() {
     let response = dispatch_client(
         &mut runtime,
         ClientRequestBodyDto::Dispatch {
-            command: ClientCommandDto::StartCityProject {
+            command: ClientCommandDto::RushProduction {
                 expected_revision: 9,
                 city_id: "capital".to_owned(),
-                project: CityProjectTypeDto::Research,
             },
         },
     );
@@ -102,7 +102,180 @@ fn production_protocol_query_commands_save_and_replay_are_current_and_exact() {
     );
 }
 
-fn production_commands() -> [ClientCommandDto; 5] {
+#[test]
+fn unit_and_wonder_completion_events_are_exact_through_client_and_replay() {
+    let (map, rules, state, actor) = fixture();
+    let unit_events = rush_events(
+        map.clone(),
+        rules.clone(),
+        queued_completion_state(
+            state,
+            &rules,
+            &actor,
+            CityProductionTarget::Unit(UnitKind::Warrior),
+            false,
+        ),
+        actor.clone(),
+    );
+    assert!(matches!(
+        unit_events.as_slice(),
+        [ClientEventDto::CityProducedUnit {
+            unit_type: UnitKindDto::Warrior,
+            ..
+        }]
+    ));
+
+    let (_, _, state, _) = fixture();
+    let wonder_events = rush_events(
+        map,
+        rules.clone(),
+        queued_completion_state(
+            state,
+            &rules,
+            &actor,
+            CityProductionTarget::Wonder(WonderType::GreatLibrary),
+            true,
+        ),
+        actor,
+    );
+    assert!(matches!(
+        wonder_events.as_slice(),
+        [
+            ClientEventDto::CityBuiltWonder { .. },
+            ClientEventDto::TechnologyResearched { .. },
+            ClientEventDto::WonderProductionRefunded {
+                refunded_production: 7,
+                ..
+            }
+        ]
+    ));
+}
+
+fn rush_events(
+    map: MapDefinition,
+    rules: RulesetDefinition,
+    state: GameState,
+    actor: PlayerId,
+) -> Vec<ClientEventDto> {
+    let mut runtime = LocalRuntime::default();
+    runtime
+        .open(OpenSession::from_state(
+            map.clone(),
+            rules.clone(),
+            state,
+            actor,
+        ))
+        .expect("open completion runtime");
+    let response = dispatch_client(
+        &mut runtime,
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::RushProduction {
+                expected_revision: 9,
+                city_id: "capital".to_owned(),
+            },
+        },
+    );
+    let ClientResponseBodyDto::Command { result } = response else {
+        panic!("completion command response")
+    };
+    assert_eq!(result.outcome, ClientCommandOutcomeDto::Accepted);
+    let replay = runtime.export_replay_json().expect("completion replay");
+    assert_eq!(
+        LocalRuntime::verify_replay_json(map, rules, &replay)
+            .expect("completion replay verification")
+            .entry_count,
+        1
+    );
+    result.events
+}
+
+fn queued_completion_state(
+    state: GameState,
+    rules: &RulesetDefinition,
+    actor: &PlayerId,
+    target: CityProductionTarget,
+    add_losing_wonder_queue: bool,
+) -> GameState {
+    let cost = match target {
+        CityProductionTarget::Unit(unit) => rules.production().unit(unit).and_then(|definition| {
+            rules
+                .production()
+                .unit_cost(definition.base_cost(), aonw_domain::PaceProfile::Unlimited)
+        }),
+        CityProductionTarget::Wonder(wonder) => {
+            rules.production().wonder(wonder).and_then(|definition| {
+                rules
+                    .production()
+                    .building_cost(definition.base_cost(), aonw_domain::PaceProfile::Unlimited)
+            })
+        }
+        CityProductionTarget::Building(_) | CityProductionTarget::Project(_) => None,
+    }
+    .expect("finite completion cost");
+    let queue =
+        CityProductionQueue::try_new(target, cost - 1, StrategicResourceStockpile::default())
+            .expect("completion queue");
+    let mut cities = state.cities().to_vec();
+    let capital = cities
+        .iter_mut()
+        .find(|city| city.id().as_str() == "capital")
+        .expect("capital");
+    *capital = capital
+        .try_with_production(Some(queue), 0)
+        .expect("replace queue");
+    if add_losing_wonder_queue {
+        let loser_queue =
+            CityProductionQueue::try_new(target, 7, StrategicResourceStockpile::default())
+                .expect("losing queue");
+        cities.push(
+            City::builder(
+                CityId::new("loser").expect("city id"),
+                actor.clone(),
+                "Loser",
+                HexCoord::new(4, 4),
+            )
+            .with_production(Some(loser_queue), 0)
+            .build()
+            .expect("losing city"),
+        );
+    }
+    let knowledge = if target == CityProductionTarget::Wonder(WonderType::GreatLibrary) {
+        KnowledgeState::new(
+            ResearchState::try_new([(
+                actor.clone(),
+                PlayerResearchState::try_new(
+                    [
+                        TechnologyId::Craftsmanship,
+                        TechnologyId::Writing,
+                        TechnologyId::Specialization,
+                    ],
+                    Some(TechnologyId::Mathematics),
+                    [(TechnologyId::Mathematics, 3)],
+                    0,
+                )
+                .expect("active research"),
+            )])
+            .expect("research state"),
+            WonderRegistry::default(),
+        )
+    } else {
+        state.knowledge().clone()
+    };
+    let update = ProductionStateUpdate {
+        revision: state.revision(),
+        units: state.units().to_vec(),
+        cities,
+        economy: state.economy().clone(),
+        knowledge,
+        fog_of_war: state.fog_of_war().clone(),
+        diplomacy: state.diplomacy().clone(),
+    };
+    state
+        .into_after_production(update)
+        .expect("completion state")
+}
+
+fn production_commands() -> [ClientCommandDto; 6] {
     [
         ClientCommandDto::StartBuilding {
             expected_revision: 9,
@@ -129,6 +302,10 @@ fn production_commands() -> [ClientCommandDto; 5] {
             expected_revision: 9,
             city_id: "capital".to_owned(),
             specialization: CitySpecializationTypeDto::Growth,
+        },
+        ClientCommandDto::RushProduction {
+            expected_revision: 9,
+            city_id: "capital".to_owned(),
         },
     ]
 }
@@ -186,6 +363,21 @@ fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {
         None,
     )
     .expect("lifecycle");
+    let housing_cost = rules
+        .production()
+        .building(CityBuildingType::Housing)
+        .and_then(|definition| {
+            rules
+                .production()
+                .building_cost(definition.base_cost(), aonw_domain::PaceProfile::Unlimited)
+        })
+        .expect("housing cost");
+    let queue = CityProductionQueue::try_new(
+        CityProductionTarget::Building(CityBuildingType::Housing),
+        housing_cost - 1,
+        StrategicResourceStockpile::default(),
+    )
+    .expect("production queue");
     let city = City::builder(
         CityId::new("capital").expect("city id"),
         actor.clone(),
@@ -193,6 +385,7 @@ fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {
         HexCoord::new(2, 2),
     )
     .with_buildings([CityBuildingType::Granary])
+    .with_production(Some(queue), 0)
     .build()
     .expect("city");
     let research = ResearchState::try_new([(
@@ -210,6 +403,16 @@ fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {
         .expect("research"),
     )])
     .expect("research state");
+    let economy = EconomyState::try_new(
+        &identity,
+        map.bounds(),
+        BTreeMap::from([(actor.clone(), 100)]),
+        BTreeMap::new(),
+        BTreeMap::new(),
+        BTreeMap::new(),
+        InitialResourceDistribution::default(),
+    )
+    .expect("economy");
     let state = GameState::builder(
         StateRevision::new(9),
         4,
@@ -218,6 +421,7 @@ fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {
         [],
     )
     .with_cities([city])
+    .with_economy(economy)
     .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
     .with_knowledge(KnowledgeState::new(research, WonderRegistry::default()))
     .try_build()

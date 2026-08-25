@@ -72,14 +72,15 @@ pub(super) fn spawn_candidates<'city>(
 ) -> impl Iterator<Item = aonw_domain::HexCoord> + 'city {
     let center = city.center();
     let mut candidates = vec![center];
-    candidates.extend(
-        center
-            .neighbors()
-            .filter(|coordinate| context.map().tile_at(*coordinate).is_some()),
-    );
-    candidates.extend(city.controlled_hexes().iter().copied());
-    candidates.sort_unstable();
-    candidates.dedup();
+    for coordinate in center
+        .neighbors()
+        .filter(|coordinate| context.map().tile_at(*coordinate).is_some())
+        .chain(city.controlled_hexes().iter().copied())
+    {
+        if !candidates.contains(&coordinate) {
+            candidates.push(coordinate);
+        }
+    }
     candidates.into_iter()
 }
 

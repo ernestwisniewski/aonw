@@ -143,6 +143,11 @@ pub enum ClientCommandDto {
         city_id: String,
         specialization: CitySpecializationTypeDto,
     },
+    /// Buys one bounded production increment for a finite city queue.
+    RushProduction {
+        expected_revision: u64,
+        city_id: String,
+    },
     /// Starts one explicitly selected field improvement.
     SelectWorkerImprovement {
         expected_revision: u64,

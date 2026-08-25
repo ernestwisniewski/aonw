@@ -157,13 +157,13 @@ fn require_participant(
 
 macro_rules! enum_mapping {
     ($decode:ident, $encode:ident, $dto:ident, $domain:ident; $($variant:ident),+ $(,)?) => {
-        const fn $decode(value: $dto) -> $domain {
+        pub(super) const fn $decode(value: $dto) -> $domain {
             match value {
                 $($dto::$variant => $domain::$variant),+
             }
         }
 
-        const fn $encode(value: $domain) -> $dto {
+        pub(super) const fn $encode(value: $domain) -> $dto {
             match value {
                 $($domain::$variant => $dto::$variant),+
             }
@@ -190,8 +190,8 @@ enum_mapping!(
 );
 
 enum_mapping!(
-    decode_technology,
-    encode_technology,
+    decode_technology_inner,
+    encode_technology_inner,
     TechnologyIdDto,
     TechnologyId;
     Agriculture,
@@ -249,3 +249,15 @@ enum_mapping!(
     Radio,
     NuclearPhysics,
 );
+
+/// Converts a current client technology identity into the domain identity.
+#[must_use]
+pub const fn decode_technology(value: TechnologyIdDto) -> TechnologyId {
+    decode_technology_inner(value)
+}
+
+/// Converts a domain technology identity into the current client identity.
+#[must_use]
+pub const fn encode_technology(value: TechnologyId) -> TechnologyIdDto {
+    encode_technology_inner(value)
+}

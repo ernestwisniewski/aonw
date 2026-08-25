@@ -14,8 +14,9 @@ use aonw_domain::{CityConquestAction, CityId, HexCoord, PlayerId, UnitId};
 use aonw_engine::{
     AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand, DetachTroopCommand,
     EngineContext, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand,
-    SetCitySpecializationCommand, StartBuildingCommand, StartCityProjectCommand,
-    StartUnitProductionCommand, StartWonderCommand, TurnCommand, UnitActionCommand,
+    RushProductionCommand, SetCitySpecializationCommand, StartBuildingCommand,
+    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, TurnCommand,
+    UnitActionCommand,
 };
 use aonw_testkit::{
     CanonicalFixtureExecutor, CanonicalFixtureInput, CanonicalFixtureLoader,
@@ -192,6 +193,21 @@ fn apply_command(
                     *expected_revision,
                     &city_id,
                     decode_city_specialization(*specialization),
+                )),
+            )
+            .map_err(display_error)
+        }
+        ReplayCommandDto::RushProduction {
+            expected_revision,
+            city_id,
+        } => {
+            let city_id = CityId::new(city_id.as_str()).map_err(display_error)?;
+            GameEngine::apply_player_owned(
+                state,
+                context,
+                PlayerCommand::RushProduction(RushProductionCommand::new(
+                    *expected_revision,
+                    &city_id,
                 )),
             )
             .map_err(display_error)

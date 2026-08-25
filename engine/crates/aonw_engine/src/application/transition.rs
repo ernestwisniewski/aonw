@@ -6,6 +6,7 @@ use crate::StateDigest;
 mod domain_transition;
 mod events;
 mod outcome;
+mod production_events;
 
 pub use events::{
     AllPlayersSubmittedEvent, CityFoundedEvent, CombatEvent, DiplomaticScoreChangedEvent,
@@ -13,6 +14,10 @@ pub use events::{
     WorkerJobCompletion,
 };
 pub use outcome::{DomainEvent, ExecutionEvidence};
+pub use production_events::{
+    CityBuiltBuildingEvent, CityBuiltWonderEvent, CityProducedUnitEvent, TechnologyResearchedEvent,
+    WonderProductionRefundedEvent,
+};
 
 /// Stable command rejection shared by every authoritative command family.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

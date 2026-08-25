@@ -39,7 +39,8 @@ pub(super) fn decode_command(
         | ReplayCommandDto::StartUnitProduction { .. }
         | ReplayCommandDto::StartCityProject { .. }
         | ReplayCommandDto::StartWonder { .. }
-        | ReplayCommandDto::SetCitySpecialization { .. }) => decode_production_command(command),
+        | ReplayCommandDto::SetCitySpecialization { .. }
+        | ReplayCommandDto::RushProduction { .. }) => decode_production_command(command),
         command @ (ReplayCommandDto::SelectWorkerImprovement { .. }
         | ReplayCommandDto::ConfirmWorkerImprovement { .. }
         | ReplayCommandDto::CancelWorkerJob { .. }
@@ -167,6 +168,13 @@ fn decode_production_command(
             expected_revision: *expected_revision,
             city_id: decode_city(city_id)?,
             specialization: decode_city_specialization(*specialization),
+        },
+        ReplayCommandDto::RushProduction {
+            expected_revision,
+            city_id,
+        } => ProductionCommandRequest::RushProduction {
+            expected_revision: *expected_revision,
+            city_id: decode_city(city_id)?,
         },
         _ => unreachable!("production decoder received another command family"),
     };

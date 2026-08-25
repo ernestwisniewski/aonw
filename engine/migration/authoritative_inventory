@@ -88,7 +88,7 @@ domain OpenResourceExchangeCommand artifact-resource-trade reference-only - pack
 domain OpenResourceTradeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RespondDiplomaticMessageCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RespondDiplomaticProposalCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
-domain RushProductionCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
+domain RushProductionCommand production runtime-ready RushProduction packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SelectCityExpansionHexCommand city runtime-ready SelectCityExpansionHex packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SelectTechnologyCommand research reference-only - packages/aonw_core/lib/game/domain/command/research_commands.dart
 domain SelectWorkerImprovementCommand worker runtime-ready SelectWorkerImprovement packages/aonw_core/lib/game/domain/command/worker_commands.dart
@@ -127,13 +127,13 @@ event ArtifactExcavationStartedEvent artifact reference-only - packages/aonw_cor
 event ArtifactStoredEvent artifact reference-only - packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event AllPlayersSubmittedEvent system-lifecycle turn-kernel-ready AllPlayersSubmitted packages/aonw_core/lib/game/domain/event/system_events.dart
 event CityAttackedEvent combat runtime-ready CityAttacked packages/aonw_core/lib/game/domain/event/combat_events.dart
-event CityBuiltBuildingEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
-event CityBuiltWonderEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
+event CityBuiltBuildingEvent city runtime-ready CityBuiltBuilding packages/aonw_core/lib/game/domain/event/city_events.dart
+event CityBuiltWonderEvent city runtime-ready CityBuiltWonder packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityCapturedEvent combat runtime-ready CityCaptured packages/aonw_core/lib/game/domain/event/combat_events.dart
 event CityClaimedHexEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityDestroyedEvent combat runtime-ready CityDestroyed packages/aonw_core/lib/game/domain/event/combat_events.dart
 event CityFoundedEvent city runtime-ready CityFounded packages/aonw_core/lib/game/domain/event/city_events.dart
-event CityProducedUnitEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
+event CityProducedUnitEvent city runtime-ready CityProducedUnit packages/aonw_core/lib/game/domain/event/city_events.dart
 event CivilizationMetEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
 event CombatResolvedEvent combat runtime-ready CombatResolved packages/aonw_core/lib/game/domain/event/combat_events.dart
 event DiplomaticMessageRespondedEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
@@ -152,7 +152,7 @@ event PlayerTimedOutEvent system-lifecycle turn-kernel-ready PlayerTimedOut pack
 event ResearchPointsGainedEvent research reference-only - packages/aonw_core/lib/game/domain/event/research_events.dart
 event StabilityBandChangedEvent stability reference-only - packages/aonw_core/lib/game/domain/event/stability_events.dart
 event StrategicResourceDiscoveredEvent resource reference-only - packages/aonw_core/lib/game/domain/event/resource_events.dart
-event TechnologyResearchedEvent research reference-only - packages/aonw_core/lib/game/domain/event/research_events.dart
+event TechnologyResearchedEvent research runtime-ready TechnologyResearched packages/aonw_core/lib/game/domain/event/research_events.dart
 event TurnAutoResolvedEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
 event TurnEndedEvent turn turn-kernel-ready TurnEnded packages/aonw_core/lib/game/domain/event/turn_events.dart
 event UnitAttackedEvent combat runtime-ready UnitAttacked packages/aonw_core/lib/game/domain/event/combat_events.dart
@@ -160,7 +160,7 @@ event UnitGainedExperienceEvent unit-action runtime-ready UnitGainedExperience p
 event UnitKilledEvent combat runtime-ready UnitKilled packages/aonw_core/lib/game/domain/event/combat_events.dart
 event UnitMovedEvent movement engine-parity UnitMoved packages/aonw_core/lib/game/domain/event/unit_events.dart
 event UnitRetreatedEvent combat runtime-ready UnitRetreated packages/aonw_core/lib/game/domain/event/combat_events.dart
-event WonderProductionRefundedEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
+event WonderProductionRefundedEvent city runtime-ready WonderProductionRefunded packages/aonw_core/lib/game/domain/event/city_events.dart
 event WorkerCompletedJobEvent turn runtime-ready WorkerCompletedJob packages/aonw_core/lib/game/domain/event/turn_events.dart
 
 native-event AutoExplorePlannedEvent movement runtime-ready AutoExplorePlanned engine/crates/aonw_engine/src/application/logistics.rs

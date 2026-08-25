@@ -236,6 +236,15 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, Clien
                 specialization: aonw_contract_mapping::decode_city_specialization(specialization),
             },
         )),
+        ClientCommandDto::RushProduction {
+            expected_revision,
+            city_id,
+        } => Ok(DecodedCommand::Production(
+            ProductionCommandRequest::RushProduction {
+                expected_revision,
+                city_id: decode_city_id(city_id)?,
+            },
+        )),
         ClientCommandDto::SelectWorkerImprovement {
             expected_revision,
             unit_id,

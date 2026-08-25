@@ -12,12 +12,32 @@ use super::rules::{building_rejection, evaluate_unit, wonder_rejection};
 use super::support::{
     controlled_city, invalid, next_revision, pace, replace_city, technology_for, validate_revision,
 };
+use crate::DomainEvent;
 use crate::EngineContext;
 
 /// Atomic replacement produced by one city-production command.
 pub(crate) enum ProductionMutation {
     Identity,
-    Update(Box<ProductionStateUpdate>),
+    Update {
+        update: Box<ProductionStateUpdate>,
+        events: Box<[DomainEvent]>,
+    },
+}
+
+impl ProductionMutation {
+    pub(super) fn update(update: ProductionStateUpdate) -> Self {
+        Self::Update {
+            update: Box::new(update),
+            events: Box::new([]),
+        }
+    }
+
+    pub(super) fn with_events(update: ProductionStateUpdate, events: Vec<DomainEvent>) -> Self {
+        Self::Update {
+            update: Box::new(update),
+            events: events.into_boxed_slice(),
+        }
+    }
 }
 
 pub(crate) fn apply_start_building(
@@ -162,12 +182,12 @@ pub(crate) fn apply_set_specialization(
         &mut cities,
         city.with_specialization(Some(command.specialization())),
     )?;
-    Ok(ProductionMutation::Update(Box::new(production_update(
+    Ok(ProductionMutation::update(production_update(
         state,
         revision,
         cities,
         state.economy().clone(),
-    ))))
+    )))
 }
 
 fn queue_target(
@@ -214,9 +234,9 @@ fn queue_target(
     let revision = next_revision(state)?;
     let mut cities = state.cities().to_vec();
     replace_city(&mut cities, updated_city)?;
-    Ok(ProductionMutation::Update(Box::new(production_update(
+    Ok(ProductionMutation::update(production_update(
         state, revision, cities, economy,
-    ))))
+    )))
 }
 
 fn resource_changes(
@@ -234,7 +254,7 @@ fn resource_changes(
     }));
 }
 
-fn production_update(
+pub(super) fn production_update(
     state: &GameState,
     revision: aonw_domain::StateRevision,
     cities: Vec<City>,
