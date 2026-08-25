@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw_core/domain.dart';
@@ -73,6 +74,35 @@ void main() {
       );
     }
   });
+
+  test(
+    'rejects malformed current tiles without filling missing data',
+    () async {
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'aonw-map-catalog-invalid-',
+      );
+      addTearDown(() => tempDirectory.delete(recursive: true));
+      final mapDirectory = Directory('${tempDirectory.path}/broken');
+      await mapDirectory.create(recursive: true);
+      final mapFile = File('${mapDirectory.path}/map.json');
+      final catalog = FileMultiplayerMapCatalog(roots: [tempDirectory.path]);
+
+      for (final tiles in [
+        [42],
+        [
+          {'col': 0, 'row': 0, 'resources': <String>[], 'height': 0},
+        ],
+      ]) {
+        await mapFile.writeAsString(
+          jsonEncode({'cols': 1, 'rows': 1, 'tiles': tiles}),
+        );
+        await expectLater(
+          catalog.loadAssetMap('broken'),
+          throwsA(isA<WorldMapLoadException>()),
+        );
+      }
+    },
+  );
 
   test('reports a missing safe map', () async {
     const catalog = FileMultiplayerMapCatalog(roots: []);

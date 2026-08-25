@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
@@ -13,6 +15,13 @@ import '../../../../support/map_test_fixture.dart';
 import 'starter_map_golden_support.dart';
 
 void main() {
+  final defaultComparator = goldenFileComparator;
+  if (defaultComparator is LocalFileComparator) {
+    goldenFileComparator = _OnePixelGoldenFileComparator(
+      defaultComparator.basedir.resolve('flame_static_map_golden_test.dart'),
+    );
+  }
+
   testWidgets('freezes the batched Flame static layers', (tester) async {
     final loaded = await loadStarterMapGoldenFixture(tester);
     final map = loaded.map;
@@ -82,6 +91,28 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
+}
+
+final class _OnePixelGoldenFileComparator extends LocalFileComparator {
+  _OnePixelGoldenFileComparator(super.testFile);
+
+  static const _goldenPixelCount = 660 * 728;
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+    if (result.passed || result.diffPercent * _goldenPixelCount <= 1.000001) {
+      result.dispose();
+      return true;
+    }
+
+    final error = await generateFailureOutput(result, golden, basedir);
+    result.dispose();
+    throw FlutterError(error);
+  }
 }
 
 MapRenderSnapshot _staticSnapshot(

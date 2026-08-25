@@ -1,6 +1,7 @@
 import 'package:aonw_rust_client/src/protocol_execution.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 import 'package:aonw_rust_client/src/protocol_map.dart';
+import 'package:aonw_rust_client/src/protocol_player_view.dart';
 import 'package:aonw_rust_client/src/protocol_query.dart';
 import 'package:aonw_rust_client/src/protocol_values.dart';
 

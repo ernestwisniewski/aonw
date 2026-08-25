@@ -228,7 +228,7 @@ void main() {
     expect(
       _makeTarget(makefile, 'architecture-check'),
       const _MakeTarget(
-        prerequisites: ['root-dependencies'],
+        prerequisites: ['root-dependencies', 'rust-engine-inventory-ast-check'],
         recipes: [
           '@dart run tool/check_architecture.dart check --ratchet-ref '
               '"\$(ARCHITECTURE_RATCHET_REF)"',
@@ -254,6 +254,7 @@ void main() {
       ),
     );
     expect(_makeTarget(makefile, 'ci').prerequisites, [
+      'successor-engine-quality-check',
       'generated-code-check',
       'format-check',
       'analyze',
@@ -292,7 +293,7 @@ void main() {
     final environment = qualityGate['env'] as YamlMap;
     expect(
       environment['ARCHITECTURE_RATCHET_REF'],
-      r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}",
+      r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}",
     );
     final steps = (qualityGate['steps'] as YamlList).cast<YamlMap>();
     final architectureStep = steps.singleWhere(

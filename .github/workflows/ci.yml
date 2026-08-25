@@ -26,6 +26,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
       - name: Check legacy freeze and successor dependencies
         run: make --no-print-directory p0-check
 
@@ -39,6 +42,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
 
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.97.1 --profile minimal --component clippy --component llvm-tools-preview --component rustfmt
@@ -68,6 +74,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
 
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.97.1 --profile minimal --component clippy --component llvm-tools-preview --component rustfmt
@@ -137,6 +146,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
@@ -200,6 +212,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
 
       - name: Fetch CI ratchet commits
         run: |
@@ -350,6 +365,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
       - name: Fetch mutation ratchet commit
         run: |
           if ! git cat-file -e "${MUTATION_RATCHET_REF}^{commit}" 2>/dev/null; then
@@ -407,6 +425,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
@@ -453,6 +474,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
       - name: Cache pinned Godot
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -481,6 +505,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -532,6 +559,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2

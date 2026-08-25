@@ -1,162 +1,62 @@
 # AoNW Flutter Client
 
-This is the standalone successor presentation client. It consumes the strict
-Rust client protocol through `package:aonw_rust_client`; the hook setting in
-this package always builds the native Rust backend for the host target. There
-is no import of the legacy root application, `aonw_core`, or per-command Dart
-fallback.
+This is the greenfield Flutter and Flame presentation client for the Rust
+engine. It consumes the strict client protocol through
+`package:aonw_rust_client` and builds the native Rust backend for the host
+target.
 
-The production viewport renders the canonical `aonw2_starter` map through
-Flame: batched terrain and grid, the generated reference bundle, recipient-safe
-units, movement overlays, hover, selection, camera pan and zoom. Flutter owns
-the surrounding HUD, loading and typed recovery states, focus and semantics.
-`GameSessionState` composes the recipient-safe Rust view with local interaction
-while keeping both distinct.
+## Modules
 
-Flame `1.38.0` is the pinned target for the viewport migration and
-`flame_test 2.3.0` is the matching component-test toolchain. Until the existing
-gamepad plugin provides a qualified Swift Package Manager integration, macOS
-intentionally stays on the committed CocoaPods path. `Podfile.lock` pins
-`gamepads_darwin 0.1.1`, and the architecture guard rejects accidental removal
-of that integration; an upgrade requires a device smoke test with real gamepad
-input.
+| Area | Responsibility |
+| --- | --- |
+| `lib/app/` | Bootstrap, composition, routing, lifecycle, and process error handling. |
+| `lib/design_system/` | Shared visual tokens and accessible widgets. |
+| `lib/features/map/` | Rust-backed session orchestration, interaction state, and map presentation. |
+| `lib/features/settings/` | Client-only preferences and persistence. |
+| `lib/features/turns/` | Presentation queue for authoritative turn updates. |
+| `lib/game/` | Flame viewport, camera, rendering, and presentation-only effects. |
+| `lib/l10n/` | ARB catalogs and generated localization APIs. |
 
-Composition lives under `lib/app/`; widgets do not construct FFI sessions or
-repositories. `AppComposition.production()` is the only production composition
-root: it creates one `RustMapRepository`, one owning `MapController`, and one
-`AonwApp`. The root widget disposes its controller when it leaves the tree or
-is replaced; the controller closes the retained Rust session idempotently. The
-test constructor accepts only the application `MapRepository` port, so no DI
-container or service locator is needed.
+`AppComposition.production()` is the production composition root. Widgets do
+not construct FFI sessions or repositories, and presentation code receives
+immutable read models rather than wire DTOs.
 
-## Developer module map
+## Boundary
 
-| Module | Responsibility and entry points | Dependency rule |
-| --- | --- | --- |
-| `lib/app` | Bootstrap, production composition, routing, lifecycle and process errors. Start at `bootstrap/run_aonw_app.dart`; wire adapters only in `composition/app_composition.dart`. | May compose features and infrastructure. Features never import `app`. |
-| `lib/design_system` | Brand tokens and accessible shared widgets. | Has no feature or Rust transport dependency. Feature-specific visuals stay in the feature. |
-| `lib/features/map` | Map/session ports, `GameSessionState`, recipient and pending-action read models, Rust adapter, interaction controller and rendering. Enter through `application/map_controller.dart`; the state contract lives beside it in `application/game_session_state.dart`. | Application owns use cases, infrastructure maps the Rust protocol, presentation never evaluates game rules. Session status is represented by closed state variants; recipient data and local interaction remain separate. |
-| `lib/features/settings` | Client-only preferences and their persistence. | Settings contain no gameplay state and do not depend on the map feature. |
-| `lib/features/turns` | Immutable turn-presentation queue and the accessible turn banner. Start at `application/turn_presentation_queue.dart`; presentation is in `presentation/turn_banner.dart`. | Consumes only authoritative turn numbers from recipient snapshots. It may order and animate presentations, but never advances or reduces a turn. |
-| `lib/game` | Flame-only viewport composition: `AonwFlameGame`, one `AonwWorld`, one camera and the typed `FlameSceneSink`. | Receives immutable presentation snapshots only. It cannot import repositories, infrastructure, FFI or wire DTOs. |
-| `lib/l10n` | ARB catalogs, generated typed strings and locale helpers. | Edit ARB sources; never edit generated localization files manually. |
+- Rust owns movement, combat, economy, turns, AI, saves, and replays.
+- Flutter owns presentation, input, accessibility, camera, and local animation.
+- One repository retains one Rust session for its complete lifecycle.
+- Accepted commands are followed by an authoritative snapshot or patch; Dart
+  never reduces gameplay state locally.
+- The client has no dependency on the legacy root application or `aonw_core`,
+  and contains no legacy adapter, alternate engine, or per-command fallback.
+- Incompatible API versions and unknown closed-enum values fail closed.
 
-When adding a module, extend this table with its owner, entry point and allowed
-dependencies. Keep implementation details in code and verification commands in
-this README.
-
-`AonwRouter` owns the small typed route table on top of Flutter's Navigator.
-The current `/` route builds the map feature; unknown locations fail closed to
-an accessible diagnostic page. `AonwApp` owns theme and lifecycle but does not
-construct feature pages directly. New screens extend the route enum and router
-without adding navigation decisions to feature widgets.
-
-The map route owns exactly one `AonwFlameGame` instance for its lifetime and
-ships no alternate renderer or runtime renderer flag. Route and application
-visibility are combined before changing the Flame lifecycle; the turn-based
-world stays paused while idle and advances only for coalesced input or active
-effects. Covering the map route does not close the Rust session. Removing the
-viewport disposes Flame caches and its presentation snapshot; the application
-controller independently closes the session when its owner is torn down.
-
-Static rendering uses three coarse components in fixed priority order: batched
-terrain, decoded reference pages and one combined grid path. Their shared cache
-is keyed by map id, content hash and dimensions; interaction-only snapshots and
-reference visibility changes reuse terrain and grid resources. Recipient units
-are keyed components patched from immutable snapshots, while reachable, route,
-selection and movement effects remain presentation-only layers. Reference
-images are owned by Flame's image cache and released with the world.
-
-Flame owns one bounded `CameraComponent`/`Viewfinder` backed by a
-framework-neutral fit and screen/world transform. A viewport-sized screen-space
-component maps Flame tap, hover, drag, scale and scroll callbacks to typed
-intents. Pointer bursts are coalesced into one camera mutation per rendered
-frame and hex picking remains one geometry lookup, never a hitbox per tile.
-`flame_test` covers component lifecycle, cache identity, camera projection and
-scene patching; Flutter widget tests cover focus, semantics, HUD composition and
-route lifecycle.
-
-Bootstrap installs one typed process error boundary. Flutter framework errors
-and unhandled asynchronous platform errors are classified separately and sent
-to an `AppErrorReporter`; the default reporter writes developer diagnostics
-only. Future crash reporting should implement that port without exposing game
-state or teaching feature controllers about a telemetry SDK. The boundary can
-be installed and restored independently in tests.
-
-Client telemetry is deliberately closed and domain-free. The sink accepts only
-the predefined `ClientTelemetryEvent` enum: app start, suspend/resume, framework
-error and asynchronous error. It cannot accept attributes, exception text,
-map identifiers, coordinates, player identifiers or game state. Production
-currently uses a developer log sink; a remote sink may replace it only behind
-the same allowlisted port.
-
-The design system keeps brand color, spacing, radii and minimum interaction
-sizes in small framework-level token groups. Shared panel, message and progress
-components provide consistent theming and explicit semantics while remaining
-independent of game features. Feature-specific colors stay with the map
-presentation layer in `MapPalette`.
-
-Flutter's generated localization boundary owns all app-shell and map-workflow
-copy. English is the canonical ARB catalog and Polish is a fully generated
-locale. Widgets consume typed placeholder methods, while `AonwApp` registers
-the generated delegates and follows the platform locale by default.
-
-Map input converges on one presentation command model. Pointer picking,
-keyboard arrows/WASD with Enter/Escape, and normalized gamepad D-pad with
-A/B/Y all drive the same local cursor, selection and reference actions. The
-production composition root owns the gamepad adapter and closes it with the
-retained Rust-backed map repository. Linux uses the repository's hardened
-gamepads adapter; no input path evaluates game rules. `AonwApp` pauses
-lifecycle-aware gamepad input whenever the application is not resumed and
-reenables it on resume. Losing focus never tears down the Rust session.
-
-The map feature opens the starter map and scenario on one retained Rust
-backend. Its `MapScene` keeps the shared static `MapView` separate from the
-recipient-safe player snapshot, so fog-filtered units never become authored
-map content. Closing the controller closes that backend session; later queries
-and commands reuse the same session instead of selecting a transport per
-operation.
-
-Recipient snapshots carry the authoritative positive turn number. The client
-shows it through an immutable presentation queue that ignores duplicate or
-older snapshots and serializes newer banners. Completing an animation only
-advances that local queue; it never changes the game turn. Reduced-motion mode
-removes the transition while preserving the live-region announcement.
-
-The same recipient snapshot carries at most one closed `PendingActionView`.
-Flutter validates its identifiers and coordinates at the adapter boundary, but
-does not decide whether an action is required or legal. `GameSessionState`
-exposes the value for the action deck; clearing or replacing it always comes
-from a refreshed Rust snapshot.
-
-Selecting a controlled unit requests its reachable tiles from Rust. Selecting
-a highlighted destination requests the versioned route plan, and the client
-dispatches `moveUnit` only after an explicit confirmation. The overlay and
-panel display returned costs; they do not calculate movement legality. After
-an accepted command the repository fetches a fresh recipient snapshot instead
-of reducing authoritative state in Dart. Rejections use a closed client-owned
-enum mapped exhaustively from the Rust wire enum. Unknown codes fail closed;
-the shared code fixture and native stale-revision test keep Flutter and Godot
-in parity.
+## Quick start
 
 Run from the repository root:
 
-    make successor-flutter-check
-    make successor-flutter-coverage-report
-    make map-stage-1-check
-    make successor-flutter-device-test
-    make successor-flutter-fm5-baseline
-    make successor-flutter-run
+```sh
+make bootstrap
+make successor-flutter-check
+make successor-flutter-run
+```
 
-`map-stage-1-check` exports the Rust-backed semantic map probe to a temporary
-directory and compares it with Godot. It does not update this client's visual
-goldens.
+Useful focused gates:
 
-The committed starter assets are generated by
-`tool/assets/compile/starter_map_bundle.dart` for both successor clients. The
-canonical map document remains in `content/maps/`, and shared odd-q geometry
-evidence remains in `aonw_tests/fixtures/geometry/`.
+```sh
+make successor-flutter-coverage-report
+make successor-flutter-device-test
+make successor-flutter-fm5-baseline
+make map-stage-1-check
+```
 
-This client owns presentation, input, camera, interaction state, accessibility,
-and client-side animation. Rules for movement, combat, economy, turns, AI,
-save, and replay remain exclusively in Rust.
+The starter map assets are generated from `content/maps/` for both successor
+clients. `make map-stage-1-check` verifies shared semantics without rewriting
+Flutter visual goldens.
+
+## Documentation
+
+Read [the Rust engine migration plan](../../docs/rust-engine-migration.md) for
+the current cutover gates. Client and engine ownership is formalized in
+[ADR 0010](../../docs/adr/0010-rust-successor-engine-and-client-boundary.md).

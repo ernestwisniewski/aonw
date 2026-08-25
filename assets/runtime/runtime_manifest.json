@@ -12,8 +12,8 @@
   },
   "files": {
     "maps/dravonia/map_texture_manifest.json": {
-      "bytes": 32123,
-      "sha256": "e1ae492a9d5c750854a53cee2fa9ece3c18b807e0d8a711e2063e1b9b7faec1e"
+      "bytes": 32107,
+      "sha256": "609f9958fa0fe03f903ca57e69aa91ce5c7a8e14a65d339037490237307506a0"
     },
     "maps/dravonia/page_00.jpg": {
       "bytes": 2544551,
@@ -40,8 +40,8 @@
       "sha256": "1f1fb1f685806aa099bc486ef0f9339895c9c138a53ce2446880a23853660737"
     },
     "maps/myranth/map_texture_manifest.json": {
-      "bytes": 14243,
-      "sha256": "e13d080a7b5a6f8c45330328a04a44a151d1453baa0165785c46c590508ac30a"
+      "bytes": 14227,
+      "sha256": "d014eb0ba86c0b58a34c8a0683676db62b9877988327c34fde02e163658c8558"
     },
     "maps/myranth/page_00.jpg": {
       "bytes": 1657006,
@@ -68,8 +68,8 @@
       "sha256": "9765681dbe5bf6f62fb7e24ef53ae2782f9a5537e2dd1948dc1f816f72fdd644"
     },
     "maps/terenos/map_texture_manifest.json": {
-      "bytes": 8941,
-      "sha256": "71b1189d304ed4e32e87cf44ce6dfb590869afea222737e59bd46cc806174cc7"
+      "bytes": 8925,
+      "sha256": "a279201788c63bc5a2dff4fff636da2ca5812d9ce61f694ff0dacbdc5eb3f3a9"
     },
     "maps/terenos/page_00.jpg": {
       "bytes": 1626163,
@@ -88,8 +88,8 @@
       "sha256": "7b8ade1c413f0aabe41cfbc89c075fffab1de9cd05a34ade3109fc3e4b2c8d47"
     },
     "maps/verdantia/map_texture_manifest.json": {
-      "bytes": 17320,
-      "sha256": "b9dc16606a92bae8a936015c70a66f6b7a49249a0c4fecbf45c260659264107a"
+      "bytes": 17304,
+      "sha256": "790c7fdd70ef43fd0fc0c31602424f28ddaf627d4cfc0ec86ca4d09fa100be8b"
     },
     "maps/verdantia/page_00.jpg": {
       "bytes": 1873240,

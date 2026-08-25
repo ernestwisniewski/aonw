@@ -607,16 +607,30 @@ func _test_shared_client_contract() -> void:
 		"coordinate": {"col": 0, "row": 0},
 		"movementUnits": 12,
 		"posture": "active",
+		"workerBuildCharges": 0,
+		"workerJob": null,
+		"workerAssignment": null,
+	}
+	var turn_lifecycle := {
+		"ownState": "active",
+		"ownSubmitted": false,
+		"requiredSubmissionCount": 1,
+		"submittedCount": 0,
 	}
 	var decoded_snapshot := ClientReadModelDecoder.decode_snapshot({
 		"stamp": snapshot_stamp,
 		"turn": 7,
+		"turnLifecycle": turn_lifecycle,
 		"pendingAction": {
 			"type": "workerActionSelection",
 			"unitId": "unit-a",
 			"improvement": "farm",
 		},
+		"cityFoundingDraft": null,
 		"units": [unit],
+		"cities": [],
+		"fieldImprovements": [],
+		"roads": [],
 	})
 	_check(
 		decoded_snapshot != null
@@ -630,12 +644,17 @@ func _test_shared_client_contract() -> void:
 		ClientReadModelDecoder.decode_snapshot({
 			"stamp": snapshot_stamp,
 			"turn": 7,
+			"turnLifecycle": turn_lifecycle,
 			"pendingAction": {
 				"type": "workerActionSelection",
 				"unitId": "unit-a",
 				"improvement": "futureImprovement",
 			},
+			"cityFoundingDraft": null,
 			"units": [unit],
+			"cities": [],
+			"fieldImprovements": [],
+			"roads": [],
 		}) == null,
 		"Godot rejects an unknown pending-action enum value",
 	)
@@ -643,8 +662,13 @@ func _test_shared_client_contract() -> void:
 		ClientReadModelDecoder.decode_snapshot({
 			"stamp": snapshot_stamp,
 			"turn": 0,
+			"turnLifecycle": turn_lifecycle,
 			"pendingAction": null,
+			"cityFoundingDraft": null,
 			"units": [unit],
+			"cities": [],
+			"fieldImprovements": [],
+			"roads": [],
 		}) == null,
 		"Godot rejects a non-positive authoritative turn",
 	)
@@ -654,8 +678,13 @@ func _test_shared_client_contract() -> void:
 		ClientReadModelDecoder.decode_snapshot({
 			"stamp": snapshot_stamp,
 			"turn": 7,
+			"turnLifecycle": turn_lifecycle,
 			"pendingAction": null,
+			"cityFoundingDraft": null,
 			"units": [unknown_unit],
+			"cities": [],
+			"fieldImprovements": [],
+			"roads": [],
 		}) == null,
 		"Godot rejects unknown unit enum values",
 	)
@@ -665,8 +694,13 @@ func _test_shared_client_contract() -> void:
 		ClientReadModelDecoder.decode_snapshot({
 			"stamp": snapshot_stamp,
 			"turn": 7,
+			"turnLifecycle": turn_lifecycle,
 			"pendingAction": null,
+			"cityFoundingDraft": null,
 			"units": [second_unit, unit],
+			"cities": [],
+			"fieldImprovements": [],
+			"roads": [],
 		}) == null,
 		"Godot rejects an unstable snapshot unit order",
 	)

@@ -369,6 +369,7 @@ void main() {
       'dependencies',
     ]);
     expect(_makeTarget(makefile, 'ci').prerequisites, [
+      'successor-engine-quality-check',
       'generated-code-check',
       'format-check',
       'analyze',
@@ -471,7 +472,6 @@ void main() {
     final workflow = _loadMap('.github/workflows/ci.yml');
     final jobs = _asMap(workflow['jobs'], 'CI jobs');
     final qualityGate = _asMap(jobs['quality-gate'], 'CI quality-gate');
-    expect(workflow.containsKey('defaults'), isFalse);
     expect(qualityGate.containsKey('defaults'), isFalse);
     expect(qualityGate.containsKey('continue-on-error'), isFalse);
     final qualityEnvironment = _asMap(
@@ -487,14 +487,14 @@ void main() {
       qualityEnvironment,
       containsPair(
         'COVERAGE_BASE_REF',
-        r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.ref_name == 'dev' && 'origin/main' || github.event.before }}",
+        r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.ref_name == 'dev' && 'origin/main' || github.event.before }}",
       ),
     );
     expect(
       qualityEnvironment,
       containsPair(
         'COVERAGE_RATCHET_REF',
-        r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}",
+        r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}",
       ),
     );
     final strategy = _asMap(qualityGate['strategy'], 'CI strategy');

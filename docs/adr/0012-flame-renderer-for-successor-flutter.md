@@ -22,12 +22,12 @@ selected Flame as that runtime.
 The successor Flutter client uses Flame as the only target renderer for its 2D
 gameplay viewport:
 
-```text
-Rust engine
-  -> recipient-safe projection / patch / evidence
-  -> Flutter application controller and immutable read models
-  -> presentation-only FlameScenePatch
-  -> AonwFlameGame + AonwWorld + CameraComponent
+```mermaid
+flowchart LR
+  Rust[Rust engine] --> Projection[Recipient-safe projection / patch / evidence]
+  Projection --> Controller[Flutter controller and immutable read models]
+  Controller --> Patch[Presentation-only FlameScenePatch]
+  Patch --> Flame[AonwFlameGame + AonwWorld + CameraComponent]
 ```
 
 - Flutter continues to own the application shell, routing, HUD, forms,
