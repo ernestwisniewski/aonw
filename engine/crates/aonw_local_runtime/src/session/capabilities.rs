@@ -4,6 +4,16 @@ pub struct RuntimeCapabilities {
     features: u16,
 }
 
+use super::runtime::LocalRuntime;
+
+impl LocalRuntime {
+    /// Returns supported operations and versions.
+    #[must_use]
+    pub const fn capabilities() -> RuntimeCapabilities {
+        RuntimeCapabilities::CURRENT
+    }
+}
+
 impl RuntimeCapabilities {
     const ROUTE_PLAN: u16 = 1 << 0;
     const REACHABLE: u16 = 1 << 1;
@@ -16,6 +26,7 @@ impl RuntimeCapabilities {
     const COMBAT: u16 = 1 << 8;
     const CITIES: u16 = 1 << 9;
     const WORKERS: u16 = 1 << 10;
+    const PRODUCTION: u16 = 1 << 11;
 
     pub(super) const CURRENT: Self = Self {
         features: Self::ROUTE_PLAN
@@ -28,7 +39,8 @@ impl RuntimeCapabilities {
             | Self::MOVEMENT_LOGISTICS
             | Self::COMBAT
             | Self::CITIES
-            | Self::WORKERS,
+            | Self::WORKERS
+            | Self::PRODUCTION,
     };
 
     /// Returns whether route planning is available.
@@ -94,5 +106,10 @@ impl RuntimeCapabilities {
     #[must_use]
     pub const fn workers(self) -> bool {
         self.features & Self::WORKERS != 0
+    }
+    /// Returns whether city production queries and queue commands are available.
+    #[must_use]
+    pub const fn production(self) -> bool {
+        self.features & Self::PRODUCTION != 0
     }
 }

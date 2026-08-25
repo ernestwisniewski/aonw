@@ -44,7 +44,7 @@
 oracle-tree b83e4a513901403ab24e9d447feb5086edbdf9b9
 expected-domain-count 39
 expected-system-count 2
-expected-query-count 10
+expected-query-count 11
 expected-event-count 40
 expected-native-event-count 4
 expected-evidence-count 1
@@ -95,13 +95,13 @@ domain SelectWorkerImprovementCommand worker runtime-ready SelectWorkerImproveme
 domain SendDiplomaticMessageCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SendDiplomaticProposalCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SendGoldGiftCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
-domain SetCitySpecializationCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
+domain SetCitySpecializationCommand production runtime-ready SetCitySpecialization packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SkipUnitTurnCommand unit-action engine-parity SkipUnitTurn packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain StartArtifactExcavationCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
-domain StartBuildingCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
-domain StartCityProjectCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
-domain StartUnitProductionCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
-domain StartWonderCommand production reference-only - packages/aonw_core/lib/game/domain/command/city_commands.dart
+domain StartBuildingCommand production runtime-ready StartBuilding packages/aonw_core/lib/game/domain/command/city_commands.dart
+domain StartCityProjectCommand production runtime-ready StartCityProject packages/aonw_core/lib/game/domain/command/city_commands.dart
+domain StartUnitProductionCommand production runtime-ready StartUnitProduction packages/aonw_core/lib/game/domain/command/city_commands.dart
+domain StartWonderCommand production runtime-ready StartWonder packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain StoreArtifactInCityCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/artifact_commands.dart
 domain SubmitTurnCommand turn turn-kernel-ready SubmitTurn packages/aonw_core/lib/game/domain/command/turn_commands.dart
 domain ToggleWorkedHexCommand city runtime-ready ToggleWorkedHex packages/aonw_core/lib/game/domain/command/city_commands.dart
@@ -118,6 +118,7 @@ query CityFoundingOptions CityFoundingOptions CityFoundingOptions city runtime-r
 query CityWorkedHexOptions CityWorkedHexOptions CityWorkedHexOptions city runtime-ready
 query CityYield CityYield CityYield economy runtime-ready
 query StrategicResourceProjection StrategicResourceProjection StrategicResourceProjection economy runtime-ready
+query ProductionOptions ProductionOptions ProductionOptions production runtime-ready
 query UnitLogisticsOptions UnitLogisticsOptions UnitLogisticsOptions movement runtime-ready
 query WorkerOptions WorkerOptions WorkerOptions worker runtime-ready
 

@@ -1,7 +1,7 @@
 use aonw_domain::{CityId, HexCoord};
 use aonw_engine::{
     CityYieldQuery, CombatPreviewQuery, GameEngine, GameQuery, MovementSearchWorkspace,
-    QueryResult, StrategicResourceProjectionQuery,
+    ProductionOptionsQuery, QueryResult, StrategicResourceProjectionQuery,
 };
 
 use crate::session::Session;
@@ -21,6 +21,15 @@ pub struct CityYieldRequest {
 pub struct StrategicResourceProjectionRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
+}
+
+/// Current engine-owned city-production-options request.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ProductionOptionsRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled city.
+    pub city_id: CityId,
 }
 
 /// Current recipient-safe combat preview request.
@@ -103,5 +112,29 @@ pub(super) fn dispatch_strategic_resource_query(
     Ok(RuntimeQueryResult::StrategicResourceProjection {
         stamp: session.stamp(),
         projection,
+    })
+}
+
+pub(super) fn dispatch_production_options_query(
+    session: &Session,
+    request: &ProductionOptionsRequest,
+    workspace: &mut MovementSearchWorkspace,
+) -> Result<RuntimeQueryResult, RuntimeError> {
+    let result = GameEngine::query_with_workspace(
+        session.state(),
+        session.context(),
+        GameQuery::ProductionOptions(ProductionOptionsQuery::new(
+            request.expected_revision,
+            &request.city_id,
+        )),
+        workspace,
+    )
+    .map_err(RuntimeError::Query)?;
+    let QueryResult::ProductionOptions(options) = result else {
+        unreachable!("production options query returns production options")
+    };
+    Ok(RuntimeQueryResult::ProductionOptions {
+        stamp: session.stamp(),
+        options,
     })
 }

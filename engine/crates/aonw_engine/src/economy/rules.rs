@@ -110,7 +110,7 @@ fn improvement_owner<'state>(
     }
 }
 
-fn resources_at(
+pub(crate) fn resources_at(
     state: &GameState,
     context: EngineContext<'_>,
     coordinate: HexCoord,
@@ -169,7 +169,7 @@ const fn extraction_improvement(resource: ResourceType) -> Option<FieldImproveme
     }
 }
 
-const fn domain_resource(resource: aonw_content::ResourceType) -> ResourceType {
+pub(crate) const fn domain_resource(resource: aonw_content::ResourceType) -> ResourceType {
     match resource {
         aonw_content::ResourceType::Wheat => ResourceType::Wheat,
         aonw_content::ResourceType::Fish => ResourceType::Fish,

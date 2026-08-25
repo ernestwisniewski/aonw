@@ -230,7 +230,9 @@ fn map_city_error(path: &str, error: &CityBuildError) -> GameStateMappingError {
     let field = match error {
         CityBuildError::NonPositivePopulation(_) => "population",
         CityBuildError::NegativeStoredFood(_) => "storedFood",
-        CityBuildError::NonPositiveMaxHexes(_) => "maxHexes",
+        CityBuildError::NonPositiveMaxHexes(_)
+        | CityBuildError::NegativeMaxHexesDelta(_)
+        | CityBuildError::MaxHexesOverflow => "maxHexes",
         CityBuildError::NegativeTerritoryRadius(_) => "territoryRadius",
         CityBuildError::NegativeProductionOverflow(_) => "productionOverflow",
         CityBuildError::NonPositiveHitPoints(_) => "hitPoints",
@@ -366,3 +368,55 @@ enum_mapping!(
     BroadcastTower,
     WorldFairGrounds,
 );
+
+/// Converts a current client building identity into the domain identity.
+#[must_use]
+pub const fn decode_city_building(value: CityBuildingTypeDto) -> CityBuildingType {
+    decode_building(value)
+}
+
+/// Converts a domain building identity into the current client identity.
+#[must_use]
+pub const fn encode_city_building(value: CityBuildingType) -> CityBuildingTypeDto {
+    encode_building(value)
+}
+
+/// Converts a current client project identity into the domain identity.
+#[must_use]
+pub const fn decode_city_project(value: CityProjectTypeDto) -> CityProjectType {
+    decode_project(value)
+}
+
+/// Converts a domain project identity into the current client identity.
+#[must_use]
+pub const fn encode_city_project(value: CityProjectType) -> CityProjectTypeDto {
+    encode_project(value)
+}
+
+/// Converts a current client specialization identity into the domain identity.
+#[must_use]
+pub const fn decode_city_specialization(
+    value: CitySpecializationTypeDto,
+) -> CitySpecializationType {
+    decode_specialization(value)
+}
+
+/// Converts a domain specialization identity into the current client identity.
+#[must_use]
+pub const fn encode_city_specialization(
+    value: CitySpecializationType,
+) -> CitySpecializationTypeDto {
+    encode_specialization(value)
+}
+
+/// Converts a current client wonder identity into the domain identity.
+#[must_use]
+pub const fn decode_city_wonder(value: WonderTypeDto) -> WonderType {
+    decode_wonder(value)
+}
+
+/// Converts a domain wonder identity into the current client identity.
+#[must_use]
+pub const fn encode_city_wonder(value: WonderType) -> WonderTypeDto {
+    encode_wonder(value)
+}

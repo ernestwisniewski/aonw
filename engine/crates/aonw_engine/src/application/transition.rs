@@ -1,20 +1,18 @@
 use aonw_content::ContentHash;
 use aonw_domain::GameState;
 
-use crate::{
-    AutoExplorePlannedEvent, CombatExecution, LogisticsExecution, MerchantRouteAssignedEvent,
-    MerchantTravelQueuedEvent, StateDigest, TroopDetachedEvent, TurnKernelExecution,
-    UnitMovedEvent, UnitMovementExecution, WorkerAutomationExecution,
-};
+use crate::StateDigest;
 
 mod domain_transition;
 mod events;
+mod outcome;
 
 pub use events::{
     AllPlayersSubmittedEvent, CityFoundedEvent, CombatEvent, DiplomaticScoreChangedEvent,
     PlayerKickedEvent, PlayerTimedOutEvent, TurnEndedEvent, WorkerCompletedJobEvent,
     WorkerJobCompletion,
 };
+pub use outcome::{DomainEvent, ExecutionEvidence};
 
 /// Stable command rejection shared by every authoritative command family.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -153,6 +151,34 @@ pub enum CommandRejectionCode {
     WorkedHexLimitReached,
     /// The coordinate is not a legal current expansion candidate.
     CityExpansionHexUnavailable,
+    /// The building is already present, locked, or misses a map requirement.
+    BuildingNotAvailable,
+    /// A strategic-resource option index does not exist for this unit.
+    UnitProductionInvalidResourceOption,
+    /// The unit is not producible or is technology-locked.
+    UnitProductionNotAvailable,
+    /// The empire lacks a visible controlled presence resource.
+    UnitProductionRequiresResource,
+    /// No strategic-resource alternative can be reserved.
+    UnitProductionMissingStrategicResource,
+    /// A naval unit requires an ocean-adjacent coastal spawn topology.
+    UnitProductionRequiresCoast,
+    /// Queuing the unit would exceed canonical supply capacity.
+    UnitSupplyLimitReached,
+    /// The wonder is completed, locked, blocked, or another wonder is active.
+    WonderNotAvailable,
+    /// City specialization technology is not unlocked.
+    CitySpecializationLocked,
+    /// The requested specialization is already selected.
+    CitySpecializationUnchanged,
+    /// The specialization prerequisite building is missing.
+    CitySpecializationMissingBuilding,
+    /// The city has no active production queue.
+    ProductionQueueEmpty,
+    /// Continuous projects cannot be rushed.
+    ProjectCannotBeRushed,
+    /// No positive affordable rush quote exists.
+    RushProductionUnavailable,
     /// The requested worker does not exist or is not a worker.
     WorkerNotFound,
     /// The actor cannot command the requested worker.
@@ -193,7 +219,7 @@ pub enum CommandRejectionCode {
 
 impl CommandRejectionCode {
     /// Complete stable rejection surface exposed to current clients.
-    pub const ALL: [Self; 85] = [
+    pub const ALL: [Self; 99] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -261,6 +287,20 @@ impl CommandRejectionCode {
         Self::WorkedHexUnavailable,
         Self::WorkedHexLimitReached,
         Self::CityExpansionHexUnavailable,
+        Self::BuildingNotAvailable,
+        Self::UnitProductionInvalidResourceOption,
+        Self::UnitProductionNotAvailable,
+        Self::UnitProductionRequiresResource,
+        Self::UnitProductionMissingStrategicResource,
+        Self::UnitProductionRequiresCoast,
+        Self::UnitSupplyLimitReached,
+        Self::WonderNotAvailable,
+        Self::CitySpecializationLocked,
+        Self::CitySpecializationUnchanged,
+        Self::CitySpecializationMissingBuilding,
+        Self::ProductionQueueEmpty,
+        Self::ProjectCannotBeRushed,
+        Self::RushProductionUnavailable,
         Self::WorkerNotFound,
         Self::WorkerNotControlled,
         Self::WorkerUnavailable,
@@ -283,6 +323,7 @@ impl CommandRejectionCode {
 
     /// Returns the stable language-neutral wire value.
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::StaleRevision => "stale_revision",
@@ -352,6 +393,22 @@ impl CommandRejectionCode {
             Self::WorkedHexUnavailable => "worked_hex_unavailable",
             Self::WorkedHexLimitReached => "worked_hex_limit_reached",
             Self::CityExpansionHexUnavailable => "city_expansion_hex_unavailable",
+            Self::BuildingNotAvailable => "building_not_available",
+            Self::UnitProductionInvalidResourceOption => "unit_production_invalid_resource_option",
+            Self::UnitProductionNotAvailable => "unit_production_not_available",
+            Self::UnitProductionRequiresResource => "unit_production_requires_resource",
+            Self::UnitProductionMissingStrategicResource => {
+                "unit_production_missing_strategic_resource"
+            }
+            Self::UnitProductionRequiresCoast => "unit_production_requires_coast",
+            Self::UnitSupplyLimitReached => "unit_supply_limit_reached",
+            Self::WonderNotAvailable => "wonder_not_available",
+            Self::CitySpecializationLocked => "city_specialization_locked",
+            Self::CitySpecializationUnchanged => "city_specialization_unchanged",
+            Self::CitySpecializationMissingBuilding => "city_specialization_missing_building",
+            Self::ProductionQueueEmpty => "production_queue_empty",
+            Self::ProjectCannotBeRushed => "project_cannot_be_rushed",
+            Self::RushProductionUnavailable => "rush_production_unavailable",
             Self::WorkerNotFound => "worker_not_found",
             Self::WorkerNotControlled => "worker_not_controlled",
             Self::WorkerUnavailable => "worker_unavailable",
@@ -392,66 +449,6 @@ impl DomainRejection {
     pub const fn code(self) -> CommandRejectionCode {
         self.code
     }
-}
-
-/// Ordered event emitted by an accepted transition.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum DomainEvent {
-    /// One city-founding job completed.
-    CityFounded(CityFoundedEvent),
-    /// One unit changed map position.
-    UnitMoved(UnitMovedEvent),
-    /// Auto-exploration selected an engine-owned target.
-    AutoExplorePlanned(AutoExplorePlannedEvent),
-    /// A cyclic merchant route was assigned.
-    MerchantRouteAssigned(MerchantRouteAssignedEvent),
-    /// Explicit merchant travel was queued.
-    MerchantTravelQueued(MerchantTravelQueuedEvent),
-    /// One army troop became an independent unit.
-    TroopDetached(TroopDetachedEvent),
-    /// One participant completed its sequential turn.
-    TurnEnded(TurnEndedEvent),
-    /// Every required participant became ready for simultaneous finalization.
-    AllPlayersSubmitted(AllPlayersSubmittedEvent),
-    /// The trusted host finalized one participant on timeout.
-    PlayerTimedOut(PlayerTimedOutEvent),
-    /// The trusted host removed one participant from active lifecycle.
-    PlayerKicked(PlayerKickedEvent),
-    /// A visible attacker engaged a visible target.
-    UnitAttacked(CombatEvent),
-    /// A visible attacker engaged a visible city.
-    CityAttacked(CombatEvent),
-    /// Exact authoritative combat resolution occurred.
-    CombatResolved(CombatEvent),
-    /// A known observer applied a city-attack reputation penalty.
-    DiplomaticScoreChanged(DiplomaticScoreChangedEvent),
-    /// A surviving unit gained combat experience.
-    UnitGainedExperience(CombatEvent),
-    /// A defeated unit was removed.
-    UnitKilled(CombatEvent),
-    /// A surviving defender changed position.
-    UnitRetreated(CombatEvent),
-    /// A defeated city changed owner.
-    CityCaptured(CombatEvent),
-    /// A defeated city was removed.
-    CityDestroyed(CombatEvent),
-    /// One worker job completed successfully.
-    WorkerCompletedJob(WorkerCompletedJobEvent),
-}
-
-/// Exact evidence used by clients for deterministic presentation.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ExecutionEvidence {
-    /// Exact movement steps executed by the engine.
-    UnitMovement(UnitMovementExecution),
-    /// Exact result of one movement-logistics command.
-    Logistics(LogisticsExecution),
-    /// Exact capability-gated processors executed by the T1 turn kernel.
-    TurnKernel(TurnKernelExecution),
-    /// Exact seed, rolls, modifiers, damage and retreat result for one attack.
-    Combat(CombatExecution),
-    /// Exact target, bounded counters, and movement selected by worker automation.
-    WorkerAutomation(WorkerAutomationExecution),
 }
 
 /// Complete authoritative outcome of one command.

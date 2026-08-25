@@ -146,6 +146,7 @@ fn dispatch_command(runtime: &mut LocalRuntime, command: DecodedCommand) -> Clie
         DecodedCommand::SelectCityExpansionHex(command) => {
             runtime.select_city_expansion_hex(&command)
         }
+        DecodedCommand::Production(command) => runtime.production(&command),
         DecodedCommand::SelectWorkerImprovement(command) => {
             runtime.select_worker_improvement(&command)
         }

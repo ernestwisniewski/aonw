@@ -138,6 +138,34 @@ pub enum ClientCommandRejectionCodeDto {
     WorkedHexLimitReached,
     /// The expansion coordinate is unavailable.
     CityExpansionHexUnavailable,
+    /// The building is already present, locked, or misses a requirement.
+    BuildingNotAvailable,
+    /// The requested strategic-resource alternative does not exist.
+    UnitProductionInvalidResourceOption,
+    /// The unit is not producible or is technology-locked.
+    UnitProductionNotAvailable,
+    /// The empire lacks a visible required resource.
+    UnitProductionRequiresResource,
+    /// No strategic-resource alternative can be reserved.
+    UnitProductionMissingStrategicResource,
+    /// Naval production requires ocean-adjacent coast.
+    UnitProductionRequiresCoast,
+    /// Queuing the unit would exceed supply capacity.
+    UnitSupplyLimitReached,
+    /// The wonder is not a legal current target.
+    WonderNotAvailable,
+    /// Specialization technology is locked.
+    CitySpecializationLocked,
+    /// The requested specialization is already active.
+    CitySpecializationUnchanged,
+    /// The specialization prerequisite building is missing.
+    CitySpecializationMissingBuilding,
+    /// The city has no active production queue.
+    ProductionQueueEmpty,
+    /// Continuous projects cannot be rushed.
+    ProjectCannotBeRushed,
+    /// No positive affordable rush quote exists.
+    RushProductionUnavailable,
     /// The requested worker does not exist or is not a worker.
     WorkerNotFound,
     /// The actor cannot command the requested worker.
@@ -181,7 +209,7 @@ pub enum ClientCommandRejectionCodeDto {
 
 impl ClientCommandRejectionCodeDto {
     /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 85] = [
+    pub const ALL: [Self; 99] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -249,6 +277,20 @@ impl ClientCommandRejectionCodeDto {
         Self::WorkedHexUnavailable,
         Self::WorkedHexLimitReached,
         Self::CityExpansionHexUnavailable,
+        Self::BuildingNotAvailable,
+        Self::UnitProductionInvalidResourceOption,
+        Self::UnitProductionNotAvailable,
+        Self::UnitProductionRequiresResource,
+        Self::UnitProductionMissingStrategicResource,
+        Self::UnitProductionRequiresCoast,
+        Self::UnitSupplyLimitReached,
+        Self::WonderNotAvailable,
+        Self::CitySpecializationLocked,
+        Self::CitySpecializationUnchanged,
+        Self::CitySpecializationMissingBuilding,
+        Self::ProductionQueueEmpty,
+        Self::ProjectCannotBeRushed,
+        Self::RushProductionUnavailable,
         Self::WorkerNotFound,
         Self::WorkerNotControlled,
         Self::WorkerUnavailable,
@@ -271,6 +313,7 @@ impl ClientCommandRejectionCodeDto {
 
     /// Returns the stable snake-case wire value.
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::StaleRevision => "stale_revision",
@@ -340,6 +383,22 @@ impl ClientCommandRejectionCodeDto {
             Self::WorkedHexUnavailable => "worked_hex_unavailable",
             Self::WorkedHexLimitReached => "worked_hex_limit_reached",
             Self::CityExpansionHexUnavailable => "city_expansion_hex_unavailable",
+            Self::BuildingNotAvailable => "building_not_available",
+            Self::UnitProductionInvalidResourceOption => "unit_production_invalid_resource_option",
+            Self::UnitProductionNotAvailable => "unit_production_not_available",
+            Self::UnitProductionRequiresResource => "unit_production_requires_resource",
+            Self::UnitProductionMissingStrategicResource => {
+                "unit_production_missing_strategic_resource"
+            }
+            Self::UnitProductionRequiresCoast => "unit_production_requires_coast",
+            Self::UnitSupplyLimitReached => "unit_supply_limit_reached",
+            Self::WonderNotAvailable => "wonder_not_available",
+            Self::CitySpecializationLocked => "city_specialization_locked",
+            Self::CitySpecializationUnchanged => "city_specialization_unchanged",
+            Self::CitySpecializationMissingBuilding => "city_specialization_missing_building",
+            Self::ProductionQueueEmpty => "production_queue_empty",
+            Self::ProjectCannotBeRushed => "project_cannot_be_rushed",
+            Self::RushProductionUnavailable => "rush_production_unavailable",
             Self::WorkerNotFound => "worker_not_found",
             Self::WorkerNotControlled => "worker_not_controlled",
             Self::WorkerUnavailable => "worker_unavailable",

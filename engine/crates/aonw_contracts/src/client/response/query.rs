@@ -1,13 +1,16 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CombatExecutionDto, CombatPreviewDto, CoordinateDto, FieldImprovementKindDto};
+use crate::{
+    CityProductionTargetDto, CombatExecutionDto, CombatPreviewDto, CoordinateDto,
+    FieldImprovementKindDto,
+};
 
 use super::{
-    AutoExploreOptionDto, CityExpansionCandidateDto, CityYieldContributionDto,
-    ClientLogisticsEvidenceDto, ClientSessionStampDto, DetachmentOptionDto,
-    MerchantDestinationOptionDto, MovementStepViewDto, StrategicResourceAmountDto,
-    StrategicResourceSourceDto, UnitMovementExecutionDto, WorkerAutomationOptionDto,
-    WorkerImprovementOptionDto, YieldValueDto,
+    AutoExploreOptionDto, CityExpansionCandidateDto, CitySpecializationOptionDto,
+    CityYieldContributionDto, ClientLogisticsEvidenceDto, ClientSessionStampDto,
+    DetachmentOptionDto, MerchantDestinationOptionDto, MovementStepViewDto, ProductionOptionDto,
+    StrategicResourceAmountDto, StrategicResourceSourceDto, UnitMovementExecutionDto,
+    UnitProductionOptionDto, WorkerAutomationOptionDto, WorkerImprovementOptionDto, YieldValueDto,
 };
 
 /// Recipient-owned action awaiting player input.
@@ -185,6 +188,29 @@ pub enum ClientQueryResultDto {
         output: Vec<StrategicResourceAmountDto>,
         /// Exact controlled extraction sources.
         sources: Vec<StrategicResourceSourceDto>,
+    },
+    /// Complete engine-owned city-production choices.
+    ProductionOptions {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Queried city.
+        city_id: String,
+        /// Active target, when present.
+        current_target: Option<CityProductionTargetDto>,
+        /// Production already invested in the active target.
+        invested_production: i64,
+        /// Stored overflow available to the next target.
+        production_overflow: i64,
+        /// Complete building catalog in canonical order.
+        buildings: Vec<ProductionOptionDto>,
+        /// Complete unit catalog in canonical order.
+        units: Vec<UnitProductionOptionDto>,
+        /// Repeatable city projects.
+        projects: Vec<ProductionOptionDto>,
+        /// Complete wonder catalog in canonical order.
+        wonders: Vec<ProductionOptionDto>,
+        /// City specializations and blockers.
+        specializations: Vec<CitySpecializationOptionDto>,
     },
     /// Recipient-safe combat preview.
     CombatPreview {

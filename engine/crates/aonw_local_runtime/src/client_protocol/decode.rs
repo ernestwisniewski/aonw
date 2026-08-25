@@ -6,8 +6,8 @@ use aonw_domain::{CityConquestAction, CityId, HexCoord, PlayerId, UnitId};
 use crate::{
     AttackHexRequest, AutoExploreUnitRequest, CityExpansionOptionsRequest,
     CityFoundingOptionsRequest, CityWorkedHexOptionsRequest, CityYieldRequest, DetachTroopRequest,
-    FoundCityRequest, MerchantCityRequest, MoveUnitRequest, OpenSession, ReachableRequest,
-    RoutePlanRequest, RuntimeQuery, SelectCityExpansionHexRequest,
+    FoundCityRequest, MerchantCityRequest, MoveUnitRequest, OpenSession, ProductionCommandRequest,
+    ReachableRequest, RoutePlanRequest, RuntimeQuery, SelectCityExpansionHexRequest,
     StrategicResourceProjectionRequest, ToggleWorkedHexRequest, TurnCommandRequest,
     UnitActionRequest, UnitLogisticsOptionsRequest, WorkerImprovementRequest, WorkerOptionsRequest,
     WorkerUnitRequest,
@@ -19,6 +19,7 @@ pub(super) enum DecodedCommand {
     FoundCity(FoundCityRequest),
     ToggleWorkedHex(ToggleWorkedHexRequest),
     SelectCityExpansionHex(SelectCityExpansionHexRequest),
+    Production(ProductionCommandRequest),
     SelectWorkerImprovement(WorkerImprovementRequest),
     ConfirmWorkerImprovement(WorkerImprovementRequest),
     CancelWorkerJob(WorkerUnitRequest),
@@ -104,6 +105,15 @@ pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeE
                 StrategicResourceProjectionRequest { expected_revision },
             ))
         }
+        ClientQueryDto::ProductionOptions {
+            expected_revision,
+            city_id,
+        } => Ok(RuntimeQuery::ProductionOptions(
+            crate::ProductionOptionsRequest {
+                expected_revision,
+                city_id: decode_city_id(city_id)?,
+            },
+        )),
         ClientQueryDto::WorkerOptions {
             expected_revision,
             unit_id,
@@ -169,6 +179,63 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, Clien
             target,
         } => select_city_expansion_hex(expected_revision, city_id, target)
             .map(DecodedCommand::SelectCityExpansionHex),
+        ClientCommandDto::StartBuilding {
+            expected_revision,
+            city_id,
+            building,
+        } => Ok(DecodedCommand::Production(
+            ProductionCommandRequest::StartBuilding {
+                expected_revision,
+                city_id: decode_city_id(city_id)?,
+                building: aonw_contract_mapping::decode_city_building(building),
+            },
+        )),
+        ClientCommandDto::StartUnitProduction {
+            expected_revision,
+            city_id,
+            unit,
+            resource_option_index,
+        } => Ok(DecodedCommand::Production(
+            ProductionCommandRequest::StartUnitProduction {
+                expected_revision,
+                city_id: decode_city_id(city_id)?,
+                unit: aonw_contract_mapping::decode_unit_kind(unit),
+                resource_option_index,
+            },
+        )),
+        ClientCommandDto::StartCityProject {
+            expected_revision,
+            city_id,
+            project,
+        } => Ok(DecodedCommand::Production(
+            ProductionCommandRequest::StartCityProject {
+                expected_revision,
+                city_id: decode_city_id(city_id)?,
+                project: aonw_contract_mapping::decode_city_project(project),
+            },
+        )),
+        ClientCommandDto::StartWonder {
+            expected_revision,
+            city_id,
+            wonder,
+        } => Ok(DecodedCommand::Production(
+            ProductionCommandRequest::StartWonder {
+                expected_revision,
+                city_id: decode_city_id(city_id)?,
+                wonder: aonw_contract_mapping::decode_city_wonder(wonder),
+            },
+        )),
+        ClientCommandDto::SetCitySpecialization {
+            expected_revision,
+            city_id,
+            specialization,
+        } => Ok(DecodedCommand::Production(
+            ProductionCommandRequest::SetCitySpecialization {
+                expected_revision,
+                city_id: decode_city_id(city_id)?,
+                specialization: aonw_contract_mapping::decode_city_specialization(specialization),
+            },
+        )),
         ClientCommandDto::SelectWorkerImprovement {
             expected_revision,
             unit_id,

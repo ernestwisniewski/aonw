@@ -13,9 +13,9 @@ use crate::session::Session;
 use crate::{
     AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest,
     FinalizeTimedOutTurnRequest, FoundCityRequest, KickParticipantRequest, LocalRuntime,
-    MerchantCityRequest, MoveUnitRequest, OpenSession, SelectCityExpansionHexRequest, SessionStamp,
-    ToggleWorkedHexRequest, TurnCommandRequest, UnitActionRequest, WorkerImprovementRequest,
-    WorkerUnitRequest,
+    MerchantCityRequest, MoveUnitRequest, OpenSession, ProductionCommandRequest,
+    SelectCityExpansionHexRequest, SessionStamp, ToggleWorkedHexRequest, TurnCommandRequest,
+    UnitActionRequest, WorkerImprovementRequest, WorkerUnitRequest,
 };
 
 mod evidence;
@@ -191,6 +191,7 @@ impl LocalRuntime {
                 ReplayRuntimeCommand::SelectCityExpansionHex(command) => {
                     runtime.select_city_expansion_hex(&command)
                 }
+                ReplayRuntimeCommand::Production(command) => runtime.production(&command),
                 ReplayRuntimeCommand::SelectWorkerImprovement(command) => {
                     runtime.select_worker_improvement(&command)
                 }
@@ -287,6 +288,7 @@ enum ReplayRuntimeCommand {
     FoundCity(FoundCityRequest),
     ToggleWorkedHex(ToggleWorkedHexRequest),
     SelectCityExpansionHex(SelectCityExpansionHexRequest),
+    Production(ProductionCommandRequest),
     SelectWorkerImprovement(WorkerImprovementRequest),
     ConfirmWorkerImprovement(WorkerImprovementRequest),
     CancelWorkerJob(WorkerUnitRequest),

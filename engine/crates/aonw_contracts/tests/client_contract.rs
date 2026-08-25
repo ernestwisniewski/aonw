@@ -15,6 +15,8 @@ use aonw_contracts::{
 
 #[path = "client_contract/economy.rs"]
 mod economy_contract;
+#[path = "client_contract/production.rs"]
+mod production_contract;
 #[path = "client_contract/worker.rs"]
 mod worker_contract;
 
@@ -255,6 +257,7 @@ fn every_current_request_variant_round_trips() {
         },
     ];
     requests.extend(logistics_requests());
+    requests.extend(production_contract::requests());
     requests.extend(worker_contract::requests());
 
     for request in requests {
@@ -390,6 +393,7 @@ fn remaining_response_variants() -> Vec<ClientResponseBodyDto> {
     rejected_command.evidence = None;
     vec![
         logistics_response(),
+        production_contract::response(),
         worker_contract::response(),
         ClientResponseBodyDto::Command {
             result: Box::new(command_result()),

@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CityConquestActionDto, CoordinateDto, FieldImprovementKindDto, TroopKindDto};
+use crate::{
+    CityBuildingTypeDto, CityConquestActionDto, CityProjectTypeDto, CitySpecializationTypeDto,
+    CoordinateDto, FieldImprovementKindDto, TroopKindDto, UnitKindDto, WonderTypeDto,
+};
 
 /// One revision-bound command stored in a replay.
 #[allow(missing_docs)]
@@ -38,6 +41,37 @@ pub enum ReplayCommandDto {
         city_id: String,
         /// Preferred expansion coordinate.
         target: CoordinateDto,
+    },
+    /// Starts construction of one building.
+    StartBuilding {
+        expected_revision: u64,
+        city_id: String,
+        building: CityBuildingTypeDto,
+    },
+    /// Starts production of one unit and optional strategic-cost alternative.
+    StartUnitProduction {
+        expected_revision: u64,
+        city_id: String,
+        unit: UnitKindDto,
+        resource_option_index: Option<u32>,
+    },
+    /// Starts one continuous city project.
+    StartCityProject {
+        expected_revision: u64,
+        city_id: String,
+        project: CityProjectTypeDto,
+    },
+    /// Starts construction of one globally unique wonder.
+    StartWonder {
+        expected_revision: u64,
+        city_id: String,
+        wonder: WonderTypeDto,
+    },
+    /// Selects one city specialization.
+    SetCitySpecialization {
+        expected_revision: u64,
+        city_id: String,
+        specialization: CitySpecializationTypeDto,
     },
     /// Starts one explicitly selected field improvement.
     SelectWorkerImprovement {

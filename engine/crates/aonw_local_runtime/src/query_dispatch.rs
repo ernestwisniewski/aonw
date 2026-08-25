@@ -2,16 +2,22 @@ use aonw_domain::{CityId, HexCoord, MovementUnits, TroopKind, UnitId};
 use aonw_engine::{
     CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions, CityFoundingOptionsQuery,
     CityWorkedHexOptions, CityWorkedHexOptionsQuery, CityYieldBreakdown, CombatPreview, GameEngine,
-    GameQuery, MovementSearchMetrics, MovementSearchWorkspace, QueryResult, ReachableMovementQuery,
-    StrategicResourceProjection, TerrainMovementQuery, UnitLogisticsOptionsQuery, WorkerOptions,
+    GameQuery, MovementSearchMetrics, MovementSearchWorkspace, ProductionOptions, QueryResult,
+    ReachableMovementQuery, StrategicResourceProjection, TerrainMovementQuery, WorkerOptions,
 };
 
+mod logistics;
 mod read_models;
 mod worker;
 
-pub use read_models::{CityYieldRequest, CombatPreviewRequest, StrategicResourceProjectionRequest};
+use logistics::dispatch_logistics_query;
+pub use read_models::{
+    CityYieldRequest, CombatPreviewRequest, ProductionOptionsRequest,
+    StrategicResourceProjectionRequest,
+};
 use read_models::{
-    dispatch_city_yield_query, dispatch_combat_preview_query, dispatch_strategic_resource_query,
+    dispatch_city_yield_query, dispatch_combat_preview_query, dispatch_production_options_query,
+    dispatch_strategic_resource_query,
 };
 use worker::dispatch_worker_query;
 
@@ -96,6 +102,8 @@ pub enum RuntimeQuery {
     CityYield(CityYieldRequest),
     /// Technology-gated actor-owned extraction projection.
     StrategicResourceProjection(StrategicResourceProjectionRequest),
+    /// Complete city-production options and blockers.
+    ProductionOptions(ProductionOptionsRequest),
     /// Improvement, assignment, road, and automation options.
     WorkerOptions(WorkerOptionsRequest),
     /// Effective combat stats and damage bounds without RNG evidence.
@@ -248,6 +256,13 @@ pub enum RuntimeQueryResult {
         /// Engine-owned query result.
         projection: StrategicResourceProjection,
     },
+    /// Engine-owned city-production options.
+    ProductionOptions {
+        /// Version and authoritative identity metadata.
+        stamp: SessionStamp,
+        /// Engine-owned query result.
+        options: ProductionOptions,
+    },
     /// Engine-owned worker options.
     WorkerOptions {
         /// Version and authoritative identity metadata.
@@ -288,6 +303,9 @@ pub(crate) fn dispatch_query(
         RuntimeQuery::CityYield(request) => dispatch_city_yield_query(session, &request, workspace),
         RuntimeQuery::StrategicResourceProjection(request) => {
             dispatch_strategic_resource_query(session, request, workspace)
+        }
+        RuntimeQuery::ProductionOptions(request) => {
+            dispatch_production_options_query(session, &request, workspace)
         }
         RuntimeQuery::WorkerOptions(request) => dispatch_worker_query(session, &request, workspace),
         RuntimeQuery::CombatPreview(request) => {
@@ -432,62 +450,4 @@ fn dispatch_city_expansion_query(
         stamp: session.stamp(),
         options,
     })
-}
-
-fn dispatch_logistics_query(
-    session: &Session,
-    request: &UnitLogisticsOptionsRequest,
-    workspace: &mut MovementSearchWorkspace,
-) -> Result<RuntimeQueryResult, RuntimeError> {
-    let result = GameEngine::query_with_workspace(
-        session.state(),
-        session.context(),
-        GameQuery::UnitLogisticsOptions(UnitLogisticsOptionsQuery::new(
-            request.expected_revision,
-            &request.unit_id,
-        )),
-        workspace,
-    )
-    .map_err(RuntimeError::Query)?;
-    let QueryResult::UnitLogisticsOptions(result) = result else {
-        unreachable!("logistics query returns logistics options")
-    };
-    Ok(RuntimeQueryResult::UnitLogisticsOptions(
-        UnitLogisticsOptionsResult {
-            stamp: session.stamp(),
-            unit_id: result.unit_id().clone(),
-            auto_explore: result.auto_explore().map(|option| AutoExploreOptionView {
-                target: option.target(),
-                total_cost: MovementUnits::new(option.total_cost_units()),
-                search_metrics: option.search_metrics(),
-            }),
-            merchant_route_destinations: result
-                .merchant_route_destinations()
-                .iter()
-                .map(merchant_destination)
-                .collect(),
-            merchant_travel_destinations: result
-                .merchant_travel_destinations()
-                .iter()
-                .map(merchant_destination)
-                .collect(),
-            detachments: result
-                .detachments()
-                .iter()
-                .map(|option| DetachmentOptionView {
-                    troop_kind: option.troop_kind(),
-                    destination: option.destination(),
-                })
-                .collect(),
-        },
-    ))
-}
-
-fn merchant_destination(
-    option: &aonw_engine::MerchantDestinationOption,
-) -> MerchantDestinationView {
-    MerchantDestinationView {
-        city_id: option.city_id().clone(),
-        total_cost: MovementUnits::new(option.total_cost_units()),
-    }
 }

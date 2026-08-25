@@ -1,22 +1,28 @@
-use aonw_contract_mapping::{encode_improvement, encode_resource, encode_troop};
-use aonw_contracts::client::{
-    AutoExploreOptionDto, CityExpansionCandidateDto, CityYieldContributionDto,
-    CityYieldContributionKindDto, ClientQueryResultDto, DetachmentOptionDto,
-    MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
-    ReachableTileViewDto, StrategicResourceAmountDto, StrategicResourceSourceDto,
-    WorkerImprovementOptionDto, YieldValueDto,
+use aonw_contract_mapping::{
+    encode_city_building, encode_city_project, encode_city_specialization, encode_city_wonder,
+    encode_improvement, encode_resource, encode_troop, encode_unit_kind,
 };
+use aonw_contracts::client::{
+    AutoExploreOptionDto, CityExpansionCandidateDto, CitySpecializationOptionDto,
+    CityYieldContributionDto, CityYieldContributionKindDto, ClientQueryResultDto,
+    DetachmentOptionDto, MerchantDestinationOptionDto, MovementSearchMetricsDto,
+    MovementStepViewDto, ProductionOptionDto, ReachableTileViewDto, StrategicResourceAmountDto,
+    StrategicResourceSourceDto, UnitProductionOptionDto, WorkerImprovementOptionDto, YieldValueDto,
+};
+use aonw_contracts::{CityProductionTargetDto, StrategicResourceStockpileDto};
+use aonw_domain::{CityProductionTarget, StrategicResourceStockpile};
 use aonw_engine::{
     CityExpansionOptions, CityFoundingOptions, CityWorkedHexOptions, CityYieldBreakdown,
-    CityYieldContributionKind, StrategicResourceProjection, YieldValue,
+    CityYieldContributionKind, ProductionOption, ProductionOptions, StrategicResourceProjection,
+    YieldValue,
 };
 
 use crate::{RuntimeQueryResult, SessionStamp};
 
 use super::evidence::combat_preview;
 use super::map_view::coordinate;
-use super::stamp;
 use super::worker::automation_option;
+use super::{rejection, stamp};
 
 pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
     match value {
@@ -40,6 +46,10 @@ pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
             stamp: value_stamp,
             projection,
         } => strategic_resource_projection(*value_stamp, projection),
+        RuntimeQueryResult::ProductionOptions {
+            stamp: value_stamp,
+            options,
+        } => production_options(*value_stamp, options),
         RuntimeQueryResult::CombatPreview {
             stamp: value_stamp,
             preview,
@@ -113,6 +123,93 @@ pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
             options,
         } => worker_options(*value_stamp, options),
     }
+}
+
+fn production_options(
+    value_stamp: SessionStamp,
+    value: &ProductionOptions,
+) -> ClientQueryResultDto {
+    ClientQueryResultDto::ProductionOptions {
+        stamp: stamp(value_stamp),
+        city_id: value.city_id().as_str().to_owned(),
+        current_target: value.current_target().map(production_target),
+        invested_production: value.invested_production(),
+        production_overflow: value.production_overflow(),
+        buildings: value
+            .buildings()
+            .iter()
+            .copied()
+            .map(production_option)
+            .collect(),
+        units: value
+            .units()
+            .iter()
+            .map(|value| UnitProductionOptionDto {
+                option: production_option(value.option()),
+                resource_options: value.resource_options().iter().map(stockpile).collect(),
+                affordable_resource_option_indices: value
+                    .affordable_resource_option_indices()
+                    .to_vec(),
+            })
+            .collect(),
+        projects: value
+            .projects()
+            .iter()
+            .copied()
+            .map(production_option)
+            .collect(),
+        wonders: value
+            .wonders()
+            .iter()
+            .copied()
+            .map(production_option)
+            .collect(),
+        specializations: value
+            .specializations()
+            .iter()
+            .copied()
+            .map(|value| CitySpecializationOptionDto {
+                specialization: encode_city_specialization(value.specialization()),
+                required_building: encode_city_building(value.required_building()),
+                rejection: value.rejection().map(rejection),
+            })
+            .collect(),
+    }
+}
+
+fn production_option(value: ProductionOption) -> ProductionOptionDto {
+    ProductionOptionDto {
+        target: production_target(value.target()),
+        cost: value.cost(),
+        rejection: value.rejection().map(rejection),
+    }
+}
+
+fn production_target(value: CityProductionTarget) -> CityProductionTargetDto {
+    match value {
+        CityProductionTarget::Building(building) => CityProductionTargetDto::Building {
+            building_type: encode_city_building(building),
+        },
+        CityProductionTarget::Unit(unit) => CityProductionTargetDto::Unit {
+            unit_type: encode_unit_kind(unit),
+        },
+        CityProductionTarget::Project(project) => CityProductionTargetDto::Project {
+            project_type: encode_city_project(project),
+        },
+        CityProductionTarget::Wonder(wonder) => CityProductionTargetDto::Wonder {
+            wonder_type: encode_city_wonder(wonder),
+        },
+    }
+}
+
+fn stockpile(value: &StrategicResourceStockpile) -> StrategicResourceStockpileDto {
+    StrategicResourceStockpileDto(
+        value
+            .amounts()
+            .iter()
+            .map(|(resource, amount)| (encode_resource(*resource), *amount))
+            .collect(),
+    )
 }
 
 fn city_yield(value_stamp: SessionStamp, value: &CityYieldBreakdown) -> ClientQueryResultDto {

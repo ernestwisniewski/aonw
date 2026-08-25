@@ -18,6 +18,10 @@ fn city() -> CityBuilder {
 #[test]
 fn complete_city_rejects_duplicate_and_uncontrolled_coordinates() {
     assert_eq!(
+        city().with_controlled_hexes([HexCoord::new(1, 1)]).build(),
+        Err(CityBuildError::CenterInControlledHexes)
+    );
+    assert_eq!(
         city()
             .with_controlled_hexes([HexCoord::new(0, 1), HexCoord::new(0, 1)])
             .build(),

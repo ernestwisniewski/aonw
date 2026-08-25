@@ -4,7 +4,7 @@ use crate::command_dispatch::{
     RuntimeUnitActionKind, RuntimeWorkerCommandKind, dispatch_assign_merchant_route,
     dispatch_attack, dispatch_auto_explore, dispatch_confirm_worker_improvement,
     dispatch_detach_troop, dispatch_found_city, dispatch_move, dispatch_move_merchant_to_city,
-    dispatch_select_city_expansion_hex, dispatch_select_worker_improvement,
+    dispatch_production, dispatch_select_city_expansion_hex, dispatch_select_worker_improvement,
     dispatch_toggle_worked_hex, dispatch_unit_action, dispatch_worker_unit,
 };
 use crate::player_view::PlayerViewSnapshot;
@@ -16,14 +16,12 @@ use crate::turn_dispatch::{
 };
 use crate::{
     AttackHexRequest, AutoExploreUnitRequest, CommandResult, DetachTroopRequest, FoundCityRequest,
-    MerchantCityRequest, MoveUnitRequest, RuntimeQuery, RuntimeQueryResult,
-    SelectCityExpansionHexRequest, ToggleWorkedHexRequest, UnitActionRequest,
+    MerchantCityRequest, MoveUnitRequest, ProductionCommandRequest, RuntimeQuery,
+    RuntimeQueryResult, SelectCityExpansionHexRequest, ToggleWorkedHexRequest, UnitActionRequest,
     WorkerImprovementRequest, WorkerUnitRequest,
 };
 
-use super::{
-    OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, Session, SessionStamp,
-};
+use super::{OpenSession, OpenSessionError, RuntimeError, Session, SessionStamp};
 
 /// Mutable owner of at most one local game session.
 #[derive(Clone, Debug, Default)]
@@ -78,6 +76,23 @@ impl LocalRuntime {
         let result = {
             let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
             dispatch_select_city_expansion_hex(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Executes one current city-production or specialization command.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error. Domain rejections are
+    /// successful typed results with a rejection code.
+    pub fn production(
+        &mut self,
+        command: &ProductionCommandRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_production(session, command)
         };
         self.complete_dispatch(result)
     }
@@ -188,12 +203,6 @@ impl LocalRuntime {
             dispatch_attack(session, command)
         };
         self.complete_dispatch(result)
-    }
-
-    /// Returns supported operations and versions.
-    #[must_use]
-    pub const fn capabilities() -> RuntimeCapabilities {
-        RuntimeCapabilities::CURRENT
     }
 
     /// Transactionally opens a new session.

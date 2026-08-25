@@ -11,6 +11,7 @@ enum QueryKind {
     CityExpansionOptions,
     CityYield,
     StrategicResourceProjection,
+    ProductionOptions,
     CombatPreview(HexCoord),
     Reachable,
     RoutePlan(HexCoord),
@@ -63,6 +64,11 @@ impl QueryCacheKey {
                 request.expected_revision,
                 QuerySubject::Actor,
                 QueryKind::StrategicResourceProjection,
+            ),
+            RuntimeQuery::ProductionOptions(request) => (
+                request.expected_revision,
+                QuerySubject::City(request.city_id.clone()),
+                QueryKind::ProductionOptions,
             ),
             RuntimeQuery::CombatPreview(request) => (
                 request.expected_revision,

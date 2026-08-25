@@ -302,6 +302,12 @@ impl<'query> TechnologyUnlockQuery<'query> {
         }
     }
 
+    /// Returns whether one canonical technology is already unlocked.
+    #[must_use]
+    pub fn is_technology_unlocked(self, technology_id: TechnologyId) -> bool {
+        self.is_unlocked(technology_id)
+    }
+
     /// Aggregates all unlocked technology modifiers without local combat tables.
     ///
     /// # Errors

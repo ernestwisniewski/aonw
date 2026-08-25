@@ -12,6 +12,7 @@ mod context;
 mod diplomacy_policy;
 mod economy;
 mod movement;
+mod production;
 mod state_digest;
 mod technology_unlock;
 mod turn_kernel;
@@ -59,6 +60,11 @@ pub use movement::{
     TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitLogisticsOptions,
     UnitLogisticsOptionsQuery, UnitMovedEvent, UnitMovementExecution, maximum_movement_units,
     terrain_entry_cost,
+};
+pub use production::{
+    CitySpecializationOption, ProductionError, ProductionOption, ProductionOptions,
+    ProductionOptionsQuery, SetCitySpecializationCommand, StartBuildingCommand,
+    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, UnitProductionOption,
 };
 pub use state_digest::StateDigest;
 pub use technology_unlock::{

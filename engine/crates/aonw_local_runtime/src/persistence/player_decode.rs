@@ -1,14 +1,17 @@
-use aonw_contract_mapping::{decode_improvement, decode_troop};
+use aonw_contract_mapping::{
+    decode_city_building, decode_city_project, decode_city_specialization, decode_city_wonder,
+    decode_improvement, decode_troop, decode_unit_kind,
+};
 use aonw_contracts::ReplayCommandDto;
-use aonw_domain::{CityConquestAction, UnitId};
+use aonw_domain::{CityConquestAction, CityId, UnitId};
 
 use super::{
     PersistenceError, ReplayRuntimeCommand, decode_found_city, decode_merchant_city,
     decode_select_city_expansion_hex, decode_toggle_worked_hex, decode_unit_action,
     decode_worker_unit,
 };
-use crate::TurnCommandRequest;
 use crate::{AttackHexRequest, AutoExploreUnitRequest, DetachTroopRequest, MoveUnitRequest};
+use crate::{ProductionCommandRequest, TurnCommandRequest};
 
 pub(super) fn decode_command(
     command: &ReplayCommandDto,
@@ -32,6 +35,11 @@ pub(super) fn decode_command(
             target,
         } => decode_select_city_expansion_hex(*expected_revision, city_id, *target)
             .map(ReplayRuntimeCommand::SelectCityExpansionHex),
+        command @ (ReplayCommandDto::StartBuilding { .. }
+        | ReplayCommandDto::StartUnitProduction { .. }
+        | ReplayCommandDto::StartCityProject { .. }
+        | ReplayCommandDto::StartWonder { .. }
+        | ReplayCommandDto::SetCitySpecialization { .. }) => decode_production_command(command),
         command @ (ReplayCommandDto::SelectWorkerImprovement { .. }
         | ReplayCommandDto::ConfirmWorkerImprovement { .. }
         | ReplayCommandDto::CancelWorkerJob { .. }
@@ -107,6 +115,66 @@ pub(super) fn decode_command(
             Ok(decode_turn_command(command))
         }
     }
+}
+
+fn decode_production_command(
+    command: &ReplayCommandDto,
+) -> Result<ReplayRuntimeCommand, PersistenceError> {
+    let request = match command {
+        ReplayCommandDto::StartBuilding {
+            expected_revision,
+            city_id,
+            building,
+        } => ProductionCommandRequest::StartBuilding {
+            expected_revision: *expected_revision,
+            city_id: decode_city(city_id)?,
+            building: decode_city_building(*building),
+        },
+        ReplayCommandDto::StartUnitProduction {
+            expected_revision,
+            city_id,
+            unit,
+            resource_option_index,
+        } => ProductionCommandRequest::StartUnitProduction {
+            expected_revision: *expected_revision,
+            city_id: decode_city(city_id)?,
+            unit: decode_unit_kind(*unit),
+            resource_option_index: *resource_option_index,
+        },
+        ReplayCommandDto::StartCityProject {
+            expected_revision,
+            city_id,
+            project,
+        } => ProductionCommandRequest::StartCityProject {
+            expected_revision: *expected_revision,
+            city_id: decode_city(city_id)?,
+            project: decode_city_project(*project),
+        },
+        ReplayCommandDto::StartWonder {
+            expected_revision,
+            city_id,
+            wonder,
+        } => ProductionCommandRequest::StartWonder {
+            expected_revision: *expected_revision,
+            city_id: decode_city(city_id)?,
+            wonder: decode_city_wonder(*wonder),
+        },
+        ReplayCommandDto::SetCitySpecialization {
+            expected_revision,
+            city_id,
+            specialization,
+        } => ProductionCommandRequest::SetCitySpecialization {
+            expected_revision: *expected_revision,
+            city_id: decode_city(city_id)?,
+            specialization: decode_city_specialization(*specialization),
+        },
+        _ => unreachable!("production decoder received another command family"),
+    };
+    Ok(ReplayRuntimeCommand::Production(request))
+}
+
+fn decode_city(city_id: &str) -> Result<CityId, PersistenceError> {
+    CityId::new(city_id.to_owned()).map_err(PersistenceError::InvalidCity)
 }
 
 fn decode_turn_command(command: &ReplayCommandDto) -> ReplayRuntimeCommand {

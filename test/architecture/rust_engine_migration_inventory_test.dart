@@ -67,7 +67,7 @@ void main() {
   });
 
   test('migration manifest closes queries, events, and evidence', () {
-    expect(manifest.queryEntries, hasLength(10));
+    expect(manifest.queryEntries, hasLength(11));
     expect(manifest.eventEntries, hasLength(40));
     expect(manifest.nativeEventEntries, hasLength(4));
     expect(manifest.evidenceEntries, hasLength(1));
@@ -209,7 +209,12 @@ void main() {
         'MoveUnitCommand': 'engine-parity',
         'SelectCityExpansionHexCommand': 'runtime-ready',
         'SelectWorkerImprovementCommand': 'runtime-ready',
+        'SetCitySpecializationCommand': 'runtime-ready',
         'SkipUnitTurnCommand': 'engine-parity',
+        'StartBuildingCommand': 'runtime-ready',
+        'StartCityProjectCommand': 'runtime-ready',
+        'StartUnitProductionCommand': 'runtime-ready',
+        'StartWonderCommand': 'runtime-ready',
         'ToggleWorkedHexCommand': 'runtime-ready',
         'CityAttackedEvent': 'runtime-ready',
         'CityCapturedEvent': 'runtime-ready',

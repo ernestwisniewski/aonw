@@ -87,6 +87,39 @@ pub(super) fn apply_city(
     ))
 }
 
+pub(super) fn apply_production(
+    state: GameState,
+    mutation: Result<crate::production::ProductionMutation, crate::ProductionError>,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let mutation = match mutation {
+        Ok(value) => value,
+        Err(crate::ProductionError::Rejected(code)) => {
+            return Ok(DomainTransition::rejected(
+                state,
+                code,
+                map_hash,
+                ruleset_hash,
+            ));
+        }
+        Err(error) => return Err(CanonicalEngineError::Production(error)),
+    };
+    let next = match mutation {
+        crate::production::ProductionMutation::Identity => state,
+        crate::production::ProductionMutation::Update(update) => state
+            .into_after_production(*update)
+            .map_err(CanonicalEngineError::State)?,
+    };
+    Ok(DomainTransition::accepted(
+        next,
+        Box::new([]),
+        None,
+        map_hash,
+        ruleset_hash,
+    ))
+}
+
 pub(super) fn apply_combat(
     state: GameState,
     update: Result<crate::combat::CombatUpdate, crate::combat::CombatApplyError>,

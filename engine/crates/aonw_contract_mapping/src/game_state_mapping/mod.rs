@@ -14,6 +14,10 @@ mod unit;
 mod value;
 mod world;
 
+pub use city::{
+    decode_city_building, decode_city_project, decode_city_specialization, decode_city_wonder,
+    encode_city_building, encode_city_project, encode_city_specialization, encode_city_wonder,
+};
 pub use economy::{decode_resource, encode_resource};
 pub use error::GameStateMappingError;
 pub use state::{canonicalize_game_state, decode_game_state, encode_game_state};

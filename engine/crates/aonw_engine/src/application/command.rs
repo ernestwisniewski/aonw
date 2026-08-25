@@ -11,15 +11,16 @@ use crate::{
     AutoExploreUnitCommand, AutomateWorkerCommand, BuildRoadCommand, CancelWorkerAssignmentCommand,
     CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DetachTroopCommand, EngineContext,
     FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
-    SelectCityExpansionHexCommand, SelectWorkerImprovementCommand, StateDigest,
-    ToggleWorkedHexCommand, TurnCommand, UnitActionCommand,
+    SelectCityExpansionHexCommand, SelectWorkerImprovementCommand, SetCitySpecializationCommand,
+    StartBuildingCommand, StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand,
+    StateDigest, ToggleWorkedHexCommand, TurnCommand, UnitActionCommand,
 };
 
 mod budget;
 mod canonical_transition;
 
 pub use budget::EventBudget;
-use canonical_transition::{apply_city, apply_combat, apply_worker};
+use canonical_transition::{apply_city, apply_combat, apply_production, apply_worker};
 
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
@@ -30,6 +31,16 @@ pub enum PlayerCommand<'command> {
     ToggleWorkedHex(ToggleWorkedHexCommand<'command>),
     /// Selects the preferred next territory expansion.
     SelectCityExpansionHex(SelectCityExpansionHexCommand<'command>),
+    /// Starts one building target.
+    StartBuilding(StartBuildingCommand<'command>),
+    /// Starts one unit target with an optional strategic-resource alternative.
+    StartUnitProduction(StartUnitProductionCommand<'command>),
+    /// Starts one continuous project.
+    StartCityProject(StartCityProjectCommand<'command>),
+    /// Starts one globally unique world wonder.
+    StartWonder(StartWonderCommand<'command>),
+    /// Selects one city specialization.
+    SetCitySpecialization(SetCitySpecializationCommand<'command>),
     /// Starts one explicitly selected field improvement.
     SelectWorkerImprovement(SelectWorkerImprovementCommand<'command>),
     /// Confirms an explicit or matching pending field improvement.
@@ -85,6 +96,8 @@ pub enum CanonicalEngineError {
     CityFounding(Box<str>),
     /// A validated worker job could not construct canonical infrastructure.
     Worker(Box<str>),
+    /// A production transition violated current content or state invariants.
+    Production(crate::ProductionError),
 }
 
 impl core::fmt::Display for CanonicalEngineError {
@@ -97,6 +110,7 @@ impl core::fmt::Display for CanonicalEngineError {
             Self::Technology(source) => source.fmt(formatter),
             Self::CityFounding(source) => write!(formatter, "city founding failed: {source}"),
             Self::Worker(source) => write!(formatter, "worker progression failed: {source}"),
+            Self::Production(source) => write!(formatter, "production failed: {source}"),
         }
     }
 }
@@ -130,6 +144,27 @@ impl GameEngine {
             PlayerCommand::SelectCityExpansionHex(command) => {
                 let mutation = crate::city::apply_select_expansion(&state, context, command);
                 apply_city(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::StartBuilding(command) => {
+                let mutation = crate::production::apply_start_building(&state, context, command);
+                apply_production(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::StartUnitProduction(command) => {
+                let mutation = crate::production::apply_start_unit(&state, context, command);
+                apply_production(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::StartCityProject(command) => {
+                let mutation = crate::production::apply_start_project(&state, context, command);
+                apply_production(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::StartWonder(command) => {
+                let mutation = crate::production::apply_start_wonder(&state, context, command);
+                apply_production(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::SetCitySpecialization(command) => {
+                let mutation =
+                    crate::production::apply_set_specialization(&state, context, command);
+                apply_production(state, mutation, map_hash, ruleset_hash)
             }
             PlayerCommand::SelectWorkerImprovement(command) => apply_worker_command(
                 state,

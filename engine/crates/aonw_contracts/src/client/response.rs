@@ -8,6 +8,7 @@ mod city;
 mod economy;
 mod event;
 mod logistics;
+mod production;
 mod query;
 mod rejection;
 mod session;
@@ -26,6 +27,7 @@ pub use logistics::{
     AutoExploreOptionDto, ClientLogisticsEvidenceDto, DetachmentOptionDto,
     MerchantDestinationOptionDto, MovementSearchMetricsDto, UnitMovementExecutionDto,
 };
+pub use production::{CitySpecializationOptionDto, ProductionOptionDto, UnitProductionOptionDto};
 pub use query::{
     ClientEvidenceDto, ClientQueryResultDto, PendingActionViewDto, ReachableTileViewDto,
 };
@@ -161,6 +163,8 @@ pub enum ClientFeatureDto {
     MovementLogistics,
     /// Worker improvements, assignments, roads, automation, and progression.
     Workers,
+    /// City production queries and queue commands.
+    Production,
 }
 
 /// Identity metadata returned with state-dependent results.

@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CityConquestActionDto, CoordinateDto, FieldImprovementKindDto, TroopKindDto};
+use crate::{
+    CityBuildingTypeDto, CityConquestActionDto, CityProjectTypeDto, CitySpecializationTypeDto,
+    CoordinateDto, FieldImprovementKindDto, TroopKindDto, UnitKindDto, WonderTypeDto,
+};
 
 /// One current client protocol request.
 #[allow(missing_docs)]
@@ -108,6 +111,37 @@ pub enum ClientCommandDto {
         city_id: String,
         /// Current engine-ranked expansion candidate.
         target: CoordinateDto,
+    },
+    /// Starts construction of one building.
+    StartBuilding {
+        expected_revision: u64,
+        city_id: String,
+        building: CityBuildingTypeDto,
+    },
+    /// Starts production of one unit and optional strategic-cost alternative.
+    StartUnitProduction {
+        expected_revision: u64,
+        city_id: String,
+        unit: UnitKindDto,
+        resource_option_index: Option<u32>,
+    },
+    /// Starts one continuous city project.
+    StartCityProject {
+        expected_revision: u64,
+        city_id: String,
+        project: CityProjectTypeDto,
+    },
+    /// Starts construction of one globally unique wonder.
+    StartWonder {
+        expected_revision: u64,
+        city_id: String,
+        wonder: WonderTypeDto,
+    },
+    /// Selects one city specialization.
+    SetCitySpecialization {
+        expected_revision: u64,
+        city_id: String,
+        specialization: CitySpecializationTypeDto,
     },
     /// Starts one explicitly selected field improvement.
     SelectWorkerImprovement {
@@ -275,6 +309,11 @@ pub enum ClientQueryDto {
     StrategicResourceProjection {
         /// Revision observed by the client.
         expected_revision: u64,
+    },
+    /// Returns complete production choices and blockers for one city.
+    ProductionOptions {
+        expected_revision: u64,
+        city_id: String,
     },
     /// Returns current worker actions and an engine-selected automation target.
     WorkerOptions {

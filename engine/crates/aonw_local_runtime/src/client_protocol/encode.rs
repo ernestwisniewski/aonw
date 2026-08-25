@@ -1,20 +1,21 @@
 use aonw_contract_mapping::{encode_improvement, encode_unit_kind, encode_unit_posture};
 use aonw_contracts::client::{
     CityFoundingDraftViewDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
-    ClientCommandResultDto, ClientFeatureDto, ClientReplayVerificationDto, ClientResponseBodyDto,
-    ClientSessionStampDto, FieldImprovementViewDto, OwnedCityPlanningViewDto, PlayerCityViewDto,
-    PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto, RoadViewDto, WorkerJobViewDto,
+    ClientCommandResultDto, ClientReplayVerificationDto, ClientSessionStampDto,
+    FieldImprovementViewDto, OwnedCityPlanningViewDto, PlayerCityViewDto, PlayerUnitViewDto,
+    PlayerViewPatchDto, PlayerViewSnapshotDto, RoadViewDto, WorkerJobViewDto,
 };
 use aonw_contracts::{CoordinateDto, TransportConditionDto};
 use aonw_domain::TransportCondition;
 use aonw_engine::CommandRejectionCode;
 
 use crate::{
-    CityFoundingDraftView, CommandResult, LocalRuntime, PlayerCityView, PlayerFieldImprovementView,
+    CityFoundingDraftView, CommandResult, PlayerCityView, PlayerFieldImprovementView,
     PlayerRoadView, PlayerUnitView, PlayerViewPatch, PlayerViewSnapshot, ReplayVerification,
     SessionStamp,
 };
 
+mod capability;
 mod evidence;
 mod map_view;
 mod presentation;
@@ -23,6 +24,7 @@ mod query;
 mod tests;
 mod worker;
 
+pub(super) use capability::capabilities;
 use evidence::{event, recipient_evidence};
 use map_view::coordinate;
 pub(super) use map_view::map;
@@ -32,45 +34,6 @@ use presentation::{pending_action, turn_lifecycle};
 pub(super) use query::query_result;
 #[cfg(test)]
 use query::{merchant_destination, movement_metrics};
-
-pub(super) fn capabilities() -> ClientResponseBodyDto {
-    let capabilities = LocalRuntime::capabilities();
-    let mut features = vec![ClientFeatureDto::InspectMap, ClientFeatureDto::Snapshot];
-    if capabilities.reachable() {
-        features.push(ClientFeatureDto::Reachable);
-    }
-    if capabilities.route_plan() {
-        features.push(ClientFeatureDto::RoutePlan);
-    }
-    if capabilities.move_unit() {
-        features.push(ClientFeatureDto::MoveUnit);
-    }
-    if capabilities.unit_actions() {
-        features.push(ClientFeatureDto::UnitActions);
-    }
-    if capabilities.turn_kernel() {
-        features.push(ClientFeatureDto::TurnKernel);
-    }
-    if capabilities.movement_logistics() {
-        features.push(ClientFeatureDto::MovementLogistics);
-    }
-    if capabilities.combat() {
-        features.push(ClientFeatureDto::Combat);
-    }
-    if capabilities.cities() {
-        features.push(ClientFeatureDto::Cities);
-    }
-    if capabilities.workers() {
-        features.push(ClientFeatureDto::Workers);
-    }
-    if capabilities.save_game() {
-        features.push(ClientFeatureDto::SaveGame);
-    }
-    if capabilities.replay_verification() {
-        features.push(ClientFeatureDto::ReplayVerification);
-    }
-    ClientResponseBodyDto::Capabilities { features }
-}
 
 pub(super) fn stamp(value: SessionStamp) -> ClientSessionStampDto {
     ClientSessionStampDto {
@@ -283,6 +246,48 @@ const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto
         }
         CommandRejectionCode::CityExpansionHexUnavailable => {
             ClientCommandRejectionCodeDto::CityExpansionHexUnavailable
+        }
+        CommandRejectionCode::BuildingNotAvailable => {
+            ClientCommandRejectionCodeDto::BuildingNotAvailable
+        }
+        CommandRejectionCode::UnitProductionInvalidResourceOption => {
+            ClientCommandRejectionCodeDto::UnitProductionInvalidResourceOption
+        }
+        CommandRejectionCode::UnitProductionNotAvailable => {
+            ClientCommandRejectionCodeDto::UnitProductionNotAvailable
+        }
+        CommandRejectionCode::UnitProductionRequiresResource => {
+            ClientCommandRejectionCodeDto::UnitProductionRequiresResource
+        }
+        CommandRejectionCode::UnitProductionMissingStrategicResource => {
+            ClientCommandRejectionCodeDto::UnitProductionMissingStrategicResource
+        }
+        CommandRejectionCode::UnitProductionRequiresCoast => {
+            ClientCommandRejectionCodeDto::UnitProductionRequiresCoast
+        }
+        CommandRejectionCode::UnitSupplyLimitReached => {
+            ClientCommandRejectionCodeDto::UnitSupplyLimitReached
+        }
+        CommandRejectionCode::WonderNotAvailable => {
+            ClientCommandRejectionCodeDto::WonderNotAvailable
+        }
+        CommandRejectionCode::CitySpecializationLocked => {
+            ClientCommandRejectionCodeDto::CitySpecializationLocked
+        }
+        CommandRejectionCode::CitySpecializationUnchanged => {
+            ClientCommandRejectionCodeDto::CitySpecializationUnchanged
+        }
+        CommandRejectionCode::CitySpecializationMissingBuilding => {
+            ClientCommandRejectionCodeDto::CitySpecializationMissingBuilding
+        }
+        CommandRejectionCode::ProductionQueueEmpty => {
+            ClientCommandRejectionCodeDto::ProductionQueueEmpty
+        }
+        CommandRejectionCode::ProjectCannotBeRushed => {
+            ClientCommandRejectionCodeDto::ProjectCannotBeRushed
+        }
+        CommandRejectionCode::RushProductionUnavailable => {
+            ClientCommandRejectionCodeDto::RushProductionUnavailable
         }
         CommandRejectionCode::WorkerNotFound => ClientCommandRejectionCodeDto::WorkerNotFound,
         CommandRejectionCode::WorkerNotControlled => {

@@ -1,34 +1,37 @@
 //! Executes current canonical fixtures without a historical reducer adapter.
 
-use std::collections::BTreeSet;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use aonw_content::RulesetDefinition;
 use aonw_contract_mapping::{
-    canonicalize_game_state, decode_game_state, decode_troop, encode_game_state,
+    canonicalize_game_state, decode_city_building, decode_city_project, decode_city_specialization,
+    decode_city_wonder, decode_game_state, decode_troop, decode_unit_kind, encode_game_state,
 };
 use aonw_contracts::{GameStateDto, ReplayCommandDto};
 use aonw_domain::{CityConquestAction, CityId, HexCoord, PlayerId, UnitId};
 use aonw_engine::{
     AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand, DetachTroopCommand,
     EngineContext, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand,
-    TurnCommand, UnitActionCommand,
+    SetCitySpecializationCommand, StartBuildingCommand, StartCityProjectCommand,
+    StartUnitProductionCommand, StartWonderCommand, TurnCommand, UnitActionCommand,
 };
 use aonw_testkit::{
     CanonicalFixtureExecutor, CanonicalFixtureInput, CanonicalFixtureLoader,
-    CanonicalFixtureOutput, verify_canonical_corpus, verify_canonical_fixture,
+    CanonicalFixtureOutput, verify_canonical_corpus,
 };
 
 #[path = "canonical_fixture_engine/city.rs"]
 mod city;
 #[path = "canonical_fixture_engine/encoding.rs"]
 mod encoding;
+#[path = "canonical_fixture_engine/review.rs"]
+mod review;
 #[path = "canonical_fixture_engine/worker.rs"]
 mod worker;
 
-use encoding::{command_name, encode_event, encode_evidence};
+use encoding::{encode_event, encode_evidence};
 
 #[derive(Debug)]
 struct ExecutionError(String);
@@ -106,6 +109,93 @@ fn apply_command(
             city_id,
             target,
         } => city::apply_select_expansion(state, context, *expected_revision, city_id, *target),
+        ReplayCommandDto::StartBuilding {
+            expected_revision,
+            city_id,
+            building,
+        } => {
+            let city_id = CityId::new(city_id.as_str()).map_err(display_error)?;
+            GameEngine::apply_player_owned(
+                state,
+                context,
+                PlayerCommand::StartBuilding(StartBuildingCommand::new(
+                    *expected_revision,
+                    &city_id,
+                    decode_city_building(*building),
+                )),
+            )
+            .map_err(display_error)
+        }
+        ReplayCommandDto::StartUnitProduction {
+            expected_revision,
+            city_id,
+            unit,
+            resource_option_index,
+        } => {
+            let city_id = CityId::new(city_id.as_str()).map_err(display_error)?;
+            GameEngine::apply_player_owned(
+                state,
+                context,
+                PlayerCommand::StartUnitProduction(StartUnitProductionCommand::new(
+                    *expected_revision,
+                    &city_id,
+                    decode_unit_kind(*unit),
+                    *resource_option_index,
+                )),
+            )
+            .map_err(display_error)
+        }
+        ReplayCommandDto::StartCityProject {
+            expected_revision,
+            city_id,
+            project,
+        } => {
+            let city_id = CityId::new(city_id.as_str()).map_err(display_error)?;
+            GameEngine::apply_player_owned(
+                state,
+                context,
+                PlayerCommand::StartCityProject(StartCityProjectCommand::new(
+                    *expected_revision,
+                    &city_id,
+                    decode_city_project(*project),
+                )),
+            )
+            .map_err(display_error)
+        }
+        ReplayCommandDto::StartWonder {
+            expected_revision,
+            city_id,
+            wonder,
+        } => {
+            let city_id = CityId::new(city_id.as_str()).map_err(display_error)?;
+            GameEngine::apply_player_owned(
+                state,
+                context,
+                PlayerCommand::StartWonder(StartWonderCommand::new(
+                    *expected_revision,
+                    &city_id,
+                    decode_city_wonder(*wonder),
+                )),
+            )
+            .map_err(display_error)
+        }
+        ReplayCommandDto::SetCitySpecialization {
+            expected_revision,
+            city_id,
+            specialization,
+        } => {
+            let city_id = CityId::new(city_id.as_str()).map_err(display_error)?;
+            GameEngine::apply_player_owned(
+                state,
+                context,
+                PlayerCommand::SetCitySpecialization(SetCitySpecializationCommand::new(
+                    *expected_revision,
+                    &city_id,
+                    decode_city_specialization(*specialization),
+                )),
+            )
+            .map_err(display_error)
+        }
         command @ (ReplayCommandDto::SelectWorkerImprovement { .. }
         | ReplayCommandDto::ConfirmWorkerImprovement { .. }
         | ReplayCommandDto::CancelWorkerJob { .. }
@@ -387,94 +477,4 @@ fn invalid_origin_is_rejected_at_the_canonical_state_boundary() {
 
     assert_eq!(error.path(), "$");
     assert!(error.to_string().contains("outside the map"));
-}
-
-#[derive(Debug)]
-struct ReviewedExecutionDisposition {
-    id: Box<str>,
-    command: Box<str>,
-    accepted: bool,
-    rejection: Option<Box<str>>,
-    canonical_artifact: Box<str>,
-}
-
-#[test]
-fn reviewed_reducer_dispositions_gate_execution_by_capability() {
-    let root = repository_root();
-    let manifest = fs::read_to_string(root.join("engine/migration/reducer_fixture_dispositions"))
-        .expect("reviewed disposition manifest");
-    let dispositions = manifest
-        .lines()
-        .filter_map(reviewed_execution_disposition)
-        .collect::<Vec<_>>();
-
-    assert_eq!(dispositions.len(), 9);
-    assert_eq!(
-        dispositions
-            .iter()
-            .map(|entry| entry.command.as_ref())
-            .collect::<BTreeSet<_>>(),
-        BTreeSet::from([
-            "CancelUnitAction",
-            "FortifyUnit",
-            "MoveUnit",
-            "SkipUnitTurn"
-        ])
-    );
-
-    for disposition in dispositions {
-        let fixture = CanonicalFixtureLoader::default()
-            .load_file(root.join(disposition.canonical_artifact.as_ref()))
-            .expect("strict current canonical fixture");
-        assert_eq!(fixture.id(), disposition.id.as_ref());
-        assert_eq!(
-            command_name(fixture.input().command()),
-            disposition.command.as_ref()
-        );
-        assert_eq!(fixture.expected().accepted(), disposition.accepted);
-        assert_eq!(
-            fixture.expected().rejection(),
-            disposition.rejection.as_deref()
-        );
-        assert_eq!(
-            canonicalize_game_state(fixture.input().state().clone())
-                .expect("canonical input round-trip"),
-            *fixture.input().state()
-        );
-        assert_eq!(
-            canonicalize_game_state(fixture.expected().state().clone())
-                .expect("canonical output round-trip"),
-            *fixture.expected().state()
-        );
-        verify_canonical_fixture(&fixture, &CanonicalRustEngineExecutor)
-            .unwrap_or_else(|failure| panic!("{failure:?}"));
-    }
-}
-
-fn reviewed_execution_disposition(line: &str) -> Option<ReviewedExecutionDisposition> {
-    let line = line.split('#').next().unwrap_or_default().trim();
-    if !line.starts_with("case ") {
-        return None;
-    }
-    let fields = line.split_whitespace().collect::<Vec<_>>();
-    assert_eq!(fields.len(), 11, "malformed reviewed disposition: {line}");
-    if fields[7] != "engine-parity" {
-        return None;
-    }
-    assert_eq!(fields[6], "round-trip");
-    assert_eq!(fields[8], "current");
-    assert_eq!(fields[9], "-");
-    let accepted = match fields[4] {
-        "accepted" => true,
-        "rejected" => false,
-        value => panic!("unknown oracle outcome: {value}"),
-    };
-    let rejection = (fields[5] != "-").then(|| fields[5].into());
-    Some(ReviewedExecutionDisposition {
-        id: fields[1].into(),
-        command: fields[3].into(),
-        accepted,
-        rejection,
-        canonical_artifact: fields[10].into(),
-    })
 }

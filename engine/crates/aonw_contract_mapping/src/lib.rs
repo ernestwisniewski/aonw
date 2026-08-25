@@ -9,9 +9,11 @@
 mod game_state_mapping;
 
 pub use game_state_mapping::{
-    GameStateMappingError, canonicalize_game_state, decode_game_state, decode_improvement,
-    decode_resource, decode_troop, encode_game_state, encode_improvement, encode_resource,
-    encode_troop,
+    GameStateMappingError, canonicalize_game_state, decode_city_building, decode_city_project,
+    decode_city_specialization, decode_city_wonder, decode_game_state, decode_improvement,
+    decode_resource, decode_troop, encode_city_building, encode_city_project,
+    encode_city_specialization, encode_city_wonder, encode_game_state, encode_improvement,
+    encode_resource, encode_troop,
 };
 
 use aonw_contracts::{
@@ -54,7 +56,9 @@ pub const fn encode_score_reason(
     }
 }
 
-const fn decode_unit_kind(kind: UnitKindDto) -> UnitKind {
+/// Converts a current client unit identity into the domain identity.
+#[must_use]
+pub const fn decode_unit_kind(kind: UnitKindDto) -> UnitKind {
     match kind {
         UnitKindDto::Commander => UnitKind::Commander,
         UnitKindDto::Warrior => UnitKind::Warrior,

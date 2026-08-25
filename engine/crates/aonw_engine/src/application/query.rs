@@ -4,10 +4,10 @@ use crate::{
     CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions, CityFoundingOptionsQuery,
     CityWorkedHexOptions, CityWorkedHexOptionsQuery, CityYieldBreakdown, CityYieldQuery,
     CombatPreview, CombatPreviewQuery, EngineContext, GameEngine, MovementSearchWorkspace,
-    ReachableMovement, ReachableMovementQuery, StrategicResourceProjection,
-    StrategicResourceProjectionQuery, TerrainMovementPlan, TerrainMovementQuery,
-    TerrainMovementQueryError, UnitLogisticsOptions, UnitLogisticsOptionsQuery, WorkerOptions,
-    WorkerOptionsQuery,
+    ProductionOptions, ProductionOptionsQuery, ReachableMovement, ReachableMovementQuery,
+    StrategicResourceProjection, StrategicResourceProjectionQuery, TerrainMovementPlan,
+    TerrainMovementQuery, TerrainMovementQueryError, UnitLogisticsOptions,
+    UnitLogisticsOptionsQuery, WorkerOptions, WorkerOptionsQuery,
 };
 
 /// Read-only game query family.
@@ -23,6 +23,8 @@ pub enum GameQuery<'query> {
     CityYield(CityYieldQuery<'query>),
     /// Returns actor-owned strategic resource extraction after technology gates.
     StrategicResourceProjection(StrategicResourceProjectionQuery),
+    /// Returns complete production and specialization availability for one city.
+    ProductionOptions(ProductionOptionsQuery<'query>),
     /// Recipient-safe combat preview without seed or rolls.
     CombatPreview(CombatPreviewQuery<'query>),
     /// Route preview for one target.
@@ -48,6 +50,8 @@ pub enum QueryResult {
     CityYield(CityYieldBreakdown),
     /// Checked strategic resource output and sources.
     StrategicResourceProjection(StrategicResourceProjection),
+    /// Complete city production choices and blockers.
+    ProductionOptions(ProductionOptions),
     /// Effective combat statistics and damage bounds.
     CombatPreview(CombatPreview),
     /// Planned route.
@@ -77,6 +81,8 @@ pub enum CanonicalQueryError {
     Worker(crate::CommandRejectionCode),
     /// Economy query failed or overflowed.
     Economy(crate::EconomyQueryError),
+    /// Production query was rejected or found corrupt state/content.
+    Production(crate::ProductionError),
 }
 
 impl CanonicalQueryError {
@@ -86,6 +92,7 @@ impl CanonicalQueryError {
         match self {
             Self::Technology(_) => "technology_query_invalid",
             Self::Economy(error) => error.code(),
+            Self::Production(error) => error.code(),
             Self::City(rejection) | Self::Combat(rejection) | Self::Worker(rejection) => {
                 rejection.as_str()
             }
@@ -100,6 +107,7 @@ impl core::fmt::Display for CanonicalQueryError {
         match self {
             Self::Technology(source) => source.fmt(formatter),
             Self::Economy(source) => source.fmt(formatter),
+            Self::Production(source) => source.fmt(formatter),
             Self::City(source) | Self::Combat(source) | Self::Worker(source) => {
                 source.fmt(formatter)
             }
@@ -161,6 +169,11 @@ impl GameEngine {
                 crate::economy::query_strategic_resource_projection(state, context, query)
                     .map(QueryResult::StrategicResourceProjection)
                     .map_err(CanonicalQueryError::Economy)
+            }
+            GameQuery::ProductionOptions(query) => {
+                crate::production::query_options(state, context, query)
+                    .map(QueryResult::ProductionOptions)
+                    .map_err(CanonicalQueryError::Production)
             }
             GameQuery::CombatPreview(query) => crate::combat::preview(state, context, query)
                 .map(QueryResult::CombatPreview)
