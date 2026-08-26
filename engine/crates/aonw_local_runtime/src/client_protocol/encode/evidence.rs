@@ -1,6 +1,7 @@
 use aonw_contract_mapping::{
-    encode_city_building, encode_city_wonder, encode_proposal_kind, encode_relation_reason,
-    encode_relation_status, encode_score_reason, encode_technology, encode_troop, encode_unit_kind,
+    encode_city_building, encode_city_wonder, encode_message_category, encode_message_response,
+    encode_message_topic, encode_proposal_kind, encode_relation_reason, encode_relation_status,
+    encode_score_reason, encode_technology, encode_troop, encode_unit_kind,
 };
 use aonw_contracts::client::{
     ClientEventDto, ClientEvidenceDto, ClientLogisticsEvidenceDto, MovementStepViewDto,
@@ -117,6 +118,26 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
                 to_player_id: value.to_player_id().as_str().to_owned(),
                 kind: encode_proposal_kind(value.kind()),
                 accepted: value.accepted(),
+            }
+        }
+        DomainEvent::DiplomaticMessageSent(value) => ClientEventDto::DiplomaticMessageSent {
+            message_id: value.message_id().to_owned(),
+            from_player_id: value.from_player_id().as_str().to_owned(),
+            to_player_id: value.to_player_id().as_str().to_owned(),
+            topic: encode_message_topic(value.topic()),
+            category: encode_message_category(value.category()),
+            expires_on_turn: value.expires_on_turn(),
+        },
+        DomainEvent::DiplomaticMessageResponded(value) => {
+            ClientEventDto::DiplomaticMessageResponded {
+                message_id: value.message_id().to_owned(),
+                from_player_id: value.from_player_id().as_str().to_owned(),
+                to_player_id: value.to_player_id().as_str().to_owned(),
+                topic: encode_message_topic(value.topic()),
+                response: encode_message_response(value.response()),
+                relation_delta: value.relation_delta(),
+                relation_score_after: value.relation_score_after(),
+                promise_due_turn: value.promise_due_turn(),
             }
         }
         DomainEvent::DiplomaticRelationChanged(value) => {

@@ -99,7 +99,9 @@ fn apply_command(
             research::apply(state, context, command)
         }
         command @ (ReplayCommandDto::SendDiplomaticProposal { .. }
-        | ReplayCommandDto::RespondDiplomaticProposal { .. }) => {
+        | ReplayCommandDto::RespondDiplomaticProposal { .. }
+        | ReplayCommandDto::SendDiplomaticMessage { .. }
+        | ReplayCommandDto::RespondDiplomaticMessage { .. }) => {
             diplomacy::apply(state, context, command)
         }
         command @ (ReplayCommandDto::StartArtifactExcavation { .. }

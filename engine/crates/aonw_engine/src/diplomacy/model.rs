@@ -1,4 +1,7 @@
-use aonw_domain::{DiplomacyStateUpdate, DiplomaticProposalKind, PlayerId};
+use aonw_domain::{
+    DiplomacyStateUpdate, DiplomaticMessageResponse, DiplomaticMessageTopic,
+    DiplomaticProposalKind, PlayerId,
+};
 
 use crate::DomainEvent;
 
@@ -75,6 +78,80 @@ impl<'command> RespondDiplomaticProposalCommand<'command> {
     }
     pub(crate) const fn accepted(self) -> bool {
         self.accepted
+    }
+}
+
+/// Revision-bound request to send one bilateral diplomatic message.
+#[derive(Clone, Copy, Debug)]
+pub struct SendDiplomaticMessageCommand<'command> {
+    expected_revision: u64,
+    target_player_id: &'command PlayerId,
+    topic: DiplomaticMessageTopic,
+    message_id: Option<&'command str>,
+}
+
+impl<'command> SendDiplomaticMessageCommand<'command> {
+    /// Creates a current authenticated message command.
+    #[must_use]
+    pub const fn new(
+        expected_revision: u64,
+        target_player_id: &'command PlayerId,
+        topic: DiplomaticMessageTopic,
+        message_id: Option<&'command str>,
+    ) -> Self {
+        Self {
+            expected_revision,
+            target_player_id,
+            topic,
+            message_id,
+        }
+    }
+
+    pub(crate) const fn expected_revision(self) -> u64 {
+        self.expected_revision
+    }
+    pub(crate) const fn target_player_id(self) -> &'command PlayerId {
+        self.target_player_id
+    }
+    pub(crate) const fn topic(self) -> DiplomaticMessageTopic {
+        self.topic
+    }
+    pub(crate) const fn message_id(self) -> Option<&'command str> {
+        self.message_id
+    }
+}
+
+/// Revision-bound response to one recipient-owned diplomatic message.
+#[derive(Clone, Copy, Debug)]
+pub struct RespondDiplomaticMessageCommand<'command> {
+    expected_revision: u64,
+    message_id: &'command str,
+    response: DiplomaticMessageResponse,
+}
+
+impl<'command> RespondDiplomaticMessageCommand<'command> {
+    /// Creates a current authenticated message response.
+    #[must_use]
+    pub const fn new(
+        expected_revision: u64,
+        message_id: &'command str,
+        response: DiplomaticMessageResponse,
+    ) -> Self {
+        Self {
+            expected_revision,
+            message_id,
+            response,
+        }
+    }
+
+    pub(crate) const fn expected_revision(self) -> u64 {
+        self.expected_revision
+    }
+    pub(crate) const fn message_id(self) -> &'command str {
+        self.message_id
+    }
+    pub(crate) const fn response(self) -> DiplomaticMessageResponse {
+        self.response
     }
 }
 

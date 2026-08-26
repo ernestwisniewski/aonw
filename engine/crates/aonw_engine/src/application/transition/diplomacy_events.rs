@@ -1,6 +1,7 @@
 use aonw_domain::{
-    DiplomaticProposal, DiplomaticProposalKind, DiplomaticRelationChangeReason,
-    DiplomaticRelationStatus, PlayerId, PlayerPair,
+    DiplomaticMessage, DiplomaticMessageCategory, DiplomaticMessageResponse,
+    DiplomaticMessageTopic, DiplomaticProposal, DiplomaticProposalKind,
+    DiplomaticRelationChangeReason, DiplomaticRelationStatus, PlayerId, PlayerPair,
 };
 
 /// Accepted fact that one private bilateral proposal was sent.
@@ -94,6 +95,128 @@ impl DiplomaticProposalRespondedEvent {
     #[must_use]
     pub const fn accepted(&self) -> bool {
         self.accepted
+    }
+}
+
+/// Accepted fact that one private bilateral message was sent.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DiplomaticMessageSentEvent {
+    message_id: String,
+    from_player_id: PlayerId,
+    to_player_id: PlayerId,
+    topic: DiplomaticMessageTopic,
+    category: DiplomaticMessageCategory,
+    expires_on_turn: u32,
+}
+
+impl DiplomaticMessageSentEvent {
+    pub(crate) fn from_message(message: &DiplomaticMessage) -> Self {
+        Self {
+            message_id: message.id().to_owned(),
+            from_player_id: message.from_player_id().clone(),
+            to_player_id: message.to_player_id().clone(),
+            topic: message.topic(),
+            category: message.category(),
+            expires_on_turn: message.expires_on_turn(),
+        }
+    }
+    /// Returns the message identity.
+    #[must_use]
+    pub fn message_id(&self) -> &str {
+        &self.message_id
+    }
+    /// Returns the sender.
+    #[must_use]
+    pub const fn from_player_id(&self) -> &PlayerId {
+        &self.from_player_id
+    }
+    /// Returns the recipient.
+    #[must_use]
+    pub const fn to_player_id(&self) -> &PlayerId {
+        &self.to_player_id
+    }
+    /// Returns the message topic.
+    #[must_use]
+    pub const fn topic(&self) -> DiplomaticMessageTopic {
+        self.topic
+    }
+    /// Returns the category fixed by the topic.
+    #[must_use]
+    pub const fn category(&self) -> DiplomaticMessageCategory {
+        self.category
+    }
+    /// Returns the last actionable turn boundary.
+    #[must_use]
+    pub const fn expires_on_turn(&self) -> u32 {
+        self.expires_on_turn
+    }
+}
+
+/// Accepted fact that the recipient responded to one diplomatic message.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DiplomaticMessageRespondedEvent {
+    message_id: String,
+    from_player_id: PlayerId,
+    to_player_id: PlayerId,
+    topic: DiplomaticMessageTopic,
+    response: DiplomaticMessageResponse,
+    relation_delta: i64,
+    relation_score_after: i64,
+    promise_due_turn: Option<u32>,
+}
+
+impl DiplomaticMessageRespondedEvent {
+    pub(crate) fn from_message(message: &DiplomaticMessage) -> Self {
+        Self {
+            message_id: message.id().to_owned(),
+            from_player_id: message.from_player_id().clone(),
+            to_player_id: message.to_player_id().clone(),
+            topic: message.topic(),
+            response: message.response().expect("responded message"),
+            relation_delta: message.relation_score_delta(),
+            relation_score_after: message.relation_score_after().expect("responded score"),
+            promise_due_turn: message.promise_due_turn(),
+        }
+    }
+    /// Returns the message identity.
+    #[must_use]
+    pub fn message_id(&self) -> &str {
+        &self.message_id
+    }
+    /// Returns the original sender.
+    #[must_use]
+    pub const fn from_player_id(&self) -> &PlayerId {
+        &self.from_player_id
+    }
+    /// Returns the responding recipient.
+    #[must_use]
+    pub const fn to_player_id(&self) -> &PlayerId {
+        &self.to_player_id
+    }
+    /// Returns the original topic.
+    #[must_use]
+    pub const fn topic(&self) -> DiplomaticMessageTopic {
+        self.topic
+    }
+    /// Returns the selected response tone.
+    #[must_use]
+    pub const fn response(&self) -> DiplomaticMessageResponse {
+        self.response
+    }
+    /// Returns the applied relation-score delta.
+    #[must_use]
+    pub const fn relation_delta(&self) -> i64 {
+        self.relation_delta
+    }
+    /// Returns the relation score after the response.
+    #[must_use]
+    pub const fn relation_score_after(&self) -> i64 {
+        self.relation_score_after
+    }
+    /// Returns the optional withdrawal-promise deadline.
+    #[must_use]
+    pub const fn promise_due_turn(&self) -> Option<u32> {
+        self.promise_due_turn
     }
 }
 

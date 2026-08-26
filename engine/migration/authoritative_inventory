@@ -86,13 +86,13 @@ domain MoveMerchantToCityCommand movement runtime-ready MoveMerchantToCity packa
 domain MoveUnitCommand movement engine-parity MoveUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain OpenResourceExchangeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain OpenResourceTradeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
-domain RespondDiplomaticMessageCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
+domain RespondDiplomaticMessageCommand diplomacy runtime-ready RespondDiplomaticMessage packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RespondDiplomaticProposalCommand diplomacy runtime-ready RespondDiplomaticProposal packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RushProductionCommand production runtime-ready RushProduction packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SelectCityExpansionHexCommand city runtime-ready SelectCityExpansionHex packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SelectTechnologyCommand research runtime-ready SelectTechnology packages/aonw_core/lib/game/domain/command/research_commands.dart
 domain SelectWorkerImprovementCommand worker runtime-ready SelectWorkerImprovement packages/aonw_core/lib/game/domain/command/worker_commands.dart
-domain SendDiplomaticMessageCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
+domain SendDiplomaticMessageCommand diplomacy runtime-ready SendDiplomaticMessage packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SendDiplomaticProposalCommand diplomacy runtime-ready SendDiplomaticProposal packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SendGoldGiftCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SetCitySpecializationCommand production runtime-ready SetCitySpecialization packages/aonw_core/lib/game/domain/command/city_commands.dart
@@ -137,8 +137,8 @@ event CityFoundedEvent city runtime-ready CityFounded packages/aonw_core/lib/gam
 event CityProducedUnitEvent city runtime-ready CityProducedUnit packages/aonw_core/lib/game/domain/event/city_events.dart
 event CivilizationMetEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart
 event CombatResolvedEvent combat runtime-ready CombatResolved packages/aonw_core/lib/game/domain/event/combat_events.dart
-event DiplomaticMessageRespondedEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
-event DiplomaticMessageSentEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
+event DiplomaticMessageRespondedEvent diplomacy runtime-ready DiplomaticMessageResponded packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
+event DiplomaticMessageSentEvent diplomacy runtime-ready DiplomaticMessageSent packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticPromiseBrokenEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticProposalExpiredEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticProposalRespondedEvent diplomacy runtime-ready DiplomaticProposalResponded packages/aonw_core/lib/game/domain/event/diplomacy_events.dart

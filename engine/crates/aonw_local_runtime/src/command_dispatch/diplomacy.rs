@@ -1,7 +1,12 @@
-use aonw_contract_mapping::encode_proposal_kind;
+use aonw_contract_mapping::{encode_message_response, encode_message_topic, encode_proposal_kind};
 use aonw_contracts::{ReplayCommandDto, ReplayRecordDto};
-use aonw_domain::{DiplomaticProposalKind, PlayerId};
-use aonw_engine::{PlayerCommand, RespondDiplomaticProposalCommand, SendDiplomaticProposalCommand};
+use aonw_domain::{
+    DiplomaticMessageResponse, DiplomaticMessageTopic, DiplomaticProposalKind, PlayerId,
+};
+use aonw_engine::{
+    PlayerCommand, RespondDiplomaticMessageCommand, RespondDiplomaticProposalCommand,
+    SendDiplomaticMessageCommand, SendDiplomaticProposalCommand,
+};
 
 use super::{CommandResult, dispatch_player};
 use crate::RuntimeError;
@@ -9,7 +14,7 @@ use crate::session::Session;
 
 /// Current authenticated proposal command.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum DiplomacyProposalRequest {
+pub enum DiplomacyRequest {
     /// Sends one friendship or truce proposal.
     Send {
         /// Expected canonical revision.
@@ -32,14 +37,34 @@ pub enum DiplomacyProposalRequest {
         /// Recipient decision.
         accepted: bool,
     },
+    /// Sends one private bilateral message.
+    SendMessage {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Discovered bilateral target.
+        target_player_id: PlayerId,
+        /// Current message topic.
+        topic: DiplomaticMessageTopic,
+        /// Optional deterministic identity.
+        message_id: Option<String>,
+    },
+    /// Responds to one recipient-owned message.
+    RespondMessage {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Existing message identity.
+        message_id: String,
+        /// Selected response tone.
+        response: DiplomaticMessageResponse,
+    },
 }
 
-pub(crate) fn dispatch_diplomacy_proposal(
+pub(crate) fn dispatch_diplomacy(
     session: &mut Session,
-    command: &DiplomacyProposalRequest,
+    command: &DiplomacyRequest,
 ) -> Result<CommandResult, RuntimeError> {
     match command {
-        DiplomacyProposalRequest::Send {
+        DiplomacyRequest::Send {
             expected_revision,
             target_player_id,
             kind,
@@ -64,7 +89,7 @@ pub(crate) fn dispatch_diplomacy_proposal(
                 },
             },
         ),
-        DiplomacyProposalRequest::Respond {
+        DiplomacyRequest::Respond {
             expected_revision,
             proposal_id,
             accepted,
@@ -80,6 +105,47 @@ pub(crate) fn dispatch_diplomacy_proposal(
                     expected_revision: *expected_revision,
                     proposal_id: proposal_id.clone(),
                     accepted: *accepted,
+                },
+            },
+        ),
+        DiplomacyRequest::SendMessage {
+            expected_revision,
+            target_player_id,
+            topic,
+            message_id,
+        } => dispatch_player(
+            session,
+            PlayerCommand::SendDiplomaticMessage(SendDiplomaticMessageCommand::new(
+                *expected_revision,
+                target_player_id,
+                *topic,
+                message_id.as_deref(),
+            )),
+            ReplayRecordDto::Player {
+                command: ReplayCommandDto::SendDiplomaticMessage {
+                    expected_revision: *expected_revision,
+                    target_player_id: target_player_id.as_str().to_owned(),
+                    topic: encode_message_topic(*topic),
+                    message_id: message_id.clone(),
+                },
+            },
+        ),
+        DiplomacyRequest::RespondMessage {
+            expected_revision,
+            message_id,
+            response,
+        } => dispatch_player(
+            session,
+            PlayerCommand::RespondDiplomaticMessage(RespondDiplomaticMessageCommand::new(
+                *expected_revision,
+                message_id,
+                *response,
+            )),
+            ReplayRecordDto::Player {
+                command: ReplayCommandDto::RespondDiplomaticMessage {
+                    expected_revision: *expected_revision,
+                    message_id: message_id.clone(),
+                    response: encode_message_response(*response),
                 },
             },
         ),

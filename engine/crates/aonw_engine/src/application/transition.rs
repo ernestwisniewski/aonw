@@ -11,7 +11,8 @@ pub use artifact_events::{
     ArtifactCarriedEvent, ArtifactExcavationStartedEvent, ArtifactStoredEvent,
 };
 pub use diplomacy_events::{
-    DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
+    DiplomaticMessageRespondedEvent, DiplomaticMessageSentEvent, DiplomaticProposalRespondedEvent,
+    DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
 };
 pub use domain_transition::{DomainRejection, DomainTransition, DomainTransitionParts};
 pub use events::{
@@ -217,6 +218,14 @@ pub enum CommandRejectionCode {
     DiplomacyProposalNotFound,
     /// The original sender can no longer fund an accepted truce payment.
     DiplomacyProposalPaymentUnavailable,
+    /// A recent message of the same category is still on cooldown.
+    DiplomacyMessageCooldown,
+    /// The requested or generated message identity is already present.
+    DiplomacyDuplicateMessage,
+    /// The requested message is absent or addressed to another participant.
+    DiplomacyMessageNotFound,
+    /// The requested message was already answered or has expired.
+    DiplomacyMessageUnavailable,
     /// The authenticated actor cannot initiate an artifact trade.
     ArtifactTradeActorUnavailable,
     /// The artifact trade target is absent or equals the actor.
@@ -271,7 +280,7 @@ pub enum CommandRejectionCode {
 
 impl CommandRejectionCode {
     /// Complete stable rejection surface exposed to current clients.
-    pub const ALL: [Self; 119] = [
+    pub const ALL: [Self; 123] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -366,6 +375,10 @@ impl CommandRejectionCode {
         Self::DiplomacyDuplicateProposal,
         Self::DiplomacyProposalNotFound,
         Self::DiplomacyProposalPaymentUnavailable,
+        Self::DiplomacyMessageCooldown,
+        Self::DiplomacyDuplicateMessage,
+        Self::DiplomacyMessageNotFound,
+        Self::DiplomacyMessageUnavailable,
         Self::ArtifactTradeActorUnavailable,
         Self::ArtifactTradeTargetInvalid,
         Self::ArtifactTradeGoldInvalid,

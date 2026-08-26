@@ -1,9 +1,9 @@
-use aonw_contract_mapping::decode_proposal_kind;
+use aonw_contract_mapping::{decode_message_response, decode_message_topic, decode_proposal_kind};
 use aonw_contracts::ReplayCommandDto;
 use aonw_domain::PlayerId;
 use aonw_engine::{
-    DomainTransition, EngineContext, GameEngine, PlayerCommand, RespondDiplomaticProposalCommand,
-    SendDiplomaticProposalCommand,
+    DomainTransition, EngineContext, GameEngine, PlayerCommand, RespondDiplomaticMessageCommand,
+    RespondDiplomaticProposalCommand, SendDiplomaticMessageCommand, SendDiplomaticProposalCommand,
 };
 
 use super::{ExecutionError, display_error};
@@ -46,6 +46,39 @@ pub(super) fn apply(
                 *expected_revision,
                 proposal_id,
                 *accepted,
+            )),
+        )
+        .map_err(display_error),
+        ReplayCommandDto::SendDiplomaticMessage {
+            expected_revision,
+            target_player_id,
+            topic,
+            message_id,
+        } => {
+            let target = PlayerId::new(target_player_id.as_str()).map_err(display_error)?;
+            GameEngine::apply_player_owned(
+                state,
+                context,
+                PlayerCommand::SendDiplomaticMessage(SendDiplomaticMessageCommand::new(
+                    *expected_revision,
+                    &target,
+                    decode_message_topic(*topic),
+                    message_id.as_deref(),
+                )),
+            )
+            .map_err(display_error)
+        }
+        ReplayCommandDto::RespondDiplomaticMessage {
+            expected_revision,
+            message_id,
+            response,
+        } => GameEngine::apply_player_owned(
+            state,
+            context,
+            PlayerCommand::RespondDiplomaticMessage(RespondDiplomaticMessageCommand::new(
+                *expected_revision,
+                message_id,
+                decode_message_response(*response),
             )),
         )
         .map_err(display_error),

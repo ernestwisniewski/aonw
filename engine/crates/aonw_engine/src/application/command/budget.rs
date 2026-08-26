@@ -42,8 +42,9 @@ impl PlayerCommand<'_> {
         match self {
             Self::RespondDiplomaticProposal(_) => EventBudget::new(3),
             Self::AttackHex(_) => EventBudget::new(7),
-            Self::AutoExploreUnit(_) => EventBudget::new(2),
+            Self::RespondDiplomaticMessage(_) | Self::AutoExploreUnit(_) => EventBudget::new(2),
             Self::SendDiplomaticProposal(_)
+            | Self::SendDiplomaticMessage(_)
             | Self::StartArtifactExcavation(_)
             | Self::StoreArtifactInCity(_)
             | Self::TradeArtifact(_)

@@ -1,7 +1,7 @@
-use super::CommandRejectionCode;
+use super::ClientCommandRejectionCodeDto;
 
-impl CommandRejectionCode {
-    /// Returns the stable language-neutral wire value.
+impl ClientCommandRejectionCodeDto {
+    /// Returns the stable snake-case wire value.
     #[must_use]
     #[allow(clippy::too_many_lines)]
     pub const fn as_str(self) -> &'static str {

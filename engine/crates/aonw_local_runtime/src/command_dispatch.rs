@@ -15,8 +15,8 @@ mod research;
 mod view_diff;
 mod worker;
 
-pub use diplomacy::DiplomacyProposalRequest;
-pub(crate) use diplomacy::dispatch_diplomacy_proposal;
+pub use diplomacy::DiplomacyRequest;
+pub(crate) use diplomacy::dispatch_diplomacy;
 pub(crate) use disclosure::{RecipientDisclosure, visible_city_ids};
 pub use production::ProductionCommandRequest;
 pub(crate) use production::dispatch_production;

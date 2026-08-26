@@ -12,7 +12,7 @@ use super::{
 };
 use crate::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, DetachTroopRequest,
-    DiplomacyProposalRequest, MoveUnitRequest, SelectTechnologyRequest,
+    DiplomacyRequest, MoveUnitRequest, SelectTechnologyRequest,
 };
 use crate::{ProductionCommandRequest, TurnCommandRequest};
 
@@ -20,17 +20,11 @@ pub(super) fn decode_command(
     command: &ReplayCommandDto,
 ) -> Result<ReplayRuntimeCommand, PersistenceError> {
     match command {
-        ReplayCommandDto::SelectTechnology {
-            expected_revision,
-            technology_id,
-        } => Ok(ReplayRuntimeCommand::SelectTechnology(
-            SelectTechnologyRequest {
-                expected_revision: *expected_revision,
-                technology: aonw_contract_mapping::decode_technology(*technology_id),
-            },
-        )),
+        command @ ReplayCommandDto::SelectTechnology { .. } => Ok(decode_research_command(command)),
         command @ (ReplayCommandDto::SendDiplomaticProposal { .. }
-        | ReplayCommandDto::RespondDiplomaticProposal { .. }) => decode_diplomacy_command(command),
+        | ReplayCommandDto::RespondDiplomaticProposal { .. }
+        | ReplayCommandDto::SendDiplomaticMessage { .. }
+        | ReplayCommandDto::RespondDiplomaticMessage { .. }) => decode_diplomacy_command(command),
         command @ (ReplayCommandDto::StartArtifactExcavation { .. }
         | ReplayCommandDto::StoreArtifactInCity { .. }
         | ReplayCommandDto::TradeArtifact { .. }) => decode_artifact_command(command),
@@ -120,6 +114,20 @@ pub(super) fn decode_command(
     }
 }
 
+fn decode_research_command(command: &ReplayCommandDto) -> ReplayRuntimeCommand {
+    let ReplayCommandDto::SelectTechnology {
+        expected_revision,
+        technology_id,
+    } = command
+    else {
+        unreachable!("research decoder receives only research commands")
+    };
+    ReplayRuntimeCommand::SelectTechnology(SelectTechnologyRequest {
+        expected_revision: *expected_revision,
+        technology: aonw_contract_mapping::decode_technology(*technology_id),
+    })
+}
+
 fn decode_diplomacy_command(
     command: &ReplayCommandDto,
 ) -> Result<ReplayRuntimeCommand, PersistenceError> {
@@ -130,7 +138,7 @@ fn decode_diplomacy_command(
             kind,
             proposal_id,
             gold_payment,
-        } => DiplomacyProposalRequest::Send {
+        } => DiplomacyRequest::Send {
             expected_revision: *expected_revision,
             target_player_id: PlayerId::new(target_player_id.clone())
                 .map_err(PersistenceError::InvalidPlayer)?,
@@ -142,14 +150,35 @@ fn decode_diplomacy_command(
             expected_revision,
             proposal_id,
             accepted,
-        } => DiplomacyProposalRequest::Respond {
+        } => DiplomacyRequest::Respond {
             expected_revision: *expected_revision,
             proposal_id: proposal_id.clone(),
             accepted: *accepted,
         },
+        ReplayCommandDto::SendDiplomaticMessage {
+            expected_revision,
+            target_player_id,
+            topic,
+            message_id,
+        } => DiplomacyRequest::SendMessage {
+            expected_revision: *expected_revision,
+            target_player_id: PlayerId::new(target_player_id.clone())
+                .map_err(PersistenceError::InvalidPlayer)?,
+            topic: aonw_contract_mapping::decode_message_topic(*topic),
+            message_id: message_id.clone(),
+        },
+        ReplayCommandDto::RespondDiplomaticMessage {
+            expected_revision,
+            message_id,
+            response,
+        } => DiplomacyRequest::RespondMessage {
+            expected_revision: *expected_revision,
+            message_id: message_id.clone(),
+            response: aonw_contract_mapping::decode_message_response(*response),
+        },
         _ => unreachable!("diplomacy decoder receives only diplomacy commands"),
     };
-    Ok(ReplayRuntimeCommand::DiplomacyProposal(request))
+    Ok(ReplayRuntimeCommand::Diplomacy(request))
 }
 
 fn decode_city_command(

@@ -6,7 +6,7 @@ use aonw_domain::{ArtifactId, CityConquestAction, CityId, HexCoord, PlayerId, Un
 use crate::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CityExpansionOptionsRequest,
     CityFoundingOptionsRequest, CityWorkedHexOptionsRequest, CityYieldRequest, DetachTroopRequest,
-    DiplomacyProposalRequest, FoundCityRequest, MerchantCityRequest, MoveUnitRequest, OpenSession,
+    DiplomacyRequest, FoundCityRequest, MerchantCityRequest, MoveUnitRequest, OpenSession,
     ProductionCommandRequest, ReachableRequest, RoutePlanRequest, RuntimeQuery,
     SelectCityExpansionHexRequest, SelectTechnologyRequest, StrategicResourceProjectionRequest,
     ToggleWorkedHexRequest, TurnCommandRequest, UnitActionRequest, UnitLogisticsOptionsRequest,
@@ -19,7 +19,7 @@ mod diplomacy;
 
 pub(super) enum DecodedCommand {
     SelectTechnology(SelectTechnologyRequest),
-    DiplomacyProposal(DiplomacyProposalRequest),
+    Diplomacy(DiplomacyRequest),
     Artifact(ArtifactCommandRequest),
     FoundCity(FoundCityRequest),
     ToggleWorkedHex(ToggleWorkedHexRequest),
@@ -177,8 +177,10 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, Clien
             technology: aonw_contract_mapping::decode_technology(technology_id),
         })),
         command @ (ClientCommandDto::SendDiplomaticProposal { .. }
-        | ClientCommandDto::RespondDiplomaticProposal { .. }) => {
-            diplomacy::command(command).map(DecodedCommand::DiplomacyProposal)
+        | ClientCommandDto::RespondDiplomaticProposal { .. }
+        | ClientCommandDto::SendDiplomaticMessage { .. }
+        | ClientCommandDto::RespondDiplomaticMessage { .. }) => {
+            diplomacy::command(command).map(DecodedCommand::Diplomacy)
         }
         ClientCommandDto::StartArtifactExcavation {
             expected_revision,

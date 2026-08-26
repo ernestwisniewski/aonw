@@ -10,9 +10,10 @@ use aonw_contracts::client::{
     ClientResponseBodyDto, ClientResponseDto,
 };
 use aonw_domain::{
-    Diplomacy, DiplomaticProposal, DiplomaticProposalKind, EconomyState, GameMode, GameState,
-    HexCoord, MatchIdentity, MatchLifecycle, MatchRules, Participant, PlayerCountry, PlayerId,
-    PlayerKind, PlayerPair, PlayerTurnState, StateRevision, TurnLifecycle,
+    Diplomacy, DiplomaticMessage, DiplomaticMessageCategory, DiplomaticMessageTopic,
+    DiplomaticProposal, DiplomaticProposalKind, EconomyState, GameMode, GameState, HexCoord,
+    MatchIdentity, MatchLifecycle, MatchRules, Participant, PlayerCountry, PlayerId, PlayerKind,
+    PlayerPair, PlayerTurnState, StateRevision, TurnLifecycle,
 };
 use aonw_local_runtime::{ClientProtocol, LocalRuntime, OpenSession};
 
@@ -89,6 +90,75 @@ fn proposal_commands_are_current_private_and_replayable() {
     verify_one_entry(&recipient, map, ruleset);
 }
 
+#[test]
+fn message_commands_are_current_private_and_replayable() {
+    let ruleset = RulesetDefinition::standard().clone();
+    let map = map();
+    let p1 = player("player-1");
+    let p2 = player("player-2");
+    let mut sender = open_runtime(&map, &ruleset, state(None), p1.clone());
+    let sent = dispatch(
+        &mut sender,
+        ClientCommandDto::SendDiplomaticMessage {
+            expected_revision: 11,
+            target_player_id: p2.as_str().to_owned(),
+            topic: aonw_contracts::DiplomaticMessageTopicDto::WithdrawScouts,
+            message_id: Some("withdraw-1".to_owned()),
+        },
+    );
+    assert_eq!(sent.outcome, ClientCommandOutcomeDto::Accepted);
+    assert!(matches!(
+        sent.events.as_slice(),
+        [ClientEventDto::DiplomaticMessageSent {
+            message_id,
+            category: aonw_contracts::DiplomaticMessageCategoryDto::Request,
+            ..
+        }] if message_id == "withdraw-1"
+    ));
+    verify_one_entry(&sender, map.clone(), ruleset.clone());
+
+    let message = DiplomaticMessage::try_new(
+        "withdraw-1".to_owned(),
+        p1,
+        p2.clone(),
+        DiplomaticMessageTopic::WithdrawScouts,
+        DiplomaticMessageCategory::Request,
+        7,
+        12,
+        None,
+        None,
+        0,
+        None,
+        None,
+        false,
+    )
+    .expect("message");
+    let mut recipient = open_runtime(&map, &ruleset, state_with_message(message), p2);
+    let responded = dispatch(
+        &mut recipient,
+        ClientCommandDto::RespondDiplomaticMessage {
+            expected_revision: 11,
+            message_id: "withdraw-1".to_owned(),
+            response: aonw_contracts::DiplomaticMessageResponseDto::Conciliatory,
+        },
+    );
+    assert_eq!(responded.outcome, ClientCommandOutcomeDto::Accepted);
+    assert!(matches!(
+        responded.events.as_slice(),
+        [
+            ClientEventDto::DiplomaticMessageResponded {
+                message_id,
+                response: aonw_contracts::DiplomaticMessageResponseDto::Conciliatory,
+                relation_delta: 12,
+                promise_due_turn: Some(10),
+                ..
+            },
+            ClientEventDto::DiplomaticScoreChanged { delta: 12, .. }
+        ] if message_id == "withdraw-1"
+    ));
+    verify_one_entry(&recipient, map, ruleset);
+}
+
 fn dispatch(
     runtime: &mut LocalRuntime,
     command: ClientCommandDto,
@@ -120,7 +190,7 @@ fn dispatch_body(
 
 fn verify_one_entry(runtime: &LocalRuntime, map: MapDefinition, ruleset: RulesetDefinition) {
     let replay = runtime.export_replay_json().expect("replay");
-    assert!(replay.contains("DiplomaticProposal") || replay.contains("diplomaticProposal"));
+    assert!(replay.contains("Diplomatic") || replay.contains("diplomatic"));
     let verification = LocalRuntime::verify_replay_json(map, ruleset, &replay).expect("verify");
     assert_eq!(verification.entry_count, 1);
 }
@@ -144,6 +214,17 @@ fn open_runtime(
 }
 
 fn state(proposal: Option<DiplomaticProposal>) -> GameState {
+    state_with_records(proposal, None)
+}
+
+fn state_with_message(message: DiplomaticMessage) -> GameState {
+    state_with_records(None, Some(message))
+}
+
+fn state_with_records(
+    proposal: Option<DiplomaticProposal>,
+    message: Option<DiplomaticMessage>,
+) -> GameState {
     let map = map();
     let p1 = player("player-1");
     let p2 = player("player-2");
@@ -169,7 +250,7 @@ fn state(proposal: Option<DiplomaticProposal>) -> GameState {
     .expect("lifecycle");
     let pair = PlayerPair::new(p1.clone(), p2.clone()).expect("pair");
     let diplomacy =
-        Diplomacy::try_new(&identity, [pair], [], proposal, [], [], []).expect("diplomacy");
+        Diplomacy::try_new(&identity, [pair], [], proposal, message, [], []).expect("diplomacy");
     let economy = EconomyState::try_new(
         &identity,
         map.bounds(),

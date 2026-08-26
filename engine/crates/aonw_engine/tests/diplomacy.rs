@@ -1,5 +1,8 @@
 //! Greenfield D8 diplomacy proposal command evidence.
 
+#[path = "diplomacy/messages.rs"]
+mod messages;
+
 use std::collections::BTreeMap;
 
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};

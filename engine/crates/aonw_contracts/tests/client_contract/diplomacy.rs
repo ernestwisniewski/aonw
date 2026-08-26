@@ -1,9 +1,10 @@
 use aonw_contracts::client::{ClientCommandDto, ClientEventDto, ClientRequestBodyDto};
 use aonw_contracts::{
+    DiplomaticMessageCategoryDto, DiplomaticMessageResponseDto, DiplomaticMessageTopicDto,
     DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationStatusDto,
 };
 
-pub(super) fn requests() -> [ClientRequestBodyDto; 2] {
+pub(super) fn requests() -> [ClientRequestBodyDto; 4] {
     [
         ClientRequestBodyDto::Dispatch {
             command: ClientCommandDto::SendDiplomaticProposal {
@@ -19,6 +20,21 @@ pub(super) fn requests() -> [ClientRequestBodyDto; 2] {
                 expected_revision: 8,
                 proposal_id: "proposal-1".to_owned(),
                 accepted: true,
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::SendDiplomaticMessage {
+                expected_revision: 8,
+                target_player_id: "player-2".to_owned(),
+                topic: DiplomaticMessageTopicDto::WithdrawScouts,
+                message_id: None,
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::RespondDiplomaticMessage {
+                expected_revision: 8,
+                message_id: "message-1".to_owned(),
+                response: DiplomaticMessageResponseDto::Conciliatory,
             },
         },
     ]
@@ -48,6 +64,24 @@ fn proposal_events_round_trip_without_legacy_fields() {
             new_status: DiplomaticRelationStatusDto::Friendly,
             reason: DiplomaticRelationChangeReasonDto::ProposalAccepted,
             expires_on_turn: None,
+        },
+        ClientEventDto::DiplomaticMessageSent {
+            message_id: "message-1".to_owned(),
+            from_player_id: "player-1".to_owned(),
+            to_player_id: "player-2".to_owned(),
+            topic: DiplomaticMessageTopicDto::WithdrawScouts,
+            category: DiplomaticMessageCategoryDto::Request,
+            expires_on_turn: 12,
+        },
+        ClientEventDto::DiplomaticMessageResponded {
+            message_id: "message-1".to_owned(),
+            from_player_id: "player-1".to_owned(),
+            to_player_id: "player-2".to_owned(),
+            topic: DiplomaticMessageTopicDto::WithdrawScouts,
+            response: DiplomaticMessageResponseDto::Conciliatory,
+            relation_delta: 12,
+            relation_score_after: 12,
+            promise_due_turn: Some(10),
         },
     ];
 

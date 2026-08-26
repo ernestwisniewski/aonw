@@ -1,7 +1,12 @@
+#[path = "encoding/command_name.rs"]
+mod command_name_encoding;
+
+pub(super) use command_name_encoding::command_name;
+
 use aonw_contract_mapping::{
-    encode_city_building, encode_city_wonder, encode_improvement, encode_proposal_kind,
-    encode_relation_reason, encode_relation_status, encode_score_reason, encode_technology,
-    encode_troop, encode_unit_kind,
+    encode_city_building, encode_city_wonder, encode_improvement, encode_message_category,
+    encode_message_response, encode_message_topic, encode_proposal_kind, encode_relation_reason,
+    encode_relation_status, encode_score_reason, encode_technology, encode_troop, encode_unit_kind,
 };
 use aonw_contracts::client::{
     WorkerAutomationActionDto, WorkerAutomationMetricsDto, WorkerAutomationOptionDto,
@@ -10,8 +15,8 @@ use aonw_contracts::client::{
 use aonw_contracts::{
     CombatExecutionDto, CombatModifierDto, CombatModifierKindDto, CombatOutcomeDto,
     CombatPreviewDto, CombatRollDto, CombatStatTargetDto, CombatStatsDto, CombatTargetDto,
-    CoordinateDto, MovementStepDto, ReplayCommandDto, ReplayEventDto, ReplayEvidenceDto,
-    ReplayLogisticsEvidenceDto, ReplayUnitMovementExecutionDto,
+    CoordinateDto, MovementStepDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogisticsEvidenceDto,
+    ReplayUnitMovementExecutionDto,
 };
 use aonw_domain::HexCoord;
 use aonw_engine::{
@@ -19,44 +24,6 @@ use aonw_engine::{
     DomainEvent, EffectiveCombatStats, ExecutionEvidence, LogisticsExecution,
     UnitMovementExecution, WorkerAutomationAction, WorkerAutomationOption,
 };
-pub(super) const fn command_name(command: &ReplayCommandDto) -> &'static str {
-    match command {
-        ReplayCommandDto::SelectTechnology { .. } => "SelectTechnology",
-        ReplayCommandDto::SendDiplomaticProposal { .. } => "SendDiplomaticProposal",
-        ReplayCommandDto::RespondDiplomaticProposal { .. } => "RespondDiplomaticProposal",
-        ReplayCommandDto::StartArtifactExcavation { .. } => "StartArtifactExcavation",
-        ReplayCommandDto::StoreArtifactInCity { .. } => "StoreArtifactInCity",
-        ReplayCommandDto::TradeArtifact { .. } => "TradeArtifact",
-        ReplayCommandDto::FoundCity { .. } => "FoundCity",
-        ReplayCommandDto::ToggleWorkedHex { .. } => "ToggleWorkedHex",
-        ReplayCommandDto::SelectCityExpansionHex { .. } => "SelectCityExpansionHex",
-        ReplayCommandDto::StartBuilding { .. } => "StartBuilding",
-        ReplayCommandDto::StartUnitProduction { .. } => "StartUnitProduction",
-        ReplayCommandDto::StartCityProject { .. } => "StartCityProject",
-        ReplayCommandDto::StartWonder { .. } => "StartWonder",
-        ReplayCommandDto::SetCitySpecialization { .. } => "SetCitySpecialization",
-        ReplayCommandDto::RushProduction { .. } => "RushProduction",
-        ReplayCommandDto::SelectWorkerImprovement { .. } => "SelectWorkerImprovement",
-        ReplayCommandDto::ConfirmWorkerImprovement { .. } => "ConfirmWorkerImprovement",
-        ReplayCommandDto::CancelWorkerJob { .. } => "CancelWorkerJob",
-        ReplayCommandDto::AssignWorkerToHex { .. } => "AssignWorkerToHex",
-        ReplayCommandDto::CancelWorkerAssignment { .. } => "CancelWorkerAssignment",
-        ReplayCommandDto::BuildRoad { .. } => "BuildRoad",
-        ReplayCommandDto::AutomateWorker { .. } => "AutomateWorker",
-        ReplayCommandDto::AttackHex { .. } => "AttackHex",
-        ReplayCommandDto::MoveUnit { .. } => "MoveUnit",
-        ReplayCommandDto::AutoExploreUnit { .. } => "AutoExploreUnit",
-        ReplayCommandDto::AssignMerchantTradeRoute { .. } => "AssignMerchantTradeRoute",
-        ReplayCommandDto::MoveMerchantToCity { .. } => "MoveMerchantToCity",
-        ReplayCommandDto::DetachTroop { .. } => "DetachTroop",
-        ReplayCommandDto::CancelUnitAction { .. } => "CancelUnitAction",
-        ReplayCommandDto::SkipUnitTurn { .. } => "SkipUnitTurn",
-        ReplayCommandDto::FortifyUnit { .. } => "FortifyUnit",
-        ReplayCommandDto::EndTurn { .. } => "EndTurn",
-        ReplayCommandDto::SubmitTurn { .. } => "SubmitTurn",
-    }
-}
-
 #[allow(clippy::too_many_lines)]
 pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
     match event {
@@ -153,6 +120,26 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
                 to_player_id: value.to_player_id().as_str().to_owned(),
                 kind: encode_proposal_kind(value.kind()),
                 accepted: value.accepted(),
+            }
+        }
+        DomainEvent::DiplomaticMessageSent(value) => ReplayEventDto::DiplomaticMessageSent {
+            message_id: value.message_id().to_owned(),
+            from_player_id: value.from_player_id().as_str().to_owned(),
+            to_player_id: value.to_player_id().as_str().to_owned(),
+            topic: encode_message_topic(value.topic()),
+            category: encode_message_category(value.category()),
+            expires_on_turn: value.expires_on_turn(),
+        },
+        DomainEvent::DiplomaticMessageResponded(value) => {
+            ReplayEventDto::DiplomaticMessageResponded {
+                message_id: value.message_id().to_owned(),
+                from_player_id: value.from_player_id().as_str().to_owned(),
+                to_player_id: value.to_player_id().as_str().to_owned(),
+                topic: encode_message_topic(value.topic()),
+                response: encode_message_response(value.response()),
+                relation_delta: value.relation_delta(),
+                relation_score_after: value.relation_score_after(),
+                promise_due_turn: value.promise_due_turn(),
             }
         }
         DomainEvent::DiplomaticRelationChanged(value) => {

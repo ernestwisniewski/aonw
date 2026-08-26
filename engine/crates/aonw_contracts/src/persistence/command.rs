@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     CityBuildingTypeDto, CityConquestActionDto, CityProjectTypeDto, CitySpecializationTypeDto,
-    CoordinateDto, DiplomaticProposalKindDto, FieldImprovementKindDto, TechnologyIdDto,
-    TroopKindDto, UnitKindDto, WonderTypeDto,
+    CoordinateDto, DiplomaticMessageResponseDto, DiplomaticMessageTopicDto,
+    DiplomaticProposalKindDto, FieldImprovementKindDto, TechnologyIdDto, TroopKindDto, UnitKindDto,
+    WonderTypeDto,
 };
 
 /// One revision-bound command stored in a replay.
@@ -34,6 +35,19 @@ pub enum ReplayCommandDto {
         expected_revision: u64,
         proposal_id: String,
         accepted: bool,
+    },
+    /// Sends one private bilateral diplomatic message.
+    SendDiplomaticMessage {
+        expected_revision: u64,
+        target_player_id: String,
+        topic: DiplomaticMessageTopicDto,
+        message_id: Option<String>,
+    },
+    /// Responds to one message addressed to the authenticated actor.
+    RespondDiplomaticMessage {
+        expected_revision: u64,
+        message_id: String,
+        response: DiplomaticMessageResponseDto,
     },
     /// Starts excavating the artifact at one controlled unit.
     StartArtifactExcavation {

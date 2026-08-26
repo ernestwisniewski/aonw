@@ -67,7 +67,7 @@ void main() {
   });
 
   test('migration manifest closes queries, events, and evidence', () {
-    expect(manifest.queryEntries, hasLength(11));
+    expect(manifest.queryEntries, hasLength(12));
     expect(manifest.eventEntries, hasLength(40));
     expect(manifest.nativeEventEntries, hasLength(4));
     expect(manifest.evidenceEntries, hasLength(1));
@@ -207,9 +207,14 @@ void main() {
         'FoundCityCommand': 'runtime-ready',
         'MoveMerchantToCityCommand': 'runtime-ready',
         'MoveUnitCommand': 'engine-parity',
+        'RespondDiplomaticMessageCommand': 'runtime-ready',
+        'RespondDiplomaticProposalCommand': 'runtime-ready',
         'RushProductionCommand': 'runtime-ready',
         'SelectCityExpansionHexCommand': 'runtime-ready',
+        'SelectTechnologyCommand': 'runtime-ready',
         'SelectWorkerImprovementCommand': 'runtime-ready',
+        'SendDiplomaticMessageCommand': 'runtime-ready',
+        'SendDiplomaticProposalCommand': 'runtime-ready',
         'SetCitySpecializationCommand': 'runtime-ready',
         'SkipUnitTurnCommand': 'engine-parity',
         'StartArtifactExcavationCommand': 'runtime-ready',
@@ -231,6 +236,11 @@ void main() {
         'CityFoundedEvent': 'runtime-ready',
         'CityProducedUnitEvent': 'runtime-ready',
         'CombatResolvedEvent': 'runtime-ready',
+        'DiplomaticMessageRespondedEvent': 'runtime-ready',
+        'DiplomaticMessageSentEvent': 'runtime-ready',
+        'DiplomaticProposalRespondedEvent': 'runtime-ready',
+        'DiplomaticProposalSentEvent': 'runtime-ready',
+        'DiplomaticRelationChangedEvent': 'runtime-ready',
         'DiplomaticScoreChangedEvent': 'runtime-ready',
         'UnitAttackedEvent': 'runtime-ready',
         'UnitGainedExperienceEvent': 'runtime-ready',

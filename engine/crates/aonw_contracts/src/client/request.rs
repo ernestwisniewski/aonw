@@ -107,6 +107,19 @@ pub enum ClientCommandDto {
         proposal_id: String,
         accepted: bool,
     },
+    /// Sends one private message to a discovered participant.
+    SendDiplomaticMessage {
+        expected_revision: u64,
+        target_player_id: String,
+        topic: crate::DiplomaticMessageTopicDto,
+        message_id: Option<String>,
+    },
+    /// Responds to one private message addressed to the authenticated actor.
+    RespondDiplomaticMessage {
+        expected_revision: u64,
+        message_id: String,
+        response: crate::DiplomaticMessageResponseDto,
+    },
     /// Starts excavating the artifact at one controlled unit.
     StartArtifactExcavation {
         expected_revision: u64,

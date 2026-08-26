@@ -169,6 +169,40 @@ pub enum ReplayEventDto {
         /// Recipient decision.
         accepted: bool,
     },
+    /// One participant sent a private bilateral message.
+    DiplomaticMessageSent {
+        /// Message identity.
+        message_id: String,
+        /// Sender identity.
+        from_player_id: String,
+        /// Recipient identity.
+        to_player_id: String,
+        /// Message topic.
+        topic: crate::DiplomaticMessageTopicDto,
+        /// Category fixed by the topic.
+        category: crate::DiplomaticMessageCategoryDto,
+        /// Last actionable turn boundary.
+        expires_on_turn: u32,
+    },
+    /// The message recipient selected one response tone.
+    DiplomaticMessageResponded {
+        /// Message identity.
+        message_id: String,
+        /// Original sender identity.
+        from_player_id: String,
+        /// Responding recipient identity.
+        to_player_id: String,
+        /// Original message topic.
+        topic: crate::DiplomaticMessageTopicDto,
+        /// Selected response tone.
+        response: crate::DiplomaticMessageResponseDto,
+        /// Applied relation-score delta.
+        relation_delta: i64,
+        /// Relation score after the response.
+        relation_score_after: i64,
+        /// Optional withdrawal-promise deadline.
+        promise_due_turn: Option<u32>,
+    },
     /// One bilateral relation status changed.
     DiplomaticRelationChanged {
         /// Canonical first participant.

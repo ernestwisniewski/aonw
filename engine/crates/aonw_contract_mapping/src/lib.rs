@@ -17,11 +17,13 @@ pub use game_state_mapping::{
 };
 
 use aonw_contracts::{
+    DiplomaticMessageCategoryDto, DiplomaticMessageResponseDto, DiplomaticMessageTopicDto,
     DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationStatusDto,
     DiplomaticScoreChangeReasonDto, MovementStepDto, QueuedMovePathDto, UnitKindDto,
     UnitPostureDto,
 };
 use aonw_domain::{
+    DiplomaticMessageCategory, DiplomaticMessageResponse, DiplomaticMessageTopic,
     DiplomaticProposalKind, DiplomaticRelationChangeReason, DiplomaticRelationStatus,
     DiplomaticScoreChangeReason, HexCoord, MovementPathError, MovementStep, MovementUnits,
     QueuedMovePath, UnitKind, UnitPosture,
@@ -42,6 +44,81 @@ pub const fn decode_proposal_kind(value: DiplomaticProposalKindDto) -> Diplomati
     match value {
         DiplomaticProposalKindDto::Friendship => DiplomaticProposalKind::Friendship,
         DiplomaticProposalKindDto::Truce => DiplomaticProposalKind::Truce,
+    }
+}
+
+/// Converts a message topic into its stable wire value.
+#[must_use]
+pub const fn encode_message_topic(value: DiplomaticMessageTopic) -> DiplomaticMessageTopicDto {
+    match value {
+        DiplomaticMessageTopic::TroopsNearCities => DiplomaticMessageTopicDto::TroopsNearCities,
+        DiplomaticMessageTopic::CitiesTooClose => DiplomaticMessageTopicDto::CitiesTooClose,
+        DiplomaticMessageTopic::BlockedRoutes => DiplomaticMessageTopicDto::BlockedRoutes,
+        DiplomaticMessageTopic::WithdrawScouts => DiplomaticMessageTopicDto::WithdrawScouts,
+        DiplomaticMessageTopic::AvoidEscalation => DiplomaticMessageTopicDto::AvoidEscalation,
+        DiplomaticMessageTopic::CommonEnemy => DiplomaticMessageTopicDto::CommonEnemy,
+        DiplomaticMessageTopic::ExpansionProvocation => {
+            DiplomaticMessageTopicDto::ExpansionProvocation
+        }
+        DiplomaticMessageTopic::PeacefulPraise => DiplomaticMessageTopicDto::PeacefulPraise,
+    }
+}
+
+/// Converts a strict wire message topic into its domain value.
+#[must_use]
+pub const fn decode_message_topic(value: DiplomaticMessageTopicDto) -> DiplomaticMessageTopic {
+    match value {
+        DiplomaticMessageTopicDto::TroopsNearCities => DiplomaticMessageTopic::TroopsNearCities,
+        DiplomaticMessageTopicDto::CitiesTooClose => DiplomaticMessageTopic::CitiesTooClose,
+        DiplomaticMessageTopicDto::BlockedRoutes => DiplomaticMessageTopic::BlockedRoutes,
+        DiplomaticMessageTopicDto::WithdrawScouts => DiplomaticMessageTopic::WithdrawScouts,
+        DiplomaticMessageTopicDto::AvoidEscalation => DiplomaticMessageTopic::AvoidEscalation,
+        DiplomaticMessageTopicDto::CommonEnemy => DiplomaticMessageTopic::CommonEnemy,
+        DiplomaticMessageTopicDto::ExpansionProvocation => {
+            DiplomaticMessageTopic::ExpansionProvocation
+        }
+        DiplomaticMessageTopicDto::PeacefulPraise => DiplomaticMessageTopic::PeacefulPraise,
+    }
+}
+
+/// Converts a message category into its stable wire value.
+#[must_use]
+pub const fn encode_message_category(
+    value: DiplomaticMessageCategory,
+) -> DiplomaticMessageCategoryDto {
+    match value {
+        DiplomaticMessageCategory::Warning => DiplomaticMessageCategoryDto::Warning,
+        DiplomaticMessageCategory::Complaint => DiplomaticMessageCategoryDto::Complaint,
+        DiplomaticMessageCategory::Request => DiplomaticMessageCategoryDto::Request,
+        DiplomaticMessageCategory::Praise => DiplomaticMessageCategoryDto::Praise,
+        DiplomaticMessageCategory::Threat => DiplomaticMessageCategoryDto::Threat,
+        DiplomaticMessageCategory::Cooperation => DiplomaticMessageCategoryDto::Cooperation,
+    }
+}
+
+/// Converts a message response into its stable wire value.
+#[must_use]
+pub const fn encode_message_response(
+    value: DiplomaticMessageResponse,
+) -> DiplomaticMessageResponseDto {
+    match value {
+        DiplomaticMessageResponse::Conciliatory => DiplomaticMessageResponseDto::Conciliatory,
+        DiplomaticMessageResponse::Neutral => DiplomaticMessageResponseDto::Neutral,
+        DiplomaticMessageResponse::Evasive => DiplomaticMessageResponseDto::Evasive,
+        DiplomaticMessageResponse::Aggressive => DiplomaticMessageResponseDto::Aggressive,
+    }
+}
+
+/// Converts a strict wire response into its domain value.
+#[must_use]
+pub const fn decode_message_response(
+    value: DiplomaticMessageResponseDto,
+) -> DiplomaticMessageResponse {
+    match value {
+        DiplomaticMessageResponseDto::Conciliatory => DiplomaticMessageResponse::Conciliatory,
+        DiplomaticMessageResponseDto::Neutral => DiplomaticMessageResponse::Neutral,
+        DiplomaticMessageResponseDto::Evasive => DiplomaticMessageResponse::Evasive,
+        DiplomaticMessageResponseDto::Aggressive => DiplomaticMessageResponse::Aggressive,
     }
 }
 

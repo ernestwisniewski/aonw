@@ -1,13 +1,13 @@
 use aonw_domain::{
-    CombatState, Diplomacy, DiplomacyStateUpdate, DiplomaticProposal, DiplomaticProposalKind,
-    DiplomaticRelation, DiplomaticRelationChangeReason, DiplomaticRelationStatus,
-    DiplomaticScoreChangeReason, DiplomaticScoreEntry, EconomyAccountChange, GameState, PlayerId,
-    PlayerPair,
+    CombatState, DiplomaticProposal, DiplomaticProposalKind, DiplomaticRelation,
+    DiplomaticRelationChangeReason, DiplomaticRelationStatus, DiplomaticScoreChangeReason,
+    EconomyAccountChange, GameState, PlayerId, PlayerPair,
 };
 
 use super::{
     DiplomacyError, DiplomacyMutation, RespondDiplomaticProposalCommand,
     SendDiplomaticProposalCommand,
+    support::{adjust_score, effective_relation, mutation, validate_actor, validate_revision},
 };
 use crate::{
     CommandRejectionCode, DiplomacyDisclosure, DiplomacyPolicyQuery,
@@ -220,40 +220,6 @@ fn reject_proposal(
     )
 }
 
-#[allow(clippy::too_many_arguments)]
-fn adjust_score(
-    diplomacy: &Diplomacy,
-    identity: &aonw_domain::MatchIdentity,
-    pair: &PlayerPair,
-    turn: u32,
-    delta: i64,
-    reason: DiplomaticScoreChangeReason,
-    source_id: &str,
-) -> Result<(Diplomacy, DiplomaticScoreEntry), DiplomacyError> {
-    let (status, current) = effective_relation(diplomacy, pair);
-    let current_relation = diplomacy.relation_between(pair.first(), pair.second());
-    let score_after = current.saturating_add(delta).clamp(-100, 100);
-    let relation = DiplomaticRelation::try_new(
-        pair.clone(),
-        status,
-        score_after,
-        current_relation.and_then(DiplomaticRelation::status_expires_on_turn),
-        current_relation.and_then(DiplomaticRelation::last_changed_turn),
-        current_relation.and_then(DiplomaticRelation::last_change_reason),
-    )?;
-    let diplomacy = diplomacy.try_with_relation(identity, relation)?;
-    let entry = DiplomaticScoreEntry::try_new(
-        pair.clone(),
-        turn,
-        score_after - current,
-        score_after,
-        reason,
-        Some(source_id.to_owned()),
-    )?;
-    let diplomacy = diplomacy.try_with_score_entry(identity, entry.clone())?;
-    Ok((diplomacy, entry))
-}
-
 fn apply_proposal_payment(
     state: &GameState,
     proposal: &DiplomaticProposal,
@@ -304,36 +270,6 @@ fn target_owner(state: &GameState, coordinate: aonw_domain::HexCoord) -> Option<
             state
                 .city_at(coordinate)
                 .map(aonw_domain::City::owner_player_id)
-        })
-}
-
-fn mutation<const N: usize>(
-    state: &GameState,
-    diplomacy: Diplomacy,
-    economy: aonw_domain::EconomyState,
-    combat: CombatState,
-    events: [DomainEvent; N],
-) -> Result<DiplomacyMutation, DiplomacyError> {
-    let revision = state
-        .revision()
-        .checked_next()
-        .ok_or(CommandRejectionCode::StateRevisionOverflow)?;
-    Ok(DiplomacyMutation {
-        update: DiplomacyStateUpdate {
-            revision,
-            economy,
-            combat,
-            diplomacy,
-        },
-        events: events.into(),
-    })
-}
-
-fn effective_relation(diplomacy: &Diplomacy, pair: &PlayerPair) -> (DiplomaticRelationStatus, i64) {
-    diplomacy
-        .relation_between(pair.first(), pair.second())
-        .map_or((DiplomaticRelationStatus::Neutral, 0), |relation| {
-            (relation.status(), relation.relation_score())
         })
 }
 
@@ -398,25 +334,5 @@ const fn proposal_allowed(kind: DiplomaticProposalKind, status: DiplomaticRelati
             status,
             DiplomaticRelationStatus::Hostile | DiplomaticRelationStatus::War
         ),
-    }
-}
-
-fn validate_actor(
-    state: &GameState,
-    context: EngineContext<'_>,
-    actor: &PlayerId,
-) -> Result<(), DiplomacyError> {
-    if context.can_act() && state.match_lifecycle().identity().contains(actor) {
-        Ok(())
-    } else {
-        Err(CommandRejectionCode::DiplomacyPlayerNotControlled.into())
-    }
-}
-
-fn validate_revision(state: &GameState, expected: u64) -> Result<(), DiplomacyError> {
-    if state.revision().get() == expected {
-        Ok(())
-    } else {
-        Err(CommandRejectionCode::StaleRevision.into())
     }
 }

@@ -36,7 +36,7 @@ fn standard_ruleset_hash_is_stable() {
     assert_eq!(first, second);
     assert_eq!(
         first.to_string(),
-        "22b14e620c340e589f82481370670bcbbb0d29f3f17b24a19e1287597bde74a2"
+        "7ec046740d2bda25ce02621c033bc5188189f4f6d585b137d45ea12e26673f97"
     );
 }
 
@@ -154,13 +154,29 @@ fn standard_research_pace_scaling_is_exact_and_uses_ceiling_arithmetic() {
 }
 
 #[test]
-fn standard_diplomacy_proposal_balance_matches_the_frozen_oracle() {
+fn standard_diplomacy_balance_matches_the_frozen_oracle() {
     let balance = RulesetDefinition::standard().diplomacy();
     assert_eq!(balance.proposal_duration_turns(), 5);
+    assert_eq!(balance.message_duration_turns(), 5);
+    assert_eq!(balance.message_cooldown_turns(), 5);
+    assert_eq!(balance.promise_duration_turns(), 3);
     assert_eq!(balance.truce_duration_turns(), 10);
     assert_eq!(balance.friendship_accept_score_delta(), 18);
     assert_eq!(balance.truce_accept_score_delta(), 10);
     assert_eq!(balance.proposal_reject_score_delta(), -6);
+    assert_eq!(
+        balance.message_response_score_delta(aonw_domain::DiplomaticMessageResponse::Conciliatory),
+        12
+    );
+    assert_eq!(
+        balance.message_response_score_delta(aonw_domain::DiplomaticMessageResponse::Aggressive),
+        -18
+    );
+    assert_eq!(
+        balance
+            .common_enemy_cooperation_bonus(aonw_domain::DiplomaticMessageResponse::Conciliatory),
+        8
+    );
 }
 
 #[test]

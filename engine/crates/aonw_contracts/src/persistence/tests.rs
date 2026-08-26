@@ -66,10 +66,12 @@ fn every_current_production_command_has_a_strict_wire_shape() {
 }
 
 #[test]
-fn diplomacy_proposal_commands_have_current_strict_wire_shapes() {
+fn diplomacy_commands_have_current_strict_wire_shapes() {
     let commands = [
         r#"{"type":"sendDiplomaticProposal","expectedRevision":7,"targetPlayerId":"player-2","kind":"truce","proposalId":null,"goldPayment":5}"#,
         r#"{"type":"respondDiplomaticProposal","expectedRevision":8,"proposalId":"proposal-1","accepted":true}"#,
+        r#"{"type":"sendDiplomaticMessage","expectedRevision":8,"targetPlayerId":"player-2","topic":"withdrawScouts","messageId":null}"#,
+        r#"{"type":"respondDiplomaticMessage","expectedRevision":9,"messageId":"message-1","response":"conciliatory"}"#,
     ];
     for json in commands {
         assert!(serde_json::from_str::<ReplayCommandDto>(json).is_ok());
@@ -96,11 +98,13 @@ fn production_completion_events_have_current_strict_replay_shapes() {
 }
 
 #[test]
-fn diplomacy_proposal_events_have_current_strict_replay_shapes() {
+fn diplomacy_events_have_current_strict_replay_shapes() {
     let events = [
         r#"{"type":"diplomaticProposalSent","proposalId":"proposal-1","fromPlayerId":"player-1","toPlayerId":"player-2","kind":"friendship","expiresOnTurn":12}"#,
         r#"{"type":"diplomaticProposalResponded","proposalId":"proposal-1","fromPlayerId":"player-1","toPlayerId":"player-2","kind":"friendship","accepted":true}"#,
         r#"{"type":"diplomaticRelationChanged","playerAId":"player-1","playerBId":"player-2","oldStatus":"neutral","newStatus":"friendly","reason":"proposalAccepted","expiresOnTurn":null}"#,
+        r#"{"type":"diplomaticMessageSent","messageId":"message-1","fromPlayerId":"player-1","toPlayerId":"player-2","topic":"withdrawScouts","category":"request","expiresOnTurn":12}"#,
+        r#"{"type":"diplomaticMessageResponded","messageId":"message-1","fromPlayerId":"player-1","toPlayerId":"player-2","topic":"withdrawScouts","response":"conciliatory","relationDelta":12,"relationScoreAfter":12,"promiseDueTurn":10}"#,
     ];
     for json in events {
         assert!(serde_json::from_str::<ReplayEventDto>(json).is_ok());

@@ -9,7 +9,8 @@ use crate::{
     WorkerAutomationExecution, WorkerCompletedJobEvent,
 };
 use crate::{
-    DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
+    DiplomaticMessageRespondedEvent, DiplomaticMessageSentEvent, DiplomaticProposalRespondedEvent,
+    DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
 };
 
 /// Ordered event emitted by an accepted transition.
@@ -65,6 +66,10 @@ pub enum DomainEvent {
     DiplomaticProposalSent(DiplomaticProposalSentEvent),
     /// The proposal recipient accepted or rejected it.
     DiplomaticProposalResponded(DiplomaticProposalRespondedEvent),
+    /// One participant sent a private bilateral message.
+    DiplomaticMessageSent(DiplomaticMessageSentEvent),
+    /// The message recipient selected one response tone.
+    DiplomaticMessageResponded(DiplomaticMessageRespondedEvent),
     /// One known bilateral status changed.
     DiplomaticRelationChanged(DiplomaticRelationChangedEvent),
     /// A surviving unit gained combat experience.

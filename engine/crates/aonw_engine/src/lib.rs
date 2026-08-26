@@ -28,15 +28,16 @@ pub use application::{
     AllPlayersSubmittedEvent, ArtifactCarriedEvent, ArtifactExcavationStartedEvent,
     ArtifactStoredEvent, AutoExplorePlannedEvent, CanonicalEngineError, CanonicalQueryError,
     CityBuiltBuildingEvent, CityBuiltWonderEvent, CityFoundedEvent, CityProducedUnitEvent,
-    CombatEvent, CommandRejectionCode, DiplomaticProposalRespondedEvent,
-    DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent, DiplomaticScoreChangedEvent,
-    DomainEvent, DomainRejection, DomainTransition, DomainTransitionParts, EventBudget,
-    ExecutionEvidence, FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand,
-    LogisticsExecution, MerchantRouteAssignedEvent, MerchantTravelQueuedEvent, PlayerCommand,
-    PlayerKickedEvent, PlayerTimedOutEvent, ProcessorRequirement, QueryResult,
-    ResearchPointsGainedEvent, SystemCommand, TechnologyResearchedEvent, TroopDetachedEvent,
-    TurnCommand, TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
-    WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
+    CombatEvent, CommandRejectionCode, DiplomaticMessageRespondedEvent, DiplomaticMessageSentEvent,
+    DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
+    DiplomaticScoreChangedEvent, DomainEvent, DomainRejection, DomainTransition,
+    DomainTransitionParts, EventBudget, ExecutionEvidence, FinalizeTimedOutTurnCommand, GameQuery,
+    KickParticipantCommand, LogisticsExecution, MerchantRouteAssignedEvent,
+    MerchantTravelQueuedEvent, PlayerCommand, PlayerKickedEvent, PlayerTimedOutEvent,
+    ProcessorRequirement, QueryResult, ResearchPointsGainedEvent, SystemCommand,
+    TechnologyResearchedEvent, TroopDetachedEvent, TurnCommand, TurnEndedEvent,
+    TurnKernelCapabilities, TurnKernelExecution, TurnProcessor, WonderProductionRefundedEvent,
+    WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use artifact::{
     ArtifactError, StartArtifactExcavationCommand, StoreArtifactInCityCommand, TradeArtifactCommand,
@@ -53,7 +54,8 @@ pub use combat::{
 };
 pub use context::{EngineContext, SystemContext};
 pub use diplomacy::{
-    DiplomacyError, RespondDiplomaticProposalCommand, SendDiplomaticProposalCommand,
+    DiplomacyError, RespondDiplomaticMessageCommand, RespondDiplomaticProposalCommand,
+    SendDiplomaticMessageCommand, SendDiplomaticProposalCommand,
 };
 pub use diplomacy_policy::{
     DiplomacyDisclosure, DiplomacyPolicy, DiplomacyPolicyError, DiplomacyPolicyPlayerRole,

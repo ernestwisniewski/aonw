@@ -8,12 +8,12 @@ use crate::{
     AutoExploreUnitCommand, AutomateWorkerCommand, BuildRoadCommand, CancelWorkerAssignmentCommand,
     CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DetachTroopCommand, EngineContext,
     FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
-    RespondDiplomaticProposalCommand, RushProductionCommand, SelectCityExpansionHexCommand,
-    SelectTechnologyCommand, SelectWorkerImprovementCommand, SendDiplomaticProposalCommand,
-    SetCitySpecializationCommand, StartArtifactExcavationCommand, StartBuildingCommand,
-    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, StateDigest,
-    StoreArtifactInCityCommand, ToggleWorkedHexCommand, TradeArtifactCommand, TurnCommand,
-    UnitActionCommand,
+    RespondDiplomaticMessageCommand, RespondDiplomaticProposalCommand, RushProductionCommand,
+    SelectCityExpansionHexCommand, SelectTechnologyCommand, SelectWorkerImprovementCommand,
+    SendDiplomaticMessageCommand, SendDiplomaticProposalCommand, SetCitySpecializationCommand,
+    StartArtifactExcavationCommand, StartBuildingCommand, StartCityProjectCommand,
+    StartUnitProductionCommand, StartWonderCommand, StateDigest, StoreArtifactInCityCommand,
+    ToggleWorkedHexCommand, TradeArtifactCommand, TurnCommand, UnitActionCommand,
 };
 
 mod budget;
@@ -34,6 +34,10 @@ pub enum PlayerCommand<'command> {
     SendDiplomaticProposal(SendDiplomaticProposalCommand<'command>),
     /// Accepts or rejects one proposal addressed to the authenticated actor.
     RespondDiplomaticProposal(RespondDiplomaticProposalCommand<'command>),
+    /// Sends one private message to a discovered participant.
+    SendDiplomaticMessage(SendDiplomaticMessageCommand<'command>),
+    /// Responds to one private message addressed to the authenticated actor.
+    RespondDiplomaticMessage(RespondDiplomaticMessageCommand<'command>),
     /// Selects one currently available technology for the authenticated actor.
     SelectTechnology(SelectTechnologyCommand),
     /// Starts excavating the artifact at one controlled unit.
@@ -120,6 +124,14 @@ impl GameEngine {
             }
             PlayerCommand::RespondDiplomaticProposal(command) => {
                 let mutation = crate::diplomacy::apply_respond_proposal(&state, context, command);
+                apply_diplomacy(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::SendDiplomaticMessage(command) => {
+                let mutation = crate::diplomacy::apply_send_message(&state, context, command);
+                apply_diplomacy(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::RespondDiplomaticMessage(command) => {
+                let mutation = crate::diplomacy::apply_respond_message(&state, context, command);
                 apply_diplomacy(state, mutation, map_hash, ruleset_hash)
             }
             PlayerCommand::SelectTechnology(command) => {
