@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use super::WorkerJobCompletionDto;
 use crate::{
     CityBuildingTypeDto, CombatTargetDto, CoordinateDto, DiplomaticScoreChangeReasonDto,
-    MapObjectiveTypeDto, TechnologyIdDto, TroopKindDto, UnitKindDto, WonderTypeDto,
+    MapObjectiveTypeDto, StabilityBandDto, TechnologyIdDto, TroopKindDto, UnitKindDto,
+    WonderTypeDto,
 };
 
 /// Presentation-safe authoritative event.
@@ -106,6 +107,26 @@ pub enum ClientEventDto {
         player_id: String,
         /// Exact positive science total.
         points: i64,
+    },
+    /// One visible city claimed a deterministic territory coordinate after growth.
+    CityClaimedHex {
+        /// Expanding city identity.
+        city_id: String,
+        /// Claimed odd-q column.
+        col: i32,
+        /// Claimed odd-q row.
+        row: i32,
+    },
+    /// The recipient's recomputed stability crossed a presentation band.
+    StabilityBandChanged {
+        /// Affected participant.
+        player_id: String,
+        /// Band before recomputation.
+        previous_band: StabilityBandDto,
+        /// Band after recomputation.
+        new_band: StabilityBandDto,
+        /// Newly computed effective stability net.
+        net: i64,
     },
     /// One participant crossed an authored map objective's hold threshold.
     MapObjectiveSecured {

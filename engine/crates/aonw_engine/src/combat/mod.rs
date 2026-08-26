@@ -425,6 +425,14 @@ fn require_attack_policy(
     }
 }
 
+pub(crate) fn city_max_hit_points(
+    state: &GameState,
+    ruleset: &RulesetDefinition,
+    city: &aonw_domain::City,
+) -> Option<i64> {
+    stats::for_city(state, ruleset, city).map(|stats| i64::from(stats.hit_points))
+}
+
 fn damage(attack: i32, defense: i32, variance: i32) -> u32 {
     if attack <= 0 {
         0

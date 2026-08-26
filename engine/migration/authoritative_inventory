@@ -131,7 +131,7 @@ event CityAttackedEvent combat runtime-ready CityAttacked packages/aonw_core/lib
 event CityBuiltBuildingEvent city runtime-ready CityBuiltBuilding packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityBuiltWonderEvent city runtime-ready CityBuiltWonder packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityCapturedEvent combat runtime-ready CityCaptured packages/aonw_core/lib/game/domain/event/combat_events.dart
-event CityClaimedHexEvent city reference-only - packages/aonw_core/lib/game/domain/event/city_events.dart
+event CityClaimedHexEvent city runtime-ready CityClaimedHex packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityDestroyedEvent combat runtime-ready CityDestroyed packages/aonw_core/lib/game/domain/event/combat_events.dart
 event CityFoundedEvent city runtime-ready CityFounded packages/aonw_core/lib/game/domain/event/city_events.dart
 event CityProducedUnitEvent city runtime-ready CityProducedUnit packages/aonw_core/lib/game/domain/event/city_events.dart
@@ -151,7 +151,7 @@ event MapObjectiveSecuredEvent objective runtime-ready MapObjectiveSecured packa
 event PlayerKickedEvent system-lifecycle turn-kernel-ready PlayerKicked packages/aonw_core/lib/game/domain/event/system_events.dart
 event PlayerTimedOutEvent system-lifecycle turn-kernel-ready PlayerTimedOut packages/aonw_core/lib/game/domain/event/system_events.dart
 event ResearchPointsGainedEvent research runtime-ready ResearchPointsGained packages/aonw_core/lib/game/domain/event/research_events.dart
-event StabilityBandChangedEvent stability reference-only - packages/aonw_core/lib/game/domain/event/stability_events.dart
+event StabilityBandChangedEvent stability runtime-ready StabilityBandChanged packages/aonw_core/lib/game/domain/event/stability_events.dart
 event StrategicResourceDiscoveredEvent resource reference-only - packages/aonw_core/lib/game/domain/event/resource_events.dart
 event TechnologyResearchedEvent research runtime-ready TechnologyResearched packages/aonw_core/lib/game/domain/event/research_events.dart
 event TurnAutoResolvedEvent system-lifecycle reference-only - packages/aonw_core/lib/game/domain/event/system_events.dart

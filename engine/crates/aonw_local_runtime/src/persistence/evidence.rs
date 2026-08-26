@@ -1,4 +1,5 @@
 mod diplomacy;
+mod economy;
 mod objective;
 
 use aonw_contract_mapping::{
@@ -78,6 +79,8 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
             player_id: value.player_id().as_str().to_owned(),
             points: value.points(),
         },
+        DomainEvent::CityClaimedHex(value) => economy::city_claimed(value),
+        DomainEvent::StabilityBandChanged(value) => economy::stability_changed(value),
         DomainEvent::MapObjectiveSecured(value) => objective::map_secured(value),
         DomainEvent::DominationThresholdReached(value) => objective::domination(value),
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {

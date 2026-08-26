@@ -125,6 +125,7 @@ impl BuildingProductionDefinition {
 pub struct UnitProductionDefinition {
     pub(super) unit: UnitKind,
     pub(super) base_cost: i64,
+    pub(super) upkeep: i64,
     pub(super) supply_cost: i64,
     pub(super) presence_resources: &'static [ResourceType],
     pub(super) strategic_cost_options: &'static [StrategicResourceCost],
@@ -140,6 +141,11 @@ impl UnitProductionDefinition {
     #[must_use]
     pub const fn base_cost(self) -> i64 {
         self.base_cost
+    }
+    /// Returns the base per-turn gold upkeep before free-unit allocation.
+    #[must_use]
+    pub const fn upkeep(self) -> i64 {
+        self.upkeep
     }
     /// Returns empire supply consumed by a produced or queued unit.
     #[must_use]

@@ -12,7 +12,10 @@ pub struct CityBalance {
     pub(super) start_population: i64,
     pub(super) start_stored_food: i64,
     pub(super) start_max_hexes: i64,
+    pub(super) mid_game_max_hexes: i64,
+    pub(super) late_game_max_hexes: i64,
     pub(super) start_territory_radius: i64,
+    pub(super) expanded_territory_radius: i64,
     pub(super) worked_hex_limit_base: i64,
     pub(super) worked_hexes_per_population: i64,
 }
@@ -53,10 +56,25 @@ impl CityBalance {
     pub const fn start_max_hexes(self) -> i64 {
         self.start_max_hexes
     }
+    /// Returns the territory capacity reached at population six.
+    #[must_use]
+    pub const fn mid_game_max_hexes(self) -> i64 {
+        self.mid_game_max_hexes
+    }
+    /// Returns the territory capacity reached at population ten.
+    #[must_use]
+    pub const fn late_game_max_hexes(self) -> i64 {
+        self.late_game_max_hexes
+    }
     /// Returns initial territory radius.
     #[must_use]
     pub const fn start_territory_radius(self) -> i64 {
         self.start_territory_radius
+    }
+    /// Returns the territory radius reached at population ten.
+    #[must_use]
+    pub const fn expanded_territory_radius(self) -> i64 {
+        self.expanded_territory_radius
     }
     /// Computes the number of manually worked non-center hexes.
     #[must_use]

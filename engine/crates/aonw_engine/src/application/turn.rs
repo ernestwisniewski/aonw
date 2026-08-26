@@ -166,6 +166,8 @@ impl SystemCommand<'_> {
                         .saturating_add(combat)
                         .saturating_add(diplomacy)
                         .saturating_add(objectives)
+                        .saturating_add(city_count)
+                        .saturating_add(player_count)
                         .saturating_add(1),
                 )
             }
@@ -270,23 +272,23 @@ impl TurnProcessor {
     }
 }
 
-/// Explicit processor set implemented by the T1 kernel.
+/// Explicit processor set implemented by the current integrated kernel.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct TurnKernelCapabilities;
 
 impl TurnKernelCapabilities {
     /// Capability label used by current fixtures and runtime clients.
     pub const LABEL: &'static str = "turn-kernel-ready";
-    /// Full canonical phase order, including slices that still fail closed.
+    /// Full canonical phase order.
     pub const ORDERED: [TurnProcessor; 18] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
         TurnProcessor::CityFounding,
         TurnProcessor::WorkerJobs,
+        TurnProcessor::Economy,
         TurnProcessor::Production,
         TurnProcessor::Artifacts,
-        TurnProcessor::Economy,
         TurnProcessor::MovementReset,
         TurnProcessor::QueuedMovement,
         TurnProcessor::TradeRoutes,
@@ -299,12 +301,13 @@ impl TurnKernelCapabilities {
         TurnProcessor::Objectives,
     ];
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 17] = [
+    pub const ENABLED: [TurnProcessor; 18] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
         TurnProcessor::CityFounding,
         TurnProcessor::WorkerJobs,
+        TurnProcessor::Economy,
         TurnProcessor::Production,
         TurnProcessor::Artifacts,
         TurnProcessor::MovementReset,
@@ -318,8 +321,8 @@ impl TurnKernelCapabilities {
         TurnProcessor::Agreements,
         TurnProcessor::Objectives,
     ];
-    /// Later turn processors that are intentionally unavailable.
-    pub const DISABLED: [TurnProcessor; 1] = [TurnProcessor::Economy];
+    /// Unsupported processors; empty once the integrated kernel is complete.
+    pub const DISABLED: [TurnProcessor; 0] = [];
 
     /// Returns whether a named processor is implemented by this kernel.
     #[must_use]
@@ -331,6 +334,7 @@ impl TurnKernelCapabilities {
                 | TurnProcessor::Combat
                 | TurnProcessor::CityFounding
                 | TurnProcessor::WorkerJobs
+                | TurnProcessor::Economy
                 | TurnProcessor::Production
                 | TurnProcessor::Artifacts
                 | TurnProcessor::MovementReset

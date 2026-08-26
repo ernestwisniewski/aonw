@@ -92,12 +92,14 @@ impl PlayerCommand<'_> {
                         .unwrap_or(u64::MAX);
                 let diplomacy = diplomacy_turn_event_budget(state);
                 let objectives = objective_turn_event_budget(state);
+                let economy = economy_turn_event_budget(state);
                 EventBudget::new(
                     units
                         .saturating_add(cities)
                         .saturating_add(participants.saturating_mul(2))
                         .saturating_add(diplomacy)
                         .saturating_add(objectives)
+                        .saturating_add(economy)
                         .saturating_add(2),
                 )
             }
@@ -112,6 +114,7 @@ impl PlayerCommand<'_> {
                     .saturating_mul(7);
                 let diplomacy = diplomacy_turn_event_budget(state);
                 let objectives = objective_turn_event_budget(state);
+                let economy = economy_turn_event_budget(state);
                 EventBudget::new(
                     participants
                         .saturating_add(units)
@@ -121,11 +124,19 @@ impl PlayerCommand<'_> {
                         .saturating_add(combat)
                         .saturating_add(diplomacy)
                         .saturating_add(objectives)
+                        .saturating_add(economy)
                         .saturating_add(1),
                 )
             }
         }
     }
+}
+
+fn economy_turn_event_budget(state: &GameState) -> u64 {
+    let cities = u64::try_from(state.cities().len()).unwrap_or(u64::MAX);
+    let participants =
+        u64::try_from(state.match_lifecycle().identity().participants().len()).unwrap_or(u64::MAX);
+    cities.saturating_add(participants)
 }
 
 fn objective_turn_event_budget(state: &GameState) -> u64 {

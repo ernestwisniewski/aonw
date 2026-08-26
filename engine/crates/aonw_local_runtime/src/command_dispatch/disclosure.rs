@@ -84,6 +84,8 @@ impl RecipientDisclosure {
             }
             DomainEvent::TechnologyResearched(value) => value.player_id() == &self.actor,
             DomainEvent::ResearchPointsGained(value) => value.player_id() == &self.actor,
+            DomainEvent::CityClaimedHex(value) => self.allows_city(value.city_id()),
+            DomainEvent::StabilityBandChanged(value) => value.player_id() == &self.actor,
             DomainEvent::MapObjectiveSecured(value) => value.player_id() == &self.actor,
             DomainEvent::UnitAttacked(value)
             | DomainEvent::CityAttacked(value)

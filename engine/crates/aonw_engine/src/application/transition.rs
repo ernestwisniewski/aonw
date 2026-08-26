@@ -1,6 +1,7 @@
 mod artifact_events;
 mod diplomacy_events;
 mod domain_transition;
+mod economy_events;
 mod events;
 mod objective_events;
 mod outcome;
@@ -17,6 +18,7 @@ pub use diplomacy_events::{
     DiplomaticRelationChangedEvent,
 };
 pub use domain_transition::{DomainRejection, DomainTransition, DomainTransitionParts};
+pub use economy_events::{CityClaimedHexEvent, StabilityBand, StabilityBandChangedEvent};
 pub use events::{
     AllPlayersSubmittedEvent, CityFoundedEvent, CombatEvent, DiplomaticScoreChangedEvent,
     PlayerKickedEvent, PlayerTimedOutEvent, TurnEndedEvent, WorkerCompletedJobEvent,

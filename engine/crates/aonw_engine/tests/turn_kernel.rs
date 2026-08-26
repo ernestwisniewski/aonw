@@ -1,9 +1,11 @@
-//! Capability, transition ordering, and rejection tests for the T1 turn kernel.
+//! Capability, transition ordering, and rejection tests for the current turn kernel.
 
 #[path = "turn_kernel/diplomacy_phase.rs"]
 mod diplomacy_phase;
-#[path = "turn_kernel/disabled_requirements.rs"]
-mod disabled_requirements;
+#[path = "turn_kernel/economy_phase.rs"]
+mod economy_phase;
+#[path = "turn_kernel/economy_requirement.rs"]
+mod economy_requirement;
 #[path = "turn_kernel/objective_phase.rs"]
 mod objective_phase;
 #[path = "turn_kernel/production_phase.rs"]
@@ -150,7 +152,7 @@ fn player_rejection_precedence_and_sequential_handoff_are_stable() {
 }
 
 #[test]
-fn fixture_manifest_rejects_unimplemented_processors() {
+fn fixture_manifest_covers_all_supported_processors() {
     let root = repository_root();
     let manifest: serde_json::Value = serde_json::from_slice(
         &std::fs::read(root.join("engine/fixtures/turn_kernel/manifest.json")).expect("manifest"),
@@ -176,63 +178,36 @@ fn fixture_manifest_rejects_unimplemented_processors() {
         }
     }
 
-    let unsupported: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(root.join("engine/fixtures/turn_kernel/unsupported-economy-manifest.json"))
-            .expect("negative manifest"),
-    )
-    .expect("strict JSON");
-    let missing = unsupported["requiredProcessors"]
-        .as_array()
-        .expect("requirements")
-        .iter()
-        .filter_map(serde_json::Value::as_str)
-        .find(|required| !enabled.contains(required));
-    assert_eq!(missing, Some(TurnProcessor::Economy.as_str()));
-
-    let state_requirements: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(
-            root.join("engine/fixtures/turn_kernel/unsupported-state-processors-manifest.json"),
-        )
-        .expect("state requirement manifest"),
-    )
-    .expect("strict JSON");
-    let required = state_requirements["fixtures"]
-        .as_array()
-        .expect("fixtures")
-        .iter()
-        .map(|fixture| {
-            fixture["requiredProcessor"]
-                .as_str()
-                .expect("required processor")
-        })
-        .collect::<Vec<_>>();
     assert_eq!(
-        required,
-        TurnKernelCapabilities::DISABLED.map(TurnProcessor::as_str)
+        TurnKernelCapabilities::ENABLED,
+        TurnKernelCapabilities::ORDERED
     );
+    assert!(TurnKernelCapabilities::DISABLED.is_empty());
 }
 
 #[test]
-fn finalization_fails_closed_when_state_requires_disabled_economy() {
+fn finalization_executes_required_economy() {
     let map = map();
     let rules = RulesetDefinition::standard();
     let p1 = player("player-1");
     let p2 = player("player-2");
     let initial = state_with_posture(GameMode::Multiplayer, [p1], None, None, true);
-    let before = GameEngine::state_digest(&initial);
-
     let transition = GameEngine::apply_player_owned(
         initial,
         EngineContext::canonical(&p2, &map, rules),
         PlayerCommand::SubmitTurn(TurnCommand::new(7, &p2)),
     )
-    .expect("disabled processor rejection");
+    .expect("economy finalization");
 
-    assert_eq!(
-        transition.rejection().expect("rejection").code(),
-        CommandRejectionCode::TurnProcessorUnsupported
+    assert!(transition.is_accepted());
+    assert!(
+        transition
+            .state()
+            .economy()
+            .player_war_weariness()
+            .is_empty()
     );
-    assert_eq!(GameEngine::state_digest(transition.state()), before);
+    assert_eq!(transition.state().economy().player_stability_net().len(), 2);
 }
 
 fn state(

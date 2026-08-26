@@ -127,7 +127,7 @@ pub(crate) fn apply_select_expansion(
 ) -> Result<CityMutation, CityRuleError> {
     validate_revision(state, command.expected_revision())?;
     let city = validate_city_control(state, context, command.city_id())?;
-    let candidates = expansion_candidates(state, context, city)?;
+    let candidates = expansion_candidates(state, context, city, state.cities())?;
     if !candidates
         .iter()
         .any(|candidate| candidate.coordinate() == command.target())
@@ -223,7 +223,7 @@ pub(crate) fn query_worked_hexes(
         context.map(),
         &selected,
         limit,
-        context.ruleset().economy(),
+        &context.ruleset().economy(),
     );
     let mut controlled = city.controlled_hexes().to_vec();
     controlled.sort_unstable();
@@ -244,7 +244,7 @@ pub(crate) fn query_expansion(
 ) -> Result<CityExpansionOptions, CityRuleError> {
     validate_revision(state, query.expected_revision())?;
     let city = validate_city_control(state, context, query.city_id())?;
-    let candidates = expansion_candidates(state, context, city)?;
+    let candidates = expansion_candidates(state, context, city, state.cities())?;
     let mut controlled = city.controlled_hexes().to_vec();
     controlled.sort_unstable();
     Ok(CityExpansionOptions::new(
@@ -295,7 +295,7 @@ pub(crate) fn effective_worked_hexes(
     map: &MapDefinition,
     selected: &[HexCoord],
     limit: u32,
-    economy: aonw_content::EconomyBalance,
+    economy: &aonw_content::EconomyBalance,
 ) -> Vec<HexCoord> {
     let limit = usize::try_from(limit).unwrap_or(usize::MAX);
     let mut effective = selected.to_vec();
@@ -328,10 +328,29 @@ pub(crate) fn effective_worked_hexes(
     effective
 }
 
+pub(crate) fn expansion_after_growth(
+    state: &GameState,
+    context: EngineContext<'_>,
+    city: &City,
+    cities: &[City],
+) -> Result<Option<HexCoord>, CityRuleError> {
+    let candidates = expansion_candidates(state, context, city, cities)?;
+    Ok(city
+        .preferred_expansion_hex()
+        .and_then(|preferred| {
+            candidates
+                .iter()
+                .any(|candidate| candidate.coordinate() == preferred)
+                .then_some(preferred)
+        })
+        .or_else(|| candidates.first().map(|candidate| candidate.coordinate())))
+}
+
 fn expansion_candidates(
     state: &GameState,
     context: EngineContext<'_>,
     city: &City,
+    cities: &[City],
 ) -> Result<Vec<CityExpansionCandidate>, CityRuleError> {
     let technology_bonus = match state.research().players().get(city.owner_player_id()) {
         Some(research) => {
@@ -350,9 +369,7 @@ fn expansion_candidates(
     let mut candidates = Vec::new();
     for owned in std::iter::once(city.center()).chain(city.controlled_hexes().iter().copied()) {
         for target in owned.neighbors() {
-            if !seen.insert(target)
-                || !can_claim_expansion(city, target, state.cities(), context.map())
-            {
+            if !seen.insert(target) || !can_claim_expansion(city, target, cities, context.map()) {
                 continue;
             }
             let tile = context
@@ -361,7 +378,7 @@ fn expansion_candidates(
                 .expect("claimable expansion has map tile");
             candidates.push(CityExpansionCandidate::new(
                 target,
-                expansion_score(tile, context.ruleset().economy()),
+                expansion_score(tile, &context.ruleset().economy()),
                 u32::try_from(city.center().distance_to(target)).unwrap_or(u32::MAX),
             ));
         }

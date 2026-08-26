@@ -30,9 +30,9 @@ pub use model::{
 pub use ruleset::{
     BuildingProductionDefinition, CityBalance, CityNameSet, DiplomacyBalance, EconomyBalance,
     EconomyYield, ProductionBalance, ProductionRequirement, RulesetDefinition,
-    StabilityModifierDefinition, StrategicResourceCost, UnitCapabilities, UnitDefinition,
-    UnitMovementDomainValue, UnitProductionDefinition, WonderProductionDefinition, WorkerBalance,
-    WorkerImprovementDefinition, WorkerYield,
+    StabilityModifierDefinition, StabilityValues, StrategicResourceCost, UnitCapabilities,
+    UnitDefinition, UnitMovementDomainValue, UnitProductionDefinition, WonderProductionDefinition,
+    WorkerBalance, WorkerImprovementDefinition, WorkerYield,
 };
 pub use scenario::{
     ScenarioBootstrapError, ScenarioDefinition, ScenarioLoadError, ScenarioUnitDefinition,

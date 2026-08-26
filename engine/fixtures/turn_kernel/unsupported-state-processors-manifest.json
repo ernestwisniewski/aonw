@@ -1,6 +1,0 @@
-{
-  "capability": "turn-kernel-ready",
-  "fixtures": [
-    {"id": "economy-without-production", "requiredProcessor": "economy"}
-  ]
-}

@@ -238,7 +238,7 @@ pub(crate) fn processor_is_required(
                 ..
             }) if owns_scope(owner_player_id)
         ),
-        TurnProcessor::Economy => economy_is_required(state, &owns_scope),
+        TurnProcessor::Economy => !player_ids.is_empty(),
         TurnProcessor::Research => {
             state.research().players().iter().any(|(player, research)| {
                 owns_scope(player)
@@ -265,19 +265,6 @@ pub(crate) fn processor_is_required(
             super::objective_phase::processor_is_required(state, map, player_ids)
         }
     }
-}
-
-fn economy_is_required(state: &GameState, owns_scope: &impl Fn(&PlayerId) -> bool) -> bool {
-    state
-        .economy()
-        .player_war_weariness()
-        .keys()
-        .any(owns_scope)
-        || state
-            .economy()
-            .player_stability_net()
-            .keys()
-            .any(owns_scope)
 }
 
 fn diplomacy_is_required(state: &GameState, owns_scope: &impl Fn(&PlayerId) -> bool) -> bool {

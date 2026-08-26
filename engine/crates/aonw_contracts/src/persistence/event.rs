@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::client::WorkerJobCompletionDto;
 use crate::{
-    CityBuildingTypeDto, CombatTargetDto, CoordinateDto, MapObjectiveTypeDto, TechnologyIdDto,
-    TroopKindDto, UnitKindDto, WonderTypeDto,
+    CityBuildingTypeDto, CombatTargetDto, CoordinateDto, MapObjectiveTypeDto, StabilityBandDto,
+    TechnologyIdDto, TroopKindDto, UnitKindDto, WonderTypeDto,
 };
 
 /// Ordered authoritative event stored in a replay result.
@@ -106,6 +106,26 @@ pub enum ReplayEventDto {
         player_id: String,
         /// Exact positive science total.
         points: i64,
+    },
+    /// One city claimed a deterministic territory coordinate after growth.
+    CityClaimedHex {
+        /// Expanding city identity.
+        city_id: String,
+        /// Claimed odd-q column.
+        col: i32,
+        /// Claimed odd-q row.
+        row: i32,
+    },
+    /// One participant's recomputed stability crossed a presentation band.
+    StabilityBandChanged {
+        /// Affected participant.
+        player_id: String,
+        /// Band before recomputation.
+        previous_band: StabilityBandDto,
+        /// Band after recomputation.
+        new_band: StabilityBandDto,
+        /// Newly computed effective stability net.
+        net: i64,
     },
     /// One participant crossed an authored map objective's hold threshold.
     MapObjectiveSecured {

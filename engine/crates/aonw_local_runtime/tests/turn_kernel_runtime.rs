@@ -19,6 +19,8 @@ use aonw_local_runtime::{
     TurnCommandRequest,
 };
 
+#[path = "turn_kernel_runtime/economy.rs"]
+mod economy;
 #[path = "turn_kernel_runtime/objective.rs"]
 mod objective;
 

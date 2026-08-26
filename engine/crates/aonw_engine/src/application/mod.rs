@@ -12,15 +12,15 @@ pub use logistics::{
 pub use query::{CanonicalQueryError, GameQuery, QueryResult};
 pub use transition::{
     AllPlayersSubmittedEvent, ArtifactCarriedEvent, ArtifactExcavationStartedEvent,
-    ArtifactStoredEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent, CityFoundedEvent,
-    CityProducedUnitEvent, CombatEvent, CommandRejectionCode, DiplomaticMessageRespondedEvent,
-    DiplomaticMessageSentEvent, DiplomaticPromiseBrokenEvent, DiplomaticProposalExpiredEvent,
-    DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
-    DiplomaticScoreChangedEvent, DomainEvent, DomainRejection, DomainTransition,
-    DomainTransitionParts, DominationThresholdReachedEvent, ExecutionEvidence,
+    ArtifactStoredEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent, CityClaimedHexEvent,
+    CityFoundedEvent, CityProducedUnitEvent, CombatEvent, CommandRejectionCode,
+    DiplomaticMessageRespondedEvent, DiplomaticMessageSentEvent, DiplomaticPromiseBrokenEvent,
+    DiplomaticProposalExpiredEvent, DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent,
+    DiplomaticRelationChangedEvent, DiplomaticScoreChangedEvent, DomainEvent, DomainRejection,
+    DomainTransition, DomainTransitionParts, DominationThresholdReachedEvent, ExecutionEvidence,
     MapObjectiveSecuredEvent, PlayerKickedEvent, PlayerTimedOutEvent, ResearchPointsGainedEvent,
-    TechnologyResearchedEvent, TurnEndedEvent, WonderProductionRefundedEvent,
-    WorkerCompletedJobEvent, WorkerJobCompletion,
+    StabilityBand, StabilityBandChangedEvent, TechnologyResearchedEvent, TurnEndedEvent,
+    WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use turn::{
     FinalizeTimedOutTurnCommand, KickParticipantCommand, ProcessorRequirement, SystemCommand,

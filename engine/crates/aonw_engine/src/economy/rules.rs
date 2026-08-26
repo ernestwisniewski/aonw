@@ -237,7 +237,7 @@ pub(crate) fn query_city_yield(
     let worked_limit = context.ruleset().city().worked_hex_limit(city.population());
     let manual = crate::city::normalized_manual_hexes(city, worked_limit);
     let worked =
-        crate::city::effective_worked_hexes(city, context.map(), &manual, worked_limit, balance);
+        crate::city::effective_worked_hexes(city, context.map(), &manual, worked_limit, &balance);
     let assigned = assigned_worker_hexes(state, city);
     let mut full_yield_hexes = worked.iter().copied().collect::<BTreeSet<_>>();
     full_yield_hexes.extend(assigned.iter().copied());
@@ -323,7 +323,7 @@ pub(crate) fn query_city_yield(
 
 pub(crate) fn tile_base_yield(
     tile: &TileDefinition,
-    balance: aonw_content::EconomyBalance,
+    balance: &aonw_content::EconomyBalance,
 ) -> Result<YieldValue, EconomyQueryError> {
     let mut value = from_content(balance.terrain_yield(tile.yield_terrain()));
     if tile
@@ -347,7 +347,7 @@ fn tile_yield(
         .map()
         .tile_at(coordinate)
         .map_or(Ok(YieldValue::default()), |tile| {
-            tile_base_yield(tile, context.ruleset().economy())
+            tile_base_yield(tile, &context.ruleset().economy())
         })?;
     if let Some(improvement) = state.infrastructure().field_improvement_at(coordinate) {
         value = checked_add(value, improvement_yield(context, improvement.kind())?)?;

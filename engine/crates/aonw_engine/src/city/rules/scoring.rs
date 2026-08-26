@@ -1,10 +1,10 @@
 use aonw_content::{EconomyBalance, TileDefinition};
 
-pub(super) fn worked_score(tile: &TileDefinition, balance: EconomyBalance) -> i32 {
+pub(super) fn worked_score(tile: &TileDefinition, balance: &EconomyBalance) -> i32 {
     clamp_score(base_score(tile, balance))
 }
 
-pub(super) fn expansion_score(tile: &TileDefinition, balance: EconomyBalance) -> i32 {
+pub(super) fn expansion_score(tile: &TileDefinition, balance: &EconomyBalance) -> i32 {
     let score = base_score(tile, balance)
         .saturating_add(
             if tile
@@ -20,7 +20,7 @@ pub(super) fn expansion_score(tile: &TileDefinition, balance: EconomyBalance) ->
     clamp_score(score)
 }
 
-fn base_score(tile: &TileDefinition, balance: EconomyBalance) -> i64 {
+fn base_score(tile: &TileDefinition, balance: &EconomyBalance) -> i64 {
     let Ok(value) = crate::economy::rules::tile_base_yield(tile, balance) else {
         return i64::MIN;
     };

@@ -1,7 +1,7 @@
 use crate::{
     AllPlayersSubmittedEvent, ArtifactCarriedEvent, ArtifactExcavationStartedEvent,
     ArtifactStoredEvent, AutoExplorePlannedEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent,
-    CityFoundedEvent, CityProducedUnitEvent, CombatEvent, CombatExecution,
+    CityClaimedHexEvent, CityFoundedEvent, CityProducedUnitEvent, CombatEvent, CombatExecution,
     DiplomaticScoreChangedEvent, LogisticsExecution, MerchantRouteAssignedEvent,
     MerchantTravelQueuedEvent, PlayerKickedEvent, PlayerTimedOutEvent, ResearchPointsGainedEvent,
     TechnologyResearchedEvent, TroopDetachedEvent, TurnEndedEvent, TurnKernelExecution,
@@ -12,6 +12,7 @@ use crate::{
     DiplomaticMessageRespondedEvent, DiplomaticMessageSentEvent, DiplomaticPromiseBrokenEvent,
     DiplomaticProposalExpiredEvent, DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent,
     DiplomaticRelationChangedEvent, DominationThresholdReachedEvent, MapObjectiveSecuredEvent,
+    StabilityBandChangedEvent,
 };
 
 /// Ordered event emitted by an accepted transition.
@@ -37,6 +38,10 @@ pub enum DomainEvent {
     TechnologyResearched(TechnologyResearchedEvent),
     /// One participant produced positive science during turn progression.
     ResearchPointsGained(ResearchPointsGainedEvent),
+    /// One growing city claimed a deterministic territory coordinate.
+    CityClaimedHex(CityClaimedHexEvent),
+    /// One player's recomputed stability crossed a band boundary.
+    StabilityBandChanged(StabilityBandChangedEvent),
     /// One player crossed an authored map objective's hold threshold.
     MapObjectiveSecured(MapObjectiveSecuredEvent),
     /// One player started a domination-threshold hold.

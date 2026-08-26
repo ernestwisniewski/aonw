@@ -1,5 +1,7 @@
 use serde::Serialize;
 
+use aonw_domain::{CityBuildingType, PaceProfile, TechnologyId};
+
 use crate::{ResourceType, TerrainType};
 
 /// Integer city yield used by deterministic economy rules.
@@ -102,6 +104,31 @@ pub struct EconomyBalance {
     growth_base_cost: i64,
     growth_cost_per_population: i64,
     growth_cost_per_controlled_hex: i64,
+    base_free_units: i64,
+    free_units_per_city: i64,
+    base_order: i64,
+    stability_cost_per_city: i64,
+    population_cost_threshold: i64,
+    stability_cost_per_population: i64,
+    conquered_city_cost: i64,
+    cohesion_reach_radius: u32,
+    frontier_cost_per_hex: i64,
+    disconnected_city_cost: i64,
+    war_weariness_cap: i64,
+    war_weariness_attack_free_per_turn: u32,
+    war_weariness_per_city_lost: i64,
+    war_weariness_peace_decay: i64,
+    war_weariness_treaty_decay: i64,
+    relative_standing_offset: i64,
+    hegemony_k_basis_points: u32,
+    hegemony_tax_points_per_cost: i64,
+    stability_per_order_building: i64,
+    stability_per_order_technology: i64,
+    stability_per_luxury_resource: i64,
+    stability_per_stored_artifact: i64,
+    order_buildings: &'static [&'static str],
+    order_technologies: &'static [&'static str],
+    luxury_resources: &'static [&'static str],
     content_stability_threshold: i64,
     unrest_stability_threshold: i64,
     content_stability: StabilityModifierDefinition,
@@ -162,6 +189,31 @@ impl EconomyBalance {
         growth_base_cost: 10,
         growth_cost_per_population: 4,
         growth_cost_per_controlled_hex: 3,
+        base_free_units: 2,
+        free_units_per_city: 2,
+        base_order: 6,
+        stability_cost_per_city: 2,
+        population_cost_threshold: 6,
+        stability_cost_per_population: 1,
+        conquered_city_cost: 3,
+        cohesion_reach_radius: 4,
+        frontier_cost_per_hex: 1,
+        disconnected_city_cost: 1,
+        war_weariness_cap: 8,
+        war_weariness_attack_free_per_turn: 1,
+        war_weariness_per_city_lost: 2,
+        war_weariness_peace_decay: 1,
+        war_weariness_treaty_decay: 2,
+        relative_standing_offset: 3,
+        hegemony_k_basis_points: 16_000,
+        hegemony_tax_points_per_cost: 5,
+        stability_per_order_building: 1,
+        stability_per_order_technology: 2,
+        stability_per_luxury_resource: 1,
+        stability_per_stored_artifact: 1,
+        order_buildings: &ORDER_BUILDINGS,
+        order_technologies: &ORDER_TECHNOLOGIES,
+        luxury_resources: &LUXURY_RESOURCES,
         content_stability_threshold: 4,
         unrest_stability_threshold: -4,
         content_stability: modifier!(10_000, 10_000, 1, false),
@@ -225,6 +277,117 @@ impl EconomyBalance {
             .checked_add(self.growth_base_cost)
     }
 
+    /// Computes the paced city growth cost with exact ceiling arithmetic.
+    #[must_use]
+    pub fn paced_growth_cost(
+        self,
+        population: i64,
+        territory_hex_count: usize,
+        pace: PaceProfile,
+    ) -> Option<i64> {
+        let basis_points = match pace {
+            PaceProfile::Unlimited => 11_500,
+            PaceProfile::Standard60 => 8_500,
+            PaceProfile::Normal90 => 9_200,
+            PaceProfile::Long120 => 10_000,
+        };
+        let base = self.growth_cost(population, territory_hex_count)?;
+        base.checked_mul(basis_points)?
+            .checked_add(9_999)?
+            .checked_div(10_000)
+            .map(|value| value.max(1))
+    }
+
+    /// Returns free upkeep-bearing units for the current city count.
+    #[must_use]
+    pub fn free_unit_count(self, city_count: usize) -> Option<i64> {
+        self.free_units_per_city
+            .checked_mul(i64::try_from(city_count).ok()?)?
+            .checked_add(self.base_free_units)
+    }
+
+    /// Returns the stability source/cost constants in one content-owned value.
+    #[must_use]
+    pub const fn stability_values(self) -> StabilityValues {
+        StabilityValues {
+            base_order: self.base_order,
+            cost_per_city: self.stability_cost_per_city,
+            population_cost_threshold: self.population_cost_threshold,
+            cost_per_population: self.stability_cost_per_population,
+            conquered_city_cost: self.conquered_city_cost,
+            cohesion_reach_radius: self.cohesion_reach_radius,
+            frontier_cost_per_hex: self.frontier_cost_per_hex,
+            disconnected_city_cost: self.disconnected_city_cost,
+            war_weariness_cap: self.war_weariness_cap,
+            war_weariness_attack_free_per_turn: self.war_weariness_attack_free_per_turn,
+            war_weariness_per_city_lost: self.war_weariness_per_city_lost,
+            war_weariness_peace_decay: self.war_weariness_peace_decay,
+            war_weariness_treaty_decay: self.war_weariness_treaty_decay,
+            relative_standing_offset: self.relative_standing_offset,
+            hegemony_k_basis_points: self.hegemony_k_basis_points,
+            hegemony_tax_points_per_cost: self.hegemony_tax_points_per_cost,
+            stability_per_order_building: self.stability_per_order_building,
+            stability_per_order_technology: self.stability_per_order_technology,
+            stability_per_luxury_resource: self.stability_per_luxury_resource,
+            stability_per_stored_artifact: self.stability_per_stored_artifact,
+        }
+    }
+
+    /// Returns the inclusive lower bound of the content stability band.
+    #[must_use]
+    pub const fn content_stability_threshold(self) -> i64 {
+        self.content_stability_threshold
+    }
+
+    /// Returns the inclusive upper bound of the unrest stability band.
+    #[must_use]
+    pub const fn unrest_stability_threshold(self) -> i64 {
+        self.unrest_stability_threshold
+    }
+
+    /// Returns whether a building contributes order stability.
+    #[must_use]
+    pub fn is_order_building(self, value: CityBuildingType) -> bool {
+        matches!(
+            value,
+            CityBuildingType::TownHall
+                | CityBuildingType::Courthouse
+                | CityBuildingType::GovernorsOffice
+                | CityBuildingType::Ministries
+                | CityBuildingType::Monument
+        )
+    }
+
+    /// Returns whether a technology contributes order stability.
+    #[must_use]
+    pub fn is_order_technology(self, value: TechnologyId) -> bool {
+        matches!(
+            value,
+            TechnologyId::Law | TechnologyId::CivilService | TechnologyId::Administration
+        )
+    }
+
+    /// Returns whether a resource contributes distinct luxury stability.
+    #[must_use]
+    pub fn is_luxury_resource(self, value: ResourceType) -> bool {
+        matches!(
+            value,
+            ResourceType::Gold
+                | ResourceType::Silver
+                | ResourceType::Gems
+                | ResourceType::Silk
+                | ResourceType::Spices
+                | ResourceType::Cotton
+                | ResourceType::Grapes
+                | ResourceType::Ivory
+                | ResourceType::Pearls
+                | ResourceType::Coffee
+                | ResourceType::Cocoa
+                | ResourceType::Tobacco
+                | ResourceType::Sugar
+        )
+    }
+
     /// Resolves stability effects without floating-point arithmetic.
     #[must_use]
     pub const fn stability_modifier(self, stability_net: i64) -> StabilityModifierDefinition {
@@ -239,6 +402,45 @@ impl EconomyBalance {
         }
     }
 }
+
+/// Exact content-owned constants used by per-turn stability progression.
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct StabilityValues {
+    pub base_order: i64,
+    pub cost_per_city: i64,
+    pub population_cost_threshold: i64,
+    pub cost_per_population: i64,
+    pub conquered_city_cost: i64,
+    pub cohesion_reach_radius: u32,
+    pub frontier_cost_per_hex: i64,
+    pub disconnected_city_cost: i64,
+    pub war_weariness_cap: i64,
+    pub war_weariness_attack_free_per_turn: u32,
+    pub war_weariness_per_city_lost: i64,
+    pub war_weariness_peace_decay: i64,
+    pub war_weariness_treaty_decay: i64,
+    pub relative_standing_offset: i64,
+    pub hegemony_k_basis_points: u32,
+    pub hegemony_tax_points_per_cost: i64,
+    pub stability_per_order_building: i64,
+    pub stability_per_order_technology: i64,
+    pub stability_per_luxury_resource: i64,
+    pub stability_per_stored_artifact: i64,
+}
+
+const ORDER_BUILDINGS: [&str; 5] = [
+    "townHall",
+    "courthouse",
+    "governorsOffice",
+    "ministries",
+    "monument",
+];
+const ORDER_TECHNOLOGIES: [&str; 3] = ["law", "civilService", "administration"];
+const LUXURY_RESOURCES: [&str; 13] = [
+    "gold", "silver", "gems", "silk", "spices", "cotton", "grapes", "ivory", "pearls", "coffee",
+    "cocoa", "tobacco", "sugar",
+];
 
 const ZERO: EconomyYield = value!(0, 0, 0, 0);
 const STANDARD_TERRAIN_YIELDS: [TerrainYieldDefinition; 14] = [

@@ -169,7 +169,7 @@ fn exchange_group_failure_never_applies_only_one_leg() {
     let poor = trade_state(DiplomaticRelationStatus::Friendly, (3, 10), (3, 5), 2);
     let poor_before = poor.state.economy().clone();
     let expired = end_round(poor.state, &poor.p2);
-    assert_eq!(expired.state().economy(), &poor_before);
+    assert_trade_accounts_unchanged(expired.state().economy(), &poor_before);
     assert!(
         expired
             .state()
@@ -181,7 +181,7 @@ fn exchange_group_failure_never_applies_only_one_leg() {
     let war = trade_state(DiplomaticRelationStatus::War, (10, 10), (3, 5), 2);
     let war_before = war.state.economy().clone();
     let aged = end_round(war.state, &war.p2);
-    assert_eq!(aged.state().economy(), &war_before);
+    assert_trade_accounts_unchanged(aged.state().economy(), &war_before);
     assert!(
         aged.state()
             .diplomacy()
@@ -193,7 +193,7 @@ fn exchange_group_failure_never_applies_only_one_leg() {
     let short = trade_state(DiplomaticRelationStatus::Neutral, (10, 10), (3, 4), 2);
     let short_before = short.state.economy().clone();
     let stock_failed = end_round(short.state, &short.p2);
-    assert_eq!(stock_failed.state().economy(), &short_before);
+    assert_trade_accounts_unchanged(stock_failed.state().economy(), &short_before);
     assert!(
         stock_failed
             .state()
@@ -201,6 +201,15 @@ fn exchange_group_failure_never_applies_only_one_leg() {
             .resource_trade_agreements()
             .iter()
             .all(|value| value.remaining_turns() == 1)
+    );
+}
+
+fn assert_trade_accounts_unchanged(actual: &EconomyState, previous: &EconomyState) {
+    assert_eq!(actual.player_gold(), previous.player_gold());
+    assert_eq!(actual.strategic_resources(), previous.strategic_resources());
+    assert_eq!(
+        actual.initial_resource_distribution(),
+        previous.initial_resource_distribution()
     );
 }
 

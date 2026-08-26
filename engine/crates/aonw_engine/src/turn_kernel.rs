@@ -2,6 +2,7 @@ mod agreement_phase;
 mod city_phase;
 mod diplomacy_phase;
 mod events;
+mod final_phases;
 mod objective_phase;
 mod preparation;
 mod processor_order;
@@ -26,11 +27,12 @@ use self::support::{
     simultaneous_lifecycle, system_content_hashes, transition_with_phase_evidence,
     unsupported_processor_for_scope, valid_system_scope, validate_player_command,
 };
-use agreement_phase::settle_resource_trades;
-use diplomacy_phase::advance_turn_diplomacy;
 use events::{TurnPhaseEvents, sequential_phase_events, simultaneous_phase_events};
-use objective_phase::advance_turn_objectives;
-use preparation::{TurnPreparationPhase, advance_turn_preparation};
+use final_phases::{FinalTurnPhases, advance_final_turn_phases};
+use preparation::{
+    SimultaneousPreparationPhase, TurnPreparationPhase, advance_simultaneous_preparation,
+    advance_turn_preparation,
+};
 use processor_order::{SEQUENTIAL_TURN_PROCESSORS, SIMULTANEOUS_TURN_PROCESSORS};
 
 pub(crate) use support::processor_is_required;
@@ -153,6 +155,7 @@ pub(crate) fn apply_end_turn(
         context.map(),
         context.ruleset(),
         &progress.reset_scope,
+        &BTreeSet::new(),
     )?;
     finish_sequential_turn(
         preparation,
@@ -208,35 +211,32 @@ fn finish_sequential_turn(
         invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     } = movement;
-    let diplomacy_phase = advance_turn_diplomacy(
+    let mut weariness_counts = crate::economy::WarWearinessEventCounts::default();
+    let FinalTurnPhases {
+        economy,
+        diplomacy,
+        objectives,
+        diplomacy_events,
+        objective_events,
+        stability_events,
+    } = advance_final_turn_phases(
         &state,
+        context.map(),
         context.ruleset(),
         &units,
         diplomacy,
+        &progress.reset_scope,
         progress.next_turn,
-    )
-    .map_err(CanonicalEngineError::DiplomacyCommand)?;
-    let (economy, diplomacy) = settle_resource_trades(
-        &state,
-        context.ruleset(),
-        diplomacy_phase.diplomacy,
-        &progress.reset_scope,
-    )
-    .map_err(CanonicalEngineError::DiplomacyCommand)?;
-    let objective_phase = advance_turn_objectives(
-        &state,
-        context.map(),
-        economy,
-        &units,
-        &progress.reset_scope,
+        &mut weariness_counts,
     )?;
     let events = sequential_phase_events(
         TurnPhaseEvents {
             settlement: preparation.events,
             movement: movement_events,
             research: preparation.research_events,
-            diplomacy: diplomacy_phase.events,
-            objectives: objective_phase.events,
+            diplomacy: diplomacy_events,
+            objectives: objective_events,
+            stability: stability_events,
         },
         command.player_id(),
     );
@@ -245,10 +245,10 @@ fn finish_sequential_turn(
         next_lifecycle,
         Some(progress.next_turn),
         units,
-        Some(objective_phase.economy),
+        Some(economy),
         Some(fog_of_war),
         Some(diplomacy),
-        Some(objective_phase.objectives),
+        Some(objectives),
         InteractionStateUpdate::Replace(interaction),
         events,
         SEQUENTIAL_TURN_PROCESSORS,
@@ -393,21 +393,9 @@ fn finalize_simultaneous(
     map_hash: ContentHash,
     ruleset_hash: ContentHash,
 ) -> Result<DomainTransition, CanonicalEngineError> {
-    if unsupported_processor_for_scope(&state, map, scope).is_some() {
-        return Ok(reject(
-            state,
-            CommandRejectionCode::TurnProcessorUnsupported,
-            map_hash,
-            ruleset_hash,
-        ));
-    }
-    let Some(next_turn) = state.turn().checked_add(1) else {
-        return Ok(reject(
-            state,
-            CommandRejectionCode::TurnNumberOverflow,
-            map_hash,
-            ruleset_hash,
-        ));
+    let next_turn = match simultaneous_preflight(&state, map, scope) {
+        Ok(next_turn) => next_turn,
+        Err(code) => return Ok(reject(state, code, map_hash, ruleset_hash)),
     };
     let lifecycle = simultaneous_lifecycle(
         &state,
@@ -417,9 +405,12 @@ fn finalize_simultaneous(
         track_timeout_streaks,
     )?;
     let current_turn = state.turn();
-    let combat =
-        crate::combat::resolve_intended_attacks(state, map, ruleset).map_err(combat_phase_error)?;
-    let preparation = advance_turn_preparation(combat.state, map, ruleset, scope)?;
+    let SimultaneousPreparationPhase {
+        turn: preparation,
+        combat_events,
+        combat_executions,
+        mut weariness_counts,
+    } = advance_simultaneous_preparation(state, map, ruleset, scope)?;
     let movement = match advance_turn_movement(&preparation.state, map, ruleset, scope) {
         Ok(movement) => movement,
         Err(code) => return Ok(reject(preparation.state, code, map_hash, ruleset_hash)),
@@ -435,28 +426,35 @@ fn finalize_simultaneous(
         invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     } = movement;
-    let diplomacy_phase =
-        advance_turn_diplomacy(&preparation.state, ruleset, &units, diplomacy, next_turn)
-            .map_err(CanonicalEngineError::DiplomacyCommand)?;
-    let (economy, diplomacy) = settle_resource_trades(
+    let FinalTurnPhases {
+        economy,
+        diplomacy,
+        objectives,
+        diplomacy_events,
+        objective_events,
+        stability_events,
+    } = advance_final_turn_phases(
         &preparation.state,
+        map,
         ruleset,
-        diplomacy_phase.diplomacy,
+        &units,
+        diplomacy,
         scope,
-    )
-    .map_err(CanonicalEngineError::DiplomacyCommand)?;
-    let objective_phase = advance_turn_objectives(&preparation.state, map, economy, &units, scope)?;
+        next_turn,
+        &mut weariness_counts,
+    )?;
     let events = simultaneous_phase_events(
         current_turn,
         scope,
         skipped,
-        combat.events,
+        combat_events,
         TurnPhaseEvents {
             settlement: preparation.events,
             movement: movement_events,
             research: preparation.research_events,
-            diplomacy: diplomacy_phase.events,
-            objectives: objective_phase.events,
+            diplomacy: diplomacy_events,
+            objectives: objective_events,
+            stability: stability_events,
         },
     );
     apply_update(
@@ -464,10 +462,10 @@ fn finalize_simultaneous(
         lifecycle,
         Some(next_turn),
         units,
-        Some(objective_phase.economy),
+        Some(economy),
         Some(fog_of_war),
         Some(diplomacy),
-        Some(objective_phase.objectives),
+        Some(objectives),
         InteractionStateUpdate::Replace(interaction),
         events,
         SIMULTANEOUS_TURN_PROCESSORS,
@@ -477,7 +475,7 @@ fn finalize_simultaneous(
     .map(|transition| {
         transition_with_phase_evidence(
             transition,
-            combat.executions.into_vec(),
+            combat_executions.into_vec(),
             reset_unit_ids,
             executions,
             invalidated_order_unit_ids,
@@ -487,11 +485,16 @@ fn finalize_simultaneous(
     })
 }
 
-fn combat_phase_error(error: crate::combat::CombatPhaseError) -> CanonicalEngineError {
-    match error {
-        crate::combat::CombatPhaseError::Diplomacy(source) => {
-            CanonicalEngineError::Diplomacy(source)
-        }
-        crate::combat::CombatPhaseError::State(source) => CanonicalEngineError::State(source),
+fn simultaneous_preflight(
+    state: &GameState,
+    map: &MapDefinition,
+    scope: &[PlayerId],
+) -> Result<u32, CommandRejectionCode> {
+    if unsupported_processor_for_scope(state, map, scope).is_some() {
+        return Err(CommandRejectionCode::TurnProcessorUnsupported);
     }
+    state
+        .turn()
+        .checked_add(1)
+        .ok_or(CommandRejectionCode::TurnNumberOverflow)
 }

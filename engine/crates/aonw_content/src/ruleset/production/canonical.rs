@@ -27,9 +27,10 @@ impl Serialize for UnitProductionDefinition {
     where
         S: Serializer,
     {
-        let mut value = serializer.serialize_struct("UnitProductionDefinition", 5)?;
+        let mut value = serializer.serialize_struct("UnitProductionDefinition", 6)?;
         value.serialize_field("unit", unit_name(self.unit))?;
         value.serialize_field("baseCost", &self.base_cost)?;
+        value.serialize_field("upkeep", &self.upkeep)?;
         value.serialize_field("supplyCost", &self.supply_cost)?;
         value.serialize_field("presenceResources", self.presence_resources)?;
         value.serialize_field("strategicCostOptions", self.strategic_cost_options)?;

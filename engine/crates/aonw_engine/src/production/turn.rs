@@ -3,12 +3,13 @@ use aonw_domain::{
     City, CityId, CityProductionTarget, CityProjectType, EconomyAccountChange, EconomyState,
     FogOfWar, GameState, PlayerId, ProductionStateUpdate, Unit,
 };
+use std::collections::BTreeMap;
 
 use super::ProductionError;
 use super::spawn::produced_unit;
 use super::support::{invalid, pace, replace_city};
 use super::wonder::resolve_completed_for_player;
-use super::yield_rules::production_per_turn;
+use super::yield_rules::{production_per_turn, target_production};
 use crate::{CityBuiltBuildingEvent, CityProducedUnitEvent, DomainEvent, EngineContext};
 
 /// State and ordered events produced by the current production turn phase.
@@ -59,11 +60,17 @@ pub(crate) fn current_research_project_science(
 
 /// Advances every scoped player's production in canonical player and city order.
 pub(crate) fn advance_turn_production(
-    mut state: GameState,
+    prepared: crate::economy::PreparedEconomyTurn,
     map: &MapDefinition,
     ruleset: &RulesetDefinition,
     scope: &[PlayerId],
 ) -> Result<ProductionTurnPhase, ProductionError> {
+    let crate::economy::PreparedEconomyTurn {
+        mut state,
+        production_by_city,
+        gold_by_player,
+        mut city_events_by_city,
+    } = prepared;
     let mut events = Vec::new();
     let mut research_project_science = Vec::new();
     for player in scope {
@@ -72,10 +79,25 @@ pub(crate) fn advance_turn_production(
             .iter()
             .any(|city| city.owner_player_id() == player && city.production_queue().is_some())
         {
+            for city in state
+                .cities()
+                .iter()
+                .filter(|city| city.owner_player_id() == player)
+            {
+                if let Some(city_events) = city_events_by_city.remove(city.id()) {
+                    events.extend(city_events);
+                }
+            }
             continue;
         }
         let context = EngineContext::canonical(player, map, ruleset);
-        let advanced = advance_player(&state, context, player)?;
+        let advanced = advance_player(
+            &state,
+            context,
+            player,
+            &production_by_city,
+            &mut city_events_by_city,
+        )?;
         let wonders = resolve_completed_for_player(
             &state,
             context,
@@ -99,6 +121,8 @@ pub(crate) fn advance_turn_production(
             .into_after_production(update)
             .map_err(|error| invalid(error.to_string()))?;
     }
+    state = crate::economy::settle_turn_income_and_upkeep(state, ruleset, scope, &gold_by_player)
+        .map_err(|error| invalid(error.to_string()))?;
     Ok(ProductionTurnPhase {
         state,
         events,
@@ -120,6 +144,8 @@ fn advance_player(
     state: &GameState,
     context: EngineContext<'_>,
     player: &PlayerId,
+    production_by_city: &BTreeMap<CityId, i64>,
+    city_events_by_city: &mut BTreeMap<CityId, Vec<DomainEvent>>,
 ) -> Result<PlayerProductionAdvance, ProductionError> {
     let mut advance = PlayerProductionAdvance {
         units: state.units().to_vec(),
@@ -135,10 +161,17 @@ fn advance_player(
         if city.owner_player_id() != player {
             continue;
         }
+        if let Some(events) = city_events_by_city.remove(city.id()) {
+            advance.events.extend(events);
+        }
         let Some(queue) = city.production_queue() else {
             continue;
         };
-        let production = production_per_turn(state, context, &city, queue.target())?;
+        let production = production_by_city
+            .get(city.id())
+            .copied()
+            .ok_or_else(|| invalid("prepared city production is missing"))?;
+        let production = target_production(state, context, &city, queue.target(), production)?;
         match queue.target() {
             CityProductionTarget::Project(project) => {
                 apply_project(

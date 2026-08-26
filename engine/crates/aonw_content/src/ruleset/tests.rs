@@ -36,7 +36,7 @@ fn standard_ruleset_hash_is_stable() {
     assert_eq!(first, second);
     assert_eq!(
         first.to_string(),
-        "b2fa3eed839670fdc6aa49a78098b86fa53a8ae1f15b203552dc7058d96a958c"
+        "be738c07e23ed8b2ffb6f67bd331c166ee87b838b655f88b51d0fca902ff9938"
     );
 }
 

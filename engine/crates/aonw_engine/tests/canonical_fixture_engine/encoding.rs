@@ -2,10 +2,15 @@
 mod command_name_encoding;
 #[path = "encoding/diplomacy.rs"]
 mod diplomacy_encoding;
+#[path = "encoding/economy.rs"]
+mod economy_encoding;
+#[path = "encoding/movement.rs"]
+mod movement_encoding;
 #[path = "encoding/objective.rs"]
 mod objective_encoding;
 
 pub(super) use command_name_encoding::command_name;
+use movement_encoding::{encode_movement_execution, encode_step};
 
 use aonw_contract_mapping::{
     encode_city_building, encode_city_wonder, encode_improvement, encode_message_category,
@@ -19,14 +24,13 @@ use aonw_contracts::client::{
 use aonw_contracts::{
     CombatExecutionDto, CombatModifierDto, CombatModifierKindDto, CombatOutcomeDto,
     CombatPreviewDto, CombatRollDto, CombatStatTargetDto, CombatStatsDto, CombatTargetDto,
-    CoordinateDto, MovementStepDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogisticsEvidenceDto,
-    ReplayUnitMovementExecutionDto,
+    CoordinateDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogisticsEvidenceDto,
 };
 use aonw_domain::HexCoord;
 use aonw_engine::{
     CombatExecution, CombatModifierKind, CombatPreview, CombatStatTarget, CombatTarget,
     DomainEvent, EffectiveCombatStats, ExecutionEvidence, LogisticsExecution,
-    UnitMovementExecution, WorkerAutomationAction, WorkerAutomationOption,
+    WorkerAutomationAction, WorkerAutomationOption,
 };
 #[allow(clippy::too_many_lines)]
 pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
@@ -84,6 +88,8 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
             player_id: value.player_id().as_str().to_owned(),
             points: value.points(),
         },
+        DomainEvent::CityClaimedHex(value) => economy_encoding::city_claimed(value),
+        DomainEvent::StabilityBandChanged(value) => economy_encoding::stability_changed(value),
         DomainEvent::MapObjectiveSecured(value) => objective_encoding::map_secured(value),
         DomainEvent::DominationThresholdReached(value) => objective_encoding::domination(value),
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
@@ -473,22 +479,6 @@ fn encode_logistics(execution: &LogisticsExecution) -> ReplayLogisticsEvidenceDt
     }
 }
 
-fn encode_movement_execution(execution: &UnitMovementExecution) -> ReplayUnitMovementExecutionDto {
-    ReplayUnitMovementExecutionDto {
-        unit_id: execution.unit_id().as_str().to_owned(),
-        from: coordinate(execution.from()),
-        steps: execution.steps().iter().map(encode_step).collect(),
-    }
-}
-
-fn encode_step(step: &aonw_domain::MovementStep) -> MovementStepDto {
-    MovementStepDto {
-        col: step.coordinate().col(),
-        row: step.coordinate().row(),
-        enter_cost_units: step.enter_cost().get(),
-        cumulative_cost_units: step.cumulative_cost().get(),
-    }
-}
 const fn coordinate(value: HexCoord) -> CoordinateDto {
     CoordinateDto {
         col: value.col(),

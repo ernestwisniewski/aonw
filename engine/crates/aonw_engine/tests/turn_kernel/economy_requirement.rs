@@ -1,4 +1,4 @@
-//! Fail-closed coverage for persisted state requiring unsupported turn processors.
+//! Coverage for the current all-scope economy turn processor.
 
 use std::collections::BTreeMap;
 
@@ -8,41 +8,41 @@ use aonw_domain::{
     MatchRules, PlayerTurnState, StateRevision, TurnLifecycle, UnitOccupancyPolicy,
 };
 use aonw_engine::{
-    CommandRejectionCode, EngineContext, GameEngine, PlayerCommand, ProcessorRequirement,
-    TurnCommand, TurnProcessor,
+    EngineContext, GameEngine, PlayerCommand, ProcessorRequirement, TurnCommand, TurnProcessor,
 };
 
 use super::{map, participant, player, unit};
 
 #[test]
-fn persisted_disabled_economy_requirement_fails_closed() {
+fn persisted_economy_requirement_is_supported_and_executes() {
     let map = map();
     let rules = RulesetDefinition::standard();
     let player = player("player-2");
     let processor = TurnProcessor::Economy;
-    let state = state_requiring(processor);
+    let state = state_requiring_economy();
     assert_eq!(
         processor.requirement(&state, &map, std::slice::from_ref(&player)),
-        ProcessorRequirement::RequiredButUnsupported,
-        "{processor:?} must be detected before mutation"
+        ProcessorRequirement::RequiredAndSupported,
+        "{processor:?} must be supported for every non-empty scope"
     );
-    let before = GameEngine::state_digest(&state);
     let transition = GameEngine::apply_player_owned(
         state,
         EngineContext::canonical(&player, &map, rules),
         PlayerCommand::SubmitTurn(TurnCommand::new(7, &player)),
     )
-    .expect("disabled processor rejection");
-    assert_eq!(
-        transition.rejection().expect("rejection").code(),
-        CommandRejectionCode::TurnProcessorUnsupported,
-        "{processor:?} must reject the whole turn"
+    .expect("supported economy finalization");
+    assert!(transition.is_accepted());
+    assert!(
+        transition
+            .state()
+            .economy()
+            .player_war_weariness()
+            .is_empty(),
+        "peace-time weariness must decay to zero"
     );
-    assert_eq!(GameEngine::state_digest(transition.state()), before);
-    assert!(transition.events().is_empty());
 }
 
-fn state_requiring(processor: TurnProcessor) -> GameState {
+fn state_requiring_economy() -> GameState {
     let p1 = player("player-1");
     let p2 = player("player-2");
     let identity = MatchIdentity::try_new(
@@ -77,20 +77,17 @@ fn state_requiring(processor: TurnProcessor) -> GameState {
     )
     .with_match_lifecycle(MatchLifecycle::new(identity.clone(), lifecycle));
 
-    builder = match processor {
-        TurnProcessor::Economy => builder.with_economy(
-            EconomyState::try_new(
-                &identity,
-                map().bounds(),
-                BTreeMap::new(),
-                BTreeMap::from([(p2, 1)]),
-                BTreeMap::new(),
-                BTreeMap::new(),
-                InitialResourceDistribution::default(),
-            )
-            .expect("economy"),
-        ),
-        _ => panic!("test requires a disabled persisted phase"),
-    };
+    builder = builder.with_economy(
+        EconomyState::try_new(
+            &identity,
+            map().bounds(),
+            BTreeMap::new(),
+            BTreeMap::from([(p2, 1)]),
+            BTreeMap::new(),
+            BTreeMap::new(),
+            InitialResourceDistribution::default(),
+        )
+        .expect("economy"),
+    );
     builder.try_build().expect("state")
 }

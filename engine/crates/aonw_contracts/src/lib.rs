@@ -59,6 +59,17 @@ pub enum MapObjectiveTypeDto {
     LegendaryResource,
 }
 
+/// Stable presentation band derived from one participant's current stability net.
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum StabilityBandDto {
+    Content,
+    Stable,
+    Strained,
+    Unrest,
+}
+
 /// Stable unit type used at engine boundaries.
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]

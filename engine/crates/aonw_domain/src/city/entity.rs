@@ -238,6 +238,35 @@ impl City {
         Ok(updated)
     }
 
+    /// Replaces checked growth counters and optionally claims one expansion hex.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the resulting progression or territory is invalid.
+    pub fn try_after_growth(
+        &self,
+        population: i64,
+        stored_food: i64,
+        max_hexes: i64,
+        territory_radius: i64,
+        claimed_hex: Option<HexCoord>,
+    ) -> Result<Self, CityBuildError> {
+        let mut updated = self.clone();
+        updated.population = population;
+        updated.stored_food = stored_food;
+        updated.max_hexes = max_hexes;
+        updated.territory_radius = territory_radius;
+        if let Some(coordinate) = claimed_hex {
+            let mut controlled = updated.controlled_hexes.into_vec();
+            controlled.push(coordinate);
+            controlled.sort_unstable();
+            updated.controlled_hexes = controlled.into_boxed_slice();
+            updated.preferred_expansion_hex = None;
+        }
+        updated.validate()?;
+        Ok(updated)
+    }
+
     /// Replaces the authoritative city specialization.
     #[must_use]
     pub fn with_specialization(&self, specialization: Option<CitySpecializationType>) -> Self {

@@ -465,7 +465,7 @@ use city::PlayerCountryValue;
 pub use city::{CityBalance, CityNameSet};
 
 mod economy;
-pub use economy::{EconomyBalance, EconomyYield, StabilityModifierDefinition};
+pub use economy::{EconomyBalance, EconomyYield, StabilityModifierDefinition, StabilityValues};
 
 mod production;
 pub use production::{

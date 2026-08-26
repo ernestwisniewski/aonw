@@ -8,6 +8,7 @@ pub use model::{
     SelectCityExpansionHexCommand, ToggleWorkedHexCommand,
 };
 
+pub(crate) use rules::expansion_after_growth;
 pub(crate) use rules::{CityMutation, CityRuleError};
 pub(crate) use rules::{apply_found_city, apply_select_expansion, apply_toggle_worked_hex};
 pub(crate) use rules::{effective_worked_hexes, normalized_manual_hexes};

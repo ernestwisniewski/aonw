@@ -1,4 +1,6 @@
 mod diplomacy;
+mod economy;
+mod movement;
 mod objective;
 
 use aonw_contract_mapping::{
@@ -7,8 +9,8 @@ use aonw_contract_mapping::{
     encode_score_reason, encode_technology, encode_troop, encode_unit_kind,
 };
 use aonw_contracts::client::{
-    ClientEventDto, ClientEvidenceDto, ClientLogisticsEvidenceDto, MovementStepViewDto,
-    UnitMovementExecutionDto, WorkerJobCompletionDto,
+    ClientEventDto, ClientEvidenceDto, ClientLogisticsEvidenceDto, UnitMovementExecutionDto,
+    WorkerJobCompletionDto,
 };
 use aonw_contracts::{
     CombatExecutionDto, CombatModifierDto, CombatModifierKindDto, CombatOutcomeDto,
@@ -81,6 +83,8 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
             player_id: value.player_id().as_str().to_owned(),
             points: value.points(),
         },
+        DomainEvent::CityClaimedHex(value) => economy::city_claimed(value),
+        DomainEvent::StabilityBandChanged(value) => economy::stability_changed(value),
         DomainEvent::MapObjectiveSecured(value) => objective::map_secured(value),
         DomainEvent::DominationThresholdReached(value) => objective::domination(value),
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
@@ -289,7 +293,7 @@ fn encode_evidence(
         ExecutionEvidence::UnitMovement(value) => Some(ClientEvidenceDto::UnitMovement {
             unit_id: value.unit_id().as_str().to_owned(),
             from: coordinate(value.from()),
-            steps: value.steps().iter().map(movement_step).collect(),
+            steps: value.steps().iter().map(movement::step).collect(),
         }),
         ExecutionEvidence::Logistics(value) => Some(ClientEvidenceDto::Logistics {
             execution: logistics_evidence(value),
@@ -456,7 +460,7 @@ fn logistics_evidence(value: &LogisticsExecution) -> ClientLogisticsEvidenceDto 
             unit_id: unit_id.as_str().to_owned(),
             origin_city_id: origin_city_id.as_str().to_owned(),
             destination_city_id: destination_city_id.as_str().to_owned(),
-            steps: steps.iter().map(movement_step).collect(),
+            steps: steps.iter().map(movement::step).collect(),
             transport_network_fingerprint: transport_network_fingerprint.to_string(),
         },
         LogisticsExecution::MerchantTravelQueued {
@@ -466,7 +470,7 @@ fn logistics_evidence(value: &LogisticsExecution) -> ClientLogisticsEvidenceDto 
         } => ClientLogisticsEvidenceDto::MerchantTravelQueued {
             unit_id: unit_id.as_str().to_owned(),
             destination_city_id: destination_city_id.as_str().to_owned(),
-            steps: steps.iter().map(movement_step).collect(),
+            steps: steps.iter().map(movement::step).collect(),
         },
         LogisticsExecution::TroopDetached {
             source_unit_id,
@@ -486,14 +490,6 @@ fn movement_execution(value: &UnitMovementExecution) -> UnitMovementExecutionDto
     UnitMovementExecutionDto {
         unit_id: value.unit_id().as_str().to_owned(),
         from: coordinate(value.from()),
-        steps: value.steps().iter().map(movement_step).collect(),
-    }
-}
-
-fn movement_step(value: &aonw_domain::MovementStep) -> MovementStepViewDto {
-    MovementStepViewDto {
-        coordinate: coordinate(value.coordinate()),
-        enter_cost_units: value.enter_cost().get(),
-        cumulative_cost_units: value.cumulative_cost().get(),
+        steps: value.steps().iter().map(movement::step).collect(),
     }
 }
