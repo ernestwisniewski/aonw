@@ -18,6 +18,7 @@ mod evidence;
 mod map_view;
 mod presentation;
 mod query;
+mod research;
 mod simple;
 #[cfg(test)]
 mod tests;
@@ -302,6 +303,12 @@ const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto
         CommandRejectionCode::UnitNotInCity => ClientCommandRejectionCodeDto::UnitNotInCity,
         CommandRejectionCode::CityArtifactSlotFull => {
             ClientCommandRejectionCodeDto::CityArtifactSlotFull
+        }
+        CommandRejectionCode::TechnologyPlayerNotControlled => {
+            ClientCommandRejectionCodeDto::TechnologyPlayerNotControlled
+        }
+        CommandRejectionCode::TechnologyNotAvailable => {
+            ClientCommandRejectionCodeDto::TechnologyNotAvailable
         }
         CommandRejectionCode::ArtifactTradeActorUnavailable => {
             ClientCommandRejectionCodeDto::ArtifactTradeActorUnavailable

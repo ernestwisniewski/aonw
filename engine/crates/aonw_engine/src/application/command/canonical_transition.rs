@@ -34,6 +34,36 @@ pub(super) fn apply_artifact(
     ))
 }
 
+pub(super) fn apply_research(
+    state: GameState,
+    mutation: Result<crate::research::ResearchMutation, crate::ResearchError>,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let mutation = match mutation {
+        Ok(value) => value,
+        Err(crate::ResearchError::Rejected(code)) => {
+            return Ok(DomainTransition::rejected(
+                state,
+                code,
+                map_hash,
+                ruleset_hash,
+            ));
+        }
+        Err(error) => return Err(CanonicalEngineError::Research(error)),
+    };
+    let next = state
+        .into_after_research(mutation.update)
+        .map_err(CanonicalEngineError::State)?;
+    Ok(DomainTransition::accepted(
+        next,
+        Box::new([]),
+        None,
+        map_hash,
+        ruleset_hash,
+    ))
+}
+
 pub(super) fn apply_worker(
     state: GameState,
     mutation: Result<crate::worker::WorkerMutation, crate::worker::WorkerRuleError>,

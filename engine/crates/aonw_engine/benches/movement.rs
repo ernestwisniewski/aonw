@@ -405,7 +405,8 @@ fn reachable(
         | QueryResult::CombatPreview(_)
         | QueryResult::Route(_)
         | QueryResult::UnitLogisticsOptions(_)
-        | QueryResult::WorkerOptions(_) => {
+        | QueryResult::WorkerOptions(_)
+        | QueryResult::ResearchOptions(_) => {
             unreachable!("reachable query returned another result")
         }
     }
@@ -429,7 +430,8 @@ fn reachable_with_workspace(
         | QueryResult::CombatPreview(_)
         | QueryResult::Route(_)
         | QueryResult::UnitLogisticsOptions(_)
-        | QueryResult::WorkerOptions(_) => {
+        | QueryResult::WorkerOptions(_)
+        | QueryResult::ResearchOptions(_) => {
             unreachable!("reachable query returned another result")
         }
     }
@@ -451,7 +453,8 @@ fn route(
         | QueryResult::CombatPreview(_)
         | QueryResult::Reachable(_)
         | QueryResult::UnitLogisticsOptions(_)
-        | QueryResult::WorkerOptions(_) => {
+        | QueryResult::WorkerOptions(_)
+        | QueryResult::ResearchOptions(_) => {
             unreachable!("route query returned another result")
         }
     }

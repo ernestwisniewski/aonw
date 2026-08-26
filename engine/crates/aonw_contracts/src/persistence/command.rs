@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     CityBuildingTypeDto, CityConquestActionDto, CityProjectTypeDto, CitySpecializationTypeDto,
-    CoordinateDto, FieldImprovementKindDto, TroopKindDto, UnitKindDto, WonderTypeDto,
+    CoordinateDto, FieldImprovementKindDto, TechnologyIdDto, TroopKindDto, UnitKindDto,
+    WonderTypeDto,
 };
 
 /// One revision-bound command stored in a replay.
@@ -15,6 +16,11 @@ use crate::{
     deny_unknown_fields
 )]
 pub enum ReplayCommandDto {
+    /// Selects one currently available research target.
+    SelectTechnology {
+        expected_revision: u64,
+        technology_id: TechnologyIdDto,
+    },
     /// Starts excavating the artifact at one controlled unit.
     StartArtifactExcavation {
         expected_revision: u64,

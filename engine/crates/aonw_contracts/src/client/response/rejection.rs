@@ -176,6 +176,10 @@ pub enum ClientCommandRejectionCodeDto {
     UnitNotInCity,
     /// The requested city already stores an artifact.
     CityArtifactSlotFull,
+    /// The authenticated actor cannot select a technology.
+    TechnologyPlayerNotControlled,
+    /// The technology is not a legal current research target.
+    TechnologyNotAvailable,
     /// The authenticated actor cannot initiate an artifact trade.
     ArtifactTradeActorUnavailable,
     /// The artifact trade target is absent or equals the actor.
@@ -233,7 +237,7 @@ pub enum ClientCommandRejectionCodeDto {
 
 impl ClientCommandRejectionCodeDto {
     /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 111] = [
+    pub const ALL: [Self; 113] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -320,6 +324,8 @@ impl ClientCommandRejectionCodeDto {
         Self::UnitNotCarryingArtifact,
         Self::UnitNotInCity,
         Self::CityArtifactSlotFull,
+        Self::TechnologyPlayerNotControlled,
+        Self::TechnologyNotAvailable,
         Self::ArtifactTradeActorUnavailable,
         Self::ArtifactTradeTargetInvalid,
         Self::ArtifactTradeGoldInvalid,
@@ -440,6 +446,8 @@ impl ClientCommandRejectionCodeDto {
             Self::UnitNotCarryingArtifact => "unit_not_carrying_artifact",
             Self::UnitNotInCity => "unit_not_in_city",
             Self::CityArtifactSlotFull => "city_artifact_slot_full",
+            Self::TechnologyPlayerNotControlled => "technology_player_not_controlled",
+            Self::TechnologyNotAvailable => "technology_not_available",
             Self::ArtifactTradeActorUnavailable => "artifact_trade_actor_unavailable",
             Self::ArtifactTradeTargetInvalid => "artifact_trade_target_invalid",
             Self::ArtifactTradeGoldInvalid => "artifact_trade_gold_invalid",

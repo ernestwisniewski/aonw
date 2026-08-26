@@ -44,7 +44,7 @@
 oracle-tree b83e4a513901403ab24e9d447feb5086edbdf9b9
 expected-domain-count 39
 expected-system-count 2
-expected-query-count 11
+expected-query-count 12
 expected-event-count 40
 expected-native-event-count 4
 expected-evidence-count 1
@@ -90,7 +90,7 @@ domain RespondDiplomaticMessageCommand diplomacy reference-only - packages/aonw_
 domain RespondDiplomaticProposalCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RushProductionCommand production runtime-ready RushProduction packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SelectCityExpansionHexCommand city runtime-ready SelectCityExpansionHex packages/aonw_core/lib/game/domain/command/city_commands.dart
-domain SelectTechnologyCommand research reference-only - packages/aonw_core/lib/game/domain/command/research_commands.dart
+domain SelectTechnologyCommand research runtime-ready SelectTechnology packages/aonw_core/lib/game/domain/command/research_commands.dart
 domain SelectWorkerImprovementCommand worker runtime-ready SelectWorkerImprovement packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain SendDiplomaticMessageCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SendDiplomaticProposalCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
@@ -121,6 +121,7 @@ query StrategicResourceProjection StrategicResourceProjection StrategicResourceP
 query ProductionOptions ProductionOptions ProductionOptions production runtime-ready
 query UnitLogisticsOptions UnitLogisticsOptions UnitLogisticsOptions movement runtime-ready
 query WorkerOptions WorkerOptions WorkerOptions worker runtime-ready
+query ResearchOptions ResearchOptions ResearchOptions research runtime-ready
 
 event ArtifactCarriedEvent artifact runtime-ready ArtifactCarried packages/aonw_core/lib/game/domain/event/artifact_events.dart
 event ArtifactExcavationStartedEvent artifact runtime-ready ArtifactExcavationStarted packages/aonw_core/lib/game/domain/event/artifact_events.dart

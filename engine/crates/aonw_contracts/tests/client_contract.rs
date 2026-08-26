@@ -19,6 +19,8 @@ mod artifact_contract;
 mod economy_contract;
 #[path = "client_contract/production.rs"]
 mod production_contract;
+#[path = "client_contract/research.rs"]
+mod research_contract;
 #[path = "client_contract/worker.rs"]
 mod worker_contract;
 
@@ -264,6 +266,7 @@ fn every_current_request_variant_round_trips() {
     requests.extend(logistics_requests());
     requests.extend(artifact_contract::requests());
     requests.extend(production_contract::requests());
+    requests.extend(research_contract::requests());
     requests.extend(worker_contract::requests());
 
     for request in requests {
@@ -316,6 +319,7 @@ fn every_current_response_variant_round_trips() {
     let responses = core_response_variants()
         .into_iter()
         .chain(economy_contract::responses())
+        .chain([research_contract::response()])
         .chain(remaining_response_variants());
 
     for response in responses {

@@ -12,7 +12,7 @@ use super::{
 };
 use crate::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, DetachTroopRequest,
-    MoveUnitRequest,
+    MoveUnitRequest, SelectTechnologyRequest,
 };
 use crate::{ProductionCommandRequest, TurnCommandRequest};
 
@@ -20,6 +20,15 @@ pub(super) fn decode_command(
     command: &ReplayCommandDto,
 ) -> Result<ReplayRuntimeCommand, PersistenceError> {
     match command {
+        ReplayCommandDto::SelectTechnology {
+            expected_revision,
+            technology_id,
+        } => Ok(ReplayRuntimeCommand::SelectTechnology(
+            SelectTechnologyRequest {
+                expected_revision: *expected_revision,
+                technology: aonw_contract_mapping::decode_technology(*technology_id),
+            },
+        )),
         command @ (ReplayCommandDto::StartArtifactExcavation { .. }
         | ReplayCommandDto::StoreArtifactInCity { .. }
         | ReplayCommandDto::TradeArtifact { .. }) => decode_artifact_command(command),

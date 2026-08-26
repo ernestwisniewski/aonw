@@ -21,6 +21,8 @@ pub enum CanonicalEngineError {
     Production(crate::ProductionError),
     /// An artifact transition violated current state invariants.
     Artifact(crate::ArtifactError),
+    /// A research transition violated current content or state invariants.
+    Research(crate::ResearchError),
 }
 
 impl core::fmt::Display for CanonicalEngineError {
@@ -35,6 +37,7 @@ impl core::fmt::Display for CanonicalEngineError {
             Self::Worker(source) => write!(formatter, "worker progression failed: {source}"),
             Self::Production(source) => write!(formatter, "production failed: {source}"),
             Self::Artifact(source) => write!(formatter, "artifact failed: {source}"),
+            Self::Research(source) => write!(formatter, "research failed: {source}"),
         }
     }
 }

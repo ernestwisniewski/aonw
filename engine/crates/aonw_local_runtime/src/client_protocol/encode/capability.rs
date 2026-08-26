@@ -35,6 +35,9 @@ pub(crate) fn capabilities() -> ClientResponseBodyDto {
     if capabilities.production() {
         features.push(ClientFeatureDto::Production);
     }
+    if capabilities.research() {
+        features.push(ClientFeatureDto::Research);
+    }
     if capabilities.artifacts() {
         features.push(ClientFeatureDto::Artifacts);
     }

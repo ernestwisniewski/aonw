@@ -10,12 +10,15 @@ use aonw_engine::{
 mod artifact;
 mod disclosure;
 mod production;
+mod research;
 mod view_diff;
 mod worker;
 
 pub(crate) use disclosure::{RecipientDisclosure, visible_city_ids};
 pub use production::ProductionCommandRequest;
 pub(crate) use production::dispatch_production;
+pub use research::SelectTechnologyRequest;
+pub(crate) use research::dispatch_select_technology;
 pub use view_diff::PlayerViewPatch;
 pub(crate) use view_diff::{ProjectedView, diff_view};
 pub(crate) use worker::{

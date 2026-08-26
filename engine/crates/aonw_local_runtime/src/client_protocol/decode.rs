@@ -8,14 +8,15 @@ use crate::{
     CityFoundingOptionsRequest, CityWorkedHexOptionsRequest, CityYieldRequest, DetachTroopRequest,
     FoundCityRequest, MerchantCityRequest, MoveUnitRequest, OpenSession, ProductionCommandRequest,
     ReachableRequest, RoutePlanRequest, RuntimeQuery, SelectCityExpansionHexRequest,
-    StrategicResourceProjectionRequest, ToggleWorkedHexRequest, TurnCommandRequest,
-    UnitActionRequest, UnitLogisticsOptionsRequest, WorkerImprovementRequest, WorkerOptionsRequest,
-    WorkerUnitRequest,
+    SelectTechnologyRequest, StrategicResourceProjectionRequest, ToggleWorkedHexRequest,
+    TurnCommandRequest, UnitActionRequest, UnitLogisticsOptionsRequest, WorkerImprovementRequest,
+    WorkerOptionsRequest, WorkerUnitRequest,
 };
 
 use super::ClientDecodeError;
 
 pub(super) enum DecodedCommand {
+    SelectTechnology(SelectTechnologyRequest),
     Artifact(ArtifactCommandRequest),
     FoundCity(FoundCityRequest),
     ToggleWorkedHex(ToggleWorkedHexRequest),
@@ -67,6 +68,9 @@ pub(super) fn map_document(document: &str) -> Result<MapDocument, ClientDecodeEr
 
 pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeError> {
     match query {
+        ClientQueryDto::ResearchOptions { expected_revision } => Ok(RuntimeQuery::ResearchOptions(
+            crate::ResearchOptionsRequest { expected_revision },
+        )),
         ClientQueryDto::CityFoundingOptions {
             expected_revision,
             founder_unit_id,
@@ -162,6 +166,13 @@ pub(super) fn query(query: ClientQueryDto) -> Result<RuntimeQuery, ClientDecodeE
 #[allow(clippy::too_many_lines)]
 pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, ClientDecodeError> {
     match command {
+        ClientCommandDto::SelectTechnology {
+            expected_revision,
+            technology_id,
+        } => Ok(DecodedCommand::SelectTechnology(SelectTechnologyRequest {
+            expected_revision,
+            technology: aonw_contract_mapping::decode_technology(technology_id),
+        })),
         ClientCommandDto::StartArtifactExcavation {
             expected_revision,
             unit_id,

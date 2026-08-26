@@ -14,8 +14,8 @@ use crate::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CommandResult,
     DetachTroopRequest, FinalizeTimedOutTurnRequest, FoundCityRequest, KickParticipantRequest,
     LocalRuntime, MerchantCityRequest, MoveUnitRequest, OpenSession, ProductionCommandRequest,
-    SelectCityExpansionHexRequest, SessionStamp, ToggleWorkedHexRequest, TurnCommandRequest,
-    UnitActionRequest, WorkerImprovementRequest, WorkerUnitRequest,
+    SelectCityExpansionHexRequest, SelectTechnologyRequest, SessionStamp, ToggleWorkedHexRequest,
+    TurnCommandRequest, UnitActionRequest, WorkerImprovementRequest, WorkerUnitRequest,
 };
 
 mod evidence;
@@ -184,6 +184,9 @@ impl LocalRuntime {
                 return Err(PersistenceError::ReplayContextMismatch { entry: entry_index });
             }
             let result = match decode_record(&entry.record)? {
+                ReplayRuntimeCommand::SelectTechnology(command) => {
+                    runtime.select_technology(command)
+                }
                 ReplayRuntimeCommand::Artifact(command) => runtime.artifact(&command),
                 ReplayRuntimeCommand::FoundCity(command) => runtime.found_city(&command),
                 ReplayRuntimeCommand::ToggleWorkedHex(command) => {
@@ -286,6 +289,7 @@ fn replay_result(result: &CommandResult, session: &Session) -> ReplayResultDto {
 }
 
 enum ReplayRuntimeCommand {
+    SelectTechnology(SelectTechnologyRequest),
     Artifact(ArtifactCommandRequest),
     FoundCity(FoundCityRequest),
     ToggleWorkedHex(ToggleWorkedHexRequest),

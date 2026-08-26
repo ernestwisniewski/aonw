@@ -18,8 +18,8 @@ pub use client_protocol::ClientProtocol;
 pub use command_dispatch::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CommandResult,
     DetachTroopRequest, FoundCityRequest, MerchantCityRequest, MoveUnitRequest, PlayerViewPatch,
-    ProductionCommandRequest, SelectCityExpansionHexRequest, ToggleWorkedHexRequest,
-    UnitActionRequest, WorkerImprovementRequest, WorkerUnitRequest,
+    ProductionCommandRequest, SelectCityExpansionHexRequest, SelectTechnologyRequest,
+    ToggleWorkedHexRequest, UnitActionRequest, WorkerImprovementRequest, WorkerUnitRequest,
 };
 pub use persistence::{PersistenceError, ReplayVerification};
 pub use player_view::{
@@ -32,9 +32,9 @@ pub use query_dispatch::{
     AutoExploreOptionView, CityExpansionOptionsRequest, CityFoundingOptionsRequest,
     CityWorkedHexOptionsRequest, CityYieldRequest, CombatPreviewRequest, DetachmentOptionView,
     MerchantDestinationView, MovementStepView, ProductionOptionsRequest, ReachableRequest,
-    ReachableResult, ReachableTileView, RoutePlanRequest, RoutePlanResult, RuntimeQuery,
-    RuntimeQueryResult, StrategicResourceProjectionRequest, UnitLogisticsOptionsRequest,
-    UnitLogisticsOptionsResult, WorkerOptionsRequest,
+    ReachableResult, ReachableTileView, ResearchOptionsRequest, RoutePlanRequest, RoutePlanResult,
+    RuntimeQuery, RuntimeQueryResult, StrategicResourceProjectionRequest,
+    UnitLogisticsOptionsRequest, UnitLogisticsOptionsResult, WorkerOptionsRequest,
 };
 pub use session::{
     LocalRuntime, OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, SessionStamp,

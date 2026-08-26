@@ -141,6 +141,7 @@ fn serialization_failure() -> String {
 
 fn dispatch_command(runtime: &mut LocalRuntime, command: DecodedCommand) -> ClientResponseDto {
     let result = match command {
+        DecodedCommand::SelectTechnology(command) => runtime.select_technology(command),
         DecodedCommand::Artifact(command) => runtime.artifact(&command),
         DecodedCommand::FoundCity(command) => runtime.found_city(&command),
         DecodedCommand::ToggleWorkedHex(command) => runtime.toggle_worked_hex(&command),

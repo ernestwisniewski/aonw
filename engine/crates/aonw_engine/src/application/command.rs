@@ -9,11 +9,11 @@ use crate::{
     AutoExploreUnitCommand, AutomateWorkerCommand, BuildRoadCommand, CancelWorkerAssignmentCommand,
     CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DetachTroopCommand, EngineContext,
     FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
-    RushProductionCommand, SelectCityExpansionHexCommand, SelectWorkerImprovementCommand,
-    SetCitySpecializationCommand, StartArtifactExcavationCommand, StartBuildingCommand,
-    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, StateDigest,
-    StoreArtifactInCityCommand, ToggleWorkedHexCommand, TradeArtifactCommand, TurnCommand,
-    UnitActionCommand,
+    RushProductionCommand, SelectCityExpansionHexCommand, SelectTechnologyCommand,
+    SelectWorkerImprovementCommand, SetCitySpecializationCommand, StartArtifactExcavationCommand,
+    StartBuildingCommand, StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand,
+    StateDigest, StoreArtifactInCityCommand, ToggleWorkedHexCommand, TradeArtifactCommand,
+    TurnCommand, UnitActionCommand,
 };
 
 mod budget;
@@ -22,13 +22,15 @@ mod error;
 
 pub use budget::EventBudget;
 use canonical_transition::{
-    apply_artifact, apply_city, apply_combat, apply_production, apply_worker,
+    apply_artifact, apply_city, apply_combat, apply_production, apply_research, apply_worker,
 };
 pub use error::CanonicalEngineError;
 
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
 pub enum PlayerCommand<'command> {
+    /// Selects one currently available technology for the authenticated actor.
+    SelectTechnology(SelectTechnologyCommand),
     /// Starts excavating the artifact at one controlled unit.
     StartArtifactExcavation(StartArtifactExcavationCommand<'command>),
     /// Stores the artifact carried by one controlled unit.
@@ -107,6 +109,10 @@ impl GameEngine {
         let (map_hash, ruleset_hash) = content_hashes(context)?;
         let map = context.map();
         match command {
+            PlayerCommand::SelectTechnology(command) => {
+                let mutation = crate::research::apply_select_technology(&state, context, command);
+                apply_research(state, mutation, map_hash, ruleset_hash)
+            }
             PlayerCommand::StartArtifactExcavation(command) => {
                 let mutation = crate::artifact::apply_start_excavation(&state, context, command);
                 apply_artifact(state, mutation, map_hash, ruleset_hash)

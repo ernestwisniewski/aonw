@@ -21,11 +21,16 @@ use crate::{RuntimeQueryResult, SessionStamp};
 
 use super::evidence::combat_preview;
 use super::map_view::coordinate;
+use super::research::research_options;
 use super::worker::automation_option;
 use super::{rejection, stamp};
 
 pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
     match value {
+        RuntimeQueryResult::ResearchOptions {
+            stamp: value_stamp,
+            options,
+        } => research_options(*value_stamp, options),
         RuntimeQueryResult::CityFoundingOptions {
             stamp: value_stamp,
             options,
@@ -89,39 +94,41 @@ pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
                 })
                 .collect(),
         },
-        RuntimeQueryResult::UnitLogisticsOptions(value) => {
-            ClientQueryResultDto::UnitLogisticsOptions {
-                stamp: stamp(value.stamp),
-                unit_id: value.unit_id.as_str().to_owned(),
-                auto_explore: value.auto_explore.map(|option| AutoExploreOptionDto {
-                    target: coordinate(option.target),
-                    total_cost_units: option.total_cost.get(),
-                    search_metrics: movement_metrics(option.search_metrics),
-                }),
-                merchant_route_destinations: value
-                    .merchant_route_destinations
-                    .iter()
-                    .map(merchant_destination)
-                    .collect(),
-                merchant_travel_destinations: value
-                    .merchant_travel_destinations
-                    .iter()
-                    .map(merchant_destination)
-                    .collect(),
-                detachments: value
-                    .detachments
-                    .iter()
-                    .map(|option| DetachmentOptionDto {
-                        troop_kind: encode_troop(option.troop_kind),
-                        destination: coordinate(option.destination),
-                    })
-                    .collect(),
-            }
-        }
+        RuntimeQueryResult::UnitLogisticsOptions(value) => logistics_options(value),
         RuntimeQueryResult::WorkerOptions {
             stamp: value_stamp,
             options,
         } => worker_options(*value_stamp, options),
+    }
+}
+
+fn logistics_options(value: &crate::UnitLogisticsOptionsResult) -> ClientQueryResultDto {
+    ClientQueryResultDto::UnitLogisticsOptions {
+        stamp: stamp(value.stamp),
+        unit_id: value.unit_id.as_str().to_owned(),
+        auto_explore: value.auto_explore.map(|option| AutoExploreOptionDto {
+            target: coordinate(option.target),
+            total_cost_units: option.total_cost.get(),
+            search_metrics: movement_metrics(option.search_metrics),
+        }),
+        merchant_route_destinations: value
+            .merchant_route_destinations
+            .iter()
+            .map(merchant_destination)
+            .collect(),
+        merchant_travel_destinations: value
+            .merchant_travel_destinations
+            .iter()
+            .map(merchant_destination)
+            .collect(),
+        detachments: value
+            .detachments
+            .iter()
+            .map(|option| DetachmentOptionDto {
+                troop_kind: encode_troop(option.troop_kind),
+                destination: coordinate(option.destination),
+            })
+            .collect(),
     }
 }
 

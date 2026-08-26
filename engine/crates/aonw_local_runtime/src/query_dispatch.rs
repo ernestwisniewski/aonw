@@ -3,7 +3,8 @@ use aonw_engine::{
     CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions, CityFoundingOptionsQuery,
     CityWorkedHexOptions, CityWorkedHexOptionsQuery, CityYieldBreakdown, CombatPreview, GameEngine,
     GameQuery, MovementSearchMetrics, MovementSearchWorkspace, ProductionOptions, QueryResult,
-    ReachableMovementQuery, StrategicResourceProjection, TerrainMovementQuery, WorkerOptions,
+    ReachableMovementQuery, ResearchOptions, ResearchOptionsQuery, StrategicResourceProjection,
+    TerrainMovementQuery, WorkerOptions,
 };
 
 mod logistics;
@@ -57,6 +58,13 @@ pub struct WorkerOptionsRequest {
     pub unit_id: UnitId,
 }
 
+/// Current actor-owned research-options request.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ResearchOptionsRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+}
+
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
 
@@ -92,6 +100,8 @@ pub struct UnitLogisticsOptionsRequest {
 /// Versioned local query family.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RuntimeQuery {
+    /// Complete actor-owned research selection choices.
+    ResearchOptions(ResearchOptionsRequest),
     /// Legal initial territory choices.
     CityFoundingOptions(CityFoundingOptionsRequest),
     /// Controlled/manual/effective worked coordinates.
@@ -221,6 +231,13 @@ pub struct UnitLogisticsOptionsResult {
 /// Versioned local query response family.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RuntimeQueryResult {
+    /// Complete actor-owned research selection choices.
+    ResearchOptions {
+        /// Version and authoritative identity metadata.
+        stamp: SessionStamp,
+        /// Engine-owned query result.
+        options: ResearchOptions,
+    },
     /// Legal city-founding choices.
     CityFoundingOptions {
         /// Version and authoritative identity metadata.
@@ -291,6 +308,9 @@ pub(crate) fn dispatch_query(
     workspace: &mut MovementSearchWorkspace,
 ) -> Result<RuntimeQueryResult, RuntimeError> {
     match request {
+        RuntimeQuery::ResearchOptions(request) => {
+            dispatch_research_query(session, request, workspace)
+        }
         RuntimeQuery::CityFoundingOptions(request) => {
             dispatch_city_founding_query(session, &request, workspace)
         }
@@ -378,6 +398,27 @@ pub(crate) fn dispatch_query(
             dispatch_logistics_query(session, &request, workspace)
         }
     }
+}
+
+fn dispatch_research_query(
+    session: &Session,
+    request: ResearchOptionsRequest,
+    workspace: &mut MovementSearchWorkspace,
+) -> Result<RuntimeQueryResult, RuntimeError> {
+    let result = GameEngine::query_with_workspace(
+        session.state(),
+        session.context(),
+        GameQuery::ResearchOptions(ResearchOptionsQuery::new(request.expected_revision)),
+        workspace,
+    )
+    .map_err(RuntimeError::Query)?;
+    let QueryResult::ResearchOptions(options) = result else {
+        unreachable!("research query returns research options")
+    };
+    Ok(RuntimeQueryResult::ResearchOptions {
+        stamp: session.stamp(),
+        options,
+    })
 }
 
 fn dispatch_city_founding_query(

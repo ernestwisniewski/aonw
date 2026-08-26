@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     CityBuildingTypeDto, CityConquestActionDto, CityProjectTypeDto, CitySpecializationTypeDto,
-    CoordinateDto, FieldImprovementKindDto, TroopKindDto, UnitKindDto, WonderTypeDto,
+    CoordinateDto, FieldImprovementKindDto, TechnologyIdDto, TroopKindDto, UnitKindDto,
+    WonderTypeDto,
 };
 
 /// One current client protocol request.
@@ -85,6 +86,11 @@ pub enum ClientRequestBodyDto {
     deny_unknown_fields
 )]
 pub enum ClientCommandDto {
+    /// Selects one currently available research target.
+    SelectTechnology {
+        expected_revision: u64,
+        technology_id: TechnologyIdDto,
+    },
     /// Starts excavating the artifact at one controlled unit.
     StartArtifactExcavation {
         expected_revision: u64,
@@ -301,6 +307,8 @@ pub enum ClientCommandDto {
     deny_unknown_fields
 )]
 pub enum ClientQueryDto {
+    /// Returns every technology with current availability, cost, and progress.
+    ResearchOptions { expected_revision: u64 },
     /// Returns legal initial territory choices for one founder.
     CityFoundingOptions {
         /// Revision observed by the client.

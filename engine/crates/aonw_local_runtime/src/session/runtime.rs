@@ -1,6 +1,7 @@
 use aonw_engine::MovementSearchWorkspace;
 
 mod artifact;
+mod research;
 
 use crate::command_dispatch::{
     RuntimeUnitActionKind, RuntimeWorkerCommandKind, dispatch_assign_merchant_route,
@@ -24,7 +25,6 @@ use crate::{
 };
 
 use super::{OpenSession, OpenSessionError, RuntimeError, Session, SessionStamp};
-
 /// Mutable owner of at most one local game session.
 #[derive(Clone, Debug, Default)]
 pub struct LocalRuntime {

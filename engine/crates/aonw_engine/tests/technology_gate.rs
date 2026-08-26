@@ -244,10 +244,14 @@ fn catalog_is_exhaustive_acyclic_and_fail_closed_at_input_boundary() {
     assert!(serde_json::from_slice::<TechnologyManifest>(&invalid).is_err());
 
     let empty = PlayerResearchState::default();
-    let error = TechnologyUnlockQuery::new(ruleset, &empty)
-        .effective_cost(TechnologyId::Agriculture, 0, false)
-        .expect_err("zero cities must fail");
-    assert!(error.to_string().contains("city count must be positive"));
+    assert_eq!(
+        TechnologyUnlockQuery::new(ruleset, &empty)
+            .effective_cost(TechnologyId::Agriculture, 0, false)
+            .expect("zero-city base cost"),
+        TechnologyUnlockQuery::new(ruleset, &empty)
+            .effective_cost(TechnologyId::Agriculture, 1, false)
+            .expect("one-city base cost")
+    );
 }
 
 fn manifest() -> TechnologyManifest {

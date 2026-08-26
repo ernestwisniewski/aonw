@@ -14,8 +14,7 @@ use aonw_engine::{
     AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand, DetachTroopCommand,
     EngineContext, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand,
     RushProductionCommand, SetCitySpecializationCommand, StartBuildingCommand,
-    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, TurnCommand,
-    UnitActionCommand,
+    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, UnitActionCommand,
 };
 use aonw_testkit::{
     CanonicalFixtureExecutor, CanonicalFixtureInput, CanonicalFixtureLoader,
@@ -28,8 +27,12 @@ mod artifact;
 mod city;
 #[path = "canonical_fixture_engine/encoding.rs"]
 mod encoding;
+#[path = "canonical_fixture_engine/research.rs"]
+mod research;
 #[path = "canonical_fixture_engine/review.rs"]
 mod review;
+#[path = "canonical_fixture_engine/turn.rs"]
+mod turn;
 #[path = "canonical_fixture_engine/worker.rs"]
 mod worker;
 
@@ -90,6 +93,9 @@ fn apply_command(
     command: &ReplayCommandDto,
 ) -> Result<aonw_engine::DomainTransition, ExecutionError> {
     match command {
+        command @ ReplayCommandDto::SelectTechnology { .. } => {
+            research::apply(state, context, command)
+        }
         command @ (ReplayCommandDto::StartArtifactExcavation { .. }
         | ReplayCommandDto::StoreArtifactInCity { .. }
         | ReplayCommandDto::TradeArtifact { .. }) => artifact::apply(state, context, command),
@@ -316,24 +322,9 @@ fn apply_command(
             unit_id,
             FixtureUnitAction::Fortify,
         ),
-        ReplayCommandDto::EndTurn { expected_revision } => GameEngine::apply_player_owned(
-            state,
-            context,
-            PlayerCommand::EndTurn(TurnCommand::new(
-                *expected_revision,
-                context.actor_player_id(),
-            )),
-        )
-        .map_err(display_error),
-        ReplayCommandDto::SubmitTurn { expected_revision } => GameEngine::apply_player_owned(
-            state,
-            context,
-            PlayerCommand::SubmitTurn(TurnCommand::new(
-                *expected_revision,
-                context.actor_player_id(),
-            )),
-        )
-        .map_err(display_error),
+        command @ (ReplayCommandDto::EndTurn { .. } | ReplayCommandDto::SubmitTurn { .. }) => {
+            turn::apply(state, context, command)
+        }
     }
 }
 

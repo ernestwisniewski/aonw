@@ -56,6 +56,17 @@ pub struct ProductionStateUpdate {
     pub diplomacy: Diplomacy,
 }
 
+/// Complete replacement produced by one authoritative research command.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ResearchStateUpdate {
+    /// Revision after the transition.
+    pub revision: StateRevision,
+    /// Player research and globally unique wonder ownership.
+    pub knowledge: KnowledgeState,
+    /// Pending research selection after an accepted choice.
+    pub interaction: InteractionState,
+}
+
 /// Canonical turn coordinates replaced atomically by the turn kernel.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TurnAdvance {
@@ -146,6 +157,22 @@ impl GameState {
         builder.knowledge = update.knowledge;
         builder.fog_of_war = update.fog_of_war;
         builder.diplomacy = update.diplomacy;
+        builder.try_build()
+    }
+
+    /// Consumes the aggregate and applies one complete research update.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the replacement violates aggregate invariants.
+    pub fn into_after_research(
+        self,
+        update: ResearchStateUpdate,
+    ) -> Result<Self, GameStateBuildError> {
+        let mut builder = self.into_builder();
+        builder.revision = update.revision;
+        builder.knowledge = update.knowledge;
+        builder.interaction = update.interaction;
         builder.try_build()
     }
 

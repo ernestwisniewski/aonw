@@ -194,6 +194,10 @@ pub enum CommandRejectionCode {
     UnitNotInCity,
     /// The requested city already stores an artifact.
     CityArtifactSlotFull,
+    /// The authenticated actor cannot select a technology.
+    TechnologyPlayerNotControlled,
+    /// The technology is unlocked, active, blocked, or misses prerequisites.
+    TechnologyNotAvailable,
     /// The authenticated actor cannot initiate an artifact trade.
     ArtifactTradeActorUnavailable,
     /// The artifact trade target is absent or equals the actor.
@@ -248,7 +252,7 @@ pub enum CommandRejectionCode {
 
 impl CommandRejectionCode {
     /// Complete stable rejection surface exposed to current clients.
-    pub const ALL: [Self; 111] = [
+    pub const ALL: [Self; 113] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -335,6 +339,8 @@ impl CommandRejectionCode {
         Self::UnitNotCarryingArtifact,
         Self::UnitNotInCity,
         Self::CityArtifactSlotFull,
+        Self::TechnologyPlayerNotControlled,
+        Self::TechnologyNotAvailable,
         Self::ArtifactTradeActorUnavailable,
         Self::ArtifactTradeTargetInvalid,
         Self::ArtifactTradeGoldInvalid,
@@ -455,6 +461,8 @@ impl CommandRejectionCode {
             Self::UnitNotCarryingArtifact => "unit_not_carrying_artifact",
             Self::UnitNotInCity => "unit_not_in_city",
             Self::CityArtifactSlotFull => "city_artifact_slot_full",
+            Self::TechnologyPlayerNotControlled => "technology_player_not_controlled",
+            Self::TechnologyNotAvailable => "technology_not_available",
             Self::ArtifactTradeActorUnavailable => "artifact_trade_actor_unavailable",
             Self::ArtifactTradeTargetInvalid => "artifact_trade_target_invalid",
             Self::ArtifactTradeGoldInvalid => "artifact_trade_gold_invalid",

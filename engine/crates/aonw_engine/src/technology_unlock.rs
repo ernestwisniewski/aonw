@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use aonw_content::{RulesetDefinition, TechnologyDefinition, TechnologyEffect, TechnologyUnlock};
 use aonw_domain::{
-    CityBuildingType, FieldImprovementKind, PlayerResearchState, ResourceType, TechnologyId,
-    UnitKind, WonderType,
+    CityBuildingType, FieldImprovementKind, PaceProfile, PlayerResearchState, ResourceType,
+    TechnologyId, UnitKind, WonderType,
 };
 
 mod effect;
@@ -75,7 +75,6 @@ pub struct TechnologyCombatModifier {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TechnologyQueryError {
     TechnologyNotInRuleset(TechnologyId),
-    InvalidCityCount(u32),
     CostOverflow(TechnologyId),
     EffectOverflow(TechnologyId),
 }
@@ -85,9 +84,6 @@ impl core::fmt::Display for TechnologyQueryError {
         match self {
             Self::TechnologyNotInRuleset(id) => {
                 write!(formatter, "technology is absent from ruleset: {id:?}")
-            }
-            Self::InvalidCityCount(count) => {
-                write!(formatter, "city count must be positive: {count}")
             }
             Self::CostOverflow(id) => write!(formatter, "research cost exceeds u32 for {id:?}"),
             Self::EffectOverflow(id) => write!(formatter, "technology effects overflow for {id:?}"),
@@ -154,29 +150,52 @@ impl<'query> TechnologyUnlockQuery<'query> {
     ///
     /// # Errors
     ///
-    /// Returns an error for a missing definition, zero cities, or a result above `u32`.
+    /// Returns an error for a missing definition or a result above `u32`.
     pub fn effective_cost(
         self,
         technology_id: TechnologyId,
         city_count: u32,
         fulfilled_boost: bool,
     ) -> Result<u32, TechnologyQueryError> {
-        if city_count == 0 {
-            return Err(TechnologyQueryError::InvalidCityCount(city_count));
-        }
         let definition = self.definition(technology_id)?;
-        let balance = self.ruleset.technology_cost_balance();
-        let city_multiplier = BASIS_POINTS
-            + u128::from(city_count - 1) * u128::from(balance.city_scaling_basis_points());
         let discount = if fulfilled_boost {
             definition
                 .boosts()
-                .first()
-                .map_or(0, |boost| boost.discount_basis_points())
+                .iter()
+                .map(|boost| boost.discount_basis_points())
+                .max()
+                .unwrap_or(0)
         } else {
             0
         };
-        let boost_multiplier = BASIS_POINTS - u128::from(discount.min(10_000));
+        self.effective_cost_with_discount(
+            technology_id,
+            city_count,
+            discount,
+            PaceProfile::Unlimited,
+        )
+    }
+
+    /// Computes the exact cost for a concrete boost discount and match pace.
+    /// Zero cities use the same base multiplier as one city, matching the
+    /// canonical greenfield selection rule.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for missing content or checked arithmetic overflow.
+    pub fn effective_cost_with_discount(
+        self,
+        technology_id: TechnologyId,
+        city_count: u32,
+        boost_discount_basis_points: u32,
+        pace: PaceProfile,
+    ) -> Result<u32, TechnologyQueryError> {
+        let definition = self.definition(technology_id)?;
+        let balance = self.ruleset.technology_cost_balance();
+        let city_multiplier = BASIS_POINTS
+            + u128::from(city_count.saturating_sub(1))
+                * u128::from(balance.city_scaling_basis_points());
+        let boost_multiplier = BASIS_POINTS - u128::from(boost_discount_basis_points.min(10_000));
         let era_multiplier = u128::from(balance.era_multiplier_basis_points(definition.era()));
         let numerator = u128::from(definition.base_cost())
             * city_multiplier
@@ -184,7 +203,11 @@ impl<'query> TechnologyUnlockQuery<'query> {
             * era_multiplier;
         let denominator = BASIS_POINTS * BASIS_POINTS * BASIS_POINTS;
         let rounded_up = numerator.div_ceil(denominator).max(1);
-        u32::try_from(rounded_up).map_err(|_| TechnologyQueryError::CostOverflow(technology_id))
+        let base = u32::try_from(rounded_up)
+            .map_err(|_| TechnologyQueryError::CostOverflow(technology_id))?;
+        balance
+            .paced_cost(base, pace)
+            .ok_or(TechnologyQueryError::CostOverflow(technology_id))
     }
 
     /// Returns the complete capability breakdown for a technology.
@@ -407,7 +430,7 @@ impl<'query> TechnologyUnlockQuery<'query> {
         Ok(modifiers)
     }
 
-    fn definition(
+    pub(crate) fn definition(
         self,
         technology_id: TechnologyId,
     ) -> Result<TechnologyDefinition, TechnologyQueryError> {

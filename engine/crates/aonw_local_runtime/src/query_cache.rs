@@ -6,6 +6,7 @@ use crate::{RuntimeQuery, RuntimeQueryResult, SessionStamp};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum QueryKind {
+    ResearchOptions,
     CityFoundingOptions,
     CityWorkedHexOptions,
     CityExpansionOptions,
@@ -40,6 +41,11 @@ struct QueryCacheKey {
 impl QueryCacheKey {
     fn new(stamp: SessionStamp, request: &RuntimeQuery) -> Self {
         let (expected_revision, subject, kind) = match request {
+            RuntimeQuery::ResearchOptions(request) => (
+                request.expected_revision,
+                QuerySubject::Actor,
+                QueryKind::ResearchOptions,
+            ),
             RuntimeQuery::CityFoundingOptions(request) => (
                 request.expected_revision,
                 QuerySubject::Unit(request.founder_unit_id.clone()),

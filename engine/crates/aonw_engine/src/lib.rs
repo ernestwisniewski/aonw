@@ -14,6 +14,7 @@ mod diplomacy_policy;
 mod economy;
 mod movement;
 mod production;
+mod research;
 mod state_digest;
 mod technology_unlock;
 mod turn_kernel;
@@ -73,6 +74,9 @@ pub use production::{
     ProductionOptionsQuery, RushProductionCommand, SetCitySpecializationCommand,
     StartBuildingCommand, StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand,
     UnitProductionOption,
+};
+pub use research::{
+    ResearchError, ResearchOption, ResearchOptions, ResearchOptionsQuery, SelectTechnologyCommand,
 };
 pub use state_digest::StateDigest;
 pub use technology_unlock::{

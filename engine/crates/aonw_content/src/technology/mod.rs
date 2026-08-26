@@ -2,7 +2,7 @@ mod catalog;
 mod identity;
 mod unlock;
 
-use aonw_domain::TechnologyId;
+use aonw_domain::{PaceProfile, TechnologyId};
 use serde::Serialize;
 
 pub use identity::{TechnologyEra, TechnologyKey};
@@ -235,5 +235,25 @@ impl TechnologyCostBalance {
             TechnologyEra::Industry => self.industry_era_multiplier,
             TechnologyEra::Strategy => self.strategy_era_multiplier,
         }
+    }
+
+    /// Scales one positive research cost for the canonical match pace using
+    /// deterministic ceiling arithmetic.
+    #[must_use]
+    pub fn paced_cost(self, base_cost: u32, pace: PaceProfile) -> Option<u32> {
+        if base_cost == 0 {
+            return Some(0);
+        }
+        let basis_points = match pace {
+            PaceProfile::Unlimited => 10_000_u64,
+            PaceProfile::Standard60 => 8_000,
+            PaceProfile::Normal90 => 9_500,
+            PaceProfile::Long120 => 11_000,
+        };
+        u64::from(base_cost)
+            .checked_mul(basis_points)?
+            .checked_add(9_999)?
+            .checked_div(10_000)
+            .and_then(|value| u32::try_from(value.max(1)).ok())
     }
 }

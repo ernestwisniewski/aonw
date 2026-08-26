@@ -2,9 +2,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     CityProductionTargetDto, CombatExecutionDto, CombatPreviewDto, CoordinateDto,
-    FieldImprovementKindDto,
+    FieldImprovementKindDto, TechnologyIdDto,
 };
 
+use super::ResearchOptionDto;
 use super::{
     AutoExploreOptionDto, CityExpansionCandidateDto, CitySpecializationOptionDto,
     CityYieldContributionDto, ClientLogisticsEvidenceDto, ClientSessionStampDto,
@@ -118,6 +119,19 @@ pub enum ClientEvidenceDto {
     deny_unknown_fields
 )]
 pub enum ClientQueryResultDto {
+    /// Complete engine-owned research selection choices.
+    ResearchOptions {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Authenticated owner of this private view.
+        player_id: String,
+        /// Current research target.
+        active_technology_id: Option<TechnologyIdDto>,
+        /// Stored science available to the next selection.
+        science_overflow: i64,
+        /// Complete technology catalog in canonical order.
+        options: Vec<ResearchOptionDto>,
+    },
     /// Legal initial territory choices for one founder.
     CityFoundingOptions {
         /// Identity of the queried state.

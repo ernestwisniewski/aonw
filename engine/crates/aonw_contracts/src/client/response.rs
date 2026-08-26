@@ -12,6 +12,7 @@ mod logistics;
 mod production;
 mod query;
 mod rejection;
+mod research;
 mod session;
 mod worker;
 
@@ -34,6 +35,7 @@ pub use query::{
     ClientEvidenceDto, ClientQueryResultDto, PendingActionViewDto, ReachableTileViewDto,
 };
 pub use rejection::ClientCommandRejectionCodeDto;
+pub use research::{ResearchOptionDto, TechnologyAvailabilityDto, TechnologyUnlockDto};
 pub use session::{ClientErrorDto, ClientReplayVerificationDto};
 pub use worker::{
     FieldImprovementViewDto, RoadViewDto, WorkerAutomationActionDto, WorkerAutomationMetricsDto,
@@ -169,6 +171,8 @@ pub enum ClientFeatureDto {
     Workers,
     /// City production queries and queue commands.
     Production,
+    /// Research selection and complete technology options.
+    Research,
 }
 
 /// Identity metadata returned with state-dependent results.

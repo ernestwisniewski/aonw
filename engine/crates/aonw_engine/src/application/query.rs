@@ -5,9 +5,10 @@ use crate::{
     CityWorkedHexOptions, CityWorkedHexOptionsQuery, CityYieldBreakdown, CityYieldQuery,
     CombatPreview, CombatPreviewQuery, EngineContext, GameEngine, MovementSearchWorkspace,
     ProductionOptions, ProductionOptionsQuery, ReachableMovement, ReachableMovementQuery,
-    StrategicResourceProjection, StrategicResourceProjectionQuery, TerrainMovementPlan,
-    TerrainMovementQuery, TerrainMovementQueryError, UnitLogisticsOptions,
-    UnitLogisticsOptionsQuery, WorkerOptions, WorkerOptionsQuery,
+    ResearchOptions, ResearchOptionsQuery, StrategicResourceProjection,
+    StrategicResourceProjectionQuery, TerrainMovementPlan, TerrainMovementQuery,
+    TerrainMovementQueryError, UnitLogisticsOptions, UnitLogisticsOptionsQuery, WorkerOptions,
+    WorkerOptionsQuery,
 };
 
 /// Read-only game query family.
@@ -35,6 +36,8 @@ pub enum GameQuery<'query> {
     UnitLogisticsOptions(UnitLogisticsOptionsQuery<'query>),
     /// Complete legal worker options and deterministic automation target.
     WorkerOptions(WorkerOptionsQuery<'query>),
+    /// Every technology with engine-owned availability, cost, and progress.
+    ResearchOptions(ResearchOptionsQuery),
 }
 
 /// Typed query result.
@@ -62,6 +65,8 @@ pub enum QueryResult {
     UnitLogisticsOptions(UnitLogisticsOptions),
     /// Improvement, assignment, road, and automation options.
     WorkerOptions(WorkerOptions),
+    /// Complete actor-owned research selection choices.
+    ResearchOptions(ResearchOptions),
 }
 
 /// Failure from a canonical read-only query.
@@ -83,6 +88,8 @@ pub enum CanonicalQueryError {
     Economy(crate::EconomyQueryError),
     /// Production query was rejected or found corrupt state/content.
     Production(crate::ProductionError),
+    /// Research query was rejected or found corrupt state/content.
+    Research(crate::ResearchError),
 }
 
 impl CanonicalQueryError {
@@ -93,6 +100,7 @@ impl CanonicalQueryError {
             Self::Technology(_) => "technology_query_invalid",
             Self::Economy(error) => error.code(),
             Self::Production(error) => error.code(),
+            Self::Research(error) => error.code(),
             Self::City(rejection) | Self::Combat(rejection) | Self::Worker(rejection) => {
                 rejection.as_str()
             }
@@ -108,6 +116,7 @@ impl core::fmt::Display for CanonicalQueryError {
             Self::Technology(source) => source.fmt(formatter),
             Self::Economy(source) => source.fmt(formatter),
             Self::Production(source) => source.fmt(formatter),
+            Self::Research(source) => source.fmt(formatter),
             Self::City(source) | Self::Combat(source) | Self::Worker(source) => {
                 source.fmt(formatter)
             }
@@ -194,6 +203,11 @@ impl GameEngine {
             GameQuery::WorkerOptions(query) => crate::worker::query_options(state, context, query)
                 .map(QueryResult::WorkerOptions)
                 .map_err(worker_query_error),
+            GameQuery::ResearchOptions(query) => {
+                crate::research::query_options(state, context, query)
+                    .map(QueryResult::ResearchOptions)
+                    .map_err(CanonicalQueryError::Research)
+            }
         }
     }
 }

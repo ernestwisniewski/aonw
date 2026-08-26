@@ -50,7 +50,8 @@ impl PlayerCommand<'_> {
             | Self::AssignMerchantTradeRoute(_)
             | Self::MoveMerchantToCity(_)
             | Self::DetachTroop(_) => EventBudget::SINGLE,
-            Self::FoundCity(_)
+            Self::SelectTechnology(_)
+            | Self::FoundCity(_)
             | Self::ToggleWorkedHex(_)
             | Self::SelectCityExpansionHex(_)
             | Self::StartBuilding(_)

@@ -21,6 +21,7 @@ use aonw_engine::{
 
 pub(super) const fn command_name(command: &ReplayCommandDto) -> &'static str {
     match command {
+        ReplayCommandDto::SelectTechnology { .. } => "SelectTechnology",
         ReplayCommandDto::StartArtifactExcavation { .. } => "StartArtifactExcavation",
         ReplayCommandDto::StoreArtifactInCity { .. } => "StoreArtifactInCity",
         ReplayCommandDto::TradeArtifact { .. } => "TradeArtifact",

@@ -28,6 +28,7 @@ impl RuntimeCapabilities {
     const WORKERS: u16 = 1 << 10;
     const PRODUCTION: u16 = 1 << 11;
     const ARTIFACTS: u16 = 1 << 12;
+    const RESEARCH: u16 = 1 << 13;
 
     pub(super) const CURRENT: Self = Self {
         features: Self::ROUTE_PLAN
@@ -42,7 +43,8 @@ impl RuntimeCapabilities {
             | Self::CITIES
             | Self::WORKERS
             | Self::PRODUCTION
-            | Self::ARTIFACTS,
+            | Self::ARTIFACTS
+            | Self::RESEARCH,
     };
 
     /// Returns whether route planning is available.
@@ -119,5 +121,11 @@ impl RuntimeCapabilities {
     #[must_use]
     pub const fn artifacts(self) -> bool {
         self.features & Self::ARTIFACTS != 0
+    }
+
+    /// Returns whether research options and selection are available.
+    #[must_use]
+    pub const fn research(self) -> bool {
+        self.features & Self::RESEARCH != 0
     }
 }

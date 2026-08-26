@@ -5,7 +5,9 @@ use aonw_domain::{
     UnitMovementDomain, WonderType,
 };
 
-use crate::{EconomyYield, ProductionRequirement, ResourceType, StrategicResourceCost};
+use crate::{
+    EconomyYield, ProductionRequirement, ResourceType, StrategicResourceCost, TechnologyCostBalance,
+};
 
 use super::{RulesetDefinition, STANDARD_UNITS};
 
@@ -118,6 +120,26 @@ fn standard_production_balance_preserves_exact_fixed_point_rules() {
             CityBuildingType::Barracks,
         ]
     );
+}
+
+#[test]
+fn standard_research_pace_scaling_is_exact_and_uses_ceiling_arithmetic() {
+    let balance = TechnologyCostBalance::STANDARD;
+    let paces = [
+        PaceProfile::Unlimited,
+        PaceProfile::Standard60,
+        PaceProfile::Normal90,
+        PaceProfile::Long120,
+    ];
+    assert_eq!(
+        paces.map(|pace| balance.paced_cost(100, pace)),
+        [Some(100), Some(80), Some(95), Some(110)]
+    );
+    assert_eq!(
+        paces.map(|pace| balance.paced_cost(1, pace)),
+        [Some(1), Some(1), Some(1), Some(2)]
+    );
+    assert_eq!(balance.paced_cost(0, PaceProfile::Long120), Some(0));
 }
 
 #[test]
