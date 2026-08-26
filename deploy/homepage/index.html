@@ -70,14 +70,13 @@
       }
 
       body::before {
+        animation: map-journey 96s ease-in-out infinite;
         background: url("/assets/main_menu/background.jpg") center / cover no-repeat;
-        height: 130lvh;
-        left: -15vw;
-        top: -15lvh;
-        transform: scale(1.012);
-        animation: homepage-background-drift 56s ease-in-out infinite;
+        height: 150lvh;
+        left: -25vw;
+        top: -25lvh;
         will-change: transform;
-        width: 130vw;
+        width: 150vw;
         z-index: 0;
       }
 
@@ -97,17 +96,22 @@
         z-index: 2;
       }
 
-      @keyframes homepage-background-drift {
-        0% {
-          transform: translate3d(0, 1.6rem, 0) scale(1.012);
+      @keyframes map-journey {
+        0%,
+        100% {
+          transform: translate3d(-3vw, 2vh, 0) scale(1.02);
+        }
+
+        25% {
+          transform: translate3d(7vw, -6vh, 0) scale(1.07);
         }
 
         50% {
-          transform: translate3d(-2rem, -1.2rem, 0) scale(1.022);
+          transform: translate3d(-8vw, -4vh, 0) scale(1.035);
         }
 
-        100% {
-          transform: translate3d(0, 1.6rem, 0) scale(1.012);
+        75% {
+          transform: translate3d(5.5vw, 7vh, 0) scale(1.075);
         }
       }
 
@@ -986,8 +990,6 @@
 
         body::before {
           background-position: center;
-          animation: none;
-          transform: scale(1.012);
         }
 
         .homepage-screen {
