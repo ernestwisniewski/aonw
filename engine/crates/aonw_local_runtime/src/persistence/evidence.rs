@@ -1,6 +1,7 @@
 use aonw_contract_mapping::{
-    encode_city_building, encode_city_wonder, encode_improvement, encode_score_reason,
-    encode_technology, encode_troop, encode_unit_kind,
+    encode_city_building, encode_city_wonder, encode_improvement, encode_proposal_kind,
+    encode_relation_reason, encode_relation_status, encode_score_reason, encode_technology,
+    encode_troop, encode_unit_kind,
 };
 use aonw_contracts::client::{
     WorkerAutomationActionDto, WorkerAutomationMetricsDto, WorkerAutomationOptionDto,
@@ -100,6 +101,32 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
             reason: encode_score_reason(value.reason()),
             source_id: value.source_id().map(str::to_owned),
         },
+        DomainEvent::DiplomaticProposalSent(value) => ReplayEventDto::DiplomaticProposalSent {
+            proposal_id: value.proposal_id().to_owned(),
+            from_player_id: value.from_player_id().as_str().to_owned(),
+            to_player_id: value.to_player_id().as_str().to_owned(),
+            kind: encode_proposal_kind(value.kind()),
+            expires_on_turn: value.expires_on_turn(),
+        },
+        DomainEvent::DiplomaticProposalResponded(value) => {
+            ReplayEventDto::DiplomaticProposalResponded {
+                proposal_id: value.proposal_id().to_owned(),
+                from_player_id: value.from_player_id().as_str().to_owned(),
+                to_player_id: value.to_player_id().as_str().to_owned(),
+                kind: encode_proposal_kind(value.kind()),
+                accepted: value.accepted(),
+            }
+        }
+        DomainEvent::DiplomaticRelationChanged(value) => {
+            ReplayEventDto::DiplomaticRelationChanged {
+                player_a_id: value.player_a_id().as_str().to_owned(),
+                player_b_id: value.player_b_id().as_str().to_owned(),
+                old_status: encode_relation_status(value.old_status()),
+                new_status: encode_relation_status(value.new_status()),
+                reason: encode_relation_reason(value.reason()),
+                expires_on_turn: value.expires_on_turn(),
+            }
+        }
         DomainEvent::UnitGainedExperience(value) => {
             combat_event(value, |attacker_unit_id, target, subject_unit_id| {
                 ReplayEventDto::UnitGainedExperience {

@@ -17,9 +17,10 @@ mod turn_dispatch;
 pub use client_protocol::ClientProtocol;
 pub use command_dispatch::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CommandResult,
-    DetachTroopRequest, FoundCityRequest, MerchantCityRequest, MoveUnitRequest, PlayerViewPatch,
-    ProductionCommandRequest, SelectCityExpansionHexRequest, SelectTechnologyRequest,
-    ToggleWorkedHexRequest, UnitActionRequest, WorkerImprovementRequest, WorkerUnitRequest,
+    DetachTroopRequest, DiplomacyProposalRequest, FoundCityRequest, MerchantCityRequest,
+    MoveUnitRequest, PlayerViewPatch, ProductionCommandRequest, SelectCityExpansionHexRequest,
+    SelectTechnologyRequest, ToggleWorkedHexRequest, UnitActionRequest, WorkerImprovementRequest,
+    WorkerUnitRequest,
 };
 pub use persistence::{PersistenceError, ReplayVerification};
 pub use player_view::{

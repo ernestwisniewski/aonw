@@ -66,6 +66,19 @@ fn every_current_production_command_has_a_strict_wire_shape() {
 }
 
 #[test]
+fn diplomacy_proposal_commands_have_current_strict_wire_shapes() {
+    let commands = [
+        r#"{"type":"sendDiplomaticProposal","expectedRevision":7,"targetPlayerId":"player-2","kind":"truce","proposalId":null,"goldPayment":5}"#,
+        r#"{"type":"respondDiplomaticProposal","expectedRevision":8,"proposalId":"proposal-1","accepted":true}"#,
+    ];
+    for json in commands {
+        assert!(serde_json::from_str::<ReplayCommandDto>(json).is_ok());
+        let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
+        assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
+    }
+}
+
+#[test]
 fn production_completion_events_have_current_strict_replay_shapes() {
     let events = [
         r#"{"type":"cityBuiltBuilding","cityId":"city-1","buildingType":"workshop"}"#,
@@ -74,6 +87,20 @@ fn production_completion_events_have_current_strict_replay_shapes() {
         r#"{"type":"wonderProductionRefunded","cityId":"city-2","ownerPlayerId":"player-2","wonderType":"greatLibrary","refundedProduction":17}"#,
         r#"{"type":"technologyResearched","playerId":"player-1","technologyId":"writing"}"#,
         r#"{"type":"researchPointsGained","playerId":"player-1","points":7}"#,
+    ];
+    for json in events {
+        assert!(serde_json::from_str::<ReplayEventDto>(json).is_ok());
+        let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
+        assert!(serde_json::from_str::<ReplayEventDto>(&unknown).is_err());
+    }
+}
+
+#[test]
+fn diplomacy_proposal_events_have_current_strict_replay_shapes() {
+    let events = [
+        r#"{"type":"diplomaticProposalSent","proposalId":"proposal-1","fromPlayerId":"player-1","toPlayerId":"player-2","kind":"friendship","expiresOnTurn":12}"#,
+        r#"{"type":"diplomaticProposalResponded","proposalId":"proposal-1","fromPlayerId":"player-1","toPlayerId":"player-2","kind":"friendship","accepted":true}"#,
+        r#"{"type":"diplomaticRelationChanged","playerAId":"player-1","playerBId":"player-2","oldStatus":"neutral","newStatus":"friendly","reason":"proposalAccepted","expiresOnTurn":null}"#,
     ];
     for json in events {
         assert!(serde_json::from_str::<ReplayEventDto>(json).is_ok());

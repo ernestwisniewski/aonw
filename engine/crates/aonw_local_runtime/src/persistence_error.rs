@@ -23,6 +23,8 @@ pub enum PersistenceError {
     ContentHash(String),
     /// Persisted actor identifier is invalid.
     InvalidActor(IdentifierError),
+    /// Persisted command player identifier is invalid.
+    InvalidPlayer(IdentifierError),
     /// Persisted command unit identifier is invalid.
     InvalidUnit(IdentifierError),
     /// Persisted command city identifier is invalid.
@@ -75,6 +77,7 @@ impl core::fmt::Display for PersistenceError {
             }
             Self::ContentHash(source) => write!(formatter, "content hash failed: {source}"),
             Self::InvalidActor(source) => write!(formatter, "invalid actor: {source}"),
+            Self::InvalidPlayer(source) => write!(formatter, "invalid player: {source}"),
             Self::InvalidUnit(source) => write!(formatter, "invalid unit: {source}"),
             Self::InvalidCity(source) => write!(formatter, "invalid city: {source}"),
             Self::InvalidArtifact(source) => write!(formatter, "invalid artifact: {source}"),

@@ -17,12 +17,74 @@ pub use game_state_mapping::{
 };
 
 use aonw_contracts::{
-    DiplomaticScoreChangeReasonDto, MovementStepDto, QueuedMovePathDto, UnitKindDto, UnitPostureDto,
+    DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationStatusDto,
+    DiplomaticScoreChangeReasonDto, MovementStepDto, QueuedMovePathDto, UnitKindDto,
+    UnitPostureDto,
 };
 use aonw_domain::{
+    DiplomaticProposalKind, DiplomaticRelationChangeReason, DiplomaticRelationStatus,
     DiplomaticScoreChangeReason, HexCoord, MovementPathError, MovementStep, MovementUnits,
     QueuedMovePath, UnitKind, UnitPosture,
 };
+
+/// Converts a proposal kind into its stable wire value.
+#[must_use]
+pub const fn encode_proposal_kind(value: DiplomaticProposalKind) -> DiplomaticProposalKindDto {
+    match value {
+        DiplomaticProposalKind::Friendship => DiplomaticProposalKindDto::Friendship,
+        DiplomaticProposalKind::Truce => DiplomaticProposalKindDto::Truce,
+    }
+}
+
+/// Converts a strict wire proposal kind into its domain value.
+#[must_use]
+pub const fn decode_proposal_kind(value: DiplomaticProposalKindDto) -> DiplomaticProposalKind {
+    match value {
+        DiplomaticProposalKindDto::Friendship => DiplomaticProposalKind::Friendship,
+        DiplomaticProposalKindDto::Truce => DiplomaticProposalKind::Truce,
+    }
+}
+
+/// Converts a relation status into its stable wire value.
+#[must_use]
+pub const fn encode_relation_status(
+    value: DiplomaticRelationStatus,
+) -> DiplomaticRelationStatusDto {
+    match value {
+        DiplomaticRelationStatus::Friendly => DiplomaticRelationStatusDto::Friendly,
+        DiplomaticRelationStatus::Neutral => DiplomaticRelationStatusDto::Neutral,
+        DiplomaticRelationStatus::Hostile => DiplomaticRelationStatusDto::Hostile,
+        DiplomaticRelationStatus::Truce => DiplomaticRelationStatusDto::Truce,
+        DiplomaticRelationStatus::War => DiplomaticRelationStatusDto::War,
+    }
+}
+
+/// Converts a relation-change reason into its stable wire value.
+#[must_use]
+pub const fn encode_relation_reason(
+    value: DiplomaticRelationChangeReason,
+) -> DiplomaticRelationChangeReasonDto {
+    match value {
+        DiplomaticRelationChangeReason::Manual => DiplomaticRelationChangeReasonDto::Manual,
+        DiplomaticRelationChangeReason::UnitAttack => DiplomaticRelationChangeReasonDto::UnitAttack,
+        DiplomaticRelationChangeReason::CityAttack => DiplomaticRelationChangeReasonDto::CityAttack,
+        DiplomaticRelationChangeReason::DeclarationOfWar => {
+            DiplomaticRelationChangeReasonDto::DeclarationOfWar
+        }
+        DiplomaticRelationChangeReason::ProposalAccepted => {
+            DiplomaticRelationChangeReasonDto::ProposalAccepted
+        }
+        DiplomaticRelationChangeReason::TruceExpired => {
+            DiplomaticRelationChangeReasonDto::TruceExpired
+        }
+        DiplomaticRelationChangeReason::MessageResponse => {
+            DiplomaticRelationChangeReasonDto::MessageResponse
+        }
+        DiplomaticRelationChangeReason::PromiseBroken => {
+            DiplomaticRelationChangeReasonDto::PromiseBroken
+        }
+    }
+}
 
 /// Converts a canonical diplomacy score reason into its stable wire value.
 #[must_use]

@@ -13,7 +13,8 @@ pub use query::{CanonicalQueryError, GameQuery, QueryResult};
 pub use transition::{
     AllPlayersSubmittedEvent, ArtifactCarriedEvent, ArtifactExcavationStartedEvent,
     ArtifactStoredEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent, CityFoundedEvent,
-    CityProducedUnitEvent, CombatEvent, CommandRejectionCode, DiplomaticScoreChangedEvent,
+    CityProducedUnitEvent, CombatEvent, CommandRejectionCode, DiplomaticProposalRespondedEvent,
+    DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent, DiplomaticScoreChangedEvent,
     DomainEvent, DomainRejection, DomainTransition, DomainTransitionParts, ExecutionEvidence,
     PlayerKickedEvent, PlayerTimedOutEvent, ResearchPointsGainedEvent, TechnologyResearchedEvent,
     TurnEndedEvent, WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,

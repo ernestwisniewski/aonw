@@ -1,6 +1,6 @@
 use aonw_engine::MovementSearchWorkspace;
-
 mod artifact;
+mod diplomacy;
 mod research;
 
 use crate::command_dispatch::{

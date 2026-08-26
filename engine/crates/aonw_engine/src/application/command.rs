@@ -1,19 +1,19 @@
 use aonw_content::ContentHash;
 use aonw_domain::GameState;
 
-use super::{DomainEvent, DomainTransition, ExecutionEvidence};
-use crate::movement::{merge_discovered_contacts, recompute_after_move};
+use super::{DomainTransition, ExecutionEvidence};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
 use crate::{
     AssignMerchantTradeRouteCommand, AssignWorkerToHexCommand, AttackHexCommand,
     AutoExploreUnitCommand, AutomateWorkerCommand, BuildRoadCommand, CancelWorkerAssignmentCommand,
     CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DetachTroopCommand, EngineContext,
     FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
-    RushProductionCommand, SelectCityExpansionHexCommand, SelectTechnologyCommand,
-    SelectWorkerImprovementCommand, SetCitySpecializationCommand, StartArtifactExcavationCommand,
-    StartBuildingCommand, StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand,
-    StateDigest, StoreArtifactInCityCommand, ToggleWorkedHexCommand, TradeArtifactCommand,
-    TurnCommand, UnitActionCommand,
+    RespondDiplomaticProposalCommand, RushProductionCommand, SelectCityExpansionHexCommand,
+    SelectTechnologyCommand, SelectWorkerImprovementCommand, SendDiplomaticProposalCommand,
+    SetCitySpecializationCommand, StartArtifactExcavationCommand, StartBuildingCommand,
+    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, StateDigest,
+    StoreArtifactInCityCommand, ToggleWorkedHexCommand, TradeArtifactCommand, TurnCommand,
+    UnitActionCommand,
 };
 
 mod budget;
@@ -22,13 +22,18 @@ mod error;
 
 pub use budget::EventBudget;
 use canonical_transition::{
-    apply_artifact, apply_city, apply_combat, apply_production, apply_research, apply_worker,
+    apply_artifact, apply_city, apply_combat, apply_diplomacy, apply_move, apply_production,
+    apply_research, apply_worker,
 };
 pub use error::CanonicalEngineError;
 
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
 pub enum PlayerCommand<'command> {
+    /// Sends one friendship or truce proposal to a discovered participant.
+    SendDiplomaticProposal(SendDiplomaticProposalCommand<'command>),
+    /// Accepts or rejects one proposal addressed to the authenticated actor.
+    RespondDiplomaticProposal(RespondDiplomaticProposalCommand<'command>),
     /// Selects one currently available technology for the authenticated actor.
     SelectTechnology(SelectTechnologyCommand),
     /// Starts excavating the artifact at one controlled unit.
@@ -109,6 +114,14 @@ impl GameEngine {
         let (map_hash, ruleset_hash) = content_hashes(context)?;
         let map = context.map();
         match command {
+            PlayerCommand::SendDiplomaticProposal(command) => {
+                let mutation = crate::diplomacy::apply_send_proposal(&state, context, command);
+                apply_diplomacy(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::RespondDiplomaticProposal(command) => {
+                let mutation = crate::diplomacy::apply_respond_proposal(&state, context, command);
+                apply_diplomacy(state, mutation, map_hash, ruleset_hash)
+            }
             PlayerCommand::SelectTechnology(command) => {
                 let mutation = crate::research::apply_select_technology(&state, context, command);
                 apply_research(state, mutation, map_hash, ruleset_hash)
@@ -411,79 +424,6 @@ fn apply_canonical_unit_action(
         next_state,
         Box::new([]),
         None,
-        map_hash,
-        ruleset_hash,
-    ))
-}
-
-fn apply_move(
-    state: GameState,
-    map: &aonw_content::MapDefinition,
-    movement: Result<crate::movement::MovementTransition, crate::MoveUnitError>,
-    map_hash: ContentHash,
-    ruleset_hash: ContentHash,
-) -> Result<DomainTransition, CanonicalEngineError> {
-    let movement = match movement {
-        Ok(value) => value,
-        Err(rejection) => {
-            return Ok(DomainTransition::rejected(
-                state,
-                rejection.code(),
-                map_hash,
-                ruleset_hash,
-            ));
-        }
-    };
-    let updated_unit = movement.unit().clone();
-    let unit_id = updated_unit.id().clone();
-    let next_revision = movement.revision();
-    let mut fog = state.fog_of_war().clone();
-    let mut diplomacy = state.diplomacy().clone();
-    if movement.event().is_some() {
-        let updated_index = state
-            .units()
-            .iter()
-            .position(|unit| unit.id() == &unit_id)
-            .expect("canonical unit exists");
-        let units = state
-            .units()
-            .iter()
-            .enumerate()
-            .map(|(index, unit)| {
-                if index == updated_index {
-                    &updated_unit
-                } else {
-                    unit
-                }
-            })
-            .collect::<Vec<_>>();
-        fog = recompute_after_move(
-            &fog,
-            map,
-            updated_unit.owner_player_id(),
-            &units,
-            state.cities(),
-        );
-        diplomacy = merge_discovered_contacts(&diplomacy, &fog, &units, state.cities());
-    }
-    let next_state = state
-        .into_after_movement(next_revision, updated_unit, fog, diplomacy)
-        .map_err(CanonicalEngineError::State)?;
-    let events = movement
-        .event()
-        .cloned()
-        .map(DomainEvent::UnitMoved)
-        .into_iter()
-        .collect::<Vec<_>>()
-        .into_boxed_slice();
-    let evidence = movement
-        .execution()
-        .cloned()
-        .map(ExecutionEvidence::UnitMovement);
-    Ok(DomainTransition::accepted(
-        next_state,
-        events,
-        evidence,
         map_hash,
         ruleset_hash,
     ))

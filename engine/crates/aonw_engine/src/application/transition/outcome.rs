@@ -8,6 +8,9 @@ use crate::{
     UnitMovedEvent, UnitMovementExecution, WonderProductionRefundedEvent,
     WorkerAutomationExecution, WorkerCompletedJobEvent,
 };
+use crate::{
+    DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
+};
 
 /// Ordered event emitted by an accepted transition.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -58,6 +61,12 @@ pub enum DomainEvent {
     CombatResolved(CombatEvent),
     /// A known observer applied a city-attack reputation penalty.
     DiplomaticScoreChanged(DiplomaticScoreChangedEvent),
+    /// One participant sent a private bilateral proposal.
+    DiplomaticProposalSent(DiplomaticProposalSentEvent),
+    /// The proposal recipient accepted or rejected it.
+    DiplomaticProposalResponded(DiplomaticProposalRespondedEvent),
+    /// One known bilateral status changed.
+    DiplomaticRelationChanged(DiplomaticRelationChangedEvent),
     /// A surviving unit gained combat experience.
     UnitGainedExperience(CombatEvent),
     /// A defeated unit was removed.

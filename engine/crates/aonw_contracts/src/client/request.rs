@@ -91,6 +91,22 @@ pub enum ClientCommandDto {
         expected_revision: u64,
         technology_id: TechnologyIdDto,
     },
+    /// Sends one current bilateral friendship or truce proposal.
+    SendDiplomaticProposal {
+        expected_revision: u64,
+        target_player_id: String,
+        kind: crate::DiplomaticProposalKindDto,
+        /// Optional caller-supplied deterministic identity.
+        proposal_id: Option<String>,
+        /// Requested truce payment; ignored for friendship proposals.
+        gold_payment: i64,
+    },
+    /// Accepts or rejects one proposal addressed to the authenticated actor.
+    RespondDiplomaticProposal {
+        expected_revision: u64,
+        proposal_id: String,
+        accepted: bool,
+    },
     /// Starts excavating the artifact at one controlled unit.
     StartArtifactExcavation {
         expected_revision: u64,

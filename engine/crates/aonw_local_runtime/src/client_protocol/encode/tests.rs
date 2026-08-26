@@ -6,7 +6,7 @@ use aonw_contracts::client::{
     CLIENT_API_VERSION, ClientCommandDto, ClientOutcomeDto, ClientQueryDto, ClientRequestBodyDto,
     ClientRequestDto, ClientResponseBodyDto,
 };
-use aonw_contracts::{CoordinateDto, TroopKindDto};
+use aonw_contracts::{CoordinateDto, DiplomaticProposalKindDto, TroopKindDto};
 use aonw_domain::{
     CityId, FieldImprovementKind, HexCoord, MovementStep, MovementUnits, PlayerId, TroopKind,
     UnitId, UnitKind,
@@ -129,6 +129,18 @@ fn dispatch_commands(runtime: &mut LocalRuntime) {
         },
         ClientCommandDto::SubmitTurn {
             expected_revision: 5,
+        },
+        ClientCommandDto::SendDiplomaticProposal {
+            expected_revision: 5,
+            target_player_id: "player-2".to_owned(),
+            kind: DiplomaticProposalKindDto::Friendship,
+            proposal_id: None,
+            gold_payment: 0,
+        },
+        ClientCommandDto::RespondDiplomaticProposal {
+            expected_revision: 5,
+            proposal_id: "proposal-1".to_owned(),
+            accepted: false,
         },
     ];
     for command in commands {

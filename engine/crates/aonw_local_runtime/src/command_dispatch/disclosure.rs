@@ -97,6 +97,15 @@ impl RecipientDisclosure {
             DomainEvent::DiplomaticScoreChanged(value) => {
                 value.player_a_id() == &self.actor || value.player_b_id() == &self.actor
             }
+            DomainEvent::DiplomaticProposalSent(value) => {
+                value.from_player_id() == &self.actor || value.to_player_id() == &self.actor
+            }
+            DomainEvent::DiplomaticProposalResponded(value) => {
+                value.from_player_id() == &self.actor || value.to_player_id() == &self.actor
+            }
+            DomainEvent::DiplomaticRelationChanged(value) => {
+                value.player_a_id() == &self.actor || value.player_b_id() == &self.actor
+            }
             DomainEvent::UnitMoved(value) => self.allows_unit(value.unit_id()),
             DomainEvent::AutoExplorePlanned(value) => self.allows_unit(value.unit_id()),
             DomainEvent::MerchantRouteAssigned(value) => self.allows_unit(value.unit_id()),

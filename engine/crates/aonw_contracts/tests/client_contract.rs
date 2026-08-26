@@ -15,6 +15,8 @@ use aonw_contracts::{
 
 #[path = "client_contract/artifact.rs"]
 mod artifact_contract;
+#[path = "client_contract/diplomacy.rs"]
+mod diplomacy_contract;
 #[path = "client_contract/economy.rs"]
 mod economy_contract;
 #[path = "client_contract/production.rs"]
@@ -267,6 +269,7 @@ fn every_current_request_variant_round_trips() {
     requests.extend(artifact_contract::requests());
     requests.extend(production_contract::requests());
     requests.extend(research_contract::requests());
+    requests.extend(diplomacy_contract::requests());
     requests.extend(worker_contract::requests());
 
     for request in requests {

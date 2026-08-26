@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     CityBuildingTypeDto, CityConquestActionDto, CityProjectTypeDto, CitySpecializationTypeDto,
-    CoordinateDto, FieldImprovementKindDto, TechnologyIdDto, TroopKindDto, UnitKindDto,
-    WonderTypeDto,
+    CoordinateDto, DiplomaticProposalKindDto, FieldImprovementKindDto, TechnologyIdDto,
+    TroopKindDto, UnitKindDto, WonderTypeDto,
 };
 
 /// One revision-bound command stored in a replay.
@@ -20,6 +20,20 @@ pub enum ReplayCommandDto {
     SelectTechnology {
         expected_revision: u64,
         technology_id: TechnologyIdDto,
+    },
+    /// Sends one current bilateral friendship or truce proposal.
+    SendDiplomaticProposal {
+        expected_revision: u64,
+        target_player_id: String,
+        kind: DiplomaticProposalKindDto,
+        proposal_id: Option<String>,
+        gold_payment: i64,
+    },
+    /// Accepts or rejects one proposal addressed to the authenticated actor.
+    RespondDiplomaticProposal {
+        expected_revision: u64,
+        proposal_id: String,
+        accepted: bool,
     },
     /// Starts excavating the artifact at one controlled unit.
     StartArtifactExcavation {

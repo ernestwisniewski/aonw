@@ -8,6 +8,8 @@ use sha2::{Digest, Sha256};
 
 use crate::{ContentHash, ScienceBalance, TechnologyCostBalance, TechnologyDefinition};
 
+mod diplomacy;
+pub use diplomacy::DiplomacyBalance;
 mod worker;
 pub use worker::{WorkerBalance, WorkerImprovementDefinition, WorkerYield};
 
@@ -255,6 +257,7 @@ pub struct RulesetDefinition {
     occupancy_policy: UnitOccupancyPolicyValue,
     combat: CombatBalance,
     city: CityBalance,
+    diplomacy: DiplomacyBalance,
     economy: EconomyBalance,
     production: ProductionBalance,
     worker: WorkerBalance,
@@ -294,6 +297,12 @@ impl RulesetDefinition {
     #[must_use]
     pub const fn city(&self) -> CityBalance {
         self.city
+    }
+
+    /// Returns immutable diplomacy proposal and relation balance.
+    #[must_use]
+    pub const fn diplomacy(&self) -> DiplomacyBalance {
+        self.diplomacy
     }
 
     /// Returns immutable city economy and growth balance.

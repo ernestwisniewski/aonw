@@ -1,12 +1,17 @@
 mod artifact_events;
+mod diplomacy_events;
 mod domain_transition;
 mod events;
 mod outcome;
 mod production_events;
+mod rejection_code_wire;
 mod research_events;
 
 pub use artifact_events::{
     ArtifactCarriedEvent, ArtifactExcavationStartedEvent, ArtifactStoredEvent,
+};
+pub use diplomacy_events::{
+    DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
 };
 pub use domain_transition::{DomainRejection, DomainTransition, DomainTransitionParts};
 pub use events::{
@@ -200,6 +205,18 @@ pub enum CommandRejectionCode {
     TechnologyPlayerNotControlled,
     /// The technology is unlocked, active, blocked, or misses prerequisites.
     TechnologyNotAvailable,
+    /// The authenticated actor cannot issue diplomacy commands.
+    DiplomacyPlayerNotControlled,
+    /// The target participant has not been discovered by the actor.
+    DiplomacyTargetNotDiscovered,
+    /// Current relation status forbids this proposal kind.
+    DiplomacyProposalNotAllowed,
+    /// The same proposal or proposal identifier is already pending.
+    DiplomacyDuplicateProposal,
+    /// The requested proposal is absent or addressed to another participant.
+    DiplomacyProposalNotFound,
+    /// The original sender can no longer fund an accepted truce payment.
+    DiplomacyProposalPaymentUnavailable,
     /// The authenticated actor cannot initiate an artifact trade.
     ArtifactTradeActorUnavailable,
     /// The artifact trade target is absent or equals the actor.
@@ -254,7 +271,7 @@ pub enum CommandRejectionCode {
 
 impl CommandRejectionCode {
     /// Complete stable rejection surface exposed to current clients.
-    pub const ALL: [Self; 113] = [
+    pub const ALL: [Self; 119] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -343,6 +360,12 @@ impl CommandRejectionCode {
         Self::CityArtifactSlotFull,
         Self::TechnologyPlayerNotControlled,
         Self::TechnologyNotAvailable,
+        Self::DiplomacyPlayerNotControlled,
+        Self::DiplomacyTargetNotDiscovered,
+        Self::DiplomacyProposalNotAllowed,
+        Self::DiplomacyDuplicateProposal,
+        Self::DiplomacyProposalNotFound,
+        Self::DiplomacyProposalPaymentUnavailable,
         Self::ArtifactTradeActorUnavailable,
         Self::ArtifactTradeTargetInvalid,
         Self::ArtifactTradeGoldInvalid,
@@ -369,127 +392,4 @@ impl CommandRejectionCode {
         Self::WorkerAutomationNotActive,
         Self::WorkerAutomationNoTarget,
     ];
-
-    /// Returns the stable language-neutral wire value.
-    #[must_use]
-    #[allow(clippy::too_many_lines)]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::StaleRevision => "stale_revision",
-            Self::UnitNotFound => "unit_not_found",
-            Self::UnitNotControlled => "unit_not_controlled",
-            Self::UnitUnavailable => "unit_unavailable",
-            Self::UnitUsesTradeRoutes => "unit_uses_trade_routes",
-            Self::UnitOutOfBounds => "unit_out_of_bounds",
-            Self::MoveTargetOutOfBounds => "move_target_out_of_bounds",
-            Self::MoveTargetIsCurrentTile => "move_target_is_current_tile",
-            Self::MoveTargetIsForeignCityCenter => "move_target_is_foreign_city_center",
-            Self::MoveTargetOccupied => "move_target_occupied",
-            Self::UnitMovementCapacityInsufficient => "unit_movement_capacity_insufficient",
-            Self::MovePathNotFound => "move_path_not_found",
-            Self::UnitNotScout => "unit_not_scout",
-            Self::UnitExhausted => "unit_exhausted",
-            Self::UnitHasPath => "unit_has_path",
-            Self::AutoExploreNoTarget => "auto_explore_no_target",
-            Self::UnitNotMerchant => "unit_not_merchant",
-            Self::MerchantNotInCity => "merchant_not_in_city",
-            Self::DestinationCityNotFound => "destination_city_not_found",
-            Self::DestinationCityNotControlled => "destination_city_not_controlled",
-            Self::DestinationCityIsOrigin => "destination_city_is_origin",
-            Self::DestinationCityIsCurrent => "destination_city_is_current",
-            Self::MerchantRouteNotFound => "merchant_route_not_found",
-            Self::MerchantCityPathNotFound => "merchant_city_path_not_found",
-            Self::TroopNotAvailable => "troop_not_available",
-            Self::DetachmentSourceOutOfBounds => "detachment_source_out_of_bounds",
-            Self::DetachmentDestinationUnavailable => "detachment_destination_unavailable",
-            Self::DetachedUnitIdUnavailable => "detached_unit_id_unavailable",
-            Self::UnitBusy => "unit_busy",
-            Self::UnitDefinitionMissing => "unit_definition_missing",
-            Self::StateRevisionOverflow => "state_revision_overflow",
-            Self::InvalidQueuedMovementPath => "invalid_queued_movement_path",
-            Self::InvalidUnit => "invalid_unit",
-            Self::MovementUnitUpdateFailed => "movement_unit_update_failed",
-            Self::TurnPlayerNotControlled => "turn_player_not_controlled",
-            Self::TurnPlayerNotActive => "turn_player_not_active",
-            Self::TurnScopeInvalid => "turn_scope_invalid",
-            Self::TurnProcessorUnsupported => "turn_processor_unsupported",
-            Self::TurnNumberOverflow => "turn_number_overflow",
-            Self::AttackerNotFound => "attacker_not_found",
-            Self::AttackerNotControlled => "attacker_not_controlled",
-            Self::AttackerUnavailable => "attacker_unavailable",
-            Self::AttackerExhausted => "attacker_exhausted",
-            Self::AttackerOutOfBounds => "attacker_out_of_bounds",
-            Self::AttackerCannotAttack => "attacker_cannot_attack",
-            Self::AttackTargetNotVisible => "attack_target_not_visible",
-            Self::AttackTargetOutOfBounds => "attack_target_out_of_bounds",
-            Self::AttackTargetNotFound => "attack_target_not_found",
-            Self::AttackTargetNotEnemy => "attack_target_not_enemy",
-            Self::AttackTargetProtectedByTreaty => "attack_target_protected_by_treaty",
-            Self::AttackTargetOutOfRange => "attack_target_out_of_range",
-            Self::AttackCityHasNoHealth => "attack_city_has_no_health",
-            Self::CityFounderNotFound => "city_founder_not_found",
-            Self::CityFounderNotControlled => "city_founder_not_controlled",
-            Self::CityFounderBusy => "city_founder_busy",
-            Self::CityFounderInvalid => "city_founder_invalid",
-            Self::CityFounderNoSettlers => "city_founder_no_settlers",
-            Self::CitySiteInvalid => "city_site_invalid",
-            Self::CityCenterOccupied => "city_center_occupied",
-            Self::CityCenterClaimed => "city_center_claimed",
-            Self::CityCenterTooClose => "city_center_too_close",
-            Self::CityControlledHexesInvalid => "city_controlled_hexes_invalid",
-            Self::CityNotFound => "city_not_found",
-            Self::CityNotControlled => "city_not_controlled",
-            Self::WorkedHexUnavailable => "worked_hex_unavailable",
-            Self::WorkedHexLimitReached => "worked_hex_limit_reached",
-            Self::CityExpansionHexUnavailable => "city_expansion_hex_unavailable",
-            Self::BuildingNotAvailable => "building_not_available",
-            Self::UnitProductionInvalidResourceOption => "unit_production_invalid_resource_option",
-            Self::UnitProductionNotAvailable => "unit_production_not_available",
-            Self::UnitProductionRequiresResource => "unit_production_requires_resource",
-            Self::UnitProductionMissingStrategicResource => {
-                "unit_production_missing_strategic_resource"
-            }
-            Self::UnitProductionRequiresCoast => "unit_production_requires_coast",
-            Self::UnitSupplyLimitReached => "unit_supply_limit_reached",
-            Self::WonderNotAvailable => "wonder_not_available",
-            Self::CitySpecializationLocked => "city_specialization_locked",
-            Self::CitySpecializationUnchanged => "city_specialization_unchanged",
-            Self::CitySpecializationMissingBuilding => "city_specialization_missing_building",
-            Self::ProductionQueueEmpty => "production_queue_empty",
-            Self::ProjectCannotBeRushed => "project_cannot_be_rushed",
-            Self::RushProductionUnavailable => "rush_production_unavailable",
-            Self::UnitAlreadyCarryingArtifact => "unit_already_carrying_artifact",
-            Self::ArtifactNotFound => "artifact_not_found",
-            Self::UnitNotCarryingArtifact => "unit_not_carrying_artifact",
-            Self::UnitNotInCity => "unit_not_in_city",
-            Self::CityArtifactSlotFull => "city_artifact_slot_full",
-            Self::TechnologyPlayerNotControlled => "technology_player_not_controlled",
-            Self::TechnologyNotAvailable => "technology_not_available",
-            Self::ArtifactTradeActorUnavailable => "artifact_trade_actor_unavailable",
-            Self::ArtifactTradeTargetInvalid => "artifact_trade_target_invalid",
-            Self::ArtifactTradeGoldInvalid => "artifact_trade_gold_invalid",
-            Self::ArtifactTradeBlockedByWar => "artifact_trade_blocked_by_war",
-            Self::ArtifactTradeGoldUnavailable => "artifact_trade_gold_unavailable",
-            Self::OfferedArtifactUnavailable => "offered_artifact_unavailable",
-            Self::TargetArtifactSlotUnavailable => "target_artifact_slot_unavailable",
-            Self::WorkerNotFound => "worker_not_found",
-            Self::WorkerNotControlled => "worker_not_controlled",
-            Self::WorkerUnavailable => "worker_unavailable",
-            Self::WorkerNoMovementPoints => "worker_no_movement_points",
-            Self::WorkerQueuedPathActive => "worker_queued_path_active",
-            Self::WorkerImprovementNotSelected => "worker_improvement_not_selected",
-            Self::WorkerActionNotControlled => "worker_action_not_controlled",
-            Self::WorkerImprovementUnavailable => "worker_improvement_unavailable",
-            Self::WorkerJobNotActive => "worker_job_not_active",
-            Self::WorkerAssignmentUnavailable => "worker_assignment_unavailable",
-            Self::WorkerAssignmentNotActive => "worker_assignment_not_active",
-            Self::WorkerRoadUnavailable => "worker_road_unavailable",
-            Self::RoadConstructionExistingRoad => "road_construction_existingRoad",
-            Self::RoadConstructionCity => "road_construction_city",
-            Self::RoadConstructionEnemyTerritory => "road_construction_enemyTerritory",
-            Self::RoadConstructionImpassableTerrain => "road_construction_impassableTerrain",
-            Self::WorkerAutomationNotActive => "worker_automation_not_active",
-            Self::WorkerAutomationNoTarget => "worker_automation_no_target",
-        }
-    }
 }

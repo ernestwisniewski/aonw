@@ -6,17 +6,20 @@ use aonw_domain::{ArtifactId, CityConquestAction, CityId, HexCoord, PlayerId, Un
 use crate::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CityExpansionOptionsRequest,
     CityFoundingOptionsRequest, CityWorkedHexOptionsRequest, CityYieldRequest, DetachTroopRequest,
-    FoundCityRequest, MerchantCityRequest, MoveUnitRequest, OpenSession, ProductionCommandRequest,
-    ReachableRequest, RoutePlanRequest, RuntimeQuery, SelectCityExpansionHexRequest,
-    SelectTechnologyRequest, StrategicResourceProjectionRequest, ToggleWorkedHexRequest,
-    TurnCommandRequest, UnitActionRequest, UnitLogisticsOptionsRequest, WorkerImprovementRequest,
-    WorkerOptionsRequest, WorkerUnitRequest,
+    DiplomacyProposalRequest, FoundCityRequest, MerchantCityRequest, MoveUnitRequest, OpenSession,
+    ProductionCommandRequest, ReachableRequest, RoutePlanRequest, RuntimeQuery,
+    SelectCityExpansionHexRequest, SelectTechnologyRequest, StrategicResourceProjectionRequest,
+    ToggleWorkedHexRequest, TurnCommandRequest, UnitActionRequest, UnitLogisticsOptionsRequest,
+    WorkerImprovementRequest, WorkerOptionsRequest, WorkerUnitRequest,
 };
 
 use super::ClientDecodeError;
 
+mod diplomacy;
+
 pub(super) enum DecodedCommand {
     SelectTechnology(SelectTechnologyRequest),
+    DiplomacyProposal(DiplomacyProposalRequest),
     Artifact(ArtifactCommandRequest),
     FoundCity(FoundCityRequest),
     ToggleWorkedHex(ToggleWorkedHexRequest),
@@ -173,6 +176,10 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, Clien
             expected_revision,
             technology: aonw_contract_mapping::decode_technology(technology_id),
         })),
+        command @ (ClientCommandDto::SendDiplomaticProposal { .. }
+        | ClientCommandDto::RespondDiplomaticProposal { .. }) => {
+            diplomacy::command(command).map(DecodedCommand::DiplomacyProposal)
+        }
         ClientCommandDto::StartArtifactExcavation {
             expected_revision,
             unit_id,

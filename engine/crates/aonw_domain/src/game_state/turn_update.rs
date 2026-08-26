@@ -67,6 +67,19 @@ pub struct ResearchStateUpdate {
     pub interaction: InteractionState,
 }
 
+/// Complete replacement produced by one authoritative diplomacy command.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DiplomacyStateUpdate {
+    /// Revision after the transition.
+    pub revision: StateRevision,
+    /// Economy after optional proposal payment.
+    pub economy: EconomyState,
+    /// Pending combat after an accepted peace proposal.
+    pub combat: CombatState,
+    /// Canonical relations, proposals, messages, scores, and trades.
+    pub diplomacy: Diplomacy,
+}
+
 /// Canonical turn coordinates replaced atomically by the turn kernel.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TurnAdvance {
@@ -173,6 +186,22 @@ impl GameState {
         builder.revision = update.revision;
         builder.knowledge = update.knowledge;
         builder.interaction = update.interaction;
+        builder.try_build()
+    }
+
+    /// Consumes the aggregate and applies one complete diplomacy update.
+    ///
+    /// # Errors
+    /// Returns an error when economy, combat, or diplomacy invariants fail.
+    pub fn into_after_diplomacy(
+        self,
+        update: DiplomacyStateUpdate,
+    ) -> Result<Self, GameStateBuildError> {
+        let mut builder = self.into_builder();
+        builder.revision = update.revision;
+        builder.economy = update.economy;
+        builder.combat = update.combat;
+        builder.diplomacy = update.diplomacy;
         builder.try_build()
     }
 

@@ -29,6 +29,7 @@ impl RuntimeCapabilities {
     const PRODUCTION: u16 = 1 << 11;
     const ARTIFACTS: u16 = 1 << 12;
     const RESEARCH: u16 = 1 << 13;
+    const DIPLOMACY: u16 = 1 << 14;
 
     pub(super) const CURRENT: Self = Self {
         features: Self::ROUTE_PLAN
@@ -44,7 +45,8 @@ impl RuntimeCapabilities {
             | Self::WORKERS
             | Self::PRODUCTION
             | Self::ARTIFACTS
-            | Self::RESEARCH,
+            | Self::RESEARCH
+            | Self::DIPLOMACY,
     };
 
     /// Returns whether route planning is available.
@@ -127,5 +129,11 @@ impl RuntimeCapabilities {
     #[must_use]
     pub const fn research(self) -> bool {
         self.features & Self::RESEARCH != 0
+    }
+
+    /// Returns whether bilateral proposal commands are available.
+    #[must_use]
+    pub const fn diplomacy(self) -> bool {
+        self.features & Self::DIPLOMACY != 0
     }
 }

@@ -11,6 +11,8 @@ pub enum CanonicalEngineError {
     TurnLifecycle(TurnLifecycleBuildError),
     /// Applying combat diplomacy violates diplomacy invariants.
     Diplomacy(DiplomacyStateBuildError),
+    /// A diplomacy command produced an invalid checked update.
+    DiplomacyCommand(crate::DiplomacyError),
     /// Technology content referenced by canonical city rules is incomplete.
     Technology(crate::TechnologyQueryError),
     /// A validated city-founding job could not construct canonical state.
@@ -32,6 +34,7 @@ impl core::fmt::Display for CanonicalEngineError {
             Self::State(source) => source.fmt(formatter),
             Self::TurnLifecycle(source) => source.fmt(formatter),
             Self::Diplomacy(source) => source.fmt(formatter),
+            Self::DiplomacyCommand(source) => source.fmt(formatter),
             Self::Technology(source) => source.fmt(formatter),
             Self::CityFounding(source) => write!(formatter, "city founding failed: {source}"),
             Self::Worker(source) => write!(formatter, "worker progression failed: {source}"),

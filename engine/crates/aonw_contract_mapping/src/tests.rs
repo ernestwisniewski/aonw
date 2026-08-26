@@ -1,6 +1,24 @@
-use aonw_domain::DiplomaticScoreChangeReason;
+use aonw_contracts::DiplomaticProposalKindDto;
+use aonw_domain::{DiplomaticProposalKind, DiplomaticScoreChangeReason};
 
-use super::encode_score_reason;
+use super::{decode_proposal_kind, encode_proposal_kind, encode_score_reason};
+
+#[test]
+fn proposal_kind_mapping_is_bijective_and_total() {
+    for (domain, dto) in [
+        (
+            DiplomaticProposalKind::Friendship,
+            DiplomaticProposalKindDto::Friendship,
+        ),
+        (
+            DiplomaticProposalKind::Truce,
+            DiplomaticProposalKindDto::Truce,
+        ),
+    ] {
+        assert_eq!(encode_proposal_kind(domain), dto);
+        assert_eq!(decode_proposal_kind(dto), domain);
+    }
+}
 
 #[test]
 fn score_reason_mapping_covers_every_current_domain_value() {

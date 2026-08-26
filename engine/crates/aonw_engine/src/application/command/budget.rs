@@ -40,9 +40,11 @@ impl PlayerCommand<'_> {
     #[must_use]
     pub fn event_budget(self, state: &GameState) -> EventBudget {
         match self {
+            Self::RespondDiplomaticProposal(_) => EventBudget::new(3),
             Self::AttackHex(_) => EventBudget::new(7),
             Self::AutoExploreUnit(_) => EventBudget::new(2),
-            Self::StartArtifactExcavation(_)
+            Self::SendDiplomaticProposal(_)
+            | Self::StartArtifactExcavation(_)
             | Self::StoreArtifactInCity(_)
             | Self::TradeArtifact(_)
             | Self::AutomateWorker(_)

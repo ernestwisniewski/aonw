@@ -8,12 +8,15 @@ use aonw_engine::{
 };
 
 mod artifact;
+mod diplomacy;
 mod disclosure;
 mod production;
 mod research;
 mod view_diff;
 mod worker;
 
+pub use diplomacy::DiplomacyProposalRequest;
+pub(crate) use diplomacy::dispatch_diplomacy_proposal;
 pub(crate) use disclosure::{RecipientDisclosure, visible_city_ids};
 pub use production::ProductionCommandRequest;
 pub(crate) use production::dispatch_production;

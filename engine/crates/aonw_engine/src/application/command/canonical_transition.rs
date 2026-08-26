@@ -2,7 +2,8 @@ use aonw_content::ContentHash;
 use aonw_domain::GameState;
 
 use super::CanonicalEngineError;
-use crate::application::{DomainTransition, ExecutionEvidence};
+use crate::application::{DomainEvent, DomainTransition, ExecutionEvidence};
+use crate::movement::{merge_discovered_contacts, recompute_after_move};
 
 pub(super) fn apply_artifact(
     state: GameState,
@@ -58,6 +59,36 @@ pub(super) fn apply_research(
     Ok(DomainTransition::accepted(
         next,
         Box::new([]),
+        None,
+        map_hash,
+        ruleset_hash,
+    ))
+}
+
+pub(super) fn apply_diplomacy(
+    state: GameState,
+    mutation: Result<crate::diplomacy::DiplomacyMutation, crate::DiplomacyError>,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let mutation = match mutation {
+        Ok(value) => value,
+        Err(crate::DiplomacyError::Rejected(code)) => {
+            return Ok(DomainTransition::rejected(
+                state,
+                code,
+                map_hash,
+                ruleset_hash,
+            ));
+        }
+        Err(error) => return Err(CanonicalEngineError::DiplomacyCommand(error)),
+    };
+    let next = state
+        .into_after_diplomacy(mutation.update)
+        .map_err(CanonicalEngineError::State)?;
+    Ok(DomainTransition::accepted(
+        next,
+        mutation.events,
         None,
         map_hash,
         ruleset_hash,
@@ -218,6 +249,79 @@ pub(super) fn apply_combat(
         next,
         update.events,
         Some(ExecutionEvidence::Combat(update.evidence)),
+        map_hash,
+        ruleset_hash,
+    ))
+}
+
+pub(super) fn apply_move(
+    state: GameState,
+    map: &aonw_content::MapDefinition,
+    movement: Result<crate::movement::MovementTransition, crate::MoveUnitError>,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let movement = match movement {
+        Ok(value) => value,
+        Err(rejection) => {
+            return Ok(DomainTransition::rejected(
+                state,
+                rejection.code(),
+                map_hash,
+                ruleset_hash,
+            ));
+        }
+    };
+    let updated_unit = movement.unit().clone();
+    let unit_id = updated_unit.id().clone();
+    let next_revision = movement.revision();
+    let mut fog = state.fog_of_war().clone();
+    let mut diplomacy = state.diplomacy().clone();
+    if movement.event().is_some() {
+        let updated_index = state
+            .units()
+            .iter()
+            .position(|unit| unit.id() == &unit_id)
+            .expect("canonical unit exists");
+        let units = state
+            .units()
+            .iter()
+            .enumerate()
+            .map(|(index, unit)| {
+                if index == updated_index {
+                    &updated_unit
+                } else {
+                    unit
+                }
+            })
+            .collect::<Vec<_>>();
+        fog = recompute_after_move(
+            &fog,
+            map,
+            updated_unit.owner_player_id(),
+            &units,
+            state.cities(),
+        );
+        diplomacy = merge_discovered_contacts(&diplomacy, &fog, &units, state.cities());
+    }
+    let next_state = state
+        .into_after_movement(next_revision, updated_unit, fog, diplomacy)
+        .map_err(CanonicalEngineError::State)?;
+    let events = movement
+        .event()
+        .cloned()
+        .map(DomainEvent::UnitMoved)
+        .into_iter()
+        .collect::<Vec<_>>()
+        .into_boxed_slice();
+    let evidence = movement
+        .execution()
+        .cloned()
+        .map(ExecutionEvidence::UnitMovement);
+    Ok(DomainTransition::accepted(
+        next_state,
+        events,
+        evidence,
         map_hash,
         ruleset_hash,
     ))

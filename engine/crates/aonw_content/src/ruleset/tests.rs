@@ -36,7 +36,7 @@ fn standard_ruleset_hash_is_stable() {
     assert_eq!(first, second);
     assert_eq!(
         first.to_string(),
-        "ae9c3cb0fa0c2997abba3d0f27afb59c154414ec52ce0c7d786cfae6f3532aba"
+        "22b14e620c340e589f82481370670bcbbb0d29f3f17b24a19e1287597bde74a2"
     );
 }
 
@@ -151,6 +151,16 @@ fn standard_research_pace_scaling_is_exact_and_uses_ceiling_arithmetic() {
         [Some(1), Some(1), Some(1), Some(2)]
     );
     assert_eq!(balance.paced_cost(0, PaceProfile::Long120), Some(0));
+}
+
+#[test]
+fn standard_diplomacy_proposal_balance_matches_the_frozen_oracle() {
+    let balance = RulesetDefinition::standard().diplomacy();
+    assert_eq!(balance.proposal_duration_turns(), 5);
+    assert_eq!(balance.truce_duration_turns(), 10);
+    assert_eq!(balance.friendship_accept_score_delta(), 18);
+    assert_eq!(balance.truce_accept_score_delta(), 10);
+    assert_eq!(balance.proposal_reject_score_delta(), -6);
 }
 
 #[test]

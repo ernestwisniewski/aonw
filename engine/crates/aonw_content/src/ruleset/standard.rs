@@ -104,6 +104,7 @@ pub(super) static STANDARD_RULESET: RulesetDefinition = RulesetDefinition {
         worked_hex_limit_base: 0,
         worked_hexes_per_population: 1,
     },
+    diplomacy: super::DiplomacyBalance::STANDARD,
     economy: EconomyBalance::STANDARD,
     production: ProductionBalance::STANDARD,
     worker: super::WorkerBalance::STANDARD,

@@ -2,15 +2,12 @@ use aonw_contract_mapping::{encode_improvement, encode_unit_kind, encode_unit_po
 use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
     ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto,
-    ClientSessionStampDto, OwnedCityPlanningViewDto, PlayerCityViewDto, PlayerUnitViewDto,
-    PlayerViewPatchDto, PlayerViewSnapshotDto, WorkerJobViewDto,
+    OwnedCityPlanningViewDto, PlayerCityViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
+    WorkerJobViewDto,
 };
 use aonw_engine::CommandRejectionCode;
 
-use crate::{
-    CommandResult, PlayerCityView, PlayerUnitView, PlayerViewPatch, PlayerViewSnapshot,
-    SessionStamp,
-};
+use crate::{CommandResult, PlayerCityView, PlayerUnitView, PlayerViewPatch};
 
 mod artifact;
 mod capability;
@@ -20,6 +17,7 @@ mod presentation;
 mod query;
 mod research;
 mod simple;
+mod snapshot;
 #[cfg(test)]
 mod tests;
 mod worker;
@@ -37,35 +35,7 @@ use query::{merchant_destination, movement_metrics};
 use simple::founding_draft;
 pub(super) use simple::replay_verification;
 use simple::{field_improvement, road};
-
-pub(super) fn stamp(value: SessionStamp) -> ClientSessionStampDto {
-    ClientSessionStampDto {
-        revision: value.revision.get(),
-        state_digest: value.state_digest.to_string(),
-        map_hash: value.map_hash.to_string(),
-        ruleset_hash: value.ruleset_hash.to_string(),
-    }
-}
-
-pub(super) fn snapshot(value: &PlayerViewSnapshot) -> PlayerViewSnapshotDto {
-    PlayerViewSnapshotDto {
-        stamp: stamp(*value.stamp()),
-        turn: value.turn(),
-        turn_lifecycle: turn_lifecycle(*value.turn_lifecycle()),
-        pending_action: value.pending_action().map(pending_action),
-        city_founding_draft: value.city_founding_draft().map(founding_draft),
-        units: value.units().iter().map(unit).collect(),
-        cities: value.cities().iter().map(city).collect(),
-        artifacts: value.artifacts().iter().map(artifact).collect(),
-        field_improvements: value
-            .field_improvements()
-            .iter()
-            .copied()
-            .map(field_improvement)
-            .collect(),
-        roads: value.roads().iter().copied().map(road).collect(),
-    }
-}
+pub(super) use snapshot::{snapshot, stamp};
 
 pub(super) fn command_result(value: &CommandResult) -> ClientCommandResultDto {
     ClientCommandResultDto {
@@ -309,6 +279,24 @@ const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto
         }
         CommandRejectionCode::TechnologyNotAvailable => {
             ClientCommandRejectionCodeDto::TechnologyNotAvailable
+        }
+        CommandRejectionCode::DiplomacyPlayerNotControlled => {
+            ClientCommandRejectionCodeDto::DiplomacyPlayerNotControlled
+        }
+        CommandRejectionCode::DiplomacyTargetNotDiscovered => {
+            ClientCommandRejectionCodeDto::DiplomacyTargetNotDiscovered
+        }
+        CommandRejectionCode::DiplomacyProposalNotAllowed => {
+            ClientCommandRejectionCodeDto::DiplomacyProposalNotAllowed
+        }
+        CommandRejectionCode::DiplomacyDuplicateProposal => {
+            ClientCommandRejectionCodeDto::DiplomacyDuplicateProposal
+        }
+        CommandRejectionCode::DiplomacyProposalNotFound => {
+            ClientCommandRejectionCodeDto::DiplomacyProposalNotFound
+        }
+        CommandRejectionCode::DiplomacyProposalPaymentUnavailable => {
+            ClientCommandRejectionCodeDto::DiplomacyProposalPaymentUnavailable
         }
         CommandRejectionCode::ArtifactTradeActorUnavailable => {
             ClientCommandRejectionCodeDto::ArtifactTradeActorUnavailable

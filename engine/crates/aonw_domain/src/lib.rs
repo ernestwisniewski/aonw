@@ -53,8 +53,8 @@ pub use fog::{FogOfWar, FogVisibility, PlayerFog};
 pub use game_state::{
     GameState, GameStateBuildError, GameStateBuilder, UnitOccupancyPolicy,
     turn_update::{
-        ArtifactStateUpdate, CombatStateUpdate, ProductionStateUpdate, ResearchStateUpdate,
-        TurnAdvance,
+        ArtifactStateUpdate, CombatStateUpdate, DiplomacyStateUpdate, ProductionStateUpdate,
+        ResearchStateUpdate, TurnAdvance,
     },
 };
 pub use hex_coord::HexCoord;

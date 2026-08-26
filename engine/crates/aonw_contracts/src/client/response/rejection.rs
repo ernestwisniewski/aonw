@@ -180,6 +180,18 @@ pub enum ClientCommandRejectionCodeDto {
     TechnologyPlayerNotControlled,
     /// The technology is not a legal current research target.
     TechnologyNotAvailable,
+    /// The authenticated actor cannot issue diplomacy commands.
+    DiplomacyPlayerNotControlled,
+    /// The target participant has not been discovered by the actor.
+    DiplomacyTargetNotDiscovered,
+    /// Current relation status forbids this proposal kind.
+    DiplomacyProposalNotAllowed,
+    /// The same proposal or proposal identifier is already pending.
+    DiplomacyDuplicateProposal,
+    /// The requested proposal is absent or addressed to another participant.
+    DiplomacyProposalNotFound,
+    /// The original sender can no longer fund an accepted truce payment.
+    DiplomacyProposalPaymentUnavailable,
     /// The authenticated actor cannot initiate an artifact trade.
     ArtifactTradeActorUnavailable,
     /// The artifact trade target is absent or equals the actor.
@@ -234,10 +246,9 @@ pub enum ClientCommandRejectionCodeDto {
     /// No deterministic worker target exists.
     WorkerAutomationNoTarget,
 }
-
 impl ClientCommandRejectionCodeDto {
     /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 113] = [
+    pub const ALL: [Self; 119] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -326,6 +337,12 @@ impl ClientCommandRejectionCodeDto {
         Self::CityArtifactSlotFull,
         Self::TechnologyPlayerNotControlled,
         Self::TechnologyNotAvailable,
+        Self::DiplomacyPlayerNotControlled,
+        Self::DiplomacyTargetNotDiscovered,
+        Self::DiplomacyProposalNotAllowed,
+        Self::DiplomacyDuplicateProposal,
+        Self::DiplomacyProposalNotFound,
+        Self::DiplomacyProposalPaymentUnavailable,
         Self::ArtifactTradeActorUnavailable,
         Self::ArtifactTradeTargetInvalid,
         Self::ArtifactTradeGoldInvalid,
@@ -352,7 +369,6 @@ impl ClientCommandRejectionCodeDto {
         Self::WorkerAutomationNotActive,
         Self::WorkerAutomationNoTarget,
     ];
-
     /// Returns the stable snake-case wire value.
     #[must_use]
     #[allow(clippy::too_many_lines)]
@@ -448,6 +464,12 @@ impl ClientCommandRejectionCodeDto {
             Self::CityArtifactSlotFull => "city_artifact_slot_full",
             Self::TechnologyPlayerNotControlled => "technology_player_not_controlled",
             Self::TechnologyNotAvailable => "technology_not_available",
+            Self::DiplomacyPlayerNotControlled => "diplomacy_player_not_controlled",
+            Self::DiplomacyTargetNotDiscovered => "diplomacy_target_not_discovered",
+            Self::DiplomacyProposalNotAllowed => "diplomacy_proposal_not_allowed",
+            Self::DiplomacyDuplicateProposal => "diplomacy_duplicate_proposal",
+            Self::DiplomacyProposalNotFound => "diplomacy_proposal_not_found",
+            Self::DiplomacyProposalPaymentUnavailable => "diplomacy_proposal_payment_unavailable",
             Self::ArtifactTradeActorUnavailable => "artifact_trade_actor_unavailable",
             Self::ArtifactTradeTargetInvalid => "artifact_trade_target_invalid",
             Self::ArtifactTradeGoldInvalid => "artifact_trade_gold_invalid",

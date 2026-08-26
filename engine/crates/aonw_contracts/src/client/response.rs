@@ -176,6 +176,8 @@ pub enum ClientFeatureDto {
     Production,
     /// Research selection and complete technology options.
     Research,
+    /// Bilateral friendship and truce proposal commands.
+    Diplomacy,
 }
 
 /// Identity metadata returned with state-dependent results.

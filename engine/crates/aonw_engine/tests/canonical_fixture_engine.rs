@@ -25,6 +25,8 @@ use aonw_testkit::{
 mod artifact;
 #[path = "canonical_fixture_engine/city.rs"]
 mod city;
+#[path = "canonical_fixture_engine/diplomacy.rs"]
+mod diplomacy;
 #[path = "canonical_fixture_engine/encoding.rs"]
 mod encoding;
 #[path = "canonical_fixture_engine/research.rs"]
@@ -95,6 +97,10 @@ fn apply_command(
     match command {
         command @ ReplayCommandDto::SelectTechnology { .. } => {
             research::apply(state, context, command)
+        }
+        command @ (ReplayCommandDto::SendDiplomaticProposal { .. }
+        | ReplayCommandDto::RespondDiplomaticProposal { .. }) => {
+            diplomacy::apply(state, context, command)
         }
         command @ (ReplayCommandDto::StartArtifactExcavation { .. }
         | ReplayCommandDto::StoreArtifactInCity { .. }
