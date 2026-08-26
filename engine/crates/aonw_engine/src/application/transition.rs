@@ -238,6 +238,28 @@ pub enum CommandRejectionCode {
     DiplomacyGoldUnavailable,
     /// The gift is below the minimum score threshold or still on cooldown.
     DiplomacyGoldGiftUnavailable,
+    /// The requested resource trade targets the authenticated actor.
+    InvalidResourceTradeTarget,
+    /// At least one requested resource is not strategic.
+    InvalidResourceTradeResource,
+    /// Gold, duration, or exchange terms are invalid.
+    InvalidResourceTradeTerms,
+    /// Current war policy blocks opening a resource agreement.
+    ResourceTradeBlockedByWar,
+    /// The importer cannot fund the first gold settlement.
+    ResourceTradeGoldUnavailable,
+    /// The same directed resource import is already active.
+    ResourceTradeAlreadyActive,
+    /// A caller-supplied agreement identity is malformed.
+    InvalidResourceTradeAgreementId,
+    /// A caller-supplied agreement identity collides with an active token.
+    ResourceTradeAgreementIdConflict,
+    /// The requested exporter has no uncommitted resource output.
+    ResourceTradeExportUnavailable,
+    /// The actor has no uncommitted output for the offered exchange resource.
+    ResourceTradeOfferUnavailable,
+    /// The counterparty has no uncommitted output for the requested exchange resource.
+    ResourceTradeRequestUnavailable,
     /// The authenticated actor cannot initiate an artifact trade.
     ArtifactTradeActorUnavailable,
     /// The artifact trade target is absent or equals the actor.
@@ -292,7 +314,7 @@ pub enum CommandRejectionCode {
 
 impl CommandRejectionCode {
     /// Complete stable rejection surface exposed to current clients.
-    pub const ALL: [Self; 129] = [
+    pub const ALL: [Self; 140] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -397,6 +419,17 @@ impl CommandRejectionCode {
         Self::DiplomacyGoldGiftBlockedByRelation,
         Self::DiplomacyGoldUnavailable,
         Self::DiplomacyGoldGiftUnavailable,
+        Self::InvalidResourceTradeTarget,
+        Self::InvalidResourceTradeResource,
+        Self::InvalidResourceTradeTerms,
+        Self::ResourceTradeBlockedByWar,
+        Self::ResourceTradeGoldUnavailable,
+        Self::ResourceTradeAlreadyActive,
+        Self::InvalidResourceTradeAgreementId,
+        Self::ResourceTradeAgreementIdConflict,
+        Self::ResourceTradeExportUnavailable,
+        Self::ResourceTradeOfferUnavailable,
+        Self::ResourceTradeRequestUnavailable,
         Self::ArtifactTradeActorUnavailable,
         Self::ArtifactTradeTargetInvalid,
         Self::ArtifactTradeGoldInvalid,

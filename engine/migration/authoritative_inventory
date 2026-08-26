@@ -84,8 +84,8 @@ domain FortifyUnitCommand unit-action engine-parity FortifyUnit packages/aonw_co
 domain FoundCityCommand city runtime-ready FoundCity packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain MoveMerchantToCityCommand movement runtime-ready MoveMerchantToCity packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain MoveUnitCommand movement engine-parity MoveUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
-domain OpenResourceExchangeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
-domain OpenResourceTradeCommand artifact-resource-trade reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
+domain OpenResourceExchangeCommand artifact-resource-trade runtime-ready OpenResourceExchange packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
+domain OpenResourceTradeCommand artifact-resource-trade runtime-ready OpenResourceTrade packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RespondDiplomaticMessageCommand diplomacy runtime-ready RespondDiplomaticMessage packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RespondDiplomaticProposalCommand diplomacy runtime-ready RespondDiplomaticProposal packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain RushProductionCommand production runtime-ready RushProduction packages/aonw_core/lib/game/domain/command/city_commands.dart

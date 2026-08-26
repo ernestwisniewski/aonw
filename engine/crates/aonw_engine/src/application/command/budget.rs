@@ -61,6 +61,8 @@ impl PlayerCommand<'_> {
             | Self::MoveMerchantToCity(_)
             | Self::DetachTroop(_) => EventBudget::SINGLE,
             Self::SelectTechnology(_)
+            | Self::OpenResourceTrade(_)
+            | Self::OpenResourceExchange(_)
             | Self::FoundCity(_)
             | Self::ToggleWorkedHex(_)
             | Self::SelectCityExpansionHex(_)

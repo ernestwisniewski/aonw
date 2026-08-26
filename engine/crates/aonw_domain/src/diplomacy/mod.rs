@@ -1,14 +1,16 @@
+mod agreement;
 mod attack;
 mod model;
 mod transition;
 
 use crate::{MatchIdentity, PlayerId};
 
+pub use agreement::ResourceTradeAgreement;
 pub use model::{
     DiplomaticMessage, DiplomaticMessageCategory, DiplomaticMessageResponse,
     DiplomaticMessageTopic, DiplomaticProposal, DiplomaticProposalKind, DiplomaticRelation,
     DiplomaticRelationChangeReason, DiplomaticRelationStatus, DiplomaticScoreChangeReason,
-    DiplomaticScoreEntry, ResourceTradeAgreement,
+    DiplomaticScoreEntry,
 };
 
 /// Ordered identity of one diplomatic relationship.

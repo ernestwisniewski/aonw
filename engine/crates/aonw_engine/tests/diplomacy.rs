@@ -2,6 +2,8 @@
 
 #[path = "diplomacy/messages.rs"]
 mod messages;
+#[path = "diplomacy/resource_trade.rs"]
+mod resource_trade;
 #[path = "diplomacy/war_gift.rs"]
 mod war_gift;
 

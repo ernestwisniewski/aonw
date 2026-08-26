@@ -1,6 +1,6 @@
 use aonw_contract_mapping::{
     decode_city_building, decode_city_project, decode_city_specialization, decode_city_wonder,
-    decode_improvement, decode_troop, decode_unit_kind,
+    decode_improvement, decode_resource, decode_troop, decode_unit_kind,
 };
 use aonw_contracts::ReplayCommandDto;
 use aonw_domain::{ArtifactId, CityConquestAction, CityId, PlayerId, UnitId};
@@ -23,6 +23,8 @@ pub(super) fn decode_command(
         command @ ReplayCommandDto::SelectTechnology { .. } => Ok(decode_research_command(command)),
         command @ (ReplayCommandDto::DeclareWar { .. }
         | ReplayCommandDto::SendGoldGift { .. }
+        | ReplayCommandDto::OpenResourceTrade { .. }
+        | ReplayCommandDto::OpenResourceExchange { .. }
         | ReplayCommandDto::SendDiplomaticProposal { .. }
         | ReplayCommandDto::RespondDiplomaticProposal { .. }
         | ReplayCommandDto::SendDiplomaticMessage { .. }
@@ -151,6 +153,38 @@ fn decode_diplomacy_command(
             target_player_id: PlayerId::new(target_player_id.clone())
                 .map_err(PersistenceError::InvalidPlayer)?,
             amount: *amount,
+        },
+        ReplayCommandDto::OpenResourceTrade {
+            expected_revision,
+            target_player_id,
+            resource,
+            gold_per_turn,
+            duration_turns,
+            agreement_id,
+        } => DiplomacyRequest::OpenResourceTrade {
+            expected_revision: *expected_revision,
+            target_player_id: PlayerId::new(target_player_id.clone())
+                .map_err(PersistenceError::InvalidPlayer)?,
+            resource: decode_resource(*resource),
+            gold_per_turn: *gold_per_turn,
+            duration_turns: *duration_turns,
+            agreement_id: agreement_id.clone(),
+        },
+        ReplayCommandDto::OpenResourceExchange {
+            expected_revision,
+            target_player_id,
+            offered_resource,
+            requested_resource,
+            duration_turns,
+            agreement_id,
+        } => DiplomacyRequest::OpenResourceExchange {
+            expected_revision: *expected_revision,
+            target_player_id: PlayerId::new(target_player_id.clone())
+                .map_err(PersistenceError::InvalidPlayer)?,
+            offered_resource: decode_resource(*offered_resource),
+            requested_resource: decode_resource(*requested_resource),
+            duration_turns: *duration_turns,
+            agreement_id: agreement_id.clone(),
         },
         ReplayCommandDto::SendDiplomaticProposal {
             expected_revision,

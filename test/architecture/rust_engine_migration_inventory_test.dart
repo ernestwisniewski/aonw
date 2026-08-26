@@ -208,6 +208,8 @@ void main() {
         'FoundCityCommand': 'runtime-ready',
         'MoveMerchantToCityCommand': 'runtime-ready',
         'MoveUnitCommand': 'engine-parity',
+        'OpenResourceExchangeCommand': 'runtime-ready',
+        'OpenResourceTradeCommand': 'runtime-ready',
         'RespondDiplomaticMessageCommand': 'runtime-ready',
         'RespondDiplomaticProposalCommand': 'runtime-ready',
         'RushProductionCommand': 'runtime-ready',

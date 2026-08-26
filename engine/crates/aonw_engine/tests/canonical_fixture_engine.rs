@@ -1,6 +1,5 @@
 //! Executes current canonical fixtures without a historical reducer adapter.
 
-use std::path::{Path, PathBuf};
 use std::{fmt, fs};
 
 use aonw_content::RulesetDefinition;
@@ -29,6 +28,8 @@ mod city;
 mod diplomacy;
 #[path = "canonical_fixture_engine/encoding.rs"]
 mod encoding;
+#[path = "canonical_fixture_engine/path.rs"]
+mod path;
 #[path = "canonical_fixture_engine/research.rs"]
 mod research;
 #[path = "canonical_fixture_engine/review.rs"]
@@ -39,6 +40,7 @@ mod turn;
 mod worker;
 
 use encoding::{encode_event, encode_evidence};
+use path::repository_root;
 
 #[derive(Debug)]
 struct ExecutionError(String);
@@ -98,6 +100,8 @@ fn apply_command(
         }
         command @ (ReplayCommandDto::DeclareWar { .. }
         | ReplayCommandDto::SendGoldGift { .. }
+        | ReplayCommandDto::OpenResourceTrade { .. }
+        | ReplayCommandDto::OpenResourceExchange { .. }
         | ReplayCommandDto::SendDiplomaticProposal { .. }
         | ReplayCommandDto::RespondDiplomaticProposal { .. }
         | ReplayCommandDto::SendDiplomaticMessage { .. }
@@ -443,14 +447,6 @@ fn apply_unit_action(
 
 fn display_error(error: impl fmt::Display) -> ExecutionError {
     ExecutionError(error.to_string())
-}
-
-fn repository_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .find(|path| path.join("engine/fixtures/canonical_commands").is_dir())
-        .expect("repository root must contain canonical engine fixtures")
-        .to_path_buf()
 }
 
 #[test]

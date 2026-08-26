@@ -40,6 +40,21 @@ pub enum ResourceType {
 }
 
 impl ResourceType {
+    /// Returns whether this resource participates in strategic-resource trade.
+    #[must_use]
+    pub const fn is_strategic(self) -> bool {
+        matches!(
+            self,
+            Self::Iron
+                | Self::Coal
+                | Self::Oil
+                | Self::Aluminium
+                | Self::Uranium
+                | Self::Horses
+                | Self::Marble
+        )
+    }
+
     /// Returns whether this resource uses a transferable stockpile.
     #[must_use]
     pub const fn is_stockpiled(self) -> bool {

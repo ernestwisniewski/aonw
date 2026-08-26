@@ -1,9 +1,113 @@
 use aonw_domain::{
     DiplomacyStateUpdate, DiplomaticMessageResponse, DiplomaticMessageTopic,
-    DiplomaticProposalKind, PlayerId,
+    DiplomaticProposalKind, PlayerId, ResourceType,
 };
 
 use crate::DomainEvent;
+
+/// Revision-bound request to open one resource-for-gold agreement.
+#[derive(Clone, Copy, Debug)]
+pub struct OpenResourceTradeCommand<'command> {
+    expected_revision: u64,
+    target_player_id: &'command PlayerId,
+    resource: ResourceType,
+    gold_per_turn: i64,
+    duration_turns: i64,
+    agreement_id: Option<&'command str>,
+}
+
+impl<'command> OpenResourceTradeCommand<'command> {
+    /// Creates a current authenticated resource-for-gold command.
+    #[must_use]
+    pub const fn new(
+        expected_revision: u64,
+        target_player_id: &'command PlayerId,
+        resource: ResourceType,
+        gold_per_turn: i64,
+        duration_turns: i64,
+        agreement_id: Option<&'command str>,
+    ) -> Self {
+        Self {
+            expected_revision,
+            target_player_id,
+            resource,
+            gold_per_turn,
+            duration_turns,
+            agreement_id,
+        }
+    }
+
+    pub(crate) const fn expected_revision(self) -> u64 {
+        self.expected_revision
+    }
+    pub(crate) const fn target_player_id(self) -> &'command PlayerId {
+        self.target_player_id
+    }
+    pub(crate) const fn resource(self) -> ResourceType {
+        self.resource
+    }
+    pub(crate) const fn gold_per_turn(self) -> i64 {
+        self.gold_per_turn
+    }
+    pub(crate) const fn duration_turns(self) -> i64 {
+        self.duration_turns
+    }
+    pub(crate) const fn agreement_id(self) -> Option<&'command str> {
+        self.agreement_id
+    }
+}
+
+/// Revision-bound request to open an atomic two-resource exchange.
+#[derive(Clone, Copy, Debug)]
+pub struct OpenResourceExchangeCommand<'command> {
+    expected_revision: u64,
+    target_player_id: &'command PlayerId,
+    offered_resource: ResourceType,
+    requested_resource: ResourceType,
+    duration_turns: i64,
+    agreement_id: Option<&'command str>,
+}
+
+impl<'command> OpenResourceExchangeCommand<'command> {
+    /// Creates a current authenticated resource-exchange command.
+    #[must_use]
+    pub const fn new(
+        expected_revision: u64,
+        target_player_id: &'command PlayerId,
+        offered_resource: ResourceType,
+        requested_resource: ResourceType,
+        duration_turns: i64,
+        agreement_id: Option<&'command str>,
+    ) -> Self {
+        Self {
+            expected_revision,
+            target_player_id,
+            offered_resource,
+            requested_resource,
+            duration_turns,
+            agreement_id,
+        }
+    }
+
+    pub(crate) const fn expected_revision(self) -> u64 {
+        self.expected_revision
+    }
+    pub(crate) const fn target_player_id(self) -> &'command PlayerId {
+        self.target_player_id
+    }
+    pub(crate) const fn offered_resource(self) -> ResourceType {
+        self.offered_resource
+    }
+    pub(crate) const fn requested_resource(self) -> ResourceType {
+        self.requested_resource
+    }
+    pub(crate) const fn duration_turns(self) -> i64 {
+        self.duration_turns
+    }
+    pub(crate) const fn agreement_id(self) -> Option<&'command str> {
+        self.agreement_id
+    }
+}
 
 /// Revision-bound request to declare war on one discovered participant.
 #[derive(Clone, Copy, Debug)]

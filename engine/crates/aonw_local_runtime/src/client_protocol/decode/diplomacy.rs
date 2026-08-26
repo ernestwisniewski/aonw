@@ -25,6 +25,38 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DiplomacyRequest, Cli
                 .map_err(|error| ClientDecodeError::new("invalid_target_player_id", error))?,
             amount,
         }),
+        ClientCommandDto::OpenResourceTrade {
+            expected_revision,
+            target_player_id,
+            resource,
+            gold_per_turn,
+            duration_turns,
+            agreement_id,
+        } => Ok(DiplomacyRequest::OpenResourceTrade {
+            expected_revision,
+            target_player_id: PlayerId::new(target_player_id)
+                .map_err(|error| ClientDecodeError::new("invalid_target_player_id", error))?,
+            resource: aonw_contract_mapping::decode_resource(resource),
+            gold_per_turn,
+            duration_turns,
+            agreement_id,
+        }),
+        ClientCommandDto::OpenResourceExchange {
+            expected_revision,
+            target_player_id,
+            offered_resource,
+            requested_resource,
+            duration_turns,
+            agreement_id,
+        } => Ok(DiplomacyRequest::OpenResourceExchange {
+            expected_revision,
+            target_player_id: PlayerId::new(target_player_id)
+                .map_err(|error| ClientDecodeError::new("invalid_target_player_id", error))?,
+            offered_resource: aonw_contract_mapping::decode_resource(offered_resource),
+            requested_resource: aonw_contract_mapping::decode_resource(requested_resource),
+            duration_turns,
+            agreement_id,
+        }),
         ClientCommandDto::SendDiplomaticProposal {
             expected_revision,
             target_player_id,

@@ -53,17 +53,25 @@ pub(crate) fn query_strategic_resource_projection(
             CommandRejectionCode::StaleRevision,
         ));
     }
+    strategic_resource_projection_for_player(state, context, context.actor_player_id())
+}
+
+pub(crate) fn strategic_resource_projection_for_player(
+    state: &GameState,
+    context: EngineContext<'_>,
+    player_id: &aonw_domain::PlayerId,
+) -> Result<StrategicResourceProjection, EconomyQueryError> {
     let empty_research = PlayerResearchState::default();
     let research = state
         .research()
         .players()
-        .get(context.actor_player_id())
+        .get(player_id)
         .unwrap_or(&empty_research);
     let technology = TechnologyUnlockQuery::new(context.ruleset(), research);
     let mut output = BTreeMap::<ResourceType, i64>::new();
     let mut sources = Vec::new();
     for improvement in state.field_improvements() {
-        let Some(city) = improvement_owner(state, context, improvement) else {
+        let Some(city) = improvement_owner(state, player_id, improvement) else {
             continue;
         };
         for resource in resources_at(state, context, improvement.coordinate()) {
@@ -89,7 +97,7 @@ pub(crate) fn query_strategic_resource_projection(
         }
     }
     Ok(StrategicResourceProjection::new(
-        context.actor_player_id().clone(),
+        player_id.clone(),
         output,
         sources,
     ))
@@ -97,12 +105,11 @@ pub(crate) fn query_strategic_resource_projection(
 
 fn improvement_owner<'state>(
     state: &'state GameState,
-    context: EngineContext<'_>,
+    player_id: &aonw_domain::PlayerId,
     improvement: &aonw_domain::FieldImprovement,
 ) -> Option<&'state City> {
     let owns_and_controls = |city: &&City| {
-        city.owner_player_id() == context.actor_player_id()
-            && city.controls(improvement.coordinate())
+        city.owner_player_id() == player_id && city.controls(improvement.coordinate())
     };
     match improvement.built_by_city_id() {
         Some(city_id) => state.city(city_id).filter(owns_and_controls),

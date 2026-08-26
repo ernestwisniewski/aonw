@@ -8,13 +8,13 @@ use crate::{
     AutoExploreUnitCommand, AutomateWorkerCommand, BuildRoadCommand, CancelWorkerAssignmentCommand,
     CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DeclareWarCommand, DetachTroopCommand,
     EngineContext, FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
-    RespondDiplomaticMessageCommand, RespondDiplomaticProposalCommand, RushProductionCommand,
-    SelectCityExpansionHexCommand, SelectTechnologyCommand, SelectWorkerImprovementCommand,
-    SendDiplomaticMessageCommand, SendDiplomaticProposalCommand, SendGoldGiftCommand,
-    SetCitySpecializationCommand, StartArtifactExcavationCommand, StartBuildingCommand,
-    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, StateDigest,
-    StoreArtifactInCityCommand, ToggleWorkedHexCommand, TradeArtifactCommand, TurnCommand,
-    UnitActionCommand,
+    OpenResourceExchangeCommand, OpenResourceTradeCommand, RespondDiplomaticMessageCommand,
+    RespondDiplomaticProposalCommand, RushProductionCommand, SelectCityExpansionHexCommand,
+    SelectTechnologyCommand, SelectWorkerImprovementCommand, SendDiplomaticMessageCommand,
+    SendDiplomaticProposalCommand, SendGoldGiftCommand, SetCitySpecializationCommand,
+    StartArtifactExcavationCommand, StartBuildingCommand, StartCityProjectCommand,
+    StartUnitProductionCommand, StartWonderCommand, StateDigest, StoreArtifactInCityCommand,
+    ToggleWorkedHexCommand, TradeArtifactCommand, TurnCommand, UnitActionCommand,
 };
 
 mod budget;
@@ -35,6 +35,10 @@ pub enum PlayerCommand<'command> {
     DeclareWar(DeclareWarCommand<'command>),
     /// Transfers a positive gold gift to one discovered participant.
     SendGoldGift(SendGoldGiftCommand<'command>),
+    /// Opens one resource-for-gold agreement.
+    OpenResourceTrade(OpenResourceTradeCommand<'command>),
+    /// Opens one atomic two-resource exchange.
+    OpenResourceExchange(OpenResourceExchangeCommand<'command>),
     /// Sends one friendship or truce proposal to a discovered participant.
     SendDiplomaticProposal(SendDiplomaticProposalCommand<'command>),
     /// Accepts or rejects one proposal addressed to the authenticated actor.
@@ -129,6 +133,16 @@ impl GameEngine {
             }
             PlayerCommand::SendGoldGift(command) => {
                 let mutation = crate::diplomacy::apply_send_gold_gift(&state, context, command);
+                apply_diplomacy(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::OpenResourceTrade(command) => {
+                let mutation =
+                    crate::diplomacy::apply_open_resource_trade(&state, context, command);
+                apply_diplomacy(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::OpenResourceExchange(command) => {
+                let mutation =
+                    crate::diplomacy::apply_open_resource_exchange(&state, context, command);
                 apply_diplomacy(state, mutation, map_hash, ruleset_hash)
             }
             PlayerCommand::SendDiplomaticProposal(command) => {

@@ -2,9 +2,10 @@ use aonw_contracts::client::{ClientCommandDto, ClientEventDto, ClientRequestBody
 use aonw_contracts::{
     DiplomaticMessageCategoryDto, DiplomaticMessageResponseDto, DiplomaticMessageTopicDto,
     DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationStatusDto,
+    ResourceTypeDto,
 };
 
-pub(super) fn requests() -> [ClientRequestBodyDto; 6] {
+pub(super) fn requests() -> [ClientRequestBodyDto; 8] {
     [
         ClientRequestBodyDto::Dispatch {
             command: ClientCommandDto::DeclareWar {
@@ -17,6 +18,26 @@ pub(super) fn requests() -> [ClientRequestBodyDto; 6] {
                 expected_revision: 8,
                 target_player_id: "player-2".to_owned(),
                 amount: 10,
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::OpenResourceTrade {
+                expected_revision: 8,
+                target_player_id: "player-2".to_owned(),
+                resource: ResourceTypeDto::Iron,
+                gold_per_turn: 3,
+                duration_turns: 5,
+                agreement_id: None,
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::OpenResourceExchange {
+                expected_revision: 8,
+                target_player_id: "player-2".to_owned(),
+                offered_resource: ResourceTypeDto::Iron,
+                requested_resource: ResourceTypeDto::Horses,
+                duration_turns: 5,
+                agreement_id: None,
             },
         },
         ClientRequestBodyDto::Dispatch {

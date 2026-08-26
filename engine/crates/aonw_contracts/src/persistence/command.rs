@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     CityBuildingTypeDto, CityConquestActionDto, CityProjectTypeDto, CitySpecializationTypeDto,
     CoordinateDto, DiplomaticMessageResponseDto, DiplomaticMessageTopicDto,
-    DiplomaticProposalKindDto, FieldImprovementKindDto, TechnologyIdDto, TroopKindDto, UnitKindDto,
-    WonderTypeDto,
+    DiplomaticProposalKindDto, FieldImprovementKindDto, ResourceTypeDto, TechnologyIdDto,
+    TroopKindDto, UnitKindDto, WonderTypeDto,
 };
 
 /// One revision-bound command stored in a replay.
@@ -27,6 +27,24 @@ pub enum ReplayCommandDto {
         expected_revision: u64,
         target_player_id: String,
         amount: i64,
+    },
+    /// Opens one resource-for-gold agreement.
+    OpenResourceTrade {
+        expected_revision: u64,
+        target_player_id: String,
+        resource: ResourceTypeDto,
+        gold_per_turn: i64,
+        duration_turns: i64,
+        agreement_id: Option<String>,
+    },
+    /// Opens one atomic two-resource exchange.
+    OpenResourceExchange {
+        expected_revision: u64,
+        target_player_id: String,
+        offered_resource: ResourceTypeDto,
+        requested_resource: ResourceTypeDto,
+        duration_turns: i64,
+        agreement_id: Option<String>,
     },
     /// Selects one currently available research target.
     SelectTechnology {

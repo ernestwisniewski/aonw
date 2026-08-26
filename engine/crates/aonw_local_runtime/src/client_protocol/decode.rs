@@ -1,7 +1,7 @@
 use aonw_content::{MapDefinition, MapDocument, RulesetDefinition, ScenarioDefinition};
 use aonw_contracts::client::{ClientCommandDto, ClientQueryDto};
 use aonw_contracts::{CityConquestActionDto, CoordinateDto};
-use aonw_domain::{ArtifactId, CityConquestAction, CityId, HexCoord, PlayerId, UnitId};
+use aonw_domain::{ArtifactId, CityConquestAction, CityId, HexCoord, PlayerId};
 
 use crate::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CityExpansionOptionsRequest,
@@ -16,6 +16,9 @@ use crate::{
 use super::ClientDecodeError;
 
 mod diplomacy;
+mod identity;
+
+use identity::{decode_city_id, decode_unit_id};
 
 pub(super) enum DecodedCommand {
     SelectTechnology(SelectTechnologyRequest),
@@ -178,6 +181,8 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, Clien
         })),
         command @ (ClientCommandDto::DeclareWar { .. }
         | ClientCommandDto::SendGoldGift { .. }
+        | ClientCommandDto::OpenResourceTrade { .. }
+        | ClientCommandDto::OpenResourceExchange { .. }
         | ClientCommandDto::SendDiplomaticProposal { .. }
         | ClientCommandDto::RespondDiplomaticProposal { .. }
         | ClientCommandDto::SendDiplomaticMessage { .. }
@@ -489,12 +494,4 @@ fn merchant_city(
         destination_city_id: CityId::new(destination_city_id)
             .map_err(|error| ClientDecodeError::new("invalid_city_id", error))?,
     })
-}
-
-fn decode_unit_id(value: String) -> Result<UnitId, ClientDecodeError> {
-    UnitId::new(value).map_err(|error| ClientDecodeError::new("invalid_unit_id", error))
-}
-
-fn decode_city_id(value: String) -> Result<CityId, ClientDecodeError> {
-    CityId::new(value).map_err(|error| ClientDecodeError::new("invalid_city_id", error))
 }

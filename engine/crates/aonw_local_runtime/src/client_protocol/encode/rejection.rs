@@ -268,6 +268,39 @@ pub(super) const fn rejection(value: CommandRejectionCode) -> ClientCommandRejec
         CommandRejectionCode::DiplomacyGoldGiftUnavailable => {
             ClientCommandRejectionCodeDto::DiplomacyGoldGiftUnavailable
         }
+        CommandRejectionCode::InvalidResourceTradeTarget => {
+            ClientCommandRejectionCodeDto::InvalidResourceTradeTarget
+        }
+        CommandRejectionCode::InvalidResourceTradeResource => {
+            ClientCommandRejectionCodeDto::InvalidResourceTradeResource
+        }
+        CommandRejectionCode::InvalidResourceTradeTerms => {
+            ClientCommandRejectionCodeDto::InvalidResourceTradeTerms
+        }
+        CommandRejectionCode::ResourceTradeBlockedByWar => {
+            ClientCommandRejectionCodeDto::ResourceTradeBlockedByWar
+        }
+        CommandRejectionCode::ResourceTradeGoldUnavailable => {
+            ClientCommandRejectionCodeDto::ResourceTradeGoldUnavailable
+        }
+        CommandRejectionCode::ResourceTradeAlreadyActive => {
+            ClientCommandRejectionCodeDto::ResourceTradeAlreadyActive
+        }
+        CommandRejectionCode::InvalidResourceTradeAgreementId => {
+            ClientCommandRejectionCodeDto::InvalidResourceTradeAgreementId
+        }
+        CommandRejectionCode::ResourceTradeAgreementIdConflict => {
+            ClientCommandRejectionCodeDto::ResourceTradeAgreementIdConflict
+        }
+        CommandRejectionCode::ResourceTradeExportUnavailable => {
+            ClientCommandRejectionCodeDto::ResourceTradeExportUnavailable
+        }
+        CommandRejectionCode::ResourceTradeOfferUnavailable => {
+            ClientCommandRejectionCodeDto::ResourceTradeOfferUnavailable
+        }
+        CommandRejectionCode::ResourceTradeRequestUnavailable => {
+            ClientCommandRejectionCodeDto::ResourceTradeRequestUnavailable
+        }
         CommandRejectionCode::ArtifactTradeActorUnavailable => {
             ClientCommandRejectionCodeDto::ArtifactTradeActorUnavailable
         }
