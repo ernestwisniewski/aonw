@@ -45,8 +45,8 @@ pub struct AttackHexRequest {
 
 use crate::persistence::{replay_context, replay_entry};
 use crate::player_view::{
-    PlayerTurnLifecycleView, city_founding_draft, pending_action, visible_artifacts,
-    visible_cities, visible_infrastructure, visible_units,
+    PlayerTurnLifecycleView, city_founding_draft, diplomacy_view, pending_action,
+    visible_artifacts, visible_cities, visible_infrastructure, visible_units,
 };
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
@@ -429,6 +429,7 @@ pub(crate) fn dispatch_player(
     let before_context = replay_context(session, Some(session.actor()));
     let before_revision = session.state().revision().get();
     let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
+    let before_diplomacy = diplomacy_view(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
     let before_city_view = visible_cities(session.state(), session.actor());
     let before_artifacts = visible_artifacts(session.state(), session.actor());
@@ -450,6 +451,7 @@ pub(crate) fn dispatch_player(
     let (after_improvements, after_roads) =
         visible_infrastructure(session.state(), session.actor());
     let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
+    let after_diplomacy = diplomacy_view(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());
     let after_founding_draft = city_founding_draft(session.state(), session.actor());
     let recipient_disclosure = RecipientDisclosure::new(
@@ -463,6 +465,7 @@ pub(crate) fn dispatch_player(
         session.state().revision().get(),
         ProjectedView::new(
             before_turn,
+            before_diplomacy,
             before_view,
             before_city_view,
             before_artifacts,
@@ -471,6 +474,7 @@ pub(crate) fn dispatch_player(
         ),
         ProjectedView::new(
             after_turn,
+            after_diplomacy,
             after_view,
             after_city_view,
             after_artifacts,

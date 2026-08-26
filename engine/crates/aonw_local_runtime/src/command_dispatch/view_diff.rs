@@ -4,7 +4,8 @@ use aonw_domain::{ArtifactId, CityId, HexCoord, UnitId};
 
 use crate::player_view::{
     CityFoundingDraftView, PendingActionView, PlayerArtifactView, PlayerCityView,
-    PlayerFieldImprovementView, PlayerRoadView, PlayerTurnLifecycleView, PlayerUnitView,
+    PlayerDiplomacyView, PlayerFieldImprovementView, PlayerRoadView, PlayerTurnLifecycleView,
+    PlayerUnitView,
 };
 
 /// Recipient-safe view delta produced by one dispatch.
@@ -40,10 +41,13 @@ pub struct PlayerViewPatch {
     pub pending_action: Option<PendingActionView>,
     /// Current recipient-owned city-founding workflow.
     pub city_founding_draft: Option<CityFoundingDraftView>,
+    /// Replacement bilateral diplomacy view when any visible record changed.
+    pub diplomacy: Option<PlayerDiplomacyView>,
 }
 
 pub(crate) struct ProjectedView {
     turn: PlayerTurnLifecycleView,
+    diplomacy: PlayerDiplomacyView,
     units: Vec<PlayerUnitView>,
     cities: Vec<PlayerCityView>,
     artifacts: Vec<PlayerArtifactView>,
@@ -54,6 +58,7 @@ pub(crate) struct ProjectedView {
 impl ProjectedView {
     pub(crate) fn new(
         turn: PlayerTurnLifecycleView,
+        diplomacy: PlayerDiplomacyView,
         units: Vec<PlayerUnitView>,
         cities: Vec<PlayerCityView>,
         artifacts: Vec<PlayerArtifactView>,
@@ -62,6 +67,7 @@ impl ProjectedView {
     ) -> Self {
         Self {
             turn,
+            diplomacy,
             units,
             cities,
             artifacts,
@@ -93,6 +99,7 @@ pub(crate) fn diff_view(
     );
     let before_turn = before.turn;
     let after_turn = after.turn;
+    let diplomacy = (before.diplomacy != after.diplomacy).then_some(after.diplomacy);
     let before_cities = before.cities;
     let after_cities = after.cities;
     let before_artifacts = before.artifacts;
@@ -150,6 +157,7 @@ pub(crate) fn diff_view(
         removed_road_coordinates,
         pending_action,
         city_founding_draft,
+        diplomacy,
     }
 }
 
@@ -261,7 +269,7 @@ mod tests {
     use aonw_domain::{HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind};
 
     use super::{ProjectedView, diff_view};
-    use crate::player_view::{PlayerTurnLifecycleView, PlayerUnitView};
+    use crate::player_view::{PlayerDiplomacyView, PlayerTurnLifecycleView, PlayerUnitView};
 
     #[test]
     fn sorted_view_diff_reports_updates_insertions_and_removals() {
@@ -272,8 +280,24 @@ mod tests {
         let patch = diff_view(
             4,
             5,
-            ProjectedView::new(turn, before, Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-            ProjectedView::new(turn, after, Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+            ProjectedView::new(
+                turn,
+                PlayerDiplomacyView::default(),
+                before,
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ),
+            ProjectedView::new(
+                turn,
+                PlayerDiplomacyView::default(),
+                after,
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ),
             None,
             None,
         );

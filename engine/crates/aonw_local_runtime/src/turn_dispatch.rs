@@ -11,8 +11,8 @@ use crate::command_dispatch::{
 };
 use crate::persistence::{replay_context, replay_entry};
 use crate::player_view::{
-    PlayerTurnLifecycleView, city_founding_draft, pending_action, visible_artifacts,
-    visible_cities, visible_infrastructure, visible_units,
+    PlayerTurnLifecycleView, city_founding_draft, diplomacy_view, pending_action,
+    visible_artifacts, visible_cities, visible_infrastructure, visible_units,
 };
 use crate::session::Session;
 
@@ -141,6 +141,7 @@ fn dispatch_system(
     let before_context = replay_context(session, None);
     let before_revision = session.state().revision().get();
     let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
+    let before_diplomacy = diplomacy_view(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
     let before_city_view = visible_cities(session.state(), session.actor());
     let before_artifacts = visible_artifacts(session.state(), session.actor());
@@ -162,6 +163,7 @@ fn dispatch_system(
     let (after_improvements, after_roads) =
         visible_infrastructure(session.state(), session.actor());
     let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
+    let after_diplomacy = diplomacy_view(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());
     let recipient_disclosure = RecipientDisclosure::new(
         session.actor().clone(),
@@ -179,6 +181,7 @@ fn dispatch_system(
             session.state().revision().get(),
             ProjectedView::new(
                 before_turn,
+                before_diplomacy,
                 before_view,
                 before_city_view,
                 before_artifacts,
@@ -187,6 +190,7 @@ fn dispatch_system(
             ),
             ProjectedView::new(
                 after_turn,
+                after_diplomacy,
                 after_view,
                 after_city_view,
                 after_artifacts,

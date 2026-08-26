@@ -49,7 +49,7 @@ expected-event-count 40
 expected-native-event-count 4
 expected-evidence-count 1
 expected-native-evidence-count 4
-expected-projection-type-count 9
+expected-projection-type-count 14
 expected-projection-variant-count 9
 dart-domain-root packages/aonw_core/lib/game/domain/command/game_command.dart
 dart-system-source packages/aonw_core/lib/game/application/engine/system_command.dart
@@ -184,6 +184,11 @@ projection-type PlayerViewPatch recipient-patch characterized PlayerViewPatchDto
 projection-type PlayerViewSnapshot recipient-snapshot characterized PlayerViewSnapshotDto engine/crates/aonw_local_runtime/src/player_view.rs
 projection-type PlayerFieldImprovementView visible-infrastructure runtime-ready FieldImprovementViewDto engine/crates/aonw_local_runtime/src/player_view/infrastructure.rs
 projection-type PlayerRoadView visible-infrastructure runtime-ready RoadViewDto engine/crates/aonw_local_runtime/src/player_view/infrastructure.rs
+projection-type PlayerDiplomacyView recipient-diplomacy runtime-ready PlayerDiplomacyViewDto engine/crates/aonw_local_runtime/src/player_view/diplomacy.rs
+projection-type PlayerDiplomaticRelationView recipient-diplomacy runtime-ready PlayerDiplomaticRelationViewDto engine/crates/aonw_local_runtime/src/player_view/diplomacy.rs
+projection-type PlayerDiplomaticProposalView recipient-diplomacy runtime-ready PlayerDiplomaticProposalViewDto engine/crates/aonw_local_runtime/src/player_view/diplomacy.rs
+projection-type PlayerDiplomaticMessageView recipient-diplomacy runtime-ready PlayerDiplomaticMessageViewDto engine/crates/aonw_local_runtime/src/player_view/diplomacy.rs
+projection-type PlayerResourceTradeAgreementView recipient-diplomacy runtime-ready PlayerResourceTradeAgreementViewDto engine/crates/aonw_local_runtime/src/player_view/diplomacy.rs
 
 projection-variant AttackTargeting pending-action characterized AttackTargeting
 projection-variant CityExpansionSelection pending-action characterized CityExpansionSelection

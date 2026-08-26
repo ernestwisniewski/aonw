@@ -6,6 +6,7 @@ use super::MapViewDto;
 
 mod artifact;
 mod city;
+mod diplomacy;
 mod economy;
 mod event;
 mod logistics;
@@ -20,6 +21,10 @@ pub use artifact::{PlayerArtifactLocationViewDto, PlayerArtifactViewDto};
 pub use city::{
     CityExpansionCandidateDto, CityFoundingDraftViewDto, OwnedCityPlanningViewDto,
     PlayerCityViewDto,
+};
+pub use diplomacy::{
+    PlayerDiplomacyViewDto, PlayerDiplomaticMessageViewDto, PlayerDiplomaticProposalViewDto,
+    PlayerDiplomaticRelationViewDto, PlayerResourceTradeAgreementViewDto,
 };
 pub use economy::{
     CityYieldContributionDto, CityYieldContributionKindDto, StrategicResourceAmountDto,
@@ -208,6 +213,8 @@ pub struct PlayerViewSnapshotDto {
     pub pending_action: Option<PendingActionViewDto>,
     /// Recipient-owned city-founding workflow, when one is persisted.
     pub city_founding_draft: Option<CityFoundingDraftViewDto>,
+    /// Bilateral diplomacy state in which this recipient participates.
+    pub diplomacy: PlayerDiplomacyViewDto,
     /// Units currently visible to the recipient.
     pub units: Vec<PlayerUnitViewDto>,
     /// Cities currently known to the recipient.
@@ -294,6 +301,8 @@ pub struct PlayerViewPatchDto {
     pub pending_action: Option<PendingActionViewDto>,
     /// Current recipient-owned founding workflow; null clears it.
     pub city_founding_draft: Option<CityFoundingDraftViewDto>,
+    /// Replacement bilateral diplomacy view when any visible record changed.
+    pub diplomacy: Option<PlayerDiplomacyViewDto>,
 }
 
 /// Result of one authoritative command.

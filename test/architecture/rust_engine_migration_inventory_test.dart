@@ -155,7 +155,7 @@ void main() {
   });
 
   test('migration manifest closes recipient projection variants', () {
-    expect(manifest.projectionTypes, hasLength(9));
+    expect(manifest.projectionTypes, hasLength(14));
     expect(manifest.projectionVariants, hasLength(9));
     for (final entry in manifest.projectionTypes) {
       expect(

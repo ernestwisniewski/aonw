@@ -25,8 +25,10 @@ pub use command_dispatch::{
 pub use persistence::{PersistenceError, ReplayVerification};
 pub use player_view::{
     CityFoundingDraftView, OwnedCityPlanningView, PendingActionView, PlayerArtifactLocationView,
-    PlayerArtifactView, PlayerCityView, PlayerFieldImprovementView, PlayerRoadView,
-    PlayerTurnLifecycleView, PlayerUnitView, PlayerViewSnapshot,
+    PlayerArtifactView, PlayerCityView, PlayerDiplomacyView, PlayerDiplomaticMessageView,
+    PlayerDiplomaticProposalView, PlayerDiplomaticRelationView, PlayerFieldImprovementView,
+    PlayerResourceTradeAgreementView, PlayerRoadView, PlayerTurnLifecycleView, PlayerUnitView,
+    PlayerViewSnapshot,
 };
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{

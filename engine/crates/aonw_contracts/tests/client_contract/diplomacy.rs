@@ -1,4 +1,8 @@
-use aonw_contracts::client::{ClientCommandDto, ClientEventDto, ClientRequestBodyDto};
+use aonw_contracts::client::{
+    ClientCommandDto, ClientEventDto, ClientRequestBodyDto, PlayerDiplomacyViewDto,
+    PlayerDiplomaticMessageViewDto, PlayerDiplomaticProposalViewDto,
+    PlayerDiplomaticRelationViewDto, PlayerResourceTradeAgreementViewDto,
+};
 use aonw_contracts::{
     DiplomaticMessageCategoryDto, DiplomaticMessageResponseDto, DiplomaticMessageTopicDto,
     DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationStatusDto,
@@ -128,4 +132,61 @@ fn proposal_events_round_trip_without_legacy_fields() {
         let unknown = encoded.replacen('}', ",\"legacyVersion\":1}", 1);
         assert!(serde_json::from_str::<ClientEventDto>(&unknown).is_err());
     }
+}
+
+#[test]
+fn recipient_diplomacy_view_round_trips_strictly_without_score_history() {
+    let view = PlayerDiplomacyViewDto {
+        relations: vec![PlayerDiplomaticRelationViewDto {
+            counterpart_player_id: "player-2".to_owned(),
+            status: DiplomaticRelationStatusDto::Friendly,
+            relation_score: 12,
+            status_expires_on_turn: None,
+            last_changed_turn: Some(7),
+            last_change_reason: Some(DiplomaticRelationChangeReasonDto::ProposalAccepted),
+        }],
+        proposals: vec![PlayerDiplomaticProposalViewDto {
+            id: "proposal-1".to_owned(),
+            from_player_id: "player-1".to_owned(),
+            to_player_id: "player-2".to_owned(),
+            kind: DiplomaticProposalKindDto::Friendship,
+            created_turn: 7,
+            expires_on_turn: 12,
+            gold_payment: 0,
+        }],
+        messages: vec![PlayerDiplomaticMessageViewDto {
+            id: "message-1".to_owned(),
+            from_player_id: "player-2".to_owned(),
+            to_player_id: "player-1".to_owned(),
+            topic: DiplomaticMessageTopicDto::WithdrawScouts,
+            category: DiplomaticMessageCategoryDto::Request,
+            created_turn: 7,
+            expires_on_turn: 12,
+            response: Some(DiplomaticMessageResponseDto::Conciliatory),
+            responded_turn: Some(8),
+            relation_score_delta: 12,
+            relation_score_after: Some(12),
+            promise_due_turn: Some(10),
+            promise_broken: false,
+        }],
+        resource_trade_agreements: vec![PlayerResourceTradeAgreementViewDto {
+            id: "trade-1".to_owned(),
+            exporter_player_id: "player-2".to_owned(),
+            importer_player_id: "player-1".to_owned(),
+            resource: ResourceTypeDto::Iron,
+            gold_per_turn: 3,
+            remaining_turns: 5,
+            amount_per_turn: 1,
+            exchange_group_id: None,
+        }],
+    };
+
+    let encoded = serde_json::to_string(&view).expect("diplomacy view JSON");
+    assert_eq!(
+        serde_json::from_str::<PlayerDiplomacyViewDto>(&encoded).expect("diplomacy view"),
+        view
+    );
+    assert!(!encoded.contains("scoreHistory"));
+    let unknown = encoded.replacen('{', "{\"legacyVersion\":1,", 1);
+    assert!(serde_json::from_str::<PlayerDiplomacyViewDto>(&unknown).is_err());
 }

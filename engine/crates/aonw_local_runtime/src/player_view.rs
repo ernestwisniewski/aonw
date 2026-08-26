@@ -7,12 +7,18 @@ use crate::SessionStamp;
 
 mod artifact;
 mod city;
+mod diplomacy;
 mod infrastructure;
 
 pub(crate) use artifact::visible_artifacts;
 pub use artifact::{PlayerArtifactLocationView, PlayerArtifactView};
 pub use city::{CityFoundingDraftView, OwnedCityPlanningView, PlayerCityView};
 pub(crate) use city::{city_founding_draft, visible_cities};
+pub(crate) use diplomacy::diplomacy_view;
+pub use diplomacy::{
+    PlayerDiplomacyView, PlayerDiplomaticMessageView, PlayerDiplomaticProposalView,
+    PlayerDiplomaticRelationView, PlayerResourceTradeAgreementView,
+};
 pub(crate) use infrastructure::visible_infrastructure;
 pub use infrastructure::{PlayerFieldImprovementView, PlayerRoadView};
 
@@ -156,6 +162,7 @@ pub struct PlayerViewSnapshot {
     turn_lifecycle: PlayerTurnLifecycleView,
     pending_action: Option<PendingActionView>,
     city_founding_draft: Option<CityFoundingDraftView>,
+    diplomacy: PlayerDiplomacyView,
     units: Box<[PlayerUnitView]>,
     cities: Box<[PlayerCityView]>,
     artifacts: Box<[PlayerArtifactView]>,
@@ -172,6 +179,7 @@ impl PlayerViewSnapshot {
             turn_lifecycle: PlayerTurnLifecycleView::new(state, actor),
             pending_action: pending_action(state, actor),
             city_founding_draft: city_founding_draft(state, actor),
+            diplomacy: diplomacy_view(state, actor),
             units: visible_units(state, actor).into_boxed_slice(),
             cities: visible_cities(state, actor).into_boxed_slice(),
             artifacts: visible_artifacts(state, actor).into_boxed_slice(),
@@ -204,6 +212,11 @@ impl PlayerViewSnapshot {
     #[must_use]
     pub const fn city_founding_draft(&self) -> Option<&CityFoundingDraftView> {
         self.city_founding_draft.as_ref()
+    }
+    /// Returns bilateral diplomacy records involving this recipient.
+    #[must_use]
+    pub const fn diplomacy(&self) -> &PlayerDiplomacyView {
+        &self.diplomacy
     }
     /// Returns all units visible to this local player.
     #[must_use]

@@ -9,6 +9,7 @@ use crate::{CommandResult, PlayerCityView, PlayerUnitView, PlayerViewPatch};
 
 mod artifact;
 mod capability;
+mod diplomacy;
 mod evidence;
 mod map_view;
 mod presentation;
@@ -22,6 +23,7 @@ mod tests;
 mod worker;
 
 pub(super) use capability::capabilities;
+use diplomacy::diplomacy;
 use evidence::{event, recipient_evidence};
 use map_view::coordinate;
 pub(super) use map_view::map;
@@ -171,6 +173,7 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
             .collect(),
         pending_action: value.pending_action.as_ref().map(pending_action),
         city_founding_draft: value.city_founding_draft.as_ref().map(founding_draft),
+        diplomacy: value.diplomacy.as_ref().map(diplomacy),
     }
 }
 use artifact::artifact;

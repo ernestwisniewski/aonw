@@ -6,8 +6,8 @@ use aonw_contracts::client::{
     ClientEvidenceDto, ClientFeatureDto, ClientOutcomeDto, ClientQueryDto, ClientQueryResultDto,
     ClientReplayVerificationDto, ClientRequestBodyDto, ClientRequestDto, ClientResponseBodyDto,
     ClientResponseDto, ClientSessionStampDto, MovementSearchMetricsDto, MovementStepViewDto,
-    PendingActionViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
-    PlayerViewSnapshotDto, ReachableTileViewDto,
+    PendingActionViewDto, PlayerDiplomacyViewDto, PlayerTurnLifecycleViewDto, PlayerUnitViewDto,
+    PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
 };
 use aonw_contracts::{
     CoordinateDto, FieldImprovementKindDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
@@ -69,6 +69,7 @@ fn player_snapshot() -> PlayerViewSnapshotDto {
             improvement: Some(FieldImprovementKindDto::Farm),
         }),
         city_founding_draft: None,
+        diplomacy: PlayerDiplomacyViewDto::default(),
         units: vec![unit()],
         cities: Vec::new(),
         artifacts: Vec::new(),
@@ -111,6 +112,7 @@ fn command_result() -> ClientCommandResultDto {
             removed_road_coordinates: Vec::new(),
             pending_action: None,
             city_founding_draft: None,
+            diplomacy: None,
         },
     }
 }
