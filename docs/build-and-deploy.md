@@ -104,6 +104,16 @@ Stage the public homepage, architecture atlas, statistics page, and download met
 make build-homepage
 ```
 
+Generate the public AoNW Engine landing page and complete Rust API documentation
+from the current local `engine/` workspace with:
+
+```sh
+make build-engine-docs
+```
+
+The documentation deployment command publishes the exact local engine version
+being worked on, without committing, stashing, or changing those files.
+
 Deployment targets require their remote values at invocation time. Example:
 
 ```sh
@@ -115,6 +125,21 @@ make deploy-web \
 ```
 
 Use `make deploy-homepage` with the equivalent homepage destination. Verify the relevant `make health-*` targets after upload.
+
+Publish the current local Rust documentation with:
+
+```sh
+make deploy-engine-docs \
+  WEB_DEPLOY_SSH_KEY=/path/to/key \
+  WEB_DEPLOY_USER=deploy \
+  WEB_DEPLOY_HOST=example.com \
+  ENGINE_DOCS_DEPLOY_DEST=/path/to/aonw/build/engine-docs
+```
+
+The first deployment also requires `engine.aonw.net` to resolve to the existing
+Caddy host and the updated Compose/Caddy configuration to be running. Later
+documentation refreshes need only `make deploy-engine-docs` with the same remote
+values. The upload is isolated from the homepage and demo directories.
 
 ## Server deployment
 
