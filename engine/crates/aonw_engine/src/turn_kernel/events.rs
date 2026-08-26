@@ -5,11 +5,13 @@ use crate::{AllPlayersSubmittedEvent, DomainEvent, PlayerTimedOutEvent, TurnEnde
 pub(super) fn sequential_phase_events(
     settlement: Vec<DomainEvent>,
     movement: Vec<DomainEvent>,
+    research: Vec<DomainEvent>,
     player_id: &PlayerId,
 ) -> Box<[DomainEvent]> {
-    let mut events = Vec::with_capacity(settlement.len() + movement.len() + 1);
+    let mut events = Vec::with_capacity(settlement.len() + movement.len() + research.len() + 1);
     events.extend(settlement);
     events.extend(movement);
+    events.extend(research);
     events.push(DomainEvent::TurnEnded(TurnEndedEvent::new(
         player_id.clone(),
     )));
@@ -23,9 +25,16 @@ pub(super) fn simultaneous_phase_events(
     combat: Box<[DomainEvent]>,
     settlement: Vec<DomainEvent>,
     movement: Vec<DomainEvent>,
+    research: Vec<DomainEvent>,
 ) -> Box<[DomainEvent]> {
     let mut events = Vec::with_capacity(
-        skipped.len() + 1 + combat.len() + settlement.len() + movement.len() + scope.len(),
+        skipped.len()
+            + 1
+            + combat.len()
+            + settlement.len()
+            + movement.len()
+            + research.len()
+            + scope.len(),
     );
     events.extend(
         skipped.iter().cloned().map(|player| {
@@ -38,6 +47,7 @@ pub(super) fn simultaneous_phase_events(
     events.extend(combat);
     events.extend(settlement);
     events.extend(movement);
+    events.extend(research);
     events.extend(
         scope
             .iter()

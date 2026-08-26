@@ -3,13 +3,14 @@ use std::collections::{BTreeMap, BTreeSet};
 use aonw_content::RulesetDefinition;
 use aonw_domain::{
     City, CityBuildingType, CityId, CityProductionQueue, CityProductionTarget, CityProjectType,
-    GameMode, GameState, HexCoord, MatchIdentity, MatchLifecycle, MatchRules, MovementUnits,
-    PaceProfile, PlayerId, PlayerTurnState, StateRevision, StrategicResourceStockpile,
-    TurnLifecycle, Unit, UnitId, UnitKind, UnitOccupancyPolicy, WonderType,
+    GameMode, GameState, HexCoord, KnowledgeState, MatchIdentity, MatchLifecycle, MatchRules,
+    MovementUnits, PaceProfile, PlayerId, PlayerResearchState, PlayerTurnState, ResearchState,
+    StateRevision, StrategicResourceStockpile, TurnLifecycle, Unit, UnitId, UnitKind,
+    UnitOccupancyPolicy, WonderRegistry, WonderType,
 };
 use aonw_engine::{
-    CommandRejectionCode, DomainEvent, EngineContext, ExecutionEvidence, GameEngine, PlayerCommand,
-    ProcessorRequirement, TurnCommand, TurnProcessor,
+    DomainEvent, EngineContext, ExecutionEvidence, GameEngine, PlayerCommand, TurnCommand,
+    TurnProcessor,
 };
 
 use super::{map, participant, player};
@@ -41,7 +42,11 @@ fn sequential_turn_completes_building_and_wealth_project_in_phase_order() {
     assert!(completed.is_accepted());
     assert!(matches!(
         completed.events(),
-        [DomainEvent::CityBuiltBuilding(_), DomainEvent::TurnEnded(_)]
+        [
+            DomainEvent::CityBuiltBuilding(_),
+            DomainEvent::ResearchPointsGained(_),
+            DomainEvent::TurnEnded(_)
+        ]
     ));
     let completed_city = completed
         .state()
@@ -75,7 +80,13 @@ fn sequential_turn_completes_building_and_wealth_project_in_phase_order() {
     .expect("wealth turn");
     assert!(project.is_accepted());
     assert_eq!(project.state().economy().player_gold().get(&p2), Some(&1));
-    assert!(matches!(project.events(), [DomainEvent::TurnEnded(_)]));
+    assert!(matches!(
+        project.events(),
+        [
+            DomainEvent::ResearchPointsGained(_),
+            DomainEvent::TurnEnded(_)
+        ]
+    ));
 }
 
 #[test]
@@ -150,7 +161,13 @@ fn finite_production_keeps_partial_progress_and_skips_idle_cities() {
     )
     .expect("partial production turn");
     assert!(transition.is_accepted());
-    assert!(matches!(transition.events(), [DomainEvent::TurnEnded(_)]));
+    assert!(matches!(
+        transition.events(),
+        [
+            DomainEvent::ResearchPointsGained(_),
+            DomainEvent::TurnEnded(_)
+        ]
+    ));
     let queue = transition
         .state()
         .city(&CityId::new("city-2").expect("city id"))
@@ -189,7 +206,13 @@ fn blocked_unit_spawn_preserves_the_completed_queue() {
     )
     .expect("blocked unit turn");
     assert!(transition.is_accepted());
-    assert!(matches!(transition.events(), [DomainEvent::TurnEnded(_)]));
+    assert!(matches!(
+        transition.events(),
+        [
+            DomainEvent::ResearchPointsGained(_),
+            DomainEvent::TurnEnded(_)
+        ]
+    ));
     assert_eq!(transition.state().units().len(), 2);
     let queue = transition
         .state()
@@ -198,43 +221,6 @@ fn blocked_unit_spawn_preserves_the_completed_queue() {
         .production_queue()
         .expect("completed queue remains pending");
     assert_eq!(queue.invested_production(), cost);
-}
-
-#[test]
-fn research_project_requires_the_disabled_research_processor_before_mutation() {
-    let ruleset = RulesetDefinition::standard();
-    let p1 = player("player-1");
-    let p2 = player("player-2");
-    let map = map();
-    let state = production_state(
-        GameMode::HotSeat,
-        [],
-        [city(
-            "city-2",
-            &p2,
-            1,
-            CityProductionTarget::Project(CityProjectType::Research),
-            0,
-        )],
-        UnitOccupancyPolicy::Exclusive,
-    );
-    assert_eq!(
-        TurnProcessor::Research.requirement(&state, &map, std::slice::from_ref(&p2)),
-        ProcessorRequirement::RequiredButUnsupported
-    );
-    let before = GameEngine::state_digest(&state);
-    let transition = GameEngine::apply_player_owned(
-        state,
-        EngineContext::canonical(&p1, &map, ruleset),
-        PlayerCommand::EndTurn(TurnCommand::new(7, &p1)),
-    )
-    .expect("research project preflight");
-    assert_eq!(
-        transition.rejection().expect("rejection").code(),
-        CommandRejectionCode::TurnProcessorUnsupported
-    );
-    assert_eq!(GameEngine::state_digest(transition.state()), before);
-    assert!(transition.events().is_empty());
 }
 
 #[test]
@@ -277,6 +263,8 @@ fn simultaneous_wonder_race_uses_scope_order_and_refunds_loser() {
             DomainEvent::AllPlayersSubmitted(_),
             DomainEvent::CityBuiltWonder(_),
             DomainEvent::WonderProductionRefunded(_),
+            DomainEvent::ResearchPointsGained(_),
+            DomainEvent::ResearchPointsGained(_),
             DomainEvent::TurnEnded(_),
             DomainEvent::TurnEnded(_)
         ]
@@ -297,11 +285,40 @@ fn simultaneous_wonder_race_uses_scope_order_and_refunds_loser() {
     assert_eq!(loser.production_overflow(), cost);
 }
 
-fn production_state(
+pub(super) fn production_state(
     mode: GameMode,
     submitted: impl IntoIterator<Item = PlayerId>,
     cities: impl IntoIterator<Item = City>,
     occupancy: UnitOccupancyPolicy,
+) -> GameState {
+    production_state_with_knowledge(mode, submitted, cities, occupancy, None)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn production_state_with_research(
+    mode: GameMode,
+    submitted: impl IntoIterator<Item = PlayerId>,
+    cities: impl IntoIterator<Item = City>,
+    occupancy: UnitOccupancyPolicy,
+    player: &PlayerId,
+    research: PlayerResearchState,
+) -> GameState {
+    let state = ResearchState::try_new([(player.clone(), research)]).expect("research state");
+    production_state_with_knowledge(
+        mode,
+        submitted,
+        cities,
+        occupancy,
+        Some(KnowledgeState::new(state, WonderRegistry::default())),
+    )
+}
+
+fn production_state_with_knowledge(
+    mode: GameMode,
+    submitted: impl IntoIterator<Item = PlayerId>,
+    cities: impl IntoIterator<Item = City>,
+    occupancy: UnitOccupancyPolicy,
+    knowledge: Option<KnowledgeState>,
 ) -> GameState {
     let p1 = player("player-1");
     let p2 = player("player-2");
@@ -343,7 +360,7 @@ fn production_state(
         None,
     )
     .expect("lifecycle");
-    GameState::builder(
+    let builder = GameState::builder(
         StateRevision::new(7),
         7,
         map().bounds(),
@@ -351,12 +368,16 @@ fn production_state(
         [unit("unit-1", p1, 0), unit("unit-2", p2, 1)],
     )
     .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
-    .with_cities(cities)
-    .try_build()
-    .expect("state")
+    .with_cities(cities);
+    let builder = if let Some(knowledge) = knowledge {
+        builder.with_knowledge(knowledge)
+    } else {
+        builder
+    };
+    builder.try_build().expect("state")
 }
 
-fn city(
+pub(super) fn city(
     id: &str,
     owner: &PlayerId,
     column: i32,
@@ -423,7 +444,7 @@ fn unit_cost(ruleset: &RulesetDefinition, kind: UnitKind) -> i64 {
         .expect("unit cost")
 }
 
-fn wonder_cost(ruleset: &RulesetDefinition, wonder: WonderType) -> i64 {
+pub(super) fn wonder_cost(ruleset: &RulesetDefinition, wonder: WonderType) -> i64 {
     let definition = ruleset
         .production()
         .wonder(wonder)

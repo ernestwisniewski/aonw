@@ -2,6 +2,12 @@ use aonw_domain::{CityId, PlayerId, UnitId};
 
 use crate::CombatTarget;
 
+impl core::fmt::Display for super::CommandRejectionCode {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        formatter.write_str(self.as_str())
+    }
+}
+
 /// Kind of completed worker construction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WorkerJobCompletion {

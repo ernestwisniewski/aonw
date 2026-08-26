@@ -149,6 +149,7 @@ impl SystemCommand<'_> {
                         .saturating_add(unit_count)
                         .saturating_add(city_count)
                         .saturating_add(player_count)
+                        .saturating_add(player_count.saturating_mul(2))
                         .saturating_add(combat)
                         .saturating_add(1),
                 )
@@ -283,7 +284,7 @@ impl TurnKernelCapabilities {
         TurnProcessor::Objectives,
     ];
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 13] = [
+    pub const ENABLED: [TurnProcessor; 14] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
@@ -297,11 +298,11 @@ impl TurnKernelCapabilities {
         TurnProcessor::WorkerAutomation,
         TurnProcessor::AutoExplore,
         TurnProcessor::ReversibleSkipCleanup,
+        TurnProcessor::Research,
     ];
     /// Later turn processors that are intentionally unavailable.
-    pub const DISABLED: [TurnProcessor; 5] = [
+    pub const DISABLED: [TurnProcessor; 4] = [
         TurnProcessor::Economy,
-        TurnProcessor::Research,
         TurnProcessor::Diplomacy,
         TurnProcessor::Agreements,
         TurnProcessor::Objectives,
@@ -325,6 +326,7 @@ impl TurnKernelCapabilities {
                 | TurnProcessor::WorkerAutomation
                 | TurnProcessor::AutoExplore
                 | TurnProcessor::ReversibleSkipCleanup
+                | TurnProcessor::Research
         )
     }
 }

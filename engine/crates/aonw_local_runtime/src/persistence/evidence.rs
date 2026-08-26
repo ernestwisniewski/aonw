@@ -70,6 +70,10 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
             player_id: value.player_id().as_str().to_owned(),
             technology_id: encode_technology(value.technology()),
         },
+        DomainEvent::ResearchPointsGained(value) => ReplayEventDto::ResearchPointsGained {
+            player_id: value.player_id().as_str().to_owned(),
+            points: value.points(),
+        },
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
             ReplayEventDto::UnitAttacked {
                 attacker_unit_id,

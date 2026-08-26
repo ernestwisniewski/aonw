@@ -15,8 +15,8 @@ pub use transition::{
     ArtifactStoredEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent, CityFoundedEvent,
     CityProducedUnitEvent, CombatEvent, CommandRejectionCode, DiplomaticScoreChangedEvent,
     DomainEvent, DomainRejection, DomainTransition, DomainTransitionParts, ExecutionEvidence,
-    PlayerKickedEvent, PlayerTimedOutEvent, TechnologyResearchedEvent, TurnEndedEvent,
-    WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
+    PlayerKickedEvent, PlayerTimedOutEvent, ResearchPointsGainedEvent, TechnologyResearchedEvent,
+    TurnEndedEvent, WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use turn::{
     FinalizeTimedOutTurnCommand, KickParticipantCommand, ProcessorRequirement, SystemCommand,

@@ -5,10 +5,9 @@ use std::collections::BTreeMap;
 use aonw_content::RulesetDefinition;
 use aonw_domain::{
     Diplomacy, DiplomaticRelation, DiplomaticRelationStatus, EconomyState, GameMode, GameState,
-    InitialResourceDistribution, KnowledgeState, MatchIdentity, MatchLifecycle, MatchRules,
-    ObjectiveState, PlayerPair, PlayerResearchState, PlayerTurnState, ResearchState,
-    ResourceTradeAgreement, ResourceType, StateRevision, TechnologyId, TurnLifecycle,
-    UnitOccupancyPolicy, WonderRegistry,
+    InitialResourceDistribution, MatchIdentity, MatchLifecycle, MatchRules, ObjectiveState,
+    PlayerPair, PlayerTurnState, ResourceTradeAgreement, ResourceType, StateRevision,
+    TurnLifecycle, UnitOccupancyPolicy,
 };
 use aonw_engine::{
     CommandRejectionCode, EngineContext, GameEngine, PlayerCommand, ProcessorRequirement,
@@ -24,7 +23,6 @@ fn every_persisted_disabled_phase_requirement_fails_closed() {
     let player = player("player-2");
     for processor in [
         TurnProcessor::Economy,
-        TurnProcessor::Research,
         TurnProcessor::Agreements,
         TurnProcessor::Diplomacy,
         TurnProcessor::Objectives,
@@ -100,13 +98,6 @@ fn state_requiring(processor: TurnProcessor) -> GameState {
             )
             .expect("economy"),
         ),
-        TurnProcessor::Research => {
-            let player_research =
-                PlayerResearchState::try_new([], Some(TechnologyId::Agriculture), [], 0)
-                    .expect("player research");
-            let research = ResearchState::try_new([(p2, player_research)]).expect("research");
-            builder.with_knowledge(KnowledgeState::new(research, WonderRegistry::default()))
-        }
         TurnProcessor::Agreements => {
             let trade = ResourceTradeAgreement::try_new(
                 "trade-1".to_owned(),

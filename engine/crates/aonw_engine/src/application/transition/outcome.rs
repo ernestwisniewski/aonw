@@ -3,9 +3,10 @@ use crate::{
     ArtifactStoredEvent, AutoExplorePlannedEvent, CityBuiltBuildingEvent, CityBuiltWonderEvent,
     CityFoundedEvent, CityProducedUnitEvent, CombatEvent, CombatExecution,
     DiplomaticScoreChangedEvent, LogisticsExecution, MerchantRouteAssignedEvent,
-    MerchantTravelQueuedEvent, PlayerKickedEvent, PlayerTimedOutEvent, TechnologyResearchedEvent,
-    TroopDetachedEvent, TurnEndedEvent, TurnKernelExecution, UnitMovedEvent, UnitMovementExecution,
-    WonderProductionRefundedEvent, WorkerAutomationExecution, WorkerCompletedJobEvent,
+    MerchantTravelQueuedEvent, PlayerKickedEvent, PlayerTimedOutEvent, ResearchPointsGainedEvent,
+    TechnologyResearchedEvent, TroopDetachedEvent, TurnEndedEvent, TurnKernelExecution,
+    UnitMovedEvent, UnitMovementExecution, WonderProductionRefundedEvent,
+    WorkerAutomationExecution, WorkerCompletedJobEvent,
 };
 
 /// Ordered event emitted by an accepted transition.
@@ -29,6 +30,8 @@ pub enum DomainEvent {
     WonderProductionRefunded(WonderProductionRefundedEvent),
     /// A completion effect unlocked the selected technology.
     TechnologyResearched(TechnologyResearchedEvent),
+    /// One participant produced positive science during turn progression.
+    ResearchPointsGained(ResearchPointsGainedEvent),
     /// One unit changed map position.
     UnitMoved(UnitMovedEvent),
     /// Auto-exploration selected an engine-owned target.

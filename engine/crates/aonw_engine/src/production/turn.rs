@@ -1,7 +1,7 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_domain::{
-    City, CityProductionTarget, CityProjectType, EconomyAccountChange, EconomyState, FogOfWar,
-    GameState, PlayerId, ProductionStateUpdate, Unit,
+    City, CityId, CityProductionTarget, CityProjectType, EconomyAccountChange, EconomyState,
+    FogOfWar, GameState, PlayerId, ProductionStateUpdate, Unit,
 };
 
 use super::ProductionError;
@@ -15,6 +15,46 @@ use crate::{CityBuiltBuildingEvent, CityProducedUnitEvent, DomainEvent, EngineCo
 pub(crate) struct ProductionTurnPhase {
     pub(crate) state: GameState,
     pub(crate) events: Vec<DomainEvent>,
+    pub(crate) research_project_science: Vec<ResearchProjectScience>,
+}
+
+/// One city-owned science contribution produced by a continuous project.
+pub(crate) struct ResearchProjectScience {
+    pub(crate) player_id: PlayerId,
+    pub(crate) city_id: CityId,
+    pub(crate) amount: i64,
+}
+
+/// Calculates current continuous research-project output without mutating state.
+pub(crate) fn current_research_project_science(
+    state: &GameState,
+    context: EngineContext<'_>,
+    player: &PlayerId,
+) -> Result<Vec<ResearchProjectScience>, ProductionError> {
+    let divisor = context.ruleset().production().project_divisor(true);
+    state
+        .cities()
+        .iter()
+        .filter(|city| city.owner_player_id() == player)
+        .filter(|city| {
+            city.production_queue().is_some_and(|queue| {
+                queue.target() == CityProductionTarget::Project(CityProjectType::Research)
+            })
+        })
+        .map(|city| {
+            let production = production_per_turn(
+                state,
+                context,
+                city,
+                CityProductionTarget::Project(CityProjectType::Research),
+            )?;
+            Ok(ResearchProjectScience {
+                player_id: player.clone(),
+                city_id: city.id().clone(),
+                amount: project_output(production, divisor)?,
+            })
+        })
+        .collect()
 }
 
 /// Advances every scoped player's production in canonical player and city order.
@@ -25,6 +65,7 @@ pub(crate) fn advance_turn_production(
     scope: &[PlayerId],
 ) -> Result<ProductionTurnPhase, ProductionError> {
     let mut events = Vec::new();
+    let mut research_project_science = Vec::new();
     for player in scope {
         if !state
             .cities()
@@ -43,6 +84,7 @@ pub(crate) fn advance_turn_production(
             player,
         )?;
         events.extend(advanced.events);
+        research_project_science.extend(advanced.research_project_science);
         events.extend(wonders.events);
         let update = ProductionStateUpdate {
             revision: state.revision(),
@@ -57,7 +99,11 @@ pub(crate) fn advance_turn_production(
             .into_after_production(update)
             .map_err(|error| invalid(error.to_string()))?;
     }
-    Ok(ProductionTurnPhase { state, events })
+    Ok(ProductionTurnPhase {
+        state,
+        events,
+        research_project_science,
+    })
 }
 
 struct PlayerProductionAdvance {
@@ -67,6 +113,7 @@ struct PlayerProductionAdvance {
     fog: FogOfWar,
     diplomacy: aonw_domain::Diplomacy,
     events: Vec<DomainEvent>,
+    research_project_science: Vec<ResearchProjectScience>,
 }
 
 fn advance_player(
@@ -81,6 +128,7 @@ fn advance_player(
         fog: state.fog_of_war().clone(),
         diplomacy: state.diplomacy().clone(),
         events: Vec::new(),
+        research_project_science: Vec::new(),
     };
     for index in 0..advance.cities.len() {
         let city = advance.cities[index].clone();
@@ -96,8 +144,9 @@ fn advance_player(
                 apply_project(
                     state,
                     context,
+                    &city,
                     &mut advance.economy,
-                    player,
+                    &mut advance.research_project_science,
                     project,
                     production,
                 )?;
@@ -134,35 +183,41 @@ fn advance_player(
 fn apply_project(
     state: &GameState,
     context: EngineContext<'_>,
+    city: &City,
     economy: &mut EconomyState,
-    player: &PlayerId,
+    research_project_science: &mut Vec<ResearchProjectScience>,
     project: CityProjectType,
     production: i64,
 ) -> Result<(), ProductionError> {
-    validate_turn_project(project)?;
-    let divisor = context.ruleset().production().project_divisor(false);
+    let divisor = context
+        .ruleset()
+        .production()
+        .project_divisor(project == CityProjectType::Research);
     let output = project_output(production, divisor)?;
-    let gold_change = (output > 0).then_some(EconomyAccountChange::Gold {
-        player: player.clone(),
-        delta: output,
-    });
-    *economy = economy
-        .try_after_changes(
-            state.match_lifecycle().identity(),
-            state.bounds(),
-            gold_change,
-        )
-        .map_err(|error| invalid(error.to_string()))?;
-    Ok(())
-}
-
-fn validate_turn_project(project: CityProjectType) -> Result<(), ProductionError> {
     match project {
-        CityProjectType::Wealth => Ok(()),
-        CityProjectType::Research => Err(invalid(
-            "research project reached production before the research processor",
-        )),
+        CityProjectType::Wealth => {
+            let gold_change = (output > 0).then_some(EconomyAccountChange::Gold {
+                player: city.owner_player_id().clone(),
+                delta: output,
+            });
+            *economy = economy
+                .try_after_changes(
+                    state.match_lifecycle().identity(),
+                    state.bounds(),
+                    gold_change,
+                )
+                .map_err(|error| invalid(error.to_string()))?;
+        }
+        CityProjectType::Research if output > 0 => {
+            research_project_science.push(ResearchProjectScience {
+                player_id: city.owner_player_id().clone(),
+                city_id: city.id().clone(),
+                amount: output,
+            });
+        }
+        CityProjectType::Research => {}
     }
+    Ok(())
 }
 
 fn project_output(production: i64, divisor: i64) -> Result<i64, ProductionError> {
@@ -300,21 +355,15 @@ enum FiniteProductionTarget {
 
 #[cfg(test)]
 mod tests {
-    use aonw_domain::CityProjectType;
-
-    use super::{project_output, validate_turn_project};
+    use super::project_output;
 
     #[test]
     fn project_output_is_ceiled_bounded_and_fail_closed() {
         assert_eq!(project_output(0, 2).expect("zero output"), 0);
         assert_eq!(project_output(3, 2).expect("ceiled output"), 2);
+        assert_eq!(project_output(5, 12).expect("research output"), 1);
+        assert_eq!(project_output(13, 12).expect("research output"), 2);
         assert!(project_output(3, 0).is_err());
         assert!(project_output(i64::MAX, 2).is_err());
-    }
-
-    #[test]
-    fn only_wealth_is_a_supported_turn_project() {
-        assert!(validate_turn_project(CityProjectType::Wealth).is_ok());
-        assert!(validate_turn_project(CityProjectType::Research).is_err());
     }
 }

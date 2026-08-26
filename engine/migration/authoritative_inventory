@@ -150,7 +150,7 @@ event FortifiedUnitThreatenedEvent unit-action reference-only - packages/aonw_co
 event MapObjectiveSecuredEvent objective reference-only - packages/aonw_core/lib/game/domain/event/objective_events.dart
 event PlayerKickedEvent system-lifecycle turn-kernel-ready PlayerKicked packages/aonw_core/lib/game/domain/event/system_events.dart
 event PlayerTimedOutEvent system-lifecycle turn-kernel-ready PlayerTimedOut packages/aonw_core/lib/game/domain/event/system_events.dart
-event ResearchPointsGainedEvent research reference-only - packages/aonw_core/lib/game/domain/event/research_events.dart
+event ResearchPointsGainedEvent research runtime-ready ResearchPointsGained packages/aonw_core/lib/game/domain/event/research_events.dart
 event StabilityBandChangedEvent stability reference-only - packages/aonw_core/lib/game/domain/event/stability_events.dart
 event StrategicResourceDiscoveredEvent resource reference-only - packages/aonw_core/lib/game/domain/event/resource_events.dart
 event TechnologyResearchedEvent research runtime-ready TechnologyResearched packages/aonw_core/lib/game/domain/event/research_events.dart

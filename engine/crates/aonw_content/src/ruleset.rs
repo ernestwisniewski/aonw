@@ -6,7 +6,7 @@ use aonw_domain::{
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
-use crate::{ContentHash, TechnologyCostBalance, TechnologyDefinition};
+use crate::{ContentHash, ScienceBalance, TechnologyCostBalance, TechnologyDefinition};
 
 mod worker;
 pub use worker::{WorkerBalance, WorkerImprovementDefinition, WorkerYield};
@@ -260,6 +260,7 @@ pub struct RulesetDefinition {
     worker: WorkerBalance,
     city_name_sets: &'static [CityNameSet],
     unit_definitions: &'static [UnitDefinition],
+    science_balance: ScienceBalance,
     technology_cost_balance: TechnologyCostBalance,
     technology_definitions: &'static [TechnologyDefinition],
 }
@@ -364,6 +365,12 @@ impl RulesetDefinition {
         self.technology_cost_balance
     }
 
+    /// Returns deterministic per-turn science balance.
+    #[must_use]
+    pub const fn science_balance(&self) -> ScienceBalance {
+        self.science_balance
+    }
+
     /// Returns the configured movement allowance for one unit.
     #[must_use]
     pub fn maximum_movement(
@@ -396,6 +403,7 @@ impl RulesetDefinition {
         serde_json::to_writer(
             &mut writer,
             &CanonicalTechnologyCatalog {
+                science_balance: self.science_balance,
                 cost_balance: self.technology_cost_balance,
                 definitions: self.technology_definitions,
             },
@@ -407,6 +415,7 @@ impl RulesetDefinition {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct CanonicalTechnologyCatalog {
+    science_balance: ScienceBalance,
     cost_balance: TechnologyCostBalance,
     definitions: &'static [TechnologyDefinition],
 }

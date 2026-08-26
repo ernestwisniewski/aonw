@@ -35,7 +35,10 @@ pub use query::{
     ClientEvidenceDto, ClientQueryResultDto, PendingActionViewDto, ReachableTileViewDto,
 };
 pub use rejection::ClientCommandRejectionCodeDto;
-pub use research::{ResearchOptionDto, TechnologyAvailabilityDto, TechnologyUnlockDto};
+pub use research::{
+    ResearchOptionDto, ScienceYieldBreakdownDto, ScienceYieldSourceDto, ScienceYieldSourceKindDto,
+    TechnologyAvailabilityDto, TechnologyUnlockDto,
+};
 pub use session::{ClientErrorDto, ClientReplayVerificationDto};
 pub use worker::{
     FieldImprovementViewDto, RoadViewDto, WorkerAutomationActionDto, WorkerAutomationMetricsDto,

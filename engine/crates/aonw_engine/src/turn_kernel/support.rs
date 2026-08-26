@@ -245,15 +245,10 @@ pub(crate) fn processor_is_required(
                     && (research.active_technology_id().is_some()
                         || !research.progress_by_technology_id().is_empty()
                         || research.science_overflow() > 0)
-            }) || state.cities().iter().any(|city| {
-                owns_scope(city.owner_player_id())
-                    && city.production_queue().is_some_and(|queue| {
-                        queue.target()
-                            == aonw_domain::CityProductionTarget::Project(
-                                aonw_domain::CityProjectType::Research,
-                            )
-                    })
-            })
+            }) || state
+                .cities()
+                .iter()
+                .any(|city| owns_scope(city.owner_player_id()))
         }
         TurnProcessor::Agreements => {
             state

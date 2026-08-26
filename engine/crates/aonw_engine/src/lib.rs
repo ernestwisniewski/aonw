@@ -31,8 +31,8 @@ pub use application::{
     DomainTransition, DomainTransitionParts, EventBudget, ExecutionEvidence,
     FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand, LogisticsExecution,
     MerchantRouteAssignedEvent, MerchantTravelQueuedEvent, PlayerCommand, PlayerKickedEvent,
-    PlayerTimedOutEvent, ProcessorRequirement, QueryResult, SystemCommand,
-    TechnologyResearchedEvent, TroopDetachedEvent, TurnCommand, TurnEndedEvent,
+    PlayerTimedOutEvent, ProcessorRequirement, QueryResult, ResearchPointsGainedEvent,
+    SystemCommand, TechnologyResearchedEvent, TroopDetachedEvent, TurnCommand, TurnEndedEvent,
     TurnKernelCapabilities, TurnKernelExecution, TurnProcessor, WonderProductionRefundedEvent,
     WorkerCompletedJobEvent, WorkerJobCompletion,
 };
@@ -76,7 +76,8 @@ pub use production::{
     UnitProductionOption,
 };
 pub use research::{
-    ResearchError, ResearchOption, ResearchOptions, ResearchOptionsQuery, SelectTechnologyCommand,
+    ResearchError, ResearchOption, ResearchOptions, ResearchOptionsQuery, ScienceYieldBreakdown,
+    ScienceYieldSource, ScienceYieldSourceKind, SelectTechnologyCommand,
 };
 pub use state_digest::StateDigest;
 pub use technology_unlock::{

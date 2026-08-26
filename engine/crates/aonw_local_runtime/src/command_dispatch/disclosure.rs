@@ -83,6 +83,7 @@ impl RecipientDisclosure {
                 value.owner_player_id() == &self.actor || self.allows_city(value.city_id())
             }
             DomainEvent::TechnologyResearched(value) => value.player_id() == &self.actor,
+            DomainEvent::ResearchPointsGained(value) => value.player_id() == &self.actor,
             DomainEvent::UnitAttacked(value)
             | DomainEvent::CityAttacked(value)
             | DomainEvent::CombatResolved(value)

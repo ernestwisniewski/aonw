@@ -47,6 +47,7 @@ fn production_turn_completion_save_reopen_and_replay_are_exact() {
                 building_type: CityBuildingTypeDto::Housing,
                 ..
             },
+            ClientEventDto::ResearchPointsGained { points: 2, .. },
             ClientEventDto::TurnEnded { .. }
         ]
     ));

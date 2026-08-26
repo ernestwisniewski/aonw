@@ -1,7 +1,7 @@
 use aonw_content::TechnologyUnlock;
 use aonw_domain::{PlayerId, TechnologyId};
 
-use crate::TechnologyAvailability;
+use crate::{ScienceYieldBreakdown, TechnologyAvailability};
 
 /// Revision-bound selection of one active research target.
 #[derive(Clone, Copy, Debug)]
@@ -132,6 +132,7 @@ pub struct ResearchOptions {
     player_id: PlayerId,
     active_technology: Option<TechnologyId>,
     science_overflow: i64,
+    science_yield: ScienceYieldBreakdown,
     options: Box<[ResearchOption]>,
 }
 
@@ -140,12 +141,14 @@ impl ResearchOptions {
         player_id: PlayerId,
         active_technology: Option<TechnologyId>,
         science_overflow: i64,
+        science_yield: ScienceYieldBreakdown,
         options: impl Into<Box<[ResearchOption]>>,
     ) -> Self {
         Self {
             player_id,
             active_technology,
             science_overflow,
+            science_yield,
             options: options.into(),
         }
     }
@@ -164,6 +167,11 @@ impl ResearchOptions {
     #[must_use]
     pub const fn science_overflow(&self) -> i64 {
         self.science_overflow
+    }
+    /// Returns the engine-owned current per-turn science preview.
+    #[must_use]
+    pub const fn science_yield(&self) -> &ScienceYieldBreakdown {
+        &self.science_yield
     }
     /// Returns every technology in immutable catalog order.
     #[must_use]

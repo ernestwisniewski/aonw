@@ -173,6 +173,13 @@ pub enum ReplayEventDto {
         /// Completed technology identity.
         technology_id: TechnologyIdDto,
     },
+    /// One participant produced positive science during turn progression.
+    ResearchPointsGained {
+        /// Research owner.
+        player_id: String,
+        /// Exact positive science total.
+        points: i64,
+    },
     /// A visible attacker engaged a visible target.
     UnitAttacked {
         /// Attacking unit identity.

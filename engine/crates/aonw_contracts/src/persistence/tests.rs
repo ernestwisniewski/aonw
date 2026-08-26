@@ -73,6 +73,7 @@ fn production_completion_events_have_current_strict_replay_shapes() {
         r#"{"type":"cityBuiltWonder","cityId":"city-1","ownerPlayerId":"player-1","wonderType":"greatLibrary"}"#,
         r#"{"type":"wonderProductionRefunded","cityId":"city-2","ownerPlayerId":"player-2","wonderType":"greatLibrary","refundedProduction":17}"#,
         r#"{"type":"technologyResearched","playerId":"player-1","technologyId":"writing"}"#,
+        r#"{"type":"researchPointsGained","playerId":"player-1","points":7}"#,
     ];
     for json in events {
         assert!(serde_json::from_str::<ReplayEventDto>(json).is_ok());

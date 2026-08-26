@@ -334,6 +334,7 @@ fn simultaneous_turn_resolves_intended_attacks_through_the_same_combat_evidence(
             DomainEvent::CityFounded(_),
             DomainEvent::WorkerCompletedJob(_),
             DomainEvent::UnitMoved(_),
+            DomainEvent::ResearchPointsGained(_),
             DomainEvent::TurnEnded(_),
             DomainEvent::TurnEnded(_),
             DomainEvent::TurnEnded(_),

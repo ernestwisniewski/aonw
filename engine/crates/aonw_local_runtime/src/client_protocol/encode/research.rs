@@ -4,9 +4,10 @@ use aonw_contract_mapping::{
     encode_technology, encode_unit_kind,
 };
 use aonw_contracts::client::{
-    ClientQueryResultDto, ResearchOptionDto, TechnologyAvailabilityDto, TechnologyUnlockDto,
+    ClientQueryResultDto, ResearchOptionDto, ScienceYieldBreakdownDto, ScienceYieldSourceDto,
+    ScienceYieldSourceKindDto, TechnologyAvailabilityDto, TechnologyUnlockDto,
 };
-use aonw_engine::{ResearchOptions, TechnologyAvailability};
+use aonw_engine::{ResearchOptions, ScienceYieldSourceKind, TechnologyAvailability};
 
 use crate::SessionStamp;
 
@@ -21,6 +22,25 @@ pub(super) fn research_options(
         player_id: value.player_id().as_str().to_owned(),
         active_technology_id: value.active_technology().map(encode_technology),
         science_overflow: value.science_overflow(),
+        science_yield: ScienceYieldBreakdownDto {
+            total: value.science_yield().total(),
+            by_city_id: value
+                .science_yield()
+                .by_city_id()
+                .iter()
+                .map(|(city, amount)| (city.as_str().to_owned(), *amount))
+                .collect(),
+            sources: value
+                .science_yield()
+                .sources()
+                .iter()
+                .map(|source| ScienceYieldSourceDto {
+                    city_id: source.city_id().as_str().to_owned(),
+                    amount: source.amount(),
+                    kind: source_kind(source.kind()),
+                })
+                .collect(),
+        },
         options: value
             .options()
             .iter()
@@ -45,6 +65,17 @@ pub(super) fn research_options(
                 unlocks: option.unlocks().iter().copied().map(unlock).collect(),
             })
             .collect(),
+    }
+}
+
+const fn source_kind(value: ScienceYieldSourceKind) -> ScienceYieldSourceKindDto {
+    match value {
+        ScienceYieldSourceKind::CityScience => ScienceYieldSourceKindDto::CityScience,
+        ScienceYieldSourceKind::CityResearchProject => {
+            ScienceYieldSourceKindDto::CityResearchProject
+        }
+        ScienceYieldSourceKind::WorldArtifact => ScienceYieldSourceKindDto::WorldArtifact,
+        ScienceYieldSourceKind::WorldWonder => ScienceYieldSourceKindDto::WorldWonder,
     }
 }
 

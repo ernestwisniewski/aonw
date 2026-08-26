@@ -204,6 +204,50 @@ pub struct TechnologyCostBalance {
     strategy_era_multiplier: u32,
 }
 
+/// Fixed-point per-turn science policy. Ten thousand basis points equal one.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ScienceBalance {
+    base_science_per_city: i64,
+    max_science_per_city: i64,
+    second_science_building_multiplier_basis_points: u32,
+    later_science_building_multiplier_basis_points: u32,
+}
+
+impl ScienceBalance {
+    /// Standard science balance characterized from the frozen oracle.
+    pub const STANDARD: Self = Self {
+        base_science_per_city: 2,
+        max_science_per_city: 0,
+        second_science_building_multiplier_basis_points: 7_000,
+        later_science_building_multiplier_basis_points: 3_500,
+    };
+
+    /// Returns science granted by every controlled city.
+    #[must_use]
+    pub const fn base_science_per_city(self) -> i64 {
+        self.base_science_per_city
+    }
+
+    /// Returns the pre-artifact, pre-wonder city cap; zero disables the cap.
+    #[must_use]
+    pub const fn max_science_per_city(self) -> i64 {
+        self.max_science_per_city
+    }
+
+    /// Returns the multiplier for the second completed science building.
+    #[must_use]
+    pub const fn second_science_building_multiplier_basis_points(self) -> u32 {
+        self.second_science_building_multiplier_basis_points
+    }
+
+    /// Returns the multiplier for every completed science building after the second.
+    #[must_use]
+    pub const fn later_science_building_multiplier_basis_points(self) -> u32 {
+        self.later_science_building_multiplier_basis_points
+    }
+}
+
 impl TechnologyCostBalance {
     /// Standard research balance characterized from the frozen oracle.
     pub const STANDARD: Self = Self {

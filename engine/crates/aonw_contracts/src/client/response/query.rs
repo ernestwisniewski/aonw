@@ -5,7 +5,6 @@ use crate::{
     FieldImprovementKindDto, TechnologyIdDto,
 };
 
-use super::ResearchOptionDto;
 use super::{
     AutoExploreOptionDto, CityExpansionCandidateDto, CitySpecializationOptionDto,
     CityYieldContributionDto, ClientLogisticsEvidenceDto, ClientSessionStampDto,
@@ -13,6 +12,7 @@ use super::{
     StrategicResourceAmountDto, StrategicResourceSourceDto, UnitMovementExecutionDto,
     UnitProductionOptionDto, WorkerAutomationOptionDto, WorkerImprovementOptionDto, YieldValueDto,
 };
+use super::{ResearchOptionDto, ScienceYieldBreakdownDto};
 
 /// Recipient-owned action awaiting player input.
 #[allow(missing_docs)]
@@ -129,6 +129,8 @@ pub enum ClientQueryResultDto {
         active_technology_id: Option<TechnologyIdDto>,
         /// Stored science available to the next selection.
         science_overflow: i64,
+        /// Engine-owned current per-turn science preview.
+        science_yield: ScienceYieldBreakdownDto,
         /// Complete technology catalog in canonical order.
         options: Vec<ResearchOptionDto>,
     },

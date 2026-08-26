@@ -100,6 +100,13 @@ pub enum ClientEventDto {
         /// Completed technology identity.
         technology_id: TechnologyIdDto,
     },
+    /// Private per-turn science total for one participant.
+    ResearchPointsGained {
+        /// Player that produced the science.
+        player_id: String,
+        /// Exact positive science total.
+        points: i64,
+    },
     /// A visible attacker engaged a visible target.
     UnitAttacked {
         /// Attacking unit identity.

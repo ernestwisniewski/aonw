@@ -1,5 +1,5 @@
 {
-  "catalogHash": "be48beb6ec5f8fd457439b78d2b89355b20e88236ecef78e09d60bd2fab2af4b",
+  "catalogHash": "a58f5b7def080e42b3d44c2ebb44955e56ea6d4f61b5d25facd3146ee5bed7b3",
   "catalogTechnologyCount": 54,
   "cases": [
     {"id": "foundation-available", "technology": "agriculture", "unlocked": [], "active": null, "cityCount": 1, "fulfilledBoost": false, "expectedAvailability": "available", "expectedCost": 6, "expectedUnlocks": ["improvement:farm", "improvement:riverFarm", "improvement:orchard"]},

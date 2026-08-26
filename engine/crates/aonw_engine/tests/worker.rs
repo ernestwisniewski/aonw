@@ -401,6 +401,7 @@ fn turn_completion_emits_typed_events_updates_infrastructure_and_changes_routing
         [
             DomainEvent::WorkerCompletedJob(_),
             DomainEvent::WorkerCompletedJob(_),
+            DomainEvent::ResearchPointsGained(_),
             DomainEvent::TurnEnded(_)
         ]
     ));

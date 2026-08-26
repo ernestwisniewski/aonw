@@ -3,6 +3,7 @@ mod domain_transition;
 mod events;
 mod outcome;
 mod production_events;
+mod research_events;
 
 pub use artifact_events::{
     ArtifactCarriedEvent, ArtifactExcavationStartedEvent, ArtifactStoredEvent,
@@ -18,6 +19,7 @@ pub use production_events::{
     CityBuiltBuildingEvent, CityBuiltWonderEvent, CityProducedUnitEvent, TechnologyResearchedEvent,
     WonderProductionRefundedEvent,
 };
+pub use research_events::ResearchPointsGainedEvent;
 
 /// Stable command rejection shared by every authoritative command family.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -489,11 +491,5 @@ impl CommandRejectionCode {
             Self::WorkerAutomationNotActive => "worker_automation_not_active",
             Self::WorkerAutomationNoTarget => "worker_automation_no_target",
         }
-    }
-}
-
-impl core::fmt::Display for CommandRejectionCode {
-    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        formatter.write_str(self.as_str())
     }
 }

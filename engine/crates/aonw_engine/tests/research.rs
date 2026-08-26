@@ -7,18 +7,25 @@ use aonw_content::{
     TileDefinition,
 };
 use aonw_domain::{
-    City, CityId, FieldImprovement, FieldImprovementKind, GameLengthConfig, GameLengthKind,
-    GameMode, GameState, HexCoord, InfrastructureState, InteractionState, KnowledgeState,
-    MatchIdentity, MatchLifecycle, MatchRules, PaceProfile, Participant, PendingInteraction,
-    PlayerCountry, PlayerId, PlayerKind, PlayerResearchState, PlayerTurnState, ResearchState,
-    StateRevision, TechnologyId, TransportNetwork, TurnLifecycle, UnitOccupancyPolicy,
-    VictoryRules, WonderRegistry,
+    ArtifactId, City, CityBuildingType, CityId, CitySpecializationType, FieldImprovement,
+    FieldImprovementKind, GameLengthConfig, GameLengthKind, GameMode, GameState, HexCoord,
+    InfrastructureState, InteractionState, KnowledgeState, MatchIdentity, MatchLifecycle,
+    MatchRules, PaceProfile, Participant, PendingInteraction, PlayerCountry, PlayerId, PlayerKind,
+    PlayerResearchState, PlayerTurnState, ResearchState, StateRevision, TechnologyId,
+    TransportNetwork, TurnLifecycle, UnitOccupancyPolicy, VictoryRules, WonderRegistry, WonderType,
+    WorldArtifact, WorldArtifactLocation, WorldArtifactType,
 };
 use aonw_engine::{
     CanonicalQueryError, CommandRejectionCode, EngineContext, GameEngine, GameQuery, PlayerCommand,
     QueryResult, ResearchError, ResearchOptionsQuery, SelectTechnologyCommand,
     TechnologyAvailability,
 };
+
+const SCIENCE_BUILDINGS: [CityBuildingType; 3] = [
+    CityBuildingType::Archive,
+    CityBuildingType::Academy,
+    CityBuildingType::University,
+];
 
 #[test]
 fn options_own_availability_cost_progress_prerequisites_and_boosts() {
@@ -35,6 +42,21 @@ fn options_own_availability_cost_progress_prerequisites_and_boosts() {
     assert_eq!(options.player_id(), &actor);
     assert_eq!(options.active_technology(), None);
     assert_eq!(options.science_overflow(), 10);
+    assert_eq!(options.science_yield().total(), 12);
+    assert_eq!(options.science_yield().sources().len(), 3);
+    assert_eq!(
+        options.science_yield().sources()[0].kind(),
+        aonw_engine::ScienceYieldSourceKind::CityScience
+    );
+    assert_eq!(options.science_yield().sources()[0].amount(), 10);
+    assert_eq!(
+        options.science_yield().sources()[1].kind(),
+        aonw_engine::ScienceYieldSourceKind::WorldArtifact
+    );
+    assert_eq!(
+        options.science_yield().sources()[2].kind(),
+        aonw_engine::ScienceYieldSourceKind::WorldWonder
+    );
     assert_eq!(options.options().len(), 54);
 
     let agriculture = option(&options, TechnologyId::Agriculture);
@@ -173,12 +195,15 @@ fn fixture() -> (MapDefinition, GameState, PlayerId) {
         HexCoord::new(2, 2),
     )
     .with_controlled_hexes([farm_a, farm_b])
+    .with_buildings(SCIENCE_BUILDINGS)
+    .with_wonders([WonderType::GreatLibrary])
+    .with_planning(Some(CitySpecializationType::Science), None)
     .build()
     .expect("city");
     let infrastructure = InfrastructureState::try_new(
         [
             FieldImprovement::new(farm_a, FieldImprovementKind::Farm, Some(city_id.clone())),
-            FieldImprovement::new(farm_b, FieldImprovementKind::Farm, Some(city_id)),
+            FieldImprovement::new(farm_b, FieldImprovementKind::Farm, Some(city_id.clone())),
         ],
         TransportNetwork::default(),
     )
@@ -239,8 +264,17 @@ fn fixture() -> (MapDefinition, GameState, PlayerId) {
         [],
     )
     .with_cities([city])
+    .with_artifacts([WorldArtifact::new(
+        ArtifactId::new("tablets").expect("artifact"),
+        WorldArtifactType::AstronomersTablets,
+        WorldArtifactLocation::Stored(city_id),
+    )])
     .with_infrastructure(infrastructure)
-    .with_knowledge(KnowledgeState::new(research, WonderRegistry::default()))
+    .with_knowledge(KnowledgeState::new(
+        research,
+        WonderRegistry::try_new([(WonderType::GreatLibrary, actor.clone())])
+            .expect("wonder registry"),
+    ))
     .with_interaction(interaction)
     .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
     .try_build()

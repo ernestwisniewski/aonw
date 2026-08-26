@@ -75,7 +75,15 @@ impl PlayerCommand<'_> {
             Self::EndTurn(_) => {
                 let units = u64::try_from(state.units().len()).unwrap_or(u64::MAX);
                 let cities = u64::try_from(state.cities().len()).unwrap_or(u64::MAX);
-                EventBudget::new(units.saturating_add(cities).saturating_add(2))
+                let participants =
+                    u64::try_from(state.match_lifecycle().identity().participants().len())
+                        .unwrap_or(u64::MAX);
+                EventBudget::new(
+                    units
+                        .saturating_add(cities)
+                        .saturating_add(participants.saturating_mul(2))
+                        .saturating_add(2),
+                )
             }
             Self::SubmitTurn(_) => {
                 let participants =
@@ -91,6 +99,7 @@ impl PlayerCommand<'_> {
                         .saturating_add(units)
                         .saturating_add(cities)
                         .saturating_add(participants)
+                        .saturating_add(participants.saturating_mul(2))
                         .saturating_add(combat)
                         .saturating_add(1),
                 )

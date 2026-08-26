@@ -39,9 +39,10 @@ pub use scenario::{
     ScenarioValidationError,
 };
 pub use technology::{
-    TechnologyBoost, TechnologyBoostCondition, TechnologyBuilding, TechnologyCostBalance,
-    TechnologyDefinition, TechnologyEffect, TechnologyEra, TechnologyImprovement, TechnologyKey,
-    TechnologyResource, TechnologyUnit, TechnologyUnlock, TechnologyWonder,
+    ScienceBalance, TechnologyBoost, TechnologyBoostCondition, TechnologyBuilding,
+    TechnologyCostBalance, TechnologyDefinition, TechnologyEffect, TechnologyEra,
+    TechnologyImprovement, TechnologyKey, TechnologyResource, TechnologyUnit, TechnologyUnlock,
+    TechnologyWonder,
 };
 pub use validation::{MapValidationError, validate_map_id};
 

@@ -80,6 +80,10 @@ fn production_completion_events_have_current_strict_wire_shapes() {
             player_id: "player-1".to_owned(),
             technology_id: aonw_contracts::TechnologyIdDto::Writing,
         },
+        ClientEventDto::ResearchPointsGained {
+            player_id: "player-1".to_owned(),
+            points: 7,
+        },
     ];
 
     let encoded = serde_json::to_string(&events).expect("event JSON");

@@ -1,12 +1,13 @@
 mod city_phase;
 mod events;
+mod preparation;
 mod support;
 mod worker_phase;
 
 use std::collections::BTreeSet;
 
 use aonw_content::{ContentHash, MapDefinition, RulesetDefinition};
-use aonw_domain::{CityId, GameMode, GameState, PlayerId, PlayerTurnState, UtcTimestamp};
+use aonw_domain::{GameMode, GameState, PlayerId, PlayerTurnState, UtcTimestamp};
 
 use crate::movement::{TurnMovementUpdate, advance_turn_movement};
 use crate::{
@@ -21,63 +22,42 @@ use self::support::{
     transition_with_phase_evidence, unsupported_processor_for_scope, valid_system_scope,
     validate_player_command,
 };
-use city_phase::advance_city_phase;
 use events::{sequential_phase_events, simultaneous_phase_events};
-use worker_phase::advance_worker_phase;
+use preparation::advance_turn_preparation;
 
 pub(crate) use support::processor_is_required;
 
-struct SettlementPhase {
-    state: GameState,
-    events: Vec<DomainEvent>,
-    founded_city_ids: Vec<CityId>,
-}
+const SEQUENTIAL_TURN_PROCESSORS: [TurnProcessor; 12] = [
+    TurnProcessor::Lifecycle,
+    TurnProcessor::CityFounding,
+    TurnProcessor::WorkerJobs,
+    TurnProcessor::Production,
+    TurnProcessor::Artifacts,
+    TurnProcessor::MovementReset,
+    TurnProcessor::QueuedMovement,
+    TurnProcessor::TradeRoutes,
+    TurnProcessor::WorkerAutomation,
+    TurnProcessor::AutoExplore,
+    TurnProcessor::ReversibleSkipCleanup,
+    TurnProcessor::Research,
+];
 
-struct TurnPreparationPhase {
-    state: GameState,
-    events: Vec<DomainEvent>,
-    founded_city_ids: Vec<CityId>,
-}
-
-fn advance_settlement_phase(
-    state: GameState,
-    map: &MapDefinition,
-    ruleset: &RulesetDefinition,
-    scope: &[PlayerId],
-) -> Result<SettlementPhase, CanonicalEngineError> {
-    let city = advance_city_phase(state, map, ruleset, scope)?;
-    let mut events = city.events;
-    let founded_city_ids = city.founded_city_ids;
-    let worker = advance_worker_phase(city.state, map, ruleset, scope)?;
-    events.extend(worker.events);
-    Ok(SettlementPhase {
-        state: worker.state,
-        events,
-        founded_city_ids,
-    })
-}
-
-fn advance_turn_preparation(
-    state: GameState,
-    map: &MapDefinition,
-    ruleset: &RulesetDefinition,
-    scope: &[PlayerId],
-) -> Result<TurnPreparationPhase, CanonicalEngineError> {
-    let settlement = advance_settlement_phase(state, map, ruleset, scope)?;
-    let production =
-        crate::production::advance_turn_production(settlement.state, map, ruleset, scope)
-            .map_err(CanonicalEngineError::Production)?;
-    let artifacts = crate::artifact::advance_turn_artifacts(production.state, scope)
-        .map_err(CanonicalEngineError::Artifact)?;
-    let mut events = settlement.events;
-    events.extend(production.events);
-    events.extend(artifacts.events);
-    Ok(TurnPreparationPhase {
-        state: artifacts.state,
-        events,
-        founded_city_ids: settlement.founded_city_ids,
-    })
-}
+const SIMULTANEOUS_TURN_PROCESSORS: [TurnProcessor; 14] = [
+    TurnProcessor::Submission,
+    TurnProcessor::Lifecycle,
+    TurnProcessor::Combat,
+    TurnProcessor::CityFounding,
+    TurnProcessor::WorkerJobs,
+    TurnProcessor::Production,
+    TurnProcessor::Artifacts,
+    TurnProcessor::MovementReset,
+    TurnProcessor::QueuedMovement,
+    TurnProcessor::TradeRoutes,
+    TurnProcessor::WorkerAutomation,
+    TurnProcessor::AutoExplore,
+    TurnProcessor::ReversibleSkipCleanup,
+    TurnProcessor::Research,
+];
 
 impl GameEngine {
     /// Applies one host-owned lifecycle command through a boundary that has no player identity.
@@ -234,7 +214,12 @@ pub(crate) fn apply_end_turn(
         invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     } = movement;
-    let events = sequential_phase_events(preparation.events, movement_events, command.player_id());
+    let events = sequential_phase_events(
+        preparation.events,
+        movement_events,
+        preparation.research_events,
+        command.player_id(),
+    );
     apply_update(
         state,
         next_lifecycle,
@@ -244,19 +229,7 @@ pub(crate) fn apply_end_turn(
         Some(diplomacy),
         InteractionStateUpdate::Replace(interaction),
         events,
-        [
-            TurnProcessor::Lifecycle,
-            TurnProcessor::CityFounding,
-            TurnProcessor::WorkerJobs,
-            TurnProcessor::Production,
-            TurnProcessor::Artifacts,
-            TurnProcessor::MovementReset,
-            TurnProcessor::QueuedMovement,
-            TurnProcessor::TradeRoutes,
-            TurnProcessor::WorkerAutomation,
-            TurnProcessor::AutoExplore,
-            TurnProcessor::ReversibleSkipCleanup,
-        ],
+        SEQUENTIAL_TURN_PROCESSORS,
         map_hash,
         ruleset_hash,
     )
@@ -445,6 +418,7 @@ fn finalize_simultaneous(
         combat.events,
         preparation.events,
         movement_events,
+        preparation.research_events,
     );
     apply_update(
         preparation.state,
@@ -455,21 +429,7 @@ fn finalize_simultaneous(
         Some(diplomacy),
         InteractionStateUpdate::Replace(interaction),
         events,
-        [
-            TurnProcessor::Submission,
-            TurnProcessor::Lifecycle,
-            TurnProcessor::Combat,
-            TurnProcessor::CityFounding,
-            TurnProcessor::WorkerJobs,
-            TurnProcessor::Production,
-            TurnProcessor::Artifacts,
-            TurnProcessor::MovementReset,
-            TurnProcessor::QueuedMovement,
-            TurnProcessor::TradeRoutes,
-            TurnProcessor::WorkerAutomation,
-            TurnProcessor::AutoExplore,
-            TurnProcessor::ReversibleSkipCleanup,
-        ],
+        SIMULTANEOUS_TURN_PROCESSORS,
         map_hash,
         ruleset_hash,
     )

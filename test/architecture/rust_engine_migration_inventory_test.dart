@@ -237,6 +237,7 @@ void main() {
         'UnitKilledEvent': 'runtime-ready',
         'UnitMovedEvent': 'engine-parity',
         'UnitRetreatedEvent': 'runtime-ready',
+        'ResearchPointsGainedEvent': 'runtime-ready',
         'TechnologyResearchedEvent': 'runtime-ready',
         'WonderProductionRefundedEvent': 'runtime-ready',
         'WorkerCompletedJobEvent': 'runtime-ready',

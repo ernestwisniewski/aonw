@@ -36,7 +36,7 @@ fn standard_ruleset_hash_is_stable() {
     assert_eq!(first, second);
     assert_eq!(
         first.to_string(),
-        "214957b11581487635901b1f47d81ce0cc17a659061bc2aff99a520177c2e837"
+        "ae9c3cb0fa0c2997abba3d0f27afb59c154414ec52ce0c7d786cfae6f3532aba"
     );
 }
 
@@ -125,6 +125,17 @@ fn standard_production_balance_preserves_exact_fixed_point_rules() {
 #[test]
 fn standard_research_pace_scaling_is_exact_and_uses_ceiling_arithmetic() {
     let balance = TechnologyCostBalance::STANDARD;
+    let science = RulesetDefinition::standard().science_balance();
+    assert_eq!(science.base_science_per_city(), 2);
+    assert_eq!(science.max_science_per_city(), 0);
+    assert_eq!(
+        science.second_science_building_multiplier_basis_points(),
+        7_000
+    );
+    assert_eq!(
+        science.later_science_building_multiplier_basis_points(),
+        3_500
+    );
     let paces = [
         PaceProfile::Unlimited,
         PaceProfile::Standard60,
@@ -278,7 +289,7 @@ fn standard_technology_catalog_is_complete_and_stable() {
             .technology_catalog_hash()
             .expect("catalog hash")
             .to_string(),
-        "be48beb6ec5f8fd457439b78d2b89355b20e88236ecef78e09d60bd2fab2af4b"
+        "a58f5b7def080e42b3d44c2ebb44955e56ea6d4f61b5d25facd3146ee5bed7b3"
     );
     assert_eq!(
         ruleset

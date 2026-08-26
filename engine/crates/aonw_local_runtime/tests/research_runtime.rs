@@ -5,13 +5,14 @@ use std::collections::BTreeMap;
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_contracts::TechnologyIdDto;
 use aonw_contracts::client::{
-    CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto, ClientFeatureDto,
-    ClientOutcomeDto, ClientQueryDto, ClientQueryResultDto, ClientRequestBodyDto, ClientRequestDto,
-    ClientResponseBodyDto, ClientResponseDto, TechnologyAvailabilityDto,
+    CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto, ClientEventDto,
+    ClientFeatureDto, ClientOutcomeDto, ClientQueryDto, ClientQueryResultDto, ClientRequestBodyDto,
+    ClientRequestDto, ClientResponseBodyDto, ClientResponseDto, TechnologyAvailabilityDto,
 };
 use aonw_domain::{
-    GameMode, GameState, HexCoord, MatchIdentity, MatchLifecycle, MatchRules, Participant,
-    PlayerCountry, PlayerId, PlayerKind, PlayerTurnState, StateRevision, TurnLifecycle,
+    City, CityId, GameMode, GameState, HexCoord, MatchIdentity, MatchLifecycle, MatchRules,
+    Participant, PlayerCountry, PlayerId, PlayerKind, PlayerTurnState, StateRevision,
+    TurnLifecycle,
 };
 use aonw_local_runtime::{ClientProtocol, LocalRuntime, OpenSession};
 
@@ -77,11 +78,31 @@ fn research_protocol_is_current_complete_and_replayable() {
     assert_eq!(result.outcome, ClientCommandOutcomeDto::Accepted);
     assert_eq!(result.stamp.revision, 1);
 
+    let advanced = dispatch(
+        &mut runtime,
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::EndTurn {
+                expected_revision: 1,
+            },
+        },
+    );
+    let ClientResponseBodyDto::Command { result } = advanced else {
+        panic!("research turn response")
+    };
+    assert!(matches!(
+        result.events.as_slice(),
+        [
+            ClientEventDto::ResearchPointsGained { points: 2, .. },
+            ClientEventDto::TurnEnded { .. }
+        ]
+    ));
+
     let replay = runtime.export_replay_json().expect("research replay");
+    assert!(replay.contains("researchPointsGained"));
     let verification =
         LocalRuntime::verify_replay_json(map, ruleset, &replay).expect("verify research replay");
-    assert_eq!(verification.entry_count, 1);
-    assert_eq!(verification.final_stamp.revision, StateRevision::new(1));
+    assert_eq!(verification.entry_count, 2);
+    assert_eq!(verification.final_stamp.revision, StateRevision::new(2));
 }
 
 fn dispatch(runtime: &mut LocalRuntime, request: ClientRequestBodyDto) -> ClientResponseBodyDto {
@@ -132,6 +153,14 @@ fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {
         ruleset.occupancy_policy(),
         [],
     )
+    .with_cities([City::builder(
+        CityId::new("capital").expect("city"),
+        actor.clone(),
+        "Capital",
+        HexCoord::new(1, 1),
+    )
+    .build()
+    .expect("city")])
     .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
     .try_build()
     .expect("research state");

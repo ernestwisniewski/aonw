@@ -4,6 +4,8 @@
 mod disabled_requirements;
 #[path = "turn_kernel/production_phase.rs"]
 mod production_phase;
+#[path = "turn_kernel/research_phase.rs"]
+mod research_phase;
 #[path = "turn_kernel/system_commands.rs"]
 mod system_commands;
 
