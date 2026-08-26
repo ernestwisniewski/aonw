@@ -2458,8 +2458,8 @@ health-homepage:
 health-architecture:
 	@command -v rg >/dev/null || { echo "rg is required for health-architecture."; exit 1; }
 	@echo "Checking $(ARCHITECTURE_HEALTH_URL)"
-	@curl -fsSL --max-time 5 "$(ARCHITECTURE_HEALTH_URL)" \
-	  | rg -F 'data-page="engine-architecture"' >/dev/null \
+	@curl -fsS --max-time 5 "$(ARCHITECTURE_HEALTH_URL)" \
+	  | rg -F 'data-page="architecture"' >/dev/null \
 	  || { echo "Architecture atlas missing or invalid"; exit 1; }
 
 health-stats:

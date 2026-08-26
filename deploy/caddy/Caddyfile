@@ -55,9 +55,8 @@
 	}
 
 	redir /privacy-policy/ /privacy-policy 308
-	redir /architecture https://{$AONW_ENGINE_DOCS_HOST}/architecture 308
-	redir /architecture/ https://{$AONW_ENGINE_DOCS_HOST}/architecture 308
-	redir /architecture/index.html https://{$AONW_ENGINE_DOCS_HOST}/architecture 308
+	redir /architecture/ /architecture 308
+	redir /architecture/index.html /architecture 308
 	redir /stats/ /stats 308
 
 	@homepageStatsApi path /api/stats
