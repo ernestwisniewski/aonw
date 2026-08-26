@@ -1,5 +1,6 @@
 mod attack;
 mod model;
+mod transition;
 
 use crate::{MatchIdentity, PlayerId};
 
@@ -235,6 +236,47 @@ impl Diplomacy {
             .is_some_and(|pair| self.contacts.binary_search(&pair).is_ok())
     }
 
+    /// Returns the stored relation for a normalized player pair.
+    #[must_use]
+    pub fn relation_between(
+        &self,
+        left: &PlayerId,
+        right: &PlayerId,
+    ) -> Option<&DiplomaticRelation> {
+        let pair = PlayerPair::new(left.clone(), right.clone())?;
+        self.relations
+            .binary_search_by(|relation| relation.pair().cmp(&pair))
+            .ok()
+            .map(|index| &self.relations[index])
+    }
+
+    /// Returns one pending proposal by its stable identifier.
+    #[must_use]
+    pub fn proposal(&self, id: &str) -> Option<&DiplomaticProposal> {
+        self.pending_proposals
+            .binary_search_by(|proposal| proposal.id().cmp(id))
+            .ok()
+            .map(|index| &self.pending_proposals[index])
+    }
+
+    /// Returns one diplomatic message by its stable identifier.
+    #[must_use]
+    pub fn message(&self, id: &str) -> Option<&DiplomaticMessage> {
+        self.messages
+            .binary_search_by(|message| message.id().cmp(id))
+            .ok()
+            .map(|index| &self.messages[index])
+    }
+
+    /// Returns one active resource trade by its stable identifier.
+    #[must_use]
+    pub fn resource_trade(&self, id: &str) -> Option<&ResourceTradeAgreement> {
+        self.resource_trade_agreements
+            .binary_search_by(|agreement| agreement.id().cmp(id))
+            .ok()
+            .map(|index| &self.resource_trade_agreements[index])
+    }
+
     /// Merges newly discovered contacts.
     #[must_use]
     pub fn merging(&self, contacts: impl IntoIterator<Item = PlayerPair>) -> Self {
@@ -270,6 +312,8 @@ pub enum DiplomacyStateBuildError {
     DuplicateRelation(PlayerPair),
     /// An identifier appears more than once in its collection.
     DuplicateId(String),
+    /// A requested identifier is absent from its canonical collection.
+    IdNotFound(String),
     /// A score entry repeats the same pair, turn and optional source.
     DuplicateScoreEntry {
         /// Related players.
@@ -310,6 +354,7 @@ impl core::fmt::Display for DiplomacyStateBuildError {
             Self::DuplicateContact(_) => formatter.write_str("duplicate diplomatic contact"),
             Self::DuplicateRelation(_) => formatter.write_str("duplicate diplomatic relation"),
             Self::DuplicateId(id) => write!(formatter, "duplicate diplomacy identifier: {id}"),
+            Self::IdNotFound(id) => write!(formatter, "diplomacy identifier not found: {id}"),
             Self::DuplicateScoreEntry {
                 pair: _,
                 turn,

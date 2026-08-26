@@ -1,7 +1,8 @@
 use super::{
-    Diplomacy, DiplomaticRelation, DiplomaticRelationChangeReason, DiplomaticRelationStatus,
-    DiplomaticScoreChangeReason, DiplomaticScoreEntry, PlayerPair, ResourceTradeAgreement,
-    attack_status_severity,
+    Diplomacy, DiplomacyStateBuildError, DiplomaticMessage, DiplomaticMessageCategory,
+    DiplomaticMessageTopic, DiplomaticProposal, DiplomaticProposalKind, DiplomaticRelation,
+    DiplomaticRelationChangeReason, DiplomaticRelationStatus, DiplomaticScoreChangeReason,
+    DiplomaticScoreEntry, PlayerPair, ResourceTradeAgreement, attack_status_severity,
 };
 use crate::{
     GameMode, MatchIdentity, MatchRules, Participant, PlayerCountry, PlayerId, PlayerKind,
@@ -100,6 +101,110 @@ fn attack_status_severity_is_total_for_the_current_status_surface() {
     ] {
         assert_eq!(artifact_type.stored_city_defense_bonus(), 0);
     }
+}
+
+#[test]
+fn proposal_transitions_are_ordered_duplicate_safe_and_current_only() {
+    let fixture = fixture();
+    let second = proposal("proposal-z", &fixture.attacker, &fixture.defender);
+    let first = proposal("proposal-a", &fixture.defender, &fixture.attacker);
+    let updated = fixture
+        .diplomacy
+        .try_with_proposal(&fixture.identity, second)
+        .and_then(|state| state.try_with_proposal(&fixture.identity, first.clone()))
+        .expect("proposals");
+    assert_eq!(updated.pending_proposals()[0].id(), "proposal-a");
+    assert_eq!(updated.proposal("proposal-a"), Some(&first));
+    assert_eq!(
+        updated.try_with_proposal(&fixture.identity, first),
+        Err(DiplomacyStateBuildError::DuplicateId(
+            "proposal-a".to_owned()
+        ))
+    );
+    let removed = updated
+        .try_without_proposal(&fixture.identity, "proposal-a")
+        .expect("remove proposal");
+    assert!(removed.proposal("proposal-a").is_none());
+    assert_eq!(
+        removed
+            .try_without_proposal(&fixture.identity, "absent")
+            .expect("absent proposal"),
+        removed
+    );
+}
+
+#[test]
+fn message_and_relation_transitions_replace_exact_canonical_records() {
+    let fixture = fixture();
+    let initial_message = message("message-1", &fixture.attacker, &fixture.defender, None);
+    let state = fixture
+        .diplomacy
+        .try_with_message(&fixture.identity, initial_message)
+        .expect("message");
+    let responded = message("message-1", &fixture.attacker, &fixture.defender, Some(7));
+    let state = state
+        .try_replacing_message(&fixture.identity, responded.clone())
+        .expect("replace message");
+    assert_eq!(state.message("message-1"), Some(&responded));
+    assert!(matches!(
+        state.try_replacing_message(
+            &fixture.identity,
+            message("missing", &fixture.attacker, &fixture.defender, None)
+        ),
+        Err(DiplomacyStateBuildError::IdNotFound(id)) if id == "missing"
+    ));
+
+    let pair = pair(&fixture.attacker, &fixture.defender);
+    let relation = DiplomaticRelation::try_new(
+        pair,
+        DiplomaticRelationStatus::Friendly,
+        42,
+        None,
+        Some(7),
+        Some(DiplomaticRelationChangeReason::ProposalAccepted),
+    )
+    .expect("relation");
+    let state = state
+        .try_with_relation(&fixture.identity, relation)
+        .expect("replace relation");
+    assert_eq!(
+        state
+            .relation_between(&fixture.attacker, &fixture.defender)
+            .expect("relation")
+            .relation_score(),
+        42
+    );
+}
+
+#[test]
+fn pair_cleanup_removes_only_bilateral_pending_actions_and_trades() {
+    let fixture = fixture();
+    let state = fixture
+        .diplomacy
+        .try_with_proposal(
+            &fixture.identity,
+            proposal("proposal-1", &fixture.attacker, &fixture.defender),
+        )
+        .and_then(|state| {
+            state.try_with_message(
+                &fixture.identity,
+                message("message-1", &fixture.defender, &fixture.attacker, None),
+            )
+        })
+        .expect("pending actions");
+    let cleaned = state
+        .try_without_pair_pending_actions(
+            &fixture.identity,
+            &pair(&fixture.attacker, &fixture.defender),
+        )
+        .expect("pair cleanup");
+    assert!(cleaned.pending_proposals().is_empty());
+    assert!(cleaned.messages().is_empty());
+    assert_eq!(cleaned.resource_trade_agreements().len(), 1);
+    assert_eq!(
+        cleaned.resource_trade_agreements()[0].id(),
+        "unrelated-trade"
+    );
 }
 
 struct Fixture {
@@ -210,6 +315,43 @@ fn trade(id: &str, exporter: &PlayerId, importer: &PlayerId) -> ResourceTradeAgr
         None,
     )
     .expect("trade")
+}
+
+fn proposal(id: &str, from: &PlayerId, to: &PlayerId) -> DiplomaticProposal {
+    DiplomaticProposal::try_new(
+        id.to_owned(),
+        from.clone(),
+        to.clone(),
+        DiplomaticProposalKind::Friendship,
+        2,
+        7,
+        0,
+    )
+    .expect("proposal")
+}
+
+fn message(
+    id: &str,
+    from: &PlayerId,
+    to: &PlayerId,
+    responded_turn: Option<u32>,
+) -> DiplomaticMessage {
+    DiplomaticMessage::try_new(
+        id.to_owned(),
+        from.clone(),
+        to.clone(),
+        DiplomaticMessageTopic::PeacefulPraise,
+        DiplomaticMessageCategory::Praise,
+        2,
+        7,
+        responded_turn.map(|_| super::DiplomaticMessageResponse::Neutral),
+        responded_turn,
+        0,
+        responded_turn.map(|_| 0),
+        None,
+        false,
+    )
+    .expect("message")
 }
 
 fn pair(left: &PlayerId, right: &PlayerId) -> PlayerPair {

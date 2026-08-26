@@ -339,7 +339,7 @@ fn reject_duplicate_ids<T>(
 
 fn local_error(path: &str, error: &DiplomacyStateBuildError) -> GameStateMappingError {
     let field = match error {
-        DiplomacyStateBuildError::EmptyId => "id",
+        DiplomacyStateBuildError::EmptyId | DiplomacyStateBuildError::IdNotFound(_) => "id",
         DiplomacyStateBuildError::RelationScoreOutOfRange(_) => "relationScore",
         DiplomacyStateBuildError::InvalidTurnRange => "expiresOnTurn",
         DiplomacyStateBuildError::NegativeGold(_) => "goldPayment",
