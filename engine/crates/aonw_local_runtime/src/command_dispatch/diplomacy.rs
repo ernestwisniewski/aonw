@@ -4,8 +4,9 @@ use aonw_domain::{
     DiplomaticMessageResponse, DiplomaticMessageTopic, DiplomaticProposalKind, PlayerId,
 };
 use aonw_engine::{
-    PlayerCommand, RespondDiplomaticMessageCommand, RespondDiplomaticProposalCommand,
-    SendDiplomaticMessageCommand, SendDiplomaticProposalCommand,
+    DeclareWarCommand, PlayerCommand, RespondDiplomaticMessageCommand,
+    RespondDiplomaticProposalCommand, SendDiplomaticMessageCommand, SendDiplomaticProposalCommand,
+    SendGoldGiftCommand,
 };
 
 use super::{CommandResult, dispatch_player};
@@ -15,6 +16,22 @@ use crate::session::Session;
 /// Current authenticated proposal command.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DiplomacyRequest {
+    /// Declares war on one discovered participant.
+    DeclareWar {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Discovered bilateral target.
+        target_player_id: PlayerId,
+    },
+    /// Transfers a gold gift to one discovered participant.
+    SendGoldGift {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Discovered bilateral target.
+        target_player_id: PlayerId,
+        /// Requested transfer amount.
+        amount: i64,
+    },
     /// Sends one friendship or truce proposal.
     Send {
         /// Expected canonical revision.
@@ -64,6 +81,15 @@ pub(crate) fn dispatch_diplomacy(
     command: &DiplomacyRequest,
 ) -> Result<CommandResult, RuntimeError> {
     match command {
+        DiplomacyRequest::DeclareWar {
+            expected_revision,
+            target_player_id,
+        } => dispatch_declare_war(session, *expected_revision, target_player_id),
+        DiplomacyRequest::SendGoldGift {
+            expected_revision,
+            target_player_id,
+            amount,
+        } => dispatch_gold_gift(session, *expected_revision, target_player_id, *amount),
         DiplomacyRequest::Send {
             expected_revision,
             target_player_id,
@@ -150,4 +176,40 @@ pub(crate) fn dispatch_diplomacy(
             },
         ),
     }
+}
+
+fn dispatch_declare_war(
+    session: &mut Session,
+    expected_revision: u64,
+    target: &PlayerId,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::DeclareWar(DeclareWarCommand::new(expected_revision, target)),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::DeclareWar {
+                expected_revision,
+                target_player_id: target.as_str().to_owned(),
+            },
+        },
+    )
+}
+
+fn dispatch_gold_gift(
+    session: &mut Session,
+    expected_revision: u64,
+    target: &PlayerId,
+    amount: i64,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::SendGoldGift(SendGoldGiftCommand::new(expected_revision, target, amount)),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::SendGoldGift {
+                expected_revision,
+                target_player_id: target.as_str().to_owned(),
+                amount,
+            },
+        },
+    )
 }

@@ -40,11 +40,18 @@ impl PlayerCommand<'_> {
     #[must_use]
     pub fn event_budget(self, state: &GameState) -> EventBudget {
         match self {
+            Self::DeclareWar(_) => {
+                let participants =
+                    u64::try_from(state.match_lifecycle().identity().participants().len())
+                        .unwrap_or(u64::MAX);
+                EventBudget::new(participants)
+            }
             Self::RespondDiplomaticProposal(_) => EventBudget::new(3),
             Self::AttackHex(_) => EventBudget::new(7),
             Self::RespondDiplomaticMessage(_) | Self::AutoExploreUnit(_) => EventBudget::new(2),
             Self::SendDiplomaticProposal(_)
             | Self::SendDiplomaticMessage(_)
+            | Self::SendGoldGift(_)
             | Self::StartArtifactExcavation(_)
             | Self::StoreArtifactInCity(_)
             | Self::TradeArtifact(_)

@@ -54,8 +54,9 @@ pub use combat::{
 };
 pub use context::{EngineContext, SystemContext};
 pub use diplomacy::{
-    DiplomacyError, RespondDiplomaticMessageCommand, RespondDiplomaticProposalCommand,
-    SendDiplomaticMessageCommand, SendDiplomaticProposalCommand,
+    DeclareWarCommand, DiplomacyError, RespondDiplomaticMessageCommand,
+    RespondDiplomaticProposalCommand, SendDiplomaticMessageCommand, SendDiplomaticProposalCommand,
+    SendGoldGiftCommand,
 };
 pub use diplomacy_policy::{
     DiplomacyDisclosure, DiplomacyPolicy, DiplomacyPolicyError, DiplomacyPolicyPlayerRole,

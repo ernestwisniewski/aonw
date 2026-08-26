@@ -202,6 +202,18 @@ pub enum ClientCommandRejectionCodeDto {
     DiplomacyMessageNotFound,
     /// The requested message was already answered or has expired.
     DiplomacyMessageUnavailable,
+    /// A non-expired truce prevents declaring war.
+    DiplomacyTruceActive,
+    /// The bilateral relation is already at war.
+    DiplomacyWarAlreadyActive,
+    /// A gold gift cannot have a negative amount.
+    DiplomacyInvalidGoldAmount,
+    /// War and truce relations forbid gold gifts.
+    DiplomacyGoldGiftBlockedByRelation,
+    /// The requested gold transfer cannot be funded atomically.
+    DiplomacyGoldUnavailable,
+    /// The gift is below the minimum score threshold or still on cooldown.
+    DiplomacyGoldGiftUnavailable,
     /// The authenticated actor cannot initiate an artifact trade.
     ArtifactTradeActorUnavailable,
     /// The artifact trade target is absent or equals the actor.
@@ -258,7 +270,7 @@ pub enum ClientCommandRejectionCodeDto {
 }
 impl ClientCommandRejectionCodeDto {
     /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 123] = [
+    pub const ALL: [Self; 129] = [
         Self::StaleRevision,
         Self::UnitNotFound,
         Self::UnitNotControlled,
@@ -357,6 +369,12 @@ impl ClientCommandRejectionCodeDto {
         Self::DiplomacyDuplicateMessage,
         Self::DiplomacyMessageNotFound,
         Self::DiplomacyMessageUnavailable,
+        Self::DiplomacyTruceActive,
+        Self::DiplomacyWarAlreadyActive,
+        Self::DiplomacyInvalidGoldAmount,
+        Self::DiplomacyGoldGiftBlockedByRelation,
+        Self::DiplomacyGoldUnavailable,
+        Self::DiplomacyGoldGiftUnavailable,
         Self::ArtifactTradeActorUnavailable,
         Self::ArtifactTradeTargetInvalid,
         Self::ArtifactTradeGoldInvalid,

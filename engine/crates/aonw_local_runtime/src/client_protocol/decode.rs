@@ -176,7 +176,9 @@ pub(super) fn command(command: ClientCommandDto) -> Result<DecodedCommand, Clien
             expected_revision,
             technology: aonw_contract_mapping::decode_technology(technology_id),
         })),
-        command @ (ClientCommandDto::SendDiplomaticProposal { .. }
+        command @ (ClientCommandDto::DeclareWar { .. }
+        | ClientCommandDto::SendGoldGift { .. }
+        | ClientCommandDto::SendDiplomaticProposal { .. }
         | ClientCommandDto::RespondDiplomaticProposal { .. }
         | ClientCommandDto::SendDiplomaticMessage { .. }
         | ClientCommandDto::RespondDiplomaticMessage { .. }) => {

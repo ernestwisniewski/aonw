@@ -77,7 +77,7 @@ domain CancelUnitActionCommand movement engine-parity CancelUnitAction packages/
 domain CancelWorkerAssignmentCommand worker runtime-ready CancelWorkerAssignment packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain CancelWorkerJobCommand worker runtime-ready CancelWorkerJob packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain ConfirmWorkerImprovementCommand worker runtime-ready ConfirmWorkerImprovement packages/aonw_core/lib/game/domain/command/worker_commands.dart
-domain DeclareWarCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
+domain DeclareWarCommand diplomacy runtime-ready DeclareWar packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain DetachTroopCommand movement runtime-ready DetachTroop packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain EndTurnCommand turn turn-kernel-ready EndTurn packages/aonw_core/lib/game/domain/command/turn_commands.dart
 domain FortifyUnitCommand unit-action engine-parity FortifyUnit packages/aonw_core/lib/game/domain/command/unit_commands.dart
@@ -94,7 +94,7 @@ domain SelectTechnologyCommand research runtime-ready SelectTechnology packages/
 domain SelectWorkerImprovementCommand worker runtime-ready SelectWorkerImprovement packages/aonw_core/lib/game/domain/command/worker_commands.dart
 domain SendDiplomaticMessageCommand diplomacy runtime-ready SendDiplomaticMessage packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SendDiplomaticProposalCommand diplomacy runtime-ready SendDiplomaticProposal packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
-domain SendGoldGiftCommand diplomacy reference-only - packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
+domain SendGoldGiftCommand diplomacy runtime-ready SendGoldGift packages/aonw_core/lib/game/domain/command/diplomacy_commands.dart
 domain SetCitySpecializationCommand production runtime-ready SetCitySpecialization packages/aonw_core/lib/game/domain/command/city_commands.dart
 domain SkipUnitTurnCommand unit-action engine-parity SkipUnitTurn packages/aonw_core/lib/game/domain/command/unit_commands.dart
 domain StartArtifactExcavationCommand artifact runtime-ready StartArtifactExcavation packages/aonw_core/lib/game/domain/command/artifact_commands.dart

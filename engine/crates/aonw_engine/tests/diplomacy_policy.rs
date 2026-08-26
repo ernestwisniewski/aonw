@@ -130,6 +130,7 @@ fn policy_manifest_rejects_unknown_compatibility_fields() {
 fn changing_only_relation_status_changes_every_dependent_policy() {
     let friendly = policy_for("friendly");
     let war = policy_for("war");
+    let truce = policy_for("truce");
     assert_ne!(friendly.is_hostile(), war.is_hostile());
     assert_ne!(friendly.can_enter_territory(), war.can_enter_territory());
     assert_ne!(friendly.can_attack(), war.can_attack());
@@ -138,6 +139,8 @@ fn changing_only_relation_status_changes_every_dependent_policy() {
     assert_ne!(friendly.disclosure(), war.disclosure());
     assert!(!friendly.can_enter_city_center());
     assert!(!war.can_enter_city_center());
+    assert_eq!(friendly.status_expires_on_turn(), None);
+    assert_eq!(truce.status_expires_on_turn(), Some(9));
 }
 
 fn policy_for(status: &str) -> aonw_engine::DiplomacyPolicy {
@@ -172,8 +175,16 @@ fn state(has_contact: bool, configured_status: Option<&str>) -> GameState {
     let pair = PlayerPair::new(p1, p2).expect("pair");
     let contacts = has_contact.then(|| pair.clone());
     let relations = configured_status.map(|status| {
-        DiplomaticRelation::try_new(pair, parse_status(status), 0, None, None, None)
-            .expect("relation")
+        let status = parse_status(status);
+        DiplomaticRelation::try_new(
+            pair,
+            status,
+            0,
+            (status == DiplomaticRelationStatus::Truce).then_some(9),
+            None,
+            None,
+        )
+        .expect("relation")
     });
     let diplomacy =
         Diplomacy::try_new(&identity, contacts, relations, [], [], [], []).expect("diplomacy");

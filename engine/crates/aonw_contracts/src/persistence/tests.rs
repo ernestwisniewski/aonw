@@ -68,6 +68,8 @@ fn every_current_production_command_has_a_strict_wire_shape() {
 #[test]
 fn diplomacy_commands_have_current_strict_wire_shapes() {
     let commands = [
+        r#"{"type":"declareWar","expectedRevision":7,"targetPlayerId":"player-2"}"#,
+        r#"{"type":"sendGoldGift","expectedRevision":7,"targetPlayerId":"player-2","amount":10}"#,
         r#"{"type":"sendDiplomaticProposal","expectedRevision":7,"targetPlayerId":"player-2","kind":"truce","proposalId":null,"goldPayment":5}"#,
         r#"{"type":"respondDiplomaticProposal","expectedRevision":8,"proposalId":"proposal-1","accepted":true}"#,
         r#"{"type":"sendDiplomaticMessage","expectedRevision":8,"targetPlayerId":"player-2","topic":"withdrawScouts","messageId":null}"#,

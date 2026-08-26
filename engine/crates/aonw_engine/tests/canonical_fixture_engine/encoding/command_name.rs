@@ -2,6 +2,8 @@ use aonw_contracts::ReplayCommandDto;
 
 pub(crate) const fn command_name(command: &ReplayCommandDto) -> &'static str {
     match command {
+        ReplayCommandDto::DeclareWar { .. } => "DeclareWar",
+        ReplayCommandDto::SendGoldGift { .. } => "SendGoldGift",
         ReplayCommandDto::SelectTechnology { .. } => "SelectTechnology",
         ReplayCommandDto::SendDiplomaticProposal { .. } => "SendDiplomaticProposal",
         ReplayCommandDto::RespondDiplomaticProposal { .. } => "RespondDiplomaticProposal",

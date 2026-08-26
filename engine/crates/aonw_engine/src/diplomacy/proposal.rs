@@ -158,7 +158,7 @@ fn accept_proposal(
         state.turn(),
         score_delta,
         DiplomaticScoreChangeReason::ProposalAccepted,
-        proposal.id(),
+        Some(proposal.id()),
     )?;
     let economy = apply_proposal_payment(state, proposal)?;
     let combat = clear_pair_attacks(state, &pair)?;
@@ -204,7 +204,7 @@ fn reject_proposal(
         state.turn(),
         context.ruleset().diplomacy().proposal_reject_score_delta(),
         DiplomaticScoreChangeReason::ProposalRejected,
-        proposal.id(),
+        Some(proposal.id()),
     )?;
     mutation(
         state,

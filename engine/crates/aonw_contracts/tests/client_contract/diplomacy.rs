@@ -4,8 +4,21 @@ use aonw_contracts::{
     DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationStatusDto,
 };
 
-pub(super) fn requests() -> [ClientRequestBodyDto; 4] {
+pub(super) fn requests() -> [ClientRequestBodyDto; 6] {
     [
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::DeclareWar {
+                expected_revision: 8,
+                target_player_id: "player-2".to_owned(),
+            },
+        },
+        ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::SendGoldGift {
+                expected_revision: 8,
+                target_player_id: "player-2".to_owned(),
+                amount: 10,
+            },
+        },
         ClientRequestBodyDto::Dispatch {
             command: ClientCommandDto::SendDiplomaticProposal {
                 expected_revision: 8,

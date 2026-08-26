@@ -60,6 +60,7 @@ impl std::error::Error for DiplomacyPolicyError {}
 pub struct DiplomacyPolicy {
     same_player: bool,
     status: DiplomaticRelationStatus,
+    status_expires_on_turn: Option<u32>,
     disclosure: DiplomacyDisclosure,
 }
 
@@ -71,6 +72,12 @@ impl DiplomacyPolicy {
     #[must_use]
     pub const fn status(self) -> DiplomaticRelationStatus {
         self.status
+    }
+
+    /// Returns the authoritative expiry of a temporary relation status.
+    #[must_use]
+    pub const fn status_expires_on_turn(self) -> Option<u32> {
+        self.status_expires_on_turn
     }
 
     /// Returns the recipient-safe relation disclosure.
@@ -163,6 +170,7 @@ impl DiplomacyPolicyQuery {
             return Ok(DiplomacyPolicy {
                 same_player: true,
                 status: DiplomaticRelationStatus::Neutral,
+                status_expires_on_turn: None,
                 disclosure: DiplomacyDisclosure::Own,
             });
         }
@@ -172,16 +180,21 @@ impl DiplomacyPolicyQuery {
             return Ok(DiplomacyPolicy {
                 same_player: true,
                 status: DiplomaticRelationStatus::Neutral,
+                status_expires_on_turn: None,
                 disclosure: DiplomacyDisclosure::Own,
             });
         };
-        let status = diplomacy
+        let relation = diplomacy
             .relations()
             .binary_search_by(|relation| relation.pair().cmp(&pair))
             .ok()
-            .map_or(DiplomaticRelationStatus::Neutral, |index| {
-                diplomacy.relations()[index].status()
-            });
+            .map(|index| &diplomacy.relations()[index]);
+        let status = relation.map_or(
+            DiplomaticRelationStatus::Neutral,
+            aonw_domain::DiplomaticRelation::status,
+        );
+        let status_expires_on_turn =
+            relation.and_then(aonw_domain::DiplomaticRelation::status_expires_on_turn);
         let disclosure = if diplomacy.has_contact(actor_player_id, counterparty_player_id) {
             DiplomacyDisclosure::Known(status)
         } else {
@@ -190,6 +203,7 @@ impl DiplomacyPolicyQuery {
         Ok(DiplomacyPolicy {
             same_player: false,
             status,
+            status_expires_on_turn,
             disclosure,
         })
     }

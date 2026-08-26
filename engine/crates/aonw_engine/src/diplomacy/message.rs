@@ -135,7 +135,7 @@ pub(crate) fn apply_respond_message(
         state.turn(),
         delta,
         reason,
-        message.id(),
+        Some(message.id()),
     )?;
     let promise_due_turn = if command.response() == DiplomaticMessageResponse::Conciliatory
         && can_create_withdrawal_promise(message.topic())

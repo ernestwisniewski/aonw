@@ -21,7 +21,9 @@ pub(super) fn decode_command(
 ) -> Result<ReplayRuntimeCommand, PersistenceError> {
     match command {
         command @ ReplayCommandDto::SelectTechnology { .. } => Ok(decode_research_command(command)),
-        command @ (ReplayCommandDto::SendDiplomaticProposal { .. }
+        command @ (ReplayCommandDto::DeclareWar { .. }
+        | ReplayCommandDto::SendGoldGift { .. }
+        | ReplayCommandDto::SendDiplomaticProposal { .. }
         | ReplayCommandDto::RespondDiplomaticProposal { .. }
         | ReplayCommandDto::SendDiplomaticMessage { .. }
         | ReplayCommandDto::RespondDiplomaticMessage { .. }) => decode_diplomacy_command(command),
@@ -132,6 +134,24 @@ fn decode_diplomacy_command(
     command: &ReplayCommandDto,
 ) -> Result<ReplayRuntimeCommand, PersistenceError> {
     let request = match command {
+        ReplayCommandDto::DeclareWar {
+            expected_revision,
+            target_player_id,
+        } => DiplomacyRequest::DeclareWar {
+            expected_revision: *expected_revision,
+            target_player_id: PlayerId::new(target_player_id.clone())
+                .map_err(PersistenceError::InvalidPlayer)?,
+        },
+        ReplayCommandDto::SendGoldGift {
+            expected_revision,
+            target_player_id,
+            amount,
+        } => DiplomacyRequest::SendGoldGift {
+            expected_revision: *expected_revision,
+            target_player_id: PlayerId::new(target_player_id.clone())
+                .map_err(PersistenceError::InvalidPlayer)?,
+            amount: *amount,
+        },
         ReplayCommandDto::SendDiplomaticProposal {
             expected_revision,
             target_player_id,

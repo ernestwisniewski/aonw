@@ -14,6 +14,11 @@ pub struct DiplomacyBalance {
     friendship_accept_score_delta: i64,
     truce_accept_score_delta: i64,
     proposal_reject_score_delta: i64,
+    war_declaration_score_delta: i64,
+    war_declaration_observer_score_delta: i64,
+    gold_gift_minimum_amount: i64,
+    gold_gift_cooldown_turns: u32,
+    gold_gift_max_score_delta: i64,
 }
 
 impl DiplomacyBalance {
@@ -26,6 +31,11 @@ impl DiplomacyBalance {
         friendship_accept_score_delta: 18,
         truce_accept_score_delta: 10,
         proposal_reject_score_delta: -6,
+        war_declaration_score_delta: -25,
+        war_declaration_observer_score_delta: -8,
+        gold_gift_minimum_amount: 5,
+        gold_gift_cooldown_turns: 5,
+        gold_gift_max_score_delta: 12,
     };
 
     /// Returns how long a pending proposal remains actionable.
@@ -74,6 +84,45 @@ impl DiplomacyBalance {
     #[must_use]
     pub const fn proposal_reject_score_delta(self) -> i64 {
         self.proposal_reject_score_delta
+    }
+
+    /// Returns the direct relation-score penalty for declaring war.
+    #[must_use]
+    pub const fn war_declaration_score_delta(self) -> i64 {
+        self.war_declaration_score_delta
+    }
+
+    /// Returns the reputation penalty applied by observers who know both sides.
+    #[must_use]
+    pub const fn war_declaration_observer_score_delta(self) -> i64 {
+        self.war_declaration_observer_score_delta
+    }
+
+    /// Returns the smallest gift that can improve a relation.
+    #[must_use]
+    pub const fn gold_gift_minimum_amount(self) -> i64 {
+        self.gold_gift_minimum_amount
+    }
+
+    /// Returns the cooldown between gifts for the same bilateral relation.
+    #[must_use]
+    pub const fn gold_gift_cooldown_turns(self) -> u32 {
+        self.gold_gift_cooldown_turns
+    }
+
+    /// Returns the bounded score reward for one positive gold gift.
+    #[must_use]
+    pub const fn gold_gift_score_delta(self, amount: i64) -> i64 {
+        if amount < self.gold_gift_minimum_amount {
+            0
+        } else {
+            let scaled = amount / self.gold_gift_minimum_amount;
+            if scaled > self.gold_gift_max_score_delta {
+                self.gold_gift_max_score_delta
+            } else {
+                scaled
+            }
+        }
     }
 
     /// Returns the base relation-score effect of a message response tone.

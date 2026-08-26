@@ -86,6 +86,17 @@ pub enum ClientRequestBodyDto {
     deny_unknown_fields
 )]
 pub enum ClientCommandDto {
+    /// Declares war on one discovered participant.
+    DeclareWar {
+        expected_revision: u64,
+        target_player_id: String,
+    },
+    /// Transfers a gold gift to one discovered participant.
+    SendGoldGift {
+        expected_revision: u64,
+        target_player_id: String,
+        amount: i64,
+    },
     /// Selects one currently available research target.
     SelectTechnology {
         expected_revision: u64,

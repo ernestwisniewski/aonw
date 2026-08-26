@@ -15,7 +15,7 @@ pub(super) fn adjust_score(
     turn: u32,
     delta: i64,
     reason: DiplomaticScoreChangeReason,
-    source_id: &str,
+    source_id: Option<&str>,
 ) -> Result<(Diplomacy, DiplomaticScoreEntry), DiplomacyError> {
     let (status, current) = effective_relation(diplomacy, pair);
     let current_relation = diplomacy.relation_between(pair.first(), pair.second());
@@ -35,7 +35,7 @@ pub(super) fn adjust_score(
         score_after - current,
         score_after,
         reason,
-        Some(source_id.to_owned()),
+        source_id.map(str::to_owned),
     )?;
     let diplomacy = diplomacy.try_with_score_entry(identity, entry.clone())?;
     Ok((diplomacy, entry))
@@ -52,12 +52,12 @@ pub(super) fn effective_relation(
         })
 }
 
-pub(super) fn mutation<const N: usize>(
+pub(super) fn mutation(
     state: &GameState,
     diplomacy: Diplomacy,
     economy: EconomyState,
     combat: CombatState,
-    events: [DomainEvent; N],
+    events: impl IntoIterator<Item = DomainEvent>,
 ) -> Result<DiplomacyMutation, DiplomacyError> {
     let revision = state
         .revision()
@@ -70,7 +70,7 @@ pub(super) fn mutation<const N: usize>(
             combat,
             diplomacy,
         },
-        events: events.into(),
+        events: events.into_iter().collect::<Vec<_>>().into_boxed_slice(),
     })
 }
 

@@ -7,6 +7,24 @@ use super::ClientDecodeError;
 
 pub(super) fn command(command: ClientCommandDto) -> Result<DiplomacyRequest, ClientDecodeError> {
     match command {
+        ClientCommandDto::DeclareWar {
+            expected_revision,
+            target_player_id,
+        } => Ok(DiplomacyRequest::DeclareWar {
+            expected_revision,
+            target_player_id: PlayerId::new(target_player_id)
+                .map_err(|error| ClientDecodeError::new("invalid_target_player_id", error))?,
+        }),
+        ClientCommandDto::SendGoldGift {
+            expected_revision,
+            target_player_id,
+            amount,
+        } => Ok(DiplomacyRequest::SendGoldGift {
+            expected_revision,
+            target_player_id: PlayerId::new(target_player_id)
+                .map_err(|error| ClientDecodeError::new("invalid_target_player_id", error))?,
+            amount,
+        }),
         ClientCommandDto::SendDiplomaticProposal {
             expected_revision,
             target_player_id,

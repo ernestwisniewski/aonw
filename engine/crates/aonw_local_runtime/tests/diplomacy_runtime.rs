@@ -159,6 +159,62 @@ fn message_commands_are_current_private_and_replayable() {
     verify_one_entry(&recipient, map, ruleset);
 }
 
+#[test]
+fn war_and_gold_gift_are_current_atomic_and_replayable() {
+    let ruleset = RulesetDefinition::standard().clone();
+    let map = map();
+    let p1 = player("player-1");
+    let p2 = player("player-2");
+
+    let mut gifting = open_runtime(&map, &ruleset, state(None), p1.clone());
+    let gifted = dispatch(
+        &mut gifting,
+        ClientCommandDto::SendGoldGift {
+            expected_revision: 11,
+            target_player_id: p2.as_str().to_owned(),
+            amount: 10,
+        },
+    );
+    assert_eq!(gifted.outcome, ClientCommandOutcomeDto::Accepted);
+    assert!(matches!(
+        gifted.events.as_slice(),
+        [ClientEventDto::DiplomaticScoreChanged {
+            delta: 2,
+            reason: aonw_contracts::DiplomaticScoreChangeReasonDto::GoldGift,
+            source_id: Some(source),
+            ..
+        }] if source == "gold_gift.7.player-1.player-2"
+    ));
+    verify_one_entry(&gifting, map.clone(), ruleset.clone());
+
+    let mut declaring = open_runtime(&map, &ruleset, state(None), p1);
+    let war = dispatch(
+        &mut declaring,
+        ClientCommandDto::DeclareWar {
+            expected_revision: 11,
+            target_player_id: p2.as_str().to_owned(),
+        },
+    );
+    assert_eq!(war.outcome, ClientCommandOutcomeDto::Accepted);
+    assert!(matches!(
+        war.events.as_slice(),
+        [
+            ClientEventDto::DiplomaticRelationChanged {
+                new_status: aonw_contracts::DiplomaticRelationStatusDto::War,
+                reason: aonw_contracts::DiplomaticRelationChangeReasonDto::DeclarationOfWar,
+                ..
+            },
+            ClientEventDto::DiplomaticScoreChanged {
+                delta: -25,
+                reason: aonw_contracts::DiplomaticScoreChangeReasonDto::DeclarationOfWar,
+                source_id: None,
+                ..
+            }
+        ]
+    ));
+    verify_one_entry(&declaring, map, ruleset);
+}
+
 fn dispatch(
     runtime: &mut LocalRuntime,
     command: ClientCommandDto,

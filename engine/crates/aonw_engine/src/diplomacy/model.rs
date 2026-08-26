@@ -5,6 +5,65 @@ use aonw_domain::{
 
 use crate::DomainEvent;
 
+/// Revision-bound request to declare war on one discovered participant.
+#[derive(Clone, Copy, Debug)]
+pub struct DeclareWarCommand<'command> {
+    expected_revision: u64,
+    target_player_id: &'command PlayerId,
+}
+
+impl<'command> DeclareWarCommand<'command> {
+    /// Creates a current authenticated declaration-of-war command.
+    #[must_use]
+    pub const fn new(expected_revision: u64, target_player_id: &'command PlayerId) -> Self {
+        Self {
+            expected_revision,
+            target_player_id,
+        }
+    }
+
+    pub(crate) const fn expected_revision(self) -> u64 {
+        self.expected_revision
+    }
+    pub(crate) const fn target_player_id(self) -> &'command PlayerId {
+        self.target_player_id
+    }
+}
+
+/// Revision-bound request to transfer a positive gold gift.
+#[derive(Clone, Copy, Debug)]
+pub struct SendGoldGiftCommand<'command> {
+    expected_revision: u64,
+    target_player_id: &'command PlayerId,
+    amount: i64,
+}
+
+impl<'command> SendGoldGiftCommand<'command> {
+    /// Creates a current authenticated gold-gift command.
+    #[must_use]
+    pub const fn new(
+        expected_revision: u64,
+        target_player_id: &'command PlayerId,
+        amount: i64,
+    ) -> Self {
+        Self {
+            expected_revision,
+            target_player_id,
+            amount,
+        }
+    }
+
+    pub(crate) const fn expected_revision(self) -> u64 {
+        self.expected_revision
+    }
+    pub(crate) const fn target_player_id(self) -> &'command PlayerId {
+        self.target_player_id
+    }
+    pub(crate) const fn amount(self) -> i64 {
+        self.amount
+    }
+}
+
 /// Revision-bound request to send one bilateral diplomatic proposal.
 #[derive(Clone, Copy, Debug)]
 pub struct SendDiplomaticProposalCommand<'command> {

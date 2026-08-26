@@ -50,9 +50,7 @@ impl fmt::Display for ExecutionError {
 }
 
 impl std::error::Error for ExecutionError {}
-
 struct CanonicalRustEngineExecutor;
-
 const CANONICAL_COMMAND_FIXTURE_COUNT: usize = 44;
 
 impl CanonicalFixtureExecutor for CanonicalRustEngineExecutor {
@@ -98,7 +96,9 @@ fn apply_command(
         command @ ReplayCommandDto::SelectTechnology { .. } => {
             research::apply(state, context, command)
         }
-        command @ (ReplayCommandDto::SendDiplomaticProposal { .. }
+        command @ (ReplayCommandDto::DeclareWar { .. }
+        | ReplayCommandDto::SendGoldGift { .. }
+        | ReplayCommandDto::SendDiplomaticProposal { .. }
         | ReplayCommandDto::RespondDiplomaticProposal { .. }
         | ReplayCommandDto::SendDiplomaticMessage { .. }
         | ReplayCommandDto::RespondDiplomaticMessage { .. }) => {

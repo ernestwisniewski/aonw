@@ -2,6 +2,8 @@
 
 #[path = "diplomacy/messages.rs"]
 mod messages;
+#[path = "diplomacy/war_gift.rs"]
+mod war_gift;
 
 use std::collections::BTreeMap;
 
@@ -228,6 +230,7 @@ struct Fixture {
     state: GameState,
     p1: PlayerId,
     p2: PlayerId,
+    p3: PlayerId,
 }
 
 fn fixture(
@@ -236,12 +239,27 @@ fn fixture(
     gold: (i64, i64),
     with_attack: bool,
 ) -> Fixture {
+    fixture_with_observer(status, contact, gold, with_attack, false)
+}
+
+fn fixture_with_observer(
+    status: Option<DiplomaticRelationStatus>,
+    contact: bool,
+    gold: (i64, i64),
+    with_attack: bool,
+    observer_contacts: bool,
+) -> Fixture {
     let map = map();
     let p1 = player("player-1");
     let p2 = player("player-2");
+    let p3 = player("player-3");
     let identity = MatchIdentity::try_new(
         MatchRules::default(),
-        [participant(p1.clone(), 1), participant(p2.clone(), 2)],
+        [
+            participant(p1.clone(), 1),
+            participant(p2.clone(), 2),
+            participant(p3.clone(), 3),
+        ],
         GameMode::Multiplayer,
     )
     .expect("identity");
@@ -250,8 +268,9 @@ fn fixture(
         BTreeMap::from([
             (p1.clone(), PlayerTurnState::Active),
             (p2.clone(), PlayerTurnState::Active),
+            (p3.clone(), PlayerTurnState::Active),
         ]),
-        [p1.clone(), p2.clone()],
+        [p1.clone(), p2.clone(), p3.clone()],
         [],
         BTreeMap::new(),
         [],
@@ -261,12 +280,23 @@ fn fixture(
     .expect("lifecycle");
     let pair = PlayerPair::new(p1.clone(), p2.clone()).expect("pair");
     let relation = status.map(|value| {
-        DiplomaticRelation::try_new(pair.clone(), value, -20, None, Some(2), None)
-            .expect("relation")
+        DiplomaticRelation::try_new(
+            pair.clone(),
+            value,
+            -20,
+            (value == DiplomaticRelationStatus::Truce).then_some(8),
+            Some(2),
+            None,
+        )
+        .expect("relation")
     });
+    let mut contacts = contact.then_some(pair).into_iter().collect::<Vec<_>>();
+    if observer_contacts {
+        contacts.push(PlayerPair::new(p1.clone(), p3.clone()).expect("observer contact"));
+        contacts.push(PlayerPair::new(p2.clone(), p3.clone()).expect("victim contact"));
+    }
     let diplomacy =
-        Diplomacy::try_new(&identity, contact.then_some(pair), relation, [], [], [], [])
-            .expect("diplomacy");
+        Diplomacy::try_new(&identity, contacts, relation, [], [], [], []).expect("diplomacy");
     let economy = EconomyState::try_new(
         &identity,
         map.bounds(),
@@ -303,7 +333,13 @@ fn fixture(
     .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
     .try_build()
     .expect("state");
-    Fixture { map, state, p1, p2 }
+    Fixture {
+        map,
+        state,
+        p1,
+        p2,
+        p3,
+    }
 }
 
 fn map() -> MapDefinition {

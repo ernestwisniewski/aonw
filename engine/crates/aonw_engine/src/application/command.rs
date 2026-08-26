@@ -6,14 +6,15 @@ use crate::unit_action::{UnitActionKind, apply_unit_action};
 use crate::{
     AssignMerchantTradeRouteCommand, AssignWorkerToHexCommand, AttackHexCommand,
     AutoExploreUnitCommand, AutomateWorkerCommand, BuildRoadCommand, CancelWorkerAssignmentCommand,
-    CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DetachTroopCommand, EngineContext,
-    FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
+    CancelWorkerJobCommand, ConfirmWorkerImprovementCommand, DeclareWarCommand, DetachTroopCommand,
+    EngineContext, FoundCityCommand, GameEngine, MoveMerchantToCityCommand, MoveUnitCommand,
     RespondDiplomaticMessageCommand, RespondDiplomaticProposalCommand, RushProductionCommand,
     SelectCityExpansionHexCommand, SelectTechnologyCommand, SelectWorkerImprovementCommand,
-    SendDiplomaticMessageCommand, SendDiplomaticProposalCommand, SetCitySpecializationCommand,
-    StartArtifactExcavationCommand, StartBuildingCommand, StartCityProjectCommand,
-    StartUnitProductionCommand, StartWonderCommand, StateDigest, StoreArtifactInCityCommand,
-    ToggleWorkedHexCommand, TradeArtifactCommand, TurnCommand, UnitActionCommand,
+    SendDiplomaticMessageCommand, SendDiplomaticProposalCommand, SendGoldGiftCommand,
+    SetCitySpecializationCommand, StartArtifactExcavationCommand, StartBuildingCommand,
+    StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand, StateDigest,
+    StoreArtifactInCityCommand, ToggleWorkedHexCommand, TradeArtifactCommand, TurnCommand,
+    UnitActionCommand,
 };
 
 mod budget;
@@ -30,6 +31,10 @@ pub use error::CanonicalEngineError;
 /// Authoritative command family available to player-facing adapters.
 #[derive(Clone, Copy, Debug)]
 pub enum PlayerCommand<'command> {
+    /// Declares war on one discovered participant.
+    DeclareWar(DeclareWarCommand<'command>),
+    /// Transfers a positive gold gift to one discovered participant.
+    SendGoldGift(SendGoldGiftCommand<'command>),
     /// Sends one friendship or truce proposal to a discovered participant.
     SendDiplomaticProposal(SendDiplomaticProposalCommand<'command>),
     /// Accepts or rejects one proposal addressed to the authenticated actor.
@@ -118,6 +123,14 @@ impl GameEngine {
         let (map_hash, ruleset_hash) = content_hashes(context)?;
         let map = context.map();
         match command {
+            PlayerCommand::DeclareWar(command) => {
+                let mutation = crate::diplomacy::apply_declare_war(&state, context, command);
+                apply_diplomacy(state, mutation, map_hash, ruleset_hash)
+            }
+            PlayerCommand::SendGoldGift(command) => {
+                let mutation = crate::diplomacy::apply_send_gold_gift(&state, context, command);
+                apply_diplomacy(state, mutation, map_hash, ruleset_hash)
+            }
             PlayerCommand::SendDiplomaticProposal(command) => {
                 let mutation = crate::diplomacy::apply_send_proposal(&state, context, command);
                 apply_diplomacy(state, mutation, map_hash, ruleset_hash)

@@ -250,6 +250,24 @@ pub(super) const fn rejection(value: CommandRejectionCode) -> ClientCommandRejec
         CommandRejectionCode::DiplomacyMessageUnavailable => {
             ClientCommandRejectionCodeDto::DiplomacyMessageUnavailable
         }
+        CommandRejectionCode::DiplomacyTruceActive => {
+            ClientCommandRejectionCodeDto::DiplomacyTruceActive
+        }
+        CommandRejectionCode::DiplomacyWarAlreadyActive => {
+            ClientCommandRejectionCodeDto::DiplomacyWarAlreadyActive
+        }
+        CommandRejectionCode::DiplomacyInvalidGoldAmount => {
+            ClientCommandRejectionCodeDto::DiplomacyInvalidGoldAmount
+        }
+        CommandRejectionCode::DiplomacyGoldGiftBlockedByRelation => {
+            ClientCommandRejectionCodeDto::DiplomacyGoldGiftBlockedByRelation
+        }
+        CommandRejectionCode::DiplomacyGoldUnavailable => {
+            ClientCommandRejectionCodeDto::DiplomacyGoldUnavailable
+        }
+        CommandRejectionCode::DiplomacyGoldGiftUnavailable => {
+            ClientCommandRejectionCodeDto::DiplomacyGoldGiftUnavailable
+        }
         CommandRejectionCode::ArtifactTradeActorUnavailable => {
             ClientCommandRejectionCodeDto::ArtifactTradeActorUnavailable
         }
