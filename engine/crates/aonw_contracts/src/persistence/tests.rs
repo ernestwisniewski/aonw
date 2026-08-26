@@ -104,9 +104,11 @@ fn diplomacy_events_have_current_strict_replay_shapes() {
     let events = [
         r#"{"type":"diplomaticProposalSent","proposalId":"proposal-1","fromPlayerId":"player-1","toPlayerId":"player-2","kind":"friendship","expiresOnTurn":12}"#,
         r#"{"type":"diplomaticProposalResponded","proposalId":"proposal-1","fromPlayerId":"player-1","toPlayerId":"player-2","kind":"friendship","accepted":true}"#,
+        r#"{"type":"diplomaticProposalExpired","proposalId":"proposal-1","fromPlayerId":"player-1","toPlayerId":"player-2","kind":"friendship"}"#,
         r#"{"type":"diplomaticRelationChanged","playerAId":"player-1","playerBId":"player-2","oldStatus":"neutral","newStatus":"friendly","reason":"proposalAccepted","expiresOnTurn":null}"#,
         r#"{"type":"diplomaticMessageSent","messageId":"message-1","fromPlayerId":"player-1","toPlayerId":"player-2","topic":"withdrawScouts","category":"request","expiresOnTurn":12}"#,
         r#"{"type":"diplomaticMessageResponded","messageId":"message-1","fromPlayerId":"player-1","toPlayerId":"player-2","topic":"withdrawScouts","response":"conciliatory","relationDelta":12,"relationScoreAfter":12,"promiseDueTurn":10}"#,
+        r#"{"type":"diplomaticPromiseBroken","messageId":"message-1","playerAId":"player-1","playerBId":"player-2","delta":-15,"scoreAfter":-3}"#,
     ];
     for json in events {
         assert!(serde_json::from_str::<ReplayEventDto>(json).is_ok());

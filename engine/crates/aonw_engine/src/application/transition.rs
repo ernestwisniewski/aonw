@@ -11,8 +11,9 @@ pub use artifact_events::{
     ArtifactCarriedEvent, ArtifactExcavationStartedEvent, ArtifactStoredEvent,
 };
 pub use diplomacy_events::{
-    DiplomaticMessageRespondedEvent, DiplomaticMessageSentEvent, DiplomaticProposalRespondedEvent,
-    DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
+    DiplomaticMessageRespondedEvent, DiplomaticMessageSentEvent, DiplomaticPromiseBrokenEvent,
+    DiplomaticProposalExpiredEvent, DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent,
+    DiplomaticRelationChangedEvent,
 };
 pub use domain_transition::{DomainRejection, DomainTransition, DomainTransitionParts};
 pub use events::{

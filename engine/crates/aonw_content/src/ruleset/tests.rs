@@ -36,7 +36,7 @@ fn standard_ruleset_hash_is_stable() {
     assert_eq!(first, second);
     assert_eq!(
         first.to_string(),
-        "b390af3c66de889013aaf43f4cf72772e89f00e633579c64d0b83d984c9aa9f9"
+        "b2fa3eed839670fdc6aa49a78098b86fa53a8ae1f15b203552dc7058d96a958c"
     );
 }
 
@@ -171,6 +171,8 @@ fn standard_diplomacy_balance_matches_the_frozen_oracle() {
     assert_eq!(balance.gold_gift_score_delta(4), 0);
     assert_eq!(balance.gold_gift_score_delta(10), 2);
     assert_eq!(balance.gold_gift_score_delta(100), 12);
+    assert_eq!(balance.promise_broken_score_delta(), -15);
+    assert_eq!(balance.friendly_resource_trade_gold_bonus(), 1);
     assert_eq!(
         balance.message_response_score_delta(aonw_domain::DiplomaticMessageResponse::Conciliatory),
         12

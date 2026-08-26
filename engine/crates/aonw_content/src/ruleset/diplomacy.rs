@@ -19,6 +19,8 @@ pub struct DiplomacyBalance {
     gold_gift_minimum_amount: i64,
     gold_gift_cooldown_turns: u32,
     gold_gift_max_score_delta: i64,
+    promise_broken_score_delta: i64,
+    friendly_resource_trade_gold_bonus: i64,
 }
 
 impl DiplomacyBalance {
@@ -36,6 +38,8 @@ impl DiplomacyBalance {
         gold_gift_minimum_amount: 5,
         gold_gift_cooldown_turns: 5,
         gold_gift_max_score_delta: 12,
+        promise_broken_score_delta: -15,
+        friendly_resource_trade_gold_bonus: 1,
     };
 
     /// Returns how long a pending proposal remains actionable.
@@ -123,6 +127,18 @@ impl DiplomacyBalance {
                 scaled
             }
         }
+    }
+
+    /// Returns the relation-score penalty when a withdrawal promise is broken.
+    #[must_use]
+    pub const fn promise_broken_score_delta(self) -> i64 {
+        self.promise_broken_score_delta
+    }
+
+    /// Returns the exporter bonus for a positive trade between friendly players.
+    #[must_use]
+    pub const fn friendly_resource_trade_gold_bonus(self) -> i64 {
+        self.friendly_resource_trade_gold_bonus
     }
 
     /// Returns the base relation-score effect of a message response tone.

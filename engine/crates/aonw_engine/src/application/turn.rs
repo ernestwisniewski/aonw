@@ -143,6 +143,16 @@ impl SystemCommand<'_> {
                 let combat = u64::try_from(state.combat().intended_attacks().len())
                     .unwrap_or(u64::MAX)
                     .saturating_mul(7);
+                let diplomacy = u64::try_from(state.diplomacy().pending_proposals().len())
+                    .unwrap_or(u64::MAX)
+                    .saturating_add(
+                        u64::try_from(state.diplomacy().relations().len()).unwrap_or(u64::MAX),
+                    )
+                    .saturating_add(
+                        u64::try_from(state.diplomacy().messages().len())
+                            .unwrap_or(u64::MAX)
+                            .saturating_mul(2),
+                    );
                 EventBudget::new(
                     player_count
                         .saturating_add(skipped_count)
@@ -151,6 +161,7 @@ impl SystemCommand<'_> {
                         .saturating_add(player_count)
                         .saturating_add(player_count.saturating_mul(2))
                         .saturating_add(combat)
+                        .saturating_add(diplomacy)
                         .saturating_add(1),
                 )
             }
@@ -284,7 +295,7 @@ impl TurnKernelCapabilities {
         TurnProcessor::Objectives,
     ];
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 14] = [
+    pub const ENABLED: [TurnProcessor; 16] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
@@ -299,14 +310,11 @@ impl TurnKernelCapabilities {
         TurnProcessor::AutoExplore,
         TurnProcessor::ReversibleSkipCleanup,
         TurnProcessor::Research,
-    ];
-    /// Later turn processors that are intentionally unavailable.
-    pub const DISABLED: [TurnProcessor; 4] = [
-        TurnProcessor::Economy,
         TurnProcessor::Diplomacy,
         TurnProcessor::Agreements,
-        TurnProcessor::Objectives,
     ];
+    /// Later turn processors that are intentionally unavailable.
+    pub const DISABLED: [TurnProcessor; 2] = [TurnProcessor::Economy, TurnProcessor::Objectives];
 
     /// Returns whether a named processor is implemented by this kernel.
     #[must_use]
@@ -327,6 +335,8 @@ impl TurnKernelCapabilities {
                 | TurnProcessor::AutoExplore
                 | TurnProcessor::ReversibleSkipCleanup
                 | TurnProcessor::Research
+                | TurnProcessor::Diplomacy
+                | TurnProcessor::Agreements
         )
     }
 }

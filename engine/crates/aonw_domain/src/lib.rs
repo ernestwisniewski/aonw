@@ -54,7 +54,7 @@ pub use game_state::{
     GameState, GameStateBuildError, GameStateBuilder, UnitOccupancyPolicy,
     turn_update::{
         ArtifactStateUpdate, CombatStateUpdate, DiplomacyStateUpdate, ProductionStateUpdate,
-        ResearchStateUpdate, TurnAdvance,
+        ResearchStateUpdate, TurnKernelStateUpdate,
     },
 };
 pub use hex_coord::HexCoord;

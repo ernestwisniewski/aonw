@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use aonw_content::{ContentHash, MapDefinition};
 use aonw_domain::{
-    Diplomacy, FogOfWar, GameState, InteractionState, MatchLifecycle, PendingInteraction, PlayerId,
-    PlayerTurnState, TurnLifecycle, UnitPosture, UtcTimestamp,
+    Diplomacy, EconomyState, FogOfWar, GameState, InteractionState, MatchLifecycle,
+    PendingInteraction, PlayerId, PlayerTurnState, TurnLifecycle, UnitPosture, UtcTimestamp,
 };
 
 use crate::{
@@ -283,18 +283,16 @@ pub(crate) fn processor_is_required(
 }
 
 fn economy_is_required(state: &GameState, owns_scope: &impl Fn(&PlayerId) -> bool) -> bool {
-    state.economy().player_gold().keys().any(owns_scope)
-        || state
-            .economy()
-            .player_war_weariness()
-            .keys()
-            .any(owns_scope)
+    state
+        .economy()
+        .player_war_weariness()
+        .keys()
+        .any(owns_scope)
         || state
             .economy()
             .player_stability_net()
             .keys()
             .any(owns_scope)
-        || state.economy().strategic_resources().keys().any(owns_scope)
 }
 
 fn diplomacy_is_required(state: &GameState, owns_scope: &impl Fn(&PlayerId) -> bool) -> bool {
@@ -310,10 +308,11 @@ fn diplomacy_is_required(state: &GameState, owns_scope: &impl Fn(&PlayerId) -> b
             && proposal.expires_on_turn() <= next_turn
     }) || diplomacy.messages().iter().any(|message| {
         (owns_scope(message.from_player_id()) || owns_scope(message.to_player_id()))
-            && (message.expires_on_turn() <= next_turn
+            && (message.response().is_none() && message.expires_on_turn() <= next_turn
                 || message
                     .promise_due_turn()
-                    .is_some_and(|turn| turn <= next_turn))
+                    .is_some_and(|turn| turn <= next_turn)
+                    && !message.promise_broken())
     })
 }
 
@@ -368,6 +367,7 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
     lifecycle: MatchLifecycle,
     turn: Option<u32>,
     units: Vec<aonw_domain::Unit>,
+    economy: Option<EconomyState>,
     fog_of_war: Option<FogOfWar>,
     diplomacy: Option<Diplomacy>,
     interaction: InteractionStateUpdate,
@@ -391,20 +391,23 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
         units
     };
     let fog_of_war = fog_of_war.unwrap_or_else(|| state.fog_of_war().clone());
+    let economy = economy.unwrap_or_else(|| state.economy().clone());
     let diplomacy = diplomacy.unwrap_or_else(|| state.diplomacy().clone());
     let interaction = match interaction {
         InteractionStateUpdate::Preserve => state.interaction().clone(),
         InteractionStateUpdate::Replace(value) => value,
     };
     let state = state
-        .into_after_turn_kernel(
+        .into_after_turn_kernel(aonw_domain::TurnKernelStateUpdate {
             revision,
-            aonw_domain::TurnAdvance::new(turn, lifecycle),
+            turn,
+            lifecycle,
             units,
+            economy,
             fog_of_war,
             diplomacy,
             interaction,
-        )
+        })
         .map_err(CanonicalEngineError::State)?;
     Ok(DomainTransition::accepted(
         state,

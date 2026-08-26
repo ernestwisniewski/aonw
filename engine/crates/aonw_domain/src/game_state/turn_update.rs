@@ -80,19 +80,25 @@ pub struct DiplomacyStateUpdate {
     pub diplomacy: Diplomacy,
 }
 
-/// Canonical turn coordinates replaced atomically by the turn kernel.
+/// Complete atomic replacement produced by the authoritative turn kernel.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TurnAdvance {
-    turn: u32,
-    lifecycle: MatchLifecycle,
-}
-
-impl TurnAdvance {
-    /// Creates one trusted turn update.
-    #[must_use]
-    pub const fn new(turn: u32, lifecycle: MatchLifecycle) -> Self {
-        Self { turn, lifecycle }
-    }
+pub struct TurnKernelStateUpdate {
+    /// Revision after the complete turn transition.
+    pub revision: StateRevision,
+    /// Canonical global turn after progression.
+    pub turn: u32,
+    /// Participant lifecycle after handoff or simultaneous reset.
+    pub lifecycle: MatchLifecycle,
+    /// Units after reset, movement, automation, and promise evaluation.
+    pub units: Vec<Unit>,
+    /// Economy after atomic resource-agreement settlement.
+    pub economy: EconomyState,
+    /// Recipient visibility recomputed after movement.
+    pub fog_of_war: FogOfWar,
+    /// Diplomacy after contact, expiry, promise, and agreement progression.
+    pub diplomacy: Diplomacy,
+    /// Pending interaction after turn-owned cleanup.
+    pub interaction: InteractionState,
 }
 
 impl GameState {
@@ -256,24 +262,20 @@ impl GameState {
     ///
     /// # Errors
     ///
-    /// Returns an error if the replacement lifecycle or units violate aggregate invariants.
+    /// Returns an error if any replacement violates aggregate invariants.
     pub fn into_after_turn_kernel(
         self,
-        revision: StateRevision,
-        advance: TurnAdvance,
-        units: Vec<Unit>,
-        fog_of_war: FogOfWar,
-        diplomacy: Diplomacy,
-        interaction: InteractionState,
+        update: TurnKernelStateUpdate,
     ) -> Result<Self, GameStateBuildError> {
         let mut builder = self.into_builder();
-        builder.revision = revision;
-        builder.turn = advance.turn;
-        builder.match_lifecycle = advance.lifecycle;
-        builder.units = units;
-        builder.fog_of_war = fog_of_war;
-        builder.diplomacy = diplomacy;
-        builder.interaction = interaction;
+        builder.revision = update.revision;
+        builder.turn = update.turn;
+        builder.match_lifecycle = update.lifecycle;
+        builder.units = update.units;
+        builder.economy = update.economy;
+        builder.fog_of_war = update.fog_of_war;
+        builder.diplomacy = update.diplomacy;
+        builder.interaction = update.interaction;
         builder.try_build()
     }
 }

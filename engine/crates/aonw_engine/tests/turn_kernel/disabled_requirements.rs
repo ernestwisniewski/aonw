@@ -4,10 +4,8 @@ use std::collections::BTreeMap;
 
 use aonw_content::RulesetDefinition;
 use aonw_domain::{
-    Diplomacy, DiplomaticRelation, DiplomaticRelationStatus, EconomyState, GameMode, GameState,
-    InitialResourceDistribution, MatchIdentity, MatchLifecycle, MatchRules, ObjectiveState,
-    PlayerPair, PlayerTurnState, ResourceTradeAgreement, ResourceType, StateRevision,
-    TurnLifecycle, UnitOccupancyPolicy,
+    EconomyState, GameMode, GameState, InitialResourceDistribution, MatchIdentity, MatchLifecycle,
+    MatchRules, ObjectiveState, PlayerTurnState, StateRevision, TurnLifecycle, UnitOccupancyPolicy,
 };
 use aonw_engine::{
     CommandRejectionCode, EngineContext, GameEngine, PlayerCommand, ProcessorRequirement,
@@ -21,12 +19,7 @@ fn every_persisted_disabled_phase_requirement_fails_closed() {
     let map = map();
     let rules = RulesetDefinition::standard();
     let player = player("player-2");
-    for processor in [
-        TurnProcessor::Economy,
-        TurnProcessor::Agreements,
-        TurnProcessor::Diplomacy,
-        TurnProcessor::Objectives,
-    ] {
+    for processor in [TurnProcessor::Economy, TurnProcessor::Objectives] {
         let state = state_requiring(processor);
         assert_eq!(
             processor.requirement(&state, &map, std::slice::from_ref(&player)),
@@ -90,46 +83,14 @@ fn state_requiring(processor: TurnProcessor) -> GameState {
             EconomyState::try_new(
                 &identity,
                 map().bounds(),
-                BTreeMap::from([(p2, 0)]),
                 BTreeMap::new(),
+                BTreeMap::from([(p2, 1)]),
                 BTreeMap::new(),
                 BTreeMap::new(),
                 InitialResourceDistribution::default(),
             )
             .expect("economy"),
         ),
-        TurnProcessor::Agreements => {
-            let trade = ResourceTradeAgreement::try_new(
-                "trade-1".to_owned(),
-                p2.clone(),
-                player("player-1"),
-                ResourceType::Iron,
-                0,
-                2,
-                1,
-                None,
-            )
-            .expect("trade");
-            builder.with_diplomacy(
-                Diplomacy::try_new(&identity, [], [], [], [], [], [trade]).expect("diplomacy"),
-            )
-        }
-        TurnProcessor::Diplomacy => {
-            let pair = PlayerPair::new(player("player-1"), p2).expect("pair");
-            let relation = DiplomaticRelation::try_new(
-                pair.clone(),
-                DiplomaticRelationStatus::Truce,
-                0,
-                Some(8),
-                Some(7),
-                None,
-            )
-            .expect("relation");
-            builder.with_diplomacy(
-                Diplomacy::try_new(&identity, [pair], [relation], [], [], [], [])
-                    .expect("diplomacy"),
-            )
-        }
         TurnProcessor::Objectives => builder.with_objectives(
             ObjectiveState::try_new(&identity, BTreeMap::from([(p2, 1)]), BTreeMap::new(), [])
                 .expect("objectives"),

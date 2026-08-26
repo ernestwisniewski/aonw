@@ -1,5 +1,7 @@
 #[path = "encoding/command_name.rs"]
 mod command_name_encoding;
+#[path = "encoding/diplomacy.rs"]
+mod diplomacy_encoding;
 
 pub(super) use command_name_encoding::command_name;
 
@@ -122,6 +124,9 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
                 accepted: value.accepted(),
             }
         }
+        DomainEvent::DiplomaticProposalExpired(value) => {
+            diplomacy_encoding::proposal_expired(value)
+        }
         DomainEvent::DiplomaticMessageSent(value) => ReplayEventDto::DiplomaticMessageSent {
             message_id: value.message_id().to_owned(),
             from_player_id: value.from_player_id().as_str().to_owned(),
@@ -142,6 +147,7 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
                 promise_due_turn: value.promise_due_turn(),
             }
         }
+        DomainEvent::DiplomaticPromiseBroken(value) => diplomacy_encoding::promise_broken(value),
         DomainEvent::DiplomaticRelationChanged(value) => {
             ReplayEventDto::DiplomaticRelationChanged {
                 player_a_id: value.player_a_id().as_str().to_owned(),

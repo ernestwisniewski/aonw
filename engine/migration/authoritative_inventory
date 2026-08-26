@@ -139,8 +139,8 @@ event CivilizationMetEvent system-lifecycle reference-only - packages/aonw_core/
 event CombatResolvedEvent combat runtime-ready CombatResolved packages/aonw_core/lib/game/domain/event/combat_events.dart
 event DiplomaticMessageRespondedEvent diplomacy runtime-ready DiplomaticMessageResponded packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticMessageSentEvent diplomacy runtime-ready DiplomaticMessageSent packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
-event DiplomaticPromiseBrokenEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
-event DiplomaticProposalExpiredEvent diplomacy reference-only - packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
+event DiplomaticPromiseBrokenEvent diplomacy runtime-ready DiplomaticPromiseBroken packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
+event DiplomaticProposalExpiredEvent diplomacy runtime-ready DiplomaticProposalExpired packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticProposalRespondedEvent diplomacy runtime-ready DiplomaticProposalResponded packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticProposalSentEvent diplomacy runtime-ready DiplomaticProposalSent packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticRelationChangedEvent diplomacy runtime-ready DiplomaticRelationChanged packages/aonw_core/lib/game/domain/event/diplomacy_events.dart

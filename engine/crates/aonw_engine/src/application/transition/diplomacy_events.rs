@@ -98,6 +98,46 @@ impl DiplomaticProposalRespondedEvent {
     }
 }
 
+/// Accepted fact that one unanswered bilateral proposal expired.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DiplomaticProposalExpiredEvent {
+    proposal_id: String,
+    from_player_id: PlayerId,
+    to_player_id: PlayerId,
+    kind: DiplomaticProposalKind,
+}
+
+impl DiplomaticProposalExpiredEvent {
+    pub(crate) fn from_proposal(proposal: &DiplomaticProposal) -> Self {
+        Self {
+            proposal_id: proposal.id().to_owned(),
+            from_player_id: proposal.from_player_id().clone(),
+            to_player_id: proposal.to_player_id().clone(),
+            kind: proposal.kind(),
+        }
+    }
+    /// Returns the expired proposal identity.
+    #[must_use]
+    pub fn proposal_id(&self) -> &str {
+        &self.proposal_id
+    }
+    /// Returns the original sender.
+    #[must_use]
+    pub const fn from_player_id(&self) -> &PlayerId {
+        &self.from_player_id
+    }
+    /// Returns the original recipient.
+    #[must_use]
+    pub const fn to_player_id(&self) -> &PlayerId {
+        &self.to_player_id
+    }
+    /// Returns the expired proposal kind.
+    #[must_use]
+    pub const fn kind(&self) -> DiplomaticProposalKind {
+        self.kind
+    }
+}
+
 /// Accepted fact that one private bilateral message was sent.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DiplomaticMessageSentEvent {
@@ -217,6 +257,51 @@ impl DiplomaticMessageRespondedEvent {
     #[must_use]
     pub const fn promise_due_turn(&self) -> Option<u32> {
         self.promise_due_turn
+    }
+}
+
+/// Accepted fact that one withdrawal promise was broken.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DiplomaticPromiseBrokenEvent {
+    message_id: String,
+    pair: PlayerPair,
+    delta: i64,
+    score_after: i64,
+}
+
+impl DiplomaticPromiseBrokenEvent {
+    pub(crate) fn new(message_id: String, pair: PlayerPair, delta: i64, score_after: i64) -> Self {
+        Self {
+            message_id,
+            pair,
+            delta,
+            score_after,
+        }
+    }
+    /// Returns the broken promise identity.
+    #[must_use]
+    pub fn message_id(&self) -> &str {
+        &self.message_id
+    }
+    /// Returns the canonical first participant.
+    #[must_use]
+    pub const fn player_a_id(&self) -> &PlayerId {
+        self.pair.first()
+    }
+    /// Returns the canonical second participant.
+    #[must_use]
+    pub const fn player_b_id(&self) -> &PlayerId {
+        self.pair.second()
+    }
+    /// Returns the bounded score delta.
+    #[must_use]
+    pub const fn delta(&self) -> i64 {
+        self.delta
+    }
+    /// Returns the relation score after the penalty.
+    #[must_use]
+    pub const fn score_after(&self) -> i64 {
+        self.score_after
     }
 }
 

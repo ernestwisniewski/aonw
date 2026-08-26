@@ -1,6 +1,9 @@
+mod agreement_phase;
 mod city_phase;
+mod diplomacy_phase;
 mod events;
 mod preparation;
+mod processor_order;
 mod support;
 mod worker_phase;
 
@@ -17,47 +20,18 @@ use crate::{
 };
 
 use self::support::{
-    InteractionStateUpdate, accept_identity, apply_update, ordered_submission_scope,
-    rebuild_lifecycle, reject, sequential_progress, simultaneous_lifecycle, system_content_hashes,
-    transition_with_phase_evidence, unsupported_processor_for_scope, valid_system_scope,
-    validate_player_command,
+    InteractionStateUpdate, SequentialProgress, accept_identity, apply_update,
+    ordered_submission_scope, rebuild_lifecycle, reject, sequential_progress,
+    simultaneous_lifecycle, system_content_hashes, transition_with_phase_evidence,
+    unsupported_processor_for_scope, valid_system_scope, validate_player_command,
 };
-use events::{sequential_phase_events, simultaneous_phase_events};
-use preparation::advance_turn_preparation;
+use agreement_phase::settle_resource_trades;
+use diplomacy_phase::advance_turn_diplomacy;
+use events::{TurnPhaseEvents, sequential_phase_events, simultaneous_phase_events};
+use preparation::{TurnPreparationPhase, advance_turn_preparation};
+use processor_order::{SEQUENTIAL_TURN_PROCESSORS, SIMULTANEOUS_TURN_PROCESSORS};
 
 pub(crate) use support::processor_is_required;
-
-const SEQUENTIAL_TURN_PROCESSORS: [TurnProcessor; 12] = [
-    TurnProcessor::Lifecycle,
-    TurnProcessor::CityFounding,
-    TurnProcessor::WorkerJobs,
-    TurnProcessor::Production,
-    TurnProcessor::Artifacts,
-    TurnProcessor::MovementReset,
-    TurnProcessor::QueuedMovement,
-    TurnProcessor::TradeRoutes,
-    TurnProcessor::WorkerAutomation,
-    TurnProcessor::AutoExplore,
-    TurnProcessor::ReversibleSkipCleanup,
-    TurnProcessor::Research,
-];
-
-const SIMULTANEOUS_TURN_PROCESSORS: [TurnProcessor; 14] = [
-    TurnProcessor::Submission,
-    TurnProcessor::Lifecycle,
-    TurnProcessor::Combat,
-    TurnProcessor::CityFounding,
-    TurnProcessor::WorkerJobs,
-    TurnProcessor::Production,
-    TurnProcessor::Artifacts,
-    TurnProcessor::MovementReset,
-    TurnProcessor::QueuedMovement,
-    TurnProcessor::TradeRoutes,
-    TurnProcessor::WorkerAutomation,
-    TurnProcessor::AutoExplore,
-    TurnProcessor::ReversibleSkipCleanup,
-    TurnProcessor::Research,
-];
 
 impl GameEngine {
     /// Applies one host-owned lifecycle command through a boundary that has no player identity.
@@ -124,6 +98,7 @@ pub(crate) fn apply_submit_turn(
             Vec::new(),
             None,
             None,
+            None,
             InteractionStateUpdate::Preserve,
             Box::new([]),
             [TurnProcessor::Submission, TurnProcessor::Lifecycle],
@@ -176,6 +151,22 @@ pub(crate) fn apply_end_turn(
         context.ruleset(),
         &progress.reset_scope,
     )?;
+    finish_sequential_turn(
+        preparation,
+        context,
+        command,
+        progress,
+        (map_hash, ruleset_hash),
+    )
+}
+
+fn finish_sequential_turn(
+    preparation: TurnPreparationPhase,
+    context: EngineContext<'_>,
+    command: TurnCommand<'_>,
+    progress: SequentialProgress,
+    hashes: (ContentHash, ContentHash),
+) -> Result<DomainTransition, CanonicalEngineError> {
     let state = preparation.state;
     let movement = match advance_turn_movement(
         &state,
@@ -184,7 +175,7 @@ pub(crate) fn apply_end_turn(
         &progress.reset_scope,
     ) {
         Ok(movement) => movement,
-        Err(code) => return Ok(reject(state, code, map_hash, ruleset_hash)),
+        Err(code) => return Ok(reject(state, code, hashes.0, hashes.1)),
     };
     let lifecycle = state.match_lifecycle().turn();
     let required = lifecycle.required_submission_player_ids().clone();
@@ -214,10 +205,28 @@ pub(crate) fn apply_end_turn(
         invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     } = movement;
+    let diplomacy_phase = advance_turn_diplomacy(
+        &state,
+        context.ruleset(),
+        &units,
+        diplomacy,
+        progress.next_turn,
+    )
+    .map_err(CanonicalEngineError::DiplomacyCommand)?;
+    let (economy, diplomacy) = settle_resource_trades(
+        &state,
+        context.ruleset(),
+        diplomacy_phase.diplomacy,
+        &progress.reset_scope,
+    )
+    .map_err(CanonicalEngineError::DiplomacyCommand)?;
     let events = sequential_phase_events(
-        preparation.events,
-        movement_events,
-        preparation.research_events,
+        TurnPhaseEvents {
+            settlement: preparation.events,
+            movement: movement_events,
+            research: preparation.research_events,
+            diplomacy: diplomacy_phase.events,
+        },
         command.player_id(),
     );
     apply_update(
@@ -225,13 +234,14 @@ pub(crate) fn apply_end_turn(
         next_lifecycle,
         Some(progress.next_turn),
         units,
+        Some(economy),
         Some(fog_of_war),
         Some(diplomacy),
         InteractionStateUpdate::Replace(interaction),
         events,
         SEQUENTIAL_TURN_PROCESSORS,
-        map_hash,
-        ruleset_hash,
+        hashes.0,
+        hashes.1,
     )
     .map(|transition| {
         transition_with_phase_evidence(
@@ -349,6 +359,7 @@ fn apply_kick(
         Vec::new(),
         None,
         None,
+        None,
         InteractionStateUpdate::Preserve,
         vec![event].into_boxed_slice(),
         [TurnProcessor::Lifecycle],
@@ -411,20 +422,34 @@ fn finalize_simultaneous(
         invalidated_order_unit_ids,
         finished_auto_explore_unit_ids,
     } = movement;
+    let diplomacy_phase =
+        advance_turn_diplomacy(&preparation.state, ruleset, &units, diplomacy, next_turn)
+            .map_err(CanonicalEngineError::DiplomacyCommand)?;
+    let (economy, diplomacy) = settle_resource_trades(
+        &preparation.state,
+        ruleset,
+        diplomacy_phase.diplomacy,
+        scope,
+    )
+    .map_err(CanonicalEngineError::DiplomacyCommand)?;
     let events = simultaneous_phase_events(
         current_turn,
         scope,
         skipped,
         combat.events,
-        preparation.events,
-        movement_events,
-        preparation.research_events,
+        TurnPhaseEvents {
+            settlement: preparation.events,
+            movement: movement_events,
+            research: preparation.research_events,
+            diplomacy: diplomacy_phase.events,
+        },
     );
     apply_update(
         preparation.state,
         lifecycle,
         Some(next_turn),
         units,
+        Some(economy),
         Some(fog_of_war),
         Some(diplomacy),
         InteractionStateUpdate::Replace(interaction),

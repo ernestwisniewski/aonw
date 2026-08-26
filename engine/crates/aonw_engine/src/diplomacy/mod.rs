@@ -3,7 +3,7 @@ mod message;
 mod model;
 mod proposal;
 mod resource_trade;
-mod support;
+pub(crate) mod support;
 mod war_gift;
 
 pub use error::DiplomacyError;

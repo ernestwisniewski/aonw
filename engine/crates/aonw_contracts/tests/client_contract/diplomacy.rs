@@ -79,7 +79,7 @@ pub(super) fn requests() -> [ClientRequestBodyDto; 8] {
 }
 
 #[test]
-fn proposal_events_round_trip_without_legacy_fields() {
+fn diplomacy_events_round_trip_without_legacy_fields() {
     let events = [
         ClientEventDto::DiplomaticProposalSent {
             proposal_id: "proposal-1".to_owned(),
@@ -94,6 +94,12 @@ fn proposal_events_round_trip_without_legacy_fields() {
             to_player_id: "player-2".to_owned(),
             kind: DiplomaticProposalKindDto::Friendship,
             accepted: true,
+        },
+        ClientEventDto::DiplomaticProposalExpired {
+            proposal_id: "proposal-1".to_owned(),
+            from_player_id: "player-1".to_owned(),
+            to_player_id: "player-2".to_owned(),
+            kind: DiplomaticProposalKindDto::Friendship,
         },
         ClientEventDto::DiplomaticRelationChanged {
             player_a_id: "player-1".to_owned(),
@@ -120,6 +126,13 @@ fn proposal_events_round_trip_without_legacy_fields() {
             relation_delta: 12,
             relation_score_after: 12,
             promise_due_turn: Some(10),
+        },
+        ClientEventDto::DiplomaticPromiseBroken {
+            message_id: "message-1".to_owned(),
+            player_a_id: "player-1".to_owned(),
+            player_b_id: "player-2".to_owned(),
+            delta: -15,
+            score_after: -3,
         },
     ];
 

@@ -8,7 +8,7 @@ use super::{DiplomacyError, DiplomacyMutation};
 use crate::{CommandRejectionCode, DomainEvent, EngineContext};
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn adjust_score(
+pub(crate) fn adjust_score(
     diplomacy: &Diplomacy,
     identity: &MatchIdentity,
     pair: &PlayerPair,
@@ -41,7 +41,7 @@ pub(super) fn adjust_score(
     Ok((diplomacy, entry))
 }
 
-pub(super) fn effective_relation(
+pub(crate) fn effective_relation(
     diplomacy: &Diplomacy,
     pair: &PlayerPair,
 ) -> (DiplomaticRelationStatus, i64) {

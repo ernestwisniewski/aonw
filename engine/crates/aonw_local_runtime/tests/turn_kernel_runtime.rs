@@ -3,12 +3,16 @@
 use std::collections::BTreeMap;
 
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
-use aonw_contracts::client::{CLIENT_API_VERSION, ClientRequestDto};
+use aonw_contracts::client::{
+    CLIENT_API_VERSION, ClientCommandDto, ClientEventDto, ClientOutcomeDto, ClientRequestBodyDto,
+    ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
+};
 use aonw_contracts::{ReplayLogDto, ReplayRecordDto};
 use aonw_domain::{
-    GameMode, GameState, HexCoord, MatchIdentity, MatchLifecycle, MatchRules, MovementUnits,
-    Participant, PlayerCountry, PlayerId, PlayerKind, PlayerTurnState, StateRevision,
-    TurnLifecycle, Unit, UnitId, UnitKind,
+    Diplomacy, DiplomaticProposal, DiplomaticProposalKind, DiplomaticRelation,
+    DiplomaticRelationStatus, GameMode, GameState, HexCoord, MatchIdentity, MatchLifecycle,
+    MatchRules, MovementUnits, Participant, PlayerCountry, PlayerId, PlayerKind, PlayerPair,
+    PlayerTurnState, StateRevision, TurnLifecycle, Unit, UnitId, UnitKind,
 };
 use aonw_local_runtime::{
     ClientProtocol, FinalizeTimedOutTurnRequest, LocalRuntime, OpenSession, RuntimeError,
@@ -131,7 +135,88 @@ fn client_protocol_has_no_system_command_variant() {
     assert!(response.contains("invalid_client_request"));
 }
 
+#[test]
+fn diplomacy_expiry_events_are_recipient_safe_saved_and_exactly_replayed() {
+    let (map, rules, state, p1, _p2) = fixture_with_expiry();
+    let mut runtime = LocalRuntime::default();
+    runtime
+        .open(OpenSession::from_state(
+            map.clone(),
+            rules.clone(),
+            state,
+            p1.clone(),
+        ))
+        .expect("open");
+    let request = ClientRequestDto {
+        api_version: CLIENT_API_VERSION,
+        request: ClientRequestBodyDto::Dispatch {
+            command: ClientCommandDto::SubmitTurn {
+                expected_revision: 7,
+            },
+        },
+    }
+    .to_json()
+    .expect("request");
+    let response =
+        ClientResponseDto::from_json(&ClientProtocol::dispatch_json(&mut runtime, &request))
+            .expect("response");
+    let ClientOutcomeDto::Success { response } = response.outcome else {
+        panic!("protocol failure")
+    };
+    let ClientResponseBodyDto::Command { result } = *response else {
+        panic!("command response")
+    };
+    assert!(result.events.iter().any(|event| matches!(
+        event,
+        ClientEventDto::DiplomaticProposalExpired {
+            proposal_id,
+            ..
+        } if proposal_id == "proposal-expired"
+    )));
+    assert!(result.events.iter().any(|event| matches!(
+        event,
+        ClientEventDto::DiplomaticRelationChanged {
+            old_status: aonw_contracts::DiplomaticRelationStatusDto::Truce,
+            new_status: aonw_contracts::DiplomaticRelationStatusDto::Neutral,
+            ..
+        }
+    )));
+    let replay = runtime.export_replay_json().expect("replay");
+    let verification = LocalRuntime::verify_replay_json(map.clone(), rules.clone(), &replay)
+        .expect("verify replay");
+    assert_eq!(verification.entry_count, 1);
+    let save = runtime.export_save_json().expect("save");
+    let expected = runtime.snapshot().expect("snapshot");
+    let mut reopened = LocalRuntime::default();
+    reopened
+        .open_save_json(map, rules, &save)
+        .expect("reopen save");
+    assert_eq!(reopened.snapshot().expect("reopened"), expected);
+}
+
 fn fixture() -> (
+    MapDefinition,
+    RulesetDefinition,
+    GameState,
+    PlayerId,
+    PlayerId,
+) {
+    fixture_with(false)
+}
+
+fn fixture_with_expiry() -> (
+    MapDefinition,
+    RulesetDefinition,
+    GameState,
+    PlayerId,
+    PlayerId,
+) {
+    fixture_with(true)
+}
+
+fn fixture_with(
+    with_expiry: bool,
+) -> (
     MapDefinition,
     RulesetDefinition,
     GameState,
@@ -151,20 +236,55 @@ fn fixture() -> (
         GameMode::Multiplayer,
     )
     .expect("identity");
-    let lifecycle = TurnLifecycle::try_new(
-        &identity,
+    let states = if with_expiry {
+        BTreeMap::from([
+            (p1.clone(), PlayerTurnState::Active),
+            (p2.clone(), PlayerTurnState::Finished),
+        ])
+    } else {
         BTreeMap::from([
             (p1.clone(), PlayerTurnState::Active),
             (p2.clone(), PlayerTurnState::Active),
-        ]),
+        ])
+    };
+    let submitted = with_expiry.then(|| p2.clone());
+    let lifecycle = TurnLifecycle::try_new(
+        &identity,
+        states,
         [p1.clone(), p2.clone()],
-        [],
+        submitted,
         BTreeMap::new(),
         [],
         [],
         None,
     )
     .expect("lifecycle");
+    let diplomacy = if with_expiry {
+        let pair = PlayerPair::new(p1.clone(), p2.clone()).expect("pair");
+        let relation = DiplomaticRelation::try_new(
+            pair.clone(),
+            DiplomaticRelationStatus::Truce,
+            0,
+            Some(8),
+            Some(7),
+            None,
+        )
+        .expect("relation");
+        let proposal = DiplomaticProposal::try_new(
+            "proposal-expired".to_owned(),
+            p1.clone(),
+            p2.clone(),
+            DiplomaticProposalKind::Friendship,
+            7,
+            8,
+            0,
+        )
+        .expect("proposal");
+        Diplomacy::try_new(&identity, [pair], [relation], [proposal], [], [], [])
+            .expect("diplomacy")
+    } else {
+        Diplomacy::default()
+    };
     let units = [unit("unit-1", &p1, 0), unit("unit-2", &p2, 1)];
     let state = GameState::builder(
         StateRevision::new(7),
@@ -174,6 +294,7 @@ fn fixture() -> (
         units,
     )
     .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
+    .with_diplomacy(diplomacy)
     .try_build()
     .expect("state");
     (map, rules, state, p1, p2)

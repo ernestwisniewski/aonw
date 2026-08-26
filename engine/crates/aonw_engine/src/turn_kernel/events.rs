@@ -2,16 +2,28 @@ use aonw_domain::PlayerId;
 
 use crate::{AllPlayersSubmittedEvent, DomainEvent, PlayerTimedOutEvent, TurnEndedEvent};
 
+pub(super) struct TurnPhaseEvents {
+    pub(super) settlement: Vec<DomainEvent>,
+    pub(super) movement: Vec<DomainEvent>,
+    pub(super) research: Vec<DomainEvent>,
+    pub(super) diplomacy: Vec<DomainEvent>,
+}
+
 pub(super) fn sequential_phase_events(
-    settlement: Vec<DomainEvent>,
-    movement: Vec<DomainEvent>,
-    research: Vec<DomainEvent>,
+    phases: TurnPhaseEvents,
     player_id: &PlayerId,
 ) -> Box<[DomainEvent]> {
-    let mut events = Vec::with_capacity(settlement.len() + movement.len() + research.len() + 1);
-    events.extend(settlement);
-    events.extend(movement);
-    events.extend(research);
+    let mut events = Vec::with_capacity(
+        phases.settlement.len()
+            + phases.movement.len()
+            + phases.research.len()
+            + phases.diplomacy.len()
+            + 1,
+    );
+    events.extend(phases.settlement);
+    events.extend(phases.movement);
+    events.extend(phases.research);
+    events.extend(phases.diplomacy);
     events.push(DomainEvent::TurnEnded(TurnEndedEvent::new(
         player_id.clone(),
     )));
@@ -23,17 +35,16 @@ pub(super) fn simultaneous_phase_events(
     scope: &[PlayerId],
     skipped: &[PlayerId],
     combat: Box<[DomainEvent]>,
-    settlement: Vec<DomainEvent>,
-    movement: Vec<DomainEvent>,
-    research: Vec<DomainEvent>,
+    phases: TurnPhaseEvents,
 ) -> Box<[DomainEvent]> {
     let mut events = Vec::with_capacity(
         skipped.len()
             + 1
             + combat.len()
-            + settlement.len()
-            + movement.len()
-            + research.len()
+            + phases.settlement.len()
+            + phases.movement.len()
+            + phases.research.len()
+            + phases.diplomacy.len()
             + scope.len(),
     );
     events.extend(
@@ -45,9 +56,10 @@ pub(super) fn simultaneous_phase_events(
         AllPlayersSubmittedEvent::new(current_turn, scope.to_vec()),
     ));
     events.extend(combat);
-    events.extend(settlement);
-    events.extend(movement);
-    events.extend(research);
+    events.extend(phases.settlement);
+    events.extend(phases.movement);
+    events.extend(phases.research);
+    events.extend(phases.diplomacy);
     events.extend(
         scope
             .iter()

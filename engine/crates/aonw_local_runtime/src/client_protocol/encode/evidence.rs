@@ -1,3 +1,5 @@
+mod diplomacy;
+
 use aonw_contract_mapping::{
     encode_city_building, encode_city_wonder, encode_message_category, encode_message_response,
     encode_message_topic, encode_proposal_kind, encode_relation_reason, encode_relation_status,
@@ -120,6 +122,7 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
                 accepted: value.accepted(),
             }
         }
+        DomainEvent::DiplomaticProposalExpired(value) => diplomacy::proposal_expired(value),
         DomainEvent::DiplomaticMessageSent(value) => ClientEventDto::DiplomaticMessageSent {
             message_id: value.message_id().to_owned(),
             from_player_id: value.from_player_id().as_str().to_owned(),
@@ -140,6 +143,7 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
                 promise_due_turn: value.promise_due_turn(),
             }
         }
+        DomainEvent::DiplomaticPromiseBroken(value) => diplomacy::promise_broken(value),
         DomainEvent::DiplomaticRelationChanged(value) => {
             ClientEventDto::DiplomaticRelationChanged {
                 player_a_id: value.player_a_id().as_str().to_owned(),

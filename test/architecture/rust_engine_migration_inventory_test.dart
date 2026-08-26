@@ -242,6 +242,8 @@ void main() {
         'CombatResolvedEvent': 'runtime-ready',
         'DiplomaticMessageRespondedEvent': 'runtime-ready',
         'DiplomaticMessageSentEvent': 'runtime-ready',
+        'DiplomaticPromiseBrokenEvent': 'runtime-ready',
+        'DiplomaticProposalExpiredEvent': 'runtime-ready',
         'DiplomaticProposalRespondedEvent': 'runtime-ready',
         'DiplomaticProposalSentEvent': 'runtime-ready',
         'DiplomaticRelationChangedEvent': 'runtime-ready',

@@ -1,5 +1,7 @@
 //! Capability, transition ordering, and rejection tests for the T1 turn kernel.
 
+#[path = "turn_kernel/diplomacy_phase.rs"]
+mod diplomacy_phase;
 #[path = "turn_kernel/disabled_requirements.rs"]
 mod disabled_requirements;
 #[path = "turn_kernel/production_phase.rs"]
@@ -304,8 +306,8 @@ fn state_with_posture(
         aonw_domain::EconomyState::try_new(
             &identity,
             map().bounds(),
-            BTreeMap::from([(p2.clone(), 0)]),
             BTreeMap::new(),
+            BTreeMap::from([(p2.clone(), 1)]),
             BTreeMap::new(),
             BTreeMap::new(),
             aonw_domain::InitialResourceDistribution::default(),

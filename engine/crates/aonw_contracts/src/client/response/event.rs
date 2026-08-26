@@ -169,6 +169,17 @@ pub enum ClientEventDto {
         /// Recipient decision.
         accepted: bool,
     },
+    /// One unanswered bilateral proposal expired.
+    DiplomaticProposalExpired {
+        /// Proposal identity.
+        proposal_id: String,
+        /// Original sender.
+        from_player_id: String,
+        /// Original recipient.
+        to_player_id: String,
+        /// Expired proposal kind.
+        kind: crate::DiplomaticProposalKindDto,
+    },
     /// One participant sent a private bilateral message.
     DiplomaticMessageSent {
         /// Message identity.
@@ -202,6 +213,19 @@ pub enum ClientEventDto {
         relation_score_after: i64,
         /// Optional withdrawal-promise deadline.
         promise_due_turn: Option<u32>,
+    },
+    /// One accepted withdrawal promise was broken.
+    DiplomaticPromiseBroken {
+        /// Message carrying the promise.
+        message_id: String,
+        /// Canonical first participant.
+        player_a_id: String,
+        /// Canonical second participant.
+        player_b_id: String,
+        /// Applied bounded score delta.
+        delta: i64,
+        /// Relation score after the penalty.
+        score_after: i64,
     },
     /// One bilateral relation status changed.
     DiplomaticRelationChanged {

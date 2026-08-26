@@ -103,11 +103,17 @@ impl RecipientDisclosure {
             DomainEvent::DiplomaticProposalResponded(value) => {
                 value.from_player_id() == &self.actor || value.to_player_id() == &self.actor
             }
+            DomainEvent::DiplomaticProposalExpired(value) => {
+                value.from_player_id() == &self.actor || value.to_player_id() == &self.actor
+            }
             DomainEvent::DiplomaticMessageSent(value) => {
                 value.from_player_id() == &self.actor || value.to_player_id() == &self.actor
             }
             DomainEvent::DiplomaticMessageResponded(value) => {
                 value.from_player_id() == &self.actor || value.to_player_id() == &self.actor
+            }
+            DomainEvent::DiplomaticPromiseBroken(value) => {
+                value.player_a_id() == &self.actor || value.player_b_id() == &self.actor
             }
             DomainEvent::DiplomaticRelationChanged(value) => {
                 value.player_a_id() == &self.actor || value.player_b_id() == &self.actor
