@@ -165,6 +165,7 @@ fn finite_production_keeps_partial_progress_and_skips_idle_cities() {
         transition.events(),
         [
             DomainEvent::ResearchPointsGained(_),
+            DomainEvent::DominationThresholdReached(_),
             DomainEvent::TurnEnded(_)
         ]
     ));

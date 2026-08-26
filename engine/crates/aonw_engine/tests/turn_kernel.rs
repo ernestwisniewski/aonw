@@ -4,6 +4,8 @@
 mod diplomacy_phase;
 #[path = "turn_kernel/disabled_requirements.rs"]
 mod disabled_requirements;
+#[path = "turn_kernel/objective_phase.rs"]
+mod objective_phase;
 #[path = "turn_kernel/production_phase.rs"]
 mod production_phase;
 #[path = "turn_kernel/research_phase.rs"]

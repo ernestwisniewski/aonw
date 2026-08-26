@@ -1,4 +1,5 @@
 mod diplomacy;
+mod objective;
 
 use aonw_contract_mapping::{
     encode_city_building, encode_city_wonder, encode_message_category, encode_message_response,
@@ -80,6 +81,8 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
             player_id: value.player_id().as_str().to_owned(),
             points: value.points(),
         },
+        DomainEvent::MapObjectiveSecured(value) => objective::map_secured(value),
+        DomainEvent::DominationThresholdReached(value) => objective::domination(value),
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
             ClientEventDto::UnitAttacked {
                 attacker_unit_id,

@@ -19,6 +19,9 @@ use aonw_local_runtime::{
     TurnCommandRequest,
 };
 
+#[path = "turn_kernel_runtime/objective.rs"]
+mod objective;
+
 #[test]
 fn player_and_system_records_replay_with_exact_lifecycle_and_offsets() {
     let (map, rules, state, p1, p2) = fixture();

@@ -145,9 +145,9 @@ event DiplomaticProposalRespondedEvent diplomacy runtime-ready DiplomaticProposa
 event DiplomaticProposalSentEvent diplomacy runtime-ready DiplomaticProposalSent packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticRelationChangedEvent diplomacy runtime-ready DiplomaticRelationChanged packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
 event DiplomaticScoreChangedEvent diplomacy runtime-ready DiplomaticScoreChanged packages/aonw_core/lib/game/domain/event/diplomacy_events.dart
-event DominationThresholdReachedEvent turn reference-only - packages/aonw_core/lib/game/domain/event/turn_events.dart
+event DominationThresholdReachedEvent turn runtime-ready DominationThresholdReached packages/aonw_core/lib/game/domain/event/turn_events.dart
 event FortifiedUnitThreatenedEvent unit-action reference-only - packages/aonw_core/lib/game/domain/event/unit_events.dart
-event MapObjectiveSecuredEvent objective reference-only - packages/aonw_core/lib/game/domain/event/objective_events.dart
+event MapObjectiveSecuredEvent objective runtime-ready MapObjectiveSecured packages/aonw_core/lib/game/domain/event/objective_events.dart
 event PlayerKickedEvent system-lifecycle turn-kernel-ready PlayerKicked packages/aonw_core/lib/game/domain/event/system_events.dart
 event PlayerTimedOutEvent system-lifecycle turn-kernel-ready PlayerTimedOut packages/aonw_core/lib/game/domain/event/system_events.dart
 event ResearchPointsGainedEvent research runtime-ready ResearchPointsGained packages/aonw_core/lib/game/domain/event/research_events.dart

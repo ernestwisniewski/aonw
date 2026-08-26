@@ -248,6 +248,8 @@ void main() {
         'DiplomaticProposalSentEvent': 'runtime-ready',
         'DiplomaticRelationChangedEvent': 'runtime-ready',
         'DiplomaticScoreChangedEvent': 'runtime-ready',
+        'DominationThresholdReachedEvent': 'runtime-ready',
+        'MapObjectiveSecuredEvent': 'runtime-ready',
         'UnitAttackedEvent': 'runtime-ready',
         'UnitGainedExperienceEvent': 'runtime-ready',
         'UnitKilledEvent': 'runtime-ready',

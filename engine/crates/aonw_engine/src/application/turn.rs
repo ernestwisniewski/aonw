@@ -153,6 +153,9 @@ impl SystemCommand<'_> {
                             .unwrap_or(u64::MAX)
                             .saturating_mul(2),
                     );
+                let objectives = u64::try_from(state.bounds().tile_count())
+                    .unwrap_or(u64::MAX)
+                    .saturating_add(player_count);
                 EventBudget::new(
                     player_count
                         .saturating_add(skipped_count)
@@ -162,6 +165,7 @@ impl SystemCommand<'_> {
                         .saturating_add(player_count.saturating_mul(2))
                         .saturating_add(combat)
                         .saturating_add(diplomacy)
+                        .saturating_add(objectives)
                         .saturating_add(1),
                 )
             }
@@ -295,7 +299,7 @@ impl TurnKernelCapabilities {
         TurnProcessor::Objectives,
     ];
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 16] = [
+    pub const ENABLED: [TurnProcessor; 17] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
@@ -312,9 +316,10 @@ impl TurnKernelCapabilities {
         TurnProcessor::Research,
         TurnProcessor::Diplomacy,
         TurnProcessor::Agreements,
+        TurnProcessor::Objectives,
     ];
     /// Later turn processors that are intentionally unavailable.
-    pub const DISABLED: [TurnProcessor; 2] = [TurnProcessor::Economy, TurnProcessor::Objectives];
+    pub const DISABLED: [TurnProcessor; 1] = [TurnProcessor::Economy];
 
     /// Returns whether a named processor is implemented by this kernel.
     #[must_use]
@@ -337,6 +342,7 @@ impl TurnKernelCapabilities {
                 | TurnProcessor::Research
                 | TurnProcessor::Diplomacy
                 | TurnProcessor::Agreements
+                | TurnProcessor::Objectives
         )
     }
 }

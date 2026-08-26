@@ -19,6 +19,8 @@ mod artifact_contract;
 mod diplomacy_contract;
 #[path = "client_contract/economy.rs"]
 mod economy_contract;
+#[path = "client_contract/objective.rs"]
+mod objective_contract;
 #[path = "client_contract/production.rs"]
 mod production_contract;
 #[path = "client_contract/research.rs"]

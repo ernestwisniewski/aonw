@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::WorkerJobCompletionDto;
 use crate::{
     CityBuildingTypeDto, CombatTargetDto, CoordinateDto, DiplomaticScoreChangeReasonDto,
-    TechnologyIdDto, TroopKindDto, UnitKindDto, WonderTypeDto,
+    MapObjectiveTypeDto, TechnologyIdDto, TroopKindDto, UnitKindDto, WonderTypeDto,
 };
 
 /// Presentation-safe authoritative event.
@@ -106,6 +106,40 @@ pub enum ClientEventDto {
         player_id: String,
         /// Exact positive science total.
         points: i64,
+    },
+    /// One participant crossed an authored map objective's hold threshold.
+    MapObjectiveSecured {
+        /// Player controlling the objective.
+        player_id: String,
+        /// Stable authored objective identity.
+        objective_id: String,
+        /// Authored objective kind.
+        objective_type: MapObjectiveTypeDto,
+        /// Objective column.
+        col: i32,
+        /// Objective row.
+        row: i32,
+        /// Current consecutive hold count.
+        hold_turns: u32,
+        /// Required consecutive hold count.
+        required_hold_turns: u32,
+        /// Authored victory-point reward.
+        victory_points: u32,
+        /// Authored per-turn gold reward.
+        gold_per_turn: u32,
+    },
+    /// One participant started a domination-threshold hold.
+    DominationThresholdReached {
+        /// Player controlling the threshold territory.
+        player_id: String,
+        /// Current percentage of passable territory controlled.
+        control_percent: serde_json::Number,
+        /// Configured percentage threshold.
+        required_control_percent: serde_json::Number,
+        /// Current consecutive hold count.
+        hold_turns: u32,
+        /// Required consecutive hold count.
+        required_hold_turns: u32,
     },
     /// A visible attacker engaged a visible target.
     UnitAttacked {

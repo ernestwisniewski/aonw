@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::CoordinateDto;
+use crate::{CoordinateDto, MapObjectiveTypeDto};
 
 /// Framework-neutral map read model returned to presentation clients.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -126,15 +126,4 @@ pub enum MapResourceDto {
     Uranium,
     Horses,
     Marble,
-}
-
-/// Objective values exposed by the current map presentation contract.
-#[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum MapObjectiveTypeDto {
-    Ruins,
-    StrategicPass,
-    HolySite,
-    LegendaryResource,
 }

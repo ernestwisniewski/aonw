@@ -2,6 +2,7 @@ mod agreement_phase;
 mod city_phase;
 mod diplomacy_phase;
 mod events;
+mod objective_phase;
 mod preparation;
 mod processor_order;
 mod support;
@@ -28,6 +29,7 @@ use self::support::{
 use agreement_phase::settle_resource_trades;
 use diplomacy_phase::advance_turn_diplomacy;
 use events::{TurnPhaseEvents, sequential_phase_events, simultaneous_phase_events};
+use objective_phase::advance_turn_objectives;
 use preparation::{TurnPreparationPhase, advance_turn_preparation};
 use processor_order::{SEQUENTIAL_TURN_PROCESSORS, SIMULTANEOUS_TURN_PROCESSORS};
 
@@ -96,6 +98,7 @@ pub(crate) fn apply_submit_turn(
             lifecycle,
             None,
             Vec::new(),
+            None,
             None,
             None,
             None,
@@ -220,12 +223,20 @@ fn finish_sequential_turn(
         &progress.reset_scope,
     )
     .map_err(CanonicalEngineError::DiplomacyCommand)?;
+    let objective_phase = advance_turn_objectives(
+        &state,
+        context.map(),
+        economy,
+        &units,
+        &progress.reset_scope,
+    )?;
     let events = sequential_phase_events(
         TurnPhaseEvents {
             settlement: preparation.events,
             movement: movement_events,
             research: preparation.research_events,
             diplomacy: diplomacy_phase.events,
+            objectives: objective_phase.events,
         },
         command.player_id(),
     );
@@ -234,9 +245,10 @@ fn finish_sequential_turn(
         next_lifecycle,
         Some(progress.next_turn),
         units,
-        Some(economy),
+        Some(objective_phase.economy),
         Some(fog_of_war),
         Some(diplomacy),
+        Some(objective_phase.objectives),
         InteractionStateUpdate::Replace(interaction),
         events,
         SEQUENTIAL_TURN_PROCESSORS,
@@ -360,6 +372,7 @@ fn apply_kick(
         None,
         None,
         None,
+        None,
         InteractionStateUpdate::Preserve,
         vec![event].into_boxed_slice(),
         [TurnProcessor::Lifecycle],
@@ -432,6 +445,7 @@ fn finalize_simultaneous(
         scope,
     )
     .map_err(CanonicalEngineError::DiplomacyCommand)?;
+    let objective_phase = advance_turn_objectives(&preparation.state, map, economy, &units, scope)?;
     let events = simultaneous_phase_events(
         current_turn,
         scope,
@@ -442,6 +456,7 @@ fn finalize_simultaneous(
             movement: movement_events,
             research: preparation.research_events,
             diplomacy: diplomacy_phase.events,
+            objectives: objective_phase.events,
         },
     );
     apply_update(
@@ -449,9 +464,10 @@ fn finalize_simultaneous(
         lifecycle,
         Some(next_turn),
         units,
-        Some(economy),
+        Some(objective_phase.economy),
         Some(fog_of_war),
         Some(diplomacy),
+        Some(objective_phase.objectives),
         InteractionStateUpdate::Replace(interaction),
         events,
         SIMULTANEOUS_TURN_PROCESSORS,

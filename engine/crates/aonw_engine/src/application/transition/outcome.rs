@@ -11,7 +11,7 @@ use crate::{
 use crate::{
     DiplomaticMessageRespondedEvent, DiplomaticMessageSentEvent, DiplomaticPromiseBrokenEvent,
     DiplomaticProposalExpiredEvent, DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent,
-    DiplomaticRelationChangedEvent,
+    DiplomaticRelationChangedEvent, DominationThresholdReachedEvent, MapObjectiveSecuredEvent,
 };
 
 /// Ordered event emitted by an accepted transition.
@@ -37,6 +37,10 @@ pub enum DomainEvent {
     TechnologyResearched(TechnologyResearchedEvent),
     /// One participant produced positive science during turn progression.
     ResearchPointsGained(ResearchPointsGainedEvent),
+    /// One player crossed an authored map objective's hold threshold.
+    MapObjectiveSecured(MapObjectiveSecuredEvent),
+    /// One player started a domination-threshold hold.
+    DominationThresholdReached(DominationThresholdReachedEvent),
     /// One unit changed map position.
     UnitMoved(UnitMovedEvent),
     /// Auto-exploration selected an engine-owned target.

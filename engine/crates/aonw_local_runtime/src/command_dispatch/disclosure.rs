@@ -84,6 +84,7 @@ impl RecipientDisclosure {
             }
             DomainEvent::TechnologyResearched(value) => value.player_id() == &self.actor,
             DomainEvent::ResearchPointsGained(value) => value.player_id() == &self.actor,
+            DomainEvent::MapObjectiveSecured(value) => value.player_id() == &self.actor,
             DomainEvent::UnitAttacked(value)
             | DomainEvent::CityAttacked(value)
             | DomainEvent::CombatResolved(value)
@@ -124,7 +125,8 @@ impl RecipientDisclosure {
             DomainEvent::MerchantTravelQueued(value) => self.allows_unit(value.unit_id()),
             DomainEvent::TroopDetached(value) => self.allows_unit(value.source_unit_id()),
             DomainEvent::WorkerCompletedJob(value) => self.allows_unit(value.unit_id()),
-            DomainEvent::TurnEnded(_)
+            DomainEvent::DominationThresholdReached(_)
+            | DomainEvent::TurnEnded(_)
             | DomainEvent::AllPlayersSubmitted(_)
             | DomainEvent::PlayerTimedOut(_)
             | DomainEvent::PlayerKicked(_) => true,

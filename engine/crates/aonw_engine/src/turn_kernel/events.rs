@@ -7,6 +7,7 @@ pub(super) struct TurnPhaseEvents {
     pub(super) movement: Vec<DomainEvent>,
     pub(super) research: Vec<DomainEvent>,
     pub(super) diplomacy: Vec<DomainEvent>,
+    pub(super) objectives: Vec<DomainEvent>,
 }
 
 pub(super) fn sequential_phase_events(
@@ -18,12 +19,14 @@ pub(super) fn sequential_phase_events(
             + phases.movement.len()
             + phases.research.len()
             + phases.diplomacy.len()
+            + phases.objectives.len()
             + 1,
     );
     events.extend(phases.settlement);
     events.extend(phases.movement);
     events.extend(phases.research);
     events.extend(phases.diplomacy);
+    events.extend(phases.objectives);
     events.push(DomainEvent::TurnEnded(TurnEndedEvent::new(
         player_id.clone(),
     )));
@@ -45,6 +48,7 @@ pub(super) fn simultaneous_phase_events(
             + phases.movement.len()
             + phases.research.len()
             + phases.diplomacy.len()
+            + phases.objectives.len()
             + scope.len(),
     );
     events.extend(
@@ -60,6 +64,7 @@ pub(super) fn simultaneous_phase_events(
     events.extend(phases.movement);
     events.extend(phases.research);
     events.extend(phases.diplomacy);
+    events.extend(phases.objectives);
     events.extend(
         scope
             .iter()

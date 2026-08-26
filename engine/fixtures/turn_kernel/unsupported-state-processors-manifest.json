@@ -1,7 +1,6 @@
 {
   "capability": "turn-kernel-ready",
   "fixtures": [
-    {"id": "economy-without-production", "requiredProcessor": "economy"},
-    {"id": "persisted-objective-progress", "requiredProcessor": "objectives"}
+    {"id": "economy-without-production", "requiredProcessor": "economy"}
   ]
 }

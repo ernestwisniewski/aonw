@@ -5,10 +5,11 @@ mod map;
 mod request;
 mod response;
 
+pub use crate::MapObjectiveTypeDto;
 pub use codec::{ClientCodecError, MAX_CLIENT_REQUEST_JSON_BYTES, MAX_CLIENT_RESPONSE_JSON_BYTES};
 pub use map::{
-    MapGridLayoutDto, MapObjectiveTypeDto, MapObjectiveViewDto, MapResourceDto, MapTerrainDto,
-    MapTileViewDto, MapViewDto,
+    MapGridLayoutDto, MapObjectiveViewDto, MapResourceDto, MapTerrainDto, MapTileViewDto,
+    MapViewDto,
 };
 pub use request::{ClientCommandDto, ClientQueryDto, ClientRequestBodyDto, ClientRequestDto};
 pub use response::{

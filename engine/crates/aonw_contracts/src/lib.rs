@@ -48,6 +48,17 @@ pub use persistence::{
     ReplaySystemCommandDto, ReplayUnitMovementExecutionDto, SaveGameDto,
 };
 
+/// Stable authored map-objective type shared by client and replay contracts.
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum MapObjectiveTypeDto {
+    Ruins,
+    StrategicPass,
+    HolySite,
+    LegendaryResource,
+}
+
 /// Stable unit type used at engine boundaries.
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]

@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use aonw_content::{ContentHash, MapDefinition};
 use aonw_domain::{
-    Diplomacy, EconomyState, FogOfWar, GameState, InteractionState, MatchLifecycle,
+    Diplomacy, EconomyState, FogOfWar, GameState, InteractionState, MatchLifecycle, ObjectiveState,
     PendingInteraction, PlayerId, PlayerTurnState, TurnLifecycle, UnitPosture, UtcTimestamp,
 };
 
@@ -262,22 +262,7 @@ pub(crate) fn processor_is_required(
         }
         TurnProcessor::Diplomacy => diplomacy_is_required(state, &owns_scope),
         TurnProcessor::Objectives => {
-            !map.objectives().is_empty()
-                || state
-                    .objectives()
-                    .domination_hold_turns_by_player_id()
-                    .keys()
-                    .any(&owns_scope)
-                || state
-                    .objectives()
-                    .cultural_victory_hold_turns_by_player_id()
-                    .keys()
-                    .any(&owns_scope)
-                || state
-                    .objectives()
-                    .map_objective_hold_states()
-                    .iter()
-                    .any(|hold| owns_scope(hold.player_id()))
+            super::objective_phase::processor_is_required(state, map, player_ids)
         }
     }
 }
@@ -370,6 +355,7 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
     economy: Option<EconomyState>,
     fog_of_war: Option<FogOfWar>,
     diplomacy: Option<Diplomacy>,
+    objectives: Option<ObjectiveState>,
     interaction: InteractionStateUpdate,
     events: Box<[DomainEvent]>,
     processors: [TurnProcessor; PROCESSORS],
@@ -393,6 +379,7 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
     let fog_of_war = fog_of_war.unwrap_or_else(|| state.fog_of_war().clone());
     let economy = economy.unwrap_or_else(|| state.economy().clone());
     let diplomacy = diplomacy.unwrap_or_else(|| state.diplomacy().clone());
+    let objectives = objectives.unwrap_or_else(|| state.objectives().clone());
     let interaction = match interaction {
         InteractionStateUpdate::Preserve => state.interaction().clone(),
         InteractionStateUpdate::Replace(value) => value,
@@ -406,6 +393,7 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
             economy,
             fog_of_war,
             diplomacy,
+            objectives,
             interaction,
         })
         .map_err(CanonicalEngineError::State)?;

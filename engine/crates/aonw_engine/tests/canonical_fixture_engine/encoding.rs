@@ -2,6 +2,8 @@
 mod command_name_encoding;
 #[path = "encoding/diplomacy.rs"]
 mod diplomacy_encoding;
+#[path = "encoding/objective.rs"]
+mod objective_encoding;
 
 pub(super) use command_name_encoding::command_name;
 
@@ -82,6 +84,8 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
             player_id: value.player_id().as_str().to_owned(),
             points: value.points(),
         },
+        DomainEvent::MapObjectiveSecured(value) => objective_encoding::map_secured(value),
+        DomainEvent::DominationThresholdReached(value) => objective_encoding::domination(value),
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
             ReplayEventDto::UnitAttacked {
                 attacker_unit_id,

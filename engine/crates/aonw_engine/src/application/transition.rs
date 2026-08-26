@@ -2,6 +2,7 @@ mod artifact_events;
 mod diplomacy_events;
 mod domain_transition;
 mod events;
+mod objective_events;
 mod outcome;
 mod production_events;
 mod rejection_code_wire;
@@ -21,6 +22,7 @@ pub use events::{
     PlayerKickedEvent, PlayerTimedOutEvent, TurnEndedEvent, WorkerCompletedJobEvent,
     WorkerJobCompletion,
 };
+pub use objective_events::{DominationThresholdReachedEvent, MapObjectiveSecuredEvent};
 pub use outcome::{DomainEvent, ExecutionEvidence};
 pub use production_events::{
     CityBuiltBuildingEvent, CityBuiltWonderEvent, CityProducedUnitEvent, TechnologyResearchedEvent,

@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use aonw_content::RulesetDefinition;
 use aonw_domain::{
     EconomyState, GameMode, GameState, InitialResourceDistribution, MatchIdentity, MatchLifecycle,
-    MatchRules, ObjectiveState, PlayerTurnState, StateRevision, TurnLifecycle, UnitOccupancyPolicy,
+    MatchRules, PlayerTurnState, StateRevision, TurnLifecycle, UnitOccupancyPolicy,
 };
 use aonw_engine::{
     CommandRejectionCode, EngineContext, GameEngine, PlayerCommand, ProcessorRequirement,
@@ -15,32 +15,31 @@ use aonw_engine::{
 use super::{map, participant, player, unit};
 
 #[test]
-fn every_persisted_disabled_phase_requirement_fails_closed() {
+fn persisted_disabled_economy_requirement_fails_closed() {
     let map = map();
     let rules = RulesetDefinition::standard();
     let player = player("player-2");
-    for processor in [TurnProcessor::Economy, TurnProcessor::Objectives] {
-        let state = state_requiring(processor);
-        assert_eq!(
-            processor.requirement(&state, &map, std::slice::from_ref(&player)),
-            ProcessorRequirement::RequiredButUnsupported,
-            "{processor:?} must be detected before mutation"
-        );
-        let before = GameEngine::state_digest(&state);
-        let transition = GameEngine::apply_player_owned(
-            state,
-            EngineContext::canonical(&player, &map, rules),
-            PlayerCommand::SubmitTurn(TurnCommand::new(7, &player)),
-        )
-        .expect("disabled processor rejection");
-        assert_eq!(
-            transition.rejection().expect("rejection").code(),
-            CommandRejectionCode::TurnProcessorUnsupported,
-            "{processor:?} must reject the whole turn"
-        );
-        assert_eq!(GameEngine::state_digest(transition.state()), before);
-        assert!(transition.events().is_empty());
-    }
+    let processor = TurnProcessor::Economy;
+    let state = state_requiring(processor);
+    assert_eq!(
+        processor.requirement(&state, &map, std::slice::from_ref(&player)),
+        ProcessorRequirement::RequiredButUnsupported,
+        "{processor:?} must be detected before mutation"
+    );
+    let before = GameEngine::state_digest(&state);
+    let transition = GameEngine::apply_player_owned(
+        state,
+        EngineContext::canonical(&player, &map, rules),
+        PlayerCommand::SubmitTurn(TurnCommand::new(7, &player)),
+    )
+    .expect("disabled processor rejection");
+    assert_eq!(
+        transition.rejection().expect("rejection").code(),
+        CommandRejectionCode::TurnProcessorUnsupported,
+        "{processor:?} must reject the whole turn"
+    );
+    assert_eq!(GameEngine::state_digest(transition.state()), before);
+    assert!(transition.events().is_empty());
 }
 
 fn state_requiring(processor: TurnProcessor) -> GameState {
@@ -90,10 +89,6 @@ fn state_requiring(processor: TurnProcessor) -> GameState {
                 InitialResourceDistribution::default(),
             )
             .expect("economy"),
-        ),
-        TurnProcessor::Objectives => builder.with_objectives(
-            ObjectiveState::try_new(&identity, BTreeMap::from([(p2, 1)]), BTreeMap::new(), [])
-                .expect("objectives"),
         ),
         _ => panic!("test requires a disabled persisted phase"),
     };
