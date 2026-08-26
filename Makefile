@@ -46,6 +46,8 @@ HOMEPAGE_HEALTH_URL ?= https://aonw.net/
 ARCHITECTURE_HEALTH_URL ?= https://aonw.net/architecture
 STATS_HEALTH_URL ?= https://aonw.net/stats
 STATS_API_HEALTH_URL ?= https://aonw.net/api/stats
+ENGINE_DOCS_HEALTH_URL ?= https://engine.aonw.net/
+ENGINE_DOCS_API_HEALTH_URL ?= https://engine.aonw.net/aonw_engine/
 HEALTH_ATTEMPTS ?= 30
 HEALTH_SLEEP ?= 2
 PRUNE ?= 1
@@ -107,6 +109,9 @@ REMOTE_DEPLOY_HOST ?= $(WEB_DEPLOY_HOST)
 REMOTE_DEPLOY_PATH ?=
 HOMEPAGE_SOURCE_DIR ?= deploy/homepage
 HOMEPAGE_BUILD_DIR ?= build/homepage
+ENGINE_DOCS_SOURCE_DIR ?= deploy/engine-docs
+ENGINE_DOCS_BUILD_DIR ?= build/engine-docs
+ENGINE_DOCS_DEPLOY_DEST ?=
 IOS_API_BASE_URL ?= https://api.aonw.net
 DEPLOY_ALL_IOS_MODE ?= best-effort
 # Removed aggregate-release option. A non-empty legacy value is rejected by
@@ -235,7 +240,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test rust-engine-inventory-ast-check rust-determinism-inventory-check rust-determinism-inventory-test rust-determinism-check rust-fixture-disposition-check rust-fixture-disposition-test rust-corpus-parity-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-coverage-report successor-flutter-device-test successor-flutter-fm4-pilot successor-flutter-fm5-baseline successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check rust-turn-kernel-check rust-diplomacy-policy-check rust-tech-gate-check rust-movement-logistics-check rust-combat-check rust-city-check rust-worker-check successor-engine-check successor-engine-evidence-check successor-engine-quality-check successor-engine-deep-check
+.PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test rust-engine-inventory-ast-check rust-determinism-inventory-check rust-determinism-inventory-test rust-determinism-check rust-fixture-disposition-check rust-fixture-disposition-test rust-corpus-parity-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage stage-engine-docs build-engine-docs deploy-engine-docs deploy-engine-docs-files download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats health-engine-docs prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-coverage-report successor-flutter-device-test successor-flutter-fm4-pilot successor-flutter-fm5-baseline successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check rust-turn-kernel-check rust-diplomacy-policy-check rust-tech-gate-check rust-movement-logistics-check rust-combat-check rust-city-check rust-worker-check successor-engine-check successor-engine-evidence-check successor-engine-quality-check successor-engine-deep-check
 
 help:
 	@echo "AONW deploy helpers"
@@ -258,6 +263,9 @@ help:
 	@echo "  make map-stage-1-check LOCAL: compare Flutter and Godot semantic map probes"
 	@echo "  make stage-1-visual-evidence LOCAL: regenerate the reviewed map screenshots"
 	@echo "  make rust-check   LOCAL: format, lint, test, and document the Rust workspace"
+	@echo "  make stage-engine-docs LOCAL: refresh the landing page around the last successful Rust API docs"
+	@echo "  make build-engine-docs LOCAL: generate current Rust API docs with the AoNW Engine landing page"
+	@echo "  make deploy-engine-docs LOCAL: build and rsync current local Rust docs to engine.aonw.net"
 	@echo "  make rust-determinism-check LOCAL: verify named inputs and debug/release replay parity"
 	@echo "  make rust-corpus-parity-check LOCAL: verify reviewed 120-case dispositions and active Rust parity"
 	@echo "  make rust-architecture-check LOCAL: verify Rust crate edges, pure boundaries, unsafe census and source ratchet"
@@ -1048,6 +1056,7 @@ infra-config-check: docker-context-check
 	@docker run --rm --entrypoint /usr/bin/caddy \
 		-e AONW_API_HOST=api.example.test \
 		-e AONW_HOMEPAGE_HOST=example.test \
+		-e AONW_ENGINE_DOCS_HOST=engine.example.test \
 		-e AONW_DEMO_HOST=demo.example.test \
 		-e AONW_UPSTREAM=server:8080 \
 		-e AONW_WEB_UPSTREAM=server:8082 \
@@ -1114,11 +1123,14 @@ build-homepage:
 	@test -f "$(HOMEPAGE_SOURCE_DIR)/stats/index.html" || { echo "$(HOMEPAGE_SOURCE_DIR)/stats/index.html not found"; exit 1; }
 	@test -f assets/logo.png || { echo "assets/logo.png not found"; exit 1; }
 	@test -f assets/aonw-mobile.png || { echo "assets/aonw-mobile.png not found"; exit 1; }
+	@test -f assets/fonts/AlbertSans-VariableFont_wght.ttf || { echo "assets/fonts/AlbertSans-VariableFont_wght.ttf not found"; exit 1; }
+	@test -f assets/fonts/AlbertSans-OFL.txt || { echo "assets/fonts/AlbertSans-OFL.txt not found"; exit 1; }
 	@test -f assets/fonts/Cinzel-VariableFont_wght.ttf || { echo "assets/fonts/Cinzel-VariableFont_wght.ttf not found"; exit 1; }
 	@test -f assets/fonts/Lato-Light.ttf || { echo "assets/fonts/Lato-Light.ttf not found"; exit 1; }
 	@test -f assets/fonts/Lato-Regular.ttf || { echo "assets/fonts/Lato-Regular.ttf not found"; exit 1; }
 	@test -f assets/fonts/Lato-Bold.ttf || { echo "assets/fonts/Lato-Bold.ttf not found"; exit 1; }
 	@test -f assets/main_menu/background.png || { echo "assets/main_menu/background.png not found"; exit 1; }
+	@test -f assets/main_menu/background.jpg || { echo "assets/main_menu/background.jpg not found"; exit 1; }
 	@test -f assets/homepage/platform-icons/android.svg || { echo "assets/homepage/platform-icons/android.svg not found"; exit 1; }
 	@test -f assets/homepage/platform-icons/apple.svg || { echo "assets/homepage/platform-icons/apple.svg not found"; exit 1; }
 	@test -f assets/homepage/platform-icons/contact.svg || { echo "assets/homepage/platform-icons/contact.svg not found"; exit 1; }
@@ -1140,11 +1152,14 @@ build-homepage:
 	@cp web/icons/Icon-192.png "$(HOMEPAGE_BUILD_DIR)/apple-touch-icon.png"
 	@cp assets/logo.png "$(HOMEPAGE_BUILD_DIR)/assets/logo.png"
 	@cp assets/aonw-mobile.png "$(HOMEPAGE_BUILD_DIR)/assets/aonw-mobile.png"
+	@cp assets/fonts/AlbertSans-VariableFont_wght.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/AlbertSans-VariableFont_wght.ttf"
+	@cp assets/fonts/AlbertSans-OFL.txt "$(HOMEPAGE_BUILD_DIR)/assets/fonts/AlbertSans-OFL.txt"
 	@cp assets/fonts/Cinzel-VariableFont_wght.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Cinzel-VariableFont_wght.ttf"
 	@cp assets/fonts/Lato-Light.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Light.ttf"
 	@cp assets/fonts/Lato-Regular.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Regular.ttf"
 	@cp assets/fonts/Lato-Bold.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Bold.ttf"
 	@cp assets/main_menu/background.png "$(HOMEPAGE_BUILD_DIR)/assets/main_menu/background.png"
+	@cp assets/main_menu/background.jpg "$(HOMEPAGE_BUILD_DIR)/assets/main_menu/background.jpg"
 	@cp assets/homepage/platform-icons/*.svg "$(HOMEPAGE_BUILD_DIR)/assets/platform-icons/"
 	@rg -F 'data-page="architecture"' "$(HOMEPAGE_BUILD_DIR)/architecture" >/dev/null || { echo "Architecture page marker missing from $(HOMEPAGE_BUILD_DIR)/architecture"; exit 1; }
 	@rg -F 'data-page="multiplayer-stats"' "$(HOMEPAGE_BUILD_DIR)/stats" >/dev/null || { echo "Stats page marker missing from $(HOMEPAGE_BUILD_DIR)/stats"; exit 1; }
@@ -1174,6 +1189,64 @@ deploy-homepage-files:
 	@$(MAKE) --no-print-directory health-homepage
 	@$(MAKE) --no-print-directory health-architecture
 	@$(MAKE) --no-print-directory health-stats
+
+# Generates rustdoc from the current local workspace, including uncommitted
+# engine changes, then replaces rustdoc's root with the public presentation page.
+build-engine-docs: rust-doc
+	@$(MAKE) --no-print-directory stage-engine-docs
+
+stage-engine-docs:
+	@command -v perl >/dev/null || { echo "perl is required for build-engine-docs."; exit 1; }
+	@test -f "$(ENGINE_DOCS_SOURCE_DIR)/index.html" || { echo "$(ENGINE_DOCS_SOURCE_DIR)/index.html not found"; exit 1; }
+	@test -f "$(ENGINE_DOCS_SOURCE_DIR)/architecture/index.html" || { echo "$(ENGINE_DOCS_SOURCE_DIR)/architecture/index.html not found"; exit 1; }
+	@test -f "$(RUST_WORKSPACE)/target/doc/aonw_engine/index.html" || { echo "aonw_engine rustdoc output not found"; exit 1; }
+	@test -f assets/logo.png || { echo "assets/logo.png not found"; exit 1; }
+	@test -f assets/main_menu/background.jpg || { echo "assets/main_menu/background.jpg not found"; exit 1; }
+	@test -f assets/fonts/AlbertSans-VariableFont_wght.ttf || { echo "AoNW body font not found"; exit 1; }
+	@test -f assets/fonts/AlbertSans-OFL.txt || { echo "AoNW body font license not found"; exit 1; }
+	@test -f assets/fonts/Cinzel-VariableFont_wght.ttf || { echo "AoNW display font not found"; exit 1; }
+	@test -f web/favicon.png || { echo "web/favicon.png not found"; exit 1; }
+	@rm -rf "$(ENGINE_DOCS_BUILD_DIR)"
+	@mkdir -p "$(ENGINE_DOCS_BUILD_DIR)/architecture" "$(ENGINE_DOCS_BUILD_DIR)/assets/fonts" "$(ENGINE_DOCS_BUILD_DIR)/assets/main_menu"
+	@cp -R "$(RUST_WORKSPACE)/target/doc/." "$(ENGINE_DOCS_BUILD_DIR)/"
+	@cp "$(ENGINE_DOCS_SOURCE_DIR)/index.html" "$(ENGINE_DOCS_BUILD_DIR)/index.html"
+	@cp "$(ENGINE_DOCS_SOURCE_DIR)/architecture/index.html" "$(ENGINE_DOCS_BUILD_DIR)/architecture/index.html"
+	@cp web/favicon.png "$(ENGINE_DOCS_BUILD_DIR)/favicon.png"
+	@cp assets/logo.png "$(ENGINE_DOCS_BUILD_DIR)/assets/logo.png"
+	@cp assets/main_menu/background.jpg "$(ENGINE_DOCS_BUILD_DIR)/assets/main_menu/background.jpg"
+	@cp assets/fonts/AlbertSans-VariableFont_wght.ttf "$(ENGINE_DOCS_BUILD_DIR)/assets/fonts/AlbertSans-VariableFont_wght.ttf"
+	@cp assets/fonts/AlbertSans-OFL.txt "$(ENGINE_DOCS_BUILD_DIR)/assets/fonts/AlbertSans-OFL.txt"
+	@cp assets/fonts/Cinzel-VariableFont_wght.ttf "$(ENGINE_DOCS_BUILD_DIR)/assets/fonts/Cinzel-VariableFont_wght.ttf"
+	@perl -0pi -e 's#\.\./\.\./assets/#assets/#g; s#\.\./\.\./web/favicon\.png#favicon.png#g' \
+	  "$(ENGINE_DOCS_BUILD_DIR)/index.html"
+	@rg -F 'data-page="engine-docs-home"' "$(ENGINE_DOCS_BUILD_DIR)/index.html" >/dev/null || { echo "Engine presentation page marker missing"; exit 1; }
+	@rg -F 'data-page="engine-architecture"' "$(ENGINE_DOCS_BUILD_DIR)/architecture/index.html" >/dev/null || { echo "Engine architecture atlas marker missing"; exit 1; }
+	@rg -F 'assets/main_menu/background.jpg' "$(ENGINE_DOCS_BUILD_DIR)/index.html" >/dev/null || { echo "Engine presentation background missing"; exit 1; }
+	@rg -F 'data-current-crate="aonw_engine"' "$(ENGINE_DOCS_BUILD_DIR)/aonw_engine/index.html" >/dev/null || { echo "aonw_engine rustdoc output is invalid"; exit 1; }
+	@echo "Current local Rust documentation staged in $(ENGINE_DOCS_BUILD_DIR)/"
+
+deploy-engine-docs:
+	@$(MAKE) --no-print-directory build-engine-docs
+	@$(MAKE) --no-print-directory deploy-engine-docs-files
+
+# Upload-only target for a previously staged engine documentation tree.
+deploy-engine-docs-files:
+	@command -v rsync >/dev/null || { echo "rsync is required for deploy-engine-docs."; exit 1; }
+	@test -n "$(WEB_DEPLOY_SSH_KEY)" || { echo "WEB_DEPLOY_SSH_KEY is required."; exit 1; }
+	@test -n "$(WEB_DEPLOY_USER)" || { echo "WEB_DEPLOY_USER is required."; exit 1; }
+	@test -n "$(WEB_DEPLOY_HOST)" || { echo "WEB_DEPLOY_HOST is required."; exit 1; }
+	@test -n "$(ENGINE_DOCS_DEPLOY_DEST)" || { echo "ENGINE_DOCS_DEPLOY_DEST is required."; exit 1; }
+	@test -f "$(WEB_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(WEB_DEPLOY_SSH_KEY)"; exit 1; }
+	@test -f "$(ENGINE_DOCS_BUILD_DIR)/index.html" || { echo "Run make build-engine-docs first."; exit 1; }
+	@test -f "$(ENGINE_DOCS_BUILD_DIR)/architecture/index.html" || { echo "Staged engine architecture atlas not found."; exit 1; }
+	@test -f "$(ENGINE_DOCS_BUILD_DIR)/aonw_engine/index.html" || { echo "Staged aonw_engine rustdoc output not found."; exit 1; }
+	@echo "Uploading $(ENGINE_DOCS_BUILD_DIR)/ -> $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(ENGINE_DOCS_DEPLOY_DEST)/..."
+	@ssh -i "$(WEB_DEPLOY_SSH_KEY)" "$(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST)" 'mkdir -p "$(ENGINE_DOCS_DEPLOY_DEST)"'
+	@rsync -avz --delete-delay --delay-updates \
+	  -e "ssh -i $(WEB_DEPLOY_SSH_KEY)" \
+	  "$(ENGINE_DOCS_BUILD_DIR)/" "$(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(ENGINE_DOCS_DEPLOY_DEST)/"
+	@echo "deploy-engine-docs finished. Checking $(ENGINE_DOCS_HEALTH_URL) ..."
+	@$(MAKE) --no-print-directory health-engine-docs
 
 download-artifacts: itch-prepare download-package
 	@echo "download artifacts ready."
@@ -2385,8 +2458,8 @@ health-homepage:
 health-architecture:
 	@command -v rg >/dev/null || { echo "rg is required for health-architecture."; exit 1; }
 	@echo "Checking $(ARCHITECTURE_HEALTH_URL)"
-	@curl -fsS --max-time 5 "$(ARCHITECTURE_HEALTH_URL)" \
-	  | rg -F 'data-page="architecture"' >/dev/null \
+	@curl -fsSL --max-time 5 "$(ARCHITECTURE_HEALTH_URL)" \
+	  | rg -F 'data-page="engine-architecture"' >/dev/null \
 	  || { echo "Architecture atlas missing or invalid"; exit 1; }
 
 health-stats:
@@ -2404,6 +2477,17 @@ health-stats:
 	  && printf '%s' "$$body" | rg -F '"outcomes":[' >/dev/null \
 	  && printf '%s' "$$body" | rg -F '"turns":{' >/dev/null \
 	  || { echo "Multiplayer statistics API payload is invalid"; exit 1; }
+
+health-engine-docs:
+	@command -v rg >/dev/null || { echo "rg is required for health-engine-docs."; exit 1; }
+	@echo "Checking $(ENGINE_DOCS_HEALTH_URL)"
+	@curl -fsS --max-time 5 "$(ENGINE_DOCS_HEALTH_URL)" \
+	  | rg -F 'data-page="engine-docs-home"' >/dev/null \
+	  || { echo "AoNW Engine presentation page missing or invalid"; exit 1; }
+	@echo "Checking $(ENGINE_DOCS_API_HEALTH_URL)"
+	@curl -fsS --max-time 5 "$(ENGINE_DOCS_API_HEALTH_URL)" \
+	  | rg -F 'data-current-crate="aonw_engine"' >/dev/null \
+	  || { echo "AoNW Engine Rust API documentation missing or invalid"; exit 1; }
 
 health-downloads:
 	@set -e; \

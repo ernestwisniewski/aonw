@@ -85,6 +85,8 @@ make rust-determinism-check
 
 ## Documentation
 
+- [Public Rust API documentation](https://engine.aonw.net/)
+- [Interactive engine architecture](https://engine.aonw.net/architecture)
 - [Migration and cutover model](../docs/rust-engine-migration.md)
 - [Migration inventory](migration/README.md)
 - [Architecture decisions](../docs/adr/README.md)

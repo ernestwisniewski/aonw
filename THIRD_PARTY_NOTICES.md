@@ -13,6 +13,8 @@ Each dependency remains under its upstream license.
 
 ## Fonts
 
+- Albert Sans variable font under `assets/fonts/`, distributed under the SIL
+  Open Font License 1.1 included as `assets/fonts/AlbertSans-OFL.txt`.
 - Cinzel font files under `assets/fonts/`.
 - Lato font files under `assets/fonts/`.
 

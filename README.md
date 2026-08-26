@@ -13,7 +13,8 @@ A Rust engine is being introduced incrementally under `engine/`. It already powe
 | Destination | Link |
 | --- | --- |
 | Website | [aonw.net](https://aonw.net/) |
-| Architecture | [Interactive map](https://aonw.net/architecture) |
+| Architecture | [Interactive Rust engine map](https://engine.aonw.net/architecture) |
+| Rust engine | [4X engine and API documentation](https://engine.aonw.net/) |
 | Devlog | [ernest.dev](https://ernest.dev) |
 | GitHub | [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw) |
 | iOS | [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591) |
