@@ -14,6 +14,7 @@ mod diplomacy;
 mod diplomacy_policy;
 mod economy;
 mod movement;
+mod outcome;
 mod production;
 mod research;
 mod state_digest;
@@ -34,12 +35,12 @@ pub use application::{
     DiplomaticScoreChangedEvent, DomainEvent, DomainRejection, DomainTransition,
     DomainTransitionParts, DominationThresholdReachedEvent, EventBudget, ExecutionEvidence,
     FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand, LogisticsExecution,
-    MapObjectiveSecuredEvent, MerchantRouteAssignedEvent, MerchantTravelQueuedEvent, PlayerCommand,
-    PlayerKickedEvent, PlayerTimedOutEvent, ProcessorRequirement, QueryResult,
-    ResearchPointsGainedEvent, StabilityBand, StabilityBandChangedEvent, SystemCommand,
-    TechnologyResearchedEvent, TroopDetachedEvent, TurnCommand, TurnEndedEvent,
-    TurnKernelCapabilities, TurnKernelExecution, TurnProcessor, WonderProductionRefundedEvent,
-    WorkerCompletedJobEvent, WorkerJobCompletion,
+    MapObjectiveSecuredEvent, MatchEndedEvent, MerchantRouteAssignedEvent,
+    MerchantTravelQueuedEvent, PlayerCommand, PlayerKickedEvent, PlayerTimedOutEvent,
+    ProcessorRequirement, QueryResult, ResearchPointsGainedEvent, StabilityBand,
+    StabilityBandChangedEvent, SystemCommand, TechnologyResearchedEvent, TroopDetachedEvent,
+    TurnCommand, TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
+    WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use artifact::{
     ArtifactError, StartArtifactExcavationCommand, StoreArtifactInCityCommand, TradeArtifactCommand,
@@ -79,6 +80,7 @@ pub use movement::{
     UnitLogisticsOptionsQuery, UnitMovedEvent, UnitMovementExecution, maximum_movement_units,
     terrain_entry_cost,
 };
+pub use outcome::{OutcomeResolutionError, calculate_empire_scores, resolve_game_outcome};
 pub use production::{
     CitySpecializationOption, ProductionError, ProductionOption, ProductionOptions,
     ProductionOptionsQuery, RushProductionCommand, SetCitySpecializationCommand,

@@ -10,6 +10,8 @@ use crate::{ContentHash, ScienceBalance, TechnologyCostBalance, TechnologyDefini
 
 mod diplomacy;
 pub use diplomacy::DiplomacyBalance;
+mod outcome;
+pub use outcome::OutcomeBalance;
 mod worker;
 pub use worker::{WorkerBalance, WorkerImprovementDefinition, WorkerYield};
 
@@ -85,6 +87,7 @@ pub struct UnitDefinition {
     kind: UnitKindValue,
     maximum_movement_units: u32,
     artifact_movement_units: u32,
+    score_value: u32,
     capabilities: UnitCapabilities,
     combat: CombatStats,
 }
@@ -104,6 +107,11 @@ impl UnitDefinition {
     #[must_use]
     pub const fn combat(self) -> CombatStats {
         self.combat
+    }
+    /// Returns the base empire-score value of one surviving unit.
+    #[must_use]
+    pub const fn score_value(self) -> u32 {
+        self.score_value
     }
     /// Returns movement allowance for the current carried-artifact state.
     #[must_use]
@@ -259,6 +267,7 @@ pub struct RulesetDefinition {
     city: CityBalance,
     diplomacy: DiplomacyBalance,
     economy: EconomyBalance,
+    outcome: OutcomeBalance,
     production: ProductionBalance,
     worker: WorkerBalance,
     city_name_sets: &'static [CityNameSet],
@@ -309,6 +318,12 @@ impl RulesetDefinition {
     #[must_use]
     pub const fn economy(&self) -> EconomyBalance {
         self.economy
+    }
+
+    /// Returns immutable empire-score balance.
+    #[must_use]
+    pub const fn outcome(&self) -> OutcomeBalance {
+        self.outcome
     }
 
     /// Returns immutable production costs, requirements, and effects.

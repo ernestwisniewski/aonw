@@ -151,6 +151,7 @@ fn state_json(revision: u64, posture: &str, movement_units: u32) -> Value {
         "dominationHoldTurnsByPlayerId": {},
         "culturalVictoryHoldTurnsByPlayerId": {},
         "mapObjectiveHoldStates": [],
+        "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
         "transportNetwork": []
     })
 }

@@ -6,9 +6,9 @@ pub use error::GameStateBuildError;
 
 use crate::{
     ArtifactId, City, CityId, CombatState, Diplomacy, EconomyState, FieldImprovement, FogOfWar,
-    HexCoord, HexGridBounds, InfrastructureState, InteractionState, KnowledgeState, MatchLifecycle,
-    ObjectiveState, PlayerId, ResearchState, StateRevision, TransportNetwork, Unit, UnitId,
-    WonderRegistry, WorldArtifact,
+    GameOutcome, HexCoord, HexGridBounds, InfrastructureState, InteractionState, KnowledgeState,
+    MatchLifecycle, ObjectiveState, PlayerId, ResearchState, StateRevision, TransportNetwork, Unit,
+    UnitId, WonderRegistry, WorldArtifact,
 };
 use validation::{
     artifact_indices, city_indices, unit_indices, validate_artifacts, validate_environment,
@@ -44,6 +44,7 @@ pub struct GameState {
     knowledge: KnowledgeState,
     combat: CombatState,
     objectives: ObjectiveState,
+    outcome: GameOutcome,
     bounds: HexGridBounds,
     occupancy_policy: UnitOccupancyPolicy,
     units: Box<[Unit]>,
@@ -69,6 +70,7 @@ pub struct GameStateBuilder {
     knowledge: KnowledgeState,
     combat: CombatState,
     objectives: ObjectiveState,
+    outcome: GameOutcome,
     bounds: HexGridBounds,
     occupancy_policy: UnitOccupancyPolicy,
     units: Vec<Unit>,
@@ -96,6 +98,7 @@ impl GameStateBuilder {
             knowledge: KnowledgeState::default(),
             combat: CombatState::default(),
             objectives: ObjectiveState::default(),
+            outcome: GameOutcome::default(),
             bounds,
             occupancy_policy,
             units: units.into_iter().collect(),
@@ -135,6 +138,12 @@ impl GameStateBuilder {
     /// Replaces the default objective-progress section.
     pub fn with_objectives(mut self, value: ObjectiveState) -> Self {
         self.objectives = value;
+        self
+    }
+
+    /// Replaces the default ongoing match result.
+    pub fn with_outcome(mut self, value: GameOutcome) -> Self {
+        self.outcome = value;
         self
     }
 
@@ -226,6 +235,9 @@ impl GameStateBuilder {
         self.objectives
             .validate_for(self.match_lifecycle.identity())
             .map_err(GameStateBuildError::InvalidObjectives)?;
+        self.outcome
+            .validate_for(self.match_lifecycle.identity())
+            .map_err(GameStateBuildError::InvalidOutcome)?;
         Ok(GameState {
             revision: self.revision,
             turn: self.turn,
@@ -234,6 +246,7 @@ impl GameStateBuilder {
             knowledge: self.knowledge,
             combat: self.combat,
             objectives: self.objectives,
+            outcome: self.outcome,
             bounds: self.bounds,
             occupancy_policy: self.occupancy_policy,
             units: self.units.into_boxed_slice(),
@@ -321,6 +334,11 @@ impl GameState {
     #[must_use]
     pub const fn objectives(&self) -> &ObjectiveState {
         &self.objectives
+    }
+    /// Returns the persisted authoritative match result.
+    #[must_use]
+    pub const fn outcome(&self) -> &GameOutcome {
+        &self.outcome
     }
     /// Returns logical map bounds.
     #[must_use]
@@ -417,6 +435,7 @@ impl GameState {
             knowledge: self.knowledge,
             combat: self.combat,
             objectives: self.objectives,
+            outcome: self.outcome,
             bounds: self.bounds,
             occupancy_policy: self.occupancy_policy,
             units: self.units.into_vec(),

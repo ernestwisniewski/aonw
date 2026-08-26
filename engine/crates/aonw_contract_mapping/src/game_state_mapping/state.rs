@@ -21,6 +21,7 @@ use super::match_lifecycle::{decode_match_lifecycle, encode_match_lifecycle};
 use super::objective::{
     decode_objectives, encode_cultural, encode_domination, encode_map_objectives,
 };
+use super::outcome::{decode_outcome, encode_game_outcome};
 use super::research::{decode_knowledge, encode_research, encode_wonder_registry};
 use super::unit::{decode_unit, encode_unit};
 use super::world::{decode_fog, encode_fog};
@@ -87,6 +88,7 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         dto.cultural_victory_hold_turns_by_player_id,
         dto.map_objective_hold_states,
     )?;
+    let outcome = decode_outcome(match_lifecycle.identity(), dto.outcome)?;
     let infrastructure = decode_infrastructure_state(
         match_lifecycle.identity(),
         bounds,
@@ -109,6 +111,7 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
     .with_knowledge(knowledge)
     .with_combat(combat)
     .with_objectives(objectives)
+    .with_outcome(outcome)
     .with_cities(cities)
     .with_artifacts(artifacts)
     .with_interaction(interaction)
@@ -231,6 +234,7 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
         domination_hold_turns_by_player_id: encode_domination(state.objectives()),
         cultural_victory_hold_turns_by_player_id: encode_cultural(state.objectives()),
         map_objective_hold_states: encode_map_objectives(state.objectives()),
+        outcome: encode_game_outcome(state.outcome()),
         transport_network: state
             .transport_network()
             .segments()

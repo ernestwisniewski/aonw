@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto};
+use crate::{CoordinateDto, GameOutcomeDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto};
 
 use super::MapViewDto;
 
@@ -207,6 +207,8 @@ pub struct PlayerViewSnapshotDto {
     pub stamp: ClientSessionStampDto,
     /// Authoritative turn number.
     pub turn: u32,
+    /// Persisted authoritative match result.
+    pub outcome: GameOutcomeDto,
     /// Recipient-owned lifecycle status and aggregate submission progress.
     pub turn_lifecycle: PlayerTurnLifecycleViewDto,
     /// Action currently awaiting input from this recipient.
@@ -277,6 +279,8 @@ pub struct PlayerViewPatchDto {
     pub to_revision: u64,
     /// Replacement lifecycle projection when turn/readiness changed.
     pub turn_lifecycle: Option<PlayerTurnLifecycleViewDto>,
+    /// Replacement match result when it changed.
+    pub outcome: Option<GameOutcomeDto>,
     /// New or changed visible units.
     pub upserted_units: Vec<PlayerUnitViewDto>,
     /// Units no longer visible.

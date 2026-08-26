@@ -8,6 +8,8 @@ mod wire;
 pub enum ClientCommandRejectionCodeDto {
     /// Command was planned against another canonical revision.
     StaleRevision,
+    /// The authoritative match result is already terminal.
+    MatchFinished,
     /// The requested unit does not exist.
     UnitNotFound,
     /// The actor cannot command the requested unit.
@@ -292,8 +294,9 @@ pub enum ClientCommandRejectionCodeDto {
 }
 impl ClientCommandRejectionCodeDto {
     /// Every code supported by the current client protocol.
-    pub const ALL: [Self; 140] = [
+    pub const ALL: [Self; 141] = [
         Self::StaleRevision,
+        Self::MatchFinished,
         Self::UnitNotFound,
         Self::UnitNotControlled,
         Self::UnitUnavailable,

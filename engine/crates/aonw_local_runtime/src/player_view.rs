@@ -159,6 +159,7 @@ pub enum PendingActionView {
 pub struct PlayerViewSnapshot {
     stamp: SessionStamp,
     turn: u32,
+    outcome: aonw_domain::GameOutcome,
     turn_lifecycle: PlayerTurnLifecycleView,
     pending_action: Option<PendingActionView>,
     city_founding_draft: Option<CityFoundingDraftView>,
@@ -176,6 +177,7 @@ impl PlayerViewSnapshot {
         Self {
             stamp,
             turn: state.turn(),
+            outcome: state.outcome().clone(),
             turn_lifecycle: PlayerTurnLifecycleView::new(state, actor),
             pending_action: pending_action(state, actor),
             city_founding_draft: city_founding_draft(state, actor),
@@ -197,6 +199,11 @@ impl PlayerViewSnapshot {
     #[must_use]
     pub const fn turn(&self) -> u32 {
         self.turn
+    }
+    /// Returns the persisted authoritative match result.
+    #[must_use]
+    pub const fn outcome(&self) -> &aonw_domain::GameOutcome {
+        &self.outcome
     }
     /// Returns recipient-owned lifecycle and aggregate submission progress.
     #[must_use]

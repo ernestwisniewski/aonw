@@ -203,6 +203,7 @@
       "resourceTradeAgreements": [],
       "revision": 4,
       "rows": 3,
+      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
@@ -439,6 +440,7 @@
       "resourceTradeAgreements": [],
       "revision": 3,
       "rows": 3,
+      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {

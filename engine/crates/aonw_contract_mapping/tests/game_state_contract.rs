@@ -11,21 +11,24 @@ use aonw_contracts::{
     DiplomaticMessageTopicDto, DiplomaticProposalDto, DiplomaticProposalKindDto,
     DiplomaticRelationChangeReasonDto, DiplomaticRelationDto, DiplomaticRelationStatusDto,
     DiplomaticScoreChangeReasonDto, DiplomaticScoreEntryDto, EconomyStateDto, FieldImprovementDto,
-    FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto, GameStateDto,
-    InitialResourceDistributionDto, InitialResourcePlacementDto, IntendedAttackDto,
-    InteractionStateDto, MapObjectiveHoldStateDto, MatchIdentityDto, MatchRulesDto,
-    MovementStepDto, PaceProfileDto, ParticipantDto, PendingInteractionDto, PlayerCountryDto,
-    PlayerFogDto, PlayerKindDto, PlayerPairDto, PlayerResearchStateDto, PlayerTurnStateDto,
-    QueuedMovePathDto, ResearchStateDto, ResourceTradeAgreementDto, ResourceTypeDto, RuleValueDto,
-    StrategicResourceStockpileDto, TechnologyIdDto, TransportConditionDto, TransportSegmentDto,
-    TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto,
-    UnitOccupancyPolicyDto, UnitPostureDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto,
-    WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
+    FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto,
+    GameOutcomeConditionDto, GameOutcomeDto, GameStateDto, InitialResourceDistributionDto,
+    InitialResourcePlacementDto, IntendedAttackDto, InteractionStateDto, MapObjectiveHoldStateDto,
+    MatchIdentityDto, MatchRulesDto, MovementStepDto, PaceProfileDto, ParticipantDto,
+    PendingInteractionDto, PlayerCountryDto, PlayerFogDto, PlayerKindDto, PlayerPairDto,
+    PlayerResearchStateDto, PlayerTurnStateDto, QueuedMovePathDto, ResearchStateDto,
+    ResourceTradeAgreementDto, ResourceTypeDto, RuleValueDto, StrategicResourceStockpileDto,
+    TechnologyIdDto, TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto,
+    TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto,
+    UnitPostureDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{FogVisibility, HexCoord, PlayerId, PlayerPair, UnitId};
 
 #[path = "game_state_contract/numeric_invariant_contract.rs"]
 mod numeric_invariant_contract;
+#[path = "game_state_contract/outcome_contract.rs"]
+mod outcome_contract;
 
 fn contract() -> GameStateDto {
     GameStateDto {
@@ -121,6 +124,11 @@ fn contract() -> GameStateDto {
         domination_hold_turns_by_player_id: domination_holds(),
         cultural_victory_hold_turns_by_player_id: cultural_holds(),
         map_objective_hold_states: map_objective_holds(),
+        outcome: GameOutcomeDto {
+            condition: GameOutcomeConditionDto::Ongoing,
+            winner_player_id: None,
+            score_by_player_id: BTreeMap::new(),
+        },
         transport_network: transport_network(),
     }
 }

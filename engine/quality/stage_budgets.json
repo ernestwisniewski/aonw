@@ -21,7 +21,7 @@
     "maxEventsPerCommand": 1,
     "maxMeasuredPayloadBytes": 167475,
     "maxMeasuredAllocations": 22468,
-    "maxMeasuredAllocatedBytes": 3128740,
+    "maxMeasuredAllocatedBytes": 3128748,
     "maxWorkCounters": {
       "frontierPops": 5971,
       "expandedTiles": 5970,
@@ -63,9 +63,9 @@
       "timeout-invalid-scope-rejected"
     ],
     "maxEventsPerCommand": 4,
-    "maxMeasuredPayloadBytes": 210635,
-    "maxMeasuredAllocations": 25234,
-    "maxMeasuredAllocatedBytes": 4514505,
+    "maxMeasuredPayloadBytes": 210896,
+    "maxMeasuredAllocations": 30009,
+    "maxMeasuredAllocatedBytes": 5103233,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -100,7 +100,7 @@
     "maxEventsPerCommand": 2,
     "maxMeasuredPayloadBytes": 1,
     "maxMeasuredAllocations": 5291,
-    "maxMeasuredAllocatedBytes": 6601209,
+    "maxMeasuredAllocatedBytes": 6601241,
     "maxWorkCounters": {
       "frontierPops": 1200,
       "expandedTiles": 1200,
@@ -130,9 +130,9 @@
       "technology-modifiers"
     ],
     "maxEventsPerCommand": 7,
-    "maxMeasuredPayloadBytes": 2174,
-    "maxMeasuredAllocations": 139205,
-    "maxMeasuredAllocatedBytes": 100466370,
+    "maxMeasuredPayloadBytes": 2428,
+    "maxMeasuredAllocations": 143563,
+    "maxMeasuredAllocatedBytes": 101053680,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -215,8 +215,8 @@
     ],
     "maxEventsPerCommand": 1200,
     "maxMeasuredPayloadBytes": 1,
-    "maxMeasuredAllocations": 16866,
-    "maxMeasuredAllocatedBytes": 7382001,
+    "maxMeasuredAllocations": 17996,
+    "maxMeasuredAllocatedBytes": 7900718,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 1200,
@@ -227,6 +227,44 @@
     "soakIterations": 20,
     "workloadPrefixes": [
       "engine/worker_"
+    ]
+  },
+  "O9": {
+    "target": "rust-integrated-turn-check",
+    "capabilities": [
+      "GameOutcome",
+      "MatchEnded",
+      "MatchFinished"
+    ],
+    "fixtureIds": [
+      "bounded-full-game-reopen-every-turn",
+      "bounded-terminal-soak",
+      "conquest-before-score",
+      "cultural-distinct-artifacts",
+      "domination-before-cultural",
+      "domination-tied-candidates",
+      "exact-empire-scoring",
+      "match-finished-rejection",
+      "score-draw-tie",
+      "score-unique-winner",
+      "single-participant-ongoing",
+      "terminal-save-reopen-replay"
+    ],
+    "maxEventsPerCommand": 5,
+    "maxMeasuredPayloadBytes": 210896,
+    "maxMeasuredAllocations": 30009,
+    "maxMeasuredAllocatedBytes": 5103233,
+    "maxWorkCounters": {
+      "frontierPops": 0,
+      "expandedTiles": 0,
+      "examinedEdges": 0,
+      "heapPushes": 0,
+      "routeRecords": 0
+    },
+    "soakIterations": 20,
+    "workloadPrefixes": [
+      "runtime/runtime_turn_timeout_finalization",
+      "runtime/turn_replay_verify"
     ]
   }
 }

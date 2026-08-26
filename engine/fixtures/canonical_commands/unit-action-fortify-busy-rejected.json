@@ -95,6 +95,7 @@
       "resourceTradeAgreements": [],
       "revision": 75,
       "rows": 1,
+      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
@@ -291,6 +292,7 @@
       "resourceTradeAgreements": [],
       "revision": 75,
       "rows": 1,
+      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {

@@ -11,6 +11,7 @@ mod infrastructure;
 mod interaction;
 mod match_lifecycle;
 mod objective;
+mod outcome;
 mod research;
 
 pub use artifact::{WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto};
@@ -43,6 +44,7 @@ pub use match_lifecycle::{
 pub use objective::{
     CulturalVictoryHoldTurnsDto, DominationHoldTurnsDto, MapObjectiveHoldStateDto,
 };
+pub use outcome::{GameOutcomeConditionDto, GameOutcomeDto};
 pub use research::{PlayerResearchStateDto, ResearchStateDto, TechnologyIdDto, WonderRegistryDto};
 
 #[allow(missing_docs)]
@@ -71,6 +73,7 @@ pub struct GameStateDto {
     pub domination_hold_turns_by_player_id: DominationHoldTurnsDto,
     pub cultural_victory_hold_turns_by_player_id: CulturalVictoryHoldTurnsDto,
     pub map_objective_hold_states: Vec<MapObjectiveHoldStateDto>,
+    pub outcome: GameOutcomeDto,
     pub transport_network: Vec<TransportSegmentDto>,
 }
 
@@ -283,7 +286,7 @@ mod tests {
 
     #[test]
     fn strict_codec_rejects_missing_unknown_and_duplicate_fields() {
-        let unknown = r#"{"revision":0,"turn":0,"matchIdentity":{"matchRules":{"gameLength":{"kind":"unlimited","targetMinutes":null,"turnLimit":null,"paceProfile":"unlimited","scoreFallbackEnabled":false},"victory":{"conquestEnabled":true,"dominationEnabled":true,"dominationControlPercent":60,"dominationHoldTurns":5,"scoreFallbackEnabled":false,"turnLimit":null,"hardTimeLimitMinutes":null,"culturalEnabled":true,"culturalRequiredArtifacts":6,"culturalHoldTurns":5},"balance":{}},"participants":[],"gameMode":"hotSeat"},"turnLifecycle":{"turnStatesByPlayerId":{},"requiredSubmissionPlayerIds":[],"submittedPlayerIds":[],"timeoutStreaksByPlayerId":{},"afkPlayerIds":[],"kickedPlayerIds":[],"turnStartedAt":null},"economy":{"playerGold":{},"playerWarWeariness":{},"playerStabilityNet":{},"strategicResources":{},"initialResourceDistribution":{"seed":0,"placements":[]}},"research":{"players":{}},"wonderRegistry":{},"intendedAttacks":[],"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"fieldImprovements":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomacy":{"contacts":[],"relations":[],"pendingProposals":[],"messages":[],"scoreHistory":[]},"resourceTradeAgreements":[],"dominationHoldTurnsByPlayerId":{},"culturalVictoryHoldTurnsByPlayerId":{},"mapObjectiveHoldStates":[],"transportNetwork":[],"extra":true}"#;
+        let unknown = r#"{"revision":0,"turn":0,"matchIdentity":{"matchRules":{"gameLength":{"kind":"unlimited","targetMinutes":null,"turnLimit":null,"paceProfile":"unlimited","scoreFallbackEnabled":false},"victory":{"conquestEnabled":true,"dominationEnabled":true,"dominationControlPercent":60,"dominationHoldTurns":5,"scoreFallbackEnabled":false,"turnLimit":null,"hardTimeLimitMinutes":null,"culturalEnabled":true,"culturalRequiredArtifacts":6,"culturalHoldTurns":5},"balance":{}},"participants":[],"gameMode":"hotSeat"},"turnLifecycle":{"turnStatesByPlayerId":{},"requiredSubmissionPlayerIds":[],"submittedPlayerIds":[],"timeoutStreaksByPlayerId":{},"afkPlayerIds":[],"kickedPlayerIds":[],"turnStartedAt":null},"economy":{"playerGold":{},"playerWarWeariness":{},"playerStabilityNet":{},"strategicResources":{},"initialResourceDistribution":{"seed":0,"placements":[]}},"research":{"players":{}},"wonderRegistry":{},"intendedAttacks":[],"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"fieldImprovements":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomacy":{"contacts":[],"relations":[],"pendingProposals":[],"messages":[],"scoreHistory":[]},"resourceTradeAgreements":[],"dominationHoldTurnsByPlayerId":{},"culturalVictoryHoldTurnsByPlayerId":{},"mapObjectiveHoldStates":[],"outcome":{"condition":"ongoing","winnerPlayerId":null,"scoreByPlayerId":{}},"transportNetwork":[],"extra":true}"#;
         assert!(GameStateDto::from_json(unknown, 4096).is_err());
         let duplicate = unknown.replace(",\"extra\":true", "").replacen(
             "\"revision\":0",

@@ -5,6 +5,7 @@ use aonw_engine::CommandRejectionCode;
 pub(super) const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto {
     match value {
         CommandRejectionCode::StaleRevision => ClientCommandRejectionCodeDto::StaleRevision,
+        CommandRejectionCode::MatchFinished => ClientCommandRejectionCodeDto::MatchFinished,
         CommandRejectionCode::UnitNotFound => ClientCommandRejectionCodeDto::UnitNotFound,
         CommandRejectionCode::UnitNotControlled => ClientCommandRejectionCodeDto::UnitNotControlled,
         CommandRejectionCode::UnitUnavailable => ClientCommandRejectionCodeDto::UnitUnavailable,

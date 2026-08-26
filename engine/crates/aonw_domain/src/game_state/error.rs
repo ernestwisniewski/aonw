@@ -1,7 +1,7 @@
 use crate::{
     ArtifactId, CityBuildError, CityId, CombatStateValidationError, DiplomacyStateBuildError,
-    EconomyStateBuildError, HexCoord, InfrastructureValidationError, KnowledgeStateValidationError,
-    ObjectiveStateBuildError, PlayerId, UnitId,
+    EconomyStateBuildError, GameOutcomeBuildError, HexCoord, InfrastructureValidationError,
+    KnowledgeStateValidationError, ObjectiveStateBuildError, PlayerId, UnitId,
 };
 
 /// Failure raised while constructing the canonical simulation aggregate.
@@ -148,6 +148,8 @@ pub enum GameStateBuildError {
     InvalidDiplomacy(DiplomacyStateBuildError),
     /// Victory-progress state violates participant or sparse-value invariants.
     InvalidObjectives(ObjectiveStateBuildError),
+    /// Persisted match result violates condition or participant invariants.
+    InvalidOutcome(GameOutcomeBuildError),
 }
 
 impl core::fmt::Display for GameStateBuildError {
@@ -295,6 +297,7 @@ impl core::fmt::Display for GameStateBuildError {
             Self::InvalidCombat(error) => error.fmt(formatter),
             Self::InvalidDiplomacy(error) => error.fmt(formatter),
             Self::InvalidObjectives(error) => error.fmt(formatter),
+            Self::InvalidOutcome(error) => error.fmt(formatter),
         }
     }
 }

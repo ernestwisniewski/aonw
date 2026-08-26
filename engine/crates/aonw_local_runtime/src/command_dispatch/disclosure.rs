@@ -127,7 +127,8 @@ impl RecipientDisclosure {
             DomainEvent::MerchantTravelQueued(value) => self.allows_unit(value.unit_id()),
             DomainEvent::TroopDetached(value) => self.allows_unit(value.source_unit_id()),
             DomainEvent::WorkerCompletedJob(value) => self.allows_unit(value.unit_id()),
-            DomainEvent::DominationThresholdReached(_)
+            DomainEvent::MatchEnded(_)
+            | DomainEvent::DominationThresholdReached(_)
             | DomainEvent::TurnEnded(_)
             | DomainEvent::AllPlayersSubmitted(_)
             | DomainEvent::PlayerTimedOut(_)

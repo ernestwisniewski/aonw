@@ -2,8 +2,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use aonw_content::{ContentHash, MapDefinition};
 use aonw_domain::{
-    Diplomacy, EconomyState, FogOfWar, GameState, InteractionState, MatchLifecycle, ObjectiveState,
-    PendingInteraction, PlayerId, PlayerTurnState, TurnLifecycle, UnitPosture, UtcTimestamp,
+    Diplomacy, EconomyState, FogOfWar, GameOutcome, GameState, InteractionState, MatchLifecycle,
+    ObjectiveState, PendingInteraction, PlayerId, PlayerTurnState, TurnLifecycle, UnitPosture,
+    UtcTimestamp,
 };
 
 use crate::{
@@ -238,7 +239,7 @@ pub(crate) fn processor_is_required(
                 ..
             }) if owns_scope(owner_player_id)
         ),
-        TurnProcessor::Economy => !player_ids.is_empty(),
+        TurnProcessor::Economy | TurnProcessor::Outcome => !player_ids.is_empty(),
         TurnProcessor::Research => {
             state.research().players().iter().any(|(player, research)| {
                 owns_scope(player)
@@ -343,6 +344,7 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
     fog_of_war: Option<FogOfWar>,
     diplomacy: Option<Diplomacy>,
     objectives: Option<ObjectiveState>,
+    outcome: Option<GameOutcome>,
     interaction: InteractionStateUpdate,
     events: Box<[DomainEvent]>,
     processors: [TurnProcessor; PROCESSORS],
@@ -367,6 +369,7 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
     let economy = economy.unwrap_or_else(|| state.economy().clone());
     let diplomacy = diplomacy.unwrap_or_else(|| state.diplomacy().clone());
     let objectives = objectives.unwrap_or_else(|| state.objectives().clone());
+    let outcome = outcome.unwrap_or_else(|| state.outcome().clone());
     let interaction = match interaction {
         InteractionStateUpdate::Preserve => state.interaction().clone(),
         InteractionStateUpdate::Replace(value) => value,
@@ -381,6 +384,7 @@ pub(super) fn apply_update<const PROCESSORS: usize>(
             fog_of_war,
             diplomacy,
             objectives,
+            outcome,
             interaction,
         })
         .map_err(CanonicalEngineError::State)?;

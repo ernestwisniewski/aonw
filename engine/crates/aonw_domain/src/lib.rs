@@ -22,6 +22,7 @@ mod match_lifecycle;
 mod movement_path;
 mod movement_units;
 mod objective;
+mod outcome;
 mod research;
 mod shared;
 mod transport;
@@ -74,6 +75,7 @@ pub use match_lifecycle::{
 pub use movement_path::{MovementPathError, MovementStep, QueuedMovePath};
 pub use movement_units::MovementUnits;
 pub use objective::{MapObjectiveHoldState, ObjectiveState, ObjectiveStateBuildError};
+pub use outcome::{GameOutcome, GameOutcomeBuildError, GameOutcomeCondition};
 pub use research::{
     KnowledgeState, KnowledgeStateValidationError, PlayerResearchState,
     PlayerResearchStateBuildError, ResearchState, ResearchTransitionError, TechnologyId,

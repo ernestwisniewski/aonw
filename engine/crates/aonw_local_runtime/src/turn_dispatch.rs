@@ -141,6 +141,7 @@ fn dispatch_system(
     let before_context = replay_context(session, None);
     let before_revision = session.state().revision().get();
     let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
+    let before_outcome = session.state().outcome().clone();
     let before_diplomacy = diplomacy_view(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
     let before_city_view = visible_cities(session.state(), session.actor());
@@ -163,6 +164,7 @@ fn dispatch_system(
     let (after_improvements, after_roads) =
         visible_infrastructure(session.state(), session.actor());
     let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
+    let after_outcome = session.state().outcome().clone();
     let after_diplomacy = diplomacy_view(session.state(), session.actor());
     let after_pending = pending_action(session.state(), session.actor());
     let recipient_disclosure = RecipientDisclosure::new(
@@ -181,21 +183,21 @@ fn dispatch_system(
             session.state().revision().get(),
             ProjectedView::new(
                 before_turn,
+                before_outcome,
                 before_diplomacy,
                 before_view,
                 before_city_view,
                 before_artifacts,
-                before_improvements,
-                before_roads,
+                (before_improvements, before_roads),
             ),
             ProjectedView::new(
                 after_turn,
+                after_outcome,
                 after_diplomacy,
                 after_view,
                 after_city_view,
                 after_artifacts,
-                after_improvements,
-                after_roads,
+                (after_improvements, after_roads),
             ),
             after_pending,
             city_founding_draft(session.state(), session.actor()),

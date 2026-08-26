@@ -23,6 +23,8 @@ use aonw_local_runtime::{
 mod economy;
 #[path = "turn_kernel_runtime/objective.rs"]
 mod objective;
+#[path = "turn_kernel_runtime/outcome.rs"]
+mod outcome;
 
 #[test]
 fn player_and_system_records_replay_with_exact_lifecycle_and_offsets() {

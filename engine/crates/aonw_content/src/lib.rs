@@ -29,7 +29,7 @@ pub use model::{
 };
 pub use ruleset::{
     BuildingProductionDefinition, CityBalance, CityNameSet, DiplomacyBalance, EconomyBalance,
-    EconomyYield, ProductionBalance, ProductionRequirement, RulesetDefinition,
+    EconomyYield, OutcomeBalance, ProductionBalance, ProductionRequirement, RulesetDefinition,
     StabilityModifierDefinition, StabilityValues, StrategicResourceCost, UnitCapabilities,
     UnitDefinition, UnitMovementDomainValue, UnitProductionDefinition, WonderProductionDefinition,
     WorkerBalance, WorkerImprovementDefinition, WorkerYield,

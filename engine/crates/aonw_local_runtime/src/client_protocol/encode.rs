@@ -134,6 +134,10 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
         from_revision: value.from_revision,
         to_revision: value.to_revision,
         turn_lifecycle: value.turn_lifecycle.map(turn_lifecycle),
+        outcome: value
+            .outcome
+            .as_ref()
+            .map(aonw_contract_mapping::encode_game_outcome),
         upserted_units: value.upserted_units.iter().map(unit).collect(),
         removed_unit_ids: value
             .removed_unit_ids

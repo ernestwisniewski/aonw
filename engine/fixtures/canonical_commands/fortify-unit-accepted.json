@@ -140,6 +140,7 @@
       "dominationHoldTurnsByPlayerId": {},
       "culturalVictoryHoldTurnsByPlayerId": {},
       "mapObjectiveHoldStates": [],
+      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
       "transportNetwork": []
     },
     "command": {
@@ -251,6 +252,7 @@
       "dominationHoldTurnsByPlayerId": {},
       "culturalVictoryHoldTurnsByPlayerId": {},
       "mapObjectiveHoldStates": [],
+      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
       "transportNetwork": []
     },
     "events": [],

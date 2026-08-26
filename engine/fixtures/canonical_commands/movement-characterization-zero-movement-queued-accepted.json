@@ -162,6 +162,7 @@
       ],
       "revision": 226,
       "rows": 1,
+      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
@@ -444,6 +445,7 @@
       ],
       "revision": 225,
       "rows": 1,
+      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {

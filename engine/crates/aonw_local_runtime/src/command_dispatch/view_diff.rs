@@ -1,6 +1,6 @@
 use core::cmp::Ordering;
 
-use aonw_domain::{ArtifactId, CityId, HexCoord, UnitId};
+use aonw_domain::{ArtifactId, CityId, GameOutcome, HexCoord, UnitId};
 
 use crate::player_view::{
     CityFoundingDraftView, PendingActionView, PlayerArtifactView, PlayerCityView,
@@ -17,6 +17,8 @@ pub struct PlayerViewPatch {
     pub to_revision: u64,
     /// Replacement turn projection when lifecycle state changed.
     pub turn_lifecycle: Option<PlayerTurnLifecycleView>,
+    /// Replacement authoritative match result when it changed.
+    pub outcome: Option<GameOutcome>,
     /// New or changed visible units.
     pub upserted_units: Box<[PlayerUnitView]>,
     /// Units no longer visible.
@@ -47,6 +49,7 @@ pub struct PlayerViewPatch {
 
 pub(crate) struct ProjectedView {
     turn: PlayerTurnLifecycleView,
+    outcome: GameOutcome,
     diplomacy: PlayerDiplomacyView,
     units: Vec<PlayerUnitView>,
     cities: Vec<PlayerCityView>,
@@ -58,15 +61,17 @@ pub(crate) struct ProjectedView {
 impl ProjectedView {
     pub(crate) fn new(
         turn: PlayerTurnLifecycleView,
+        outcome: GameOutcome,
         diplomacy: PlayerDiplomacyView,
         units: Vec<PlayerUnitView>,
         cities: Vec<PlayerCityView>,
         artifacts: Vec<PlayerArtifactView>,
-        field_improvements: Vec<PlayerFieldImprovementView>,
-        roads: Vec<PlayerRoadView>,
+        infrastructure: (Vec<PlayerFieldImprovementView>, Vec<PlayerRoadView>),
     ) -> Self {
+        let (field_improvements, roads) = infrastructure;
         Self {
             turn,
+            outcome,
             diplomacy,
             units,
             cities,
@@ -99,6 +104,7 @@ pub(crate) fn diff_view(
     );
     let before_turn = before.turn;
     let after_turn = after.turn;
+    let outcome = (before.outcome != after.outcome).then_some(after.outcome);
     let diplomacy = (before.diplomacy != after.diplomacy).then_some(after.diplomacy);
     let before_cities = before.cities;
     let after_cities = after.cities;
@@ -145,6 +151,7 @@ pub(crate) fn diff_view(
         from_revision,
         to_revision,
         turn_lifecycle: (before_turn != after_turn).then_some(after_turn),
+        outcome,
         upserted_units: upserted_units.into_boxed_slice(),
         removed_unit_ids: removed_unit_ids.into_boxed_slice(),
         upserted_cities,
@@ -266,7 +273,7 @@ fn diff_cities(
 
 #[cfg(test)]
 mod tests {
-    use aonw_domain::{HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind};
+    use aonw_domain::{GameOutcome, HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind};
 
     use super::{ProjectedView, diff_view};
     use crate::player_view::{PlayerDiplomacyView, PlayerTurnLifecycleView, PlayerUnitView};
@@ -282,21 +289,21 @@ mod tests {
             5,
             ProjectedView::new(
                 turn,
+                GameOutcome::ongoing(),
                 PlayerDiplomacyView::default(),
                 before,
                 Vec::new(),
                 Vec::new(),
-                Vec::new(),
-                Vec::new(),
+                (Vec::new(), Vec::new()),
             ),
             ProjectedView::new(
                 turn,
+                GameOutcome::ongoing(),
                 PlayerDiplomacyView::default(),
                 after,
                 Vec::new(),
                 Vec::new(),
-                Vec::new(),
-                Vec::new(),
+                (Vec::new(), Vec::new()),
             ),
             None,
             None,

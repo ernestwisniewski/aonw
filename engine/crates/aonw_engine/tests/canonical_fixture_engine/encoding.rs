@@ -92,6 +92,10 @@ pub(super) fn encode_event(event: &DomainEvent) -> ReplayEventDto {
         DomainEvent::StabilityBandChanged(value) => economy_encoding::stability_changed(value),
         DomainEvent::MapObjectiveSecured(value) => objective_encoding::map_secured(value),
         DomainEvent::DominationThresholdReached(value) => objective_encoding::domination(value),
+        DomainEvent::MatchEnded(value) => ReplayEventDto::MatchEnded {
+            turn: value.turn(),
+            outcome: aonw_contract_mapping::encode_game_outcome(value.outcome()),
+        },
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
             ReplayEventDto::UnitAttacked {
                 attacker_unit_id,

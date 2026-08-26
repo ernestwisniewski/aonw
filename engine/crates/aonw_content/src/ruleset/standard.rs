@@ -8,6 +8,10 @@ use super::{
     UnitMovementDomainValue, UnitOccupancyPolicyValue,
 };
 
+mod units;
+
+pub(super) use units::STANDARD_UNITS;
+
 const fn names(country: PlayerCountryValue, values: &'static [&'static str]) -> CityNameSet {
     CityNameSet {
         country,
@@ -41,6 +45,7 @@ const fn stats(
 const fn unit(
     kind: UnitKindValue,
     points: u32,
+    score_value: u32,
     capabilities: UnitCapabilities,
     combat: CombatStats,
 ) -> UnitDefinition {
@@ -48,6 +53,7 @@ const fn unit(
         kind,
         maximum_movement_units: points * MovementUnits::PER_POINT,
         artifact_movement_units: 2 * MovementUnits::PER_POINT,
+        score_value,
         capabilities,
         combat,
     }
@@ -109,6 +115,7 @@ pub(super) static STANDARD_RULESET: RulesetDefinition = RulesetDefinition {
     },
     diplomacy: super::DiplomacyBalance::STANDARD,
     economy: EconomyBalance::STANDARD,
+    outcome: super::OutcomeBalance::STANDARD,
     production: ProductionBalance::STANDARD,
     worker: super::WorkerBalance::STANDARD,
     city_name_sets: &STANDARD_CITY_NAMES,
@@ -396,105 +403,5 @@ const STANDARD_CITY_NAMES: [CityNameSet; 24] = [
         &[
             "Athens", "Sparta", "Corinth", "Thebes", "Argos", "Rhodes", "Delphi", "Knossos",
         ],
-    ),
-];
-
-pub(super) const STANDARD_UNITS: [UnitDefinition; 17] = [
-    unit(
-        UnitKindValue::Commander,
-        5,
-        LAND_MILITARY,
-        stats(1, 1, 8, 1, 2),
-    ),
-    unit(
-        UnitKindValue::Warrior,
-        3,
-        LAND_MILITARY,
-        stats(4, 3, 10, 1, 1),
-    ),
-    unit(
-        UnitKindValue::Archer,
-        3,
-        LAND_MILITARY,
-        stats(3, 1, 7, 2, 1),
-    ),
-    unit(
-        UnitKindValue::Settler,
-        3,
-        LAND_CIVILIAN,
-        stats(0, 1, 1, 1, 1),
-    ),
-    unit(
-        UnitKindValue::Worker,
-        3,
-        LAND_CIVILIAN,
-        stats(0, 1, 1, 1, 1),
-    ),
-    unit(
-        UnitKindValue::Merchant,
-        3,
-        caps(UnitMovementDomainValue::Land, PRODUCIBLE | TRADE),
-        stats(0, 1, 1, 1, 1),
-    ),
-    unit(UnitKindValue::Scout, 3, LAND_RECON, stats(1, 1, 5, 1, 3)),
-    unit(
-        UnitKindValue::Spearman,
-        3,
-        LAND_MILITARY,
-        stats(3, 5, 10, 1, 1),
-    ),
-    unit(
-        UnitKindValue::Cavalry,
-        5,
-        LAND_MILITARY,
-        stats(6, 3, 10, 1, 3),
-    ),
-    unit(
-        UnitKindValue::Catapult,
-        2,
-        LAND_MILITARY,
-        stats(7, 1, 7, 2, 1),
-    ),
-    unit(
-        UnitKindValue::HeavyInfantry,
-        3,
-        LAND_MILITARY,
-        stats(7, 6, 13, 1, 1),
-    ),
-    unit(
-        UnitKindValue::FieldCannon,
-        2,
-        LAND_MILITARY,
-        stats(10, 2, 8, 2, 1),
-    ),
-    unit(
-        UnitKindValue::Rifleman,
-        3,
-        LAND_MILITARY,
-        stats(8, 7, 11, 1, 1),
-    ),
-    unit(
-        UnitKindValue::Tank,
-        5,
-        LAND_MILITARY,
-        stats(13, 9, 16, 1, 3),
-    ),
-    unit(
-        UnitKindValue::ScoutShip,
-        5,
-        NAVAL_RECON,
-        stats(3, 3, 8, 1, 3),
-    ),
-    unit(
-        UnitKindValue::Warship,
-        5,
-        NAVAL_MILITARY,
-        stats(10, 7, 14, 2, 2),
-    ),
-    unit(
-        UnitKindValue::ReconPlane,
-        7,
-        AIR_RECON,
-        stats(1, 3, 6, 3, 5),
     ),
 ];

@@ -12,8 +12,8 @@ pub use game_state_mapping::{
     GameStateMappingError, canonicalize_game_state, decode_city_building, decode_city_project,
     decode_city_specialization, decode_city_wonder, decode_game_state, decode_improvement,
     decode_resource, decode_technology, decode_troop, encode_city_building, encode_city_project,
-    encode_city_specialization, encode_city_wonder, encode_game_state, encode_improvement,
-    encode_resource, encode_technology, encode_troop,
+    encode_city_specialization, encode_city_wonder, encode_game_outcome, encode_game_state,
+    encode_improvement, encode_resource, encode_technology, encode_troop,
 };
 
 use aonw_contracts::{

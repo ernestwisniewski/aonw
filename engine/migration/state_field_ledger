@@ -34,7 +34,7 @@
 
 expected-fixture-count 120
 expected-envelope-count 10
-expected-envelope-field-count 92
+expected-envelope-field-count 95
 expected-domain-field-count 30
 expected-state-json-key-count 16
 expected-lifecycle-json-key-count 13
@@ -102,6 +102,7 @@ envelope-field rust-canonical-state resourceTradeAgreements canonical-rule-state
 envelope-field rust-canonical-state dominationHoldTurnsByPlayerId canonical-rule-state
 envelope-field rust-canonical-state culturalVictoryHoldTurnsByPlayerId canonical-rule-state
 envelope-field rust-canonical-state mapObjectiveHoldStates canonical-rule-state
+envelope-field rust-canonical-state outcome canonical-rule-state
 envelope-field rust-canonical-state transportNetwork canonical-rule-state
 
 envelope-field rust-save mapId immutable-content-identity
@@ -133,6 +134,7 @@ envelope-field rust-session-stamp rulesetHash immutable-content-identity
 
 envelope-field rust-recipient-snapshot stamp authoritative-identity
 envelope-field rust-recipient-snapshot turn recipient-view
+envelope-field rust-recipient-snapshot outcome recipient-view
 envelope-field rust-recipient-snapshot turnLifecycle recipient-view
 envelope-field rust-recipient-snapshot pendingAction recipient-view
 envelope-field rust-recipient-snapshot cityFoundingDraft recipient-view
@@ -146,6 +148,7 @@ envelope-field rust-recipient-snapshot roads recipient-view
 envelope-field rust-recipient-patch fromRevision authoritative-identity
 envelope-field rust-recipient-patch toRevision authoritative-identity
 envelope-field rust-recipient-patch turnLifecycle recipient-view
+envelope-field rust-recipient-patch outcome recipient-view
 envelope-field rust-recipient-patch upsertedUnits recipient-view
 envelope-field rust-recipient-patch removedUnitIds recipient-view
 envelope-field rust-recipient-patch upsertedCities recipient-view

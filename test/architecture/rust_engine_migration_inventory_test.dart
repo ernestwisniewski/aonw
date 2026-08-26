@@ -69,7 +69,7 @@ void main() {
   test('migration manifest closes queries, events, and evidence', () {
     expect(manifest.queryEntries, hasLength(12));
     expect(manifest.eventEntries, hasLength(40));
-    expect(manifest.nativeEventEntries, hasLength(4));
+    expect(manifest.nativeEventEntries, hasLength(5));
     expect(manifest.evidenceEntries, hasLength(1));
     expect(manifest.nativeEvidenceEntries, hasLength(4));
 
@@ -236,6 +236,7 @@ void main() {
         'CityBuiltBuildingEvent': 'runtime-ready',
         'CityBuiltWonderEvent': 'runtime-ready',
         'CityCapturedEvent': 'runtime-ready',
+        'CityClaimedHexEvent': 'runtime-ready',
         'CityDestroyedEvent': 'runtime-ready',
         'CityFoundedEvent': 'runtime-ready',
         'CityProducedUnitEvent': 'runtime-ready',
@@ -256,6 +257,7 @@ void main() {
         'UnitMovedEvent': 'engine-parity',
         'UnitRetreatedEvent': 'runtime-ready',
         'ResearchPointsGainedEvent': 'runtime-ready',
+        'StabilityBandChangedEvent': 'runtime-ready',
         'TechnologyResearchedEvent': 'runtime-ready',
         'WonderProductionRefundedEvent': 'runtime-ready',
         'WorkerCompletedJobEvent': 'runtime-ready',

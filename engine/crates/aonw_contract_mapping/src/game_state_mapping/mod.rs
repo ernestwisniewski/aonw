@@ -8,6 +8,7 @@ mod infrastructure;
 mod interaction;
 mod match_lifecycle;
 mod objective;
+mod outcome;
 mod research;
 mod state;
 mod unit;
@@ -20,6 +21,7 @@ pub use city::{
 };
 pub use economy::{decode_resource, encode_resource};
 pub use error::GameStateMappingError;
+pub use outcome::encode_game_outcome;
 pub use research::{decode_technology, encode_technology};
 pub use state::{canonicalize_game_state, decode_game_state, encode_game_state};
 pub use value::{decode_improvement, decode_troop, encode_improvement, encode_troop};

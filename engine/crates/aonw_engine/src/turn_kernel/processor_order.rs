@@ -1,6 +1,6 @@
 use crate::TurnProcessor;
 
-pub(super) const SEQUENTIAL_TURN_PROCESSORS: [TurnProcessor; 16] = [
+pub(super) const SEQUENTIAL_TURN_PROCESSORS: [TurnProcessor; 17] = [
     TurnProcessor::Lifecycle,
     TurnProcessor::CityFounding,
     TurnProcessor::WorkerJobs,
@@ -17,9 +17,10 @@ pub(super) const SEQUENTIAL_TURN_PROCESSORS: [TurnProcessor; 16] = [
     TurnProcessor::Diplomacy,
     TurnProcessor::Agreements,
     TurnProcessor::Objectives,
+    TurnProcessor::Outcome,
 ];
 
-pub(super) const SIMULTANEOUS_TURN_PROCESSORS: [TurnProcessor; 18] = [
+pub(super) const SIMULTANEOUS_TURN_PROCESSORS: [TurnProcessor; 19] = [
     TurnProcessor::Submission,
     TurnProcessor::Lifecycle,
     TurnProcessor::Combat,
@@ -38,4 +39,5 @@ pub(super) const SIMULTANEOUS_TURN_PROCESSORS: [TurnProcessor; 18] = [
     TurnProcessor::Diplomacy,
     TurnProcessor::Agreements,
     TurnProcessor::Objectives,
+    TurnProcessor::Outcome,
 ];

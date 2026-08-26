@@ -1,7 +1,7 @@
 use aonw_content::ContentHash;
 use aonw_domain::GameState;
 
-use super::{DomainTransition, ExecutionEvidence};
+use super::{CommandRejectionCode, DomainTransition, ExecutionEvidence};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
 use crate::{
     AssignMerchantTradeRouteCommand, AssignWorkerToHexCommand, AttackHexCommand,
@@ -125,6 +125,14 @@ impl GameEngine {
         command: PlayerCommand<'_>,
     ) -> Result<DomainTransition, CanonicalEngineError> {
         let (map_hash, ruleset_hash) = content_hashes(context)?;
+        if state.outcome().is_terminal() {
+            return Ok(DomainTransition::rejected(
+                state,
+                CommandRejectionCode::MatchFinished,
+                map_hash,
+                ruleset_hash,
+            ));
+        }
         let map = context.map();
         match command {
             PlayerCommand::DeclareWar(command) => {

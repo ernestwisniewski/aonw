@@ -100,7 +100,7 @@ impl PlayerCommand<'_> {
                         .saturating_add(diplomacy)
                         .saturating_add(objectives)
                         .saturating_add(economy)
-                        .saturating_add(2),
+                        .saturating_add(3),
                 )
             }
             Self::SubmitTurn(_) => {
@@ -125,7 +125,7 @@ impl PlayerCommand<'_> {
                         .saturating_add(diplomacy)
                         .saturating_add(objectives)
                         .saturating_add(economy)
-                        .saturating_add(1),
+                        .saturating_add(2),
                 )
             }
         }

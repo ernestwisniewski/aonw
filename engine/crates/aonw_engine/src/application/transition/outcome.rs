@@ -12,7 +12,7 @@ use crate::{
     DiplomaticMessageRespondedEvent, DiplomaticMessageSentEvent, DiplomaticPromiseBrokenEvent,
     DiplomaticProposalExpiredEvent, DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent,
     DiplomaticRelationChangedEvent, DominationThresholdReachedEvent, MapObjectiveSecuredEvent,
-    StabilityBandChangedEvent,
+    MatchEndedEvent, StabilityBandChangedEvent,
 };
 
 /// Ordered event emitted by an accepted transition.
@@ -46,6 +46,8 @@ pub enum DomainEvent {
     MapObjectiveSecured(MapObjectiveSecuredEvent),
     /// One player started a domination-threshold hold.
     DominationThresholdReached(DominationThresholdReachedEvent),
+    /// Authoritative turn processing produced a terminal match result.
+    MatchEnded(MatchEndedEvent),
     /// One unit changed map position.
     UnitMoved(UnitMovedEvent),
     /// Auto-exploration selected an engine-owned target.

@@ -20,6 +20,7 @@ pub(in crate::client_protocol) fn snapshot(value: &PlayerViewSnapshot) -> Player
     PlayerViewSnapshotDto {
         stamp: stamp(*value.stamp()),
         turn: value.turn(),
+        outcome: aonw_contract_mapping::encode_game_outcome(value.outcome()),
         turn_lifecycle: turn_lifecycle(*value.turn_lifecycle()),
         pending_action: value.pending_action().map(pending_action),
         city_founding_draft: value.city_founding_draft().map(founding_draft),

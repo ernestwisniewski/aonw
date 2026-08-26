@@ -55,7 +55,7 @@ fn artifact_turn_phase_decrements_then_completes_in_owner_scope() {
 
     let completed = GameEngine::apply_player_owned(
         state_with_active(
-            vec![excavator],
+            vec![excavator, unit("foreign", &p2, HexCoord::new(3, 0))],
             Vec::new(),
             vec![excavation(1)],
             None,

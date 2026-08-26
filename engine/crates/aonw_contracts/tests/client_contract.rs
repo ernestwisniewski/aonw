@@ -1,5 +1,7 @@
 //! Golden and strict-boundary tests for the shared current client protocol.
 
+use std::collections::BTreeMap;
+
 use aonw_contracts::client::{
     AutoExploreOptionDto, CLIENT_API_VERSION, ClientCommandDto, ClientCommandOutcomeDto,
     ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto, ClientEventDto,
@@ -10,7 +12,8 @@ use aonw_contracts::client::{
     PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
 };
 use aonw_contracts::{
-    CoordinateDto, FieldImprovementKindDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
+    CoordinateDto, FieldImprovementKindDto, GameOutcomeConditionDto, GameOutcomeDto,
+    PlayerTurnStateDto, UnitKindDto, UnitPostureDto,
 };
 
 #[path = "client_contract/artifact.rs"]
@@ -60,6 +63,11 @@ fn player_snapshot() -> PlayerViewSnapshotDto {
     PlayerViewSnapshotDto {
         stamp: stamp(),
         turn: 7,
+        outcome: GameOutcomeDto {
+            condition: GameOutcomeConditionDto::Ongoing,
+            winner_player_id: None,
+            score_by_player_id: BTreeMap::new(),
+        },
         turn_lifecycle: PlayerTurnLifecycleViewDto {
             own_state: Some(PlayerTurnStateDto::Active),
             own_submitted: false,
@@ -102,6 +110,7 @@ fn command_result() -> ClientCommandResultDto {
             from_revision: 7,
             to_revision: 8,
             turn_lifecycle: None,
+            outcome: None,
             upserted_units: vec![unit()],
             removed_unit_ids: Vec::new(),
             upserted_cities: Vec::new(),

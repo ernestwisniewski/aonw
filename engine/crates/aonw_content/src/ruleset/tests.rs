@@ -30,13 +30,54 @@ fn standard_ruleset_owns_movement_balance_and_capabilities() {
 }
 
 #[test]
+fn standard_ruleset_owns_exact_outcome_balance() {
+    let ruleset = RulesetDefinition::standard();
+    let balance = ruleset.outcome();
+    assert_eq!(balance.city_score(), 40);
+    assert_eq!(balance.population_score(), 12);
+    assert_eq!(balance.territory_hex_score(), 3);
+    assert_eq!(balance.building_score(), 8);
+    assert_eq!(balance.technology_score(), 18);
+    assert_eq!(balance.improvement_score(), 5);
+    assert_eq!(balance.experience_point_divisor(), 5);
+    assert_eq!(balance.gold_divisor(), 50);
+    assert_eq!(balance.maximum_gold_score(), 200);
+
+    let score_values = [
+        (UnitKind::Commander, 30),
+        (UnitKind::Warrior, 15),
+        (UnitKind::Archer, 17),
+        (UnitKind::Settler, 18),
+        (UnitKind::Worker, 12),
+        (UnitKind::Merchant, 14),
+        (UnitKind::Scout, 10),
+        (UnitKind::Spearman, 18),
+        (UnitKind::Cavalry, 24),
+        (UnitKind::Catapult, 25),
+        (UnitKind::HeavyInfantry, 30),
+        (UnitKind::FieldCannon, 35),
+        (UnitKind::Rifleman, 38),
+        (UnitKind::Tank, 50),
+        (UnitKind::ScoutShip, 20),
+        (UnitKind::Warship, 40),
+        (UnitKind::ReconPlane, 36),
+    ];
+    for (kind, score) in score_values {
+        assert_eq!(
+            ruleset.unit(kind).expect("unit definition").score_value(),
+            score
+        );
+    }
+}
+
+#[test]
 fn standard_ruleset_hash_is_stable() {
     let first = RulesetDefinition::standard().content_hash().expect("hash");
     let second = RulesetDefinition::standard().content_hash().expect("hash");
     assert_eq!(first, second);
     assert_eq!(
         first.to_string(),
-        "be738c07e23ed8b2ffb6f67bd331c166ee87b838b655f88b51d0fca902ff9938"
+        "c8bec5b750ded25f60e989dd0e87c6a1a1a7ab87914d574aea830856441ad7ed"
     );
 }
 

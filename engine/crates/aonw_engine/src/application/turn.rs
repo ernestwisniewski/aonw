@@ -168,7 +168,7 @@ impl SystemCommand<'_> {
                         .saturating_add(objectives)
                         .saturating_add(city_count)
                         .saturating_add(player_count)
-                        .saturating_add(1),
+                        .saturating_add(2),
                 )
             }
             Self::KickParticipant(_) => EventBudget::new(1),
@@ -215,6 +215,8 @@ pub enum TurnProcessor {
     Agreements,
     /// Victory and map-objective progression.
     Objectives,
+    /// Authoritative match-outcome resolution.
+    Outcome,
 }
 
 /// Whether one processor is needed by the exact turn scope and available in
@@ -252,6 +254,7 @@ impl TurnProcessor {
             Self::Research => "research",
             Self::Agreements => "agreements",
             Self::Objectives => "objectives",
+            Self::Outcome => "outcome",
         }
     }
 
@@ -280,7 +283,7 @@ impl TurnKernelCapabilities {
     /// Capability label used by current fixtures and runtime clients.
     pub const LABEL: &'static str = "turn-kernel-ready";
     /// Full canonical phase order.
-    pub const ORDERED: [TurnProcessor; 18] = [
+    pub const ORDERED: [TurnProcessor; 19] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
@@ -299,9 +302,10 @@ impl TurnKernelCapabilities {
         TurnProcessor::Diplomacy,
         TurnProcessor::Agreements,
         TurnProcessor::Objectives,
+        TurnProcessor::Outcome,
     ];
     /// Processors executed by the current kernel.
-    pub const ENABLED: [TurnProcessor; 18] = [
+    pub const ENABLED: [TurnProcessor; 19] = [
         TurnProcessor::Submission,
         TurnProcessor::Lifecycle,
         TurnProcessor::Combat,
@@ -320,6 +324,7 @@ impl TurnKernelCapabilities {
         TurnProcessor::Diplomacy,
         TurnProcessor::Agreements,
         TurnProcessor::Objectives,
+        TurnProcessor::Outcome,
     ];
     /// Unsupported processors; empty once the integrated kernel is complete.
     pub const DISABLED: [TurnProcessor; 0] = [];
@@ -347,6 +352,7 @@ impl TurnKernelCapabilities {
                 | TurnProcessor::Diplomacy
                 | TurnProcessor::Agreements
                 | TurnProcessor::Objectives
+                | TurnProcessor::Outcome
         )
     }
 }

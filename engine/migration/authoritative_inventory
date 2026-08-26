@@ -46,7 +46,7 @@ expected-domain-count 39
 expected-system-count 2
 expected-query-count 12
 expected-event-count 40
-expected-native-event-count 4
+expected-native-event-count 5
 expected-evidence-count 1
 expected-native-evidence-count 4
 expected-projection-type-count 14
@@ -167,6 +167,7 @@ event WorkerCompletedJobEvent turn runtime-ready WorkerCompletedJob packages/aon
 native-event AutoExplorePlannedEvent movement runtime-ready AutoExplorePlanned engine/crates/aonw_engine/src/application/logistics.rs
 native-event MerchantRouteAssignedEvent movement runtime-ready MerchantRouteAssigned engine/crates/aonw_engine/src/application/logistics.rs
 native-event MerchantTravelQueuedEvent movement runtime-ready MerchantTravelQueued engine/crates/aonw_engine/src/application/logistics.rs
+native-event MatchEndedEvent outcome runtime-ready MatchEnded engine/crates/aonw_engine/src/application/transition/outcome_events.rs
 native-event TroopDetachedEvent movement runtime-ready TroopDetached engine/crates/aonw_engine/src/application/logistics.rs
 
 evidence MovementCommandExecution movement engine-parity UnitMovement packages/aonw_core/lib/game/domain/movement/movement_command_execution.dart

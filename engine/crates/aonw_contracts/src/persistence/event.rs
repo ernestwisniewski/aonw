@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::client::WorkerJobCompletionDto;
 use crate::{
-    CityBuildingTypeDto, CombatTargetDto, CoordinateDto, MapObjectiveTypeDto, StabilityBandDto,
-    TechnologyIdDto, TroopKindDto, UnitKindDto, WonderTypeDto,
+    CityBuildingTypeDto, CombatTargetDto, CoordinateDto, GameOutcomeDto, MapObjectiveTypeDto,
+    StabilityBandDto, TechnologyIdDto, TroopKindDto, UnitKindDto, WonderTypeDto,
 };
 
 /// Ordered authoritative event stored in a replay result.
@@ -160,6 +160,13 @@ pub enum ReplayEventDto {
         hold_turns: u32,
         /// Required consecutive hold count.
         required_hold_turns: u32,
+    },
+    /// Authoritative turn processing ended the match.
+    MatchEnded {
+        /// Turn at which the result became terminal.
+        turn: u32,
+        /// Exact persisted result.
+        outcome: GameOutcomeDto,
     },
     /// A visible attacker engaged a visible target.
     UnitAttacked {

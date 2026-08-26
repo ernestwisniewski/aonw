@@ -7,6 +7,7 @@ impl ClientCommandRejectionCodeDto {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::StaleRevision => "stale_revision",
+            Self::MatchFinished => "match_finished",
             Self::UnitNotFound => "unit_not_found",
             Self::UnitNotControlled => "unit_not_controlled",
             Self::UnitUnavailable => "unit_unavailable",

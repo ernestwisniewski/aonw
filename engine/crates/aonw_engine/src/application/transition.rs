@@ -5,6 +5,7 @@ mod economy_events;
 mod events;
 mod objective_events;
 mod outcome;
+mod outcome_events;
 mod production_events;
 mod rejection_code_wire;
 mod research_events;
@@ -26,6 +27,7 @@ pub use events::{
 };
 pub use objective_events::{DominationThresholdReachedEvent, MapObjectiveSecuredEvent};
 pub use outcome::{DomainEvent, ExecutionEvidence};
+pub use outcome_events::MatchEndedEvent;
 pub use production_events::{
     CityBuiltBuildingEvent, CityBuiltWonderEvent, CityProducedUnitEvent, TechnologyResearchedEvent,
     WonderProductionRefundedEvent,
@@ -37,6 +39,8 @@ pub use research_events::ResearchPointsGainedEvent;
 pub enum CommandRejectionCode {
     /// Command was planned against another canonical revision.
     StaleRevision,
+    /// The authoritative match result is already terminal.
+    MatchFinished,
     /// The requested unit does not exist.
     UnitNotFound,
     /// The actor cannot command the requested unit.

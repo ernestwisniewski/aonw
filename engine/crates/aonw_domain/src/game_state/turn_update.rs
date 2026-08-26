@@ -1,6 +1,7 @@
 use crate::{
-    City, CombatState, Diplomacy, EconomyState, FogOfWar, InfrastructureState, InteractionState,
-    KnowledgeState, MatchLifecycle, ObjectiveState, StateRevision, Unit, WorldArtifact,
+    City, CombatState, Diplomacy, EconomyState, FogOfWar, GameOutcome, InfrastructureState,
+    InteractionState, KnowledgeState, MatchLifecycle, ObjectiveState, StateRevision, Unit,
+    WorldArtifact,
 };
 
 use super::{GameState, GameStateBuildError};
@@ -99,6 +100,8 @@ pub struct TurnKernelStateUpdate {
     pub diplomacy: Diplomacy,
     /// Victory and authored map-objective progress after the turn.
     pub objectives: ObjectiveState,
+    /// Authoritative result after outcome resolution.
+    pub outcome: GameOutcome,
     /// Pending interaction after turn-owned cleanup.
     pub interaction: InteractionState,
 }
@@ -278,6 +281,7 @@ impl GameState {
         builder.fog_of_war = update.fog_of_war;
         builder.diplomacy = update.diplomacy;
         builder.objectives = update.objectives;
+        builder.outcome = update.outcome;
         builder.interaction = update.interaction;
         builder.try_build()
     }

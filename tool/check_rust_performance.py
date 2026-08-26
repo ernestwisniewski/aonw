@@ -210,9 +210,17 @@ def parse_csv(source: str, scope: str, header: list[str]) -> tuple[dict[str, Any
 
 def load_stages(path: Path) -> dict[str, dict[str, Any]]:
     raw = read_json(path, "stage budgets")
-    if not isinstance(raw, dict) or set(raw) != {"E0", "T1", "U2", "C3", "C4", "W5"}:
+    if not isinstance(raw, dict) or set(raw) != {
+        "E0",
+        "T1",
+        "U2",
+        "C3",
+        "C4",
+        "W5",
+        "O9",
+    }:
         raise PerformanceFailure(
-            "stage budgets must contain exactly active stages E0, T1, U2, C3, C4 and W5"
+            "stage budgets must contain exactly active stages E0, T1, U2, C3, C4, W5 and O9"
         )
     expected = {
         "E0": {
@@ -271,6 +279,11 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
                 "SelectWorkerImprovement",
             ],
             "fixtureCount": 17,
+        },
+        "O9": {
+            "target": "rust-integrated-turn-check",
+            "capabilities": ["GameOutcome", "MatchEnded", "MatchFinished"],
+            "fixtureCount": 12,
         },
     }
     stages: dict[str, dict[str, Any]] = {}
@@ -482,6 +495,38 @@ def validate_w5_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("W5 event budget cannot cover the maximum worker turn")
 
 
+def validate_o9_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
+    manifest = read_json(
+        repo_root / "engine/fixtures/outcome/manifest.json",
+        "O9 fixture manifest",
+    )
+    if not isinstance(manifest, dict) or manifest.get("capability") != "outcome-ready":
+        raise PerformanceFailure("O9 fixture manifest capability differs")
+    cases = manifest.get("cases")
+    if not isinstance(cases, list) or sorted(cases) != stage["fixtureIds"]:
+        raise PerformanceFailure("O9 fixture IDs differ from the stage budget")
+    if manifest.get("conditions") != [
+        "conquest",
+        "cultural",
+        "domination",
+        "draw",
+        "ongoing",
+        "resignation",
+        "score",
+    ]:
+        raise PerformanceFailure("O9 outcome condition inventory differs")
+    if manifest.get("events") != ["matchEnded"]:
+        raise PerformanceFailure("O9 event inventory differs")
+    if manifest.get("rejections") != ["match_finished"]:
+        raise PerformanceFailure("O9 rejection inventory differs")
+    if manifest.get("turnProcessors") != ["outcome"]:
+        raise PerformanceFailure("O9 turn processor inventory differs")
+    if manifest.get("clientApiVersion") != 5 or manifest.get("legacyPaths") is not False:
+        raise PerformanceFailure("O9 current-only protocol policy differs")
+    if stage["maxEventsPerCommand"] < 5:
+        raise PerformanceFailure("O9 event budget cannot cover terminal turn resolution")
+
+
 def validate_stages(
     stages: dict[str, dict[str, Any]], stable: dict[str, Any], repo_root: Path
 ) -> None:
@@ -491,6 +536,7 @@ def validate_stages(
     validate_c3_fixtures(stages["C3"], repo_root)
     validate_c4_fixtures(stages["C4"], repo_root)
     validate_w5_fixtures(stages["W5"], repo_root)
+    validate_o9_fixtures(stages["O9"], repo_root)
     for name, stage in stages.items():
         selected = {
             key: workload
@@ -572,7 +618,7 @@ def build_report(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
     validate_stages(stages, stable, repo_root)
     return {
         "provenance": provenance(),
-        "stage": "W5",
+        "stage": "O9",
         "stable": dict(sorted(stable.items())),
         "diagnosticTimings": dict(sorted({**engine_timings, **runtime_timings}.items())),
     }
@@ -622,7 +668,7 @@ def make_snapshot(report: dict[str, Any]) -> dict[str, Any]:
             "cargo": report["provenance"]["cargo"],
             "allocator": report["provenance"]["allocator"],
             "measurement": report["provenance"]["measurement"],
-            "reviewedDate": "2026-08-25",
+            "reviewedDate": "2026-08-26",
         },
         "stage": report["stage"],
         "columns": BASELINE_COLUMNS,

@@ -29,6 +29,8 @@ pub enum CanonicalEngineError {
     Objective(Box<str>),
     /// Economy progression overflowed or produced invalid canonical state.
     Economy(Box<str>),
+    /// Match-outcome resolution overflowed or encountered incomplete content.
+    Outcome(crate::OutcomeResolutionError),
 }
 
 impl core::fmt::Display for CanonicalEngineError {
@@ -47,6 +49,7 @@ impl core::fmt::Display for CanonicalEngineError {
             Self::Research(source) => write!(formatter, "research failed: {source}"),
             Self::Objective(source) => write!(formatter, "objective progression failed: {source}"),
             Self::Economy(source) => write!(formatter, "economy progression failed: {source}"),
+            Self::Outcome(source) => write!(formatter, "outcome resolution failed: {source}"),
         }
     }
 }

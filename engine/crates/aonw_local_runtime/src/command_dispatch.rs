@@ -15,7 +15,6 @@ mod research;
 mod view_diff;
 mod worker;
 
-pub use diplomacy::DiplomacyRequest;
 pub(crate) use diplomacy::dispatch_diplomacy;
 pub(crate) use disclosure::{RecipientDisclosure, visible_city_ids};
 pub use production::ProductionCommandRequest;
@@ -29,6 +28,7 @@ pub(crate) use worker::{
     dispatch_select_worker_improvement, dispatch_worker_unit,
 };
 pub use worker::{WorkerImprovementRequest, WorkerUnitRequest};
+pub use {artifact::ArtifactCommandRequest, diplomacy::DiplomacyRequest};
 
 /// Current revision-bound visible attack.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -429,6 +429,7 @@ pub(crate) fn dispatch_player(
     let before_context = replay_context(session, Some(session.actor()));
     let before_revision = session.state().revision().get();
     let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
+    let before_outcome = session.state().outcome().clone();
     let before_diplomacy = diplomacy_view(session.state(), session.actor());
     let before_view = visible_units(session.state(), session.actor());
     let before_city_view = visible_cities(session.state(), session.actor());
@@ -465,21 +466,21 @@ pub(crate) fn dispatch_player(
         session.state().revision().get(),
         ProjectedView::new(
             before_turn,
+            before_outcome,
             before_diplomacy,
             before_view,
             before_city_view,
             before_artifacts,
-            before_improvements,
-            before_roads,
+            (before_improvements, before_roads),
         ),
         ProjectedView::new(
             after_turn,
+            session.state().outcome().clone(),
             after_diplomacy,
             after_view,
             after_city_view,
             after_artifacts,
-            after_improvements,
-            after_roads,
+            (after_improvements, after_roads),
         ),
         after_pending,
         after_founding_draft,
@@ -496,5 +497,4 @@ pub(crate) fn dispatch_player(
     session.push_replay(replay);
     Ok(result)
 }
-pub use artifact::ArtifactCommandRequest;
 pub(crate) use artifact::dispatch_artifact;

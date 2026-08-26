@@ -7,6 +7,7 @@ mod objective_phase;
 mod preparation;
 mod processor_order;
 mod support;
+mod system;
 mod worker_phase;
 
 use std::collections::BTreeSet;
@@ -17,15 +18,15 @@ use aonw_domain::{GameMode, GameState, PlayerId, PlayerTurnState, UtcTimestamp};
 use crate::movement::{TurnMovementUpdate, advance_turn_movement};
 use crate::{
     CanonicalEngineError, CommandRejectionCode, DomainEvent, DomainTransition, EngineContext,
-    FinalizeTimedOutTurnCommand, GameEngine, KickParticipantCommand, PlayerKickedEvent,
-    SystemCommand, SystemContext, TurnCommand, TurnProcessor,
+    FinalizeTimedOutTurnCommand, KickParticipantCommand, PlayerKickedEvent, SystemContext,
+    TurnCommand, TurnProcessor,
 };
 
 use self::support::{
     InteractionStateUpdate, SequentialProgress, accept_identity, apply_update,
     ordered_submission_scope, rebuild_lifecycle, reject, sequential_progress,
-    simultaneous_lifecycle, system_content_hashes, transition_with_phase_evidence,
-    unsupported_processor_for_scope, valid_system_scope, validate_player_command,
+    simultaneous_lifecycle, transition_with_phase_evidence, unsupported_processor_for_scope,
+    valid_system_scope, validate_player_command,
 };
 use events::{TurnPhaseEvents, sequential_phase_events, simultaneous_phase_events};
 use final_phases::{FinalTurnPhases, advance_final_turn_phases};
@@ -36,29 +37,6 @@ use preparation::{
 use processor_order::{SEQUENTIAL_TURN_PROCESSORS, SIMULTANEOUS_TURN_PROCESSORS};
 
 pub(crate) use support::processor_is_required;
-
-impl GameEngine {
-    /// Applies one host-owned lifecycle command through a boundary that has no player identity.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error only when canonical content or an engine-produced state is invalid.
-    pub fn apply_system_owned(
-        state: GameState,
-        context: SystemContext<'_>,
-        command: SystemCommand<'_>,
-    ) -> Result<DomainTransition, CanonicalEngineError> {
-        let hashes = system_content_hashes(context)?;
-        match command {
-            SystemCommand::FinalizeTimedOutTurn(command) => {
-                apply_timeout_finalization(state, context, command, hashes)
-            }
-            SystemCommand::KickParticipant(command) => {
-                apply_kick(state, command, hashes.0, hashes.1)
-            }
-        }
-    }
-}
 
 pub(crate) fn apply_submit_turn(
     state: GameState,
@@ -100,6 +78,7 @@ pub(crate) fn apply_submit_turn(
             lifecycle,
             None,
             Vec::new(),
+            None,
             None,
             None,
             None,
@@ -216,9 +195,11 @@ fn finish_sequential_turn(
         economy,
         diplomacy,
         objectives,
+        outcome,
         diplomacy_events,
         objective_events,
         stability_events,
+        outcome_events,
     } = advance_final_turn_phases(
         &state,
         context.map(),
@@ -237,6 +218,7 @@ fn finish_sequential_turn(
             diplomacy: diplomacy_events,
             objectives: objective_events,
             stability: stability_events,
+            outcome: outcome_events,
         },
         command.player_id(),
     );
@@ -249,6 +231,7 @@ fn finish_sequential_turn(
         Some(fog_of_war),
         Some(diplomacy),
         Some(objectives),
+        Some(outcome),
         InteractionStateUpdate::Replace(interaction),
         events,
         SEQUENTIAL_TURN_PROCESSORS,
@@ -373,6 +356,7 @@ fn apply_kick(
         None,
         None,
         None,
+        None,
         InteractionStateUpdate::Preserve,
         vec![event].into_boxed_slice(),
         [TurnProcessor::Lifecycle],
@@ -430,9 +414,11 @@ fn finalize_simultaneous(
         economy,
         diplomacy,
         objectives,
+        outcome,
         diplomacy_events,
         objective_events,
         stability_events,
+        outcome_events,
     } = advance_final_turn_phases(
         &preparation.state,
         map,
@@ -455,6 +441,7 @@ fn finalize_simultaneous(
             diplomacy: diplomacy_events,
             objectives: objective_events,
             stability: stability_events,
+            outcome: outcome_events,
         },
     );
     apply_update(
@@ -466,6 +453,7 @@ fn finalize_simultaneous(
         Some(fog_of_war),
         Some(diplomacy),
         Some(objectives),
+        Some(outcome),
         InteractionStateUpdate::Replace(interaction),
         events,
         SIMULTANEOUS_TURN_PROCESSORS,

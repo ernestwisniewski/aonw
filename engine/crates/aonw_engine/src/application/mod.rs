@@ -18,9 +18,9 @@ pub use transition::{
     DiplomaticProposalExpiredEvent, DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent,
     DiplomaticRelationChangedEvent, DiplomaticScoreChangedEvent, DomainEvent, DomainRejection,
     DomainTransition, DomainTransitionParts, DominationThresholdReachedEvent, ExecutionEvidence,
-    MapObjectiveSecuredEvent, PlayerKickedEvent, PlayerTimedOutEvent, ResearchPointsGainedEvent,
-    StabilityBand, StabilityBandChangedEvent, TechnologyResearchedEvent, TurnEndedEvent,
-    WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
+    MapObjectiveSecuredEvent, MatchEndedEvent, PlayerKickedEvent, PlayerTimedOutEvent,
+    ResearchPointsGainedEvent, StabilityBand, StabilityBandChangedEvent, TechnologyResearchedEvent,
+    TurnEndedEvent, WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
 };
 pub use turn::{
     FinalizeTimedOutTurnCommand, KickParticipantCommand, ProcessorRequirement, SystemCommand,
