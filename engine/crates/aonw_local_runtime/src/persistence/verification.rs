@@ -95,6 +95,24 @@ fn verify_segment(
                 found: entry.index,
             });
         }
+        if matches!(entry.record, ReplayRecordDto::Player { .. })
+            && let Some(recorded_actor) = entry.context.actor_player_id.as_deref()
+        {
+            let current_actor = runtime
+                .session_ref()
+                .map_err(PersistenceError::Runtime)?
+                .actor();
+            if current_actor.as_str() != recorded_actor {
+                let recorded_actor = PlayerId::new(recorded_actor.to_owned())
+                    .map_err(PersistenceError::InvalidActor)?;
+                runtime
+                    .handoff_hot_seat_actor(recorded_actor)
+                    .map_err(|_| PersistenceError::ReplayContextMismatch {
+                        segment: segment_index,
+                        entry: entry_index,
+                    })?;
+            }
+        }
         let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
         let context_actor = match &entry.record {
             ReplayRecordDto::Player { .. } => Some(session.actor()),

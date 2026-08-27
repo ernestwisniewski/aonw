@@ -242,7 +242,7 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
                 "TacticalSearchEvidence",
                 "StrategicTurnReport",
             ],
-            "fixtureCount": 33,
+            "fixtureCount": 34,
         },
         "E0": {
             "target": "rust-foundation-check",

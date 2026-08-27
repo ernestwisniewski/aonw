@@ -103,6 +103,14 @@ impl Session {
         self.actor.clone()
     }
 
+    pub(crate) fn handoff_actor(&mut self, actor: PlayerId) {
+        let actor = Arc::new(actor);
+        self.visibility =
+            MovementVisibility::for_player(self.state(), self.world.map(), actor.as_ref());
+        self.projection = ProjectedView::for_recipient(self.state(), actor.clone());
+        self.actor = actor;
+    }
+
     pub(crate) const fn map(&self) -> &MapDefinition {
         self.world.map()
     }

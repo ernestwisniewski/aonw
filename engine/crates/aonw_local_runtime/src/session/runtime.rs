@@ -25,6 +25,9 @@ use crate::{
 };
 
 use super::{OpenSession, OpenSessionError, RuntimeError, Session, SessionStamp};
+
+mod actor_handoff;
+
 /// Mutable owner of at most one local game session.
 #[derive(Clone, Debug, Default)]
 pub struct LocalRuntime {
