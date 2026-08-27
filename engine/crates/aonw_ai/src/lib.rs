@@ -6,8 +6,21 @@
 
 #![forbid(unsafe_code)]
 
+mod actions;
 mod baseline;
+mod budget;
+mod command;
 mod fingerprint;
+mod mcts;
+mod mcts_search;
+mod random_planner;
+mod rng;
 
-pub use baseline::{BaselinePlan, BaselinePlanner, BaselinePlanningOutcome, PlannedCommand};
-pub use fingerprint::PlanFingerprint;
+pub use baseline::{BaselinePlan, BaselinePlanner, BaselinePlanningOutcome};
+pub use budget::{PlanningBudget, PlanningBudgetError};
+pub use command::PlannedCommand;
+pub use fingerprint::{PlanFingerprint, SearchFingerprint};
+pub use mcts::{MctsPlan, MctsPlanner, MctsPlanningOutcome};
+pub use mcts_search::MctsSearchStats;
+pub use random_planner::{RandomPlan, RandomPlanner, RandomPlanningOutcome};
+pub use rng::{AiRng, AiRngDraw, AiRngTrace};

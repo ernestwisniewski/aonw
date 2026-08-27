@@ -2,22 +2,36 @@
   "A10": {
     "target": "rust-ai-check",
     "capabilities": [
+      "AiRng",
       "BaselinePlanner",
-      "PlanFingerprint"
+      "MctsPlanner",
+      "PlanFingerprint",
+      "PlanningBudget",
+      "RandomPlanner",
+      "SearchFingerprint"
     ],
     "fixtureIds": [
+      "ai-rng-oracle-parity",
+      "bounded-mcts-memory",
       "canonical-move-tie-break",
+      "cloned-runtime-rollout",
       "context-identity-replan",
+      "deterministic-mcts-search",
       "deterministic-plan-fingerprint",
+      "deterministic-random-plan",
+      "iteration-node-depth-budget",
+      "multi-turn-ai-replay",
       "one-command-per-revision",
+      "ordered-rng-evidence",
       "public-runtime-execution",
       "recipient-owned-view",
+      "search-fingerprint",
       "stale-plan-rejection"
     ],
     "maxEventsPerCommand": 1,
-    "maxMeasuredPayloadBytes": 32,
-    "maxMeasuredAllocations": 10308,
-    "maxMeasuredAllocatedBytes": 3352113,
+    "maxMeasuredPayloadBytes": 124,
+    "maxMeasuredAllocations": 171932,
+    "maxMeasuredAllocatedBytes": 60115509,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -27,7 +41,7 @@
     },
     "soakIterations": 20,
     "workloadPrefixes": [
-      "ai/baseline_"
+      "ai/"
     ]
   },
   "E0": {

@@ -12,7 +12,7 @@ expected-randomness-count 7
 expected-wall-clock-count 2
 
 randomness combat-turn-xorshift32 rng-class xorshift32 turn+attacker-id+defender-id seed+ordered-rolls runtime-ready CombatRng packages/aonw_core/lib/game/domain/combat/combat_rng.dart CombatRng
-randomness ai-turn-lcg32 rng-class lcg32 base-seed+turn+player-id seed+ordered-draws+final-plan reference-only - packages/aonw_core/lib/ai/ai_rng.dart AiRng
+randomness ai-turn-lcg32 rng-class lcg32 base-seed+turn+player-id seed+ordered-draws+final-plan runtime-ready AiRng packages/aonw_core/lib/ai/ai_rng.dart AiRng
 randomness initial-resource-lcg32 rng-class lcg32 explicit-seed+map+starting-units seed+ordered-draws+ordered-placements reference-only - packages/aonw_core/lib/game/domain/resource/initial_resource_distribution_generator.dart _ResourceDistributionRng
 randomness starting-position-lcg32 rng-class lcg32 explicit-seed+map+participants seed+ordered-draws+ordered-starting-units reference-only - packages/aonw_core/lib/game/domain/unit/starting_units.dart _StartingPositionRng
 randomness starting-position-seed seed-derivation mix32 typed-parts derived-seed reference-only - packages/aonw_core/lib/game/domain/unit/starting_position_seed.dart StartingPositionSeed

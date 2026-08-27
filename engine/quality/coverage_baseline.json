@@ -1,18 +1,25 @@
 {
   "crates": {
     "aonw_ai": {
-      "countedLines": 167,
-      "coveredLines": 163,
+      "countedLines": 859,
+      "coveredLines": 832,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_ai/src/lib.rs"
       ],
       "sourceFiles": [
+        "crates/aonw_ai/src/actions.rs",
         "crates/aonw_ai/src/baseline.rs",
+        "crates/aonw_ai/src/budget.rs",
+        "crates/aonw_ai/src/command.rs",
         "crates/aonw_ai/src/fingerprint.rs",
-        "crates/aonw_ai/src/lib.rs"
+        "crates/aonw_ai/src/lib.rs",
+        "crates/aonw_ai/src/mcts.rs",
+        "crates/aonw_ai/src/mcts_search.rs",
+        "crates/aonw_ai/src/random_planner.rs",
+        "crates/aonw_ai/src/rng.rs"
       ],
-      "uncoveredLines": 4
+      "uncoveredLines": 27
     },
     "aonw_content": {
       "countedLines": 2881,
@@ -244,7 +251,7 @@
     },
     "aonw_engine": {
       "countedLines": 18872,
-      "coveredLines": 17456,
+      "coveredLines": 17458,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_engine/src/application/mod.rs",
@@ -396,7 +403,7 @@
         "crates/aonw_engine/src/worker/score.rs",
         "crates/aonw_engine/src/worker/turn.rs"
       ],
-      "uncoveredLines": 1416
+      "uncoveredLines": 1414
     },
     "aonw_local_runtime": {
       "countedLines": 6458,

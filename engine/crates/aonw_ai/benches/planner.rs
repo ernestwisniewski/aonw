@@ -4,7 +4,10 @@ use std::alloc::System;
 use std::hint::black_box;
 use std::time::Instant;
 
-use aonw_ai::{BaselinePlanner, BaselinePlanningOutcome};
+use aonw_ai::{
+    BaselinePlanner, BaselinePlanningOutcome, MctsPlanner, MctsPlanningOutcome, PlanningBudget,
+    RandomPlanner, RandomPlanningOutcome,
+};
 use aonw_content::{
     GridLayout, MapDefinition, RulesetDefinition, ScenarioDefinition, ScenarioUnitDefinition,
     TerrainType, TileDefinition,
@@ -31,6 +34,12 @@ fn main() {
 
 fn benchmark(unit_count: usize) {
     let base = opened_runtime(unit_count);
+    benchmark_baseline(&base, unit_count);
+    benchmark_random(&base, unit_count);
+    benchmark_mcts(&base, unit_count);
+}
+
+fn benchmark_baseline(base: &LocalRuntime, unit_count: usize) {
     report_with_setup(
         "baseline_plan",
         unit_count,
@@ -64,6 +73,94 @@ fn benchmark(unit_count: usize) {
             )
         },
     );
+}
+
+fn benchmark_random(base: &LocalRuntime, unit_count: usize) {
+    report_with_setup(
+        "random_plan",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let RandomPlanningOutcome::Planned(plan) =
+                RandomPlanner::new(77).plan(&mut runtime).expect("plan")
+            else {
+                panic!("planned command")
+            };
+            (
+                fingerprint_signature(plan.search_fingerprint().as_bytes()),
+                trace_payload(plan.rng_trace().draws().len()),
+            )
+        },
+    );
+    report_with_setup(
+        "random_plan_execute",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let RandomPlanningOutcome::Planned(plan) =
+                RandomPlanner::new(77).plan(&mut runtime).expect("plan")
+            else {
+                panic!("planned command")
+            };
+            let result = plan.execute(&mut runtime).expect("execute");
+            (
+                mix(
+                    fingerprint_signature(plan.search_fingerprint().as_bytes()),
+                    result.stamp.revision.get(),
+                ),
+                trace_payload(plan.rng_trace().draws().len()),
+            )
+        },
+    );
+}
+
+fn benchmark_mcts(base: &LocalRuntime, unit_count: usize) {
+    report_with_setup(
+        "mcts_plan",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let MctsPlanningOutcome::Planned(plan) = MctsPlanner::new(77, mcts_budget())
+                .plan(&mut runtime)
+                .expect("search")
+            else {
+                panic!("planned command")
+            };
+            (
+                fingerprint_signature(plan.search_fingerprint().as_bytes()),
+                trace_payload(plan.rng_trace().draws().len()),
+            )
+        },
+    );
+    report_with_setup(
+        "mcts_plan_execute",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let MctsPlanningOutcome::Planned(plan) = MctsPlanner::new(77, mcts_budget())
+                .plan(&mut runtime)
+                .expect("search")
+            else {
+                panic!("planned command")
+            };
+            let result = plan.execute(&mut runtime).expect("execute");
+            (
+                mix(
+                    fingerprint_signature(plan.search_fingerprint().as_bytes()),
+                    result.stamp.revision.get(),
+                ),
+                trace_payload(plan.rng_trace().draws().len()),
+            )
+        },
+    );
+}
+
+fn mcts_budget() -> PlanningBudget {
+    PlanningBudget::try_new(8, 8, 2).expect("static benchmark budget")
+}
+
+fn trace_payload(draws: usize) -> usize {
+    64_usize.saturating_add(draws.saturating_mul(size_of::<u32>()))
 }
 
 fn report_with_setup<T>(

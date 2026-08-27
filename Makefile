@@ -653,8 +653,9 @@ rust-integrated-turn-check: rust-engine-inventory-check rust-corpus-parity-check
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contract_mapping --test game_state_contract
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts
 
-rust-ai-check: rust-engine-inventory-check rust-performance-check
+rust-ai-check: rust-engine-inventory-check rust-determinism-inventory-check rust-determinism-inventory-test rust-performance-check
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_ai --all-features
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --release -p aonw_ai --test deterministic_search mcts_is_identical_for_the_same_state_seed_and_budget -- --exact
 
 successor-engine-check: rust-tool-versions p0-check rust-check rust-architecture-check rust-dependency-check rust-determinism-check
 

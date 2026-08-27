@@ -227,8 +227,16 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
     expected = {
         "A10": {
             "target": "rust-ai-check",
-            "capabilities": ["BaselinePlanner", "PlanFingerprint"],
-            "fixtureCount": 7,
+            "capabilities": [
+                "AiRng",
+                "BaselinePlanner",
+                "MctsPlanner",
+                "PlanFingerprint",
+                "PlanningBudget",
+                "RandomPlanner",
+                "SearchFingerprint",
+            ],
+            "fixtureCount": 16,
         },
         "E0": {
             "target": "rust-foundation-check",
@@ -539,7 +547,7 @@ def validate_a10_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         repo_root / "engine/fixtures/ai/manifest.json",
         "A10 fixture manifest",
     )
-    if not isinstance(manifest, dict) or manifest.get("capability") != "baseline-planner-ready":
+    if not isinstance(manifest, dict) or manifest.get("capability") != "deterministic-planners-ready":
         raise PerformanceFailure("A10 fixture manifest capability differs")
     cases = manifest.get("cases")
     if not isinstance(cases, list) or sorted(cases) != stage["fixtureIds"]:
@@ -548,6 +556,14 @@ def validate_a10_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("A10 command inventory differs")
     if manifest.get("queries") != ["reachable"]:
         raise PerformanceFailure("A10 query inventory differs")
+    if manifest.get("strategies") != ["baseline", "mcts", "random"]:
+        raise PerformanceFailure("A10 strategy inventory differs")
+    if manifest.get("deterministicBudget") != ["iterations", "maxDepth", "maxNodes"]:
+        raise PerformanceFailure("A10 deterministic budget inventory differs")
+    if manifest.get("randomness") != "ai-turn-lcg32":
+        raise PerformanceFailure("A10 randomness inventory differs")
+    if manifest.get("wallClockBudget") is not False:
+        raise PerformanceFailure("A10 wall-clock budget must remain disabled")
     if manifest.get("legacyPaths") is not False:
         raise PerformanceFailure("A10 greenfield policy differs")
 

@@ -1,14 +1,35 @@
 {
-  "capability": "baseline-planner-ready",
+  "capability": "deterministic-planners-ready",
   "cases": [
+    "ai-rng-oracle-parity",
+    "bounded-mcts-memory",
     "canonical-move-tie-break",
+    "cloned-runtime-rollout",
     "context-identity-replan",
+    "deterministic-mcts-search",
     "deterministic-plan-fingerprint",
+    "deterministic-random-plan",
+    "iteration-node-depth-budget",
+    "multi-turn-ai-replay",
     "one-command-per-revision",
+    "ordered-rng-evidence",
     "public-runtime-execution",
     "recipient-owned-view",
+    "search-fingerprint",
     "stale-plan-rejection"
   ],
+  "strategies": [
+    "baseline",
+    "mcts",
+    "random"
+  ],
+  "deterministicBudget": [
+    "iterations",
+    "maxDepth",
+    "maxNodes"
+  ],
+  "randomness": "ai-turn-lcg32",
+  "wallClockBudget": false,
   "commands": [
     "moveUnit"
   ],

@@ -1,41 +1,8 @@
-use core::cmp::Ordering;
-
-use aonw_domain::{HexCoord, MovementUnits, PlayerId, StateRevision, UnitId};
+use aonw_domain::{PlayerId, StateRevision};
 use aonw_engine::StateDigest;
-use aonw_local_runtime::{
-    CommandResult, LocalRuntime, MoveUnitRequest, PlayerViewSnapshot, ReachableRequest,
-    RuntimeError, RuntimeQuery, RuntimeQueryResult, SessionStamp,
-};
+use aonw_local_runtime::{CommandResult, LocalRuntime, RuntimeError, SessionStamp};
 
-use crate::PlanFingerprint;
-
-/// One standard public runtime command selected by a planner.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum PlannedCommand {
-    /// Revision-bound manual movement selected from `Reachable` query output.
-    MoveUnit(MoveUnitRequest),
-}
-
-impl PlannedCommand {
-    /// Executes the plan through the normal authoritative runtime boundary.
-    ///
-    /// # Errors
-    ///
-    /// Returns the same session or engine error as a client-issued command.
-    pub fn execute(&self, runtime: &mut LocalRuntime) -> Result<CommandResult, RuntimeError> {
-        match self {
-            Self::MoveUnit(request) => runtime.dispatch(request),
-        }
-    }
-
-    /// Returns the revision observed while this command was planned.
-    #[must_use]
-    pub const fn expected_revision(&self) -> u64 {
-        match self {
-            Self::MoveUnit(request) => request.expected_revision,
-        }
-    }
-}
+use crate::{PlanFingerprint, PlannedCommand, actions::best_move_command};
 
 /// One deterministic command and the canonical identity it was planned from.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -143,7 +110,7 @@ impl BaselinePlanner {
             return Ok(BaselinePlanningOutcome::AlreadyPlanned { revision });
         }
 
-        let command = select_move(runtime, &snapshot)?;
+        let command = best_move_command(runtime, &snapshot)?;
         let outcome = command.map_or(
             BaselinePlanningOutcome::NoLegalCommand { revision },
             |command| {
@@ -157,87 +124,4 @@ impl BaselinePlanner {
         self.last_planned_identity = Some(identity);
         Ok(outcome)
     }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct MoveCandidate {
-    unit_id: UnitId,
-    target: HexCoord,
-    distance_to_known_opponent: Option<u64>,
-    cost: MovementUnits,
-}
-
-fn select_move(
-    runtime: &mut LocalRuntime,
-    snapshot: &PlayerViewSnapshot,
-) -> Result<Option<PlannedCommand>, RuntimeError> {
-    let recipient = snapshot.recipient_player_id();
-    let known_opponents = snapshot
-        .units()
-        .iter()
-        .filter(|unit| unit.owner_player_id() != recipient)
-        .map(|unit| HexCoord::new(unit.col(), unit.row()))
-        .chain(
-            snapshot
-                .cities()
-                .iter()
-                .filter(|city| city.owner_player_id() != recipient)
-                .map(aonw_local_runtime::PlayerCityView::center),
-        )
-        .collect::<Vec<_>>();
-    let revision = snapshot.stamp().revision.get();
-    let mut selected: Option<MoveCandidate> = None;
-
-    for unit in snapshot
-        .units()
-        .iter()
-        .filter(|unit| unit.owner_player_id() == recipient && unit.movement_units() > 0)
-    {
-        let origin = HexCoord::new(unit.col(), unit.row());
-        let response = runtime.query(&RuntimeQuery::Reachable(ReachableRequest {
-            expected_revision: revision,
-            unit_id: unit.id().clone(),
-        }))?;
-        let RuntimeQueryResult::Reachable(reachable) = response else {
-            unreachable!("reachable query returns reachable response")
-        };
-        for tile in reachable
-            .tiles
-            .iter()
-            .filter(|tile| tile.coordinate != origin)
-        {
-            let candidate = MoveCandidate {
-                unit_id: unit.id().clone(),
-                target: tile.coordinate,
-                distance_to_known_opponent: known_opponents
-                    .iter()
-                    .map(|target| tile.coordinate.distance_to(*target))
-                    .min(),
-                cost: tile.cost,
-            };
-            if selected
-                .as_ref()
-                .is_none_or(|current| compare_candidates(&candidate, current).is_lt())
-            {
-                selected = Some(candidate);
-            }
-        }
-    }
-
-    Ok(selected.map(|candidate| {
-        PlannedCommand::MoveUnit(MoveUnitRequest {
-            expected_revision: revision,
-            unit_id: candidate.unit_id,
-            target: candidate.target,
-        })
-    }))
-}
-
-fn compare_candidates(left: &MoveCandidate, right: &MoveCandidate) -> Ordering {
-    left.distance_to_known_opponent
-        .unwrap_or(u64::MAX)
-        .cmp(&right.distance_to_known_opponent.unwrap_or(u64::MAX))
-        .then_with(|| left.cost.cmp(&right.cost))
-        .then_with(|| left.unit_id.cmp(&right.unit_id))
-        .then_with(|| left.target.cmp(&right.target))
 }
