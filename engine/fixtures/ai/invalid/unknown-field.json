@@ -1,0 +1,15 @@
+{
+  "capability": "feature-complete-command-policy",
+  "cases": [],
+  "strategies": [],
+  "productionDefault": "strategic",
+  "randomTestOnly": true,
+  "deterministicBudget": [],
+  "randomness": "ai-turn-lcg32",
+  "wallClockBudget": false,
+  "commands": [],
+  "queries": [],
+  "clientApiVersion": 5,
+  "legacyPaths": false,
+  "compatibilityReader": true
+}

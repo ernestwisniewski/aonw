@@ -13,7 +13,7 @@ use crate::persistence::{replay_context, replay_entry};
 use crate::session::Session;
 
 /// Revision-bound `EndTurn` or `SubmitTurn` request from the local authenticated actor.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct TurnCommandRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,

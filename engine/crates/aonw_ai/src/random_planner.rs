@@ -13,7 +13,7 @@ use crate::{
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RandomPlan {
     stamp: SessionStamp,
-    command: PlannedCommand,
+    command: aonw_local_runtime::MoveUnitRequest,
     fingerprint: PlanFingerprint,
     search_fingerprint: SearchFingerprint,
     rng_trace: AiRngTrace,
@@ -34,8 +34,8 @@ impl RandomPlan {
 
     /// Returns the standard runtime command selected by the planner.
     #[must_use]
-    pub const fn command(&self) -> &PlannedCommand {
-        &self.command
+    pub fn command(&self) -> PlannedCommand {
+        PlannedCommand::MoveUnit(self.command.clone())
     }
 
     /// Returns the stable state/command identity shared by all planners.
@@ -62,7 +62,7 @@ impl RandomPlan {
     ///
     /// Returns the same session or engine error as a client-issued command.
     pub fn execute(&self, runtime: &mut LocalRuntime) -> Result<CommandResult, RuntimeError> {
-        self.command.execute(runtime)
+        runtime.dispatch(&self.command)
     }
 }
 
@@ -111,9 +111,9 @@ impl RandomPlanner {
         let mut rng = initial_rng;
         let mut draws = Vec::with_capacity(1);
         let selected = draw_index(&mut rng, maximum, &mut draws);
-        let command = candidates[selected].command.clone();
+        let command = candidates[selected].request().clone();
         let rng_trace = AiRngTrace::new(initial_rng.state(), rng.state(), draws);
-        let fingerprint = PlanFingerprint::for_command(stamp, recipient, &command);
+        let fingerprint = PlanFingerprint::for_move(stamp, recipient, &command);
         let search_fingerprint = SearchFingerprint::for_search(SearchFingerprintInput {
             stamp,
             recipient,

@@ -11,7 +11,7 @@ pub use errors::{
 
 /// Stable identity of one technology in the current ruleset.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum TechnologyId {
     Agriculture,
     Woodworking,

@@ -26,7 +26,7 @@ pub enum DiplomaticRelationChangeReason {
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum DiplomaticProposalKind {
     Friendship,
     Truce,
@@ -44,7 +44,7 @@ pub enum DiplomaticMessageCategory {
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum DiplomaticMessageTopic {
     TroopsNearCities,
     CitiesTooClose,
@@ -72,7 +72,7 @@ impl DiplomaticMessageTopic {
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum DiplomaticMessageResponse {
     Conciliatory,
     Neutral,

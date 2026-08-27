@@ -9,7 +9,7 @@ use crate::RuntimeError;
 use crate::session::Session;
 
 /// Current revision-bound artifact command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ArtifactCommandRequest {
     /// Starts excavation at the controlled unit's coordinate.
     StartExcavation {

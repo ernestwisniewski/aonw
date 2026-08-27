@@ -6,7 +6,7 @@ use super::EconomyStateBuildError;
 
 /// Resource identifier preserved by canonical economy state.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ResourceType {
     Wheat,
     Fish,

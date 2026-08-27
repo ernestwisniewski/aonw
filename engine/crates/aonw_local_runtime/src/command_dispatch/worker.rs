@@ -11,7 +11,7 @@ use crate::RuntimeError;
 use crate::session::Session;
 
 /// Current revision-bound improvement selection or confirmation.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct WorkerImprovementRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -22,7 +22,7 @@ pub struct WorkerImprovementRequest {
 }
 
 /// Current revision-bound worker command without an additional payload.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct WorkerUnitRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,

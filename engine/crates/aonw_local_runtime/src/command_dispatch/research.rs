@@ -7,7 +7,7 @@ use crate::RuntimeError;
 use crate::session::Session;
 
 /// Current revision-bound research selection.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SelectTechnologyRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,

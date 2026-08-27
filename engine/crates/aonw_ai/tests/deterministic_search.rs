@@ -1,10 +1,11 @@
 //! Deterministic random and MCTS planning through public runtime transitions.
 
+use core::num::NonZeroU32;
 use std::collections::BTreeMap;
 
 use aonw_ai::{
     MctsPlan, MctsPlanner, MctsPlanningOutcome, PlanningBudget, RandomPlan, RandomPlanner,
-    RandomPlanningOutcome, SearchFingerprint,
+    RandomPlanningOutcome, SearchFingerprint, StrategicPlanner,
 };
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
@@ -44,6 +45,15 @@ fn random_planner_replays_seed_and_ordered_draw_exactly() {
         different_seed.search_fingerprint()
     );
     assert_ne!(first.command(), different_seed.command());
+
+    let mut execution_runtime = opened_runtime();
+    let execution_plan = random_plan(&mut execution_runtime, 77);
+    assert!(
+        execution_plan
+            .execute(&mut execution_runtime)
+            .expect("public random dispatch")
+            .is_accepted()
+    );
 }
 
 #[test]
@@ -144,6 +154,40 @@ fn multi_turn_ai_soak_replays_digest_and_rng_evidence_exactly() {
     let verification = LocalRuntime::verify_replay_json(map(), ruleset(), &first.2)
         .expect("verify AI command replay");
     assert_eq!(verification.final_stamp, first.0);
+}
+
+#[test]
+fn strategic_policy_completes_a_turn_without_manual_commands_and_replays_exactly() {
+    let mut first = opened_runtime();
+    let mut second = opened_runtime();
+    let budget = NonZeroU32::new(64).expect("positive budget");
+
+    let first_report = StrategicPlanner
+        .play_turn(&mut first, budget)
+        .expect("first autonomous turn");
+    let second_report = StrategicPlanner
+        .play_turn(&mut second, budget)
+        .expect("second autonomous turn");
+
+    assert_eq!(first_report, second_report);
+    assert!(first_report.completed_turn());
+    assert!(first_report.executed_commands() >= 3);
+    assert_eq!(
+        first_report
+            .family_usage()
+            .get(&aonw_ai::PlannedCommandFamily::Research),
+        Some(&1)
+    );
+    assert_eq!(
+        first_report
+            .family_usage()
+            .get(&aonw_ai::PlannedCommandFamily::Turn),
+        Some(&1)
+    );
+    let replay = first.export_replay_json().expect("policy replay");
+    let verification =
+        LocalRuntime::verify_replay_json(map(), ruleset(), &replay).expect("verify policy replay");
+    assert_eq!(verification.final_stamp, *first_report.final_stamp());
 }
 
 fn random_plan(runtime: &mut LocalRuntime, seed: u32) -> Box<RandomPlan> {

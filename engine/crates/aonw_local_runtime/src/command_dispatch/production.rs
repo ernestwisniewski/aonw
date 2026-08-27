@@ -17,7 +17,7 @@ use crate::session::Session;
 
 /// Current revision-bound production queue and specialization commands.
 #[allow(missing_docs)]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ProductionCommandRequest {
     /// Starts one building.
     StartBuilding {

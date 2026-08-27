@@ -1,6 +1,6 @@
 /// Building identity retained by canonical city state.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum CityBuildingType {
     Granary,
     WaterMill,
@@ -65,7 +65,7 @@ pub enum CityBuildingType {
 
 /// Wonder identity retained by canonical city state.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum WonderType {
     GreatLibrary,
     HangingGardens,
@@ -82,7 +82,7 @@ pub enum WonderType {
 
 /// Repeatable city project.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum CityProjectType {
     Wealth,
     Research,
@@ -90,7 +90,7 @@ pub enum CityProjectType {
 
 /// Optional city specialization.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum CitySpecializationType {
     Growth,
     Industry,

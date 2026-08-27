@@ -2,7 +2,7 @@ use crate::{ArtifactId, HexCoord};
 
 /// Improvement constructed by a worker job.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum FieldImprovementKind {
     Farm,
     RiverFarm,

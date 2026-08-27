@@ -1,11 +1,11 @@
 use core::{cmp::Ordering, num::NonZeroUsize};
 
 use aonw_domain::{HexCoord, PlayerId};
-use aonw_local_runtime::{LocalRuntime, PlayerViewSnapshot, RuntimeError};
+use aonw_local_runtime::{LocalRuntime, MoveUnitRequest, PlayerViewSnapshot, RuntimeError};
 
 use crate::{
-    AiRng, PlannedCommand, PlanningBudget,
-    actions::{bounded_move_candidates, compare_commands},
+    AiRng, PlanningBudget,
+    actions::{bounded_move_candidates, compare_move_requests},
     rng::draw_index,
 };
 
@@ -65,7 +65,7 @@ impl MctsSearchStats {
 }
 
 pub(crate) struct SearchResult {
-    pub(crate) command: PlannedCommand,
+    pub(crate) command: MoveUnitRequest,
     pub(crate) stats: MctsSearchStats,
 }
 
@@ -74,7 +74,7 @@ pub(crate) fn search(
     recipient: &PlayerId,
     initial_movement: u64,
     budget: PlanningBudget,
-    root_actions: Vec<PlannedCommand>,
+    root_actions: Vec<MoveUnitRequest>,
     rng: &mut AiRng,
     draws: &mut Vec<u32>,
 ) -> Result<SearchResult, RuntimeError> {
@@ -110,15 +110,15 @@ pub(crate) fn search(
 #[derive(Clone, Debug)]
 struct SearchNode {
     parent: Option<usize>,
-    command: Option<PlannedCommand>,
+    command: Option<MoveUnitRequest>,
     children: Vec<usize>,
-    untried: Option<Vec<PlannedCommand>>,
+    untried: Option<Vec<MoveUnitRequest>>,
     visits: u32,
     total_score: i64,
 }
 
 impl SearchNode {
-    fn root(actions: Vec<PlannedCommand>) -> Self {
+    fn root(actions: Vec<MoveUnitRequest>) -> Self {
         Self {
             parent: None,
             command: None,
@@ -129,7 +129,7 @@ impl SearchNode {
         }
     }
 
-    fn child(parent: usize, command: PlannedCommand) -> Self {
+    fn child(parent: usize, command: MoveUnitRequest) -> Self {
         Self {
             parent: Some(parent),
             command: Some(command),
@@ -172,7 +172,7 @@ fn run_iteration(
                 .is_some_and(|items| !items.is_empty())
         {
             let command = take_random_action(&mut nodes[node], rng, draws);
-            if !execute(simulation, &command, stats)? {
+            if !execute_move(simulation, &command, stats)? {
                 rejected = true;
                 break;
             }
@@ -192,7 +192,7 @@ fn run_iteration(
             .as_ref()
             .expect("child has command")
             .clone();
-        if !execute(simulation, &command, stats)? {
+        if !execute_move(simulation, &command, stats)? {
             rejected = true;
             break;
         }
@@ -211,7 +211,7 @@ fn run_iteration(
             break;
         };
         let selected = draw_index(rng, maximum, draws);
-        if !execute(simulation, &candidates[selected].command, stats)? {
+        if !execute_move(simulation, candidates[selected].request(), stats)? {
             rejected = true;
             break;
         }
@@ -219,12 +219,21 @@ fn run_iteration(
         depth += 1;
     }
     stats.max_depth_reached = stats.max_depth_reached.max(depth);
-    let score = if rejected {
-        -1_000_000
-    } else {
-        evaluate(simulation, recipient, initial_movement)?
-    };
+    let score = iteration_score(rejected, simulation, recipient, initial_movement)?;
     Ok(IterationResult { node, score })
+}
+
+fn iteration_score(
+    rejected: bool,
+    simulation: &LocalRuntime,
+    recipient: &PlayerId,
+    initial_movement: u64,
+) -> Result<i64, RuntimeError> {
+    if rejected {
+        Ok(-1_000_000)
+    } else {
+        evaluate(simulation, recipient, initial_movement)
+    }
 }
 
 fn cache_actions(
@@ -244,7 +253,7 @@ fn cache_actions(
             usize::try_from(budget.max_nodes() - 1).unwrap_or(usize::MAX),
         )?
         .into_iter()
-        .map(|candidate| candidate.command)
+        .map(crate::actions::MoveCandidate::into_request)
         .collect(),
     );
     Ok(())
@@ -254,18 +263,18 @@ fn take_random_action(
     node: &mut SearchNode,
     rng: &mut AiRng,
     draws: &mut Vec<u32>,
-) -> PlannedCommand {
+) -> MoveUnitRequest {
     let actions = node.untried.as_mut().expect("actions cached");
     let maximum = NonZeroUsize::new(actions.len()).expect("non-empty actions");
     actions.remove(draw_index(rng, maximum, draws))
 }
 
-fn execute(
+fn execute_move(
     simulation: &mut LocalRuntime,
-    command: &PlannedCommand,
+    request: &aonw_local_runtime::MoveUnitRequest,
     stats: &mut MctsSearchStats,
 ) -> Result<bool, RuntimeError> {
-    let result = command.execute(simulation)?;
+    let result = simulation.dispatch(request)?;
     stats.executed_commands += 1;
     if result.is_accepted() {
         Ok(true)
@@ -358,7 +367,7 @@ fn compare_average(left: &SearchNode, right: &SearchNode) -> Ordering {
 }
 
 fn compare_node_commands(left: &SearchNode, right: &SearchNode) -> Ordering {
-    compare_commands(
+    compare_move_requests(
         left.command.as_ref().expect("child command"),
         right.command.as_ref().expect("child command"),
     )
@@ -378,3 +387,6 @@ fn backpropagate(nodes: &mut [SearchNode], mut node: usize, score: i64) {
 fn to_i64(value: u64) -> i64 {
     i64::try_from(value).unwrap_or(i64::MAX)
 }
+
+#[cfg(test)]
+pub(crate) mod tests;

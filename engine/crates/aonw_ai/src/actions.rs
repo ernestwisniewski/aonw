@@ -10,9 +10,23 @@ use crate::PlannedCommand;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct MoveCandidate {
-    pub(crate) command: PlannedCommand,
+    request: MoveUnitRequest,
     distance_to_known_opponent: Option<u64>,
     cost: MovementUnits,
+}
+
+impl MoveCandidate {
+    pub(crate) fn request(&self) -> &MoveUnitRequest {
+        &self.request
+    }
+
+    pub(crate) fn into_request(self) -> MoveUnitRequest {
+        self.request
+    }
+
+    pub(crate) fn into_command(self) -> PlannedCommand {
+        PlannedCommand::MoveUnit(self.request)
+    }
 }
 
 pub(crate) fn legal_move_candidates(
@@ -58,7 +72,7 @@ pub(crate) fn best_move_command(
             selected = Some(candidate);
         }
     })?;
-    Ok(selected.map(|candidate| candidate.command))
+    Ok(selected.map(MoveCandidate::into_command))
 }
 
 fn visit_legal_move_candidates(
@@ -87,10 +101,14 @@ fn visit_legal_move_candidates(
         .filter(|unit| unit.owner_player_id() == recipient && unit.movement_units() > 0)
     {
         let origin = HexCoord::new(unit.col(), unit.row());
-        let response = runtime.query(&RuntimeQuery::Reachable(ReachableRequest {
+        let response = match runtime.query(&RuntimeQuery::Reachable(ReachableRequest {
             expected_revision: revision,
             unit_id: unit.id().clone(),
-        }))?;
+        })) {
+            Ok(response) => response,
+            Err(RuntimeError::Query(_)) => continue,
+            Err(error) => return Err(error),
+        };
         let RuntimeQueryResult::Reachable(reachable) = response else {
             unreachable!("reachable query returns reachable response")
         };
@@ -100,11 +118,11 @@ fn visit_legal_move_candidates(
             .filter(|tile| tile.coordinate != origin)
         {
             visit(MoveCandidate {
-                command: PlannedCommand::MoveUnit(MoveUnitRequest {
+                request: MoveUnitRequest {
                     expected_revision: revision,
                     unit_id: unit.id().clone(),
                     target: tile.coordinate,
-                }),
+                },
                 distance_to_known_opponent: known_opponents
                     .iter()
                     .map(|target| tile.coordinate.distance_to(*target))
@@ -116,13 +134,10 @@ fn visit_legal_move_candidates(
     Ok(())
 }
 
-pub(crate) fn compare_commands(left: &PlannedCommand, right: &PlannedCommand) -> Ordering {
-    match (left, right) {
-        (PlannedCommand::MoveUnit(left), PlannedCommand::MoveUnit(right)) => left
-            .unit_id
-            .cmp(&right.unit_id)
-            .then_with(|| left.target.cmp(&right.target)),
-    }
+pub(crate) fn compare_move_requests(left: &MoveUnitRequest, right: &MoveUnitRequest) -> Ordering {
+    left.unit_id
+        .cmp(&right.unit_id)
+        .then_with(|| left.target.cmp(&right.target))
 }
 
 fn compare_candidates(left: &MoveCandidate, right: &MoveCandidate) -> Ordering {
@@ -130,5 +145,5 @@ fn compare_candidates(left: &MoveCandidate, right: &MoveCandidate) -> Ordering {
         .unwrap_or(u64::MAX)
         .cmp(&right.distance_to_known_opponent.unwrap_or(u64::MAX))
         .then_with(|| left.cost.cmp(&right.cost))
-        .then_with(|| compare_commands(&left.command, &right.command))
+        .then_with(|| compare_move_requests(&left.request, &right.request))
 }

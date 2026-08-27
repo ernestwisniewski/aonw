@@ -17,7 +17,7 @@ use crate::RuntimeError;
 use crate::session::Session;
 
 /// Current authenticated proposal command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum DiplomacyRequest {
     /// Declares war on one discovered participant.
     DeclareWar {

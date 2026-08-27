@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use crate::{HexCoord, HexGridBounds, MatchIdentity, PlayerId, StateRevision, Unit, UnitId};
 
 /// Requested disposition of a defeated city.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum CityConquestAction {
     /// Transfer the city to the attacker.
     #[default]

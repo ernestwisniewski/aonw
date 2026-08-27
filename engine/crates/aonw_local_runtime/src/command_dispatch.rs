@@ -31,7 +31,7 @@ pub use worker::{WorkerImprovementRequest, WorkerUnitRequest};
 pub use {artifact::ArtifactCommandRequest, diplomacy::DiplomacyRequest};
 
 /// Current revision-bound visible attack.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct AttackHexRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -48,7 +48,7 @@ use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
 
 /// Current revision-bound manual-movement command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct MoveUnitRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -59,7 +59,7 @@ pub struct MoveUnitRequest {
 }
 
 /// Current revision-bound city-founding command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct FoundCityRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -70,7 +70,7 @@ pub struct FoundCityRequest {
 }
 
 /// Current revision-bound manual worked-hex command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ToggleWorkedHexRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -81,7 +81,7 @@ pub struct ToggleWorkedHexRequest {
 }
 
 /// Current revision-bound preferred-expansion command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SelectCityExpansionHexRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -92,7 +92,7 @@ pub struct SelectCityExpansionHexRequest {
 }
 
 /// Current revision-bound map-independent unit action.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct UnitActionRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -101,7 +101,7 @@ pub struct UnitActionRequest {
 }
 
 /// Current revision-bound scout auto-exploration command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct AutoExploreUnitRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -110,7 +110,7 @@ pub struct AutoExploreUnitRequest {
 }
 
 /// Current revision-bound merchant destination command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct MerchantCityRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -121,7 +121,7 @@ pub struct MerchantCityRequest {
 }
 
 /// Current revision-bound troop-detachment command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct DetachTroopRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,

@@ -13,7 +13,7 @@ use crate::{
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MctsPlan {
     stamp: SessionStamp,
-    command: PlannedCommand,
+    command: aonw_local_runtime::MoveUnitRequest,
     fingerprint: PlanFingerprint,
     search_fingerprint: SearchFingerprint,
     rng_trace: AiRngTrace,
@@ -36,8 +36,8 @@ impl MctsPlan {
 
     /// Returns the standard runtime command selected by the planner.
     #[must_use]
-    pub const fn command(&self) -> &PlannedCommand {
-        &self.command
+    pub fn command(&self) -> PlannedCommand {
+        PlannedCommand::MoveUnit(self.command.clone())
     }
 
     /// Returns the stable state/command identity shared by all planners.
@@ -76,7 +76,7 @@ impl MctsPlan {
     ///
     /// Returns the same session or engine error as a client-issued command.
     pub fn execute(&self, runtime: &mut LocalRuntime) -> Result<CommandResult, RuntimeError> {
-        self.command.execute(runtime)
+        runtime.dispatch(&self.command)
     }
 }
 
@@ -123,7 +123,7 @@ impl MctsPlanner {
             usize::try_from(self.budget.max_nodes() - 1).unwrap_or(usize::MAX),
         )?
         .into_iter()
-        .map(|candidate| candidate.command)
+        .map(crate::actions::MoveCandidate::into_request)
         .collect::<Vec<_>>();
         if root_actions.is_empty() {
             return Ok(MctsPlanningOutcome::NoLegalCommand { revision });
@@ -144,7 +144,7 @@ impl MctsPlanner {
         )?;
 
         let rng_trace = AiRngTrace::new(initial_rng.state(), rng.state(), draws);
-        let fingerprint = PlanFingerprint::for_command(stamp, &recipient, &result.command);
+        let fingerprint = PlanFingerprint::for_move(stamp, &recipient, &result.command);
         let counters = result.stats.fingerprint_counters();
         let search_fingerprint = SearchFingerprint::for_search(SearchFingerprintInput {
             stamp,
