@@ -11,8 +11,8 @@ use crate::{
     UnitId, WonderRegistry, WorldArtifact,
 };
 use validation::{
-    artifact_indices, city_indices, unit_indices, validate_artifacts, validate_environment,
-    validate_interaction, validate_player_references,
+    city_territory_indices, unit_position_indices, validate_artifact_ids, validate_artifacts,
+    validate_environment, validate_interaction, validate_player_references,
 };
 
 /// Occupancy policy selected by the immutable ruleset.
@@ -48,11 +48,10 @@ pub struct GameState {
     bounds: HexGridBounds,
     occupancy_policy: UnitOccupancyPolicy,
     units: Box<[Unit]>,
-    unit_indices_by_id: Box<[usize]>,
+    unit_indices_by_position: Box<[usize]>,
     cities: Box<[City]>,
-    city_indices_by_id: Box<[usize]>,
+    city_territory_indices: Box<[(HexCoord, usize)]>,
     artifacts: Box<[WorldArtifact]>,
-    artifact_indices_by_id: Box<[usize]>,
     interaction: InteractionState,
     fog_of_war: FogOfWar,
     diplomacy: Diplomacy,
@@ -197,15 +196,34 @@ impl GameStateBuilder {
     /// Returns [`GameStateBuildError`] when any aggregate invariant is
     /// violated. No partially validated [`GameState`] is returned.
     pub fn try_build(mut self) -> Result<GameState, GameStateBuildError> {
-        self.units
-            .sort_unstable_by(|left, right| left.id().cmp(right.id()));
-        self.cities
-            .sort_unstable_by(|left, right| left.id().cmp(right.id()));
-        self.artifacts
-            .sort_unstable_by(|left, right| left.id().cmp(right.id()));
-        let unit_indices_by_id = unit_indices(self.bounds, self.occupancy_policy, &self.units)?;
-        let city_indices_by_id = city_indices(self.bounds, &self.cities)?;
-        let artifact_indices_by_id = artifact_indices(&self.artifacts)?;
+        if !self
+            .units
+            .windows(2)
+            .all(|pair| pair[0].id() <= pair[1].id())
+        {
+            self.units
+                .sort_unstable_by(|left, right| left.id().cmp(right.id()));
+        }
+        if !self
+            .cities
+            .windows(2)
+            .all(|pair| pair[0].id() <= pair[1].id())
+        {
+            self.cities
+                .sort_unstable_by(|left, right| left.id().cmp(right.id()));
+        }
+        if !self
+            .artifacts
+            .windows(2)
+            .all(|pair| pair[0].id() <= pair[1].id())
+        {
+            self.artifacts
+                .sort_unstable_by(|left, right| left.id().cmp(right.id()));
+        }
+        let unit_indices_by_position =
+            unit_position_indices(self.bounds, self.occupancy_policy, &self.units)?;
+        let city_territory_indices = city_territory_indices(self.bounds, &self.cities)?;
+        validate_artifact_ids(&self.artifacts)?;
         validate_player_references(
             self.match_lifecycle.identity(),
             &self.units,
@@ -250,11 +268,10 @@ impl GameStateBuilder {
             bounds: self.bounds,
             occupancy_policy: self.occupancy_policy,
             units: self.units.into_boxed_slice(),
-            unit_indices_by_id: unit_indices_by_id.into_boxed_slice(),
+            unit_indices_by_position: unit_indices_by_position.into_boxed_slice(),
             cities: self.cities.into_boxed_slice(),
-            city_indices_by_id: city_indices_by_id.into_boxed_slice(),
+            city_territory_indices: city_territory_indices.into_boxed_slice(),
             artifacts: self.artifacts.into_boxed_slice(),
-            artifact_indices_by_id: artifact_indices_by_id.into_boxed_slice(),
             interaction: self.interaction,
             fog_of_war: self.fog_of_war,
             diplomacy: self.diplomacy,
@@ -398,32 +415,55 @@ impl GameState {
     /// Finds a unit through the deterministic secondary index.
     #[must_use]
     pub fn unit(&self, unit_id: &UnitId) -> Option<&Unit> {
-        self.unit_indices_by_id
-            .binary_search_by(|index| self.units[*index].id().cmp(unit_id))
+        self.units
+            .binary_search_by(|unit| unit.id().cmp(unit_id))
             .ok()
-            .map(|index| &self.units[self.unit_indices_by_id[index]])
+            .map(|index| &self.units[index])
     }
     /// Finds a city through the deterministic secondary index.
     #[must_use]
     pub fn city(&self, city_id: &CityId) -> Option<&City> {
-        self.city_indices_by_id
-            .binary_search_by(|index| self.cities[*index].id().cmp(city_id))
+        self.cities
+            .binary_search_by(|city| city.id().cmp(city_id))
             .ok()
-            .map(|index| &self.cities[self.city_indices_by_id[index]])
+            .map(|index| &self.cities[index])
     }
     /// Finds an artifact through the deterministic secondary index.
     #[must_use]
     pub fn artifact(&self, artifact_id: &ArtifactId) -> Option<&WorldArtifact> {
-        self.artifact_indices_by_id
-            .binary_search_by(|index| self.artifacts[*index].id().cmp(artifact_id))
+        self.artifacts
+            .binary_search_by(|artifact| artifact.id().cmp(artifact_id))
             .ok()
-            .map(|index| &self.artifacts[self.artifact_indices_by_id[index]])
+            .map(|index| &self.artifacts[index])
     }
 
     /// Finds the first city center at a coordinate.
     #[must_use]
     pub fn city_at(&self, coordinate: HexCoord) -> Option<&City> {
-        self.cities.iter().find(|city| city.center() == coordinate)
+        self.city_controlling(coordinate)
+            .filter(|city| city.center() == coordinate)
+    }
+
+    /// Finds the city controlling a coordinate through the revision-scoped tile index.
+    #[must_use]
+    pub fn city_controlling(&self, coordinate: HexCoord) -> Option<&City> {
+        self.city_territory_indices
+            .binary_search_by_key(&coordinate, |entry| entry.0)
+            .ok()
+            .map(|index| &self.cities[self.city_territory_indices[index].1])
+    }
+
+    /// Iterates units at one coordinate through the revision-scoped tile index.
+    pub fn units_at(&self, coordinate: HexCoord) -> impl Iterator<Item = &Unit> {
+        let start = self
+            .unit_indices_by_position
+            .partition_point(|index| self.units[*index].position() < coordinate);
+        let end = self
+            .unit_indices_by_position
+            .partition_point(|index| self.units[*index].position() <= coordinate);
+        self.unit_indices_by_position[start..end]
+            .iter()
+            .map(|index| &self.units[*index])
     }
 
     fn into_builder(self) -> GameStateBuilder {
@@ -477,9 +517,8 @@ impl GameState {
         diplomacy: Diplomacy,
     ) -> Result<Self, GameStateBuildError> {
         let index = self
-            .unit_indices_by_id
-            .binary_search_by(|index| self.units[*index].id().cmp(unit.id()))
-            .map(|source_index| self.unit_indices_by_id[source_index])
+            .units
+            .binary_search_by(|candidate| candidate.id().cmp(unit.id()))
             .map_err(|_| GameStateBuildError::UnitNotFound(unit.id().clone()))?;
         let mut builder = self.into_builder();
         builder.units[index] = unit;
@@ -501,9 +540,8 @@ impl GameState {
         cancelled_excavation: Option<ArtifactId>,
     ) -> Result<Self, GameStateBuildError> {
         let index = self
-            .unit_indices_by_id
-            .binary_search_by(|index| self.units[*index].id().cmp(unit.id()))
-            .map(|source_index| self.unit_indices_by_id[source_index])
+            .units
+            .binary_search_by(|candidate| candidate.id().cmp(unit.id()))
             .map_err(|_| GameStateBuildError::UnitNotFound(unit.id().clone()))?;
         let mut builder = self.into_builder();
         let unit_id = unit.id().clone();

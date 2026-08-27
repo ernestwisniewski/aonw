@@ -78,14 +78,12 @@ pub enum PlayerArtifactLocationView {
 }
 
 pub(crate) fn visible_artifacts(state: &GameState, actor: &PlayerId) -> Vec<PlayerArtifactView> {
-    let mut artifacts = state
+    state
         .artifacts()
         .iter()
         .filter(|artifact| can_see(state, actor, artifact.location()))
         .map(PlayerArtifactView::from_artifact)
-        .collect::<Vec<_>>();
-    artifacts.sort_unstable_by(|left, right| left.id().cmp(right.id()));
-    artifacts
+        .collect()
 }
 
 fn can_see(state: &GameState, actor: &PlayerId, location: &WorldArtifactLocation) -> bool {

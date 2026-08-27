@@ -160,6 +160,7 @@ fn benchmark_runtime(unit_count: usize) {
     );
 
     let base = opened(open);
+    benchmark_snapshot(&base, unit_count);
     let accepted = MoveUnitRequest {
         expected_revision: 0,
         unit_id: UnitId::new("unit-0").expect("unit id"),
@@ -232,6 +233,24 @@ fn benchmark_runtime(unit_count: usize) {
         |mut runtime| {
             let response = ClientProtocol::dispatch_json(&mut runtime, &open_json);
             (signature_bytes(&response), response.len())
+        },
+    );
+}
+
+fn benchmark_snapshot(base: &LocalRuntime, unit_count: usize) {
+    report_with_setup(
+        "runtime_snapshot",
+        unit_count,
+        || base.clone(),
+        |runtime| {
+            let snapshot = runtime.snapshot().expect("snapshot");
+            (
+                mix(
+                    stamp_signature(snapshot.stamp()),
+                    u64::try_from(snapshot.units().len()).unwrap_or(u64::MAX),
+                ),
+                0,
+            )
         },
     );
 }

@@ -239,11 +239,7 @@ impl LocalRuntime {
     /// Returns [`RuntimeError::SessionNotOpen`] when closed.
     pub fn snapshot(&self) -> Result<PlayerViewSnapshot, RuntimeError> {
         let session = self.session.as_ref().ok_or(RuntimeError::SessionNotOpen)?;
-        Ok(PlayerViewSnapshot::new(
-            session.stamp(),
-            session.state(),
-            session.actor(),
-        ))
+        Ok(session.projection().snapshot(session.stamp()))
     }
 
     /// Executes a versioned read-only query.
@@ -494,7 +490,6 @@ impl LocalRuntime {
         {
             self.session = None;
         }
-        self.query_cache.clear();
         result
     }
 }

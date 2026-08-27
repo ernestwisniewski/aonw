@@ -16,13 +16,13 @@ mod view_diff;
 mod worker;
 
 pub(crate) use diplomacy::dispatch_diplomacy;
-pub(crate) use disclosure::{RecipientDisclosure, visible_city_ids};
+pub(crate) use disclosure::RecipientDisclosure;
 pub use production::ProductionCommandRequest;
 pub(crate) use production::dispatch_production;
 pub use research::SelectTechnologyRequest;
 pub(crate) use research::dispatch_select_technology;
 pub use view_diff::PlayerViewPatch;
-pub(crate) use view_diff::{ProjectedView, diff_view};
+pub(crate) use view_diff::{ProjectedView, diff_view, unchanged_view};
 pub(crate) use worker::{
     RuntimeWorkerCommandKind, dispatch_confirm_worker_improvement,
     dispatch_select_worker_improvement, dispatch_worker_unit,
@@ -44,10 +44,6 @@ pub struct AttackHexRequest {
 }
 
 use crate::persistence::{replay_context, replay_entry};
-use crate::player_view::{
-    PlayerTurnLifecycleView, city_founding_draft, diplomacy_view, pending_action,
-    visible_artifacts, visible_cities, visible_infrastructure, visible_units,
-};
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
 
@@ -428,15 +424,7 @@ pub(crate) fn dispatch_player(
     session.prepare_replay_segment();
     let before_context = replay_context(session, Some(session.actor()));
     let before_revision = session.state().revision().get();
-    let before_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
-    let before_outcome = session.state().outcome().clone();
-    let before_diplomacy = diplomacy_view(session.state(), session.actor());
-    let before_view = visible_units(session.state(), session.actor());
-    let before_city_view = visible_cities(session.state(), session.actor());
-    let before_artifacts = visible_artifacts(session.state(), session.actor());
-    let (before_improvements, before_roads) =
-        visible_infrastructure(session.state(), session.actor());
-    let before_visible_city_ids = visible_city_ids(session.state(), session.actor());
+    let before_digest = session.stamp().state_digest;
     let state = session.take_state();
     let transition = GameEngine::apply_player_owned(state, session.context(), command)
         .map_err(RuntimeError::Engine)?;
@@ -445,46 +433,35 @@ pub(crate) fn dispatch_player(
     let events = parts.events;
     let evidence = parts.evidence;
     session.commit_event_reservation(event_reservation, events.len())?;
-    session.replace_state(parts.state, parts.digest);
-    let after_view = visible_units(session.state(), session.actor());
-    let after_city_view = visible_cities(session.state(), session.actor());
-    let after_artifacts = visible_artifacts(session.state(), session.actor());
-    let (after_improvements, after_roads) =
-        visible_infrastructure(session.state(), session.actor());
-    let after_turn = PlayerTurnLifecycleView::new(session.state(), session.actor());
-    let after_diplomacy = diplomacy_view(session.state(), session.actor());
-    let after_pending = pending_action(session.state(), session.actor());
-    let after_founding_draft = city_founding_draft(session.state(), session.actor());
-    let recipient_disclosure = RecipientDisclosure::new(
-        session.actor().clone(),
-        &before_view,
-        &before_visible_city_ids,
-        evidence.as_ref(),
+    let rejected = rejection.is_some();
+    let recipient_disclosure = if rejected {
+        RecipientDisclosure::empty(session.actor().clone())
+    } else {
+        RecipientDisclosure::new(
+            session.actor().clone(),
+            session.projection().units(),
+            session.projection().cities(),
+            evidence.as_ref(),
+        )
+    };
+    let next_revision = parts.state.revision().get();
+    let next_projection =
+        (!rejected).then(|| ProjectedView::for_recipient(&parts.state, session.actor()));
+    let view_patch = next_projection.as_ref().map_or_else(
+        || unchanged_view(before_revision, session.projection()),
+        |after| diff_view(before_revision, next_revision, session.projection(), after),
     );
-    let view_patch = diff_view(
-        before_revision,
-        session.state().revision().get(),
-        ProjectedView::new(
-            before_turn,
-            before_outcome,
-            before_diplomacy,
-            before_view,
-            before_city_view,
-            before_artifacts,
-            (before_improvements, before_roads),
-        ),
-        ProjectedView::new(
-            after_turn,
-            session.state().outcome().clone(),
-            after_diplomacy,
-            after_view,
-            after_city_view,
-            after_artifacts,
-            (after_improvements, after_roads),
-        ),
-        after_pending,
-        after_founding_draft,
-    );
+    if let Some(projection) = next_projection {
+        session.replace_state(
+            parts.state,
+            parts.digest.expect("accepted transition has a digest"),
+            projection,
+        );
+    } else {
+        debug_assert!(parts.digest.is_none());
+        session.restore_rejected_state(parts.state);
+        debug_assert_eq!(session.stamp().state_digest, before_digest);
+    }
     let result = CommandResult {
         stamp: session.stamp(),
         rejection,

@@ -4,6 +4,7 @@ use aonw_engine::{
     EngineContext, EventBudget, GameEngine, MovementVisibility, StateDigest, SystemContext,
 };
 
+use crate::command_dispatch::ProjectedView;
 use crate::persistence::ReplayRecorder;
 use crate::prepared_world::PreparedWorld;
 
@@ -31,6 +32,7 @@ pub(crate) struct Session {
     visibility: MovementVisibility,
     event_offset: u64,
     replay: ReplayRecorder,
+    projection: ProjectedView,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -74,6 +76,7 @@ impl Session {
         let visibility =
             MovementVisibility::for_player(&request.state, world.map(), &request.actor);
         let replay = ReplayRecorder::new(&request.state, state_digest, request.event_offset);
+        let projection = ProjectedView::for_recipient(&request.state, &request.actor);
         Ok(Self {
             world,
             state: Some(request.state),
@@ -82,6 +85,7 @@ impl Session {
             visibility,
             event_offset: request.event_offset,
             replay,
+            projection,
         })
     }
 
@@ -126,6 +130,10 @@ impl Session {
         &self.replay
     }
 
+    pub(crate) const fn projection(&self) -> &ProjectedView {
+        &self.projection
+    }
+
     pub(crate) fn prepare_replay_segment(&mut self) {
         if self.replay.is_full() {
             self.replay = ReplayRecorder::new(self.state(), self.state_digest, self.event_offset);
@@ -146,9 +154,19 @@ impl Session {
         SystemContext::canonical(self.world.map(), self.world.ruleset())
     }
 
-    pub(crate) fn replace_state(&mut self, state: GameState, state_digest: StateDigest) {
+    pub(crate) fn replace_state(
+        &mut self,
+        state: GameState,
+        state_digest: StateDigest,
+        projection: ProjectedView,
+    ) {
         self.state_digest = state_digest;
         self.visibility = MovementVisibility::for_player(&state, self.world.map(), &self.actor);
+        self.state = Some(state);
+        self.projection = projection;
+    }
+
+    pub(crate) fn restore_rejected_state(&mut self, state: GameState) {
         self.state = Some(state);
     }
 

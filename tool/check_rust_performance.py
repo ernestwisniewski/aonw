@@ -668,7 +668,7 @@ def make_snapshot(report: dict[str, Any]) -> dict[str, Any]:
             "cargo": report["provenance"]["cargo"],
             "allocator": report["provenance"]["allocator"],
             "measurement": report["provenance"]["measurement"],
-            "reviewedDate": "2026-08-26",
+            "reviewedDate": "2026-08-27",
         },
         "stage": report["stage"],
         "columns": BASELINE_COLUMNS,

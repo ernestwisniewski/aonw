@@ -98,6 +98,80 @@ fn digest_includes_reversible_skip_balance() {
 }
 
 #[test]
+fn every_pending_interaction_shape_has_a_distinct_digest() {
+    use aonw_domain::FieldImprovementKind;
+
+    let owner = PlayerId::new("player-1").expect("player");
+    let unit_id = UnitId::new("unit").expect("unit");
+    let city_id = aonw_domain::CityId::new("city").expect("city");
+    let pending = [
+        PendingInteraction::ResearchSelection {
+            owner_player_id: owner.clone(),
+        },
+        PendingInteraction::CityWorkedHexSelection {
+            owner_player_id: owner.clone(),
+            city_id: city_id.clone(),
+        },
+        PendingInteraction::CityExpansionSelection {
+            owner_player_id: owner.clone(),
+            city_id,
+        },
+        PendingInteraction::WorkerActionSelection {
+            owner_player_id: owner.clone(),
+            unit_id: unit_id.clone(),
+            improvement: None,
+        },
+        PendingInteraction::MerchantTradeRouteSelection {
+            owner_player_id: owner.clone(),
+            unit_id: unit_id.clone(),
+        },
+        PendingInteraction::MerchantMoveToCitySelection {
+            owner_player_id: owner.clone(),
+            unit_id: unit_id.clone(),
+        },
+        PendingInteraction::UnitTurnSkip {
+            owner_player_id: owner.clone(),
+            unit_id: unit_id.clone(),
+            restore_movement: MovementUnits::new(10),
+        },
+        PendingInteraction::AttackTargeting {
+            owner_player_id: owner.clone(),
+            unit_id: unit_id.clone(),
+            defender: Some(HexCoord::new(1, 1)),
+        },
+        PendingInteraction::CommanderMergeSelection {
+            owner_player_id: owner,
+            unit_id,
+        },
+    ];
+    let mut digests = pending
+        .into_iter()
+        .map(|pending| {
+            let mut writer = super::writer::DigestWriter::new();
+            super::hash_interaction(&mut writer, &InteractionState::new(None, Some(pending)));
+            writer.finish()
+        })
+        .collect::<Vec<_>>();
+    digests.sort_unstable();
+    digests.dedup();
+    assert_eq!(digests.len(), 9);
+
+    let mut writer = super::writer::DigestWriter::new();
+    super::hash_interaction(
+        &mut writer,
+        &InteractionState::new(
+            None,
+            Some(PendingInteraction::WorkerActionSelection {
+                owner_player_id: PlayerId::new("player-1").expect("player"),
+                unit_id: UnitId::new("unit").expect("unit"),
+                improvement: Some(FieldImprovementKind::Mine),
+            }),
+        ),
+    );
+    assert!(!digests.contains(&writer.finish()));
+}
+
+#[test]
 fn city_identity_tags_are_stable_and_total() {
     use aonw_domain::CityBuildingType::*;
     use aonw_domain::WonderType::*;

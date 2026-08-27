@@ -49,7 +49,6 @@ impl FieldImprovement {
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct InfrastructureState {
     field_improvements: Box<[FieldImprovement]>,
-    field_improvement_indices_by_coordinate: Box<[usize]>,
     transport_network: TransportNetwork,
 }
 
@@ -64,19 +63,22 @@ impl InfrastructureState {
         transport_network: TransportNetwork,
     ) -> Result<Self, InfrastructureStateBuildError> {
         let mut field_improvements = field_improvements.into_iter().collect::<Vec<_>>();
-        field_improvements.sort_unstable_by_key(FieldImprovement::coordinate);
-        let mut indices = (0..field_improvements.len()).collect::<Vec<_>>();
-        indices.sort_unstable_by_key(|index| field_improvements[*index].coordinate());
-        if let Some(pair) = indices.windows(2).find(|pair| {
-            field_improvements[pair[0]].coordinate() == field_improvements[pair[1]].coordinate()
-        }) {
+        if !field_improvements
+            .windows(2)
+            .all(|pair| pair[0].coordinate() <= pair[1].coordinate())
+        {
+            field_improvements.sort_unstable_by_key(FieldImprovement::coordinate);
+        }
+        if let Some(pair) = field_improvements
+            .windows(2)
+            .find(|pair| pair[0].coordinate() == pair[1].coordinate())
+        {
             return Err(InfrastructureStateBuildError::DuplicateFieldImprovement(
-                field_improvements[pair[0]].coordinate(),
+                pair[0].coordinate(),
             ));
         }
         Ok(Self {
             field_improvements: field_improvements.into_boxed_slice(),
-            field_improvement_indices_by_coordinate: indices.into_boxed_slice(),
             transport_network,
         })
     }
@@ -86,7 +88,6 @@ impl InfrastructureState {
     pub fn from_transport(transport_network: TransportNetwork) -> Self {
         Self {
             field_improvements: Box::default(),
-            field_improvement_indices_by_coordinate: Box::default(),
             transport_network,
         }
     }
@@ -100,14 +101,10 @@ impl InfrastructureState {
     /// Returns the field improvement at a coordinate.
     #[must_use]
     pub fn field_improvement_at(&self, coordinate: HexCoord) -> Option<&FieldImprovement> {
-        self.field_improvement_indices_by_coordinate
-            .binary_search_by_key(&coordinate, |index| {
-                self.field_improvements[*index].coordinate()
-            })
+        self.field_improvements
+            .binary_search_by_key(&coordinate, FieldImprovement::coordinate)
             .ok()
-            .map(|index| {
-                &self.field_improvements[self.field_improvement_indices_by_coordinate[index]]
-            })
+            .map(|index| &self.field_improvements[index])
     }
 
     /// Returns canonical road infrastructure.

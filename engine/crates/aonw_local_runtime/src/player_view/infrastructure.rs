@@ -48,7 +48,7 @@ pub(crate) fn visible_infrastructure(
     state: &GameState,
     actor: &PlayerId,
 ) -> (Vec<PlayerFieldImprovementView>, Vec<PlayerRoadView>) {
-    let mut improvements = state
+    let improvements = state
         .field_improvements()
         .iter()
         .filter(|improvement| {
@@ -64,9 +64,8 @@ pub(crate) fn visible_infrastructure(
             improvement: improvement.kind(),
         })
         .collect::<Vec<_>>();
-    improvements.sort_unstable_by_key(|value| value.coordinate);
 
-    let mut roads = state
+    let roads = state
         .transport_network()
         .segments()
         .iter()
@@ -79,7 +78,6 @@ pub(crate) fn visible_infrastructure(
             condition: segment.condition(),
         })
         .collect::<Vec<_>>();
-    roads.sort_unstable_by_key(|value| value.coordinate);
     (improvements, roads)
 }
 

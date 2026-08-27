@@ -152,8 +152,44 @@ fn friendly_stacking_is_an_explicit_policy() {
         HexGridBounds::new(2, 2).expect("bounds"),
         UnitOccupancyPolicy::FriendlyStacking,
         [unit("one", position), unit("two", position)],
+    )
+    .expect("friendly stack");
+    assert_eq!(
+        state
+            .units_at(position)
+            .map(|unit| unit.id().as_str())
+            .collect::<Vec<_>>(),
+        ["one", "two"]
     );
-    assert!(state.is_ok());
+}
+
+#[test]
+fn aggregate_indexes_city_centers_and_territory_by_coordinate() {
+    let city = City::builder(
+        CityId::new("city-a").expect("city id"),
+        PlayerId::new("player-1").expect("player id"),
+        "First",
+        HexCoord::new(0, 0),
+    )
+    .with_controlled_hexes([HexCoord::new(1, 0)])
+    .build()
+    .expect("city");
+    let state = GameState::builder(
+        StateRevision::INITIAL,
+        0,
+        HexGridBounds::new(2, 1).expect("bounds"),
+        UnitOccupancyPolicy::Exclusive,
+        [],
+    )
+    .with_cities([city])
+    .try_build()
+    .expect("state");
+
+    assert_eq!(
+        state.city_at(HexCoord::new(0, 0)).map(City::id),
+        state.city_controlling(HexCoord::new(1, 0)).map(City::id)
+    );
+    assert!(state.city_at(HexCoord::new(1, 0)).is_none());
 }
 
 #[test]

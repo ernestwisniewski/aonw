@@ -4,6 +4,8 @@ use aonw_engine::StateDigest;
 
 use crate::{RuntimeQuery, RuntimeQueryResult, SessionStamp};
 
+const MAX_QUERY_CACHE_ENTRIES: usize = 64;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum QueryKind {
     ResearchOptions,
@@ -125,7 +127,8 @@ pub struct QueryCacheStats {
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct QueryCache {
-    entry: Option<(QueryCacheKey, RuntimeQueryResult)>,
+    scope: Option<SessionStamp>,
+    entries: Vec<(QueryCacheKey, RuntimeQueryResult)>,
     stats: QueryCacheStats,
 }
 
@@ -135,12 +138,18 @@ impl QueryCache {
         stamp: SessionStamp,
         request: &RuntimeQuery,
     ) -> Option<RuntimeQueryResult> {
+        self.prepare_scope(stamp);
         let key = QueryCacheKey::new(stamp, request);
-        if let Some((cached_key, result)) = &self.entry
-            && cached_key == &key
+        if let Some(index) = self
+            .entries
+            .iter()
+            .position(|(cached_key, _)| cached_key == &key)
         {
             self.stats.hits = self.stats.hits.saturating_add(1);
-            return Some(result.clone());
+            let entry = self.entries.remove(index);
+            let result = entry.1.clone();
+            self.entries.push(entry);
+            return Some(result);
         }
         self.stats.misses = self.stats.misses.saturating_add(1);
         None
@@ -152,14 +161,27 @@ impl QueryCache {
         request: &RuntimeQuery,
         result: &RuntimeQueryResult,
     ) {
-        self.entry = Some((QueryCacheKey::new(stamp, request), result.clone()));
+        self.prepare_scope(stamp);
+        if self.entries.len() == MAX_QUERY_CACHE_ENTRIES {
+            self.entries.remove(0);
+        }
+        self.entries
+            .push((QueryCacheKey::new(stamp, request), result.clone()));
     }
 
     pub(crate) fn clear(&mut self) {
-        self.entry = None;
+        self.scope = None;
+        self.entries.clear();
     }
 
     pub(crate) const fn stats(&self) -> QueryCacheStats {
         self.stats
+    }
+
+    fn prepare_scope(&mut self, stamp: SessionStamp) {
+        if self.scope != Some(stamp) {
+            self.scope = Some(stamp);
+            self.entries.clear();
+        }
     }
 }

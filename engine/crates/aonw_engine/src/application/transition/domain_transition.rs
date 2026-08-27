@@ -25,7 +25,7 @@ pub struct DomainTransition {
     rejection: Option<DomainRejection>,
     events: Box<[DomainEvent]>,
     evidence: Option<ExecutionEvidence>,
-    digest: StateDigest,
+    digest: Option<StateDigest>,
     map_hash: ContentHash,
     ruleset_hash: ContentHash,
 }
@@ -41,8 +41,9 @@ pub struct DomainTransitionParts {
     pub events: Box<[DomainEvent]>,
     /// Exact execution evidence.
     pub evidence: Option<ExecutionEvidence>,
-    /// Canonical identity of `state`.
-    pub digest: StateDigest,
+    /// Canonical identity of a changed `state`; rejected transitions reuse the
+    /// caller's existing identity without recomputing it.
+    pub digest: Option<StateDigest>,
     /// Exact logical map identity.
     pub map_hash: ContentHash,
     /// Exact immutable ruleset identity.
@@ -58,7 +59,7 @@ impl DomainTransition {
         ruleset_hash: ContentHash,
     ) -> Self {
         Self {
-            digest: crate::state_digest::digest_state(&state),
+            digest: Some(crate::state_digest::digest_state(&state)),
             state,
             rejection: None,
             events,
@@ -75,7 +76,7 @@ impl DomainTransition {
         ruleset_hash: ContentHash,
     ) -> Self {
         Self {
-            digest: crate::state_digest::digest_state(&state),
+            digest: None,
             state,
             rejection: Some(DomainRejection { code }),
             events: Box::new([]),
@@ -128,8 +129,9 @@ impl DomainTransition {
 
     /// Returns canonical state identity.
     #[must_use]
-    pub const fn digest(&self) -> StateDigest {
+    pub fn digest(&self) -> StateDigest {
         self.digest
+            .unwrap_or_else(|| crate::state_digest::digest_state(&self.state))
     }
 
     /// Returns the exact map identity used by the transition.

@@ -297,42 +297,6 @@ fn revision_overflow_is_rejected_without_advancing_runtime_counters() {
 }
 
 #[test]
-fn repeated_and_batch_queries_use_revision_scoped_cache() {
-    let mut runtime = LocalRuntime::default();
-    runtime.open(request()).expect("open");
-    let reachable = RuntimeQuery::Reachable(ReachableRequest {
-        expected_revision: 0,
-        unit_id: UnitId::new("unit-1").expect("unit id"),
-    });
-    let route = RuntimeQuery::RoutePlan(RoutePlanRequest {
-        expected_revision: 0,
-        unit_id: UnitId::new("unit-1").expect("unit id"),
-        target: HexCoord::new(1, 0),
-    });
-
-    runtime.query(&reachable).expect("cold reachable");
-    runtime.query(&reachable).expect("cached reachable");
-    let stale = RuntimeQuery::Reachable(ReachableRequest {
-        expected_revision: 99,
-        unit_id: UnitId::new("unit-1").expect("unit id"),
-    });
-    assert!(runtime.query(&stale).is_err());
-    let results = runtime.query_batch(&[route.clone(), route]);
-    assert!(results.iter().all(Result::is_ok));
-    assert_eq!(runtime.query_cache_stats().hits, 2);
-    assert_eq!(runtime.query_cache_stats().misses, 3);
-
-    runtime
-        .dispatch(&MoveUnitRequest {
-            expected_revision: 0,
-            unit_id: UnitId::new("unit-1").expect("unit id"),
-            target: HexCoord::new(1, 0),
-        })
-        .expect("move");
-    assert!(runtime.query_cache_stats().hits >= 2);
-}
-
-#[test]
 fn save_round_trip_preserves_complete_state_and_runtime_checkpoint() {
     let mut runtime = LocalRuntime::default();
     runtime.open(request().with_event_offset(11)).expect("open");

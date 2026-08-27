@@ -1,7 +1,7 @@
-use aonw_domain::{CityId, FogVisibility, GameState, PlayerId, UnitId};
+use aonw_domain::{CityId, PlayerId, UnitId};
 use aonw_engine::{CombatExecution, CombatTarget, DomainEvent, ExecutionEvidence};
 
-use crate::player_view::PlayerUnitView;
+use crate::player_view::{PlayerCityView, PlayerUnitView};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct RecipientDisclosure {
@@ -15,17 +15,17 @@ impl RecipientDisclosure {
     pub(crate) fn new(
         actor: PlayerId,
         visible_units: &[PlayerUnitView],
-        visible_city_ids: &[CityId],
+        visible_cities: &[PlayerCityView],
         evidence: Option<&ExecutionEvidence>,
     ) -> Self {
         let mut combats = Vec::new();
         match evidence {
             Some(ExecutionEvidence::Combat(execution)) => {
-                push_visible_combat(&mut combats, execution, visible_units, visible_city_ids);
+                push_visible_combat(&mut combats, execution, visible_units, visible_cities);
             }
             Some(ExecutionEvidence::TurnKernel(execution)) => {
                 for combat in execution.combat_executions() {
-                    push_visible_combat(&mut combats, combat, visible_units, visible_city_ids);
+                    push_visible_combat(&mut combats, combat, visible_units, visible_cities);
                 }
             }
             Some(
@@ -38,8 +38,20 @@ impl RecipientDisclosure {
         Self {
             actor,
             unit_ids: visible_units.iter().map(|unit| unit.id().clone()).collect(),
-            city_ids: visible_city_ids.into(),
+            city_ids: visible_cities
+                .iter()
+                .map(|city| city.id().clone())
+                .collect(),
             combats: combats.into_boxed_slice(),
+        }
+    }
+
+    pub(crate) fn empty(actor: PlayerId) -> Self {
+        Self {
+            actor,
+            unit_ids: Box::new([]),
+            city_ids: Box::new([]),
+            combats: Box::new([]),
         }
     }
 
@@ -147,7 +159,7 @@ fn push_visible_combat(
     output: &mut Vec<(UnitId, CombatTarget)>,
     execution: &CombatExecution,
     visible_units: &[PlayerUnitView],
-    visible_city_ids: &[CityId],
+    visible_cities: &[PlayerCityView],
 ) {
     let preview = &execution.preview;
     let attacker_visible = visible_units
@@ -155,21 +167,9 @@ fn push_visible_combat(
         .any(|unit| unit.id() == &preview.attacker_unit_id);
     let target_visible = match &preview.target {
         CombatTarget::Unit(id) => visible_units.iter().any(|unit| unit.id() == id),
-        CombatTarget::City(id) => visible_city_ids.contains(id),
+        CombatTarget::City(id) => visible_cities.iter().any(|city| city.id() == id),
     };
     if attacker_visible && target_visible {
         output.push((preview.attacker_unit_id.clone(), preview.target.clone()));
     }
-}
-
-pub(crate) fn visible_city_ids(state: &GameState, actor: &PlayerId) -> Vec<CityId> {
-    state
-        .cities()
-        .iter()
-        .filter(|city| {
-            city.owner_player_id() == actor
-                || state.fog_of_war().visibility(actor, city.center()) == FogVisibility::Visible
-        })
-        .map(|city| city.id().clone())
-        .collect()
 }

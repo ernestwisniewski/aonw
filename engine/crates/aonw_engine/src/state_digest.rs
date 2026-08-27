@@ -64,24 +64,18 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
         UnitOccupancyPolicy::FriendlyStacking => 1,
     });
 
-    let mut units = state.units().iter().collect::<Vec<_>>();
-    units.sort_unstable_by(|left, right| left.id().cmp(right.id()));
-    writer.usize(units.len());
-    for unit in units {
+    writer.usize(state.units().len());
+    for unit in state.units() {
         hash_unit(&mut writer, unit);
     }
 
-    let mut cities = state.cities().iter().collect::<Vec<_>>();
-    cities.sort_unstable_by(|left, right| left.id().cmp(right.id()));
-    writer.usize(cities.len());
-    for city in cities {
+    writer.usize(state.cities().len());
+    for city in state.cities() {
         hash_city(&mut writer, city);
     }
 
-    let mut artifacts = state.artifacts().iter().collect::<Vec<_>>();
-    artifacts.sort_unstable_by(|left, right| left.id().cmp(right.id()));
-    writer.usize(artifacts.len());
-    for artifact in artifacts {
+    writer.usize(state.artifacts().len());
+    for artifact in state.artifacts() {
         hash_artifact(&mut writer, artifact);
     }
     hash_interaction(&mut writer, state.interaction());

@@ -361,10 +361,10 @@ pub(super) fn validate_road(
     if state.transport_network().at(target).is_some() {
         return Err(CommandRejectionCode::RoadConstructionExistingRoad.into());
     }
-    if state.cities().iter().any(|city| city.center() == target) {
+    if state.city_at(target).is_some() {
         return Err(CommandRejectionCode::RoadConstructionCity.into());
     }
-    if let Some(controller) = state.cities().iter().find(|city| city.controls(target))
+    if let Some(controller) = state.city_controlling(target)
         && controller.owner_player_id() != unit.owner_player_id()
     {
         return Err(CommandRejectionCode::RoadConstructionEnemyTerritory.into());

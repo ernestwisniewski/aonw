@@ -42,7 +42,7 @@ pub struct PlayerCityView {
 impl PlayerCityView {
     fn from_city(city: &City, state: &GameState, actor: &PlayerId) -> Self {
         let owned = city.owner_player_id() == actor;
-        let mut visible_controlled_hexes = city
+        let visible_controlled_hexes = city
             .controlled_hexes()
             .iter()
             .copied()
@@ -50,7 +50,6 @@ impl PlayerCityView {
                 owned || state.fog_of_war().visibility(actor, *coordinate) != FogVisibility::Hidden
             })
             .collect::<Vec<_>>();
-        visible_controlled_hexes.sort_unstable();
         let owned_planning = owned.then(|| {
             let mut worked_hexes = city.worked_hexes().to_vec();
             worked_hexes.sort_unstable();
@@ -138,7 +137,7 @@ impl CityFoundingDraftView {
 }
 
 pub(crate) fn visible_cities(state: &GameState, actor: &PlayerId) -> Vec<PlayerCityView> {
-    let mut cities = state
+    state
         .cities()
         .iter()
         .filter(|city| {
@@ -146,9 +145,7 @@ pub(crate) fn visible_cities(state: &GameState, actor: &PlayerId) -> Vec<PlayerC
                 || state.fog_of_war().visibility(actor, city.center()) != FogVisibility::Hidden
         })
         .map(|city| PlayerCityView::from_city(city, state, actor))
-        .collect::<Vec<_>>();
-    cities.sort_unstable_by(|left, right| left.id().cmp(right.id()));
-    cities
+        .collect()
 }
 
 pub(crate) fn city_founding_draft(

@@ -262,9 +262,8 @@ fn clear_pair_attacks(state: &GameState, pair: &PlayerPair) -> Result<CombatStat
 
 fn target_owner(state: &GameState, coordinate: aonw_domain::HexCoord) -> Option<&PlayerId> {
     state
-        .units()
-        .iter()
-        .find(|unit| unit.position() == coordinate)
+        .units_at(coordinate)
+        .next()
         .map(aonw_domain::Unit::owner_player_id)
         .or_else(|| {
             state

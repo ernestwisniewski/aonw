@@ -95,7 +95,12 @@ impl TransportNetwork {
     /// Returns the duplicated coordinate.
     pub fn try_new(segments: impl IntoIterator<Item = TransportSegment>) -> Result<Self, HexCoord> {
         let mut segments = segments.into_iter().collect::<Vec<_>>();
-        segments.sort_unstable_by_key(TransportSegment::coordinate);
+        if !segments
+            .windows(2)
+            .all(|pair| pair[0].coordinate() <= pair[1].coordinate())
+        {
+            segments.sort_unstable_by_key(TransportSegment::coordinate);
+        }
         if let Some(pair) = segments
             .windows(2)
             .find(|pair| pair[0].coordinate() == pair[1].coordinate())

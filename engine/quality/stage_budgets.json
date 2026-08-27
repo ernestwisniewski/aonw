@@ -20,7 +20,7 @@
     ],
     "maxEventsPerCommand": 1,
     "maxMeasuredPayloadBytes": 167475,
-    "maxMeasuredAllocations": 22468,
+    "maxMeasuredAllocations": 24010,
     "maxMeasuredAllocatedBytes": 3128748,
     "maxWorkCounters": {
       "frontierPops": 5971,
@@ -65,7 +65,7 @@
     "maxEventsPerCommand": 4,
     "maxMeasuredPayloadBytes": 210896,
     "maxMeasuredAllocations": 30009,
-    "maxMeasuredAllocatedBytes": 5103233,
+    "maxMeasuredAllocatedBytes": 5158295,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -170,7 +170,7 @@
     "maxEventsPerCommand": 1,
     "maxMeasuredPayloadBytes": 1,
     "maxMeasuredAllocations": 2073,
-    "maxMeasuredAllocatedBytes": 299555,
+    "maxMeasuredAllocatedBytes": 303643,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -216,7 +216,7 @@
     "maxEventsPerCommand": 1200,
     "maxMeasuredPayloadBytes": 1,
     "maxMeasuredAllocations": 17996,
-    "maxMeasuredAllocatedBytes": 7900718,
+    "maxMeasuredAllocatedBytes": 7987078,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 1200,
@@ -253,7 +253,7 @@
     "maxEventsPerCommand": 5,
     "maxMeasuredPayloadBytes": 210896,
     "maxMeasuredAllocations": 30009,
-    "maxMeasuredAllocatedBytes": 5103233,
+    "maxMeasuredAllocatedBytes": 5158295,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,

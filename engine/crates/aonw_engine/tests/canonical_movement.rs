@@ -176,7 +176,7 @@ fn prepared_apply_matches_raw_apply_and_exposes_owned_parts() {
     .into_parts();
 
     assert_eq!(owned.state, *raw.state());
-    assert_eq!(owned.digest, raw.digest());
+    assert_eq!(owned.digest, Some(raw.digest()));
     assert_eq!(&*owned.events, raw.events());
     assert_eq!(owned.evidence.as_ref(), raw.evidence());
     assert_eq!(owned.map_hash, compiled.map_hash());
