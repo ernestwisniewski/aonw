@@ -21,6 +21,8 @@ use aonw_local_runtime::{LocalRuntime, OpenSession};
 mod lifecycle;
 #[path = "strategic_policy_families/pending.rs"]
 mod pending;
+#[path = "strategic_policy_families/profiles.rs"]
+mod profiles;
 
 #[test]
 fn policy_accepts_an_incoming_diplomatic_proposal_first() {

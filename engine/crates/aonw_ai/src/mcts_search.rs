@@ -5,7 +5,7 @@ use aonw_local_runtime::{LocalRuntime, MoveUnitRequest, PlayerViewSnapshot, Runt
 
 use crate::{
     AiRng, PlanningBudget,
-    actions::{bounded_move_candidates, compare_move_requests},
+    actions::{bounded_tactical_move_candidates, compare_move_requests},
     rng::draw_index,
 };
 
@@ -202,7 +202,7 @@ fn run_iteration(
 
     while !rejected && depth < budget.max_depth() {
         let snapshot = simulation.snapshot()?;
-        let candidates = bounded_move_candidates(
+        let candidates = bounded_tactical_move_candidates(
             simulation,
             &snapshot,
             usize::try_from(budget.max_nodes() - 1).unwrap_or(usize::MAX),
@@ -247,7 +247,7 @@ fn cache_actions(
     }
     let snapshot = simulation.snapshot()?;
     nodes[node].untried = Some(
-        bounded_move_candidates(
+        bounded_tactical_move_candidates(
             simulation,
             &snapshot,
             usize::try_from(budget.max_nodes() - 1).unwrap_or(usize::MAX),
@@ -300,7 +300,9 @@ fn evaluate(
     let proximity = snapshot
         .units()
         .iter()
-        .filter(|unit| unit.owner_player_id() == recipient)
+        .filter(|unit| {
+            unit.owner_player_id() == recipient && crate::strategy::is_military(unit.kind())
+        })
         .flat_map(|unit| {
             let position = HexCoord::new(unit.col(), unit.row());
             opponents
@@ -318,7 +320,9 @@ pub(crate) fn owned_movement(snapshot: &PlayerViewSnapshot, recipient: &PlayerId
     snapshot
         .units()
         .iter()
-        .filter(|unit| unit.owner_player_id() == recipient)
+        .filter(|unit| {
+            unit.owner_player_id() == recipient && crate::strategy::is_military(unit.kind())
+        })
         .map(|unit| u64::from(unit.movement_units()))
         .sum()
 }

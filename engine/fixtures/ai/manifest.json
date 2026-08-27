@@ -4,6 +4,7 @@
     "ai-rng-oracle-parity",
     "autonomous-full-turn",
     "bounded-mcts-memory",
+    "bounded-utility-scoring",
     "canonical-move-tie-break",
     "cloned-runtime-rollout",
     "context-identity-replan",
@@ -11,6 +12,7 @@
     "deterministic-plan-fingerprint",
     "deterministic-random-plan",
     "diplomacy-response-policy",
+    "difficulty-budget-policy",
     "every-public-command-wire-shape",
     "every-public-runtime-command-path",
     "family-artifact-policy",
@@ -20,14 +22,17 @@
     "family-production-policy",
     "family-research-policy",
     "family-worker-policy",
+    "hierarchical-strategic-goals",
     "iteration-node-depth-budget",
     "multi-turn-ai-replay",
     "one-command-per-revision",
     "ordered-rng-evidence",
+    "persona-research-production-policy",
     "public-runtime-execution",
     "recipient-owned-view",
     "research-production-worker-turn",
     "search-fingerprint",
+    "selective-tactical-search",
     "stale-plan-rejection"
   ],
   "strategies": [
@@ -38,6 +43,27 @@
   ],
   "productionDefault": "strategic",
   "randomTestOnly": true,
+  "difficulties": [
+    "easy",
+    "normal",
+    "hard",
+    "veryHard"
+  ],
+  "personas": [
+    "balanced",
+    "aggressive",
+    "expansive",
+    "economic",
+    "scientific"
+  ],
+  "strategicModes": [
+    "expand",
+    "consolidate",
+    "military",
+    "techRush"
+  ],
+  "utilityArithmetic": "bounded-fixed-point-basis-points",
+  "tacticalSearch": "visible-hostile-military-only",
   "deterministicBudget": [
     "iterations",
     "maxDepth",

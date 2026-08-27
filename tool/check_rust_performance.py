@@ -229,6 +229,7 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
             "target": "rust-ai-check",
             "capabilities": [
                 "AiRng",
+                "AiProfile",
                 "BaselinePlanner",
                 "MctsPlanner",
                 "PlanFingerprint",
@@ -237,9 +238,11 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
                 "RandomPlanner",
                 "SearchFingerprint",
                 "StrategicPlanner",
+                "StrategicAssessment",
+                "TacticalSearchEvidence",
                 "StrategicTurnReport",
             ],
-            "fixtureCount": 28,
+            "fixtureCount": 33,
         },
         "E0": {
             "target": "rust-foundation-check",
@@ -571,6 +574,22 @@ def validate_a10_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("A10 strategy inventory differs")
     if manifest.get("productionDefault") != "strategic" or manifest.get("randomTestOnly") is not True:
         raise PerformanceFailure("A10 production strategy policy differs")
+    if manifest.get("difficulties") != ["easy", "normal", "hard", "veryHard"]:
+        raise PerformanceFailure("A10 difficulty inventory differs")
+    if manifest.get("personas") != [
+        "balanced",
+        "aggressive",
+        "expansive",
+        "economic",
+        "scientific",
+    ]:
+        raise PerformanceFailure("A10 persona inventory differs")
+    if manifest.get("strategicModes") != ["expand", "consolidate", "military", "techRush"]:
+        raise PerformanceFailure("A10 strategic mode inventory differs")
+    if manifest.get("utilityArithmetic") != "bounded-fixed-point-basis-points":
+        raise PerformanceFailure("A10 utility arithmetic policy differs")
+    if manifest.get("tacticalSearch") != "visible-hostile-military-only":
+        raise PerformanceFailure("A10 selective tactical search policy differs")
     if manifest.get("deterministicBudget") != ["iterations", "maxDepth", "maxNodes"]:
         raise PerformanceFailure("A10 deterministic budget inventory differs")
     if manifest.get("randomness") != "ai-turn-lcg32":

@@ -4,7 +4,8 @@ use core::num::NonZeroU32;
 use std::collections::BTreeMap;
 
 use aonw_ai::{
-    PlannedCommandFamily, StrategicPlanner, StrategicPlannerError, StrategicPlanningOutcome,
+    AiDifficulty, AiPersona, AiProfile, PlannedCommand, PlannedCommandFamily, StrategicPlanner,
+    StrategicPlannerError, StrategicPlanningOutcome,
 };
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
@@ -68,6 +69,16 @@ fn strategic_plan_identity_and_budget_errors_are_explicit() {
     };
     assert_eq!(plan.state_digest(), plan.stamp().state_digest);
     assert_ne!(plan.fingerprint().as_bytes(), &[0; 32]);
+    assert_eq!(plan.profile(), AiProfile::default());
+    assert_eq!(plan.assessment().empire().city_count(), 1);
+    assert_eq!(plan.assessment().empire().population(), 2);
+    assert_eq!(plan.assessment().empire().worker_count(), 1);
+    assert_eq!(plan.assessment().empire().settler_count(), 0);
+    assert_eq!(plan.assessment().empire().military_count(), 0);
+    assert_eq!(plan.assessment().empire().visible_enemy_military_count(), 0);
+    assert_eq!(plan.assessment().empire().hostile_relation_count(), 0);
+    assert_eq!(plan.assessment().goals().len(), 4);
+    assert!(plan.assessment().goals()[0].utility() >= plan.assessment().goals()[1].utility());
 
     let error = StrategicPlanner
         .play_turn(&mut runtime, NonZeroU32::new(1).expect("budget"))
@@ -96,6 +107,47 @@ fn strategic_plan_identity_and_budget_errors_are_explicit() {
         .expect_err("closed runtime");
     assert!(matches!(closed, StrategicPlannerError::Runtime(_)));
     assert!(!closed.to_string().is_empty());
+}
+
+#[test]
+fn persona_changes_research_selection_on_the_same_revision() {
+    let (map, rules, state, actor) = fixture();
+    let mut scientific_runtime = LocalRuntime::default();
+    scientific_runtime
+        .open(OpenSession::from_state(
+            map.clone(),
+            rules.clone(),
+            state.clone(),
+            actor.clone(),
+        ))
+        .expect("scientific session");
+    let mut aggressive_runtime = LocalRuntime::default();
+    aggressive_runtime
+        .open(OpenSession::from_state(map, rules, state, actor))
+        .expect("aggressive session");
+
+    let scientific = planned_technology(
+        &mut scientific_runtime,
+        AiProfile::new(AiDifficulty::VeryHard, AiPersona::Scientific),
+    );
+    let aggressive = planned_technology(
+        &mut aggressive_runtime,
+        AiProfile::new(AiDifficulty::VeryHard, AiPersona::Aggressive),
+    );
+    assert_ne!(scientific, aggressive);
+}
+
+fn planned_technology(runtime: &mut LocalRuntime, profile: AiProfile) -> TechnologyId {
+    let StrategicPlanningOutcome::Planned(plan) = StrategicPlanner
+        .plan_with_profile(runtime, profile)
+        .expect("profiled plan")
+    else {
+        panic!("expected research decision")
+    };
+    let PlannedCommand::SelectTechnology(request) = plan.command() else {
+        panic!("research is the first unresolved family")
+    };
+    request.technology
 }
 
 fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {

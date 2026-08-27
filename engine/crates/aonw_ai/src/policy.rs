@@ -5,12 +5,18 @@ use aonw_domain::StateRevision;
 use aonw_engine::{CommandRejectionCode, StateDigest};
 use aonw_local_runtime::{CommandResult, LocalRuntime, RuntimeError, SessionStamp};
 
-use crate::{PlanFingerprint, PlannedCommand, PlannedCommandFamily, policy_actions};
+use crate::{
+    AiProfile, MctsSearchStats, PlanFingerprint, PlannedCommand, PlannedCommandFamily,
+    PlanningBudget, SearchFingerprint, StrategicAssessment, policy_actions,
+};
 
 /// One deterministic policy command and the authoritative identity it read.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct StrategicPlan {
     stamp: SessionStamp,
+    profile: AiProfile,
+    assessment: StrategicAssessment,
+    tactical_search: Option<TacticalSearchEvidence>,
     command: PlannedCommand,
     fingerprint: PlanFingerprint,
 }
@@ -19,11 +25,17 @@ impl StrategicPlan {
     fn new(
         stamp: SessionStamp,
         recipient: &aonw_domain::PlayerId,
+        profile: AiProfile,
+        assessment: StrategicAssessment,
+        tactical_search: Option<TacticalSearchEvidence>,
         command: PlannedCommand,
     ) -> Self {
         let fingerprint = PlanFingerprint::for_command(stamp, recipient, &command);
         Self {
             stamp,
+            profile,
+            assessment,
+            tactical_search,
             command,
             fingerprint,
         }
@@ -39,6 +51,24 @@ impl StrategicPlan {
     #[must_use]
     pub const fn stamp(&self) -> &SessionStamp {
         &self.stamp
+    }
+
+    /// Returns the explicit policy profile used for this decision.
+    #[must_use]
+    pub const fn profile(&self) -> AiProfile {
+        self.profile
+    }
+
+    /// Returns the revision-bound hierarchical assessment used by the policy.
+    #[must_use]
+    pub const fn assessment(&self) -> &StrategicAssessment {
+        &self.assessment
+    }
+
+    /// Returns bounded search evidence when this command used tactical MCTS.
+    #[must_use]
+    pub const fn tactical_search(&self) -> Option<&TacticalSearchEvidence> {
+        self.tactical_search.as_ref()
     }
 
     /// Returns the selected standard runtime command.
@@ -67,7 +97,7 @@ impl StrategicPlan {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StrategicPlanningOutcome {
     /// One deterministic public command was selected.
-    Planned(StrategicPlan),
+    Planned(Box<StrategicPlan>),
     /// The actor already submitted or finished its current turn.
     AwaitingTurn {
         /// Current canonical revision.
@@ -95,6 +125,20 @@ impl StrategicPlanner {
         self,
         runtime: &mut LocalRuntime,
     ) -> Result<StrategicPlanningOutcome, RuntimeError> {
+        self.plan_with_profile(runtime, AiProfile::default())
+    }
+
+    /// Plans one decision with explicit difficulty and persona inputs.
+    ///
+    /// # Errors
+    ///
+    /// Returns a public runtime error when the session or an authoritative query
+    /// cannot be evaluated.
+    pub fn plan_with_profile(
+        self,
+        runtime: &mut LocalRuntime,
+        profile: AiProfile,
+    ) -> Result<StrategicPlanningOutcome, RuntimeError> {
         let snapshot = runtime.snapshot()?;
         let revision = snapshot.stamp().revision;
         if snapshot.outcome().is_terminal() {
@@ -110,9 +154,18 @@ impl StrategicPlanner {
         }
         let stamp = *snapshot.stamp();
         let recipient = snapshot.recipient_player_id().clone();
-        let command = policy_actions::next_policy_command(runtime, &snapshot)?;
-        Ok(StrategicPlanningOutcome::Planned(StrategicPlan::new(
-            stamp, &recipient, command,
+        let assessment = StrategicAssessment::from_snapshot(&snapshot, profile);
+        let decision =
+            policy_actions::next_policy_command(runtime, &snapshot, &assessment, profile)?;
+        Ok(StrategicPlanningOutcome::Planned(Box::new(
+            StrategicPlan::new(
+                stamp,
+                &recipient,
+                profile,
+                assessment,
+                decision.tactical_search,
+                decision.command,
+            ),
         )))
     }
 
@@ -127,10 +180,24 @@ impl StrategicPlanner {
         runtime: &mut LocalRuntime,
         command_budget: NonZeroU32,
     ) -> Result<StrategicTurnReport, StrategicPlannerError> {
+        self.play_turn_with_profile(runtime, command_budget, AiProfile::default())
+    }
+
+    /// Executes one bounded actor turn with an explicit production AI profile.
+    ///
+    /// # Errors
+    ///
+    /// Returns on runtime failure, policy rejection, or command-budget exhaustion.
+    pub fn play_turn_with_profile(
+        self,
+        runtime: &mut LocalRuntime,
+        command_budget: NonZeroU32,
+        profile: AiProfile,
+    ) -> Result<StrategicTurnReport, StrategicPlannerError> {
         let initial_stamp = *runtime.snapshot()?.stamp();
         let mut family_usage = BTreeMap::new();
         for executed_commands in 0..command_budget.get() {
-            match self.plan(runtime)? {
+            match self.plan_with_profile(runtime, profile)? {
                 StrategicPlanningOutcome::Planned(plan) => {
                     let family = plan.command().family();
                     let result = plan.execute(runtime)?;
@@ -172,6 +239,43 @@ fn ensure_accepted(
     rejection.map_or(Ok(()), |rejection| {
         Err(StrategicPlannerError::CommandRejected { family, rejection })
     })
+}
+
+/// Audit evidence for selective tactical search inside the strategic policy.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct TacticalSearchEvidence {
+    fingerprint: SearchFingerprint,
+    budget: PlanningBudget,
+    stats: MctsSearchStats,
+}
+
+impl TacticalSearchEvidence {
+    pub(crate) const fn new(
+        fingerprint: SearchFingerprint,
+        budget: PlanningBudget,
+        stats: MctsSearchStats,
+    ) -> Self {
+        Self {
+            fingerprint,
+            budget,
+            stats,
+        }
+    }
+    /// Returns the stable identity of state, seed, work, trace, and result.
+    #[must_use]
+    pub const fn fingerprint(self) -> SearchFingerprint {
+        self.fingerprint
+    }
+    /// Returns the exact deterministic search limits.
+    #[must_use]
+    pub const fn budget(self) -> PlanningBudget {
+        self.budget
+    }
+    /// Returns exact bounded work counters.
+    #[must_use]
+    pub const fn stats(self) -> MctsSearchStats {
+        self.stats
+    }
 }
 
 /// Deterministic evidence from one policy-driven actor turn.

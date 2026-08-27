@@ -6,10 +6,13 @@ use aonw_local_runtime::{
 };
 
 use crate::PlannedCommand;
+use crate::{AiProfile, StrategicAssessment, policy_scoring::production_utility};
 
 pub(super) fn production_command(
     runtime: &mut LocalRuntime,
     snapshot: &PlayerViewSnapshot,
+    assessment: &StrategicAssessment,
+    profile: AiProfile,
 ) -> Result<Option<PlannedCommand>, RuntimeError> {
     let actor = snapshot.recipient_player_id();
     let revision = snapshot.stamp().revision.get();
@@ -51,7 +54,13 @@ pub(super) fn production_command(
                     .copied()
                     .filter(|option| option.is_available()),
             )
-            .min_by_key(|option| option.cost());
+            .max_by_key(|option| {
+                (
+                    production_utility(*option, assessment, profile),
+                    core::cmp::Reverse(option.cost()),
+                    core::cmp::Reverse(crate::policy_scoring::production_order(option.target())),
+                )
+            });
         let target = some_or_continue!(finite.or_else(|| options.projects().first().copied()));
         let resource_option_index = unit_resource_option_index(target.target(), &options);
         let request = production_request(

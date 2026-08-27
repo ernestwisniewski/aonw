@@ -34,18 +34,20 @@ pub(crate) fn legal_move_candidates(
     snapshot: &PlayerViewSnapshot,
 ) -> Result<Vec<MoveCandidate>, RuntimeError> {
     let mut candidates = Vec::new();
-    visit_legal_move_candidates(runtime, snapshot, |candidate| candidates.push(candidate))?;
+    visit_legal_move_candidates(runtime, snapshot, false, |candidate| {
+        candidates.push(candidate);
+    })?;
     candidates.sort_by(compare_candidates);
     Ok(candidates)
 }
 
-pub(crate) fn bounded_move_candidates(
+pub(crate) fn bounded_tactical_move_candidates(
     runtime: &mut LocalRuntime,
     snapshot: &PlayerViewSnapshot,
     limit: usize,
 ) -> Result<Vec<MoveCandidate>, RuntimeError> {
     let mut candidates = Vec::with_capacity(limit);
-    visit_legal_move_candidates(runtime, snapshot, |candidate| {
+    visit_legal_move_candidates(runtime, snapshot, true, |candidate| {
         let index = candidates
             .binary_search_by(|current| compare_candidates(current, &candidate))
             .unwrap_or_else(core::convert::identity);
@@ -64,7 +66,7 @@ pub(crate) fn best_move_command(
     snapshot: &PlayerViewSnapshot,
 ) -> Result<Option<PlannedCommand>, RuntimeError> {
     let mut selected: Option<MoveCandidate> = None;
-    visit_legal_move_candidates(runtime, snapshot, |candidate| {
+    visit_legal_move_candidates(runtime, snapshot, false, |candidate| {
         if selected
             .as_ref()
             .is_none_or(|current| compare_candidates(&candidate, current).is_lt())
@@ -78,6 +80,7 @@ pub(crate) fn best_move_command(
 fn visit_legal_move_candidates(
     runtime: &mut LocalRuntime,
     snapshot: &PlayerViewSnapshot,
+    tactical_only: bool,
     mut visit: impl FnMut(MoveCandidate),
 ) -> Result<(), RuntimeError> {
     let recipient = snapshot.recipient_player_id();
@@ -95,11 +98,11 @@ fn visit_legal_move_candidates(
         )
         .collect::<Vec<_>>();
     let revision = snapshot.stamp().revision.get();
-    for unit in snapshot
-        .units()
-        .iter()
-        .filter(|unit| unit.owner_player_id() == recipient && unit.movement_units() > 0)
-    {
+    for unit in snapshot.units().iter().filter(|unit| {
+        unit.owner_player_id() == recipient
+            && unit.movement_units() > 0
+            && (!tactical_only || crate::strategy::is_military(unit.kind()))
+    }) {
         let origin = HexCoord::new(unit.col(), unit.row());
         let response = match runtime.query(&RuntimeQuery::Reachable(ReachableRequest {
             expected_revision: revision,

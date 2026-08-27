@@ -4,7 +4,7 @@ use aonw_local_runtime::{CommandResult, LocalRuntime, RuntimeError, SessionStamp
 
 use crate::{
     AiRng, AiRngTrace, PlanFingerprint, PlannedCommand, PlanningBudget, SearchFingerprint,
-    actions::bounded_move_candidates,
+    actions::bounded_tactical_move_candidates,
     fingerprint::SearchFingerprintInput,
     mcts_search::{MctsSearchStats, owned_movement, search},
 };
@@ -117,7 +117,7 @@ impl MctsPlanner {
         let stamp = *root_snapshot.stamp();
         let revision = stamp.revision;
         let recipient = root_snapshot.recipient_player_id().clone();
-        let root_actions = bounded_move_candidates(
+        let root_actions = bounded_tactical_move_candidates(
             runtime,
             &root_snapshot,
             usize::try_from(self.budget.max_nodes() - 1).unwrap_or(usize::MAX),

@@ -1,14 +1,16 @@
-use aonw_domain::{CityConquestAction, DiplomaticMessageResponse, HexCoord, UnitKind, UnitPosture};
+use aonw_domain::{HexCoord, UnitKind, UnitPosture};
 use aonw_engine::TechnologyAvailability;
 use aonw_local_runtime::{
-    ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CityFoundingOptionsRequest,
-    CombatPreviewRequest, DiplomacyRequest, FoundCityRequest, LocalRuntime, MerchantCityRequest,
-    PendingActionView, PlayerArtifactLocationView, PlayerViewSnapshot, ResearchOptionsRequest,
-    RuntimeError, RuntimeQuery, RuntimeQueryResult, SelectTechnologyRequest, TurnCommandRequest,
-    UnitActionRequest, UnitLogisticsOptionsRequest, WorkerImprovementRequest,
+    ArtifactCommandRequest, CityFoundingOptionsRequest, DiplomacyRequest, FoundCityRequest,
+    LocalRuntime, PendingActionView, PlayerArtifactLocationView, PlayerViewSnapshot,
+    ResearchOptionsRequest, RuntimeError, RuntimeQuery, RuntimeQueryResult,
+    SelectTechnologyRequest, TurnCommandRequest, UnitActionRequest, WorkerImprovementRequest,
 };
 
-use crate::{PlannedCommand, actions::best_move_command};
+use crate::{
+    AiProfile, PlannedCommand, StrategicAssessment,
+    policy_scoring::{accept_proposal, message_response, research_utility},
+};
 
 macro_rules! query_variant {
     ($value:expr, $pattern:pat => $result:expr, $message:literal) => {{
@@ -38,58 +40,92 @@ macro_rules! some_or_continue {
 }
 
 mod economy;
+mod tactical;
 
 use economy::{production_command, worker_command, worker_selection_command};
+use tactical::{combat_command, logistics_command, merchant_pending_command, movement_command};
+
+pub(crate) struct PolicyDecision {
+    pub(crate) command: PlannedCommand,
+    pub(crate) tactical_search: Option<crate::TacticalSearchEvidence>,
+}
+
+impl PolicyDecision {
+    pub(super) const fn direct(command: PlannedCommand) -> Self {
+        Self {
+            command,
+            tactical_search: None,
+        }
+    }
+
+    pub(super) const fn searched(
+        command: PlannedCommand,
+        tactical_search: crate::TacticalSearchEvidence,
+    ) -> Self {
+        Self {
+            command,
+            tactical_search: Some(tactical_search),
+        }
+    }
+}
 
 pub(crate) fn next_policy_command(
     runtime: &mut LocalRuntime,
     snapshot: &PlayerViewSnapshot,
-) -> Result<PlannedCommand, RuntimeError> {
-    if let Some(command) = pending_command(runtime, snapshot)? {
-        return Ok(command);
+    assessment: &StrategicAssessment,
+    profile: AiProfile,
+) -> Result<PolicyDecision, RuntimeError> {
+    if let Some(command) = pending_command(runtime, snapshot, assessment, profile)? {
+        return Ok(PolicyDecision::direct(command));
     }
-    if let Some(command) = diplomacy_response(snapshot) {
-        return Ok(command);
+    if let Some(command) = diplomacy_response(snapshot, assessment, profile) {
+        return Ok(PolicyDecision::direct(command));
     }
-    if let Some(command) = research_command(runtime, snapshot)? {
-        return Ok(command);
+    if let Some(command) = research_command(runtime, snapshot, assessment, profile)? {
+        return Ok(PolicyDecision::direct(command));
     }
     if let Some(command) = artifact_command(snapshot) {
-        return Ok(command);
+        return Ok(PolicyDecision::direct(command));
     }
     if let Some(command) = founding_command(runtime, snapshot)? {
-        return Ok(command);
+        return Ok(PolicyDecision::direct(command));
     }
-    if let Some(command) = production_command(runtime, snapshot)? {
-        return Ok(command);
+    if let Some(command) = production_command(runtime, snapshot, assessment, profile)? {
+        return Ok(PolicyDecision::direct(command));
     }
     if let Some(command) = worker_command(runtime, snapshot)? {
-        return Ok(command);
+        return Ok(PolicyDecision::direct(command));
     }
-    if let Some(command) = combat_command(runtime, snapshot)? {
-        return Ok(command);
+    if let Some(command) = combat_command(runtime, snapshot, profile)? {
+        return Ok(PolicyDecision::direct(command));
     }
     if let Some(command) = logistics_command(runtime, snapshot)? {
-        return Ok(command);
+        return Ok(PolicyDecision::direct(command));
     }
-    if let Some(command) = best_move_command(runtime, snapshot)? {
-        return Ok(command);
+    if let Some(decision) = movement_command(runtime, snapshot, assessment, profile)? {
+        return Ok(decision);
     }
-    Ok(PlannedCommand::EndTurn(TurnCommandRequest {
-        expected_revision: snapshot.stamp().revision.get(),
-    }))
+    Ok(PolicyDecision::direct(PlannedCommand::EndTurn(
+        TurnCommandRequest {
+            expected_revision: snapshot.stamp().revision.get(),
+        },
+    )))
 }
 
 fn pending_command(
     runtime: &mut LocalRuntime,
     snapshot: &PlayerViewSnapshot,
+    assessment: &StrategicAssessment,
+    profile: AiProfile,
 ) -> Result<Option<PlannedCommand>, RuntimeError> {
     let Some(pending) = snapshot.pending_action() else {
         return Ok(None);
     };
     let revision = snapshot.stamp().revision.get();
     match pending {
-        PendingActionView::ResearchSelection => research_command(runtime, snapshot),
+        PendingActionView::ResearchSelection => {
+            research_command(runtime, snapshot, assessment, profile)
+        }
         PendingActionView::WorkerActionSelection {
             unit_id,
             improvement: Some(improvement),
@@ -126,6 +162,8 @@ fn pending_command(
 fn research_command(
     runtime: &mut LocalRuntime,
     snapshot: &PlayerViewSnapshot,
+    assessment: &StrategicAssessment,
+    profile: AiProfile,
 ) -> Result<Option<PlannedCommand>, RuntimeError> {
     let revision = snapshot.stamp().revision.get();
     let result = runtime_result!(runtime.query(&RuntimeQuery::ResearchOptions(
@@ -145,7 +183,13 @@ fn research_command(
         .options()
         .iter()
         .filter(|option| option.availability() == TechnologyAvailability::Available)
-        .min_by_key(|option| (option.effective_cost(), option.technology()))
+        .max_by_key(|option| {
+            (
+                research_utility(option, assessment, profile),
+                core::cmp::Reverse(option.effective_cost()),
+                core::cmp::Reverse(option.technology()),
+            )
+        })
         .map(|option| {
             PlannedCommand::SelectTechnology(SelectTechnologyRequest {
                 expected_revision: revision,
@@ -154,7 +198,11 @@ fn research_command(
         }))
 }
 
-fn diplomacy_response(snapshot: &PlayerViewSnapshot) -> Option<PlannedCommand> {
+fn diplomacy_response(
+    snapshot: &PlayerViewSnapshot,
+    assessment: &StrategicAssessment,
+    profile: AiProfile,
+) -> Option<PlannedCommand> {
     let actor = snapshot.recipient_player_id();
     let revision = snapshot.stamp().revision.get();
     if let Some(proposal) = snapshot
@@ -166,7 +214,7 @@ fn diplomacy_response(snapshot: &PlayerViewSnapshot) -> Option<PlannedCommand> {
         return Some(PlannedCommand::Diplomacy(DiplomacyRequest::Respond {
             expected_revision: revision,
             proposal_id: proposal.id().to_owned(),
-            accepted: true,
+            accepted: accept_proposal(proposal.kind(), assessment, profile),
         }));
     }
     snapshot
@@ -178,7 +226,7 @@ fn diplomacy_response(snapshot: &PlayerViewSnapshot) -> Option<PlannedCommand> {
             PlannedCommand::Diplomacy(DiplomacyRequest::RespondMessage {
                 expected_revision: revision,
                 message_id: message.id().to_owned(),
-                response: DiplomaticMessageResponse::Conciliatory,
+                response: message_response(assessment.mode(), profile),
             })
         })
 }
@@ -271,153 +319,6 @@ fn founding_command(
         return Ok(Some(PlannedCommand::FoundCity(request)));
     }
     Ok(None)
-}
-
-fn combat_command(
-    runtime: &mut LocalRuntime,
-    snapshot: &PlayerViewSnapshot,
-) -> Result<Option<PlannedCommand>, RuntimeError> {
-    let actor = snapshot.recipient_player_id();
-    let revision = snapshot.stamp().revision.get();
-    let targets = snapshot
-        .units()
-        .iter()
-        .filter(|unit| unit.owner_player_id() != actor)
-        .map(|unit| HexCoord::new(unit.col(), unit.row()))
-        .chain(
-            snapshot
-                .cities()
-                .iter()
-                .filter(|city| city.owner_player_id() != actor)
-                .map(aonw_local_runtime::PlayerCityView::center),
-        )
-        .collect::<std::collections::BTreeSet<_>>();
-    for unit in snapshot.units().iter().filter(|unit| {
-        unit.owner_player_id() == actor
-            && unit.movement_units() > 0
-            && unit.posture() == UnitPosture::Active
-    }) {
-        for target in &targets {
-            let query = RuntimeQuery::CombatPreview(CombatPreviewRequest {
-                expected_revision: revision,
-                attacker_unit_id: unit.id().clone(),
-                defender: *target,
-            });
-            let Some(RuntimeQueryResult::CombatPreview { preview, .. }) =
-                optional_query(runtime, &query)?
-            else {
-                continue;
-            };
-            let retaliation = preview.retaliation_damage.map_or(0, |(_, maximum)| maximum);
-            if preview.outgoing_damage.1 >= retaliation {
-                let request = AttackHexRequest {
-                    expected_revision: revision,
-                    attacker_unit_id: unit.id().clone(),
-                    defender: *target,
-                    city_conquest_action: CityConquestAction::Capture,
-                };
-                return Ok(Some(PlannedCommand::AttackHex(request)));
-            }
-        }
-    }
-    Ok(None)
-}
-
-fn logistics_command(
-    runtime: &mut LocalRuntime,
-    snapshot: &PlayerViewSnapshot,
-) -> Result<Option<PlannedCommand>, RuntimeError> {
-    let actor = snapshot.recipient_player_id();
-    let revision = snapshot.stamp().revision.get();
-    for unit in snapshot.units().iter().filter(|unit| {
-        unit.owner_player_id() == actor
-            && unit.movement_units() > 0
-            && unit.posture() == UnitPosture::Active
-            && matches!(unit.kind(), UnitKind::Scout | UnitKind::Merchant)
-    }) {
-        let result = runtime_result!(optional_query(
-            runtime,
-            &RuntimeQuery::UnitLogisticsOptions(UnitLogisticsOptionsRequest {
-                expected_revision: revision,
-                unit_id: unit.id().clone(),
-            }),
-        ));
-        let result = some_or_continue!(result);
-        let options = query_variant!(
-            result,
-            RuntimeQueryResult::UnitLogisticsOptions(options) => options,
-            "logistics query returns logistics options"
-        );
-        if unit.kind() == UnitKind::Merchant {
-            if let Some(destination) = options.merchant_route_destinations.first() {
-                let request = MerchantCityRequest {
-                    expected_revision: revision,
-                    unit_id: unit.id().clone(),
-                    destination_city_id: destination.city_id.clone(),
-                };
-                return Ok(Some(PlannedCommand::AssignMerchantTradeRoute(request)));
-            }
-            if let Some(destination) = options.merchant_travel_destinations.first() {
-                let request = MerchantCityRequest {
-                    expected_revision: revision,
-                    unit_id: unit.id().clone(),
-                    destination_city_id: destination.city_id.clone(),
-                };
-                return Ok(Some(PlannedCommand::MoveMerchantToCity(request)));
-            }
-        } else if options.auto_explore.is_some() {
-            let request = AutoExploreUnitRequest {
-                expected_revision: revision,
-                unit_id: unit.id().clone(),
-            };
-            return Ok(Some(PlannedCommand::AutoExploreUnit(request)));
-        }
-    }
-    Ok(None)
-}
-
-fn merchant_pending_command(
-    runtime: &mut LocalRuntime,
-    revision: u64,
-    unit_id: &aonw_domain::UnitId,
-    route: bool,
-) -> Result<Option<PlannedCommand>, RuntimeError> {
-    let result = runtime_result!(runtime.query(&RuntimeQuery::UnitLogisticsOptions(
-        UnitLogisticsOptionsRequest {
-            expected_revision: revision,
-            unit_id: unit_id.clone(),
-        }
-    ),));
-    let options = query_variant!(
-        result,
-        RuntimeQueryResult::UnitLogisticsOptions(options) => options,
-        "logistics query returns logistics options"
-    );
-    let destination = if route {
-        options.merchant_route_destinations.first()
-    } else {
-        options.merchant_travel_destinations.first()
-    };
-    Ok(Some(destination.map_or_else(
-        || {
-            PlannedCommand::CancelUnitAction(UnitActionRequest {
-                expected_revision: revision,
-                unit_id: unit_id.clone(),
-            })
-        },
-        |destination| {
-            let request = MerchantCityRequest {
-                expected_revision: revision,
-                unit_id: unit_id.clone(),
-                destination_city_id: destination.city_id.clone(),
-            };
-            if route {
-                PlannedCommand::AssignMerchantTradeRoute(request)
-            } else {
-                PlannedCommand::MoveMerchantToCity(request)
-            }
-        },
-    )))
 }
 
 fn complete_controlled_hexes(
