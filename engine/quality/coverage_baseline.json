@@ -1,5 +1,19 @@
 {
   "crates": {
+    "aonw_ai": {
+      "countedLines": 167,
+      "coveredLines": 163,
+      "group": "authoritative",
+      "missingFiles": [
+        "crates/aonw_ai/src/lib.rs"
+      ],
+      "sourceFiles": [
+        "crates/aonw_ai/src/baseline.rs",
+        "crates/aonw_ai/src/fingerprint.rs",
+        "crates/aonw_ai/src/lib.rs"
+      ],
+      "uncoveredLines": 4
+    },
     "aonw_content": {
       "countedLines": 2881,
       "coveredLines": 2451,
@@ -230,7 +244,7 @@
     },
     "aonw_engine": {
       "countedLines": 18872,
-      "coveredLines": 17453,
+      "coveredLines": 17456,
       "group": "authoritative",
       "missingFiles": [
         "crates/aonw_engine/src/application/mod.rs",
@@ -382,11 +396,11 @@
         "crates/aonw_engine/src/worker/score.rs",
         "crates/aonw_engine/src/worker/turn.rs"
       ],
-      "uncoveredLines": 1419
+      "uncoveredLines": 1416
     },
     "aonw_local_runtime": {
-      "countedLines": 6437,
-      "coveredLines": 5576,
+      "countedLines": 6458,
+      "coveredLines": 5597,
       "group": "runtime",
       "missingFiles": [
         "crates/aonw_local_runtime/src/lib.rs",

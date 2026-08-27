@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
+  "crates/aonw_ai",
   "crates/aonw_content",
   "crates/aonw_contract_mapping",
   "crates/aonw_contracts",

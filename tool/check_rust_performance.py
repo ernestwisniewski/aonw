@@ -98,6 +98,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--snapshot", type=Path, default=Path("/tmp/aonw-rust-performance-baseline.json"))
     parser.add_argument("--engine-csv", type=Path)
     parser.add_argument("--runtime-csv", type=Path)
+    parser.add_argument("--ai-csv", type=Path)
     return parser.parse_args()
 
 
@@ -211,6 +212,7 @@ def parse_csv(source: str, scope: str, header: list[str]) -> tuple[dict[str, Any
 def load_stages(path: Path) -> dict[str, dict[str, Any]]:
     raw = read_json(path, "stage budgets")
     if not isinstance(raw, dict) or set(raw) != {
+        "A10",
         "E0",
         "T1",
         "U2",
@@ -220,9 +222,14 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
         "O9",
     }:
         raise PerformanceFailure(
-            "stage budgets must contain exactly active stages E0, T1, U2, C3, C4, W5 and O9"
+            "stage budgets must contain exactly active stages E0, T1, U2, C3, C4, W5, O9 and A10"
         )
     expected = {
+        "A10": {
+            "target": "rust-ai-check",
+            "capabilities": ["BaselinePlanner", "PlanFingerprint"],
+            "fixtureCount": 7,
+        },
         "E0": {
             "target": "rust-foundation-check",
             "capabilities": [
@@ -527,6 +534,24 @@ def validate_o9_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("O9 event budget cannot cover terminal turn resolution")
 
 
+def validate_a10_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
+    manifest = read_json(
+        repo_root / "engine/fixtures/ai/manifest.json",
+        "A10 fixture manifest",
+    )
+    if not isinstance(manifest, dict) or manifest.get("capability") != "baseline-planner-ready":
+        raise PerformanceFailure("A10 fixture manifest capability differs")
+    cases = manifest.get("cases")
+    if not isinstance(cases, list) or sorted(cases) != stage["fixtureIds"]:
+        raise PerformanceFailure("A10 fixture IDs differ from the stage budget")
+    if manifest.get("commands") != ["moveUnit"]:
+        raise PerformanceFailure("A10 command inventory differs")
+    if manifest.get("queries") != ["reachable"]:
+        raise PerformanceFailure("A10 query inventory differs")
+    if manifest.get("legacyPaths") is not False:
+        raise PerformanceFailure("A10 greenfield policy differs")
+
+
 def validate_stages(
     stages: dict[str, dict[str, Any]], stable: dict[str, Any], repo_root: Path
 ) -> None:
@@ -537,6 +562,7 @@ def validate_stages(
     validate_c4_fixtures(stages["C4"], repo_root)
     validate_w5_fixtures(stages["W5"], repo_root)
     validate_o9_fixtures(stages["O9"], repo_root)
+    validate_a10_fixtures(stages["A10"], repo_root)
     for name, stage in stages.items():
         selected = {
             key: workload
@@ -594,6 +620,7 @@ def build_report(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
     sources.extend([
         repo_root / "engine/crates/aonw_engine/benches/movement.rs",
         repo_root / "engine/crates/aonw_local_runtime/benches/runtime.rs",
+        repo_root / "engine/crates/aonw_ai/benches/planner.rs",
     ])
     for source in sources:
         text = source.read_text(encoding="utf-8")
@@ -609,18 +636,25 @@ def build_report(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
         "runtime",
         RUNTIME_HEADER,
     )
-    stable = {**engine_stable, **runtime_stable}
-    if len(stable) != len(engine_stable) + len(runtime_stable):
-        raise PerformanceFailure("engine/runtime workload keys overlap")
+    ai_stable, ai_timings = parse_csv(
+        bench_csv(repo_root, "aonw_ai", "planner", args.ai_csv),
+        "ai",
+        RUNTIME_HEADER,
+    )
+    stable = {**engine_stable, **runtime_stable, **ai_stable}
+    if len(stable) != len(engine_stable) + len(runtime_stable) + len(ai_stable):
+        raise PerformanceFailure("measured workload keys overlap")
     stages = load_stages(
         args.stage_budgets if args.stage_budgets.is_absolute() else repo_root / args.stage_budgets
     )
     validate_stages(stages, stable, repo_root)
     return {
         "provenance": provenance(),
-        "stage": "O9",
+        "stage": "A10",
         "stable": dict(sorted(stable.items())),
-        "diagnosticTimings": dict(sorted({**engine_timings, **runtime_timings}.items())),
+        "diagnosticTimings": dict(
+            sorted({**engine_timings, **runtime_timings, **ai_timings}.items())
+        ),
     }
 
 

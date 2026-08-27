@@ -52,6 +52,7 @@ pub struct PlayerViewPatch {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ProjectedView {
+    recipient_player_id: Arc<PlayerId>,
     turn_number: u32,
     turn: PlayerTurnLifecycleView,
     outcome: Arc<GameOutcome>,
@@ -78,6 +79,7 @@ impl ProjectedView {
     ) -> Self {
         let (field_improvements, roads) = infrastructure;
         Self {
+            recipient_player_id: Arc::new(PlayerId::new("test-player").expect("player id")),
             turn_number: 0,
             turn,
             outcome: Arc::new(outcome),
@@ -92,25 +94,35 @@ impl ProjectedView {
         }
     }
 
-    pub(crate) fn for_recipient(state: &GameState, actor: &PlayerId) -> Self {
-        let (field_improvements, roads) = visible_infrastructure(state, actor);
+    pub(crate) fn for_recipient(state: &GameState, actor: Arc<PlayerId>) -> Self {
+        let recipient = actor.as_ref();
+        let (field_improvements, roads) = visible_infrastructure(state, recipient);
+        let turn = PlayerTurnLifecycleView::new(state, recipient);
+        let diplomacy = Arc::new(diplomacy_view(state, recipient));
+        let units = visible_units(state, recipient).into();
+        let cities = visible_cities(state, recipient).into();
+        let artifacts = visible_artifacts(state, recipient).into();
+        let pending_action = pending_action(state, recipient).map(Arc::new);
+        let city_founding_draft = city_founding_draft(state, recipient).map(Arc::new);
         Self {
+            recipient_player_id: actor,
             turn_number: state.turn(),
-            turn: PlayerTurnLifecycleView::new(state, actor),
+            turn,
             outcome: Arc::new(state.outcome().clone()),
-            diplomacy: Arc::new(diplomacy_view(state, actor)),
-            units: visible_units(state, actor).into(),
-            cities: visible_cities(state, actor).into(),
-            artifacts: visible_artifacts(state, actor).into(),
+            diplomacy,
+            units,
+            cities,
+            artifacts,
             field_improvements: field_improvements.into(),
             roads: roads.into(),
-            pending_action: pending_action(state, actor).map(Arc::new),
-            city_founding_draft: city_founding_draft(state, actor).map(Arc::new),
+            pending_action,
+            city_founding_draft,
         }
     }
 
     pub(crate) fn snapshot(&self, stamp: SessionStamp) -> PlayerViewSnapshot {
         PlayerViewSnapshot::from_parts(
+            self.recipient_player_id.clone(),
             stamp,
             self.turn_number,
             self.turn,

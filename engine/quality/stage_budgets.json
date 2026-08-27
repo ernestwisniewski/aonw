@@ -1,4 +1,35 @@
 {
+  "A10": {
+    "target": "rust-ai-check",
+    "capabilities": [
+      "BaselinePlanner",
+      "PlanFingerprint"
+    ],
+    "fixtureIds": [
+      "canonical-move-tie-break",
+      "context-identity-replan",
+      "deterministic-plan-fingerprint",
+      "one-command-per-revision",
+      "public-runtime-execution",
+      "recipient-owned-view",
+      "stale-plan-rejection"
+    ],
+    "maxEventsPerCommand": 1,
+    "maxMeasuredPayloadBytes": 32,
+    "maxMeasuredAllocations": 10308,
+    "maxMeasuredAllocatedBytes": 3352113,
+    "maxWorkCounters": {
+      "frontierPops": 0,
+      "expandedTiles": 0,
+      "examinedEdges": 0,
+      "heapPushes": 0,
+      "routeRecords": 0
+    },
+    "soakIterations": 20,
+    "workloadPrefixes": [
+      "ai/baseline_"
+    ]
+  },
   "E0": {
     "target": "rust-foundation-check",
     "capabilities": [
@@ -20,7 +51,7 @@
     ],
     "maxEventsPerCommand": 1,
     "maxMeasuredPayloadBytes": 167475,
-    "maxMeasuredAllocations": 24010,
+    "maxMeasuredAllocations": 24011,
     "maxMeasuredAllocatedBytes": 3128748,
     "maxWorkCounters": {
       "frontierPops": 5971,
@@ -65,7 +96,7 @@
     "maxEventsPerCommand": 4,
     "maxMeasuredPayloadBytes": 210896,
     "maxMeasuredAllocations": 30009,
-    "maxMeasuredAllocatedBytes": 5158295,
+    "maxMeasuredAllocatedBytes": 5158327,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,
@@ -253,7 +284,7 @@
     "maxEventsPerCommand": 5,
     "maxMeasuredPayloadBytes": 210896,
     "maxMeasuredAllocations": 30009,
-    "maxMeasuredAllocatedBytes": 5158295,
+    "maxMeasuredAllocatedBytes": 5158327,
     "maxWorkCounters": {
       "frontierPops": 0,
       "expandedTiles": 0,

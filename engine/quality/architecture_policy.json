@@ -1,12 +1,18 @@
 {
   "provenance": {
-    "reviewedDate": "2026-08-24",
+    "reviewedDate": "2026-08-27",
     "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
     "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
     "methodology": "exact-crate-edges-pure-source-unsafe-and-line-ratchet"
   },
   "workspaceManifest": "engine/Cargo.toml",
   "crateDependencies": {
+    "aonw_ai": [
+      "dev:aonw_content",
+      "normal:aonw_domain",
+      "normal:aonw_engine",
+      "normal:aonw_local_runtime"
+    ],
     "aonw_content": [
       "normal:aonw_domain"
     ],

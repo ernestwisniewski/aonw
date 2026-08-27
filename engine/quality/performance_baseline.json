@@ -1,8 +1,14 @@
 {
   "provenance": {"allocator": {"name": "stats_alloc", "source": "https://crates.io/crates/stats_alloc/0.1.10", "version": "0.1.10"}, "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)", "measurement": {"setup": "outside", "threads": 1, "timings": "diagnostic-only", "warmupIterations": 3}, "reviewedDate": "2026-08-27", "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)"},
-  "stage": "O9",
+  "stage": "A10",
   "columns": ["signature", "minimumIterations", "maxAllocations", "maxReallocations", "maxAllocatedBytes", "maxPayloadBytes", "maxFrontierPops", "maxExpandedTiles", "maxExaminedEdges", "maxHeapPushes", "maxRouteRecords"],
   "ceilings": {
+    "ai/baseline_plan/1200/1": ["052d156bc62a2787", 20, 41, 5, 8393, 32, 0, 0, 0, 0, 0],
+    "ai/baseline_plan/1200/512": ["11278b6a254aa625", 20, 6153, 312, 261418, 32, 0, 0, 0, 0, 0],
+    "ai/baseline_plan/1200/64": ["60b18dadcc61063d", 20, 2518, 269, 163050, 32, 0, 0, 0, 0, 0],
+    "ai/baseline_plan_execute/1200/1": ["f5c2ec21b9a128b2", 20, 109, 27, 48187, 32, 0, 0, 0, 0, 0],
+    "ai/baseline_plan_execute/1200/512": ["70d8095d5dd84f2c", 20, 10308, 3877, 3352113, 32, 0, 0, 0, 0, 0],
+    "ai/baseline_plan_execute/1200/64": ["aeb9fa5248dd97f4", 20, 3089, 736, 579313, 32, 0, 0, 0, 0, 0],
     "engine/apply/100/1": ["000a2a0000089be3", 20, 45, 11, 5665, 0, 3, 2, 6, 7, 7],
     "engine/apply/100/10": ["000a2a0000089be3", 20, 105, 73, 19010, 0, 2, 1, 2, 2, 2],
     "engine/apply/1200/1": ["000a2a0000089be3", 20, 45, 11, 36601, 0, 3, 2, 6, 7, 7],
@@ -145,9 +151,9 @@
     "runtime/client_json_dispatch_accepted/1200/1": ["d273f0574ca4acc7", 20, 89, 37, 45649, 1245, 0, 0, 0, 0, 0],
     "runtime/client_json_dispatch_accepted/1200/512": ["c95a529033330ac4", 20, 4174, 3578, 3094656, 1245, 0, 0, 0, 0, 0],
     "runtime/client_json_dispatch_accepted/1200/64": ["7be2e4c53082a4a5", 20, 590, 480, 421192, 1245, 0, 0, 0, 0, 0],
-    "runtime/client_json_open/1200/1": ["6e7408d4e4f76b6d", 20, 16856, 8442, 1134692, 345, 0, 0, 0, 0, 0],
-    "runtime/client_json_open/1200/512": ["ebab6d9e248c170e", 20, 24010, 8461, 1762772, 345, 0, 0, 0, 0, 0],
-    "runtime/client_json_open/1200/64": ["a1c908ce020f07bf", 20, 17738, 8452, 1210527, 345, 0, 0, 0, 0, 0],
+    "runtime/client_json_open/1200/1": ["6e7408d4e4f76b6d", 20, 16857, 8442, 1134724, 345, 0, 0, 0, 0, 0],
+    "runtime/client_json_open/1200/512": ["ebab6d9e248c170e", 20, 24011, 8461, 1762804, 345, 0, 0, 0, 0, 0],
+    "runtime/client_json_open/1200/64": ["a1c908ce020f07bf", 20, 17739, 8452, 1210559, 345, 0, 0, 0, 0, 0],
     "runtime/client_json_turn_submit_partial/1200/1": ["7b913d3bc5909d45", 20, 67, 25, 9491, 1087, 0, 0, 0, 0, 0],
     "runtime/client_json_turn_submit_partial/1200/512": ["3f0bf4a198fc55bb", 20, 3644, 32, 307790, 1087, 0, 0, 0, 0, 0],
     "runtime/client_json_turn_submit_partial/1200/64": ["72d113195f02fb1d", 20, 508, 29, 45818, 1087, 0, 0, 0, 0, 0],
@@ -162,9 +168,9 @@
     "runtime/runtime_dispatch_rejected/1200/1": ["00002a000000475e", 20, 9, 12, 2468, 0, 0, 0, 0, 0, 0],
     "runtime/runtime_dispatch_rejected/1200/512": ["0000df0000017aed", 20, 9, 12, 2468, 0, 0, 0, 0, 0, 0],
     "runtime/runtime_dispatch_rejected/1200/64": ["0000b00000012b10", 20, 9, 12, 2468, 0, 0, 0, 0, 0, 0],
-    "runtime/runtime_open/1200/1": ["00002a000000475e", 20, 21, 3, 89134, 0, 0, 0, 0, 0, 0],
-    "runtime/runtime_open/1200/512": ["0000df0000017aed", 20, 3087, 10, 412580, 0, 0, 0, 0, 0, 0],
-    "runtime/runtime_open/1200/64": ["0000b00000012b10", 20, 399, 7, 128620, 0, 0, 0, 0, 0, 0],
+    "runtime/runtime_open/1200/1": ["00002a000000475e", 20, 22, 3, 89166, 0, 0, 0, 0, 0, 0],
+    "runtime/runtime_open/1200/512": ["0000df0000017aed", 20, 3088, 10, 412612, 0, 0, 0, 0, 0, 0],
+    "runtime/runtime_open/1200/64": ["0000b00000012b10", 20, 400, 7, 128652, 0, 0, 0, 0, 0, 0],
     "runtime/runtime_snapshot/1200/1": ["008ebd000079466d", 20, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     "runtime/runtime_snapshot/1200/512": ["02f3da0002807ab7", 20, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     "runtime/runtime_snapshot/1200/64": ["0256600001fc98f0", 20, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -177,8 +183,8 @@
     "runtime/runtime_turn_timeout_finalization/1200/1": ["000a1a00000880b3", 20, 737, 64, 207013, 0, 0, 0, 0, 0, 0],
     "runtime/runtime_turn_timeout_finalization/1200/512": ["000aa7000009704a", 20, 14582, 3538, 3849701, 0, 0, 0, 0, 0, 0],
     "runtime/runtime_turn_timeout_finalization/1200/64": ["000af3000009f16e", 20, 2444, 438, 643453, 0, 0, 0, 0, 0, 0],
-    "runtime/turn_replay_verify/1200/1": ["0000070000000be5", 20, 3398, 126, 408024, 4685, 0, 0, 0, 0, 0],
-    "runtime/turn_replay_verify/1200/512": ["0000070000000be5", 20, 28485, 3629, 5158295, 210896, 0, 0, 0, 0, 0],
-    "runtime/turn_replay_verify/1200/64": ["0000070000000be5", 20, 6491, 517, 978867, 29974, 0, 0, 0, 0, 0]
+    "runtime/turn_replay_verify/1200/1": ["0000070000000be5", 20, 3399, 126, 408056, 4685, 0, 0, 0, 0, 0],
+    "runtime/turn_replay_verify/1200/512": ["0000070000000be5", 20, 28486, 3629, 5158327, 210896, 0, 0, 0, 0, 0],
+    "runtime/turn_replay_verify/1200/64": ["0000070000000be5", 20, 6492, 517, 978899, 29974, 0, 0, 0, 0, 0]
   }
 }

@@ -34,6 +34,7 @@ write_baseline() {
     cp "${repo_root}/${source}" "${fixture_root}/${source}"
   done
   mkdir -p \
+    "${fixture_root}/engine/crates/aonw_ai/src" \
     "${fixture_root}/engine/crates/aonw_domain/src" \
     "${fixture_root}/engine/crates/aonw_engine/src" \
     "${fixture_root}/engine/crates/aonw_contract_mapping/src" \

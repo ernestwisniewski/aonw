@@ -183,6 +183,7 @@ cmp -s "${clock_expected}" "${clock_actual}" || {
 }
 
 for pure_root in \
+  "${repo_root}/engine/crates/aonw_ai/src" \
   "${repo_root}/engine/crates/aonw_domain/src" \
   "${repo_root}/engine/crates/aonw_engine/src" \
   "${repo_root}/engine/crates/aonw_contract_mapping/src"; do

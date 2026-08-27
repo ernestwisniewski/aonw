@@ -63,6 +63,7 @@ pub enum PendingActionView {
 /// Complete recipient-safe presentation snapshot.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlayerViewSnapshot {
+    recipient_player_id: Arc<PlayerId>,
     stamp: SessionStamp,
     turn: u32,
     outcome: Arc<aonw_domain::GameOutcome>,
@@ -80,6 +81,7 @@ pub struct PlayerViewSnapshot {
 impl PlayerViewSnapshot {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_parts(
+        recipient_player_id: Arc<PlayerId>,
         stamp: SessionStamp,
         turn: u32,
         turn_lifecycle: PlayerTurnLifecycleView,
@@ -94,6 +96,7 @@ impl PlayerViewSnapshot {
         roads: Arc<[PlayerRoadView]>,
     ) -> Self {
         Self {
+            recipient_player_id,
             stamp,
             turn,
             outcome,
@@ -107,6 +110,12 @@ impl PlayerViewSnapshot {
             field_improvements,
             roads,
         }
+    }
+
+    /// Returns the player identity this recipient-safe snapshot was projected for.
+    #[must_use]
+    pub fn recipient_player_id(&self) -> &PlayerId {
+        &self.recipient_player_id
     }
 
     /// Returns version and authoritative identity metadata.

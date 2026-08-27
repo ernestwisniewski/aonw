@@ -66,11 +66,13 @@ class Fixture:
         self.root = Path(tempfile.mkdtemp(prefix="aonw-rust-performance-"))
         self.engine_csv = self.root / "engine.csv"
         self.runtime_csv = self.root / "runtime.csv"
+        self.ai_csv = self.root / "ai.csv"
         self.stage_path = self.root / "stage.json"
         self.baseline_path = self.root / "baseline.json"
         self.report_path = self.root / "report.json"
         self.engine_row: dict[str, str] = {}
         self.runtime_row: dict[str, str] = {}
+        self.ai_row: dict[str, str] = {}
         self.stage: dict[str, Any] = {}
         self.baseline: dict[str, Any] = {}
         self.reset()
@@ -107,6 +109,19 @@ class Fixture:
             "allocated_bytes": "50",
             "payload_bytes": "12",
             "signature": "0000000000000002",
+            "median_ns": "10",
+            "p95_ns": "20",
+        }
+        self.ai_row = {
+            "workload": "baseline_plan",
+            "tiles": "1200",
+            "units": "1",
+            "iterations": "20",
+            "allocations": "5",
+            "reallocations": "1",
+            "allocated_bytes": "50",
+            "payload_bytes": "12",
+            "signature": "0000000000000004",
             "median_ns": "10",
             "p95_ns": "20",
         }
@@ -224,6 +239,22 @@ class Fixture:
                 "soakIterations": 20,
             }
         )
+        self.stage["A10"].update(
+            {
+                "workloadPrefixes": ["ai/baseline_plan"],
+                "maxMeasuredPayloadBytes": 20,
+                "maxMeasuredAllocations": 20,
+                "maxMeasuredAllocatedBytes": 200,
+                "maxWorkCounters": {
+                    "frontierPops": 10,
+                    "expandedTiles": 10,
+                    "examinedEdges": 10,
+                    "heapPushes": 10,
+                    "routeRecords": 10,
+                },
+                "soakIterations": 20,
+            }
+        )
         self.baseline = {
             "provenance": {
                 "rustc": "fixture rustc",
@@ -241,7 +272,7 @@ class Fixture:
                 },
                 "reviewedDate": "2099-01-01",
             },
-            "stage": "O9",
+            "stage": "A10",
             "columns": COLUMNS,
             "ceilings": {
                 "engine/apply/1200/1": [
@@ -270,6 +301,19 @@ class Fixture:
                     0,
                     0,
                 ],
+                "ai/baseline_plan/1200/1": [
+                    "0000000000000004",
+                    20,
+                    5,
+                    1,
+                    50,
+                    12,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
             },
         }
         self.write()
@@ -283,6 +327,7 @@ class Fixture:
     def write(self) -> None:
         self.write_csv(self.engine_csv, ENGINE_HEADER, self.engine_row)
         self.write_csv(self.runtime_csv, RUNTIME_HEADER, self.runtime_row)
+        self.write_csv(self.ai_csv, RUNTIME_HEADER, self.ai_row)
         self.stage_path.write_text(json.dumps(self.stage) + "\n", encoding="utf-8")
         self.baseline_path.write_text(json.dumps(self.baseline) + "\n", encoding="utf-8")
 
@@ -298,6 +343,8 @@ class Fixture:
                 str(self.engine_csv),
                 "--runtime-csv",
                 str(self.runtime_csv),
+                "--ai-csv",
+                str(self.ai_csv),
                 "--stage-budgets",
                 str(self.stage_path),
                 "--baseline",

@@ -3,6 +3,7 @@ use aonw_domain::{GameState, PlayerId, StateRevision};
 use aonw_engine::{
     EngineContext, EventBudget, GameEngine, MovementVisibility, StateDigest, SystemContext,
 };
+use std::sync::Arc;
 
 use crate::command_dispatch::ProjectedView;
 use crate::persistence::ReplayRecorder;
@@ -27,7 +28,7 @@ pub struct SessionStamp {
 pub(crate) struct Session {
     world: PreparedWorld,
     state: Option<GameState>,
-    actor: PlayerId,
+    actor: Arc<PlayerId>,
     state_digest: StateDigest,
     visibility: MovementVisibility,
     event_offset: u64,
@@ -72,15 +73,16 @@ impl EventReservation {
 impl Session {
     pub(super) fn try_open(request: OpenSession) -> Result<Self, OpenSessionError> {
         let world = PreparedWorld::try_new(request.map, request.ruleset, &request.state)?;
+        let actor = Arc::new(request.actor);
         let state_digest = GameEngine::state_digest(&request.state);
         let visibility =
-            MovementVisibility::for_player(&request.state, world.map(), &request.actor);
+            MovementVisibility::for_player(&request.state, world.map(), actor.as_ref());
         let replay = ReplayRecorder::new(&request.state, state_digest, request.event_offset);
-        let projection = ProjectedView::for_recipient(&request.state, &request.actor);
+        let projection = ProjectedView::for_recipient(&request.state, actor.clone());
         Ok(Self {
             world,
             state: Some(request.state),
-            actor: request.actor,
+            actor,
             state_digest,
             visibility,
             event_offset: request.event_offset,
@@ -93,8 +95,12 @@ impl Session {
         self.state.as_ref().expect("open session owns state")
     }
 
-    pub(crate) const fn actor(&self) -> &PlayerId {
-        &self.actor
+    pub(crate) fn actor(&self) -> &PlayerId {
+        self.actor.as_ref()
+    }
+
+    pub(crate) fn shared_actor(&self) -> Arc<PlayerId> {
+        self.actor.clone()
     }
 
     pub(crate) const fn map(&self) -> &MapDefinition {
@@ -161,7 +167,8 @@ impl Session {
         projection: ProjectedView,
     ) {
         self.state_digest = state_digest;
-        self.visibility = MovementVisibility::for_player(&state, self.world.map(), &self.actor);
+        self.visibility =
+            MovementVisibility::for_player(&state, self.world.map(), self.actor.as_ref());
         self.state = Some(state);
         self.projection = projection;
     }

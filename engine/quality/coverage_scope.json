@@ -6,6 +6,7 @@
   },
   "groups": {
     "authoritative": [
+      "aonw_ai",
       "aonw_content",
       "aonw_contract_mapping",
       "aonw_contracts",

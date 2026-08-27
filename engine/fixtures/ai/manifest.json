@@ -1,0 +1,19 @@
+{
+  "capability": "baseline-planner-ready",
+  "cases": [
+    "canonical-move-tie-break",
+    "context-identity-replan",
+    "deterministic-plan-fingerprint",
+    "one-command-per-revision",
+    "public-runtime-execution",
+    "recipient-owned-view",
+    "stale-plan-rejection"
+  ],
+  "commands": [
+    "moveUnit"
+  ],
+  "queries": [
+    "reachable"
+  ],
+  "legacyPaths": false
+}

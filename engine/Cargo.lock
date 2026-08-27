@@ -9,6 +9,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
+name = "aonw_ai"
+version = "0.1.0"
+dependencies = [
+ "aonw_content",
+ "aonw_domain",
+ "aonw_engine",
+ "aonw_local_runtime",
+ "sha2",
+ "stats_alloc",
+]
+
+[[package]]
 name = "aonw_content"
 version = "0.1.0"
 dependencies = [
