@@ -195,8 +195,8 @@
     "runtime/runtime_turn_timeout_finalization/1200/1": ["000a1a00000880b3", 20, 737, 64, 207013, 0, 0, 0, 0, 0, 0],
     "runtime/runtime_turn_timeout_finalization/1200/512": ["000aa7000009704a", 20, 14582, 3538, 3849701, 0, 0, 0, 0, 0, 0],
     "runtime/runtime_turn_timeout_finalization/1200/64": ["000af3000009f16e", 20, 2444, 438, 643453, 0, 0, 0, 0, 0, 0],
-    "runtime/turn_replay_verify/1200/1": ["0000070000000be5", 20, 3399, 126, 408056, 4685, 0, 0, 0, 0, 0],
-    "runtime/turn_replay_verify/1200/512": ["0000070000000be5", 20, 28486, 3629, 5158327, 210896, 0, 0, 0, 0, 0],
-    "runtime/turn_replay_verify/1200/64": ["0000070000000be5", 20, 6492, 517, 978899, 29974, 0, 0, 0, 0, 0]
+    "runtime/turn_replay_verify/1200/1": ["0000070000000be5", 20, 3386, 131, 408318, 4700, 0, 0, 0, 0, 0],
+    "runtime/turn_replay_verify/1200/512": ["0000070000000be5", 20, 26940, 3633, 4951231, 210911, 0, 0, 0, 0, 0],
+    "runtime/turn_replay_verify/1200/64": ["0000070000000be5", 20, 6290, 521, 953655, 29989, 0, 0, 0, 0, 0]
   }
 }

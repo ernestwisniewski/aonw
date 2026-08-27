@@ -39,6 +39,8 @@ pub enum PersistenceError {
     StateDigestMismatch,
     /// Replay entry index is not contiguous.
     ReplayIndexMismatch {
+        /// Zero-based replay segment.
+        segment: usize,
         /// Required contiguous index.
         expected: u64,
         /// Index present in the document.
@@ -46,13 +48,27 @@ pub enum PersistenceError {
     },
     /// A replay entry index cannot be represented by the wire contract.
     ReplayIndexOverflow,
+    /// A segment checkpoint digest does not identify its canonical state.
+    ReplayCheckpointDigestMismatch {
+        /// Zero-based replay segment.
+        segment: usize,
+    },
+    /// A segment checkpoint does not exactly continue the preceding segment.
+    ReplayCheckpointMismatch {
+        /// Zero-based replay segment.
+        segment: usize,
+    },
     /// Recorded trusted context differs from the replayed session.
     ReplayContextMismatch {
+        /// Zero-based replay segment.
+        segment: usize,
         /// Zero-based replay entry.
         entry: usize,
     },
     /// Recorded outcome differs from deterministic engine execution.
     ReplayResultMismatch {
+        /// Zero-based replay segment.
+        segment: usize,
         /// Zero-based replay entry.
         entry: usize,
     },
@@ -86,18 +102,38 @@ impl core::fmt::Display for PersistenceError {
             Self::StateDigestMismatch => {
                 formatter.write_str("state digest does not match canonical state")
             }
-            Self::ReplayIndexMismatch { expected, found } => write!(
+            Self::ReplayIndexMismatch {
+                segment,
+                expected,
+                found,
+            } => write!(
                 formatter,
-                "replay entry index {found} is not the expected index {expected}"
+                "replay segment {segment} entry index {found} is not the expected index {expected}"
             ),
             Self::ReplayIndexOverflow => {
                 formatter.write_str("replay entry index exceeds the wire integer range")
             }
-            Self::ReplayContextMismatch { entry } => {
-                write!(formatter, "replay context differs at entry {entry}")
+            Self::ReplayCheckpointDigestMismatch { segment } => write!(
+                formatter,
+                "replay checkpoint digest differs at segment {segment}"
+            ),
+            Self::ReplayCheckpointMismatch { segment } => {
+                write!(
+                    formatter,
+                    "replay checkpoint chain differs at segment {segment}"
+                )
             }
-            Self::ReplayResultMismatch { entry } => {
-                write!(formatter, "replay result differs at entry {entry}")
+            Self::ReplayContextMismatch { segment, entry } => {
+                write!(
+                    formatter,
+                    "replay context differs at segment {segment} entry {entry}"
+                )
+            }
+            Self::ReplayResultMismatch { segment, entry } => {
+                write!(
+                    formatter,
+                    "replay result differs at segment {segment} entry {entry}"
+                )
             }
             Self::Open(source) => source.fmt(formatter),
             Self::Runtime(source) => source.fmt(formatter),
@@ -106,3 +142,36 @@ impl core::fmt::Display for PersistenceError {
 }
 
 impl std::error::Error for PersistenceError {}
+
+#[cfg(test)]
+mod tests {
+    use super::PersistenceError;
+
+    #[test]
+    fn segmented_replay_errors_identify_the_exact_drift_location() {
+        assert_eq!(
+            PersistenceError::ReplayCheckpointDigestMismatch { segment: 2 }.to_string(),
+            "replay checkpoint digest differs at segment 2"
+        );
+        assert_eq!(
+            PersistenceError::ReplayCheckpointMismatch { segment: 3 }.to_string(),
+            "replay checkpoint chain differs at segment 3"
+        );
+        assert_eq!(
+            PersistenceError::ReplayContextMismatch {
+                segment: 4,
+                entry: 5,
+            }
+            .to_string(),
+            "replay context differs at segment 4 entry 5"
+        );
+        assert_eq!(
+            PersistenceError::ReplayResultMismatch {
+                segment: 6,
+                entry: 7,
+            }
+            .to_string(),
+            "replay result differs at segment 6 entry 7"
+        );
+    }
+}

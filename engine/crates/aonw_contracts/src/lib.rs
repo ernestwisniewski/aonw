@@ -43,10 +43,11 @@ pub use limits::{
     MAX_GAME_STATE_UNIT_COUNT, MAX_MOVEMENT_BALANCE_UNITS, MAX_QUEUED_PATH_STEP_COUNT,
 };
 pub use persistence::{
-    MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_SAVE_GAME_JSON_BYTES,
-    PersistenceCodecError, ReplayCommandDto, ReplayContextDto, ReplayEntryDto, ReplayEventDto,
-    ReplayEvidenceDto, ReplayLogDto, ReplayLogisticsEvidenceDto, ReplayRecordDto, ReplayResultDto,
-    ReplaySystemCommandDto, ReplayUnitMovementExecutionDto, SaveGameDto,
+    MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_REPLAY_SEGMENT_COUNT,
+    MAX_SAVE_GAME_JSON_BYTES, PersistenceCodecError, ReplayCommandDto, ReplayContextDto,
+    ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto, ReplayLogisticsEvidenceDto,
+    ReplayRecordDto, ReplayResultDto, ReplaySegmentDto, ReplaySystemCommandDto,
+    ReplayUnitMovementExecutionDto, SaveGameDto,
 };
 
 /// Stable authored map-objective type shared by client and replay contracts.

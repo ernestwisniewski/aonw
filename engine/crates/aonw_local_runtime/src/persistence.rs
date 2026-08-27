@@ -1,14 +1,15 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
-    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, ReplayContextDto, ReplayEntryDto, ReplayLogDto,
-    ReplayRecordDto, ReplayResultDto, ReplaySystemCommandDto, SaveGameDto,
+    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_SEGMENT_COUNT, ReplayContextDto,
+    ReplayEntryDto, ReplayLogDto, ReplayRecordDto, ReplayResultDto, ReplaySegmentDto,
+    ReplaySystemCommandDto, SaveGameDto,
 };
 use aonw_domain::{CityId, PlayerId, UnitId, UtcTimestamp};
 use aonw_engine::GameEngine;
 
 pub use crate::persistence_error::PersistenceError;
-use crate::persistence_validation::{validate_replay_header, validate_save_header};
+use crate::persistence_validation::validate_save_header;
 use crate::session::Session;
 use crate::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CommandResult,
@@ -21,9 +22,11 @@ use crate::{
 
 mod evidence;
 mod player_decode;
+mod verification;
 
 use evidence::{encode_event, encode_evidence};
 use player_decode::decode_command;
+use verification::verify_replay;
 
 /// Result of deterministic replay verification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -38,10 +41,8 @@ pub struct ReplayVerification {
 
 #[derive(Clone, Debug)]
 pub(crate) struct ReplayRecorder {
-    initial_state: aonw_contracts::GameStateDto,
-    initial_state_digest: String,
-    initial_event_offset: u64,
-    entries: Vec<ReplayEntryDto>,
+    completed_segments: Vec<ReplaySegmentDto>,
+    current_segment: ReplaySegmentDto,
 }
 
 impl ReplayRecorder {
@@ -51,6 +52,21 @@ impl ReplayRecorder {
         event_offset: u64,
     ) -> Self {
         Self {
+            completed_segments: Vec::new(),
+            current_segment: Self::checkpoint(state, digest, event_offset),
+        }
+    }
+
+    pub(crate) fn is_full(&self) -> bool {
+        self.current().entries.len() >= MAX_REPLAY_ENTRY_COUNT
+    }
+
+    pub(crate) fn checkpoint(
+        state: &aonw_domain::GameState,
+        digest: aonw_engine::StateDigest,
+        event_offset: u64,
+    ) -> ReplaySegmentDto {
+        ReplaySegmentDto {
             initial_state: encode_game_state(state),
             initial_state_digest: digest.to_string(),
             initial_event_offset: event_offset,
@@ -58,25 +74,41 @@ impl ReplayRecorder {
         }
     }
 
-    pub(crate) fn is_full(&self) -> bool {
-        self.entries.len() >= MAX_REPLAY_ENTRY_COUNT
+    pub(crate) fn rollover(&mut self, checkpoint: ReplaySegmentDto) {
+        if self.completed_segments.len() == MAX_REPLAY_SEGMENT_COUNT - 1 {
+            self.completed_segments.remove(0);
+        }
+        let completed = core::mem::replace(&mut self.current_segment, checkpoint);
+        self.completed_segments.push(completed);
     }
 
     pub(crate) fn push(&mut self, entry: ReplayEntryDto) {
-        self.entries.push(entry);
+        self.current_mut().entries.push(entry);
+    }
+
+    pub(crate) fn current_entry_count(&self) -> usize {
+        self.current().entries.len()
+    }
+
+    fn current(&self) -> &ReplaySegmentDto {
+        &self.current_segment
+    }
+
+    fn current_mut(&mut self) -> &mut ReplaySegmentDto {
+        &mut self.current_segment
     }
 
     fn to_dto(&self, session: &Session) -> ReplayLogDto {
+        let mut segments = Vec::with_capacity(self.completed_segments.len() + 1);
+        segments.extend(self.completed_segments.iter().cloned());
+        segments.push(self.current_segment.clone());
         ReplayLogDto {
             map_id: session.map().map_id().to_owned(),
             map_hash: session.stamp().map_hash.to_string(),
             ruleset_id: session.ruleset().ruleset_id().to_owned(),
             ruleset_hash: session.stamp().ruleset_hash.to_string(),
             actor_player_id: session.actor().as_str().to_owned(),
-            initial_event_offset: self.initial_event_offset,
-            initial_state_digest: self.initial_state_digest.clone(),
-            initial_state: self.initial_state.clone(),
-            entries: self.entries.clone(),
+            segments,
         }
     }
 }
@@ -150,105 +182,7 @@ impl LocalRuntime {
         ruleset: RulesetDefinition,
         input: &str,
     ) -> Result<ReplayVerification, PersistenceError> {
-        let replay = ReplayLogDto::from_json(input).map_err(PersistenceError::Codec)?;
-        validate_replay_header(&replay, &map, &ruleset)?;
-        let state =
-            decode_game_state(replay.initial_state.clone()).map_err(PersistenceError::State)?;
-        if GameEngine::state_digest(&state).to_string() != replay.initial_state_digest {
-            return Err(PersistenceError::StateDigestMismatch);
-        }
-        let actor = PlayerId::new(replay.actor_player_id.clone())
-            .map_err(PersistenceError::InvalidActor)?;
-        let mut runtime = Self::default();
-        runtime
-            .open(
-                OpenSession::from_state(map, ruleset, state, actor)
-                    .with_event_offset(replay.initial_event_offset),
-            )
-            .map_err(PersistenceError::Open)?;
-
-        for (entry_index, entry) in replay.entries.iter().enumerate() {
-            let expected_index =
-                u64::try_from(entry_index).map_err(|_| PersistenceError::ReplayIndexOverflow)?;
-            if entry.index != expected_index {
-                return Err(PersistenceError::ReplayIndexMismatch {
-                    expected: expected_index,
-                    found: entry.index,
-                });
-            }
-            let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-            let actor = match &entry.record {
-                ReplayRecordDto::Player { .. } => Some(session.actor()),
-                ReplayRecordDto::System { .. } => None,
-            };
-            if entry.context != replay_context(session, actor) {
-                return Err(PersistenceError::ReplayContextMismatch { entry: entry_index });
-            }
-            let result = match decode_record(&entry.record)? {
-                ReplayRuntimeCommand::SelectTechnology(command) => {
-                    runtime.select_technology(command)
-                }
-                ReplayRuntimeCommand::Diplomacy(command) => runtime.diplomacy(&command),
-                ReplayRuntimeCommand::Artifact(command) => runtime.artifact(&command),
-                ReplayRuntimeCommand::FoundCity(command) => runtime.found_city(&command),
-                ReplayRuntimeCommand::ToggleWorkedHex(command) => {
-                    runtime.toggle_worked_hex(&command)
-                }
-                ReplayRuntimeCommand::SelectCityExpansionHex(command) => {
-                    runtime.select_city_expansion_hex(&command)
-                }
-                ReplayRuntimeCommand::Production(command) => runtime.production(&command),
-                ReplayRuntimeCommand::SelectWorkerImprovement(command) => {
-                    runtime.select_worker_improvement(&command)
-                }
-                ReplayRuntimeCommand::ConfirmWorkerImprovement(command) => {
-                    runtime.confirm_worker_improvement(&command)
-                }
-                ReplayRuntimeCommand::CancelWorkerJob(command) => {
-                    runtime.cancel_worker_job(&command)
-                }
-                ReplayRuntimeCommand::AssignWorkerToHex(command) => {
-                    runtime.assign_worker_to_hex(&command)
-                }
-                ReplayRuntimeCommand::CancelWorkerAssignment(command) => {
-                    runtime.cancel_worker_assignment(&command)
-                }
-                ReplayRuntimeCommand::BuildRoad(command) => runtime.build_road(&command),
-                ReplayRuntimeCommand::AutomateWorker(command) => runtime.automate_worker(&command),
-                ReplayRuntimeCommand::Attack(command) => runtime.attack_hex(&command),
-                ReplayRuntimeCommand::Move(command) => runtime.dispatch(&command),
-                ReplayRuntimeCommand::AutoExplore(command) => runtime.auto_explore_unit(&command),
-                ReplayRuntimeCommand::AssignMerchantRoute(command) => {
-                    runtime.assign_merchant_trade_route(&command)
-                }
-                ReplayRuntimeCommand::MoveMerchantToCity(command) => {
-                    runtime.move_merchant_to_city(&command)
-                }
-                ReplayRuntimeCommand::DetachTroop(command) => runtime.detach_troop(&command),
-                ReplayRuntimeCommand::Cancel(command) => runtime.cancel_unit_action(&command),
-                ReplayRuntimeCommand::Skip(command) => runtime.skip_unit_turn(&command),
-                ReplayRuntimeCommand::Fortify(command) => runtime.fortify_unit(&command),
-                ReplayRuntimeCommand::EndTurn(command) => runtime.end_turn(command),
-                ReplayRuntimeCommand::SubmitTurn(command) => runtime.submit_turn(command),
-                ReplayRuntimeCommand::FinalizeTimedOutTurn(command) => {
-                    runtime.finalize_timed_out_turn(&command)
-                }
-                ReplayRuntimeCommand::KickParticipant(command) => {
-                    runtime.kick_participant(&command)
-                }
-            }
-            .map_err(PersistenceError::Runtime)?;
-            let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-            if entry.result != replay_result(&result, session) {
-                return Err(PersistenceError::ReplayResultMismatch { entry: entry_index });
-            }
-        }
-        let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-        Ok(ReplayVerification {
-            entry_count: replay.entries.len(),
-            final_stamp: session.stamp(),
-            final_event_offset: session.event_offset(),
-        })
+        verify_replay(map, ruleset, input)
     }
 }
 
@@ -259,7 +193,7 @@ pub(crate) fn replay_entry(
     result: &CommandResult,
 ) -> ReplayEntryDto {
     ReplayEntryDto {
-        index: u64::try_from(session.replay().entries.len())
+        index: u64::try_from(session.replay().current_entry_count())
             .expect("bounded replay entry count fits u64"),
         context: before,
         record,

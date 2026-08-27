@@ -142,7 +142,9 @@ impl Session {
 
     pub(crate) fn prepare_replay_segment(&mut self) {
         if self.replay.is_full() {
-            self.replay = ReplayRecorder::new(self.state(), self.state_digest, self.event_offset);
+            let checkpoint =
+                ReplayRecorder::checkpoint(self.state(), self.state_digest, self.event_offset);
+            self.replay.rollover(checkpoint);
         }
     }
 

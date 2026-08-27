@@ -368,9 +368,10 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
     let expected_stamp = *runtime.snapshot().expect("snapshot").stamp();
     let replay_json = runtime.export_replay_json().expect("replay");
     let replay = ReplayLogDto::from_json(&replay_json).expect("strict replay");
-    assert_eq!(replay.entries.len(), 2);
-    assert!(replay.entries[0].result.accepted);
-    assert!(!replay.entries[1].result.accepted);
+    assert_eq!(replay.segments.len(), 1);
+    assert_eq!(replay.segments[0].entries.len(), 2);
+    assert!(replay.segments[0].entries[0].result.accepted);
+    assert!(!replay.segments[0].entries[1].result.accepted);
 
     let (map, ruleset) = content();
     assert_eq!(
@@ -383,7 +384,7 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
     );
 
     let mut reordered = replay.clone();
-    reordered.entries.swap(0, 1);
+    reordered.segments[0].entries.swap(0, 1);
     let (map, ruleset) = content();
     assert!(matches!(
         LocalRuntime::verify_replay_json(
@@ -392,15 +393,17 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
             &reordered.to_json().expect("reordered replay")
         ),
         Err(PersistenceError::ReplayIndexMismatch {
+            segment: 0,
             expected: 0,
             found: 1,
         })
     ));
 
     let mut reordered_commands = replay.clone();
-    let first_record = reordered_commands.entries[0].record.clone();
-    reordered_commands.entries[0].record = reordered_commands.entries[1].record.clone();
-    reordered_commands.entries[1].record = first_record;
+    let first_record = reordered_commands.segments[0].entries[0].record.clone();
+    reordered_commands.segments[0].entries[0].record =
+        reordered_commands.segments[0].entries[1].record.clone();
+    reordered_commands.segments[0].entries[1].record = first_record;
     let (map, ruleset) = content();
     assert!(matches!(
         LocalRuntime::verify_replay_json(
@@ -410,11 +413,14 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
                 .to_json()
                 .expect("command-reordered replay")
         ),
-        Err(PersistenceError::ReplayResultMismatch { entry: 0 })
+        Err(PersistenceError::ReplayResultMismatch {
+            segment: 0,
+            entry: 0
+        })
     ));
 
     let mut tampered_event = replay.clone();
-    tampered_event.entries[0].result.events.clear();
+    tampered_event.segments[0].entries[0].result.events.clear();
     let (map, ruleset) = content();
     assert!(matches!(
         LocalRuntime::verify_replay_json(
@@ -422,11 +428,14 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
             ruleset,
             &tampered_event.to_json().expect("event-tampered replay")
         ),
-        Err(PersistenceError::ReplayResultMismatch { entry: 0 })
+        Err(PersistenceError::ReplayResultMismatch {
+            segment: 0,
+            entry: 0
+        })
     ));
 
     let mut tampered = replay;
-    tampered.entries[0].result.state_digest = "00".repeat(32);
+    tampered.segments[0].entries[0].result.state_digest = "00".repeat(32);
     let (map, ruleset) = content();
     assert!(matches!(
         LocalRuntime::verify_replay_json(
@@ -434,7 +443,10 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
             ruleset,
             &tampered.to_json().expect("tampered replay")
         ),
-        Err(PersistenceError::ReplayResultMismatch { entry: 0 })
+        Err(PersistenceError::ReplayResultMismatch {
+            segment: 0,
+            entry: 0
+        })
     ));
 }
 
@@ -469,6 +481,6 @@ fn deterministic_replay_signature_is_stable() {
     assert!(!replay_json.contains("initialRngState"));
     assert_eq!(
         format!("{:x}", Sha256::digest(replay_json.as_bytes())),
-        "2e92f11340816e35d66fd1c179c27b6de9d5895a97e3bcfd773deb8f26fbdcd6"
+        "408d436b93059e2e7abb0a59d05319a1287b0c71b738ef8f21e449ca4053a7cb"
     );
 }

@@ -65,12 +65,18 @@ fn terminal_outcome_is_global_persisted_replayable_and_rejects_later_commands() 
 
     let replay_json = runtime.export_replay_json().expect("outcome replay");
     let replay = ReplayLogDto::from_json(&replay_json).expect("replay DTO");
-    assert!(replay.entries[0].result.events.iter().any(|event| matches!(
-        event,
-        ReplayEventDto::MatchEnded { turn: 8, outcome }
-            if outcome.condition == GameOutcomeConditionDto::Conquest
-                && outcome.winner_player_id.as_deref() == Some("player-1")
-    )));
+    assert!(
+        replay.segments[0].entries[0]
+            .result
+            .events
+            .iter()
+            .any(|event| matches!(
+                event,
+                ReplayEventDto::MatchEnded { turn: 8, outcome }
+                    if outcome.condition == GameOutcomeConditionDto::Conquest
+                        && outcome.winner_player_id.as_deref() == Some("player-1")
+            ))
+    );
     let verification = LocalRuntime::verify_replay_json(map.clone(), rules.clone(), &replay_json)
         .expect("verify outcome replay");
     assert_eq!(verification.entry_count, 2);

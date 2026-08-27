@@ -80,21 +80,17 @@ fn player_and_system_records_replay_with_exact_lifecycle_and_offsets() {
 
     let replay_json = runtime.export_replay_json().expect("replay");
     let replay = ReplayLogDto::from_json(&replay_json).expect("replay DTO");
-    assert_eq!(replay.entries.len(), 2);
-    assert!(matches!(
-        replay.entries[0].record,
-        ReplayRecordDto::Player { .. }
-    ));
+    assert_eq!(replay.segments.len(), 1);
+    let entries = &replay.segments[0].entries;
+    assert_eq!(entries.len(), 2);
+    assert!(matches!(entries[0].record, ReplayRecordDto::Player { .. }));
     assert_eq!(
-        replay.entries[0].context.actor_player_id.as_deref(),
+        entries[0].context.actor_player_id.as_deref(),
         Some("player-1")
     );
-    assert!(matches!(
-        replay.entries[1].record,
-        ReplayRecordDto::System { .. }
-    ));
-    assert_eq!(replay.entries[1].context.actor_player_id, None);
-    assert_eq!(replay.entries[1].result.event_offset, 14);
+    assert!(matches!(entries[1].record, ReplayRecordDto::System { .. }));
+    assert_eq!(entries[1].context.actor_player_id, None);
+    assert_eq!(entries[1].result.event_offset, 14);
 
     let verification = LocalRuntime::verify_replay_json(map.clone(), rules.clone(), &replay_json)
         .expect("verify replay");

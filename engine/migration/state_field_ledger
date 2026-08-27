@@ -33,8 +33,8 @@
 # functional engine parity for commands that mutate the field.
 
 expected-fixture-count 120
-expected-envelope-count 10
-expected-envelope-field-count 95
+expected-envelope-count 11
+expected-envelope-field-count 96
 expected-domain-field-count 30
 expected-state-json-key-count 16
 expected-lifecycle-json-key-count 13
@@ -53,6 +53,7 @@ envelope dart-snapshot-metadata persistence-metadata GameSnapshotMetadata packag
 envelope rust-canonical-state canonical-rule-state GameStateDto engine/crates/aonw_contracts/src/canonical.rs state-contract-ready
 envelope rust-save persistence-envelope SaveGameDto engine/crates/aonw_contracts/src/persistence.rs state-contract-ready
 envelope rust-replay persistence-envelope ReplayLogDto engine/crates/aonw_contracts/src/persistence.rs state-contract-ready
+envelope rust-replay-segment persistence-envelope ReplaySegmentDto engine/crates/aonw_contracts/src/persistence.rs state-contract-ready
 envelope rust-client-response client-transport ClientResponseDto engine/crates/aonw_contracts/src/client/response.rs characterized
 envelope rust-session-stamp authoritative-identity ClientSessionStampDto engine/crates/aonw_contracts/src/client/response.rs characterized
 envelope rust-recipient-snapshot recipient-view PlayerViewSnapshotDto engine/crates/aonw_contracts/src/client/response.rs characterized
@@ -119,10 +120,12 @@ envelope-field rust-replay mapHash immutable-content-identity
 envelope-field rust-replay rulesetId immutable-content-identity
 envelope-field rust-replay rulesetHash immutable-content-identity
 envelope-field rust-replay actorPlayerId recipient-context
-envelope-field rust-replay initialEventOffset event-log-metadata
-envelope-field rust-replay initialStateDigest authoritative-identity
-envelope-field rust-replay initialState canonical-rule-state
-envelope-field rust-replay entries replay-history
+envelope-field rust-replay segments replay-history
+
+envelope-field rust-replay-segment initialEventOffset event-log-metadata
+envelope-field rust-replay-segment initialStateDigest authoritative-identity
+envelope-field rust-replay-segment initialState canonical-rule-state
+envelope-field rust-replay-segment entries replay-history
 
 envelope-field rust-client-response apiVersion shared-client-api
 envelope-field rust-client-response outcome client-transport

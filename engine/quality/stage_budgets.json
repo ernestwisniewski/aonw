@@ -108,7 +108,7 @@
       "timeout-invalid-scope-rejected"
     ],
     "maxEventsPerCommand": 4,
-    "maxMeasuredPayloadBytes": 210896,
+    "maxMeasuredPayloadBytes": 210911,
     "maxMeasuredAllocations": 30009,
     "maxMeasuredAllocatedBytes": 5158327,
     "maxWorkCounters": {
@@ -296,7 +296,7 @@
       "terminal-save-reopen-replay"
     ],
     "maxEventsPerCommand": 5,
-    "maxMeasuredPayloadBytes": 210896,
+    "maxMeasuredPayloadBytes": 210911,
     "maxMeasuredAllocations": 30009,
     "maxMeasuredAllocatedBytes": 5158327,
     "maxWorkCounters": {

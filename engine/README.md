@@ -30,10 +30,11 @@ versioned client boundary; they do not implement rules or fallback to Dart.
 ## Current scope
 
 Implemented runtime slices include movement, unit actions, logistics, combat,
-cities, workers, roads, recipient-safe projections, local sessions, and exact
-current save/replay verification. Economy, production, research, diplomatic
-mutations, objectives, AI, and the production Serverpod host remain migration
-work and fail closed where their turn processors are not available.
+cities, workers, roads, economy, production, research, diplomacy, objectives,
+match outcome, recipient-safe projections, local sessions, current saves and
+bounded multi-segment exact replay. The deterministic AI search core exists;
+feature-complete strategic AI policy, final persistence host adapters and the
+production Serverpod host remain migration work.
 
 The engine and successor clients are greenfield and update one current contract
 atomically. Internal DTOs do not carry speculative versions, legacy readers,

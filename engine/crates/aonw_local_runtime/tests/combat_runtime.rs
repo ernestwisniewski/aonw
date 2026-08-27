@@ -81,7 +81,7 @@ fn combat_preview_dispatch_save_and_replay_use_one_exact_execution() {
 
     let mut tampered = replay.clone();
     let Some(ReplayEvidenceDto::Combat { execution }) =
-        tampered.entries[0].result.evidence.as_mut()
+        tampered.segments[0].entries[0].result.evidence.as_mut()
     else {
         panic!("persisted combat evidence")
     };
@@ -90,13 +90,13 @@ fn combat_preview_dispatch_save_and_replay_use_one_exact_execution() {
     assert!(LocalRuntime::verify_replay_json(map.clone(), rules.clone(), &tampered).is_err());
 
     let mut tampered = replay.clone();
-    tampered.entries[0].result.events.pop();
+    tampered.segments[0].entries[0].result.events.pop();
     let tampered = tampered.to_json().expect("event-tampered replay");
     assert!(LocalRuntime::verify_replay_json(map.clone(), rules.clone(), &tampered).is_err());
 
     let mut tampered = replay;
     let Some(ReplayEvidenceDto::Combat { execution }) =
-        tampered.entries[0].result.evidence.as_mut()
+        tampered.segments[0].entries[0].result.evidence.as_mut()
     else {
         panic!("persisted combat evidence")
     };

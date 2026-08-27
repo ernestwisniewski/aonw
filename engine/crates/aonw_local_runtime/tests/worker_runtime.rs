@@ -246,7 +246,7 @@ fn assert_final_roundtrip_replay_and_disclosure(
     assert_eq!(verification.entry_count, 3);
     assert_eq!(&verification.final_stamp, final_snapshot.stamp());
     let mut tampered = ReplayLogDto::from_json(&replay_json).expect("replay DTO");
-    let completion_event = tampered.entries[2]
+    let completion_event = tampered.segments[0].entries[2]
         .result
         .events
         .iter_mut()

@@ -91,7 +91,7 @@ fn founding_draft_save_reopen_completion_and_replay_are_exact() {
     let mut tampered = ReplayLogDto::from_json(&replay_json).expect("replay DTO");
     let Some(ReplayEvidenceDto::TurnKernel {
         founded_city_ids, ..
-    }) = tampered.entries[1].result.evidence.as_mut()
+    }) = tampered.segments[0].entries[1].result.evidence.as_mut()
     else {
         panic!("persisted turn evidence")
     };

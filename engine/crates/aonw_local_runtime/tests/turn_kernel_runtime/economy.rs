@@ -45,20 +45,32 @@ fn economy_events_are_current_recipient_safe_saved_and_exactly_replayed() {
 
     let replay_json = runtime.export_replay_json().expect("economy replay");
     let replay = ReplayLogDto::from_json(&replay_json).expect("replay DTO");
-    assert!(replay.entries[0].result.events.iter().any(|event| matches!(
-        event,
-        ReplayEventDto::CityClaimedHex { city_id, col: 0, row: 1 }
-            if city_id == "city-1"
-    )));
-    assert!(replay.entries[0].result.events.iter().any(|event| matches!(
-        event,
-        ReplayEventDto::StabilityBandChanged {
-            player_id,
-            previous_band: StabilityBandDto::Content,
-            new_band: StabilityBandDto::Stable,
-            net: 1,
-        } if player_id == "player-1"
-    )));
+    assert!(
+        replay.segments[0].entries[0]
+            .result
+            .events
+            .iter()
+            .any(|event| matches!(
+                event,
+                ReplayEventDto::CityClaimedHex { city_id, col: 0, row: 1 }
+                    if city_id == "city-1"
+            ))
+    );
+    assert!(
+        replay.segments[0].entries[0]
+            .result
+            .events
+            .iter()
+            .any(|event| matches!(
+                event,
+                ReplayEventDto::StabilityBandChanged {
+                    player_id,
+                    previous_band: StabilityBandDto::Content,
+                    new_band: StabilityBandDto::Stable,
+                    net: 1,
+                } if player_id == "player-1"
+            ))
+    );
     assert_eq!(
         LocalRuntime::verify_replay_json(map.clone(), rules.clone(), &replay_json)
             .expect("verify economy replay")

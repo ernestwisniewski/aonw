@@ -18,6 +18,8 @@ pub const MAX_SAVE_GAME_JSON_BYTES: usize = 16 * 1024 * 1024;
 pub const MAX_REPLAY_LOG_JSON_BYTES: usize = 64 * 1024 * 1024;
 /// Maximum commands retained in one replay segment.
 pub const MAX_REPLAY_ENTRY_COUNT: usize = 512;
+/// Maximum self-contained replay segments retained in one archive.
+pub const MAX_REPLAY_SEGMENT_COUNT: usize = 8;
 
 /// Complete canonical save envelope.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -168,7 +170,21 @@ pub struct ReplayEntryDto {
     pub result: ReplayResultDto,
 }
 
-/// Deterministic replay segment beginning at one canonical snapshot.
+/// One self-contained deterministic replay segment and its restore checkpoint.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReplaySegmentDto {
+    /// Event offset at the segment start.
+    pub initial_event_offset: u64,
+    /// Digest of the initial canonical state.
+    pub initial_state_digest: String,
+    /// Complete initial canonical state.
+    pub initial_state: GameStateDto,
+    /// Commands and exact expected outcomes.
+    pub entries: Vec<ReplayEntryDto>,
+}
+
+/// Bounded current-format replay archive ordered from oldest to newest segment.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReplayLogDto {
@@ -182,14 +198,8 @@ pub struct ReplayLogDto {
     pub ruleset_hash: String,
     /// Actor used by every recorded context.
     pub actor_player_id: String,
-    /// Event offset at the segment start.
-    pub initial_event_offset: u64,
-    /// Digest of the initial canonical state.
-    pub initial_state_digest: String,
-    /// Complete initial canonical state.
-    pub initial_state: GameStateDto,
-    /// Commands and exact expected outcomes.
-    pub entries: Vec<ReplayEntryDto>,
+    /// Ordered self-contained replay segments with canonical checkpoints.
+    pub segments: Vec<ReplaySegmentDto>,
 }
 
 /// Strict save or replay codec failure.
@@ -209,6 +219,15 @@ pub enum PersistenceCodecError {
         /// Maximum accepted command count.
         maximum: usize,
     },
+    /// Replay archive does not contain a restore checkpoint.
+    EmptyReplayArchive,
+    /// Replay archive contains too many retained segments.
+    TooManyReplaySegments {
+        /// Actual segment count.
+        actual: usize,
+        /// Maximum accepted segment count.
+        maximum: usize,
+    },
     /// JSON violates the strict DTO contract.
     Json(serde_json::Error),
 }
@@ -225,6 +244,11 @@ impl core::fmt::Display for PersistenceCodecError {
             Self::TooManyReplayEntries { actual, maximum } => write!(
                 formatter,
                 "replay has {actual} entries; maximum is {maximum}"
+            ),
+            Self::EmptyReplayArchive => formatter.write_str("replay archive has no segments"),
+            Self::TooManyReplaySegments { actual, maximum } => write!(
+                formatter,
+                "replay archive has {actual} segments; maximum is {maximum}"
             ),
             Self::Json(source) => source.fmt(formatter),
         }

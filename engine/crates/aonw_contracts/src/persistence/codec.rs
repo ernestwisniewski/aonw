@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_SAVE_GAME_JSON_BYTES,
-    PersistenceCodecError, ReplayLogDto, SaveGameDto,
+    MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_REPLAY_SEGMENT_COUNT,
+    MAX_SAVE_GAME_JSON_BYTES, PersistenceCodecError, ReplayLogDto, SaveGameDto,
 };
 
 impl SaveGameDto {
@@ -33,12 +33,7 @@ impl ReplayLogDto {
     /// Returns an error for oversized, structurally invalid, or unbounded input.
     pub fn from_json(input: &str) -> Result<Self, PersistenceCodecError> {
         let replay: Self = parse_bounded(input, MAX_REPLAY_LOG_JSON_BYTES)?;
-        if replay.entries.len() > MAX_REPLAY_ENTRY_COUNT {
-            return Err(PersistenceCodecError::TooManyReplayEntries {
-                actual: replay.entries.len(),
-                maximum: MAX_REPLAY_ENTRY_COUNT,
-            });
-        }
+        replay.validate_bounds()?;
         Ok(replay)
     }
 
@@ -48,13 +43,29 @@ impl ReplayLogDto {
     ///
     /// Returns an error if serialization fails.
     pub fn to_json(&self) -> Result<String, PersistenceCodecError> {
-        if self.entries.len() > MAX_REPLAY_ENTRY_COUNT {
-            return Err(PersistenceCodecError::TooManyReplayEntries {
-                actual: self.entries.len(),
-                maximum: MAX_REPLAY_ENTRY_COUNT,
+        self.validate_bounds()?;
+        serialize_bounded(self, MAX_REPLAY_LOG_JSON_BYTES)
+    }
+
+    fn validate_bounds(&self) -> Result<(), PersistenceCodecError> {
+        if self.segments.is_empty() {
+            return Err(PersistenceCodecError::EmptyReplayArchive);
+        }
+        if self.segments.len() > MAX_REPLAY_SEGMENT_COUNT {
+            return Err(PersistenceCodecError::TooManyReplaySegments {
+                actual: self.segments.len(),
+                maximum: MAX_REPLAY_SEGMENT_COUNT,
             });
         }
-        serialize_bounded(self, MAX_REPLAY_LOG_JSON_BYTES)
+        for segment in &self.segments {
+            if segment.entries.len() > MAX_REPLAY_ENTRY_COUNT {
+                return Err(PersistenceCodecError::TooManyReplayEntries {
+                    actual: segment.entries.len(),
+                    maximum: MAX_REPLAY_ENTRY_COUNT,
+                });
+            }
+        }
+        Ok(())
     }
 }
 

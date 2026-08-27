@@ -75,16 +75,28 @@ fn objective_events_are_recipient_safe_saved_and_exactly_replayed() {
 fn assert_replay_and_save(runtime: &LocalRuntime, map: &MapDefinition, rules: &RulesetDefinition) {
     let replay_json = runtime.export_replay_json().expect("replay");
     let replay = ReplayLogDto::from_json(&replay_json).expect("replay DTO");
-    assert!(replay.entries[0].result.events.iter().any(|event| matches!(
-        event,
-        ReplayEventDto::MapObjectiveSecured { objective_id, .. }
-            if objective_id == "central-ruins"
-    )));
-    assert!(replay.entries[0].result.events.iter().any(|event| matches!(
-        event,
-        ReplayEventDto::DominationThresholdReached { player_id, .. }
-            if player_id == "player-2"
-    )));
+    assert!(
+        replay.segments[0].entries[0]
+            .result
+            .events
+            .iter()
+            .any(|event| matches!(
+                event,
+                ReplayEventDto::MapObjectiveSecured { objective_id, .. }
+                    if objective_id == "central-ruins"
+            ))
+    );
+    assert!(
+        replay.segments[0].entries[0]
+            .result
+            .events
+            .iter()
+            .any(|event| matches!(
+                event,
+                ReplayEventDto::DominationThresholdReached { player_id, .. }
+                    if player_id == "player-2"
+            ))
+    );
     LocalRuntime::verify_replay_json(map.clone(), rules.clone(), &replay_json)
         .expect("verify replay");
     let save = runtime.export_save_json().expect("save");

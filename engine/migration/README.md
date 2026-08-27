@@ -122,6 +122,16 @@ and greenfield clients update this one current contract atomically. A format
 version is introduced only after a concrete independently deployed reader or
 supported persisted format requires compatibility.
 
+PS11A keeps one current persistence contract. `SaveGameDto` is the complete
+canonical checkpoint. `ReplayLogDto` is a bounded archive of up to eight
+self-contained `ReplaySegmentDto` checkpoints, each with at most 512 commands.
+Rollover retains the ordered tail instead of silently discarding the preceding
+segment; verification restores every checkpoint independently and reports the
+exact segment/entry of the first drift. Corrupt, truncated, oversized, duplicate,
+unknown-field and hash-mismatch inputs fail before replacing an open session.
+There is no persistence version, historical reader, upcaster, or future-version
+fixture while only this format is supported.
+
 Run the dependency-free source guard and its negative fixtures from the
 repository root:
 
