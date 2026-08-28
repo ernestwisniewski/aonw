@@ -1,3 +1,5 @@
+import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
+import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
 import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/application/movement_session_port.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
@@ -157,6 +159,7 @@ final class FakeGameSession
     implements
         MapSessionPort,
         MovementSessionPort,
+        UnitLogisticsSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   FakeGameSession.success(
@@ -169,6 +172,9 @@ final class FakeGameSession
     this.unitActionFailure,
     this.turnResult,
     this.turnFailure,
+    this.logisticsOptions,
+    this.logisticsResult,
+    this.logisticsFailure,
   }) : failure = null;
   FakeGameSession.failure(this.failure)
     : scene = null,
@@ -179,7 +185,10 @@ final class FakeGameSession
       unitActionResult = null,
       unitActionFailure = null,
       turnResult = null,
-      turnFailure = null;
+      turnFailure = null,
+      logisticsOptions = null,
+      logisticsResult = null,
+      logisticsFailure = null;
 
   final MapScene? scene;
   final MapLoadException? failure;
@@ -191,12 +200,19 @@ final class FakeGameSession
   final UnitActionSessionException? unitActionFailure;
   final TurnCommandResultView? turnResult;
   final TurnSessionException? turnFailure;
+  final UnitLogisticsOptionsView? logisticsOptions;
+  final UnitLogisticsCommandResultView? logisticsResult;
+  final UnitLogisticsSessionException? logisticsFailure;
   var unitActionCalls = 0;
   UnitActionKindView? lastUnitAction;
   int? lastUnitActionExpectedRevision;
   String? lastUnitActionUnitId;
   var endTurnCalls = 0;
   int? lastEndTurnExpectedRevision;
+  var logisticsOptionCalls = 0;
+  var logisticsCommandCalls = 0;
+  int? lastLogisticsExpectedRevision;
+  UnitLogisticsActionView? lastLogisticsAction;
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
@@ -251,6 +267,39 @@ final class FakeGameSession
     final error = turnFailure;
     if (error != null) throw error;
     return turnResult ?? (throw StateError('No turn fixture.'));
+  }
+
+  @override
+  Future<UnitLogisticsOptionsView> unitLogisticsOptions({
+    required int expectedRevision,
+    required String unitId,
+  }) async {
+    logisticsOptionCalls += 1;
+    final error = logisticsFailure;
+    if (error != null) throw error;
+    return logisticsOptions ??
+        UnitLogisticsOptionsView(
+          stamp: testSessionStamp(revision: expectedRevision),
+          unitId: unitId,
+          autoExplore: null,
+          merchantRouteDestinations: const [],
+          merchantTravelDestinations: const [],
+          detachments: const [],
+        );
+  }
+
+  @override
+  Future<UnitLogisticsCommandResultView> executeUnitLogistics({
+    required int expectedRevision,
+    required UnitLogisticsActionView action,
+  }) async {
+    logisticsCommandCalls += 1;
+    lastLogisticsExpectedRevision = expectedRevision;
+    lastLogisticsAction = action;
+    final error = logisticsFailure;
+    if (error != null) throw error;
+    return logisticsResult ??
+        (throw StateError('No unit logistics result fixture.'));
   }
 
   @override

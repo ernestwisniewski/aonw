@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import '../../features/logistics/application/unit_logistics_session_port.dart';
 import '../../features/map/application/map_session_port.dart';
 import '../../features/map/application/movement_session_port.dart';
 import '../../features/map/infrastructure/gamepad_map_input_source.dart';
@@ -19,6 +20,7 @@ final class AppComposition {
   AppComposition({
     required MapSessionPort mapSession,
     required MovementSessionPort movementSession,
+    required UnitLogisticsSessionPort logisticsSession,
     required UnitActionSessionPort unitActionSession,
     required TurnSessionPort turnSession,
     MapInputSource? mapInputSource,
@@ -29,6 +31,7 @@ final class AppComposition {
          mapController: MapPresentationController(
            session: mapSession,
            movement: movementSession,
+           logistics: logisticsSession,
            unitActions: unitActionSession,
            turns: turnSession,
          ),
@@ -47,6 +50,7 @@ final class AppComposition {
     return AppComposition(
       mapSession: gateway,
       movementSession: gateway,
+      logisticsSession: gateway,
       unitActionSession: gateway,
       turnSession: gateway,
       mapInputSource: GamepadMapInputSource(),

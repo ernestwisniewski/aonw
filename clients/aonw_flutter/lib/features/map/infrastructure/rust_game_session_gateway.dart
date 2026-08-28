@@ -1,6 +1,9 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 
+import '../../logistics/application/unit_logistics_session_port.dart';
+import '../../logistics/infrastructure/rust_unit_logistics_gateway.dart';
+import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../turns/infrastructure/rust_turn_gateway.dart';
 import '../../turns/read_model/turn_command_view.dart';
@@ -15,16 +18,17 @@ import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
 import '../read_model/player_map_view.dart';
 import 'map_view_mapper.dart';
-import 'movement_view_mapper.dart';
 import 'player_map_view_mapper.dart';
 import 'recipient_projection_cache.dart';
 import 'rust_game_session_context.dart';
 import 'rust_game_session_loader.dart';
+import 'rust_movement_gateway.dart';
 
 final class RustGameSessionGateway
     implements
         MapSessionPort,
         MovementSessionPort,
+        UnitLogisticsSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   RustGameSessionGateway({
@@ -32,8 +36,10 @@ final class RustGameSessionGateway
     RustSessionFactory sessionFactory = createAonwRustSession,
     MapViewMapper mapper = const MapViewMapper(),
     PlayerMapViewMapper playerMapper = const PlayerMapViewMapper(),
-    MovementViewMapper movementMapper = const MovementViewMapper(),
+    RustMovementGateway movementGateway = const RustMovementGateway(),
     RustTurnGateway turnGateway = const RustTurnGateway(),
+    RustUnitLogisticsGateway logisticsGateway =
+        const RustUnitLogisticsGateway(),
     UnitActionViewMapper unitActionMapper = const UnitActionViewMapper(),
   }) : _loader = RustGameSessionLoader(
          assets: assets,
@@ -42,8 +48,9 @@ final class RustGameSessionGateway
          playerMapper: playerMapper,
        ),
        _playerMapper = playerMapper,
-       _movementMapper = movementMapper,
+       _movementGateway = movementGateway,
        _turnGateway = turnGateway,
+       _logisticsGateway = logisticsGateway,
        _unitActions = RustUnitActionGateway(
          playerMapper: playerMapper,
          mapper: unitActionMapper,
@@ -51,8 +58,9 @@ final class RustGameSessionGateway
 
   final RustGameSessionLoader _loader;
   final PlayerMapViewMapper _playerMapper;
-  final MovementViewMapper _movementMapper;
+  final RustMovementGateway _movementGateway;
   final RustTurnGateway _turnGateway;
+  final RustUnitLogisticsGateway _logisticsGateway;
   final RustUnitActionGateway _unitActions;
   AonwRustSession? _session;
   MapView? _map;
@@ -107,108 +115,72 @@ final class RustGameSessionGateway
   Future<ReachableView> reachable({
     required int expectedRevision,
     required String unitId,
-  }) => _serialize(() async {
-    final context = _context();
-    try {
-      final response = await _send(
-        context.session,
-        AonwClientRequest.reachable(
-          expectedRevision: expectedRevision,
-          unitId: unitId,
-        ),
-      );
-      final result = response.require<AonwQueryResponse>().result;
-      if (result is! AonwReachableResult) {
-        throw const FormatException('Expected a reachable result.');
-      }
-      return _movementMapper.reachable(
-        result,
-        map: context.map,
-        expectedUnitId: unitId,
-        expectedRevision: expectedRevision,
-      );
-    } on MovementSessionException {
-      rethrow;
-    } on FormatException catch (error, stackTrace) {
-      throw _invalidSessionResponse(error, stackTrace);
-    }
-  });
+  }) => _serialize(
+    () => _movementGateway.reachable(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      unitId: unitId,
+      send: _send,
+    ),
+  );
 
   @override
   Future<RoutePlanView> routePlan({
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
-  }) => _serialize(() async {
-    final context = _context();
-    try {
-      final unit = requireControlledUnit(context, unitId);
-      final response = await _send(
-        context.session,
-        AonwClientRequest.routePlan(
-          expectedRevision: expectedRevision,
-          unitId: unitId,
-          targetCol: target.col,
-          targetRow: target.row,
-        ),
-      );
-      final result = response.require<AonwQueryResponse>().result;
-      if (result is! AonwRoutePlanResult) {
-        throw const FormatException('Expected a route-plan result.');
-      }
-      return _movementMapper.routePlan(
-        result,
-        map: context.map,
-        unit: unit,
-        expectedTarget: target,
-        expectedRevision: expectedRevision,
-      );
-    } on MovementSessionException {
-      rethrow;
-    } on FormatException catch (error, stackTrace) {
-      throw _invalidSessionResponse(error, stackTrace);
-    }
-  });
+  }) => _serialize(
+    () => _movementGateway.routePlan(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      unitId: unitId,
+      target: target,
+      send: _send,
+    ),
+  );
 
   @override
   Future<MoveUnitResultView> moveUnit({
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
-  }) => _serialize(() async {
-    final context = _context();
-    try {
-      requireControlledUnit(context, unitId);
-      final response = await _send(
-        context.session,
-        AonwClientRequest.moveUnit(
-          expectedRevision: expectedRevision,
-          unitId: unitId,
-          targetCol: target.col,
-          targetRow: target.row,
-        ),
-      );
-      final command = response.require<AonwCommandResponse>().result;
-      final execution = _movementMapper.validateCommand(
-        command,
-        map: context.map,
-        expectedUnitId: unitId,
-        expectedRevision: expectedRevision,
-        currentRevision: context.player.stamp.revision,
-      );
-      final player = await _applyCommandPatch(context, command);
-      if (!command.accepted) {
-        return MoveUnitResultView.rejected(
-          code: _movementMapper.rejectionCode(command.rejection!),
-        );
-      }
-      return MoveUnitResultView.accepted(player: player, execution: execution);
-    } on MovementSessionException {
-      rethrow;
-    } on FormatException catch (error, stackTrace) {
-      throw _invalidSessionResponse(error, stackTrace);
-    }
-  });
+  }) => _serialize(
+    () => _movementGateway.moveUnit(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      unitId: unitId,
+      target: target,
+      send: _send,
+      applyPatch: _applyCommandPatch,
+    ),
+  );
+
+  @override
+  Future<UnitLogisticsOptionsView> unitLogisticsOptions({
+    required int expectedRevision,
+    required String unitId,
+  }) => _serialize(
+    () => _logisticsGateway.options(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      unitId: unitId,
+      send: _send,
+    ),
+  );
+
+  @override
+  Future<UnitLogisticsCommandResultView> executeUnitLogistics({
+    required int expectedRevision,
+    required UnitLogisticsActionView action,
+  }) => _serialize(
+    () => _logisticsGateway.execute(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      action: action,
+      send: _send,
+      applyPatch: _applyCommandPatch,
+    ),
+  );
 
   @override
   Future<UnitActionResultView> executeUnitAction({
@@ -300,16 +272,6 @@ final class RustGameSessionGateway
     }
     return response;
   }
-
-  static MovementSessionException _invalidSessionResponse(
-    FormatException error,
-    StackTrace stackTrace,
-  ) => MovementSessionException(
-    code: 'invalid_session_protocol',
-    message: 'The movement response is incompatible with this client.',
-    diagnosticCause: error,
-    diagnosticStackTrace: stackTrace,
-  );
 
   Future<PlayerMapView> _applyCommandPatch(
     RustGameSessionContext context,

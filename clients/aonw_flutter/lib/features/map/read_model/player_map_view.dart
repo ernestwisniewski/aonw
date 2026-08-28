@@ -39,7 +39,7 @@ final class SessionStampView {
 }
 
 final class VisibleUnitView {
-  const VisibleUnitView({
+  VisibleUnitView({
     required this.id,
     required this.ownerPlayerId,
     required this.kind,
@@ -47,7 +47,10 @@ final class VisibleUnitView {
     required this.coordinate,
     required this.movementUnits,
     required this.posture,
-  });
+    List<VisibleArmyTroopView> army = const [],
+    this.queuedTarget,
+    this.merchantRouteDestinationCityId,
+  }) : army = List.unmodifiable(army);
 
   final String id;
   final String ownerPlayerId;
@@ -56,6 +59,16 @@ final class VisibleUnitView {
   final MapHexCoordinate coordinate;
   final int movementUnits;
   final VisibleUnitPosture posture;
+  final List<VisibleArmyTroopView> army;
+  final MapHexCoordinate? queuedTarget;
+  final String? merchantRouteDestinationCityId;
+}
+
+final class VisibleArmyTroopView {
+  const VisibleArmyTroopView({required this.kind, required this.count});
+
+  final String kind;
+  final int count;
 }
 
 final class PlayerMapView {
@@ -64,7 +77,19 @@ final class PlayerMapView {
     required this.stamp,
     required this.turnView,
     required List<VisibleUnitView> units,
-  }) : units = List.unmodifiable(units);
+  }) : units = List.unmodifiable(units) {
+    final byCoordinate = <MapHexCoordinate, List<VisibleUnitView>>{};
+    final controlledById = <String, VisibleUnitView>{};
+    for (final unit in units) {
+      (byCoordinate[unit.coordinate] ??= []).add(unit);
+      if (unit.ownerPlayerId == actorPlayerId) controlledById[unit.id] = unit;
+    }
+    _unitsByCoordinate = Map.unmodifiable({
+      for (final entry in byCoordinate.entries)
+        entry.key: List<VisibleUnitView>.unmodifiable(entry.value),
+    });
+    _controlledUnitsById = Map.unmodifiable(controlledById);
+  }
 
   factory PlayerMapView.preview({
     required String actorPlayerId,
@@ -95,13 +120,15 @@ final class PlayerMapView {
   final SessionStampView stamp;
   final RecipientTurnView turnView;
   final List<VisibleUnitView> units;
+  late final Map<MapHexCoordinate, List<VisibleUnitView>> _unitsByCoordinate;
+  late final Map<String, VisibleUnitView> _controlledUnitsById;
 
   int get turn => turnView.number;
 
   PendingActionView? get pendingAction => turnView.pendingAction;
 
   Iterable<VisibleUnitView> unitsAt(MapHexCoordinate coordinate) =>
-      units.where((unit) => unit.coordinate == coordinate);
+      _unitsByCoordinate[coordinate] ?? const <VisibleUnitView>[];
 
   VisibleUnitView? controlledUnitAt(MapHexCoordinate coordinate) {
     for (final unit in unitsAt(coordinate)) {
@@ -109,4 +136,7 @@ final class PlayerMapView {
     }
     return null;
   }
+
+  VisibleUnitView? controlledUnitById(String unitId) =>
+      _controlledUnitsById[unitId];
 }

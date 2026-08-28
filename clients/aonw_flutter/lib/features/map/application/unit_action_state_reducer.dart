@@ -37,6 +37,7 @@ GameSessionReady _successfulCompletion(
           clearReachable: true,
           clearRoute: true,
           clearActionDeck: true,
+          clearUnitLogistics: true,
         )
       : current.interaction.copyWith(
           selected: selectedUnit.coordinate,
@@ -69,6 +70,7 @@ GameSessionReady _failedCompletion(
         clearReachable: true,
         clearRoute: true,
         clearActionDeck: true,
+        clearUnitLogistics: true,
       ),
     );
   }

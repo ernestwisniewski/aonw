@@ -81,6 +81,13 @@ class AonwLocalizationsEn extends AonwLocalizations {
       'skip': 'Skip',
       'cancel': 'Cancel action',
       'executing': 'Executing unit action',
+      'logisticsTitle': 'Logistics',
+      'logisticsLoading': 'Loading logistics options',
+      'logisticsEmpty': 'No logistics actions are currently available.',
+      'autoExplore': 'Auto explore',
+      'merchantRoute': 'Assign trade route',
+      'merchantTravel': 'Move to city',
+      'detachTroop': 'Detach troop',
       'other': 'Unit action',
     });
     return '$_temp0';
@@ -98,6 +105,11 @@ class AonwLocalizationsEn extends AonwLocalizations {
       'unitUnavailable': 'That unit is no longer available to command.',
       'unitBusy': 'That unit is busy and cannot perform this action now.',
       'internal': 'The unit action could not be applied. Try again.',
+      'logisticsRequestFailed': 'The logistics request could not be completed.',
+      'logisticsResponseIncompatible':
+          'The logistics response is incompatible with this client.',
+      'logisticsOptionUnavailable':
+          'That logistics option is no longer available.',
       'other': 'The unit action could not be completed.',
     });
     return '$_temp0';

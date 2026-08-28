@@ -83,5 +83,6 @@ MapCoordinator _controller(FakeGameSession session) => MapCoordinator(
   session: session,
   movement: session,
   unitActions: session,
+  logistics: session,
   turns: session,
 );

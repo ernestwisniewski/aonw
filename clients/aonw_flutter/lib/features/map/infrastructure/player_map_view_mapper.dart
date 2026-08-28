@@ -117,6 +117,18 @@ final class PlayerMapViewMapper {
     coordinate: _coordinate(unit),
     movementUnits: unit.movementUnits,
     posture: _posture(unit.posture),
+    army: [
+      for (final troop in unit.ownedDetails?.army ?? const <AonwArmyTroop>[])
+        VisibleArmyTroopView(kind: troop.kind.name, count: troop.count),
+    ],
+    queuedTarget: unit.ownedDetails?.queuedPath == null
+        ? null
+        : (
+            col: unit.ownedDetails!.queuedPath!.target.col,
+            row: unit.ownedDetails!.queuedPath!.target.row,
+          ),
+    merchantRouteDestinationCityId:
+        unit.ownedDetails?.merchantTradeRoute?.destinationCityId,
   );
 
   static SessionStampView _mapStamp(AonwSessionStamp stamp) => SessionStampView(

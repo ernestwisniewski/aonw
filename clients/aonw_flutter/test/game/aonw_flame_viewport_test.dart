@@ -19,6 +19,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -79,6 +80,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);

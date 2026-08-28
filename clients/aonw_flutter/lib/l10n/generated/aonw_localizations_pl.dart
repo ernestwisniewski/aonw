@@ -81,6 +81,13 @@ class AonwLocalizationsPl extends AonwLocalizations {
       'skip': 'Pomiń',
       'cancel': 'Anuluj akcję',
       'executing': 'Wykonywanie akcji jednostki',
+      'logisticsTitle': 'Logistyka',
+      'logisticsLoading': 'Ładowanie opcji logistycznych',
+      'logisticsEmpty': 'Brak dostępnych działań logistycznych.',
+      'autoExplore': 'Automatyczna eksploracja',
+      'merchantRoute': 'Przypisz szlak handlowy',
+      'merchantTravel': 'Przenieś do miasta',
+      'detachTroop': 'Odłącz oddział',
       'other': 'Akcja jednostki',
     });
     return '$_temp0';
@@ -100,6 +107,11 @@ class AonwLocalizationsPl extends AonwLocalizations {
       'unitBusy':
           'Ta jednostka jest zajęta i nie może teraz wykonać tej akcji.',
       'internal': 'Nie udało się zastosować akcji jednostki. Spróbuj ponownie.',
+      'logisticsRequestFailed': 'Nie udało się wykonać żądania logistycznego.',
+      'logisticsResponseIncompatible':
+          'Odpowiedź logistyczna jest niezgodna z tym klientem.',
+      'logisticsOptionUnavailable':
+          'Ta opcja logistyczna nie jest już dostępna.',
       'other': 'Nie udało się wykonać akcji jednostki.',
     });
     return '$_temp0';

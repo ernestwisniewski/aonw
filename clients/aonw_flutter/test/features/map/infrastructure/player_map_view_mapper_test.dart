@@ -36,6 +36,49 @@ void main() {
     expect(player.units.first.movementUnits, 12);
   });
 
+  test(
+    'indexes controlled logistics details without inventing foreign data',
+    () {
+      final player = mapper.fromWire(
+        _snapshot([
+          _unit(
+            'unit-a',
+            ownedDetails: const AonwOwnedUnitDetails(
+              army: [AonwArmyTroop(kind: AonwTroopKind.archer, count: 2)],
+              queuedPath: AonwQueuedMovePath(
+                target: AonwCoordinate(col: 1, row: 0),
+                steps: [],
+              ),
+              merchantTradeRoute: AonwMerchantTradeRoute(
+                originCityId: 'city-a',
+                destinationCityId: 'city-b',
+                steps: [],
+                transportNetworkFingerprint: 'road-network',
+              ),
+              workerJob: null,
+              cityFoundingJob: null,
+              workerAssignment: null,
+              excavatingArtifactId: null,
+              workerBuildCharges: 0,
+              experiencePoints: 0,
+            ),
+          ),
+          _unit('unit-b', ownerPlayerId: 'player-2'),
+        ]),
+        map: testMapScene().map,
+        actorPlayerId: 'player-1',
+      );
+
+      final controlled = player.controlledUnitById('unit-a')!;
+      expect(controlled.army.single.count, 2);
+      expect(controlled.queuedTarget, (col: 1, row: 0));
+      expect(controlled.merchantRouteDestinationCityId, 'city-b');
+      expect(player.controlledUnitById('unit-b'), isNull);
+      expect(player.units.last.army, isEmpty);
+      expect(player.unitsAt((col: 0, row: 0)), hasLength(2));
+    },
+  );
+
   test('rejects a snapshot for another map', () {
     final map = testMapScene();
 
@@ -199,16 +242,22 @@ AonwPlayerViewSnapshot _snapshot(
   roads: const [],
 );
 
-AonwPlayerUnitView _unit(String id, {int col = 0, int row = 0}) =>
-    AonwPlayerUnitView(
-      id: id,
-      ownerPlayerId: 'player-1',
-      kind: AonwUnitKind.commander,
-      name: 'Commander',
-      coordinate: AonwCoordinate(col: col, row: row),
-      movementUnits: 12,
-      posture: AonwUnitPosture.active,
-      workerBuildCharges: 0,
-      workerJob: null,
-      workerAssignment: null,
-    );
+AonwPlayerUnitView _unit(
+  String id, {
+  int col = 0,
+  int row = 0,
+  String ownerPlayerId = 'player-1',
+  AonwOwnedUnitDetails? ownedDetails,
+}) => AonwPlayerUnitView(
+  id: id,
+  ownerPlayerId: ownerPlayerId,
+  kind: AonwUnitKind.commander,
+  name: 'Commander',
+  coordinate: AonwCoordinate(col: col, row: row),
+  movementUnits: 12,
+  posture: AonwUnitPosture.active,
+  workerBuildCharges: 0,
+  workerJob: null,
+  workerAssignment: null,
+  ownedDetails: ownedDetails,
+);

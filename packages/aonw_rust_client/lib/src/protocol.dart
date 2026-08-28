@@ -103,6 +103,18 @@ final class AonwClientRequest {
     },
   });
 
+  factory AonwClientRequest.unitLogisticsOptions({
+    required int expectedRevision,
+    required String unitId,
+  }) => AonwClientRequest._({
+    'type': 'query',
+    'query': {
+      'type': 'unitLogisticsOptions',
+      'expectedRevision': expectedRevision,
+      'unitId': unitId,
+    },
+  });
+
   factory AonwClientRequest.moveUnit({
     required int expectedRevision,
     required String unitId,
@@ -115,6 +127,53 @@ final class AonwClientRequest {
       'expectedRevision': expectedRevision,
       'unitId': unitId,
       'target': {'col': targetCol, 'row': targetRow},
+    },
+  });
+
+  factory AonwClientRequest.autoExploreUnit({
+    required int expectedRevision,
+    required String unitId,
+  }) => AonwClientRequest._(
+    _unitCommand('autoExploreUnit', expectedRevision, unitId),
+  );
+
+  factory AonwClientRequest.assignMerchantTradeRoute({
+    required int expectedRevision,
+    required String unitId,
+    required String destinationCityId,
+  }) => AonwClientRequest._(
+    _merchantCommand(
+      'assignMerchantTradeRoute',
+      expectedRevision,
+      unitId,
+      destinationCityId,
+    ),
+  );
+
+  factory AonwClientRequest.moveMerchantToCity({
+    required int expectedRevision,
+    required String unitId,
+    required String destinationCityId,
+  }) => AonwClientRequest._(
+    _merchantCommand(
+      'moveMerchantToCity',
+      expectedRevision,
+      unitId,
+      destinationCityId,
+    ),
+  );
+
+  factory AonwClientRequest.detachTroop({
+    required int expectedRevision,
+    required String unitId,
+    required String troopKind,
+  }) => AonwClientRequest._({
+    'type': 'dispatch',
+    'command': {
+      'type': 'detachTroop',
+      'expectedRevision': expectedRevision,
+      'unitId': unitId,
+      'troopKind': troopKind,
     },
   });
 
@@ -184,6 +243,21 @@ final class AonwClientRequest {
       'type': type,
       'expectedRevision': expectedRevision,
       'unitId': unitId,
+    },
+  };
+
+  static Map<String, Object?> _merchantCommand(
+    String type,
+    int expectedRevision,
+    String unitId,
+    String destinationCityId,
+  ) => {
+    'type': 'dispatch',
+    'command': {
+      'type': type,
+      'expectedRevision': expectedRevision,
+      'unitId': unitId,
+      'destinationCityId': destinationCityId,
     },
   };
 }

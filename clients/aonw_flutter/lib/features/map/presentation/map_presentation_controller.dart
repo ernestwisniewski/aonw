@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../logistics/application/unit_logistics_session_port.dart';
+import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
@@ -15,6 +17,7 @@ final class MapPresentationController extends ChangeNotifier {
   MapPresentationController({
     required MapSessionPort session,
     required MovementSessionPort movement,
+    required UnitLogisticsSessionPort logistics,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     MapAssetPaths assets = MapAssetPaths.starter,
@@ -23,6 +26,7 @@ final class MapPresentationController extends ChangeNotifier {
          MapCoordinator(
            session: session,
            movement: movement,
+           logistics: logistics,
            unitActions: unitActions,
            turns: turns,
            assets: assets,
@@ -50,6 +54,9 @@ final class MapPresentationController extends ChangeNotifier {
 
   void executeUnitAction(UnitActionKindView action) =>
       _coordinator.executeUnitAction(action);
+
+  void executeUnitLogistics(UnitLogisticsActionView action) =>
+      _coordinator.executeUnitLogistics(action);
 
   void endTurn() => _coordinator.endTurn();
 

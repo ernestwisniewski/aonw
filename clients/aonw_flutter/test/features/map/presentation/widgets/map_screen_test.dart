@@ -28,6 +28,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     final flameGame = AonwFlameGame();
@@ -101,6 +102,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -141,6 +143,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -203,6 +206,7 @@ void main() {
         session: session,
         movement: session,
         unitActions: session,
+        logistics: session,
         turns: session,
       );
       final flameGame = AonwFlameGame();
@@ -248,6 +252,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     final firstGame = AonwFlameGame();
@@ -289,6 +294,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -316,6 +322,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     final flameGame = AonwFlameGame();
@@ -352,6 +359,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(input.close);
@@ -403,6 +411,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     final routeObserver = RouteObserver<ModalRoute<void>>();

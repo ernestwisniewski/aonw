@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
+import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
 import 'package:aonw_flutter/features/map/application/map_coordinator.dart';
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
@@ -25,6 +27,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -61,6 +64,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -77,6 +81,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -110,6 +115,7 @@ void main() {
         session: session,
         movement: session,
         unitActions: session,
+        logistics: session,
         turns: session,
         diagnosticReporter: (code, error, stackTrace) =>
             diagnostics.add((code: code, error: error, stackTrace: stackTrace)),
@@ -152,6 +158,7 @@ void main() {
         session: session,
         movement: session,
         unitActions: session,
+        logistics: session,
         turns: session,
       );
       addTearDown(controller.dispose);
@@ -200,6 +207,7 @@ void main() {
         session: session,
         movement: session,
         unitActions: session,
+        logistics: session,
         turns: session,
       );
       addTearDown(controller.dispose);
@@ -245,6 +253,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -300,6 +309,7 @@ void main() {
         session: session,
         movement: session,
         unitActions: session,
+        logistics: session,
         turns: session,
       );
       addTearDown(controller.dispose);
@@ -343,6 +353,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -384,6 +395,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      logistics: session,
       turns: session,
     );
     addTearDown(controller.dispose);
@@ -408,6 +420,7 @@ final class _CompletingGameSession
     implements
         MapSessionPort,
         MovementSessionPort,
+        UnitLogisticsSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   final requests = <Completer<MapScene>>[];
@@ -437,6 +450,18 @@ final class _CompletingGameSession
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<UnitLogisticsOptionsView> unitLogisticsOptions({
+    required int expectedRevision,
+    required String unitId,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<UnitLogisticsCommandResultView> executeUnitLogistics({
+    required int expectedRevision,
+    required UnitLogisticsActionView action,
   }) => throw UnimplementedError();
 
   @override

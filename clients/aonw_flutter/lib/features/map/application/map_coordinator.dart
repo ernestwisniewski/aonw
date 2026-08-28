@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import '../../logistics/application/unit_logistics_session_port.dart';
+import '../../logistics/application/unit_logistics_state.dart';
+import '../../logistics/application/unit_logistics_workflow.dart';
+import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../turns/application/turn_workflow.dart';
 import '../../unit_actions/application/action_deck_state.dart';
@@ -13,7 +17,7 @@ import 'map_interaction_state.dart';
 import 'map_session_port.dart';
 import 'movement_command_runner.dart';
 import 'movement_session_port.dart';
-import 'unit_action_state_reducer.dart';
+import 'unit_action_workflow.dart';
 
 typedef MapDiagnosticReporter =
     void Function(String code, Object error, StackTrace stackTrace);
@@ -22,6 +26,7 @@ final class MapCoordinator {
   MapCoordinator({
     required MapSessionPort session,
     required MovementSessionPort movement,
+    required UnitLogisticsSessionPort logistics,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     this.assets = MapAssetPaths.starter,
@@ -31,9 +36,15 @@ final class MapCoordinator {
          session: movement,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
-       _unitActions = UnitActionCommandRunner(
-         session: unitActions,
+       _logistics = UnitLogisticsWorkflow(
+         session: logistics,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
+       _unitActions = UnitActionWorkflow(
+         runner: UnitActionCommandRunner(
+           session: unitActions,
+           diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+         ),
        ),
        _turns = TurnWorkflow(
          session: turns,
@@ -43,7 +54,8 @@ final class MapCoordinator {
 
   final MapSessionPort _session;
   final MovementCommandRunner _movement;
-  final UnitActionCommandRunner _unitActions;
+  final UnitLogisticsWorkflow _logistics;
+  final UnitActionWorkflow _unitActions;
   final TurnWorkflow _turns;
   final MapDiagnosticReporter _diagnosticReporter;
   final MapAssetPaths assets;
@@ -53,7 +65,6 @@ final class MapCoordinator {
   var _disposed = false;
   var _loadGeneration = 0;
   var _interactionGeneration = 0;
-  var _actionCorrelationId = 0;
 
   GameSessionState get state => _state;
 
@@ -138,6 +149,7 @@ final class MapCoordinator {
           clearReachable: true,
           clearRoute: true,
           clearActionDeck: true,
+          clearUnitLogistics: true,
           movementPending: false,
           clearMovementError: true,
         ),
@@ -154,6 +166,7 @@ final class MapCoordinator {
           clearReachable: true,
           clearRoute: true,
           clearActionDeck: true,
+          clearUnitLogistics: true,
           movementPending: false,
           clearMovementError: true,
         ),
@@ -173,12 +186,19 @@ final class MapCoordinator {
           selected: coordinate,
           selectedUnitId: unitId,
           actionDeck: ActionDeckViewState(unitId: unitId),
+          unitLogistics: UnitLogisticsState.loading(unitId),
           clearReachable: true,
           clearRoute: true,
           movementPending: true,
           clearMovementError: true,
         ),
       ),
+    );
+    _logistics.load(
+      unitId: unitId,
+      readState: () => _state,
+      publish: _setState,
+      isDisposed: () => _disposed,
     );
     final completion = await _movement.reachable(
       expectedRevision: current.recipient.stamp.revision,
@@ -277,44 +297,27 @@ final class MapCoordinator {
   }
 
   void executeUnitAction(UnitActionKindView action) {
-    unawaited(_executeUnitAction(action));
-  }
-
-  Future<void> _executeUnitAction(UnitActionKindView action) async {
-    final current = _state;
-    if (current is! GameSessionReady || _interactionBusy(current.interaction)) {
-      return;
-    }
-    final actionDeck = current.interaction.actionDeck;
-    final unitId = current.interaction.selectedUnitId;
-    if (actionDeck == null || unitId == null || actionDeck.unitId != unitId) {
-      return;
-    }
-    final generation = ++_interactionGeneration;
-    final correlationId = ++_actionCorrelationId;
-    _setState(
-      current.withInteraction(
-        current.interaction.copyWith(
-          clearReachable: true,
-          clearRoute: true,
-          clearMovementError: true,
-          actionDeck: actionDeck.copyWith(
-            correlationId: correlationId,
-            inFlightAction: action,
-            clearFailure: true,
-          ),
-        ),
+    _unitActions.execute(
+      action: action,
+      readState: () => _state,
+      publish: _setState,
+      isDisposed: () => _disposed,
+      onSelectionRetained: (unitId) => _logistics.load(
+        unitId: unitId,
+        readState: () => _state,
+        publish: _setState,
+        isDisposed: () => _disposed,
       ),
     );
-    final completion = await _unitActions.execute(
-      expectedRevision: current.recipient.stamp.revision,
-      unitId: unitId,
+  }
+
+  void executeUnitLogistics(UnitLogisticsActionView action) {
+    _logistics.execute(
       action: action,
+      readState: () => _state,
+      publish: _setState,
+      isDisposed: () => _disposed,
     );
-    final ready = _currentUnitAction(generation, correlationId);
-    if (ready != null) {
-      _setState(reduceUnitActionCompletion(ready, completion));
-    }
   }
 
   void endTurn() {
@@ -353,13 +356,6 @@ final class MapCoordinator {
     if (_disposed || generation != _interactionGeneration) return null;
     final current = _state;
     return current is GameSessionReady ? current : null;
-  }
-
-  GameSessionReady? _currentUnitAction(int generation, int correlationId) {
-    final ready = _currentInteraction(generation);
-    return ready?.interaction.actionDeck?.correlationId == correlationId
-        ? ready
-        : null;
   }
 
   void _setState(GameSessionState value) {
@@ -419,6 +415,7 @@ GameSessionReady _moveResultState(
           clearReachable: true,
           clearRoute: true,
           clearActionDeck: true,
+          clearUnitLogistics: true,
           movementPending: false,
           clearMovementError: true,
           lastMovementExecution: result.execution,
@@ -442,7 +439,8 @@ GameSessionReady _movementFailureState<T>(
 
 bool _interactionBusy(MapInteractionState interaction) =>
     interaction.movementPending ||
-    (interaction.actionDeck?.commandPending ?? false);
+    (interaction.actionDeck?.commandPending ?? false) ||
+    (interaction.unitLogistics?.commandPending ?? false);
 
 MapLoadFailureViewCode _loadFailureCode(String code) => switch (code) {
   'rust_adapter_unavailable' ||

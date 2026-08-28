@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:aonw_flutter/app/composition/app_composition.dart';
 import 'package:aonw_flutter/app/telemetry/client_telemetry.dart';
+import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
+import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
 import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/application/movement_session_port.dart';
 import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
@@ -36,6 +38,7 @@ void main() {
         mapSession: first,
         movementSession: first,
         unitActionSession: first,
+        logisticsSession: first,
         turnSession: first,
         mapInputSource: firstInput,
       ).root,
@@ -50,6 +53,7 @@ void main() {
         mapSession: second,
         movementSession: second,
         unitActionSession: second,
+        logisticsSession: second,
         turnSession: second,
         mapInputSource: secondInput,
       ).root,
@@ -80,6 +84,7 @@ void main() {
         mapSession: session,
         movementSession: session,
         unitActionSession: session,
+        logisticsSession: session,
         turnSession: session,
         mapInputSource: input,
         flameGameFactory: () {
@@ -138,6 +143,7 @@ void main() {
         mapSession: firstSession,
         movementSession: firstSession,
         unitActionSession: firstSession,
+        logisticsSession: firstSession,
         turnSession: firstSession,
         mapInputSource: firstInput,
         flameGameFactory: createGame,
@@ -168,6 +174,7 @@ void main() {
         mapSession: secondSession,
         movementSession: secondSession,
         unitActionSession: secondSession,
+        logisticsSession: secondSession,
         turnSession: secondSession,
         mapInputSource: secondInput,
         flameGameFactory: createGame,
@@ -247,6 +254,7 @@ final class _LifecycleGameSession
     implements
         MapSessionPort,
         MovementSessionPort,
+        UnitLogisticsSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   var loadCalls = 0;
@@ -276,6 +284,18 @@ final class _LifecycleGameSession
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<UnitLogisticsOptionsView> unitLogisticsOptions({
+    required int expectedRevision,
+    required String unitId,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<UnitLogisticsCommandResultView> executeUnitLogistics({
+    required int expectedRevision,
+    required UnitLogisticsActionView action,
   }) => throw UnimplementedError();
 
   @override

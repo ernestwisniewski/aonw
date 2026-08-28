@@ -2,21 +2,10 @@ import 'package:aonw_rust_client/aonw_rust_client.dart';
 
 import '../../map/application/movement_session_port.dart';
 import '../../map/infrastructure/rust_game_session_context.dart';
-import '../../map/read_model/player_map_view.dart';
+import '../../map/infrastructure/rust_game_session_operations.dart';
 import '../application/turn_session_port.dart';
 import '../read_model/turn_command_view.dart';
 import 'turn_view_mapper.dart';
-
-typedef RustRequestSender =
-    Future<AonwClientResponse> Function(
-      AonwRustSession session,
-      AonwClientRequest request,
-    );
-typedef TurnPatchApplier =
-    Future<PlayerMapView> Function(
-      RustGameSessionContext context,
-      AonwCommandResult command,
-    );
 
 final class RustTurnGateway {
   const RustTurnGateway({TurnViewMapper mapper = const TurnViewMapper()})
@@ -28,7 +17,7 @@ final class RustTurnGateway {
     required RustGameSessionContext context,
     required int expectedRevision,
     required RustRequestSender send,
-    required TurnPatchApplier applyPatch,
+    required RustPatchApplier applyPatch,
   }) async {
     try {
       final response = await send(
@@ -67,7 +56,7 @@ final class RustTurnGateway {
   Future<TurnCommandResultView> _rejected(
     RustGameSessionContext context,
     AonwCommandResult command,
-    TurnPatchApplier applyPatch,
+    RustPatchApplier applyPatch,
   ) async {
     final rejection = _mapper.rejected(
       command,
