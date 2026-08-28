@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:aonw_rust_client/src/api.dart';
 import 'package:aonw_rust_client/src/native_identity.dart';
+import 'package:aonw_rust_client/src/protocol_coordinate.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 import 'package:aonw_rust_client/src/protocol_response.dart';
 import 'package:aonw_rust_client/src/protocol_values.dart';
@@ -131,6 +132,54 @@ final class AonwClientRequest {
     },
   });
 
+  factory AonwClientRequest.cityFoundingOptions({
+    required int expectedRevision,
+    required String founderUnitId,
+  }) => AonwClientRequest._({
+    'type': 'query',
+    'query': {
+      'type': 'cityFoundingOptions',
+      'expectedRevision': expectedRevision,
+      'founderUnitId': founderUnitId,
+    },
+  });
+
+  factory AonwClientRequest.cityWorkedHexOptions({
+    required int expectedRevision,
+    required String cityId,
+  }) => AonwClientRequest._({
+    'type': 'query',
+    'query': {
+      'type': 'cityWorkedHexOptions',
+      'expectedRevision': expectedRevision,
+      'cityId': cityId,
+    },
+  });
+
+  factory AonwClientRequest.cityExpansionOptions({
+    required int expectedRevision,
+    required String cityId,
+  }) => AonwClientRequest._({
+    'type': 'query',
+    'query': {
+      'type': 'cityExpansionOptions',
+      'expectedRevision': expectedRevision,
+      'cityId': cityId,
+    },
+  });
+
+  factory AonwClientRequest.cityYield({
+    required int expectedRevision,
+    required String cityId,
+  }) => AonwClientRequest._({
+    'type': 'query',
+    'query': {
+      'type': 'cityYield',
+      'expectedRevision': expectedRevision,
+      'cityId': cityId,
+    },
+  });
+
   factory AonwClientRequest.moveUnit({
     required int expectedRevision,
     required String unitId,
@@ -207,6 +256,53 @@ final class AonwClientRequest {
       'attackerUnitId': attackerUnitId,
       'defender': {'col': defenderCol, 'row': defenderRow},
       'cityConquestAction': cityConquestAction.name,
+    },
+  });
+
+  factory AonwClientRequest.foundCity({
+    required int expectedRevision,
+    required String founderUnitId,
+    required List<AonwCoordinate> controlledHexes,
+  }) => AonwClientRequest._({
+    'type': 'dispatch',
+    'command': {
+      'type': 'foundCity',
+      'expectedRevision': expectedRevision,
+      'founderUnitId': founderUnitId,
+      'controlledHexes': [
+        for (final coordinate in controlledHexes)
+          {'col': coordinate.col, 'row': coordinate.row},
+      ],
+    },
+  });
+
+  factory AonwClientRequest.toggleWorkedHex({
+    required int expectedRevision,
+    required String cityId,
+    required int targetCol,
+    required int targetRow,
+  }) => AonwClientRequest._({
+    'type': 'dispatch',
+    'command': {
+      'type': 'toggleWorkedHex',
+      'expectedRevision': expectedRevision,
+      'cityId': cityId,
+      'target': {'col': targetCol, 'row': targetRow},
+    },
+  });
+
+  factory AonwClientRequest.selectCityExpansionHex({
+    required int expectedRevision,
+    required String cityId,
+    required int targetCol,
+    required int targetRow,
+  }) => AonwClientRequest._({
+    'type': 'dispatch',
+    'command': {
+      'type': 'selectCityExpansionHex',
+      'expectedRevision': expectedRevision,
+      'cityId': cityId,
+      'target': {'col': targetCol, 'row': targetRow},
     },
   });
 

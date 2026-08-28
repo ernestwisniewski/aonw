@@ -314,9 +314,6 @@ final class AonwOwnedCityDetails {
   final AonwCoordinate? preferredExpansionHex;
 }
 
-@Deprecated('Use AonwOwnedCityDetails.')
-typedef AonwOwnedCityPlanning = AonwOwnedCityDetails;
-
 final class AonwPlayerCityView {
   const AonwPlayerCityView({
     required this.id,
@@ -324,7 +321,7 @@ final class AonwPlayerCityView {
     required this.name,
     required this.center,
     required this.visibleControlledHexes,
-    required this.ownedPlanning,
+    required this.ownedDetails,
     this.hitPoints,
   });
 
@@ -348,7 +345,7 @@ final class AonwPlayerCityView {
         value['visibleControlledHexes'],
         'visible controlled hexes',
       ),
-      ownedPlanning: value['ownedDetails'] == null
+      ownedDetails: value['ownedDetails'] == null
           ? null
           : AonwOwnedCityDetails.fromJson(value['ownedDetails']),
       hitPoints: value['hitPoints'] == null
@@ -362,10 +359,8 @@ final class AonwPlayerCityView {
   final String name;
   final AonwCoordinate center;
   final List<AonwCoordinate> visibleControlledHexes;
-  final AonwOwnedCityDetails? ownedPlanning;
+  final AonwOwnedCityDetails? ownedDetails;
   final int? hitPoints;
-
-  AonwOwnedCityDetails? get ownedDetails => ownedPlanning;
 }
 
 List<AonwCoordinate> _coordinates(Object? value, String label) =>

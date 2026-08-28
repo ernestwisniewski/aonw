@@ -132,7 +132,7 @@ final class RecipientProjectionValidator {
     }
     requireCoordinate(city.center, 'city center');
     _validateCoordinateSet(city.visibleControlledHexes, 'controlled city hex');
-    final planning = city.ownedPlanning;
+    final planning = city.ownedDetails;
     if (planning == null) return;
     _validateCoordinateSet(planning.workedHexes, 'worked city hex');
     final preferred = planning.preferredExpansionHex;

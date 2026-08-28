@@ -4,6 +4,8 @@ import 'package:aonw_rust_client/src/protocol_json.dart';
 import 'package:aonw_rust_client/src/protocol_player_view.dart';
 import 'package:aonw_rust_client/src/protocol_values.dart';
 
+part 'protocol_city_query.dart';
+
 sealed class AonwQueryResult {
   const AonwQueryResult();
 
@@ -14,6 +16,10 @@ sealed class AonwQueryResult {
       'routePlan' => AonwRoutePlanResult.fromJson(value),
       'unitLogisticsOptions' => AonwUnitLogisticsOptionsResult.fromJson(value),
       'combatPreview' => AonwCombatPreviewResult.fromJson(value),
+      'cityFoundingOptions' => AonwCityFoundingOptionsResult.fromJson(value),
+      'cityWorkedHexOptions' => AonwCityWorkedHexOptionsResult.fromJson(value),
+      'cityExpansionOptions' => AonwCityExpansionOptionsResult.fromJson(value),
+      'cityYield' => AonwCityYieldResult.fromJson(value),
       final Object? type => throw FormatException(
         'Unknown AoNW query result $type.',
       ),
