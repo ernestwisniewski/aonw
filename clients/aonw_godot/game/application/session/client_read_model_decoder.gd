@@ -9,6 +9,33 @@ const UNIT_KINDS := [
 ]
 const UNIT_POSTURES := ["active", "fortified", "autoExploring", "autoWorking"]
 const PLAYER_TURN_STATES := ["active", "finished"]
+const GAME_OUTCOME_CONDITIONS := [
+	"ongoing", "conquest", "domination", "cultural", "score", "resignation", "draw",
+]
+const ARTIFACT_TYPES := [
+	"ancientImperialCrown", "astronomersTablets", "prophetMask", "heroSword",
+	"merchantsSeal", "firstPeoplesChronicle", "templeReliquary", "queensMirror",
+]
+const DIPLOMATIC_RELATION_STATUSES := ["friendly", "neutral", "hostile", "truce", "war"]
+const DIPLOMATIC_RELATION_CHANGE_REASONS := [
+	"manual", "unitAttack", "cityAttack", "declarationOfWar", "proposalAccepted",
+	"truceExpired", "messageResponse", "promiseBroken",
+]
+const DIPLOMATIC_PROPOSAL_KINDS := ["friendship", "truce"]
+const DIPLOMATIC_MESSAGE_CATEGORIES := [
+	"warning", "complaint", "request", "praise", "threat", "cooperation",
+]
+const DIPLOMATIC_MESSAGE_TOPICS := [
+	"troopsNearCities", "citiesTooClose", "blockedRoutes", "withdrawScouts",
+	"avoidEscalation", "commonEnemy", "expansionProvocation", "peacefulPraise",
+]
+const DIPLOMATIC_MESSAGE_RESPONSES := ["conciliatory", "neutral", "evasive", "aggressive"]
+const RESOURCE_TYPES := [
+	"wheat", "fish", "deer", "sheep", "rice", "cow", "apple", "banana", "citrus",
+	"gold", "silver", "gems", "silk", "spices", "cotton", "grapes", "ivory",
+	"pearls", "coffee", "cocoa", "tobacco", "sugar", "iron", "coal", "oil",
+	"aluminium", "uranium", "horses", "marble",
+]
 const TRANSPORT_CONDITIONS := ["operational", "pillaged"]
 const FIELD_IMPROVEMENTS := [
 	"farm", "riverFarm", "mine", "lumberMill", "pasture", "camp", "quarry",
@@ -122,21 +149,25 @@ static func decode_stamp(raw: Variant) -> AonwClientReadModels.Stamp:
 
 static func decode_snapshot(raw: Variant) -> AonwClientReadModels.SnapshotView:
 	if not _has_exact_fields(raw, [
-		"stamp", "turn", "turnLifecycle", "pendingAction", "cityFoundingDraft",
-		"units", "cities", "fieldImprovements", "roads",
+		"stamp", "turn", "outcome", "turnLifecycle", "pendingAction", "cityFoundingDraft",
+		"diplomacy", "units", "cities", "artifacts", "fieldImprovements", "roads",
 	]):
 		return null
-	if not _arrays(raw, ["units", "cities", "fieldImprovements", "roads"]):
+	if not _arrays(raw, ["units", "cities", "artifacts", "fieldImprovements", "roads"]):
 		return null
 	if not _integers(raw, ["turn"], true) or int(raw["turn"]) < 1:
 		return null
 	var stamp := decode_stamp(raw["stamp"])
+	var outcome := _decode_game_outcome(raw["outcome"])
 	var turn_lifecycle := _decode_turn_lifecycle(raw["turnLifecycle"])
 	var pending_action := _decode_pending_action(raw["pendingAction"])
 	var city_founding_draft := _decode_city_founding_draft(raw["cityFoundingDraft"])
+	var diplomacy := _decode_diplomacy(raw["diplomacy"])
 	if (
 		stamp == null
+		or outcome == null
 		or turn_lifecycle == null
+		or diplomacy == null
 		or (raw["pendingAction"] != null and pending_action == null)
 		or (raw["cityFoundingDraft"] != null and city_founding_draft == null)
 	):
@@ -151,18 +182,22 @@ static func decode_snapshot(raw: Variant) -> AonwClientReadModels.SnapshotView:
 		previous_id = unit.id
 	units.make_read_only()
 	var cities: Variant = _decode_cities(raw["cities"])
+	var artifacts: Variant = _decode_artifacts(raw["artifacts"])
 	var field_improvements: Variant = _decode_field_improvements(raw["fieldImprovements"])
 	var roads: Variant = _decode_roads(raw["roads"])
-	if cities == null or field_improvements == null or roads == null:
+	if cities == null or artifacts == null or field_improvements == null or roads == null:
 		return null
 	var result := ReadModels.SnapshotView.new()
 	result.stamp = stamp
 	result.turn = int(raw["turn"])
+	result.outcome = outcome
 	result.turn_lifecycle = turn_lifecycle
 	result.pending_action = pending_action
 	result.city_founding_draft = city_founding_draft
+	result.diplomacy = diplomacy
 	result.units = units
 	result.cities = cities
+	result.artifacts = artifacts
 	result.field_improvements = field_improvements
 	result.roads = roads
 	return result
@@ -383,6 +418,351 @@ static func _decode_turn_lifecycle(raw: Variant) -> AonwClientReadModels.TurnLif
 	result.submitted_count = int(raw["submittedCount"])
 	return result
 
+static func _decode_game_outcome(raw: Variant) -> AonwClientReadModels.GameOutcomeView:
+	if not _has_exact_fields(raw, ["condition", "winnerPlayerId", "scoreByPlayerId"]):
+		return null
+	if not raw["condition"] is String or not GAME_OUTCOME_CONDITIONS.has(raw["condition"]):
+		return null
+	if (
+		raw["winnerPlayerId"] != null
+		and (not raw["winnerPlayerId"] is String or raw["winnerPlayerId"].is_empty())
+	):
+		return null
+	if not raw["scoreByPlayerId"] is Dictionary:
+		return null
+	var scores: Dictionary = {}
+	for player_id: Variant in raw["scoreByPlayerId"]:
+		var score: Variant = raw["scoreByPlayerId"][player_id]
+		if not player_id is String or player_id.is_empty() or not _is_integer(score, true):
+			return null
+		scores[player_id] = int(score)
+	scores.make_read_only()
+	var result := ReadModels.GameOutcomeView.new()
+	result.condition = StringName(raw["condition"])
+	result.has_winner_player_id = raw["winnerPlayerId"] != null
+	if raw["winnerPlayerId"] != null:
+		result.winner_player_id = raw["winnerPlayerId"]
+	result.score_by_player_id = scores
+	return result
+
+static func _decode_artifacts(raw: Array) -> Variant:
+	var artifacts: Array[AonwClientReadModels.ArtifactView] = []
+	var previous_id := ""
+	for value: Variant in raw:
+		var artifact := _decode_artifact(value)
+		if artifact == null or (not previous_id.is_empty() and artifact.id <= previous_id):
+			return null
+		artifacts.append(artifact)
+		previous_id = artifact.id
+	artifacts.make_read_only()
+	return artifacts
+
+static func _decode_artifact(raw: Variant) -> AonwClientReadModels.ArtifactView:
+	if not _has_exact_fields(raw, ["id", "type", "location"]):
+		return null
+	if (
+		not raw["id"] is String
+		or raw["id"].is_empty()
+		or not raw["type"] is String
+		or not ARTIFACT_TYPES.has(raw["type"])
+	):
+		return null
+	var location := _decode_artifact_location(raw["location"])
+	if location == null:
+		return null
+	var result := ReadModels.ArtifactView.new()
+	result.id = raw["id"]
+	result.artifact_type = StringName(raw["type"])
+	result.location = location
+	return result
+
+static func _decode_artifact_location(raw: Variant) -> AonwClientReadModels.ArtifactLocationView:
+	if not raw is Dictionary or not raw.get("kind") is String:
+		return null
+	var result := ReadModels.ArtifactLocationView.new()
+	result.kind = StringName(raw["kind"])
+	match raw["kind"]:
+		"map":
+			if not _has_exact_fields(raw, ["kind", "coordinate"]):
+				return null
+			var coordinate: Variant = _decode_coordinate(raw["coordinate"])
+			if coordinate == null:
+				return null
+			result.coordinate = coordinate
+		"carried":
+			if not _has_exact_fields(raw, ["kind", "unitId"]) or not _valid_unit_id(raw["unitId"]):
+				return null
+			result.unit_id = raw["unitId"]
+		"stored":
+			if (
+				not _has_exact_fields(raw, ["kind", "cityId"])
+				or not raw["cityId"] is String
+				or raw["cityId"].is_empty()
+			):
+				return null
+			result.city_id = raw["cityId"]
+		"excavation":
+			if not _has_exact_fields(raw, ["kind", "unitId", "coordinate", "remainingTurns"]):
+				return null
+			if (
+				not _valid_unit_id(raw["unitId"])
+				or not _integers(raw, ["remainingTurns"], true)
+				or int(raw["remainingTurns"]) == 0
+			):
+				return null
+			var coordinate: Variant = _decode_coordinate(raw["coordinate"])
+			if coordinate == null:
+				return null
+			result.unit_id = raw["unitId"]
+			result.coordinate = coordinate
+			result.remaining_turns = int(raw["remainingTurns"])
+		_:
+			return null
+	return result
+
+static func _decode_diplomacy(raw: Variant) -> AonwClientReadModels.DiplomacyView:
+	if not _has_exact_fields(raw, [
+		"relations", "proposals", "messages", "resourceTradeAgreements",
+	]):
+		return null
+	if not _arrays(raw, ["relations", "proposals", "messages", "resourceTradeAgreements"]):
+		return null
+	var relations: Array[AonwClientReadModels.DiplomaticRelationView] = []
+	for value: Variant in raw["relations"]:
+		var relation := _decode_diplomatic_relation(value)
+		if relation == null:
+			return null
+		relations.append(relation)
+	var proposals: Array[AonwClientReadModels.DiplomaticProposalView] = []
+	for value: Variant in raw["proposals"]:
+		var proposal := _decode_diplomatic_proposal(value)
+		if proposal == null:
+			return null
+		proposals.append(proposal)
+	var messages: Array[AonwClientReadModels.DiplomaticMessageView] = []
+	for value: Variant in raw["messages"]:
+		var message := _decode_diplomatic_message(value)
+		if message == null:
+			return null
+		messages.append(message)
+	var agreements: Array[AonwClientReadModels.ResourceTradeAgreementView] = []
+	for value: Variant in raw["resourceTradeAgreements"]:
+		var agreement := _decode_resource_trade_agreement(value)
+		if agreement == null:
+			return null
+		agreements.append(agreement)
+	relations.make_read_only()
+	proposals.make_read_only()
+	messages.make_read_only()
+	agreements.make_read_only()
+	var result := ReadModels.DiplomacyView.new()
+	result.relations = relations
+	result.proposals = proposals
+	result.messages = messages
+	result.resource_trade_agreements = agreements
+	return result
+
+static func _decode_diplomatic_relation(
+	raw: Variant,
+) -> AonwClientReadModels.DiplomaticRelationView:
+	if not _has_exact_fields(raw, [
+		"counterpartPlayerId", "status", "relationScore", "statusExpiresOnTurn",
+		"lastChangedTurn", "lastChangeReason",
+	]):
+		return null
+	if (
+		not raw["counterpartPlayerId"] is String
+		or raw["counterpartPlayerId"].is_empty()
+		or not raw["status"] is String
+		or not DIPLOMATIC_RELATION_STATUSES.has(raw["status"])
+		or not _is_integer(raw["relationScore"], false)
+		or int(raw["relationScore"]) < -100
+		or int(raw["relationScore"]) > 100
+		or not _is_nullable_integer(raw["statusExpiresOnTurn"], true)
+		or not _is_nullable_integer(raw["lastChangedTurn"], true)
+	):
+		return null
+	if (
+		raw["lastChangeReason"] != null
+		and (
+			not raw["lastChangeReason"] is String
+			or not DIPLOMATIC_RELATION_CHANGE_REASONS.has(raw["lastChangeReason"])
+		)
+	):
+		return null
+	var result := ReadModels.DiplomaticRelationView.new()
+	result.counterpart_player_id = raw["counterpartPlayerId"]
+	result.status = StringName(raw["status"])
+	result.relation_score = int(raw["relationScore"])
+	result.has_status_expires_on_turn = raw["statusExpiresOnTurn"] != null
+	if result.has_status_expires_on_turn:
+		result.status_expires_on_turn = int(raw["statusExpiresOnTurn"])
+	result.has_last_changed_turn = raw["lastChangedTurn"] != null
+	if result.has_last_changed_turn:
+		result.last_changed_turn = int(raw["lastChangedTurn"])
+	if raw["lastChangeReason"] != null:
+		result.last_change_reason = StringName(raw["lastChangeReason"])
+	return result
+
+static func _decode_diplomatic_proposal(
+	raw: Variant,
+) -> AonwClientReadModels.DiplomaticProposalView:
+	if not _has_exact_fields(raw, [
+		"id", "fromPlayerId", "toPlayerId", "kind", "createdTurn", "expiresOnTurn",
+		"goldPayment",
+	]):
+		return null
+	if not _strings(raw, ["id", "fromPlayerId", "toPlayerId", "kind"]):
+		return null
+	if (
+		raw["id"].is_empty()
+		or raw["fromPlayerId"].is_empty()
+		or raw["toPlayerId"].is_empty()
+		or raw["fromPlayerId"] == raw["toPlayerId"]
+		or not DIPLOMATIC_PROPOSAL_KINDS.has(raw["kind"])
+		or not _integers(raw, ["createdTurn", "expiresOnTurn"], true)
+		or int(raw["expiresOnTurn"]) <= int(raw["createdTurn"])
+		or not _integers(raw, ["goldPayment"], true)
+	):
+		return null
+	var result := ReadModels.DiplomaticProposalView.new()
+	result.id = raw["id"]
+	result.from_player_id = raw["fromPlayerId"]
+	result.to_player_id = raw["toPlayerId"]
+	result.kind = StringName(raw["kind"])
+	result.created_turn = int(raw["createdTurn"])
+	result.expires_on_turn = int(raw["expiresOnTurn"])
+	result.gold_payment = int(raw["goldPayment"])
+	return result
+
+static func _decode_diplomatic_message(
+	raw: Variant,
+) -> AonwClientReadModels.DiplomaticMessageView:
+	if not _has_exact_fields(raw, [
+		"id", "fromPlayerId", "toPlayerId", "topic", "category", "createdTurn",
+		"expiresOnTurn", "response", "respondedTurn", "relationScoreDelta",
+		"relationScoreAfter", "promiseDueTurn", "promiseBroken",
+	]):
+		return null
+	if not _strings(raw, ["id", "fromPlayerId", "toPlayerId", "topic", "category"]):
+		return null
+	if (
+		raw["id"].is_empty()
+		or raw["fromPlayerId"].is_empty()
+		or raw["toPlayerId"].is_empty()
+		or raw["fromPlayerId"] == raw["toPlayerId"]
+		or not DIPLOMATIC_MESSAGE_TOPICS.has(raw["topic"])
+		or not DIPLOMATIC_MESSAGE_CATEGORIES.has(raw["category"])
+		or StringName(raw["category"]) != _message_category(raw["topic"])
+		or not _integers(raw, ["createdTurn", "expiresOnTurn"], true)
+		or int(raw["expiresOnTurn"]) <= int(raw["createdTurn"])
+		or not _integers(raw, ["relationScoreDelta"], false)
+		or not _is_nullable_integer(raw["respondedTurn"], true)
+		or not _is_nullable_integer(raw["relationScoreAfter"], false)
+		or not _is_nullable_integer(raw["promiseDueTurn"], true)
+		or not raw["promiseBroken"] is bool
+	):
+		return null
+	if (raw["response"] != null) != (raw["respondedTurn"] != null):
+		return null
+	if (
+		raw["relationScoreAfter"] != null
+		and (
+			int(raw["relationScoreAfter"]) < -100
+			or int(raw["relationScoreAfter"]) > 100
+		)
+	):
+		return null
+	if raw["promiseDueTurn"] != null and raw["response"] == null:
+		return null
+	if raw["promiseBroken"] and raw["promiseDueTurn"] == null:
+		return null
+	if (
+		raw["response"] != null
+		and (
+			not raw["response"] is String
+			or not DIPLOMATIC_MESSAGE_RESPONSES.has(raw["response"])
+		)
+	):
+		return null
+	var result := ReadModels.DiplomaticMessageView.new()
+	result.id = raw["id"]
+	result.from_player_id = raw["fromPlayerId"]
+	result.to_player_id = raw["toPlayerId"]
+	result.topic = StringName(raw["topic"])
+	result.category = StringName(raw["category"])
+	result.created_turn = int(raw["createdTurn"])
+	result.expires_on_turn = int(raw["expiresOnTurn"])
+	if raw["response"] != null:
+		result.response = StringName(raw["response"])
+	result.has_responded_turn = raw["respondedTurn"] != null
+	if result.has_responded_turn:
+		result.responded_turn = int(raw["respondedTurn"])
+	result.relation_score_delta = int(raw["relationScoreDelta"])
+	result.has_relation_score_after = raw["relationScoreAfter"] != null
+	if result.has_relation_score_after:
+		result.relation_score_after = int(raw["relationScoreAfter"])
+	result.has_promise_due_turn = raw["promiseDueTurn"] != null
+	if result.has_promise_due_turn:
+		result.promise_due_turn = int(raw["promiseDueTurn"])
+	result.promise_broken = raw["promiseBroken"]
+	return result
+
+static func _decode_resource_trade_agreement(
+	raw: Variant,
+) -> AonwClientReadModels.ResourceTradeAgreementView:
+	if not _has_exact_fields(raw, [
+		"id", "exporterPlayerId", "importerPlayerId", "resource", "goldPerTurn",
+		"remainingTurns", "amountPerTurn", "exchangeGroupId",
+	]):
+		return null
+	if not _strings(raw, ["id", "exporterPlayerId", "importerPlayerId", "resource"]):
+		return null
+	if (
+		raw["id"].is_empty()
+		or raw["exporterPlayerId"].is_empty()
+		or raw["importerPlayerId"].is_empty()
+		or raw["exporterPlayerId"] == raw["importerPlayerId"]
+		or not RESOURCE_TYPES.has(raw["resource"])
+		or not _integers(raw, ["goldPerTurn"], true)
+		or not _integers(raw, ["remainingTurns", "amountPerTurn"], true)
+		or int(raw["remainingTurns"]) == 0
+		or int(raw["amountPerTurn"]) == 0
+	):
+		return null
+	if (
+		raw["exchangeGroupId"] != null
+		and (not raw["exchangeGroupId"] is String or raw["exchangeGroupId"].is_empty())
+	):
+		return null
+	var result := ReadModels.ResourceTradeAgreementView.new()
+	result.id = raw["id"]
+	result.exporter_player_id = raw["exporterPlayerId"]
+	result.importer_player_id = raw["importerPlayerId"]
+	result.resource = StringName(raw["resource"])
+	result.gold_per_turn = int(raw["goldPerTurn"])
+	result.remaining_turns = int(raw["remainingTurns"])
+	result.amount_per_turn = int(raw["amountPerTurn"])
+	if raw["exchangeGroupId"] != null:
+		result.exchange_group_id = raw["exchangeGroupId"]
+	return result
+
+static func _message_category(topic: String) -> StringName:
+	match topic:
+		"troopsNearCities":
+			return &"warning"
+		"citiesTooClose":
+			return &"complaint"
+		"blockedRoutes", "withdrawScouts":
+			return &"request"
+		"avoidEscalation", "commonEnemy":
+			return &"cooperation"
+		"expansionProvocation":
+			return &"threat"
+		"peacefulPraise":
+			return &"praise"
+	return &""
+
 static func _decode_city_founding_draft(
 	raw: Variant,
 ) -> AonwClientReadModels.CityFoundingDraftView:
@@ -542,19 +922,25 @@ static func _decode_string_ids(raw: Array) -> Variant:
 
 static func _decode_patch(raw: Variant) -> AonwClientReadModels.ViewPatch:
 	if not _has_exact_fields(raw, [
-		"fromRevision", "toRevision", "turnLifecycle", "upsertedUnits", "removedUnitIds",
-		"upsertedCities", "removedCityIds", "upsertedFieldImprovements",
+		"fromRevision", "toRevision", "turn", "turnLifecycle", "outcome", "upsertedUnits",
+		"removedUnitIds", "upsertedCities", "removedCityIds", "upsertedArtifacts",
+		"removedArtifactIds", "upsertedFieldImprovements",
 		"removedFieldImprovementCoordinates", "upsertedRoads", "removedRoadCoordinates",
-		"pendingAction", "cityFoundingDraft",
+		"pendingAction", "cityFoundingDraft", "diplomacy",
 	]):
 		return null
 	if not _arrays(raw, [
 		"upsertedUnits", "removedUnitIds", "upsertedCities", "removedCityIds",
+		"upsertedArtifacts", "removedArtifactIds",
 		"upsertedFieldImprovements", "removedFieldImprovementCoordinates",
 		"upsertedRoads", "removedRoadCoordinates",
 	]):
 		return null
-	if not _integers(raw, ["fromRevision", "toRevision"], true):
+	if (
+		not _integers(raw, ["fromRevision", "toRevision", "turn"], true)
+		or int(raw["toRevision"]) < int(raw["fromRevision"])
+		or int(raw["turn"]) == 0
+	):
 		return null
 	var units: Array[AonwClientReadModels.UnitView] = []
 	for value in raw["upsertedUnits"]:
@@ -570,10 +956,14 @@ static func _decode_patch(raw: Variant) -> AonwClientReadModels.ViewPatch:
 		removed.append(value)
 	removed.make_read_only()
 	var turn_lifecycle := _decode_turn_lifecycle(raw["turnLifecycle"])
+	var outcome := _decode_game_outcome(raw["outcome"])
 	var pending_action := _decode_pending_action(raw["pendingAction"])
 	var city_founding_draft := _decode_city_founding_draft(raw["cityFoundingDraft"])
+	var diplomacy := _decode_diplomacy(raw["diplomacy"])
 	var cities: Variant = _decode_cities(raw["upsertedCities"])
 	var removed_city_ids: Variant = _decode_string_ids(raw["removedCityIds"])
+	var artifacts: Variant = _decode_artifacts(raw["upsertedArtifacts"])
+	var removed_artifact_ids: Variant = _decode_string_ids(raw["removedArtifactIds"])
 	var field_improvements: Variant = _decode_field_improvements(
 		raw["upsertedFieldImprovements"]
 	)
@@ -584,10 +974,14 @@ static func _decode_patch(raw: Variant) -> AonwClientReadModels.ViewPatch:
 	var removed_roads: Variant = _decode_coordinates(raw["removedRoadCoordinates"])
 	if (
 		(raw["turnLifecycle"] != null and turn_lifecycle == null)
+		or (raw["outcome"] != null and outcome == null)
 		or (raw["pendingAction"] != null and pending_action == null)
 		or (raw["cityFoundingDraft"] != null and city_founding_draft == null)
+		or (raw["diplomacy"] != null and diplomacy == null)
 		or cities == null
 		or removed_city_ids == null
+		or artifacts == null
+		or removed_artifact_ids == null
 		or field_improvements == null
 		or removed_field_improvements == null
 		or roads == null
@@ -597,17 +991,22 @@ static func _decode_patch(raw: Variant) -> AonwClientReadModels.ViewPatch:
 	var result := ReadModels.ViewPatch.new()
 	result.from_revision = int(raw["fromRevision"])
 	result.to_revision = int(raw["toRevision"])
+	result.turn = int(raw["turn"])
 	result.turn_lifecycle = turn_lifecycle
+	result.outcome = outcome
 	result.upserted_units = units
 	result.removed_unit_ids = removed
 	result.upserted_cities = cities
 	result.removed_city_ids = removed_city_ids
+	result.upserted_artifacts = artifacts
+	result.removed_artifact_ids = removed_artifact_ids
 	result.upserted_field_improvements = field_improvements
 	result.removed_field_improvement_coordinates = removed_field_improvements
 	result.upserted_roads = roads
 	result.removed_road_coordinates = removed_roads
 	result.pending_action = pending_action
 	result.city_founding_draft = city_founding_draft
+	result.diplomacy = diplomacy
 	return result
 
 static func _decode_pending_action(raw: Variant) -> AonwClientReadModels.PendingActionView:
@@ -732,13 +1131,18 @@ static func _decode_coordinate(raw: Variant) -> Variant:
 
 static func _integers(raw: Dictionary, fields: Array, non_negative: bool) -> bool:
 	for field in fields:
-		var value: Variant = raw[field]
-		if not value is int and not value is float:
-			return false
-		var integer := int(value)
-		if float(integer) != float(value) or (non_negative and integer < 0):
+		if not _is_integer(raw[field], non_negative):
 			return false
 	return true
+
+static func _is_integer(value: Variant, non_negative: bool) -> bool:
+	if not value is int and not value is float:
+		return false
+	var integer := int(value)
+	return float(integer) == float(value) and (not non_negative or integer >= 0)
+
+static func _is_nullable_integer(value: Variant, non_negative: bool) -> bool:
+	return value == null or _is_integer(value, non_negative)
 
 static func _strings(raw: Dictionary, fields: Array) -> bool:
 	for field in fields:

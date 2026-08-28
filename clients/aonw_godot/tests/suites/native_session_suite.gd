@@ -617,9 +617,21 @@ func _test_shared_client_contract() -> void:
 		"requiredSubmissionCount": 1,
 		"submittedCount": 0,
 	}
-	var decoded_snapshot := ClientReadModelDecoder.decode_snapshot({
+	var game_outcome := {
+		"condition": "ongoing",
+		"winnerPlayerId": null,
+		"scoreByPlayerId": {},
+	}
+	var diplomacy := {
+		"relations": [],
+		"proposals": [],
+		"messages": [],
+		"resourceTradeAgreements": [],
+	}
+	var snapshot_document := {
 		"stamp": snapshot_stamp,
 		"turn": 7,
+		"outcome": game_outcome,
 		"turnLifecycle": turn_lifecycle,
 		"pendingAction": {
 			"type": "workerActionSelection",
@@ -627,81 +639,52 @@ func _test_shared_client_contract() -> void:
 			"improvement": "farm",
 		},
 		"cityFoundingDraft": null,
+		"diplomacy": diplomacy,
 		"units": [unit],
 		"cities": [],
+		"artifacts": [],
 		"fieldImprovements": [],
 		"roads": [],
-	})
+	}
+	var decoded_snapshot := ClientReadModelDecoder.decode_snapshot(snapshot_document)
 	_check(
 		decoded_snapshot != null
 		and decoded_snapshot.turn == 7
+		and decoded_snapshot.outcome.condition == &"ongoing"
 		and decoded_snapshot.pending_action.kind == &"workerActionSelection"
 		and decoded_snapshot.pending_action.improvement == &"farm"
 		and decoded_snapshot.units[0].kind == "commander",
 		"Godot maps the complete recipient-safe snapshot",
 	)
+	var invalid_pending: Dictionary = snapshot_document.duplicate(true)
+	invalid_pending["pendingAction"]["improvement"] = "futureImprovement"
 	_check(
-		ClientReadModelDecoder.decode_snapshot({
-			"stamp": snapshot_stamp,
-			"turn": 7,
-			"turnLifecycle": turn_lifecycle,
-			"pendingAction": {
-				"type": "workerActionSelection",
-				"unitId": "unit-a",
-				"improvement": "futureImprovement",
-			},
-			"cityFoundingDraft": null,
-			"units": [unit],
-			"cities": [],
-			"fieldImprovements": [],
-			"roads": [],
-		}) == null,
+		ClientReadModelDecoder.decode_snapshot(invalid_pending) == null,
 		"Godot rejects an unknown pending-action enum value",
 	)
+	var invalid_turn: Dictionary = snapshot_document.duplicate(true)
+	invalid_turn["turn"] = 0
+	invalid_turn["pendingAction"] = null
 	_check(
-		ClientReadModelDecoder.decode_snapshot({
-			"stamp": snapshot_stamp,
-			"turn": 0,
-			"turnLifecycle": turn_lifecycle,
-			"pendingAction": null,
-			"cityFoundingDraft": null,
-			"units": [unit],
-			"cities": [],
-			"fieldImprovements": [],
-			"roads": [],
-		}) == null,
+		ClientReadModelDecoder.decode_snapshot(invalid_turn) == null,
 		"Godot rejects a non-positive authoritative turn",
 	)
 	var unknown_unit: Dictionary = unit.duplicate(true)
 	unknown_unit["kind"] = "futureUnit"
+	var invalid_unit: Dictionary = snapshot_document.duplicate(true)
+	invalid_unit["pendingAction"] = null
+	invalid_unit["units"] = [unknown_unit]
 	_check(
-		ClientReadModelDecoder.decode_snapshot({
-			"stamp": snapshot_stamp,
-			"turn": 7,
-			"turnLifecycle": turn_lifecycle,
-			"pendingAction": null,
-			"cityFoundingDraft": null,
-			"units": [unknown_unit],
-			"cities": [],
-			"fieldImprovements": [],
-			"roads": [],
-		}) == null,
+		ClientReadModelDecoder.decode_snapshot(invalid_unit) == null,
 		"Godot rejects unknown unit enum values",
 	)
 	var second_unit: Dictionary = unit.duplicate(true)
 	second_unit["id"] = "unit-b"
+	var unstable_units: Dictionary = snapshot_document.duplicate(true)
+	unstable_units["pendingAction"] = null
+	unstable_units["units"] = [second_unit, unit]
 	_check(
-		ClientReadModelDecoder.decode_snapshot({
-			"stamp": snapshot_stamp,
-			"turn": 7,
-			"turnLifecycle": turn_lifecycle,
-			"pendingAction": null,
-			"cityFoundingDraft": null,
-			"units": [second_unit, unit],
-			"cities": [],
-			"fieldImprovements": [],
-			"roads": [],
-		}) == null,
+		ClientReadModelDecoder.decode_snapshot(unstable_units) == null,
 		"Godot rejects an unstable snapshot unit order",
 	)
 

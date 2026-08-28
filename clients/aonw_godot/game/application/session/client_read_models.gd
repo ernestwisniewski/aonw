@@ -38,6 +38,85 @@ class TurnLifecycleView:
 	var required_submission_count: int
 	var submitted_count: int
 
+class GameOutcomeView:
+	extends RefCounted
+	var condition: StringName
+	var has_winner_player_id: bool
+	var winner_player_id: String
+	var score_by_player_id: Dictionary
+
+class ArtifactLocationView:
+	extends RefCounted
+	var kind: StringName
+	var coordinate: Vector2i
+	var unit_id: String
+	var city_id: String
+	var remaining_turns: int
+
+class ArtifactView:
+	extends RefCounted
+	var id: String
+	var artifact_type: StringName
+	var location: ArtifactLocationView
+
+class DiplomaticRelationView:
+	extends RefCounted
+	var counterpart_player_id: String
+	var status: StringName
+	var relation_score: int
+	var has_status_expires_on_turn: bool
+	var status_expires_on_turn: int
+	var has_last_changed_turn: bool
+	var last_changed_turn: int
+	var last_change_reason: StringName
+
+class DiplomaticProposalView:
+	extends RefCounted
+	var id: String
+	var from_player_id: String
+	var to_player_id: String
+	var kind: StringName
+	var created_turn: int
+	var expires_on_turn: int
+	var gold_payment: int
+
+class DiplomaticMessageView:
+	extends RefCounted
+	var id: String
+	var from_player_id: String
+	var to_player_id: String
+	var topic: StringName
+	var category: StringName
+	var created_turn: int
+	var expires_on_turn: int
+	var response: StringName
+	var has_responded_turn: bool
+	var responded_turn: int
+	var relation_score_delta: int
+	var has_relation_score_after: bool
+	var relation_score_after: int
+	var has_promise_due_turn: bool
+	var promise_due_turn: int
+	var promise_broken: bool
+
+class ResourceTradeAgreementView:
+	extends RefCounted
+	var id: String
+	var exporter_player_id: String
+	var importer_player_id: String
+	var resource: StringName
+	var gold_per_turn: int
+	var remaining_turns: int
+	var amount_per_turn: int
+	var exchange_group_id: String
+
+class DiplomacyView:
+	extends RefCounted
+	var relations: Array[DiplomaticRelationView]
+	var proposals: Array[DiplomaticProposalView]
+	var messages: Array[DiplomaticMessageView]
+	var resource_trade_agreements: Array[ResourceTradeAgreementView]
+
 class CityFoundingDraftView:
 	extends RefCounted
 	var founder_unit_id: String
@@ -102,11 +181,14 @@ class SnapshotView:
 	extends RefCounted
 	var stamp: Stamp
 	var turn: int
+	var outcome: GameOutcomeView
 	var turn_lifecycle: TurnLifecycleView
 	var pending_action: PendingActionView
 	var city_founding_draft: CityFoundingDraftView
+	var diplomacy: DiplomacyView
 	var units: Array[UnitView]
 	var cities: Array[CityView]
+	var artifacts: Array[ArtifactView]
 	var field_improvements: Array[FieldImprovementView]
 	var roads: Array[RoadView]
 
@@ -132,17 +214,22 @@ class ViewPatch:
 	extends RefCounted
 	var from_revision: int
 	var to_revision: int
+	var turn: int
 	var turn_lifecycle: TurnLifecycleView
+	var outcome: GameOutcomeView
 	var upserted_units: Array[UnitView]
 	var removed_unit_ids: Array[String]
 	var upserted_cities: Array[CityView]
 	var removed_city_ids: Array[String]
+	var upserted_artifacts: Array[ArtifactView]
+	var removed_artifact_ids: Array[String]
 	var upserted_field_improvements: Array[FieldImprovementView]
 	var removed_field_improvement_coordinates: Array[Vector2i]
 	var upserted_roads: Array[RoadView]
 	var removed_road_coordinates: Array[Vector2i]
 	var pending_action: PendingActionView
 	var city_founding_draft: CityFoundingDraftView
+	var diplomacy: DiplomacyView
 
 class MovementEvidence:
 	extends RefCounted
