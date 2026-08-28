@@ -110,6 +110,34 @@ class AonwLocalizationsEn extends AonwLocalizations {
           'The logistics response is incompatible with this client.',
       'logisticsOptionUnavailable':
           'That logistics option is no longer available.',
+      'combatFailureRequestFailed':
+          'The combat request could not be completed.',
+      'combatFailureResponseIncompatible':
+          'The combat response is incompatible with this client.',
+      'combatFailureSessionUnavailable':
+          'The local game session is unavailable.',
+      'combatFailureTargetUnavailable':
+          'No attack preview is available for that target.',
+      'combatFailureStaleRevision':
+          'The game state changed. Review it and try again.',
+      'combatFailureMatchFinished': 'The match has already finished.',
+      'combatFailureAttackerNotFound':
+          'The attacking unit is no longer available.',
+      'combatFailureAttackerNotControlled':
+          'The attacking unit is not controlled by this player.',
+      'combatFailureAttackerUnavailable': 'The attacking unit is unavailable.',
+      'combatFailureAttackerExhausted': 'The attacking unit is exhausted.',
+      'combatFailureAttackerOutOfBounds':
+          'The attacking unit is outside the map.',
+      'combatFailureAttackerCannotAttack': 'That unit cannot attack.',
+      'combatFailureAttackTargetNotVisible': 'The target is not visible.',
+      'combatFailureAttackTargetOutOfBounds': 'The target is outside the map.',
+      'combatFailureAttackTargetNotFound': 'No target is present there.',
+      'combatFailureAttackTargetNotEnemy': 'That target is not an enemy.',
+      'combatFailureAttackTargetProtectedByTreaty':
+          'A treaty protects that target.',
+      'combatFailureAttackTargetOutOfRange': 'The target is out of range.',
+      'combatFailureAttackCityHasNoHealth': 'That city cannot be attacked.',
       'other': 'The unit action could not be completed.',
     });
     return '$_temp0';
@@ -153,6 +181,29 @@ class AonwLocalizationsEn extends AonwLocalizations {
       'activityUnit': 'Unit activity',
       'activityTurn': 'Turn updated',
       'activityWorker': 'Worker job completed',
+      'combatTitle': 'Combat',
+      'combatLoading': 'Loading combat preview',
+      'combatTarget': 'Target',
+      'combatDistance': 'Distance',
+      'combatOutgoing': 'Outgoing damage',
+      'combatRetaliation': 'Retaliation damage',
+      'combatNone': 'None',
+      'combatCapture': 'Capture city',
+      'combatDestroy': 'Destroy city',
+      'combatConfirm': 'Confirm attack',
+      'combatExecuting': 'Resolving combat',
+      'combatResolved': 'Combat resolved',
+      'combatAttackerHp': 'Attacker health',
+      'combatDefenderHp': 'Defender health',
+      'combatEventUnitAttacked': 'Unit attacked',
+      'combatEventCityAttacked': 'City attacked',
+      'combatEventCombatResolved': 'Combat resolved',
+      'combatEventUnitGainedExperience': 'Unit gained experience',
+      'combatEventUnitKilled': 'Unit defeated',
+      'combatEventUnitRetreated': 'Unit retreated',
+      'combatEventCityCaptured': 'City captured',
+      'combatEventCityDestroyed': 'City destroyed',
+      'combatEventDiplomaticScoreChanged': 'Diplomatic relation changed',
       'other': 'Game activity',
     });
     return '$_temp0';

@@ -4,6 +4,7 @@ import 'package:aonw_rust_client/src/api.dart';
 import 'package:aonw_rust_client/src/native_identity.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 import 'package:aonw_rust_client/src/protocol_response.dart';
+import 'package:aonw_rust_client/src/protocol_values.dart';
 
 export 'protocol_artifact.dart';
 export 'protocol_city_view.dart';
@@ -115,6 +116,21 @@ final class AonwClientRequest {
     },
   });
 
+  factory AonwClientRequest.combatPreview({
+    required int expectedRevision,
+    required String attackerUnitId,
+    required int defenderCol,
+    required int defenderRow,
+  }) => AonwClientRequest._({
+    'type': 'query',
+    'query': {
+      'type': 'combatPreview',
+      'expectedRevision': expectedRevision,
+      'attackerUnitId': attackerUnitId,
+      'defender': {'col': defenderCol, 'row': defenderRow},
+    },
+  });
+
   factory AonwClientRequest.moveUnit({
     required int expectedRevision,
     required String unitId,
@@ -174,6 +190,23 @@ final class AonwClientRequest {
       'expectedRevision': expectedRevision,
       'unitId': unitId,
       'troopKind': troopKind,
+    },
+  });
+
+  factory AonwClientRequest.attackHex({
+    required int expectedRevision,
+    required String attackerUnitId,
+    required int defenderCol,
+    required int defenderRow,
+    required AonwCityConquestAction cityConquestAction,
+  }) => AonwClientRequest._({
+    'type': 'dispatch',
+    'command': {
+      'type': 'attackHex',
+      'expectedRevision': expectedRevision,
+      'attackerUnitId': attackerUnitId,
+      'defender': {'col': defenderCol, 'row': defenderRow},
+      'cityConquestAction': cityConquestAction.name,
     },
   });
 

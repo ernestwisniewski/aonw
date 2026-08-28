@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import '../../combat/application/combat_session_port.dart';
+import '../../combat/application/combat_workflow.dart';
+import '../../combat/read_model/combat_view.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/application/unit_logistics_state.dart';
 import '../../logistics/application/unit_logistics_workflow.dart';
@@ -19,6 +22,8 @@ import 'movement_command_runner.dart';
 import 'movement_session_port.dart';
 import 'unit_action_workflow.dart';
 
+part 'map_coordinator_actions.dart';
+
 typedef MapDiagnosticReporter =
     void Function(String code, Object error, StackTrace stackTrace);
 
@@ -26,6 +31,7 @@ final class MapCoordinator {
   MapCoordinator({
     required MapSessionPort session,
     required MovementSessionPort movement,
+    CombatSessionPort? combat,
     required UnitLogisticsSessionPort logistics,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
@@ -34,6 +40,10 @@ final class MapCoordinator {
   }) : _session = session,
        _movement = MovementCommandRunner(
          session: movement,
+         diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
+       _combat = CombatWorkflow(
+         session: combat ?? _requireCombatSession(movement),
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _logistics = UnitLogisticsWorkflow(
@@ -54,6 +64,7 @@ final class MapCoordinator {
 
   final MapSessionPort _session;
   final MovementCommandRunner _movement;
+  final CombatWorkflow _combat;
   final UnitLogisticsWorkflow _logistics;
   final UnitActionWorkflow _unitActions;
   final TurnWorkflow _turns;
@@ -137,6 +148,17 @@ final class MapCoordinator {
       return;
     }
 
+    if (selectedUnitId != null) {
+      _combat.preview(
+        attackerUnitId: selectedUnitId,
+        defender: next,
+        readState: () => _state,
+        publish: _setState,
+        isDisposed: () => _disposed,
+      );
+      return;
+    }
+
     _selectPlainHex(current, next);
   }
 
@@ -150,6 +172,7 @@ final class MapCoordinator {
           clearRoute: true,
           clearActionDeck: true,
           clearUnitLogistics: true,
+          clearCombat: true,
           movementPending: false,
           clearMovementError: true,
         ),
@@ -167,6 +190,7 @@ final class MapCoordinator {
           clearRoute: true,
           clearActionDeck: true,
           clearUnitLogistics: true,
+          clearCombat: true,
           movementPending: false,
           clearMovementError: true,
         ),
@@ -191,6 +215,7 @@ final class MapCoordinator {
           clearRoute: true,
           movementPending: true,
           clearMovementError: true,
+          clearCombat: true,
         ),
       ),
     );
@@ -296,50 +321,6 @@ final class MapCoordinator {
     }
   }
 
-  void executeUnitAction(UnitActionKindView action) {
-    _unitActions.execute(
-      action: action,
-      readState: () => _state,
-      publish: _setState,
-      isDisposed: () => _disposed,
-      onSelectionRetained: (unitId) => _logistics.load(
-        unitId: unitId,
-        readState: () => _state,
-        publish: _setState,
-        isDisposed: () => _disposed,
-      ),
-    );
-  }
-
-  void executeUnitLogistics(UnitLogisticsActionView action) {
-    _logistics.execute(
-      action: action,
-      readState: () => _state,
-      publish: _setState,
-      isDisposed: () => _disposed,
-    );
-  }
-
-  void endTurn() {
-    _turns.endTurn(
-      readState: () => _state,
-      publish: _setState,
-      isDisposed: () => _disposed,
-    );
-  }
-
-  void toggleReference() {
-    final current = _state;
-    if (current is! GameSessionReady) return;
-    _setState(_toggleReferenceState(current));
-  }
-
-  void completeTurnPresentation() {
-    if (_state case final GameSessionReady current) {
-      _setState(current.completeTurnPresentation());
-    }
-  }
-
   void dispose() {
     if (_disposed) return;
     _disposed = true;
@@ -416,6 +397,7 @@ GameSessionReady _moveResultState(
           clearRoute: true,
           clearActionDeck: true,
           clearUnitLogistics: true,
+          clearCombat: true,
           movementPending: false,
           clearMovementError: true,
           lastMovementExecution: result.execution,
@@ -439,8 +421,19 @@ GameSessionReady _movementFailureState<T>(
 
 bool _interactionBusy(MapInteractionState interaction) =>
     interaction.movementPending ||
+    (interaction.combat?.commandPending ?? false) ||
+    (interaction.combat?.loading ?? false) ||
     (interaction.actionDeck?.commandPending ?? false) ||
     (interaction.unitLogistics?.commandPending ?? false);
+
+CombatSessionPort _requireCombatSession(MovementSessionPort movement) {
+  if (movement case final CombatSessionPort combat) return combat;
+  throw ArgumentError.value(
+    movement,
+    'movement',
+    'must also provide the combat session port',
+  );
+}
 
 MapLoadFailureViewCode _loadFailureCode(String code) => switch (code) {
   'rust_adapter_unavailable' ||

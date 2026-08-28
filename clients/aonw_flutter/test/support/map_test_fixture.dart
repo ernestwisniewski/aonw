@@ -1,3 +1,5 @@
+import 'package:aonw_flutter/features/combat/application/combat_session_port.dart';
+import 'package:aonw_flutter/features/combat/read_model/combat_view.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
 import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
 import 'package:aonw_flutter/features/map/application/map_session_port.dart';
@@ -155,10 +157,65 @@ MoveUnitExecutionView testMoveUnitExecutionView({
   ),
 );
 
+CombatPreviewView testCombatPreviewView({
+  String attackerUnitId = 'preview-commander',
+  MapHexCoordinate defender = const (col: 1, row: 0),
+}) => CombatPreviewView(
+  stamp: testSessionStamp(),
+  attackerUnitId: attackerUnitId,
+  defenderCoordinate: defender,
+  target: const CombatTargetView(
+    kind: CombatTargetKindView.unit,
+    id: 'defender',
+  ),
+  distance: 1,
+  attacker: CombatStatsView(
+    attack: 7,
+    defense: 4,
+    hitPoints: 10,
+    range: 1,
+    mobility: 4,
+    modifiers: const [],
+  ),
+  defender: CombatStatsView(
+    attack: 3,
+    defense: 5,
+    hitPoints: 4,
+    range: 1,
+    mobility: 4,
+    modifiers: const [],
+  ),
+  outgoingDamageMin: 2,
+  outgoingDamageMax: 5,
+  retaliationDamageMin: 1,
+  retaliationDamageMax: 3,
+);
+
+CombatExecutionView testCombatExecutionView({int revision = 1}) =>
+    CombatExecutionView(
+      revision: revision,
+      preview: testCombatPreviewView(),
+      outcome: const CombatOutcomeView(
+        attackerHitPoints: 9,
+        defenderHitPoints: 0,
+        attackerKilled: false,
+        defenderKilled: true,
+        defenderRetreat: null,
+        outgoingDamage: 4,
+        retaliationDamage: 1,
+      ),
+      events: const [
+        CombatEventKindView.unitAttacked,
+        CombatEventKindView.combatResolved,
+        CombatEventKindView.unitKilled,
+      ],
+    );
+
 final class FakeGameSession
     implements
         MapSessionPort,
         MovementSessionPort,
+        CombatSessionPort,
         UnitLogisticsSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
@@ -175,6 +232,9 @@ final class FakeGameSession
     this.logisticsOptions,
     this.logisticsResult,
     this.logisticsFailure,
+    this.combatPreviewResult,
+    this.combatResult,
+    this.combatFailure,
   }) : failure = null;
   FakeGameSession.failure(this.failure)
     : scene = null,
@@ -188,7 +248,10 @@ final class FakeGameSession
       turnFailure = null,
       logisticsOptions = null,
       logisticsResult = null,
-      logisticsFailure = null;
+      logisticsFailure = null,
+      combatPreviewResult = null,
+      combatResult = null,
+      combatFailure = null;
 
   final MapScene? scene;
   final MapLoadException? failure;
@@ -203,6 +266,9 @@ final class FakeGameSession
   final UnitLogisticsOptionsView? logisticsOptions;
   final UnitLogisticsCommandResultView? logisticsResult;
   final UnitLogisticsSessionException? logisticsFailure;
+  final CombatPreviewView? combatPreviewResult;
+  final CombatCommandResultView? combatResult;
+  final CombatSessionException? combatFailure;
   var unitActionCalls = 0;
   UnitActionKindView? lastUnitAction;
   int? lastUnitActionExpectedRevision;
@@ -213,6 +279,10 @@ final class FakeGameSession
   var logisticsCommandCalls = 0;
   int? lastLogisticsExpectedRevision;
   UnitLogisticsActionView? lastLogisticsAction;
+  var combatPreviewCalls = 0;
+  var combatAttackCalls = 0;
+  MapHexCoordinate? lastCombatDefender;
+  CombatAttackView? lastCombatAttack;
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
@@ -243,6 +313,32 @@ final class FakeGameSession
     final error = moveFailure;
     if (error != null) throw error;
     return moveResult ?? (throw StateError('No move fixture.'));
+  }
+
+  @override
+  Future<CombatPreviewView> combatPreview({
+    required int expectedRevision,
+    required String attackerUnitId,
+    required MapHexCoordinate defender,
+  }) async {
+    combatPreviewCalls += 1;
+    lastCombatDefender = defender;
+    final error = combatFailure;
+    if (error != null) throw error;
+    return combatPreviewResult ??
+        (throw StateError('No combat preview fixture.'));
+  }
+
+  @override
+  Future<CombatCommandResultView> attack({
+    required int expectedRevision,
+    required CombatAttackView attack,
+  }) async {
+    combatAttackCalls += 1;
+    lastCombatAttack = attack;
+    final error = combatFailure;
+    if (error != null) throw error;
+    return combatResult ?? (throw StateError('No combat result fixture.'));
   }
 
   @override

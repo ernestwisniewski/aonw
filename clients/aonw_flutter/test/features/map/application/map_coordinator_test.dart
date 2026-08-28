@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:aonw_flutter/features/combat/application/combat_session_port.dart';
+import 'package:aonw_flutter/features/combat/read_model/combat_view.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
 import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
@@ -420,6 +422,7 @@ final class _CompletingGameSession
     implements
         MapSessionPort,
         MovementSessionPort,
+        CombatSessionPort,
         UnitLogisticsSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
@@ -450,6 +453,19 @@ final class _CompletingGameSession
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<CombatPreviewView> combatPreview({
+    required int expectedRevision,
+    required String attackerUnitId,
+    required MapHexCoordinate defender,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<CombatCommandResultView> attack({
+    required int expectedRevision,
+    required CombatAttackView attack,
   }) => throw UnimplementedError();
 
   @override

@@ -112,6 +112,32 @@ class AonwLocalizationsPl extends AonwLocalizations {
           'Odpowiedź logistyczna jest niezgodna z tym klientem.',
       'logisticsOptionUnavailable':
           'Ta opcja logistyczna nie jest już dostępna.',
+      'combatFailureRequestFailed': 'Nie udało się wykonać żądania walki.',
+      'combatFailureResponseIncompatible':
+          'Odpowiedź walki jest niezgodna z tym klientem.',
+      'combatFailureSessionUnavailable': 'Lokalna sesja gry jest niedostępna.',
+      'combatFailureTargetUnavailable':
+          'Dla tego celu nie ma dostępnego podglądu ataku.',
+      'combatFailureStaleRevision':
+          'Stan gry uległ zmianie. Sprawdź go i spróbuj ponownie.',
+      'combatFailureMatchFinished': 'Mecz już się zakończył.',
+      'combatFailureAttackerNotFound':
+          'Atakująca jednostka nie jest już dostępna.',
+      'combatFailureAttackerNotControlled':
+          'Atakująca jednostka nie należy do tego gracza.',
+      'combatFailureAttackerUnavailable':
+          'Atakująca jednostka jest niedostępna.',
+      'combatFailureAttackerExhausted': 'Atakująca jednostka jest wyczerpana.',
+      'combatFailureAttackerOutOfBounds':
+          'Atakująca jednostka znajduje się poza mapą.',
+      'combatFailureAttackerCannotAttack': 'Ta jednostka nie może atakować.',
+      'combatFailureAttackTargetNotVisible': 'Cel nie jest widoczny.',
+      'combatFailureAttackTargetOutOfBounds': 'Cel znajduje się poza mapą.',
+      'combatFailureAttackTargetNotFound': 'W tym miejscu nie ma celu.',
+      'combatFailureAttackTargetNotEnemy': 'Ten cel nie jest wrogiem.',
+      'combatFailureAttackTargetProtectedByTreaty': 'Traktat chroni ten cel.',
+      'combatFailureAttackTargetOutOfRange': 'Cel jest poza zasięgiem.',
+      'combatFailureAttackCityHasNoHealth': 'Tego miasta nie można zaatakować.',
       'other': 'Nie udało się wykonać akcji jednostki.',
     });
     return '$_temp0';
@@ -155,6 +181,29 @@ class AonwLocalizationsPl extends AonwLocalizations {
       'activityUnit': 'Aktywność jednostki',
       'activityTurn': 'Zaktualizowano turę',
       'activityWorker': 'Robotnik ukończył zadanie',
+      'combatTitle': 'Walka',
+      'combatLoading': 'Ładowanie podglądu walki',
+      'combatTarget': 'Cel',
+      'combatDistance': 'Dystans',
+      'combatOutgoing': 'Zadawane obrażenia',
+      'combatRetaliation': 'Obrażenia odwetowe',
+      'combatNone': 'Brak',
+      'combatCapture': 'Przejmij miasto',
+      'combatDestroy': 'Zniszcz miasto',
+      'combatConfirm': 'Potwierdź atak',
+      'combatExecuting': 'Rozstrzyganie walki',
+      'combatResolved': 'Walka rozstrzygnięta',
+      'combatAttackerHp': 'Zdrowie atakującego',
+      'combatDefenderHp': 'Zdrowie obrońcy',
+      'combatEventUnitAttacked': 'Jednostka zaatakowana',
+      'combatEventCityAttacked': 'Miasto zaatakowane',
+      'combatEventCombatResolved': 'Walka rozstrzygnięta',
+      'combatEventUnitGainedExperience': 'Jednostka zdobyła doświadczenie',
+      'combatEventUnitKilled': 'Jednostka pokonana',
+      'combatEventUnitRetreated': 'Jednostka wycofała się',
+      'combatEventCityCaptured': 'Miasto przejęte',
+      'combatEventCityDestroyed': 'Miasto zniszczone',
+      'combatEventDiplomaticScoreChanged': 'Relacja dyplomatyczna zmieniona',
       'other': 'Aktywność w grze',
     });
     return '$_temp0';

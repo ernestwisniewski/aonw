@@ -13,9 +13,11 @@ final class FlameScenePatch {
     required List<VisibleUnitView> unitUpserts,
     required List<String> removedUnitIds,
     required List<FlameUnitMovementTransition> movements,
+    required List<FlameCombatTransition> combats,
   }) : unitUpserts = List.unmodifiable(unitUpserts),
        removedUnitIds = List.unmodifiable(removedUnitIds),
-       movements = List.unmodifiable(movements);
+       movements = List.unmodifiable(movements),
+       combats = List.unmodifiable(combats);
 
   factory FlameScenePatch.between(
     MapRenderSnapshot? previous,
@@ -33,6 +35,7 @@ final class FlameScenePatch {
       unitUpserts: _unitUpserts(previous, next, previousUnits),
       removedUnitIds: _removedUnitIds(previous, nextUnits),
       movements: _movementBetween(previous, next, previousUnits, nextUnits),
+      combats: _combatBetween(previous, next),
     );
   }
 
@@ -40,6 +43,7 @@ final class FlameScenePatch {
   final List<VisibleUnitView> unitUpserts;
   final List<String> removedUnitIds;
   final List<FlameUnitMovementTransition> movements;
+  final List<FlameCombatTransition> combats;
 
   static FlameScenePatch _replacement(
     MapRenderSnapshot? previous,
@@ -50,6 +54,7 @@ final class FlameScenePatch {
     removedUnitIds:
         previous?.player.units.map((unit) => unit.id).toList() ?? const [],
     movements: const [],
+    combats: const [],
   );
 
   static Map<String, VisibleUnitView> _unitsById(MapRenderSnapshot snapshot) =>
@@ -118,6 +123,27 @@ final class FlameScenePatch {
       next.player.stamp.mapHash == previous.player.stamp.mapHash &&
       next.player.stamp.rulesetHash == previous.player.stamp.rulesetHash;
 
+  static List<FlameCombatTransition> _combatBetween(
+    MapRenderSnapshot previous,
+    MapRenderSnapshot next,
+  ) {
+    final execution = next.interaction.combat?.lastExecution;
+    if (execution == null ||
+        execution.revision ==
+            previous.interaction.combat?.lastExecution?.revision ||
+        execution.revision != next.player.stamp.revision ||
+        !_isAuthoritativeAdvance(previous, next)) {
+      return const [];
+    }
+    return [
+      FlameCombatTransition(
+        defender: execution.preview.defenderCoordinate,
+        revision: execution.revision,
+        eventCount: execution.events.length,
+      ),
+    ];
+  }
+
   static bool _sameMap(MapRenderSnapshot previous, MapRenderSnapshot next) =>
       previous.map.mapId == next.map.mapId &&
       previous.map.contentHash == next.map.contentHash &&
@@ -132,6 +158,18 @@ final class FlameScenePatch {
       left.coordinate == right.coordinate &&
       left.movementUnits == right.movementUnits &&
       left.posture == right.posture;
+}
+
+final class FlameCombatTransition {
+  const FlameCombatTransition({
+    required this.defender,
+    required this.revision,
+    required this.eventCount,
+  });
+
+  final MapHexCoordinate defender;
+  final int revision;
+  final int eventCount;
 }
 
 final class FlameUnitMovementTransition {

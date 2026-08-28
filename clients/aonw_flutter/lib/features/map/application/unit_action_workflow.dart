@@ -79,6 +79,8 @@ GameSessionReady? _actionable(GameSessionState state) {
   final deck = interaction.actionDeck;
   final unitId = interaction.selectedUnitId;
   if (interaction.movementPending ||
+      (interaction.combat?.commandPending ?? false) ||
+      (interaction.combat?.loading ?? false) ||
       (interaction.unitLogistics?.commandPending ?? false) ||
       deck == null ||
       deck.commandPending ||
@@ -98,6 +100,7 @@ GameSessionReady _pending(
     clearReachable: true,
     clearRoute: true,
     clearMovementError: true,
+    clearCombat: true,
     actionDeck: current.interaction.actionDeck!.copyWith(
       correlationId: correlationId,
       inFlightAction: action,

@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import '../../features/combat/application/combat_session_port.dart';
 import '../../features/logistics/application/unit_logistics_session_port.dart';
 import '../../features/map/application/map_session_port.dart';
 import '../../features/map/application/movement_session_port.dart';
@@ -20,6 +21,7 @@ final class AppComposition {
   AppComposition({
     required MapSessionPort mapSession,
     required MovementSessionPort movementSession,
+    CombatSessionPort? combatSession,
     required UnitLogisticsSessionPort logisticsSession,
     required UnitActionSessionPort unitActionSession,
     required TurnSessionPort turnSession,
@@ -31,6 +33,7 @@ final class AppComposition {
          mapController: MapPresentationController(
            session: mapSession,
            movement: movementSession,
+           combat: combatSession ?? _requireCombatSession(movementSession),
            logistics: logisticsSession,
            unitActions: unitActionSession,
            turns: turnSession,
@@ -50,6 +53,7 @@ final class AppComposition {
     return AppComposition(
       mapSession: gateway,
       movementSession: gateway,
+      combatSession: gateway,
       logisticsSession: gateway,
       unitActionSession: gateway,
       turnSession: gateway,
@@ -60,4 +64,13 @@ final class AppComposition {
   }
 
   final AonwApp root;
+}
+
+CombatSessionPort _requireCombatSession(MovementSessionPort movement) {
+  if (movement case final CombatSessionPort combat) return combat;
+  throw ArgumentError.value(
+    movement,
+    'movementSession',
+    'must also provide the combat session port',
+  );
 }

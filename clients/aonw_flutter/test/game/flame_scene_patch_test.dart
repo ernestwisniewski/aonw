@@ -1,3 +1,4 @@
+import 'package:aonw_flutter/features/combat/application/combat_state.dart';
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
@@ -87,6 +88,46 @@ void main() {
     expect(patch.unitUpserts, [same(added)]);
     expect(patch.removedUnitIds, ['removed']);
   });
+
+  test('derives one bounded combat cue only from accepted exact evidence', () {
+    final unit = testVisibleUnit();
+    final scene = testMapScene(units: [unit]);
+    final before = _snapshot(
+      scene,
+      player: scene.player,
+      interaction: CombatState(
+        attackerUnitId: unit.id,
+        defenderCoordinate: const (col: 1, row: 0),
+        preview: testCombatPreviewView(),
+        commandPending: true,
+      ).asInteraction(unit.coordinate),
+    );
+    final after = _snapshot(
+      scene,
+      player: _player(revision: 1, digest: 'd' * 64, units: [unit]),
+      interaction: CombatState(
+        attackerUnitId: unit.id,
+        defenderCoordinate: const (col: 1, row: 0),
+        lastExecution: testCombatExecutionView(),
+      ).asInteraction(const (col: 1, row: 0)),
+    );
+
+    final patch = FlameScenePatch.between(before, after);
+
+    expect(patch.combats, hasLength(1));
+    expect(patch.combats.single.defender, (col: 1, row: 0));
+    expect(patch.combats.single.revision, 1);
+    expect(patch.combats.single.eventCount, 3);
+  });
+}
+
+extension on CombatState {
+  MapInteractionState asInteraction(({int col, int row}) selected) =>
+      MapInteractionState(
+        selected: selected,
+        selectedUnitId: attackerUnitId,
+        combat: this,
+      );
 }
 
 MapRenderSnapshot _snapshot(

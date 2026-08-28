@@ -39,6 +39,8 @@ final class TurnWorkflow {
     final current = readState();
     if (current is! GameSessionReady ||
         current.turnAction.inFlight ||
+        (current.interaction.combat?.commandPending ?? false) ||
+        (current.interaction.combat?.loading ?? false) ||
         !current.recipient.turnView.canEndTurn) {
       return;
     }

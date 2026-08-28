@@ -1,6 +1,9 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 
+import '../../combat/application/combat_session_port.dart';
+import '../../combat/infrastructure/rust_combat_gateway.dart';
+import '../../combat/read_model/combat_view.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/infrastructure/rust_unit_logistics_gateway.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
@@ -28,6 +31,7 @@ final class RustGameSessionGateway
     implements
         MapSessionPort,
         MovementSessionPort,
+        CombatSessionPort,
         UnitLogisticsSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
@@ -37,6 +41,7 @@ final class RustGameSessionGateway
     MapViewMapper mapper = const MapViewMapper(),
     PlayerMapViewMapper playerMapper = const PlayerMapViewMapper(),
     RustMovementGateway movementGateway = const RustMovementGateway(),
+    RustCombatGateway combatGateway = const RustCombatGateway(),
     RustTurnGateway turnGateway = const RustTurnGateway(),
     RustUnitLogisticsGateway logisticsGateway =
         const RustUnitLogisticsGateway(),
@@ -49,6 +54,7 @@ final class RustGameSessionGateway
        ),
        _playerMapper = playerMapper,
        _movementGateway = movementGateway,
+       _combatGateway = combatGateway,
        _turnGateway = turnGateway,
        _logisticsGateway = logisticsGateway,
        _unitActions = RustUnitActionGateway(
@@ -59,6 +65,7 @@ final class RustGameSessionGateway
   final RustGameSessionLoader _loader;
   final PlayerMapViewMapper _playerMapper;
   final RustMovementGateway _movementGateway;
+  final RustCombatGateway _combatGateway;
   final RustTurnGateway _turnGateway;
   final RustUnitLogisticsGateway _logisticsGateway;
   final RustUnitActionGateway _unitActions;
@@ -150,6 +157,35 @@ final class RustGameSessionGateway
       expectedRevision: expectedRevision,
       unitId: unitId,
       target: target,
+      send: _send,
+      applyPatch: _applyCommandPatch,
+    ),
+  );
+
+  @override
+  Future<CombatPreviewView> combatPreview({
+    required int expectedRevision,
+    required String attackerUnitId,
+    required MapHexCoordinate defender,
+  }) => _serialize(
+    () => _combatGateway.preview(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      attackerUnitId: attackerUnitId,
+      defender: defender,
+      send: _send,
+    ),
+  );
+
+  @override
+  Future<CombatCommandResultView> attack({
+    required int expectedRevision,
+    required CombatAttackView attack,
+  }) => _serialize(
+    () => _combatGateway.attack(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      attack: attack,
       send: _send,
       applyPatch: _applyCommandPatch,
     ),

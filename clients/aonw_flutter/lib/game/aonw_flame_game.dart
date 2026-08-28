@@ -12,6 +12,7 @@ import '../features/map/read_model/map_view.dart';
 import 'input/flame_map_input_surface.dart';
 import 'map/flame_map_camera.dart';
 import 'map/gameplay_map_layers.dart';
+import 'map/map_effect_host.dart';
 import 'map/static_map_layers.dart';
 import 'presentation/flame_scene_patch.dart';
 import 'presentation/flame_scene_sink.dart';

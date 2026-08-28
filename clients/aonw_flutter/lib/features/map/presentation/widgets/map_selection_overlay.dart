@@ -4,6 +4,8 @@ import '../../../../design_system/aonw_tokens.dart';
 import '../../../../design_system/widgets/aonw_panel.dart';
 import '../../../../design_system/widgets/aonw_progress_indicator.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../combat/presentation/combat_panel.dart';
+import '../../../combat/read_model/combat_view.dart';
 import '../../../logistics/read_model/unit_logistics_view.dart';
 import '../../../unit_actions/presentation/unit_action_deck.dart';
 import '../../../unit_actions/read_model/unit_action_view.dart';
@@ -43,6 +45,8 @@ final class MapSelectionOverlay extends StatelessWidget {
         onConfirmMove: controller.confirmMove,
         onUnitAction: controller.executeUnitAction,
         onUnitLogistics: controller.executeUnitLogistics,
+        onConfirmCombat: controller.confirmCombat,
+        onCityConquestAction: controller.setCityConquestAction,
       ),
     );
   }
@@ -56,6 +60,8 @@ final class _MapSelectionPanel extends StatelessWidget {
     required this.onConfirmMove,
     required this.onUnitAction,
     required this.onUnitLogistics,
+    required this.onConfirmCombat,
+    required this.onCityConquestAction,
   });
 
   final MapHexCoordinate coordinate;
@@ -64,6 +70,8 @@ final class _MapSelectionPanel extends StatelessWidget {
   final VoidCallback onConfirmMove;
   final ValueChanged<UnitActionKindView> onUnitAction;
   final ValueChanged<UnitLogisticsActionView> onUnitLogistics;
+  final VoidCallback onConfirmCombat;
+  final ValueChanged<CityConquestActionView> onCityConquestAction;
 
   @override
   Widget build(BuildContext context) {
@@ -84,10 +92,11 @@ final class _MapSelectionPanel extends StatelessWidget {
             const SizedBox(height: AonwSpacing.xs),
             Text(l10n.unitLabel(unitId)),
             if (unit case final unit?) Text(unit.name),
-            _MovementControls(
-              interaction: interaction,
-              onConfirmMove: onConfirmMove,
-            ),
+            if (interaction.combat == null)
+              _MovementControls(
+                interaction: interaction,
+                onConfirmMove: onConfirmMove,
+              ),
             if (interaction.actionDeck case final actionDeck?)
               UnitActionDeck(
                 state: actionDeck,
@@ -97,6 +106,12 @@ final class _MapSelectionPanel extends StatelessWidget {
                 onLogisticsAction: onUnitLogistics,
               ),
           ],
+          if (interaction.combat case final combat?)
+            CombatPanel(
+              state: combat,
+              onConfirm: onConfirmCombat,
+              onCityConquestAction: onCityConquestAction,
+            ),
           _MovementFeedback(interaction: interaction),
         ],
       ),

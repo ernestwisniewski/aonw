@@ -1,4 +1,5 @@
 import 'package:aonw_rust_client/src/protocol_coordinate.dart';
+import 'package:aonw_rust_client/src/protocol_evidence.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 import 'package:aonw_rust_client/src/protocol_player_view.dart';
 import 'package:aonw_rust_client/src/protocol_values.dart';
@@ -12,11 +13,31 @@ sealed class AonwQueryResult {
       'reachable' => AonwReachableResult.fromJson(value),
       'routePlan' => AonwRoutePlanResult.fromJson(value),
       'unitLogisticsOptions' => AonwUnitLogisticsOptionsResult.fromJson(value),
+      'combatPreview' => AonwCombatPreviewResult.fromJson(value),
       final Object? type => throw FormatException(
         'Unknown AoNW query result $type.',
       ),
     };
   }
+}
+
+final class AonwCombatPreviewResult extends AonwQueryResult {
+  const AonwCombatPreviewResult({required this.stamp, required this.preview});
+
+  factory AonwCombatPreviewResult.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {
+      'type',
+      'stamp',
+      'preview',
+    }, 'combat preview result');
+    return AonwCombatPreviewResult(
+      stamp: AonwSessionStamp.fromJson(value['stamp']),
+      preview: AonwCombatPreview.fromJson(value['preview']),
+    );
+  }
+
+  final AonwSessionStamp stamp;
+  final AonwCombatPreview preview;
 }
 
 final class AonwUnitLogisticsOptionsResult extends AonwQueryResult {

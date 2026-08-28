@@ -115,6 +115,8 @@ enum AonwUnitPosture {
   }
 }
 
+enum AonwCityConquestAction { capture, destroy }
+
 final class AonwSessionStamp {
   const AonwSessionStamp({
     required this.revision,

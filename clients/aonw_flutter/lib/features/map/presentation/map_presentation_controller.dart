@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../combat/application/combat_session_port.dart';
+import '../../combat/read_model/combat_view.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../turns/application/turn_session_port.dart';
@@ -17,6 +19,7 @@ final class MapPresentationController extends ChangeNotifier {
   MapPresentationController({
     required MapSessionPort session,
     required MovementSessionPort movement,
+    CombatSessionPort? combat,
     required UnitLogisticsSessionPort logistics,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
@@ -26,6 +29,7 @@ final class MapPresentationController extends ChangeNotifier {
          MapCoordinator(
            session: session,
            movement: movement,
+           combat: combat,
            logistics: logistics,
            unitActions: unitActions,
            turns: turns,
@@ -57,6 +61,11 @@ final class MapPresentationController extends ChangeNotifier {
 
   void executeUnitLogistics(UnitLogisticsActionView action) =>
       _coordinator.executeUnitLogistics(action);
+
+  void confirmCombat() => _coordinator.confirmCombat();
+
+  void setCityConquestAction(CityConquestActionView action) =>
+      _coordinator.setCityConquestAction(action);
 
   void endTurn() => _coordinator.endTurn();
 

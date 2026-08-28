@@ -1,3 +1,4 @@
+import '../../combat/application/combat_state.dart';
 import '../../logistics/application/unit_logistics_state.dart';
 import '../../unit_actions/application/action_deck_state.dart';
 import '../read_model/map_view.dart';
@@ -32,6 +33,7 @@ final class MapInteractionState {
     this.lastMovementExecution,
     this.actionDeck,
     this.unitLogistics,
+    this.combat,
     this.referenceVisible = true,
   });
 
@@ -45,6 +47,7 @@ final class MapInteractionState {
   final MoveUnitExecutionView? lastMovementExecution;
   final ActionDeckViewState? actionDeck;
   final UnitLogisticsState? unitLogistics;
+  final CombatState? combat;
   final bool referenceVisible;
 
   MapInteractionState copyWith({
@@ -66,6 +69,8 @@ final class MapInteractionState {
     bool clearActionDeck = false,
     UnitLogisticsState? unitLogistics,
     bool clearUnitLogistics = false,
+    CombatState? combat,
+    bool clearCombat = false,
     bool? referenceVisible,
   }) => MapInteractionState(
     hovered: clearHovered ? null : hovered ?? this.hovered,
@@ -84,6 +89,7 @@ final class MapInteractionState {
     unitLogistics: clearUnitLogistics
         ? null
         : unitLogistics ?? this.unitLogistics,
+    combat: clearCombat ? null : combat ?? this.combat,
     referenceVisible: referenceVisible ?? this.referenceVisible,
   );
 }
