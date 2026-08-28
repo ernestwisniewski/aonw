@@ -2,6 +2,7 @@ import 'package:aonw_rust_client/aonw_rust_client.dart';
 
 import '../../cities/read_model/city_view.dart';
 import '../../turns/read_model/recipient_turn_view.dart';
+import '../../workers/infrastructure/worker_view_mapper.dart';
 import '../read_model/map_view.dart';
 import '../read_model/player_map_view.dart';
 import 'pending_action_view_mapper.dart';
@@ -10,9 +11,12 @@ final class PlayerMapViewMapper {
   const PlayerMapViewMapper({
     PendingActionViewMapper pendingActionMapper =
         const PendingActionViewMapper(),
-  }) : _pendingActionMapper = pendingActionMapper;
+    WorkerViewMapper workerMapper = const WorkerViewMapper(),
+  }) : _pendingActionMapper = pendingActionMapper,
+       _workerMapper = workerMapper;
 
   final PendingActionViewMapper _pendingActionMapper;
+  final WorkerViewMapper _workerMapper;
 
   PlayerMapView fromWire(
     AonwPlayerViewSnapshot wire, {
@@ -51,6 +55,11 @@ final class PlayerMapViewMapper {
       ),
       units: units,
       cities: [for (final city in wire.cities) _mapCity(city)],
+      fieldImprovements: [
+        for (final improvement in wire.fieldImprovements)
+          _workerMapper.fieldImprovement(improvement, map),
+      ],
+      roads: [for (final road in wire.roads) _workerMapper.road(road, map)],
       cityFoundingDraft: wire.cityFoundingDraft == null
           ? null
           : _mapCityFoundingDraft(wire.cityFoundingDraft!),
@@ -80,7 +89,7 @@ final class PlayerMapViewMapper {
     _validateHash(stamp.rulesetHash, 'ruleset hash');
   }
 
-  static List<VisibleUnitView> _mapUnits(
+  List<VisibleUnitView> _mapUnits(
     List<AonwPlayerUnitView> source,
     MapView map,
   ) {
@@ -88,7 +97,7 @@ final class PlayerMapViewMapper {
     String? previousId;
     for (final unit in source) {
       _validateUnit(unit, previousId: previousId, map: map);
-      units.add(_mapUnit(unit));
+      units.add(_mapUnit(unit, map));
       previousId = unit.id;
     }
     return units;
@@ -114,27 +123,34 @@ final class PlayerMapViewMapper {
     }
   }
 
-  static VisibleUnitView _mapUnit(AonwPlayerUnitView unit) => VisibleUnitView(
-    id: unit.id,
-    ownerPlayerId: unit.ownerPlayerId,
-    kind: _kind(unit.kind),
-    name: unit.name,
-    coordinate: _coordinate(unit),
-    movementUnits: unit.movementUnits,
-    posture: _posture(unit.posture),
-    army: [
-      for (final troop in unit.ownedDetails?.army ?? const <AonwArmyTroop>[])
-        VisibleArmyTroopView(kind: troop.kind.name, count: troop.count),
-    ],
-    queuedTarget: unit.ownedDetails?.queuedPath == null
-        ? null
-        : (
-            col: unit.ownedDetails!.queuedPath!.target.col,
-            row: unit.ownedDetails!.queuedPath!.target.row,
-          ),
-    merchantRouteDestinationCityId:
-        unit.ownedDetails?.merchantTradeRoute?.destinationCityId,
-  );
+  VisibleUnitView _mapUnit(AonwPlayerUnitView unit, MapView map) =>
+      VisibleUnitView(
+        id: unit.id,
+        ownerPlayerId: unit.ownerPlayerId,
+        kind: _kind(unit.kind),
+        name: unit.name,
+        coordinate: _coordinate(unit),
+        movementUnits: unit.movementUnits,
+        posture: _posture(unit.posture),
+        army: [
+          for (final troop
+              in unit.ownedDetails?.army ?? const <AonwArmyTroop>[])
+            VisibleArmyTroopView(kind: troop.kind.name, count: troop.count),
+        ],
+        queuedTarget: unit.ownedDetails?.queuedPath == null
+            ? null
+            : (
+                col: unit.ownedDetails!.queuedPath!.target.col,
+                row: unit.ownedDetails!.queuedPath!.target.row,
+              ),
+        merchantRouteDestinationCityId:
+            unit.ownedDetails?.merchantTradeRoute?.destinationCityId,
+        workerBuildCharges: unit.workerBuildCharges,
+        workerJob: _workerMapper.job(unit.workerJob, map),
+        workerAssignment: unit.workerAssignment == null
+            ? null
+            : _ownedCoordinate(unit.workerAssignment!, map),
+      );
 
   static CityView _mapCity(AonwPlayerCityView city) => CityView(
     id: city.id,
@@ -187,6 +203,17 @@ final class PlayerMapViewMapper {
 
   static MapHexCoordinate _cityCoordinate(AonwCoordinate coordinate) =>
       (col: coordinate.col, row: coordinate.row);
+
+  static MapHexCoordinate _ownedCoordinate(
+    AonwCoordinate coordinate,
+    MapView map,
+  ) {
+    final value = _cityCoordinate(coordinate);
+    if (!map.contains(value)) {
+      throw const FormatException('Owned unit coordinate is outside the map.');
+    }
+    return value;
+  }
 
   static void _validateHash(String value, String label) {
     if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(value)) {

@@ -2,6 +2,7 @@ import '../../features/cities/read_model/city_view.dart';
 import '../../features/map/presentation/map_render_snapshot.dart';
 import '../../features/map/read_model/map_view.dart';
 import '../../features/map/read_model/player_map_view.dart';
+import '../../features/workers/read_model/worker_view.dart';
 
 /// The presentation-only delta between two validated map snapshots.
 ///
@@ -15,12 +16,22 @@ final class FlameScenePatch {
     required List<String> removedUnitIds,
     required List<CityView> cityUpserts,
     required List<String> removedCityIds,
+    required List<FieldImprovementView> fieldImprovementUpserts,
+    required List<MapHexCoordinate> removedFieldImprovementCoordinates,
+    required List<RoadView> roadUpserts,
+    required List<MapHexCoordinate> removedRoadCoordinates,
     required List<FlameUnitMovementTransition> movements,
     required List<FlameCombatTransition> combats,
   }) : unitUpserts = List.unmodifiable(unitUpserts),
        removedUnitIds = List.unmodifiable(removedUnitIds),
        cityUpserts = List.unmodifiable(cityUpserts),
        removedCityIds = List.unmodifiable(removedCityIds),
+       fieldImprovementUpserts = List.unmodifiable(fieldImprovementUpserts),
+       removedFieldImprovementCoordinates = List.unmodifiable(
+         removedFieldImprovementCoordinates,
+       ),
+       roadUpserts = List.unmodifiable(roadUpserts),
+       removedRoadCoordinates = List.unmodifiable(removedRoadCoordinates),
        movements = List.unmodifiable(movements),
        combats = List.unmodifiable(combats);
 
@@ -36,6 +47,10 @@ final class FlameScenePatch {
     final nextUnits = _unitsById(next);
     final previousCities = _citiesById(previous);
     final nextCities = _citiesById(next);
+    final previousImprovements = _improvementsByCoordinate(previous);
+    final nextImprovements = _improvementsByCoordinate(next);
+    final previousRoads = _roadsByCoordinate(previous);
+    final nextRoads = _roadsByCoordinate(next);
 
     return FlameScenePatch._(
       snapshot: next,
@@ -43,6 +58,27 @@ final class FlameScenePatch {
       removedUnitIds: _removedUnitIds(previous, nextUnits),
       cityUpserts: _cityUpserts(previous, next, previousCities),
       removedCityIds: _removedCityIds(previous, nextCities),
+      fieldImprovementUpserts: [
+        for (final improvement in next.player.fieldImprovements)
+          if (!_sameImprovement(
+            previousImprovements[improvement.coordinate],
+            improvement,
+          ))
+            improvement,
+      ],
+      removedFieldImprovementCoordinates: [
+        for (final improvement in previous.player.fieldImprovements)
+          if (!nextImprovements.containsKey(improvement.coordinate))
+            improvement.coordinate,
+      ],
+      roadUpserts: [
+        for (final road in next.player.roads)
+          if (!_sameRoad(previousRoads[road.coordinate], road)) road,
+      ],
+      removedRoadCoordinates: [
+        for (final road in previous.player.roads)
+          if (!nextRoads.containsKey(road.coordinate)) road.coordinate,
+      ],
       movements: _movementBetween(previous, next, previousUnits, nextUnits),
       combats: _combatBetween(previous, next),
     );
@@ -53,6 +89,10 @@ final class FlameScenePatch {
   final List<String> removedUnitIds;
   final List<CityView> cityUpserts;
   final List<String> removedCityIds;
+  final List<FieldImprovementView> fieldImprovementUpserts;
+  final List<MapHexCoordinate> removedFieldImprovementCoordinates;
+  final List<RoadView> roadUpserts;
+  final List<MapHexCoordinate> removedRoadCoordinates;
   final List<FlameUnitMovementTransition> movements;
   final List<FlameCombatTransition> combats;
 
@@ -68,6 +108,16 @@ final class FlameScenePatch {
     cityUpserts: next.player.cities,
     removedCityIds:
         previous?.player.cities.map((city) => city.id).toList() ?? const [],
+    fieldImprovementUpserts: next.player.fieldImprovements,
+    removedFieldImprovementCoordinates:
+        previous?.player.fieldImprovements
+            .map((value) => value.coordinate)
+            .toList() ??
+        const [],
+    roadUpserts: next.player.roads,
+    removedRoadCoordinates:
+        previous?.player.roads.map((value) => value.coordinate).toList() ??
+        const [],
     combats: const [],
   );
 
@@ -77,6 +127,17 @@ final class FlameScenePatch {
   static Map<String, CityView> _citiesById(MapRenderSnapshot snapshot) => {
     for (final city in snapshot.player.cities) city.id: city,
   };
+
+  static Map<MapHexCoordinate, FieldImprovementView> _improvementsByCoordinate(
+    MapRenderSnapshot snapshot,
+  ) => {
+    for (final value in snapshot.player.fieldImprovements)
+      value.coordinate: value,
+  };
+
+  static Map<MapHexCoordinate, RoadView> _roadsByCoordinate(
+    MapRenderSnapshot snapshot,
+  ) => {for (final value in snapshot.player.roads) value.coordinate: value};
 
   static List<VisibleUnitView> _unitUpserts(
     MapRenderSnapshot previous,
@@ -196,7 +257,10 @@ final class FlameScenePatch {
       left.name == right.name &&
       left.coordinate == right.coordinate &&
       left.movementUnits == right.movementUnits &&
-      left.posture == right.posture;
+      left.posture == right.posture &&
+      left.workerBuildCharges == right.workerBuildCharges &&
+      left.workerAssignment == right.workerAssignment &&
+      _sameWorkerJob(left.workerJob, right.workerJob);
 
   static bool _sameCity(CityView? left, CityView right) =>
       left != null &&
@@ -206,6 +270,32 @@ final class FlameScenePatch {
       left.center == right.center &&
       left.hitPoints == right.hitPoints &&
       left.visibleControlledHexes.length == right.visibleControlledHexes.length;
+
+  static bool _sameImprovement(
+    FieldImprovementView? left,
+    FieldImprovementView right,
+  ) => left != null && left.improvement == right.improvement;
+
+  static bool _sameRoad(RoadView? left, RoadView right) =>
+      left != null && left.condition == right.condition;
+
+  static bool _sameWorkerJob(WorkerJobView? left, WorkerJobView? right) {
+    if (left == null || right == null) return left == right;
+    if (left.target != right.target ||
+        left.remainingTurns != right.remainingTurns ||
+        left.totalTurns != right.totalTurns) {
+      return false;
+    }
+    return switch ((left, right)) {
+      (
+        FieldImprovementJobView(improvement: final leftImprovement),
+        FieldImprovementJobView(improvement: final rightImprovement),
+      ) =>
+        leftImprovement == rightImprovement,
+      (RoadConstructionJobView(), RoadConstructionJobView()) => true,
+      _ => false,
+    };
+  }
 }
 
 final class FlameCombatTransition {

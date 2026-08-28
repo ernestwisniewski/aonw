@@ -15,6 +15,8 @@ import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
 import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
 import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
+import 'package:aonw_flutter/features/workers/application/worker_session_port.dart';
+import 'package:aonw_flutter/features/workers/read_model/worker_view.dart';
 
 part 'city_test_fixture.dart';
 
@@ -26,6 +28,8 @@ MapScene testMapScene({
   double defaultZoom = 1,
   List<VisibleUnitView> units = const [],
   List<CityView> cities = const [],
+  List<FieldImprovementView> fieldImprovements = const [],
+  List<RoadView> roads = const [],
   CityFoundingDraftView? cityFoundingDraft,
 }) {
   final terrains = MapTerrain.values;
@@ -76,6 +80,8 @@ MapScene testMapScene({
       pendingAction: null,
       units: units,
       cities: cities,
+      fieldImprovements: fieldImprovements,
+      roads: roads,
       cityFoundingDraft: cityFoundingDraft,
     ),
   );
@@ -86,14 +92,21 @@ VisibleUnitView testVisibleUnit({
   String ownerPlayerId = 'preview-player',
   MapHexCoordinate coordinate = (col: 0, row: 0),
   int movementUnits = 12,
+  VisibleUnitKind kind = VisibleUnitKind.commander,
+  int workerBuildCharges = 0,
+  WorkerJobView? workerJob,
+  MapHexCoordinate? workerAssignment,
 }) => VisibleUnitView(
   id: id,
   ownerPlayerId: ownerPlayerId,
-  kind: VisibleUnitKind.commander,
+  kind: kind,
   name: 'Commander',
   coordinate: coordinate,
   movementUnits: movementUnits,
   posture: VisibleUnitPosture.active,
+  workerBuildCharges: workerBuildCharges,
+  workerJob: workerJob,
+  workerAssignment: workerAssignment,
 );
 
 SessionStampView testSessionStamp({int revision = 0, String? stateDigest}) =>
@@ -226,6 +239,7 @@ final class FakeGameSession
         CitySessionPort,
         CombatSessionPort,
         UnitLogisticsSessionPort,
+        WorkerSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   FakeGameSession.success(
@@ -241,6 +255,9 @@ final class FakeGameSession
     this.logisticsOptions,
     this.logisticsResult,
     this.logisticsFailure,
+    this.workerOptionsResult,
+    this.workerResult,
+    this.workerFailure,
     this.combatPreviewResult,
     this.combatResult,
     this.combatFailure,
@@ -262,6 +279,9 @@ final class FakeGameSession
       logisticsOptions = null,
       logisticsResult = null,
       logisticsFailure = null,
+      workerOptionsResult = null,
+      workerResult = null,
+      workerFailure = null,
       combatPreviewResult = null,
       combatResult = null,
       combatFailure = null,
@@ -283,6 +303,9 @@ final class FakeGameSession
   final UnitLogisticsOptionsView? logisticsOptions;
   final UnitLogisticsCommandResultView? logisticsResult;
   final UnitLogisticsSessionException? logisticsFailure;
+  final WorkerOptionsView? workerOptionsResult;
+  final WorkerCommandResultView? workerResult;
+  final WorkerSessionException? workerFailure;
   final CombatPreviewView? combatPreviewResult;
   final CombatCommandResultView? combatResult;
   final CombatSessionException? combatFailure;
@@ -300,6 +323,10 @@ final class FakeGameSession
   var logisticsCommandCalls = 0;
   int? lastLogisticsExpectedRevision;
   UnitLogisticsActionView? lastLogisticsAction;
+  var workerOptionCalls = 0;
+  var workerCommandCalls = 0;
+  int? lastWorkerExpectedRevision;
+  WorkerActionView? lastWorkerAction;
   var combatPreviewCalls = 0;
   var combatAttackCalls = 0;
   MapHexCoordinate? lastCombatDefender;
@@ -456,6 +483,41 @@ final class FakeGameSession
     if (error != null) throw error;
     return logisticsResult ??
         (throw StateError('No unit logistics result fixture.'));
+  }
+
+  @override
+  Future<WorkerOptionsView> workerOptions({
+    required int expectedRevision,
+    required String unitId,
+  }) async {
+    workerOptionCalls += 1;
+    final error = workerFailure;
+    if (error != null) throw error;
+    return workerOptionsResult ??
+        WorkerOptionsView(
+          stamp: testSessionStamp(revision: expectedRevision),
+          unitId: unitId,
+          coordinate:
+              scene?.player.controlledUnitById(unitId)?.coordinate ??
+              (col: 0, row: 0),
+          improvements: const [],
+          canAssign: false,
+          canBuildRoad: false,
+          automation: null,
+        );
+  }
+
+  @override
+  Future<WorkerCommandResultView> executeWorkerAction({
+    required int expectedRevision,
+    required WorkerActionView action,
+  }) async {
+    workerCommandCalls += 1;
+    lastWorkerExpectedRevision = expectedRevision;
+    lastWorkerAction = action;
+    final error = workerFailure;
+    if (error != null) throw error;
+    return workerResult ?? (throw StateError('No worker result fixture.'));
   }
 
   @override

@@ -18,7 +18,7 @@ extension MapCoordinatorSelection on MapCoordinator {
       await _selectControlledUnit(
         current,
         next,
-        unit.id,
+        unit,
         current.recipient.cityAt(next),
         generation,
       );
@@ -60,6 +60,7 @@ extension MapCoordinatorSelection on MapCoordinator {
           clearRoute: true,
           clearActionDeck: true,
           clearUnitLogistics: true,
+          clearWorker: true,
           clearCombat: true,
           clearCity: true,
           movementPending: false,
@@ -79,6 +80,7 @@ extension MapCoordinatorSelection on MapCoordinator {
           clearRoute: true,
           clearActionDeck: true,
           clearUnitLogistics: true,
+          clearWorker: true,
           clearCombat: true,
           clearCity: true,
           movementPending: false,
@@ -103,6 +105,7 @@ extension MapCoordinatorSelection on MapCoordinator {
           clearRoute: true,
           clearActionDeck: true,
           clearUnitLogistics: true,
+          clearWorker: true,
           clearCombat: true,
           city: owned
               ? CityState.loadingCity(city.id)
@@ -125,10 +128,12 @@ extension MapCoordinatorSelection on MapCoordinator {
   Future<void> _selectControlledUnit(
     GameSessionReady current,
     MapHexCoordinate coordinate,
-    String unitId,
+    VisibleUnitView unit,
     CityView? city,
     int generation,
   ) async {
+    final unitId = unit.id;
+    final isWorker = unit.kind == VisibleUnitKind.worker;
     _setState(
       current.withInteraction(
         current.interaction.copyWith(
@@ -136,6 +141,8 @@ extension MapCoordinatorSelection on MapCoordinator {
           selectedUnitId: unitId,
           actionDeck: ActionDeckViewState(unitId: unitId),
           unitLogistics: UnitLogisticsState.loading(unitId),
+          worker: isWorker ? WorkerState.loading(unitId) : null,
+          clearWorker: !isWorker,
           clearReachable: true,
           clearRoute: true,
           movementPending: true,
@@ -156,6 +163,14 @@ extension MapCoordinatorSelection on MapCoordinator {
       publish: _setState,
       isDisposed: () => _disposed,
     );
+    if (isWorker) {
+      _workers.load(
+        unitId: unitId,
+        readState: () => _state,
+        publish: _setState,
+        isDisposed: () => _disposed,
+      );
+    }
     if (city?.ownedDetails != null) {
       _cities.inspect(
         cityId: city!.id,

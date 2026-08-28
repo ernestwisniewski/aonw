@@ -12,9 +12,12 @@ import '../../../combat/read_model/combat_view.dart';
 import '../../../logistics/read_model/unit_logistics_view.dart';
 import '../../../unit_actions/presentation/unit_action_deck.dart';
 import '../../../unit_actions/read_model/unit_action_view.dart';
+import '../../../workers/presentation/worker_panel.dart';
+import '../../../workers/read_model/worker_view.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_scene.dart';
 import '../../read_model/map_view.dart';
+import '../../read_model/pending_action_view.dart';
 import '../../read_model/player_map_view.dart';
 import '../map_presentation_controller.dart';
 import 'map_failure_messages.dart';
@@ -48,9 +51,14 @@ final class MapSelectionOverlay extends StatelessWidget {
         city: interaction.city?.cityId == null
             ? scene.player.cityAt(selected)
             : scene.player.cityById(interaction.city!.cityId!),
+        pendingWorkerAction:
+            scene.player.pendingAction is PendingWorkerActionSelectionView
+            ? scene.player.pendingAction! as PendingWorkerActionSelectionView
+            : null,
         onConfirmMove: controller.confirmMove,
         onUnitAction: controller.executeUnitAction,
         onUnitLogistics: controller.executeUnitLogistics,
+        onWorkerAction: controller.executeWorkerAction,
         onConfirmCombat: controller.confirmCombat,
         onCityConquestAction: controller.setCityConquestAction,
         onOpenCityFounding: controller.openCityFounding,
@@ -68,9 +76,11 @@ final class _MapSelectionPanel extends StatelessWidget {
     required this.interaction,
     required this.unit,
     required this.city,
+    required this.pendingWorkerAction,
     required this.onConfirmMove,
     required this.onUnitAction,
     required this.onUnitLogistics,
+    required this.onWorkerAction,
     required this.onConfirmCombat,
     required this.onCityConquestAction,
     required this.onOpenCityFounding,
@@ -83,9 +93,11 @@ final class _MapSelectionPanel extends StatelessWidget {
   final MapInteractionState interaction;
   final VisibleUnitView? unit;
   final CityView? city;
+  final PendingWorkerActionSelectionView? pendingWorkerAction;
   final VoidCallback onConfirmMove;
   final ValueChanged<UnitActionKindView> onUnitAction;
   final ValueChanged<UnitLogisticsActionView> onUnitLogistics;
+  final ValueChanged<WorkerActionView> onWorkerAction;
   final VoidCallback onConfirmCombat;
   final ValueChanged<CityConquestActionView> onCityConquestAction;
   final VoidCallback onOpenCityFounding;
@@ -121,10 +133,26 @@ final class _MapSelectionPanel extends StatelessWidget {
               UnitActionDeck(
                 state: actionDeck,
                 logistics: interaction.unitLogistics,
-                enabled: !interaction.movementPending,
+                enabled:
+                    !interaction.movementPending &&
+                    !(interaction.worker?.commandPending ?? false),
                 onAction: onUnitAction,
                 onLogisticsAction: onUnitLogistics,
               ),
+            if (interaction.worker case final workerState?)
+              if (unit case final unit?)
+                WorkerPanel(
+                  state: workerState,
+                  unit: unit,
+                  pendingAction: pendingWorkerAction?.unitId == unit.id
+                      ? pendingWorkerAction
+                      : null,
+                  enabled:
+                      !interaction.movementPending &&
+                      !(interaction.actionDeck?.commandPending ?? false) &&
+                      !(interaction.unitLogistics?.commandPending ?? false),
+                  onAction: onWorkerAction,
+                ),
             if (interaction.city?.founderUnitId == null)
               TextButton.icon(
                 key: const ValueKey('open-city-founding'),
@@ -175,7 +203,8 @@ final class _MovementControls extends StatelessWidget {
     final commandPending =
         interaction.movementPending ||
         (interaction.actionDeck?.commandPending ?? false) ||
-        (interaction.unitLogistics?.commandPending ?? false);
+        (interaction.unitLogistics?.commandPending ?? false) ||
+        (interaction.worker?.commandPending ?? false);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,

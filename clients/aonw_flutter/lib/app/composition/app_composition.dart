@@ -14,6 +14,7 @@ import '../../features/settings/infrastructure/shared_preferences_client_setting
 import '../../features/settings/presentation/client_settings_controller.dart';
 import '../../features/turns/application/turn_session_port.dart';
 import '../../features/unit_actions/application/unit_action_session_port.dart';
+import '../../features/workers/application/worker_session_port.dart';
 import '../../game/aonw_flame_game.dart';
 import '../navigation/aonw_app.dart';
 import '../telemetry/client_telemetry.dart';
@@ -25,6 +26,7 @@ final class AppComposition {
     CombatSessionPort? combatSession,
     CitySessionPort? citySession,
     required UnitLogisticsSessionPort logisticsSession,
+    WorkerSessionPort? workerSession,
     required UnitActionSessionPort unitActionSession,
     required TurnSessionPort turnSession,
     MapInputSource? mapInputSource,
@@ -38,6 +40,7 @@ final class AppComposition {
            combat: combatSession ?? _requireCombatSession(movementSession),
            cities: citySession ?? _requireCitySession(movementSession),
            logistics: logisticsSession,
+           workers: workerSession ?? _requireWorkerSession(movementSession),
            unitActions: unitActionSession,
            turns: turnSession,
          ),
@@ -59,6 +62,7 @@ final class AppComposition {
       combatSession: gateway,
       citySession: gateway.citySession,
       logisticsSession: gateway,
+      workerSession: gateway.workerSession,
       unitActionSession: gateway,
       turnSession: gateway,
       mapInputSource: GamepadMapInputSource(),
@@ -85,5 +89,14 @@ CitySessionPort _requireCitySession(MovementSessionPort movement) {
     movement,
     'movementSession',
     'must also provide the city session port',
+  );
+}
+
+WorkerSessionPort _requireWorkerSession(MovementSessionPort movement) {
+  if (movement case final WorkerSessionPort workers) return workers;
+  throw ArgumentError.value(
+    movement,
+    'movementSession',
+    'must also provide the worker session port',
   );
 }

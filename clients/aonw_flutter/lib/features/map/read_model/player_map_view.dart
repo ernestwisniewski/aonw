@@ -1,5 +1,6 @@
 import '../../cities/read_model/city_view.dart';
 import '../../turns/read_model/recipient_turn_view.dart';
+import '../../workers/read_model/worker_view.dart';
 import 'map_view.dart';
 import 'pending_action_view.dart';
 
@@ -51,6 +52,9 @@ final class VisibleUnitView {
     List<VisibleArmyTroopView> army = const [],
     this.queuedTarget,
     this.merchantRouteDestinationCityId,
+    this.workerBuildCharges = 0,
+    this.workerJob,
+    this.workerAssignment,
   }) : army = List.unmodifiable(army);
 
   final String id;
@@ -63,6 +67,9 @@ final class VisibleUnitView {
   final List<VisibleArmyTroopView> army;
   final MapHexCoordinate? queuedTarget;
   final String? merchantRouteDestinationCityId;
+  final int workerBuildCharges;
+  final WorkerJobView? workerJob;
+  final MapHexCoordinate? workerAssignment;
 }
 
 final class VisibleArmyTroopView {
@@ -79,9 +86,13 @@ final class PlayerMapView {
     required this.turnView,
     required List<VisibleUnitView> units,
     List<CityView> cities = const [],
+    List<FieldImprovementView> fieldImprovements = const [],
+    List<RoadView> roads = const [],
     this.cityFoundingDraft,
   }) : units = List.unmodifiable(units),
-       cities = List.unmodifiable(cities) {
+       cities = List.unmodifiable(cities),
+       fieldImprovements = List.unmodifiable(fieldImprovements),
+       roads = List.unmodifiable(roads) {
     final byCoordinate = <MapHexCoordinate, List<VisibleUnitView>>{};
     final controlledById = <String, VisibleUnitView>{};
     for (final unit in units) {
@@ -101,6 +112,13 @@ final class PlayerMapView {
       for (final city in cities)
         if (city.ownerPlayerId == actorPlayerId) city.id: city,
     });
+    _fieldImprovementsByCoordinate = Map.unmodifiable({
+      for (final improvement in fieldImprovements)
+        improvement.coordinate: improvement,
+    });
+    _roadsByCoordinate = Map.unmodifiable({
+      for (final road in roads) road.coordinate: road,
+    });
   }
 
   factory PlayerMapView.preview({
@@ -110,6 +128,8 @@ final class PlayerMapView {
     required PendingActionView? pendingAction,
     required List<VisibleUnitView> units,
     List<CityView> cities = const [],
+    List<FieldImprovementView> fieldImprovements = const [],
+    List<RoadView> roads = const [],
     CityFoundingDraftView? cityFoundingDraft,
   }) => PlayerMapView(
     actorPlayerId: actorPlayerId,
@@ -129,6 +149,8 @@ final class PlayerMapView {
     ),
     units: units,
     cities: cities,
+    fieldImprovements: fieldImprovements,
+    roads: roads,
     cityFoundingDraft: cityFoundingDraft,
   );
 
@@ -137,12 +159,17 @@ final class PlayerMapView {
   final RecipientTurnView turnView;
   final List<VisibleUnitView> units;
   final List<CityView> cities;
+  final List<FieldImprovementView> fieldImprovements;
+  final List<RoadView> roads;
   final CityFoundingDraftView? cityFoundingDraft;
   late final Map<MapHexCoordinate, List<VisibleUnitView>> _unitsByCoordinate;
   late final Map<String, VisibleUnitView> _controlledUnitsById;
   late final Map<MapHexCoordinate, CityView> _citiesByCoordinate;
   late final Map<String, CityView> _citiesById;
   late final Map<String, CityView> _controlledCitiesById;
+  late final Map<MapHexCoordinate, FieldImprovementView>
+  _fieldImprovementsByCoordinate;
+  late final Map<MapHexCoordinate, RoadView> _roadsByCoordinate;
 
   int get turn => turnView.number;
 
@@ -167,4 +194,10 @@ final class PlayerMapView {
   CityView? cityById(String cityId) => _citiesById[cityId];
 
   CityView? controlledCityById(String cityId) => _controlledCitiesById[cityId];
+
+  FieldImprovementView? fieldImprovementAt(MapHexCoordinate coordinate) =>
+      _fieldImprovementsByCoordinate[coordinate];
+
+  RoadView? roadAt(MapHexCoordinate coordinate) =>
+      _roadsByCoordinate[coordinate];
 }

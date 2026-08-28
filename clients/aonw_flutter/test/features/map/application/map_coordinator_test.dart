@@ -18,6 +18,8 @@ import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/action_deck_state.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
 import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
+import 'package:aonw_flutter/features/workers/application/worker_session_port.dart';
+import 'package:aonw_flutter/features/workers/read_model/worker_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/map_test_fixture.dart';
@@ -427,6 +429,7 @@ final class _CompletingGameSession
         MovementSessionPort,
         CombatSessionPort,
         UnitLogisticsSessionPort,
+        WorkerSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   final requests = <Completer<MapScene>>[];
@@ -481,6 +484,18 @@ final class _CompletingGameSession
   Future<UnitLogisticsCommandResultView> executeUnitLogistics({
     required int expectedRevision,
     required UnitLogisticsActionView action,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<WorkerOptionsView> workerOptions({
+    required int expectedRevision,
+    required String unitId,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<WorkerCommandResultView> executeWorkerAction({
+    required int expectedRevision,
+    required WorkerActionView action,
   }) => throw UnimplementedError();
 
   @override

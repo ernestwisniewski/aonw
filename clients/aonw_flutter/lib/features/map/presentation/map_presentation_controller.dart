@@ -11,6 +11,8 @@ import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
+import '../../workers/application/worker_session_port.dart';
+import '../../workers/read_model/worker_view.dart';
 import '../application/game_session_state.dart';
 import '../application/map_coordinator.dart';
 import '../application/map_session_port.dart';
@@ -24,6 +26,7 @@ final class MapPresentationController extends ChangeNotifier {
     CombatSessionPort? combat,
     CitySessionPort? cities,
     required UnitLogisticsSessionPort logistics,
+    WorkerSessionPort? workers,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     MapAssetPaths assets = MapAssetPaths.starter,
@@ -35,6 +38,7 @@ final class MapPresentationController extends ChangeNotifier {
            combat: combat,
            cities: cities,
            logistics: logistics,
+           workers: workers,
            unitActions: unitActions,
            turns: turns,
            assets: assets,
@@ -65,6 +69,9 @@ final class MapPresentationController extends ChangeNotifier {
 
   void executeUnitLogistics(UnitLogisticsActionView action) =>
       _coordinator.executeUnitLogistics(action);
+
+  void executeWorkerAction(WorkerActionView action) =>
+      _coordinator.executeWorkerAction(action);
 
   void confirmCombat() => _coordinator.confirmCombat();
 

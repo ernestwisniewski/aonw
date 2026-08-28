@@ -17,6 +17,9 @@ import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/infrastructure/rust_unit_action_gateway.dart';
 import '../../unit_actions/infrastructure/unit_action_view_mapper.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
+import '../../workers/application/worker_session_port.dart';
+import '../../workers/infrastructure/rust_worker_gateway.dart';
+import '../../workers/read_model/worker_view.dart';
 import '../application/map_session_port.dart';
 import '../application/movement_session_port.dart';
 import '../read_model/map_scene.dart';
@@ -31,6 +34,7 @@ import 'rust_game_session_loader.dart';
 import 'rust_movement_gateway.dart';
 
 part 'rust_game_city_session.dart';
+part 'rust_game_worker_session.dart';
 
 final class RustGameSessionGateway
     implements
@@ -48,6 +52,7 @@ final class RustGameSessionGateway
     RustMovementGateway movementGateway = const RustMovementGateway(),
     RustCombatGateway combatGateway = const RustCombatGateway(),
     RustCityGateway cityGateway = const RustCityGateway(),
+    RustWorkerGateway workerGateway = const RustWorkerGateway(),
     RustTurnGateway turnGateway = const RustTurnGateway(),
     RustUnitLogisticsGateway logisticsGateway =
         const RustUnitLogisticsGateway(),
@@ -62,6 +67,7 @@ final class RustGameSessionGateway
        _movementGateway = movementGateway,
        _combatGateway = combatGateway,
        _cityGateway = cityGateway,
+       _workerGateway = workerGateway,
        _turnGateway = turnGateway,
        _logisticsGateway = logisticsGateway,
        _unitActions = RustUnitActionGateway(
@@ -69,6 +75,7 @@ final class RustGameSessionGateway
          mapper: unitActionMapper,
        ) {
     citySession = _RustGameCitySession(this);
+    workerSession = _RustGameWorkerSession(this);
   }
 
   final RustGameSessionLoader _loader;
@@ -76,10 +83,12 @@ final class RustGameSessionGateway
   final RustMovementGateway _movementGateway;
   final RustCombatGateway _combatGateway;
   final RustCityGateway _cityGateway;
+  final RustWorkerGateway _workerGateway;
   final RustTurnGateway _turnGateway;
   final RustUnitLogisticsGateway _logisticsGateway;
   final RustUnitActionGateway _unitActions;
   late final CitySessionPort citySession;
+  late final WorkerSessionPort workerSession;
   AonwRustSession? _session;
   MapView? _map;
   PlayerMapView? _player;

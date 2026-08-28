@@ -82,6 +82,7 @@ GameSessionReady? _actionable(GameSessionState state) {
       (interaction.combat?.commandPending ?? false) ||
       (interaction.combat?.loading ?? false) ||
       (interaction.unitLogistics?.commandPending ?? false) ||
+      (interaction.worker?.commandPending ?? false) ||
       deck == null ||
       deck.commandPending ||
       unitId == null ||

@@ -17,8 +17,13 @@ import '../../unit_actions/application/action_deck_state.dart';
 import '../../unit_actions/application/unit_action_command_runner.dart';
 import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
+import '../../workers/application/worker_session_port.dart';
+import '../../workers/application/worker_state.dart';
+import '../../workers/application/worker_workflow.dart';
+import '../../workers/read_model/worker_view.dart';
 import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
+import '../read_model/player_map_view.dart';
 import 'game_session_state.dart';
 import 'map_interaction_state.dart';
 import 'map_session_port.dart';
@@ -39,6 +44,7 @@ final class MapCoordinator {
     CombatSessionPort? combat,
     CitySessionPort? cities,
     required UnitLogisticsSessionPort logistics,
+    WorkerSessionPort? workers,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     this.assets = MapAssetPaths.starter,
@@ -60,6 +66,10 @@ final class MapCoordinator {
          session: logistics,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
+       _workers = WorkerWorkflow(
+         session: workers ?? _requireWorkerSession(movement),
+         diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
        _unitActions = UnitActionWorkflow(
          runner: UnitActionCommandRunner(
            session: unitActions,
@@ -77,6 +87,7 @@ final class MapCoordinator {
   final CombatWorkflow _combat;
   final CityWorkflow _cities;
   final UnitLogisticsWorkflow _logistics;
+  final WorkerWorkflow _workers;
   final UnitActionWorkflow _unitActions;
   final TurnWorkflow _turns;
   final MapDiagnosticReporter _diagnosticReporter;
@@ -245,6 +256,7 @@ GameSessionReady _moveResultState(
           clearRoute: true,
           clearActionDeck: true,
           clearUnitLogistics: true,
+          clearWorker: true,
           clearCombat: true,
           movementPending: false,
           clearMovementError: true,
@@ -274,7 +286,9 @@ bool _interactionBusy(MapInteractionState interaction) =>
     (interaction.city?.commandPending ?? false) ||
     (interaction.city?.loading ?? false) ||
     (interaction.actionDeck?.commandPending ?? false) ||
-    (interaction.unitLogistics?.commandPending ?? false);
+    (interaction.unitLogistics?.commandPending ?? false) ||
+    (interaction.worker?.commandPending ?? false) ||
+    (interaction.worker?.loading ?? false);
 
 CombatSessionPort _requireCombatSession(MovementSessionPort movement) {
   if (movement case final CombatSessionPort combat) return combat;
@@ -291,6 +305,15 @@ CitySessionPort _requireCitySession(MovementSessionPort movement) {
     movement,
     'movement',
     'must also provide the city session port',
+  );
+}
+
+WorkerSessionPort _requireWorkerSession(MovementSessionPort movement) {
+  if (movement case final WorkerSessionPort workers) return workers;
+  throw ArgumentError.value(
+    movement,
+    'movement',
+    'must also provide the worker session port',
   );
 }
 

@@ -2,6 +2,7 @@ import 'package:aonw_flutter/features/map/infrastructure/player_map_view_mapper.
 import 'package:aonw_flutter/features/map/read_model/pending_action_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/features/turns/read_model/recipient_turn_view.dart';
+import 'package:aonw_flutter/features/workers/read_model/worker_view.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -167,6 +168,63 @@ void main() {
     );
   });
 
+  test('maps worker progress and recipient-safe infrastructure exactly', () {
+    final player = mapper.fromWire(
+      _snapshot(
+        [
+          _unit(
+            'worker-a',
+            kind: AonwUnitKind.worker,
+            ownedDetails: const AonwOwnedUnitDetails(
+              army: [],
+              queuedPath: null,
+              merchantTradeRoute: null,
+              workerJob: AonwFieldImprovementJobView(
+                target: AonwCoordinate(col: 0, row: 0),
+                improvement: AonwFieldImprovementKind.farm,
+                remainingTurns: 2,
+                totalTurns: 3,
+              ),
+              cityFoundingJob: null,
+              workerAssignment: AonwCoordinate(col: 1, row: 0),
+              excavatingArtifactId: null,
+              workerBuildCharges: 1,
+              experiencePoints: 0,
+            ),
+          ),
+        ],
+        fieldImprovements: const [
+          AonwFieldImprovementView(
+            coordinate: AonwCoordinate(col: 1, row: 0),
+            improvement: AonwFieldImprovementKind.mine,
+          ),
+        ],
+        roads: const [
+          AonwRoadView(
+            coordinate: AonwCoordinate(col: 2, row: 1),
+            condition: AonwTransportCondition.pillaged,
+          ),
+        ],
+      ),
+      map: testMapScene().map,
+      actorPlayerId: 'player-1',
+    );
+
+    final worker = player.controlledUnitById('worker-a')!;
+    expect(worker.workerBuildCharges, 1);
+    expect(worker.workerAssignment, (col: 1, row: 0));
+    expect(worker.workerJob, isA<FieldImprovementJobView>());
+    expect(worker.workerJob!.remainingTurns, 2);
+    expect(
+      player.fieldImprovementAt((col: 1, row: 0))?.improvement,
+      FieldImprovementKind.mine,
+    );
+    expect(
+      player.roadAt((col: 2, row: 1))?.condition,
+      TransportConditionView.pillaged,
+    );
+  });
+
   test(
     'rejects pending actions for an uncontrolled unit or invalid target',
     () {
@@ -208,6 +266,8 @@ AonwPlayerViewSnapshot _snapshot(
   List<AonwPlayerUnitView> units, {
   String? mapHash,
   AonwPendingActionView? pendingAction,
+  List<AonwFieldImprovementView> fieldImprovements = const [],
+  List<AonwRoadView> roads = const [],
 }) => AonwPlayerViewSnapshot(
   stamp: AonwSessionStamp(
     revision: 7,
@@ -238,8 +298,8 @@ AonwPlayerViewSnapshot _snapshot(
   units: units,
   cities: const [],
   artifacts: const [],
-  fieldImprovements: const [],
-  roads: const [],
+  fieldImprovements: fieldImprovements,
+  roads: roads,
 );
 
 AonwPlayerUnitView _unit(
@@ -248,16 +308,17 @@ AonwPlayerUnitView _unit(
   int row = 0,
   String ownerPlayerId = 'player-1',
   AonwOwnedUnitDetails? ownedDetails,
+  AonwUnitKind kind = AonwUnitKind.commander,
 }) => AonwPlayerUnitView(
   id: id,
   ownerPlayerId: ownerPlayerId,
-  kind: AonwUnitKind.commander,
+  kind: kind,
   name: 'Commander',
   coordinate: AonwCoordinate(col: col, row: row),
   movementUnits: 12,
   posture: AonwUnitPosture.active,
-  workerBuildCharges: 0,
-  workerJob: null,
-  workerAssignment: null,
+  workerBuildCharges: ownedDetails?.workerBuildCharges ?? 0,
+  workerJob: ownedDetails?.workerJob,
+  workerAssignment: ownedDetails?.workerAssignment,
   ownedDetails: ownedDetails,
 );

@@ -7,7 +7,9 @@ import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_g
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
+import 'package:aonw_flutter/features/map/read_model/pending_action_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/features/workers/read_model/worker_view.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/widgets.dart';
@@ -43,7 +45,10 @@ void main() {
     expect(game.world.unitLayer.debugSharedPaintCount, 3);
     expect(game.world.cityLayer.debugCityCount, 40);
     expect(game.world.cityLayer.debugSharedPaintCount, 3);
-    expect(game.world.children, hasLength(9));
+    expect(game.world.workerInfrastructureLayer.debugImprovementCount, 120);
+    expect(game.world.workerInfrastructureLayer.debugRoadCount, 120);
+    expect(game.world.workerInfrastructureLayer.debugSharedPaintCount, 4);
+    expect(game.world.children, hasLength(10));
     expect(game.paused, isTrue, reason: 'the turn-based world starts idle');
     final idleUpdates = game.world.effectHost.debugActiveUpdateCount;
     for (var frame = 0; frame < 12; frame++) {
@@ -93,10 +98,14 @@ void main() {
         'dimensions': {'cols': 40, 'rows': 30},
         'visibleUnits': 120,
         'visibleCities': 40,
+        'visibleFieldImprovements': 120,
+        'visibleRoads': 120,
         'warmupFrames': 12,
         'timedFrames': 60,
         'worldComponents': game.world.children.length,
         'sharedUnitPaints': game.world.unitLayer.debugSharedPaintCount,
+        'sharedInfrastructurePaints':
+            game.world.workerInfrastructureLayer.debugSharedPaintCount,
       },
       'metrics': {
         'startupMicros': startup.elapsedMicroseconds,
@@ -166,6 +175,23 @@ MapRenderSnapshot _largeSnapshot() {
         ownedDetails: null,
       ),
   ];
+  final fieldImprovements = <FieldImprovementView>[
+    for (var index = 0; index < 120; index++)
+      FieldImprovementView(
+        coordinate: (col: index % cols, row: 10 + index ~/ cols),
+        improvement: FieldImprovementKind
+            .values[index % FieldImprovementKind.values.length],
+      ),
+  ];
+  final roads = <RoadView>[
+    for (var index = 0; index < 120; index++)
+      RoadView(
+        coordinate: (col: index % cols, row: 16 + index ~/ cols),
+        condition: index.isEven
+            ? TransportConditionView.operational
+            : TransportConditionView.pillaged,
+      ),
+  ];
   const geometry = AonwOddQFlatTopGeometry(
     cols: cols,
     rows: rows,
@@ -206,6 +232,8 @@ MapRenderSnapshot _largeSnapshot() {
       pendingAction: null,
       units: units,
       cities: cities,
+      fieldImprovements: fieldImprovements,
+      roads: roads,
     ),
   );
 }
