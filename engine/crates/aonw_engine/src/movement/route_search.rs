@@ -174,7 +174,7 @@ pub(crate) fn find_route_costs(
     let costs_by_tile =
         prepare_route_search(units, map, unit, targets, available_movement, context, None)
             .map_or_else(
-                || Box::new([]),
+                || Vec::<u32>::new().into_boxed_slice(),
                 |search| run_route_cost_search(search, map, unit, context),
             );
     RouteCostMap { costs_by_tile }
