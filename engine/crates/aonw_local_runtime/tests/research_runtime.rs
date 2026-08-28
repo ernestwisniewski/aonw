@@ -97,6 +97,14 @@ fn research_protocol_is_current_complete_and_replayable() {
         ]
     ));
 
+    let expected = runtime.snapshot().expect("research snapshot");
+    let save = runtime.export_save_json().expect("research save");
+    let mut reopened = LocalRuntime::default();
+    reopened
+        .open_save_json(map.clone(), ruleset.clone(), &save)
+        .expect("reopen research save");
+    assert_eq!(reopened.snapshot().expect("reopened snapshot"), expected);
+
     let replay = runtime.export_replay_json().expect("research replay");
     assert!(replay.contains("researchPointsGained"));
     let verification =

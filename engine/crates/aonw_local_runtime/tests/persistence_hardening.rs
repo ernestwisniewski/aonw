@@ -1,5 +1,9 @@
 //! Current-only persistence corruption, rollover, and checkpoint-chain tests.
 
+use std::fs;
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
+
 use aonw_content::{
     GridLayout, MapDefinition, RulesetDefinition, ScenarioDefinition, ScenarioUnitDefinition,
     TerrainType, TileDefinition,
@@ -10,8 +14,11 @@ use aonw_contracts::{
 };
 use aonw_domain::{HexCoord, PlayerId, UnitId, UnitKind};
 use aonw_local_runtime::{
-    LocalRuntime, MoveUnitRequest, OpenSession, PersistenceError, ReplayVerification,
+    LocalRuntime, MoveUnitRequest, OpenSession, PersistenceError, PersistenceFileStore,
+    PersistenceRestoreSource, ReplayVerification,
 };
+
+static TEST_DIRECTORY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[test]
 fn persistence_manifest_is_current_only_and_bounded() {
@@ -26,7 +33,7 @@ fn persistence_manifest_is_current_only_and_bounded() {
     assert_eq!(manifest["limits"]["replayEntriesPerSegment"], 512);
     assert_eq!(manifest["limits"]["replaySegments"], 8);
     let cases = manifest["cases"].as_array().expect("case list");
-    assert_eq!(cases.len(), 11);
+    assert_eq!(cases.len(), 15);
     assert!(
         cases
             .windows(2)
@@ -128,6 +135,81 @@ fn replay_archive_codec_enforces_segment_and_entry_bounds() {
     assert!(replay.to_json().is_err());
 }
 
+#[test]
+fn atomic_host_save_preserves_backup_and_repairs_a_corrupt_primary() {
+    let scratch = ScratchDirectory::new();
+    let store = PersistenceFileStore::new(scratch.path().join("session.aonw-save"));
+    let mut runtime = LocalRuntime::default();
+    let initial_stamp = runtime.open(request()).expect("open");
+
+    store.write_current_save(&runtime).expect("initial write");
+    let initial_document = fs::read_to_string(store.primary_path()).expect("initial document");
+    let moved = runtime
+        .dispatch(&MoveUnitRequest {
+            expected_revision: 0,
+            unit_id: UnitId::new("unit-1").expect("unit id"),
+            target: HexCoord::new(1, 0),
+        })
+        .expect("move");
+    assert!(moved.is_accepted());
+    store
+        .write_current_save(&runtime)
+        .expect("replacement write");
+    assert_eq!(
+        fs::read_to_string(store.backup_path()).expect("backup"),
+        initial_document
+    );
+
+    let (map, ruleset) = content();
+    let mut primary_restore = LocalRuntime::default();
+    let (stamp, source) = store
+        .restore_current_save(&mut primary_restore, map, ruleset)
+        .expect("primary restore");
+    assert_eq!(source, PersistenceRestoreSource::Primary);
+    assert_eq!(stamp, moved.stamp);
+
+    fs::write(store.primary_path(), "{\"truncated\":")
+        .expect("inject corrupt primary for recovery drill");
+    let (map, ruleset) = content();
+    let mut backup_restore = LocalRuntime::default();
+    let (stamp, source) = store
+        .restore_current_save(&mut backup_restore, map, ruleset)
+        .expect("backup restore");
+    assert_eq!(source, PersistenceRestoreSource::Backup);
+    assert_eq!(stamp, initial_stamp);
+    assert_eq!(
+        fs::read_to_string(store.primary_path()).expect("repaired primary"),
+        initial_document
+    );
+
+    fs::remove_file(store.primary_path()).expect("remove primary for missing-primary drill");
+    let (map, ruleset) = content();
+    let mut missing_primary_restore = LocalRuntime::default();
+    let (stamp, source) = store
+        .restore_current_save(&mut missing_primary_restore, map, ruleset)
+        .expect("missing primary falls back to backup");
+    assert_eq!(source, PersistenceRestoreSource::Backup);
+    assert_eq!(stamp, initial_stamp);
+    assert_eq!(
+        fs::read_to_string(store.primary_path()).expect("recreated primary"),
+        initial_document
+    );
+
+    let preserved = backup_restore.snapshot().expect("preserved snapshot");
+    fs::write(store.primary_path(), "invalid").expect("corrupt primary");
+    fs::write(store.backup_path(), "invalid").expect("corrupt backup");
+    let (map, ruleset) = content();
+    assert!(
+        store
+            .restore_current_save(&mut backup_restore, map, ruleset)
+            .is_err()
+    );
+    assert_eq!(
+        backup_restore.snapshot().expect("transactional restore"),
+        preserved
+    );
+}
+
 fn rejected_entry() -> aonw_contracts::ReplayEntryDto {
     let mut runtime = LocalRuntime::default();
     runtime.open(request()).expect("open");
@@ -194,4 +276,28 @@ fn content() -> (MapDefinition, RulesetDefinition) {
     )
     .expect("map");
     (map, RulesetDefinition::standard().clone())
+}
+
+struct ScratchDirectory(PathBuf);
+
+impl ScratchDirectory {
+    fn new() -> Self {
+        let path = std::env::temp_dir().join(format!(
+            "aonw-persistence-{}-{}",
+            std::process::id(),
+            TEST_DIRECTORY_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::create_dir(&path).expect("create scratch directory");
+        Self(path)
+    }
+
+    fn path(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+
+impl Drop for ScratchDirectory {
+    fn drop(&mut self) {
+        fs::remove_dir_all(&self.0).expect("remove scratch directory");
+    }
 }

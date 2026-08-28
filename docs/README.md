@@ -10,7 +10,7 @@ This directory documents contracts that are easy to misuse or expensive to redis
 | Understand the repository | This page |
 | Change gameplay rules | [`adr/README.md`](adr/README.md) and [`game-design/README.md`](game-design/README.md) |
 | Change multiplayer | [`multiplayer-protocol.md`](multiplayer-protocol.md) |
-| Work on Rust or Godot | [`rust-engine-migration.md`](rust-engine-migration.md) |
+| Work on Rust or Godot | [`rust-engine-migration.md`](rust-engine-migration.md) and [`rust-engine-persistence.md`](rust-engine-persistence.md) |
 | Change tests or quality gates | [`static-analysis.md`](static-analysis.md), [`test-coverage.md`](test-coverage.md), [`architecture-budgets.md`](architecture-budgets.md), [`mutation-testing.md`](mutation-testing.md), [`critical-e2e.md`](critical-e2e.md), [`multiplayer-protocol.md`](multiplayer-protocol.md) |
 | Release or operate the backend | [`build-and-deploy.md`](build-and-deploy.md) |
 
@@ -99,6 +99,7 @@ ADRs record constraints that should survive refactors. Read the index before cha
 ### Multiplayer and operations
 
 - [`multiplayer-protocol.md`](multiplayer-protocol.md): current online contract and rollout checklist.
+- [`rust-engine-persistence.md`](rust-engine-persistence.md): current-only save, replay, atomic write, backup, and restore contract.
 - [`multiplayer-scale-out.md`](multiplayer-scale-out.md): current single-active-instance limitation.
 - [`multiplayer-chaos-alerts.md`](multiplayer-chaos-alerts.md): release smoke and manual failure drills.
 - [`multiplayer-testflight.md`](multiplayer-testflight.md): staging and two-device acceptance.

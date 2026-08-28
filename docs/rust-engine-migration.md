@@ -33,8 +33,8 @@ The current crate inventory and commands are documented in [`../engine/README.md
 ## Rules that do not change during migration
 
 1. The Flutter application stays buildable and releasable at the repository root.
-2. `packages/aonw_core` remains the compatibility reference until explicit cutover gates pass.
-3. Port current behavior before redesigning it.
+2. `packages/aonw_core` remains behavioral evidence until explicit cutover gates pass; it is not a runtime compatibility dependency for new clients.
+3. Preserve required game behavior, but prefer a simpler, safer, or more efficient Rust design over a line-for-line Dart port.
 4. One save or match uses one primary engine for its entire lifetime.
 5. Command families are never split between Dart and Rust inside an active session.
 6. Fixtures are an independently reviewed oracle. Neither implementation may generate and bless its own expected result in CI.
@@ -120,7 +120,10 @@ Shadow output is comparison data only. It is never persisted, broadcast, or show
 
 A kill switch may change the default engine for new saves or matches after parity, packaging, observability, and rollback drills pass. Existing work remains pinned unless an explicit versioned migration proves it safe to move.
 
-Readers come before writers: Rust may write a format only when every supported Rust input is readable and the rollback Dart path can read the new output.
+Readers and writers for the single current Rust contract ship together. New
+Flutter and Godot clients consume that contract directly; no Dart bridge or
+rollback adapter is introduced. Development artifacts are unsupported until
+the first production writer establishes the compatibility-support boundary.
 
 ### 6. Retire Dart authority
 
@@ -135,7 +138,10 @@ The Dart engine can be removed only when all of the following use Rust:
 - Serverpod authoritative transitions and recovery;
 - every supported platform, including a deliberate Flutter Web solution.
 
-No active server match may remain pinned to Dart. Historical formats need a Rust reader/upcaster or an explicit end-of-support migration. The rollback window and drills must be complete.
+No active server match may remain pinned to Dart. A reader/upcaster is added
+only when a second real production format is deliberately supported; there is
+no speculative compatibility layer for pre-cutover development artifacts. The
+rollback window and drills must be complete.
 
 Only after retirement should the repository be reorganized mechanically into final client/service directories. Do not mix that move with behavior migration.
 
@@ -202,6 +208,7 @@ Wall-clock numbers are host-local observations. Stable signatures and work count
 
 - Flutter network state is recipient-projected by Serverpod but still passes through a Dart canonical compatibility envelope. Replace it with nominal recipient types before remote-replica cutover.
 - The Rust client/save/replay contracts are current-only. Historical upcasters are deferred until a second schema exists.
+- Atomic native writes, current-format backup promotion, and transactional restore are documented in [`rust-engine-persistence.md`](rust-engine-persistence.md).
 - Rust is not yet the Serverpod production engine or the default Flutter local engine.
 
 Keep this page at milestone level. Detailed crate behavior belongs in `engine/README.md`, Godot authoring behavior in `clients/aonw_godot/README.md`, and durable decisions in ADRs.

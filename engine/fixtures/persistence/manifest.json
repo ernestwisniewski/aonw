@@ -12,12 +12,16 @@
     "saveBytes": 16777216
   },
   "cases": [
+    "atomic-host-write",
+    "backup-promotion",
     "corrupt-save-transactional",
     "duplicate-field-rejected",
     "empty-archive-rejected",
     "hash-mismatch-rejected",
+    "install-rollback",
     "long-replay-verification",
     "oversized-document-rejected",
+    "restore-command-family-matrix",
     "segment-checkpoint-chain-drift",
     "segment-checkpoint-digest-drift",
     "segment-rollover",

@@ -1,6 +1,6 @@
 //! Current-only diplomacy proposal protocol, replay, and disclosure coverage.
 
-use aonw_content::RulesetDefinition;
+use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_contracts::client::{
     ClientCommandDto, ClientCommandOutcomeDto, ClientEventDto, ClientFeatureDto,
     ClientRequestBodyDto, ClientResponseBodyDto,
@@ -10,6 +10,7 @@ use aonw_domain::{
     DiplomaticMessage, DiplomaticMessageCategory, DiplomaticMessageTopic, DiplomaticProposal,
     DiplomaticProposalKind,
 };
+use aonw_local_runtime::LocalRuntime;
 
 #[path = "diplomacy_runtime/fixture.rs"]
 mod fixture;
@@ -255,6 +256,7 @@ fn resource_trade_commands_are_current_persisted_and_replayable() {
     assert_eq!(snapshot.diplomacy.resource_trade_agreements.len(), 1);
     let save = trade_runtime.export_save_json().expect("save");
     assert!(save.contains("resource_trade_player-1_player-2_marble_0"));
+    assert_save_reopens(&mut trade_runtime, map.clone(), ruleset.clone(), &save);
     verify_one_entry(&trade_runtime, map.clone(), ruleset.clone());
 
     let mut exchange_runtime = open_runtime(&map, &ruleset, resource_trade_state(), p1);
@@ -283,5 +285,20 @@ fn resource_trade_commands_are_current_persisted_and_replayable() {
     let save = exchange_runtime.export_save_json().expect("save");
     assert!(save.contains("exchange-1_offered"));
     assert!(save.contains("exchange-1_requested"));
+    assert_save_reopens(&mut exchange_runtime, map.clone(), ruleset.clone(), &save);
     verify_one_entry(&exchange_runtime, map, ruleset);
+}
+
+fn assert_save_reopens(
+    runtime: &mut LocalRuntime,
+    map: MapDefinition,
+    ruleset: RulesetDefinition,
+    save: &str,
+) {
+    let expected = runtime.snapshot().expect("source snapshot");
+    let mut reopened = LocalRuntime::default();
+    reopened
+        .open_save_json(map, ruleset, save)
+        .expect("reopen diplomacy save");
+    assert_eq!(reopened.snapshot().expect("reopened snapshot"), expected);
 }

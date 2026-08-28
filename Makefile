@@ -665,8 +665,25 @@ rust-ai-check: rust-ai-ledger-check rust-engine-inventory-check rust-determinism
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_ai --all-features
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --release -p aonw_ai --test deterministic_search mcts_is_identical_for_the_same_state_seed_and_budget -- --exact
 
-rust-persistence-check: rust-engine-inventory-check rust-determinism-inventory-check rust-determinism-inventory-test rust-performance-check
+rust-replacement-surface-check:
+	@tool/check_rust_replacement_surface.py
+
+rust-restore-matrix-check:
+	@tool/check_rust_restore_matrix.py
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime \
+		--test artifact_runtime \
+		--test city_runtime \
+		--test combat_runtime \
+		--test diplomacy_runtime \
+		--test movement_logistics_runtime \
+		--test production_runtime \
+		--test research_runtime \
+		--test turn_kernel_runtime \
+		--test worker_runtime
+
+rust-persistence-check: rust-replacement-surface-check rust-restore-matrix-check rust-engine-inventory-check rust-determinism-inventory-check rust-determinism-inventory-test rust-performance-check
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts persistence::tests
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --lib persistence_file::tests
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test persistence_hardening
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test local_session deterministic_replay_signature_is_stable -- --exact
 

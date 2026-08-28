@@ -32,9 +32,10 @@ versioned client boundary; they do not implement rules or fallback to Dart.
 Implemented runtime slices include movement, unit actions, logistics, combat,
 cities, workers, roads, economy, production, research, diplomacy, objectives,
 match outcome, recipient-safe projections, local sessions, current saves and
-bounded multi-segment exact replay. The deterministic AI search core exists;
-feature-complete strategic AI policy, final persistence host adapters and the
-production Serverpod host remain migration work.
+bounded multi-segment exact replay. Strategic AI is deterministic, profile-aware,
+strength-gated, and exercises the complete local runtime. Native persistence
+uses atomic current-format writes plus a last-known-good backup. The production
+Serverpod host remains migration work.
 
 The engine and successor clients are greenfield and update one current contract
 atomically. Internal DTOs do not carry speculative versions, legacy readers,
@@ -59,6 +60,8 @@ make rust-movement-logistics-check
 make rust-combat-check
 make rust-city-check
 make rust-worker-check
+make rust-ai-check
+make rust-persistence-check
 ```
 
 Build or test the native adapters with:
@@ -89,6 +92,7 @@ make rust-determinism-check
 - [Public Rust API documentation](https://engine.aonw.net/)
 - [Interactive engine architecture](https://engine.aonw.net/architecture)
 - [Migration and cutover model](../docs/rust-engine-migration.md)
+- [Current save and replay contract](../docs/rust-engine-persistence.md)
 - [Migration inventory](migration/README.md)
 - [Architecture decisions](../docs/adr/README.md)
 - [Successor clients](../clients/README.md)

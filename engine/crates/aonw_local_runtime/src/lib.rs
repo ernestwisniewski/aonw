@@ -6,6 +6,7 @@ mod client_protocol;
 mod command_dispatch;
 mod persistence;
 mod persistence_error;
+mod persistence_file;
 mod persistence_validation;
 mod player_view;
 mod prepared_world;
@@ -23,6 +24,7 @@ pub use command_dispatch::{
     WorkerUnitRequest,
 };
 pub use persistence::{PersistenceError, ReplayVerification};
+pub use persistence_file::{PersistenceFileError, PersistenceFileStore, PersistenceRestoreSource};
 pub use player_view::{
     CityFoundingDraftView, OwnedCityPlanningView, PendingActionView, PlayerArtifactLocationView,
     PlayerArtifactView, PlayerCityView, PlayerDiplomacyView, PlayerDiplomaticMessageView,
