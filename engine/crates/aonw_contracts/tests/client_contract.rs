@@ -140,8 +140,7 @@ fn golden_move_request_is_stable_and_strict() {
             },
         },
     };
-    let golden =
-        include_str!("../../../../test/fixtures/client_protocol/move_unit_request.json").trim();
+    let golden = include_str!("../../../fixtures/client_protocol/move_unit_request.json").trim();
 
     assert_eq!(request.to_json().expect("request JSON"), golden);
     assert_eq!(
@@ -161,8 +160,7 @@ fn golden_command_response_is_stable_and_strict() {
         },
     };
     let golden =
-        include_str!("../../../../test/fixtures/client_protocol/command_result_response.json")
-            .trim();
+        include_str!("../../../fixtures/client_protocol/command_result_response.json").trim();
 
     assert_eq!(response.to_json().expect("response JSON"), golden);
     assert_eq!(
@@ -174,7 +172,7 @@ fn golden_command_response_is_stable_and_strict() {
 #[test]
 fn command_rejection_codes_match_the_shared_fixture() {
     let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../test/fixtures/client_protocol/command_rejection_codes.json"
+        "../../../fixtures/client_protocol/command_rejection_codes.json"
     ))
     .expect("rejection code fixture");
     let fixture_codes = fixture["codes"]

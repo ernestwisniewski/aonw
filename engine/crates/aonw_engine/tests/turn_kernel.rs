@@ -153,9 +153,9 @@ fn player_rejection_precedence_and_sequential_handoff_are_stable() {
 
 #[test]
 fn fixture_manifest_covers_all_supported_processors() {
-    let root = repository_root();
+    let root = engine_root();
     let manifest: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(root.join("engine/fixtures/turn_kernel/manifest.json")).expect("manifest"),
+        &std::fs::read(root.join("fixtures/turn_kernel/manifest.json")).expect("manifest"),
     )
     .expect("strict JSON");
     assert_eq!(manifest["capability"], TurnKernelCapabilities::LABEL);
@@ -370,10 +370,10 @@ fn player(id: &str) -> PlayerId {
     PlayerId::new(id).expect("player id")
 }
 
-fn repository_root() -> PathBuf {
+fn engine_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
-        .find(|path| path.join("engine/fixtures/turn_kernel").is_dir())
-        .expect("repository root")
+        .find(|path| path.join("fixtures/turn_kernel").is_dir())
+        .expect("engine root")
         .to_path_buf()
 }

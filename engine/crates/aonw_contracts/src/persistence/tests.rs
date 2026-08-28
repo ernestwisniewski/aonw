@@ -1,5 +1,6 @@
 use super::{
-    MAX_SAVE_GAME_JSON_BYTES, ReplayCommandDto, ReplayEventDto, ReplayLogDto, SaveGameDto,
+    MAX_SAVE_GAME_JSON_BYTES, PersistenceCodecError, ReplayCommandDto, ReplayEventDto,
+    ReplayLogDto, SaveGameDto,
 };
 
 #[test]
@@ -10,7 +11,21 @@ fn strict_save_codec_rejects_unknown_duplicate_and_oversized_input() {
     assert!(SaveGameDto::from_json(&unknown).is_err());
     let duplicate = base.replacen("\"mapId\":\"m\",", "\"mapId\":\"m\",\"mapId\":\"m\",", 1);
     assert!(SaveGameDto::from_json(&duplicate).is_err());
-    assert!(SaveGameDto::from_json(&"x".repeat(MAX_SAVE_GAME_JSON_BYTES + 1)).is_err());
+    let exact_boundary = format!(
+        "{base}{}",
+        " ".repeat(MAX_SAVE_GAME_JSON_BYTES - base.len())
+    );
+    assert_eq!(exact_boundary.len(), MAX_SAVE_GAME_JSON_BYTES);
+    assert!(SaveGameDto::from_json(&exact_boundary).is_ok());
+
+    let oversized = format!("{exact_boundary} ");
+    assert!(matches!(
+        SaveGameDto::from_json(&oversized),
+        Err(PersistenceCodecError::TooLarge {
+            actual,
+            maximum: MAX_SAVE_GAME_JSON_BYTES,
+        }) if actual == MAX_SAVE_GAME_JSON_BYTES + 1
+    ));
 }
 
 #[test]

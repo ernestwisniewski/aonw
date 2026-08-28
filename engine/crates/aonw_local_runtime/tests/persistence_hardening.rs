@@ -64,6 +64,62 @@ fn corrupt_save_corpus_never_replaces_the_open_session() {
 }
 
 #[test]
+fn save_and_replay_reject_every_content_identity_mismatch() {
+    let mut runtime = LocalRuntime::default();
+    let expected = runtime.open(request()).expect("open");
+    let save =
+        SaveGameDto::from_json(&runtime.export_save_json().expect("save")).expect("save DTO");
+    let replay = ReplayLogDto::from_json(&runtime.export_replay_json().expect("replay"))
+        .expect("replay DTO");
+
+    let mut wrong_map_id = save.clone();
+    wrong_map_id.map_id = "other-map".to_owned();
+    assert_save_error(&mut runtime, &wrong_map_id, |error| {
+        matches!(error, PersistenceError::MapIdMismatch)
+    });
+    let mut wrong_map_hash = save.clone();
+    wrong_map_hash.map_hash = "00".repeat(32);
+    assert_save_error(&mut runtime, &wrong_map_hash, |error| {
+        matches!(error, PersistenceError::MapHashMismatch)
+    });
+    let mut wrong_ruleset_id = save.clone();
+    wrong_ruleset_id.ruleset_id = "other-ruleset".to_owned();
+    assert_save_error(&mut runtime, &wrong_ruleset_id, |error| {
+        matches!(error, PersistenceError::RulesetIdMismatch)
+    });
+    let mut wrong_ruleset_hash = save;
+    wrong_ruleset_hash.ruleset_hash = "00".repeat(32);
+    assert_save_error(&mut runtime, &wrong_ruleset_hash, |error| {
+        matches!(error, PersistenceError::RulesetHashMismatch)
+    });
+    assert_eq!(
+        runtime.snapshot().expect("preserved session").stamp(),
+        &expected
+    );
+
+    let mut wrong_map_id = replay.clone();
+    wrong_map_id.map_id = "other-map".to_owned();
+    assert_replay_error(&wrong_map_id, |error| {
+        matches!(error, PersistenceError::MapIdMismatch)
+    });
+    let mut wrong_map_hash = replay.clone();
+    wrong_map_hash.map_hash = "00".repeat(32);
+    assert_replay_error(&wrong_map_hash, |error| {
+        matches!(error, PersistenceError::MapHashMismatch)
+    });
+    let mut wrong_ruleset_id = replay.clone();
+    wrong_ruleset_id.ruleset_id = "other-ruleset".to_owned();
+    assert_replay_error(&wrong_ruleset_id, |error| {
+        matches!(error, PersistenceError::RulesetIdMismatch)
+    });
+    let mut wrong_ruleset_hash = replay;
+    wrong_ruleset_hash.ruleset_hash = "00".repeat(32);
+    assert_replay_error(&wrong_ruleset_hash, |error| {
+        matches!(error, PersistenceError::RulesetHashMismatch)
+    });
+}
+
+#[test]
 fn replay_rollover_restores_each_checkpoint_and_reports_exact_drift() {
     let mut runtime = LocalRuntime::default();
     let expected = runtime.open(request()).expect("open");
@@ -226,6 +282,26 @@ fn rejected_entry() -> aonw_contracts::ReplayEntryDto {
         .remove(0)
         .entries
         .remove(0)
+}
+
+fn assert_save_error(
+    runtime: &mut LocalRuntime,
+    save: &SaveGameDto,
+    expected: impl FnOnce(&PersistenceError) -> bool,
+) {
+    let (map, ruleset) = content();
+    let error = runtime
+        .open_save_json(map, ruleset, &save.to_json().expect("save JSON"))
+        .expect_err("identity mismatch");
+    assert!(expected(&error), "unexpected save error: {error}");
+}
+
+fn assert_replay_error(replay: &ReplayLogDto, expected: impl FnOnce(&PersistenceError) -> bool) {
+    let (map, ruleset) = content();
+    let error =
+        LocalRuntime::verify_replay_json(map, ruleset, &replay.to_json().expect("replay JSON"))
+            .expect_err("identity mismatch");
+    assert!(expected(&error), "unexpected replay error: {error}");
 }
 
 fn request() -> OpenSession {

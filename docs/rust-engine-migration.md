@@ -180,6 +180,17 @@ introduced by the EXR/zerocopy and serde proc-macro chains; it is owned by the
 engine foundation, expires on 2027-08-24, and must be removed or re-reviewed at
 expiry. OSV continues to scan every committed lockfile independently.
 
+Security-oriented test tooling is also external and pinned. `cargo-mutants
+27.1.0` runs 19 focused mutations across codec bounds, state digest finalization,
+turn finalization, and persistence identity validation with zero survivors.
+`cargo-fuzz 0.13.2` and `libfuzzer-sys 0.4.13` run bounded ASan smokes for strict
+persistence codecs, canonical DTO/domain mapping, and the live Flutter C ABI.
+Miri runs the feasible pure contract/domain boundary on
+`nightly-2026-08-24`. The strict repository policy validates tool provenance,
+the exact target census, bounds, and outcomes; it does not implement its own
+mutation engine, fuzzer, sanitizer, or interpreter. Expensive execution is a
+separate scheduled/manual workflow, while policy drift fails fast CI.
+
 These quality artifacts describe the single current greenfield engine and
 successor-client contract. They introduce no legacy reader, adapter, upcaster,
 or redundant internal format version. Shared API, map, fixture, and other real

@@ -85,7 +85,24 @@ make rust-performance-check
 make rust-architecture-check
 make rust-dependency-check
 make rust-determinism-check
+make rust-security-policy-check
 ```
+
+Focused mutation testing uses pinned `cargo-mutants`; three bounded fuzz targets
+use pinned `cargo-fuzz`/LibFuzzer with AddressSanitizer; and Miri checks the pure
+contract/domain boundary on one pinned nightly. The policy is part of fast CI,
+while the expensive executions are scheduled or run manually:
+
+```sh
+make rust-mutation-check
+make rust-fuzz-smoke
+make rust-miri-check
+make rust-engine-security-check
+```
+
+The fuzz workspace has its own committed lockfile because it is intentionally
+separate from the production workspace. Generated corpora and crash artifacts
+are local evidence and are not committed.
 
 ## Documentation
 

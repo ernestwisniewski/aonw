@@ -1,0 +1,63 @@
+name: Successor Engine Security Checks
+
+on:
+  schedule:
+    - cron: "41 2 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: Rust mutation
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal
+
+      - name: Install pinned mutation tool
+        run: cargo +1.97.1 install --locked --force --version 27.1.0 cargo-mutants
+
+      - name: Run focused mutation gate
+        run: make --no-print-directory rust-mutation-check
+
+  fuzz:
+    name: Rust bounded fuzz
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install pinned Rust toolchains
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal --component rustfmt
+          rustup toolchain install nightly-2026-08-24 --profile minimal --component rust-src
+
+      - name: Install pinned fuzz tool
+        run: cargo +1.97.1 install --locked --force --version 0.13.2 cargo-fuzz
+
+      - name: Run bounded ASan fuzz smoke
+        run: make --no-print-directory rust-fuzz-smoke
+
+  miri:
+    name: Rust Miri
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install pinned Miri toolchain
+        run: rustup toolchain install nightly-2026-08-24 --profile minimal --component miri --component rust-src
+
+      - name: Run pure-boundary Miri gate
+        run: make --no-print-directory rust-miri-check

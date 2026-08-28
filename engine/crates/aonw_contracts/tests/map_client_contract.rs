@@ -43,8 +43,7 @@ fn inspect_map_request_golden_is_stable() {
             map_document: "map-document".to_owned(),
         },
     };
-    let golden =
-        include_str!("../../../../test/fixtures/client_protocol/inspect_map_request.json").trim();
+    let golden = include_str!("../../../fixtures/client_protocol/inspect_map_request.json").trim();
 
     assert_eq!(request.to_json().expect("request JSON"), golden);
     assert_eq!(
@@ -62,8 +61,7 @@ fn map_inspected_response_golden_is_stable_and_strict() {
         },
     };
     let golden =
-        include_str!("../../../../test/fixtures/client_protocol/map_inspected_response.json")
-            .trim();
+        include_str!("../../../fixtures/client_protocol/map_inspected_response.json").trim();
 
     assert_eq!(response.to_json().expect("response JSON"), golden);
     assert_eq!(
