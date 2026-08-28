@@ -1,3 +1,4 @@
+mod access;
 mod auto_explore;
 mod balance;
 mod compiled_map;
@@ -40,6 +41,7 @@ pub use transition::{MoveUnitCommand, MoveUnitError, UnitMovedEvent, UnitMovemen
 pub use visibility::MovementVisibility;
 pub use workspace::MovementSearchWorkspace;
 
+pub(crate) use access::MovementAccess;
 pub(crate) use auto_explore::apply_auto_explore;
 pub(crate) use detachment::apply_detach_troop;
 pub(crate) use fog::{

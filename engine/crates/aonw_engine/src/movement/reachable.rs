@@ -208,6 +208,7 @@ fn reachable_costs(
         return metrics;
     };
     let occupied = MovementOccupancy::for_unit(units, map, unit, context);
+    let access = context.prepare_movement_access(unit);
     let costs = &mut workspace.reachable_costs[..tile_count];
     costs[start] = 0;
     let frontier = &mut workspace.reachable_frontier;
@@ -233,9 +234,6 @@ fn reachable_costs(
         if current.cost >= available.get() {
             continue;
         }
-        let Some(coordinate) = map.coordinate_at(HexTileIndex::new(current.index)) else {
-            continue;
-        };
         metrics.expanded();
         let (neighbors, neighbor_count) =
             neighbor_indices(map, context.compiled_movement_map(), current.index);
@@ -247,20 +245,18 @@ fn reachable_costs(
             if occupied.contains(next_index) {
                 continue;
             }
-            if !context.can_plan_through_tile(unit, next)
-                || context.city_block_is_known(unit, next)
-                || context.territory_block_is_known(unit, next)
-            {
+            if !context.can_plan_through_tile(unit, next) || access.blocks(next_index) {
                 continue;
             }
             let movement_domain = definition.capabilities().movement_domain.domain();
             let MovementCost::Passable(enter_cost) = movement_cost_for_index(
-                coordinate,
+                current.index,
                 next,
                 next_index,
                 map,
                 movement_domain,
                 context,
+                &access,
             ) else {
                 continue;
             };

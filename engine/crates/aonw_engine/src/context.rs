@@ -4,7 +4,9 @@ use aonw_domain::{
     TransportNetwork, Unit,
 };
 
-use crate::movement::{CompiledMovementMap, MovementPlanningView, MovementVisibility};
+use crate::movement::{
+    CompiledMovementMap, MovementAccess, MovementPlanningView, MovementVisibility,
+};
 
 /// Immutable content available only to a trusted system-command boundary.
 #[derive(Clone, Copy, Debug)]
@@ -298,6 +300,75 @@ impl<'context> EngineContext<'context> {
         moving_unit.position().distance_to(coordinate) <= 3
     }
 
+    pub(crate) fn prepare_movement_access(self, moving_unit: &Unit) -> MovementAccess {
+        let mut access = MovementAccess::empty(self.map.bounds().tile_count());
+        let Some(world) = self.world else {
+            return access;
+        };
+        for city in world.cities {
+            let policy = crate::DiplomacyPolicyQuery::between_parts(
+                world.match_identity,
+                world.diplomacy,
+                moving_unit.owner_player_id(),
+                city.owner_player_id(),
+            );
+            let center_visible =
+                self.visibility(world.fog_of_war, city.center()) != FogVisibility::Hidden;
+            let center_known = city.owner_player_id() == self.actor_player_id || center_visible;
+            if center_known && let Some(index) = self.map.tile_index(city.center()) {
+                access.reveal_city_center(index.get());
+                if center_visible
+                    && policy
+                        .as_ref()
+                        .map_or(true, |value| !value.can_enter_city_center())
+                {
+                    access.block(index.get());
+                }
+            }
+            if policy
+                .as_ref()
+                .is_ok_and(|value| value.can_enter_territory())
+            {
+                continue;
+            }
+            for coordinate in
+                core::iter::once(city.center()).chain(city.controlled_hexes().iter().copied())
+            {
+                if self.visibility(world.fog_of_war, coordinate) == FogVisibility::Hidden {
+                    continue;
+                }
+                if let Some(index) = self.map.tile_index(coordinate) {
+                    access.block(index.get());
+                }
+            }
+        }
+        for segment in world.transport_network.segments() {
+            if !segment.is_operational() {
+                continue;
+            }
+            let city_owned = segment
+                .built_by_city_id()
+                .and_then(|city_id| {
+                    world
+                        .cities
+                        .binary_search_by(|city| city.id().cmp(city_id))
+                        .ok()
+                        .map(|index| &world.cities[index])
+                })
+                .is_some_and(|city| city.owner_player_id() == self.actor_player_id);
+            if segment.built_by_player_id() != self.actor_player_id
+                && !city_owned
+                && self.visibility(world.fog_of_war, segment.coordinate()) == FogVisibility::Hidden
+            {
+                continue;
+            }
+            if let Some(index) = self.map.tile_index(segment.coordinate()) {
+                access.reveal_operational_road(index.get());
+            }
+        }
+        access
+    }
+
     pub(crate) fn can_share_occupied_city(self, moving_unit: &Unit, coordinate: HexCoord) -> bool {
         self.allow_owned_city_stacking
             && moving_unit.kind() == aonw_domain::UnitKind::Merchant
@@ -367,38 +438,6 @@ impl<'context> EngineContext<'context> {
         self.territory_blocks(moving_unit, coordinate)
             && self.world.is_none_or(|world| {
                 self.visibility(world.fog_of_war, coordinate) != FogVisibility::Hidden
-            })
-    }
-
-    pub(crate) fn has_known_operational_road(self, coordinate: HexCoord) -> bool {
-        let Some(world) = self.world else {
-            return false;
-        };
-        let Some(segment) = world.transport_network.at(coordinate) else {
-            return false;
-        };
-        if !segment.is_operational() {
-            return false;
-        }
-        segment.built_by_player_id() == self.actor_player_id
-            || segment
-                .built_by_city_id()
-                .and_then(|city_id| world.cities.iter().find(|city| city.id() == city_id))
-                .is_some_and(|city| city.owner_player_id() == self.actor_player_id)
-            || self.visibility(world.fog_of_war, coordinate) != FogVisibility::Hidden
-    }
-
-    pub(crate) fn is_known_city_center(self, coordinate: HexCoord) -> bool {
-        let Some(world) = self.world else {
-            return false;
-        };
-        world
-            .cities
-            .iter()
-            .find(|city| city.center() == coordinate)
-            .is_some_and(|city| {
-                city.owner_player_id() == self.actor_player_id
-                    || self.visibility(world.fog_of_war, coordinate) != FogVisibility::Hidden
             })
     }
 

@@ -6,7 +6,9 @@ use aonw_domain::{HexCoord, HexTileIndex, MovementStep, MovementUnits, Unit};
 
 use super::compiled_map::neighbor_indices;
 use super::cost::{movement_cost_for_index, terrain_entry_cost};
-use super::{MovementCost, MovementOccupancy, MovementSearchMetrics, maximum_movement_units};
+use super::{
+    MovementAccess, MovementCost, MovementOccupancy, MovementSearchMetrics, maximum_movement_units,
+};
 use crate::EngineContext;
 
 pub(super) struct RouteSearchResult {
@@ -73,6 +75,7 @@ struct PreparedRouteSearch {
     target_indices: Box<[usize]>,
     maximum_movement: MovementUnits,
     occupied: MovementOccupancy,
+    access: MovementAccess,
     records: Vec<RouteRecord>,
     best_by_state: Vec<Option<BestRouteRecord>>,
     remaining_slots: usize,
@@ -191,6 +194,7 @@ fn prepare_route_search(
         return None;
     }
     let occupied = MovementOccupancy::for_unit(units, map, unit, context);
+    let access = context.prepare_movement_access(unit);
     let maximum_movement = maximum_override.unwrap_or_else(|| {
         maximum_movement_units(
             context.ruleset(),
@@ -239,6 +243,7 @@ fn prepare_route_search(
         target_indices: target_indices.into_boxed_slice(),
         maximum_movement,
         occupied,
+        access,
         records,
         best_by_state,
         remaining_slots,
@@ -266,10 +271,6 @@ fn run_route_search(
                 metrics: search.metrics,
             };
         }
-        let Some(coordinate) = map.coordinate_at(HexTileIndex::new(current.state.tile_index))
-        else {
-            continue;
-        };
         search.metrics.expanded();
         let (neighbors, neighbor_count) = neighbor_indices(
             map,
@@ -285,18 +286,18 @@ fn run_route_search(
                 continue;
             }
             if !context.can_plan_through_tile(unit, next_coordinate)
-                || context.city_block_is_known(unit, next_coordinate)
-                || context.territory_block_is_known(unit, next_coordinate)
+                || search.access.blocks(next_index)
             {
                 continue;
             }
             let MovementCost::Passable(enter_cost) = movement_cost_for_index(
-                coordinate,
+                current.state.tile_index,
                 next_coordinate,
                 next_index,
                 map,
                 search.movement_domain,
                 context,
+                &search.access,
             ) else {
                 continue;
             };
