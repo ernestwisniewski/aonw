@@ -16,6 +16,20 @@ pub(super) struct RouteSearchResult {
     pub(super) metrics: MovementSearchMetrics,
 }
 
+pub(crate) struct RouteCostMap {
+    costs_by_tile: Box<[u32]>,
+}
+
+impl RouteCostMap {
+    pub(crate) fn cost_at(&self, map: &MapDefinition, coordinate: HexCoord) -> Option<u32> {
+        let index = map.tile_index(coordinate)?.get();
+        self.costs_by_tile
+            .get(index)
+            .copied()
+            .filter(|cost| *cost != u32::MAX)
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct RouteScore {
     turns: u32,
@@ -149,6 +163,23 @@ pub(super) fn find_route_ignoring_capacity(
     )
 }
 
+pub(crate) fn find_route_costs(
+    units: &[Unit],
+    map: &MapDefinition,
+    unit: &Unit,
+    targets: &[HexCoord],
+    available_movement: MovementUnits,
+    context: EngineContext<'_>,
+) -> RouteCostMap {
+    let costs_by_tile =
+        prepare_route_search(units, map, unit, targets, available_movement, context, None)
+            .map_or_else(
+                || Box::new([]),
+                |search| run_route_cost_search(search, map, unit, context),
+            );
+    RouteCostMap { costs_by_tile }
+}
+
 fn find_route_with_maximum(
     units: &[Unit],
     map: &MapDefinition,
@@ -186,10 +217,12 @@ fn prepare_route_search(
 ) -> Option<PreparedRouteSearch> {
     let definition = context.ruleset().unit(unit.kind())?;
     let start_index = map.tile_index(unit.position()).map(HexTileIndex::get)?;
-    let target_indices = targets
+    let mut target_indices = targets
         .iter()
         .filter_map(|target| map.tile_index(*target).map(HexTileIndex::get))
         .collect::<Vec<_>>();
+    target_indices.sort_unstable();
+    target_indices.dedup();
     if target_indices.is_empty() {
         return None;
     }
@@ -259,98 +292,145 @@ fn run_route_search(
     unit: &Unit,
     context: EngineContext<'_>,
 ) -> RouteSearchResult {
-    while let Some(current_node) = search.frontier.pop() {
-        search.metrics.popped();
-        if !is_current_best(&search.best_by_state, search.remaining_slots, current_node) {
-            continue;
-        }
-        let current = search.records[current_node.record_index];
-        if search.target_indices.contains(&current.state.tile_index) {
+    while let Some((current_node, current)) = pop_current(&mut search) {
+        if search
+            .target_indices
+            .binary_search(&current.state.tile_index)
+            .is_ok()
+        {
             return RouteSearchResult {
                 steps: reconstruct_route(map, &search.records, current_node.record_index),
                 metrics: search.metrics,
             };
         }
-        search.metrics.expanded();
-        let (neighbors, neighbor_count) = neighbor_indices(
-            map,
-            context.compiled_movement_map(),
-            current.state.tile_index,
-        );
-        for &next_index in &neighbors[..neighbor_count] {
-            search.metrics.examined_edge();
-            let Some(next_coordinate) = map.coordinate_at(HexTileIndex::new(next_index)) else {
-                continue;
-            };
-            if search.occupied.contains(next_index) {
-                continue;
-            }
-            if !context.can_plan_through_tile(unit, next_coordinate)
-                || search.access.blocks(next_index)
-            {
-                continue;
-            }
-            let MovementCost::Passable(enter_cost) = movement_cost_for_index(
-                current.state.tile_index,
-                next_coordinate,
-                next_index,
-                map,
-                search.movement_domain,
-                context,
-                &search.access,
-            ) else {
-                continue;
-            };
-            if enter_cost > search.maximum_movement && unit.carried_artifact_id().is_none() {
-                continue;
-            }
-            let Some(next_score) = next_score(current.score, enter_cost) else {
-                continue;
-            };
-            let Some((turns, remaining)) = advance_route(
-                current.state,
-                current.score.turns,
-                enter_cost,
-                search.maximum_movement,
-            ) else {
-                continue;
-            };
-            let next_state = RouteState {
-                tile_index: next_index,
-                remaining,
-                started: true,
-            };
-            let next_score = RouteScore {
-                turns,
-                ..next_score
-            };
-            if !record_if_better(
-                &mut search.best_by_state,
-                search.remaining_slots,
-                next_state,
-                next_score,
-                search.records.len(),
-            ) {
-                continue;
-            }
-            let record_index = search.records.len();
-            let record = RouteRecord {
-                state: next_state,
-                score: next_score,
-                parent: Some(current_node.record_index),
-                enter_cost,
-            };
-            search.records.push(record);
-            search.metrics.retained_record();
-            if let Some(node) = frontier_node(map, record_index, record) {
-                search.frontier.push(node);
-                search.metrics.pushed();
-            }
-        }
+        expand_current(&mut search, map, unit, context, current_node, current);
     }
     RouteSearchResult {
         steps: None,
         metrics: search.metrics,
+    }
+}
+
+fn run_route_cost_search(
+    mut search: PreparedRouteSearch,
+    map: &MapDefinition,
+    unit: &Unit,
+    context: EngineContext<'_>,
+) -> Box<[u32]> {
+    let mut costs_by_tile = vec![u32::MAX; map.bounds().tile_count()];
+    let mut unresolved = search.target_indices.len();
+    while unresolved > 0
+        && let Some((current_node, current)) = pop_current(&mut search)
+    {
+        if search
+            .target_indices
+            .binary_search(&current.state.tile_index)
+            .is_ok()
+            && costs_by_tile[current.state.tile_index] == u32::MAX
+        {
+            costs_by_tile[current.state.tile_index] = current.score.total_cost;
+            unresolved -= 1;
+            if unresolved == 0 {
+                break;
+            }
+        }
+        expand_current(&mut search, map, unit, context, current_node, current);
+    }
+    costs_by_tile.into_boxed_slice()
+}
+
+fn pop_current(search: &mut PreparedRouteSearch) -> Option<(FrontierNode, RouteRecord)> {
+    while let Some(node) = search.frontier.pop() {
+        search.metrics.popped();
+        if is_current_best(&search.best_by_state, search.remaining_slots, node) {
+            return Some((node, search.records[node.record_index]));
+        }
+    }
+    None
+}
+
+fn expand_current(
+    search: &mut PreparedRouteSearch,
+    map: &MapDefinition,
+    unit: &Unit,
+    context: EngineContext<'_>,
+    current_node: FrontierNode,
+    current: RouteRecord,
+) {
+    search.metrics.expanded();
+    let (neighbors, neighbor_count) = neighbor_indices(
+        map,
+        context.compiled_movement_map(),
+        current.state.tile_index,
+    );
+    for &next_index in &neighbors[..neighbor_count] {
+        search.metrics.examined_edge();
+        let Some(next_coordinate) = map.coordinate_at(HexTileIndex::new(next_index)) else {
+            continue;
+        };
+        if search.occupied.contains(next_index) {
+            continue;
+        }
+        if !context.can_plan_through_tile(unit, next_coordinate) || search.access.blocks(next_index)
+        {
+            continue;
+        }
+        let MovementCost::Passable(enter_cost) = movement_cost_for_index(
+            current.state.tile_index,
+            next_coordinate,
+            next_index,
+            map,
+            search.movement_domain,
+            context,
+            &search.access,
+        ) else {
+            continue;
+        };
+        if enter_cost > search.maximum_movement && unit.carried_artifact_id().is_none() {
+            continue;
+        }
+        let Some(next_score) = next_score(current.score, enter_cost) else {
+            continue;
+        };
+        let Some((turns, remaining)) = advance_route(
+            current.state,
+            current.score.turns,
+            enter_cost,
+            search.maximum_movement,
+        ) else {
+            continue;
+        };
+        let next_state = RouteState {
+            tile_index: next_index,
+            remaining,
+            started: true,
+        };
+        let next_score = RouteScore {
+            turns,
+            ..next_score
+        };
+        if !record_if_better(
+            &mut search.best_by_state,
+            search.remaining_slots,
+            next_state,
+            next_score,
+            search.records.len(),
+        ) {
+            continue;
+        }
+        let record_index = search.records.len();
+        let record = RouteRecord {
+            state: next_state,
+            score: next_score,
+            parent: Some(current_node.record_index),
+            enter_cost,
+        };
+        search.records.push(record);
+        search.metrics.retained_record();
+        if let Some(node) = frontier_node(map, record_index, record) {
+            search.frontier.push(node);
+            search.metrics.pushed();
+        }
     }
 }
 

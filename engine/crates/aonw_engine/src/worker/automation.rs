@@ -15,7 +15,7 @@ use super::rules::{
 };
 use super::score::{assignment_score, improvement_score};
 use crate::movement::{
-    movement_from_plan, plan_route_for_unit, reachable_path_hits_hidden_blocker,
+    find_route_costs, movement_from_plan, plan_route_for_unit, reachable_path_hits_hidden_blocker,
 };
 use crate::{
     CommandRejectionCode, DomainEvent, EngineContext, ExecutionEvidence, UnitMovementExecution,
@@ -78,7 +78,7 @@ fn compute_automation_plan(
         .filter(|city| city.owner_player_id() == unit.owner_player_id())
         .collect::<Vec<_>>();
     owned_cities.sort_unstable_by(|left, right| left.id().cmp(right.id()));
-    let mut reachable = Vec::new();
+    let mut examined = Vec::new();
     'cities: for city in owned_cities {
         let mut targets = city.controlled_hexes().to_vec();
         targets.sort_unstable();
@@ -90,18 +90,39 @@ fn compute_automation_plan(
             if reserved.contains(&target) {
                 continue;
             }
-            let Some(movement_cost) =
-                route_cost(state, planning_context, unit, target, &mut metrics)
-            else {
-                continue;
-            };
-            reachable.push(ReachableTarget {
-                city,
-                coordinate: target,
-                movement_cost,
-            });
+            examined.push((city, target));
         }
     }
+    let route_targets = examined
+        .iter()
+        .filter_map(|(_, target)| (*target != unit.position()).then_some(*target))
+        .collect::<Vec<_>>();
+    for _ in &route_targets {
+        metrics.route();
+    }
+    let route_costs = find_route_costs(
+        state.units(),
+        context.map(),
+        unit,
+        &route_targets,
+        unit.movement_units(),
+        planning_context,
+    );
+    let reachable = examined
+        .into_iter()
+        .filter_map(|(city, coordinate)| {
+            let movement_cost = if coordinate == unit.position() {
+                0
+            } else {
+                route_costs.cost_at(context.map(), coordinate)?
+            };
+            Some(ReachableTarget {
+                city,
+                coordinate,
+                movement_cost,
+            })
+        })
+        .collect::<Vec<_>>();
 
     let build = (unit.worker_build_charges() > 0)
         .then(|| best_build(state, planning_context, unit, &reachable, &mut metrics))
@@ -390,30 +411,6 @@ fn best_assignment(
         }
     }
     best
-}
-
-fn route_cost(
-    state: &GameState,
-    context: EngineContext<'_>,
-    unit: &Unit,
-    target: HexCoord,
-    metrics: &mut WorkerAutomationMetrics,
-) -> Option<u32> {
-    if target == unit.position() {
-        return Some(0);
-    }
-    metrics.route();
-    plan_route_for_unit(
-        state.revision().get(),
-        state.units(),
-        context,
-        unit,
-        target,
-        unit.movement_units(),
-        false,
-    )
-    .ok()
-    .map(|route| route.total_cost().get())
 }
 
 fn record_legality(context: EngineContext<'_>, metrics: &mut WorkerAutomationMetrics) -> bool {

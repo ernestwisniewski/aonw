@@ -56,6 +56,7 @@ pub(crate) use query::plan_terrain_route;
 #[cfg(test)]
 pub(crate) use reachable::find_reachable_tiles;
 pub(crate) use reachable::find_reachable_tiles_with_workspace;
+pub(crate) use route_search::find_route_costs;
 pub(crate) use transition::MovementTransition;
 pub(crate) use transition::apply_move_unit;
 pub(crate) use transition::{movement_from_plan, reachable_path_hits_hidden_blocker};
