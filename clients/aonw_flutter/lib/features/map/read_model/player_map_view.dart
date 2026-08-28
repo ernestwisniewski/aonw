@@ -1,3 +1,4 @@
+import '../../artifacts/read_model/artifact_view.dart';
 import '../../cities/read_model/city_view.dart';
 import '../../turns/read_model/recipient_turn_view.dart';
 import '../../workers/read_model/worker_view.dart';
@@ -55,6 +56,8 @@ final class VisibleUnitView {
     this.workerBuildCharges = 0,
     this.workerJob,
     this.workerAssignment,
+    this.carriedArtifactId,
+    this.excavatingArtifactId,
   }) : army = List.unmodifiable(army);
 
   final String id;
@@ -70,6 +73,8 @@ final class VisibleUnitView {
   final int workerBuildCharges;
   final WorkerJobView? workerJob;
   final MapHexCoordinate? workerAssignment;
+  final String? carriedArtifactId;
+  final String? excavatingArtifactId;
 }
 
 final class VisibleArmyTroopView {
@@ -86,11 +91,17 @@ final class PlayerMapView {
     required this.turnView,
     required List<VisibleUnitView> units,
     List<CityView> cities = const [],
+    List<WorldArtifactView> artifacts = const [],
+    List<String> diplomaticCounterpartPlayerIds = const [],
     List<FieldImprovementView> fieldImprovements = const [],
     List<RoadView> roads = const [],
     this.cityFoundingDraft,
   }) : units = List.unmodifiable(units),
        cities = List.unmodifiable(cities),
+       artifacts = List.unmodifiable(artifacts),
+       diplomaticCounterpartPlayerIds = List.unmodifiable(
+         diplomaticCounterpartPlayerIds,
+       ),
        fieldImprovements = List.unmodifiable(fieldImprovements),
        roads = List.unmodifiable(roads) {
     final byCoordinate = <MapHexCoordinate, List<VisibleUnitView>>{};
@@ -112,6 +123,28 @@ final class PlayerMapView {
       for (final city in cities)
         if (city.ownerPlayerId == actorPlayerId) city.id: city,
     });
+    final unitsById = {for (final unit in units) unit.id: unit};
+    final citiesById = {for (final city in cities) city.id: city};
+    _artifactsById = Map.unmodifiable({
+      for (final artifact in artifacts) artifact.id: artifact,
+    });
+    final artifactsByCoordinate = <MapHexCoordinate, List<WorldArtifactView>>{};
+    for (final artifact in artifacts) {
+      final coordinate = switch (artifact.location) {
+        MapArtifactLocationView(:final coordinate) => coordinate,
+        ExcavationArtifactLocationView(:final coordinate) => coordinate,
+        CarriedArtifactLocationView(:final unitId) =>
+          unitsById[unitId]?.coordinate,
+        StoredArtifactLocationView(:final cityId) => citiesById[cityId]?.center,
+      };
+      if (coordinate != null) {
+        (artifactsByCoordinate[coordinate] ??= []).add(artifact);
+      }
+    }
+    _artifactsByCoordinate = Map.unmodifiable({
+      for (final entry in artifactsByCoordinate.entries)
+        entry.key: List<WorldArtifactView>.unmodifiable(entry.value),
+    });
     _fieldImprovementsByCoordinate = Map.unmodifiable({
       for (final improvement in fieldImprovements)
         improvement.coordinate: improvement,
@@ -128,6 +161,8 @@ final class PlayerMapView {
     required PendingActionView? pendingAction,
     required List<VisibleUnitView> units,
     List<CityView> cities = const [],
+    List<WorldArtifactView> artifacts = const [],
+    List<String> diplomaticCounterpartPlayerIds = const [],
     List<FieldImprovementView> fieldImprovements = const [],
     List<RoadView> roads = const [],
     CityFoundingDraftView? cityFoundingDraft,
@@ -149,6 +184,8 @@ final class PlayerMapView {
     ),
     units: units,
     cities: cities,
+    artifacts: artifacts,
+    diplomaticCounterpartPlayerIds: diplomaticCounterpartPlayerIds,
     fieldImprovements: fieldImprovements,
     roads: roads,
     cityFoundingDraft: cityFoundingDraft,
@@ -159,6 +196,8 @@ final class PlayerMapView {
   final RecipientTurnView turnView;
   final List<VisibleUnitView> units;
   final List<CityView> cities;
+  final List<WorldArtifactView> artifacts;
+  final List<String> diplomaticCounterpartPlayerIds;
   final List<FieldImprovementView> fieldImprovements;
   final List<RoadView> roads;
   final CityFoundingDraftView? cityFoundingDraft;
@@ -167,6 +206,9 @@ final class PlayerMapView {
   late final Map<MapHexCoordinate, CityView> _citiesByCoordinate;
   late final Map<String, CityView> _citiesById;
   late final Map<String, CityView> _controlledCitiesById;
+  late final Map<String, WorldArtifactView> _artifactsById;
+  late final Map<MapHexCoordinate, List<WorldArtifactView>>
+  _artifactsByCoordinate;
   late final Map<MapHexCoordinate, FieldImprovementView>
   _fieldImprovementsByCoordinate;
   late final Map<MapHexCoordinate, RoadView> _roadsByCoordinate;
@@ -194,6 +236,12 @@ final class PlayerMapView {
   CityView? cityById(String cityId) => _citiesById[cityId];
 
   CityView? controlledCityById(String cityId) => _controlledCitiesById[cityId];
+
+  WorldArtifactView? artifactById(String artifactId) =>
+      _artifactsById[artifactId];
+
+  Iterable<WorldArtifactView> artifactsAt(MapHexCoordinate coordinate) =>
+      _artifactsByCoordinate[coordinate] ?? const <WorldArtifactView>[];
 
   FieldImprovementView? fieldImprovementAt(MapHexCoordinate coordinate) =>
       _fieldImprovementsByCoordinate[coordinate];

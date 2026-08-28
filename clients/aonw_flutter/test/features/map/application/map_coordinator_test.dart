@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:aonw_flutter/features/artifacts/application/artifact_session_port.dart';
+import 'package:aonw_flutter/features/artifacts/read_model/artifact_view.dart';
+
 import 'package:aonw_flutter/features/combat/application/combat_session_port.dart';
 import 'package:aonw_flutter/features/combat/read_model/combat_view.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
@@ -433,6 +436,7 @@ final class _CompletingGameSession
         UnitLogisticsSessionPort,
         WorkerSessionPort,
         ProductionSessionPort,
+        ArtifactSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   final requests = <Completer<MapScene>>[];
@@ -512,6 +516,12 @@ final class _CompletingGameSession
   Future<ProductionCommandResultView> executeProductionAction({
     required int expectedRevision,
     required ProductionActionView action,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<ArtifactCommandResultView> executeArtifactAction({
+    required int expectedRevision,
+    required ArtifactActionView action,
   }) => throw UnimplementedError();
 
   @override

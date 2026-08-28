@@ -1,3 +1,4 @@
+import '../../artifacts/application/artifact_state.dart';
 import '../../cities/application/city_state.dart';
 import '../../combat/application/combat_state.dart';
 import '../../logistics/application/unit_logistics_state.dart';
@@ -40,6 +41,7 @@ final class MapInteractionState {
     this.city,
     this.worker,
     this.production,
+    this.artifact,
     this.referenceVisible = true,
   });
 
@@ -57,6 +59,7 @@ final class MapInteractionState {
   final CityState? city;
   final WorkerState? worker;
   final ProductionState? production;
+  final ArtifactState? artifact;
   final bool referenceVisible;
 
   MapInteractionState copyWith({
@@ -86,6 +89,8 @@ final class MapInteractionState {
     bool clearWorker = false,
     ProductionState? production,
     bool clearProduction = false,
+    ArtifactState? artifact,
+    bool clearArtifact = false,
     bool? referenceVisible,
   }) => MapInteractionState(
     hovered: _replaceNullable(this.hovered, hovered, clearHovered),
@@ -114,6 +119,7 @@ final class MapInteractionState {
     city: _replaceNullable(this.city, city, clearCity),
     worker: _replaceNullable(this.worker, worker, clearWorker),
     production: _replaceNullable(this.production, production, clearProduction),
+    artifact: _replaceNullable(this.artifact, artifact, clearArtifact),
     referenceVisible: referenceVisible ?? this.referenceVisible,
   );
 }

@@ -1,3 +1,4 @@
+import '../../features/artifacts/read_model/artifact_view.dart';
 import '../../features/cities/read_model/city_view.dart';
 import '../../features/map/presentation/map_render_snapshot.dart';
 import '../../features/map/read_model/map_view.dart';
@@ -16,6 +17,8 @@ final class FlameScenePatch {
     required List<String> removedUnitIds,
     required List<CityView> cityUpserts,
     required List<String> removedCityIds,
+    required List<WorldArtifactView> artifactUpserts,
+    required List<String> removedArtifactIds,
     required List<FieldImprovementView> fieldImprovementUpserts,
     required List<MapHexCoordinate> removedFieldImprovementCoordinates,
     required List<RoadView> roadUpserts,
@@ -26,6 +29,8 @@ final class FlameScenePatch {
        removedUnitIds = List.unmodifiable(removedUnitIds),
        cityUpserts = List.unmodifiable(cityUpserts),
        removedCityIds = List.unmodifiable(removedCityIds),
+       artifactUpserts = List.unmodifiable(artifactUpserts),
+       removedArtifactIds = List.unmodifiable(removedArtifactIds),
        fieldImprovementUpserts = List.unmodifiable(fieldImprovementUpserts),
        removedFieldImprovementCoordinates = List.unmodifiable(
          removedFieldImprovementCoordinates,
@@ -47,6 +52,8 @@ final class FlameScenePatch {
     final nextUnits = _unitsById(next);
     final previousCities = _citiesById(previous);
     final nextCities = _citiesById(next);
+    final previousArtifacts = _artifactsById(previous);
+    final nextArtifacts = _artifactsById(next);
     final previousImprovements = _improvementsByCoordinate(previous);
     final nextImprovements = _improvementsByCoordinate(next);
     final previousRoads = _roadsByCoordinate(previous);
@@ -58,6 +65,15 @@ final class FlameScenePatch {
       removedUnitIds: _removedUnitIds(previous, nextUnits),
       cityUpserts: _cityUpserts(previous, next, previousCities),
       removedCityIds: _removedCityIds(previous, nextCities),
+      artifactUpserts: [
+        for (final artifact in next.player.artifacts)
+          if (!_sameArtifact(previousArtifacts[artifact.id], artifact))
+            artifact,
+      ],
+      removedArtifactIds: [
+        for (final artifact in previous.player.artifacts)
+          if (!nextArtifacts.containsKey(artifact.id)) artifact.id,
+      ],
       fieldImprovementUpserts: [
         for (final improvement in next.player.fieldImprovements)
           if (!_sameImprovement(
@@ -89,6 +105,8 @@ final class FlameScenePatch {
   final List<String> removedUnitIds;
   final List<CityView> cityUpserts;
   final List<String> removedCityIds;
+  final List<WorldArtifactView> artifactUpserts;
+  final List<String> removedArtifactIds;
   final List<FieldImprovementView> fieldImprovementUpserts;
   final List<MapHexCoordinate> removedFieldImprovementCoordinates;
   final List<RoadView> roadUpserts;
@@ -108,6 +126,10 @@ final class FlameScenePatch {
     cityUpserts: next.player.cities,
     removedCityIds:
         previous?.player.cities.map((city) => city.id).toList() ?? const [],
+    artifactUpserts: next.player.artifacts,
+    removedArtifactIds:
+        previous?.player.artifacts.map((artifact) => artifact.id).toList() ??
+        const [],
     fieldImprovementUpserts: next.player.fieldImprovements,
     removedFieldImprovementCoordinates:
         previous?.player.fieldImprovements
@@ -126,6 +148,12 @@ final class FlameScenePatch {
 
   static Map<String, CityView> _citiesById(MapRenderSnapshot snapshot) => {
     for (final city in snapshot.player.cities) city.id: city,
+  };
+
+  static Map<String, WorldArtifactView> _artifactsById(
+    MapRenderSnapshot snapshot,
+  ) => {
+    for (final artifact in snapshot.player.artifacts) artifact.id: artifact,
   };
 
   static Map<MapHexCoordinate, FieldImprovementView> _improvementsByCoordinate(
@@ -258,6 +286,8 @@ final class FlameScenePatch {
       left.coordinate == right.coordinate &&
       left.movementUnits == right.movementUnits &&
       left.posture == right.posture &&
+      left.carriedArtifactId == right.carriedArtifactId &&
+      left.excavatingArtifactId == right.excavatingArtifactId &&
       left.workerBuildCharges == right.workerBuildCharges &&
       left.workerAssignment == right.workerAssignment &&
       _sameWorkerJob(left.workerJob, right.workerJob);
@@ -278,6 +308,49 @@ final class FlameScenePatch {
 
   static bool _sameRoad(RoadView? left, RoadView right) =>
       left != null && left.condition == right.condition;
+
+  static bool _sameArtifact(WorldArtifactView? left, WorldArtifactView right) =>
+      left != null &&
+      left.id == right.id &&
+      left.kind == right.kind &&
+      _sameArtifactLocation(left.location, right.location);
+
+  static bool _sameArtifactLocation(
+    ArtifactLocationView left,
+    ArtifactLocationView right,
+  ) => switch ((left, right)) {
+    (
+      MapArtifactLocationView(coordinate: final leftCoordinate),
+      MapArtifactLocationView(coordinate: final rightCoordinate),
+    ) =>
+      leftCoordinate == rightCoordinate,
+    (
+      CarriedArtifactLocationView(unitId: final leftUnitId),
+      CarriedArtifactLocationView(unitId: final rightUnitId),
+    ) =>
+      leftUnitId == rightUnitId,
+    (
+      StoredArtifactLocationView(cityId: final leftCityId),
+      StoredArtifactLocationView(cityId: final rightCityId),
+    ) =>
+      leftCityId == rightCityId,
+    (
+      ExcavationArtifactLocationView(
+        unitId: final leftUnitId,
+        coordinate: final leftCoordinate,
+        remainingTurns: final leftRemainingTurns,
+      ),
+      ExcavationArtifactLocationView(
+        unitId: final rightUnitId,
+        coordinate: final rightCoordinate,
+        remainingTurns: final rightRemainingTurns,
+      ),
+    ) =>
+      leftUnitId == rightUnitId &&
+          leftCoordinate == rightCoordinate &&
+          leftRemainingTurns == rightRemainingTurns,
+    _ => false,
+  };
 
   static bool _sameWorkerJob(WorkerJobView? left, WorkerJobView? right) {
     if (left == null || right == null) return left == right;

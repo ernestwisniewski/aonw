@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import '../../artifacts/application/artifact_session_port.dart';
+import '../../artifacts/application/artifact_state.dart';
+import '../../artifacts/application/artifact_workflow.dart';
+import '../../artifacts/read_model/artifact_view.dart';
 import '../../cities/application/city_session_port.dart';
 import '../../cities/application/city_state.dart';
 import '../../cities/application/city_workflow.dart';
@@ -50,6 +54,7 @@ final class MapCoordinator {
     required UnitLogisticsSessionPort logistics,
     WorkerSessionPort? workers,
     ProductionSessionPort? production,
+    ArtifactSessionPort? artifacts,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     this.assets = MapAssetPaths.starter,
@@ -79,6 +84,10 @@ final class MapCoordinator {
          session: production ?? _requireProductionSession(movement),
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
+       _artifacts = ArtifactWorkflow(
+         session: artifacts ?? _requireArtifactSession(movement),
+         diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
        _unitActions = UnitActionWorkflow(
          runner: UnitActionCommandRunner(
            session: unitActions,
@@ -98,6 +107,7 @@ final class MapCoordinator {
   final UnitLogisticsWorkflow _logistics;
   final WorkerWorkflow _workers;
   final ProductionWorkflow _production;
+  final ArtifactWorkflow _artifacts;
   final UnitActionWorkflow _unitActions;
   final TurnWorkflow _turns;
   final MapDiagnosticReporter _diagnosticReporter;
@@ -268,6 +278,7 @@ GameSessionReady _moveResultState(
           clearUnitLogistics: true,
           clearWorker: true,
           clearProduction: true,
+          clearArtifact: true,
           clearCombat: true,
           movementPending: false,
           clearMovementError: true,
@@ -301,7 +312,8 @@ bool _interactionBusy(MapInteractionState interaction) =>
     (interaction.worker?.commandPending ?? false) ||
     (interaction.worker?.loading ?? false) ||
     (interaction.production?.commandPending ?? false) ||
-    (interaction.production?.loading ?? false);
+    (interaction.production?.loading ?? false) ||
+    (interaction.artifact?.commandPending ?? false);
 
 CombatSessionPort _requireCombatSession(MovementSessionPort movement) {
   if (movement case final CombatSessionPort combat) return combat;
@@ -336,6 +348,15 @@ ProductionSessionPort _requireProductionSession(MovementSessionPort movement) {
     movement,
     'movement',
     'must also provide the production session port',
+  );
+}
+
+ArtifactSessionPort _requireArtifactSession(MovementSessionPort movement) {
+  if (movement case final ArtifactSessionPort artifacts) return artifacts;
+  throw ArgumentError.value(
+    movement,
+    'movement',
+    'must also provide the artifact session port',
   );
 }
 

@@ -4,6 +4,8 @@ import '../../../../design_system/aonw_tokens.dart';
 import '../../../../design_system/widgets/aonw_panel.dart';
 import '../../../../design_system/widgets/aonw_progress_indicator.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../artifacts/presentation/artifact_panel.dart';
+import '../../../artifacts/read_model/artifact_view.dart';
 import '../../../cities/presentation/city_copy.dart';
 import '../../../cities/presentation/city_panel.dart';
 import '../../../cities/read_model/city_view.dart';
@@ -53,6 +55,7 @@ final class MapSelectionOverlay extends StatelessWidget {
         city: interaction.city?.cityId == null
             ? scene.player.cityAt(selected)
             : scene.player.cityById(interaction.city!.cityId!),
+        player: scene.player,
         pendingWorkerAction:
             scene.player.pendingAction is PendingWorkerActionSelectionView
             ? scene.player.pendingAction! as PendingWorkerActionSelectionView
@@ -68,6 +71,7 @@ final class MapSelectionOverlay extends StatelessWidget {
         onConfirmCityFounding: controller.confirmCityFounding,
         onCityAction: controller.executeCityAction,
         onProductionAction: controller.executeProductionAction,
+        onArtifactAction: controller.executeArtifactAction,
       ),
     );
   }
@@ -79,6 +83,7 @@ final class _MapSelectionPanel extends StatelessWidget {
     required this.interaction,
     required this.unit,
     required this.city,
+    required this.player,
     required this.pendingWorkerAction,
     required this.onConfirmMove,
     required this.onUnitAction,
@@ -91,12 +96,14 @@ final class _MapSelectionPanel extends StatelessWidget {
     required this.onConfirmCityFounding,
     required this.onCityAction,
     required this.onProductionAction,
+    required this.onArtifactAction,
   });
 
   final MapHexCoordinate coordinate;
   final MapInteractionState interaction;
   final VisibleUnitView? unit;
   final CityView? city;
+  final PlayerMapView player;
   final PendingWorkerActionSelectionView? pendingWorkerAction;
   final VoidCallback onConfirmMove;
   final ValueChanged<UnitActionKindView> onUnitAction;
@@ -109,6 +116,7 @@ final class _MapSelectionPanel extends StatelessWidget {
   final VoidCallback onConfirmCityFounding;
   final ValueChanged<CityActionView> onCityAction;
   final ValueChanged<ProductionActionView> onProductionAction;
+  final ValueChanged<ArtifactActionView> onArtifactAction;
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +154,8 @@ final class _MapSelectionPanel extends StatelessWidget {
                     enabled:
                         !interaction.movementPending &&
                         !(interaction.worker?.commandPending ?? false) &&
-                        !(interaction.production?.commandPending ?? false),
+                        !(interaction.production?.commandPending ?? false) &&
+                        !(interaction.artifact?.commandPending ?? false),
                     onAction: onUnitAction,
                     onLogisticsAction: onUnitLogistics,
                   ),
@@ -163,7 +172,8 @@ final class _MapSelectionPanel extends StatelessWidget {
                           !(interaction.actionDeck?.commandPending ?? false) &&
                           !(interaction.unitLogistics?.commandPending ??
                               false) &&
-                          !(interaction.production?.commandPending ?? false),
+                          !(interaction.production?.commandPending ?? false) &&
+                          !(interaction.artifact?.commandPending ?? false),
                       onAction: onWorkerAction,
                     ),
                 if (interaction.city?.founderUnitId == null)
@@ -189,15 +199,34 @@ final class _MapSelectionPanel extends StatelessWidget {
                   onToggleFoundingHex: onToggleCityFoundingHex,
                   onConfirmFounding: onConfirmCityFounding,
                   onAction: onCityAction,
-                  enabled: !(interaction.production?.commandPending ?? false),
+                  enabled:
+                      !(interaction.production?.commandPending ?? false) &&
+                      !(interaction.artifact?.commandPending ?? false),
                 ),
               if (interaction.production case final productionState?)
                 ProductionPanel(
                   state: productionState,
                   enabled:
                       !(interaction.city?.commandPending ?? false) &&
-                      !interaction.movementPending,
+                      !interaction.movementPending &&
+                      !(interaction.artifact?.commandPending ?? false),
                   onAction: onProductionAction,
+                ),
+              if (interaction.artifact case final artifactState?)
+                ArtifactPanel(
+                  state: artifactState,
+                  player: player,
+                  coordinate: coordinate,
+                  unit: unit,
+                  city: city,
+                  enabled:
+                      !interaction.movementPending &&
+                      !(interaction.city?.commandPending ?? false) &&
+                      !(interaction.production?.commandPending ?? false) &&
+                      !(interaction.worker?.commandPending ?? false) &&
+                      !(interaction.actionDeck?.commandPending ?? false) &&
+                      !(interaction.unitLogistics?.commandPending ?? false),
+                  onAction: onArtifactAction,
                 ),
               _MovementFeedback(interaction: interaction),
             ],
@@ -231,7 +260,8 @@ final class _MovementControls extends StatelessWidget {
         (interaction.actionDeck?.commandPending ?? false) ||
         (interaction.unitLogistics?.commandPending ?? false) ||
         (interaction.worker?.commandPending ?? false) ||
-        (interaction.production?.commandPending ?? false);
+        (interaction.production?.commandPending ?? false) ||
+        (interaction.artifact?.commandPending ?? false);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,3 +1,4 @@
+import 'package:aonw_flutter/features/artifacts/read_model/artifact_view.dart';
 import 'package:aonw_flutter/features/map/infrastructure/player_map_view_mapper.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/pending_action_view.dart';
@@ -244,6 +245,66 @@ void main() {
     expect(details.productionQueue?.resourceAllocation, {MapResource.oil: 2});
   });
 
+  test('maps exact artifact locations and diplomacy counterparts', () {
+    final player = mapper.fromWire(
+      _snapshot(
+        [_unit('unit-a', carriedArtifactId: 'artifact-b')],
+        artifacts: const [
+          AonwPlayerArtifactView(
+            id: 'artifact-a',
+            type: AonwWorldArtifactType.ancientImperialCrown,
+            location: AonwMapArtifactLocation(AonwCoordinate(col: 2, row: 1)),
+          ),
+          AonwPlayerArtifactView(
+            id: 'artifact-b',
+            type: AonwWorldArtifactType.heroSword,
+            location: AonwCarriedArtifactLocation('unit-a'),
+          ),
+        ],
+        diplomacy: _diplomacy(const ['player-2']),
+      ),
+      map: testMapScene().map,
+      actorPlayerId: 'player-1',
+    );
+
+    expect(
+      player.artifactById('artifact-a')?.location,
+      isA<MapArtifactLocationView>(),
+    );
+    expect(player.artifactsAt((col: 0, row: 0)), hasLength(1));
+    expect(player.units.single.carriedArtifactId, 'artifact-b');
+    expect(player.diplomaticCounterpartPlayerIds, ['player-2']);
+  });
+
+  test('rejects inconsistent artifact and diplomacy references', () {
+    final map = testMapScene().map;
+    const carried = AonwPlayerArtifactView(
+      id: 'artifact-a',
+      type: AonwWorldArtifactType.heroSword,
+      location: AonwCarriedArtifactLocation('unit-a'),
+    );
+
+    expect(
+      () => mapper.fromWire(
+        _snapshot([_unit('unit-a')], artifacts: const [carried]),
+        map: map,
+        actorPlayerId: 'player-1',
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => mapper.fromWire(
+        _snapshot(
+          const [],
+          diplomacy: _diplomacy(const ['player-2', 'player-2']),
+        ),
+        map: map,
+        actorPlayerId: 'player-1',
+      ),
+      throwsFormatException,
+    );
+  });
+
   test(
     'rejects pending actions for an uncontrolled unit or invalid target',
     () {
@@ -286,6 +347,8 @@ AonwPlayerViewSnapshot _snapshot(
   String? mapHash,
   AonwPendingActionView? pendingAction,
   List<AonwPlayerCityView> cities = const [],
+  List<AonwPlayerArtifactView> artifacts = const [],
+  AonwPlayerDiplomacyView? diplomacy,
   List<AonwFieldImprovementView> fieldImprovements = const [],
   List<AonwRoadView> roads = const [],
 }) => AonwPlayerViewSnapshot(
@@ -309,15 +372,10 @@ AonwPlayerViewSnapshot _snapshot(
   ),
   pendingAction: pendingAction,
   cityFoundingDraft: null,
-  diplomacy: const AonwPlayerDiplomacyView(
-    relations: [],
-    proposals: [],
-    messages: [],
-    resourceTradeAgreements: [],
-  ),
+  diplomacy: diplomacy ?? _diplomacy(),
   units: units,
   cities: cities,
-  artifacts: const [],
+  artifacts: artifacts,
   fieldImprovements: fieldImprovements,
   roads: roads,
 );
@@ -358,6 +416,7 @@ AonwPlayerUnitView _unit(
   String ownerPlayerId = 'player-1',
   AonwOwnedUnitDetails? ownedDetails,
   AonwUnitKind kind = AonwUnitKind.commander,
+  String? carriedArtifactId,
 }) => AonwPlayerUnitView(
   id: id,
   ownerPlayerId: ownerPlayerId,
@@ -369,5 +428,24 @@ AonwPlayerUnitView _unit(
   workerBuildCharges: ownedDetails?.workerBuildCharges ?? 0,
   workerJob: ownedDetails?.workerJob,
   workerAssignment: ownedDetails?.workerAssignment,
+  carriedArtifactId: carriedArtifactId,
   ownedDetails: ownedDetails,
 );
+
+AonwPlayerDiplomacyView _diplomacy([List<String> counterpartIds = const []]) =>
+    AonwPlayerDiplomacyView(
+      relations: [
+        for (final id in counterpartIds)
+          AonwPlayerDiplomaticRelationView(
+            counterpartPlayerId: id,
+            status: AonwDiplomaticRelationStatus.neutral,
+            relationScore: 0,
+            statusExpiresOnTurn: null,
+            lastChangedTurn: null,
+            lastChangeReason: null,
+          ),
+      ],
+      proposals: const [],
+      messages: const [],
+      resourceTradeAgreements: const [],
+    );

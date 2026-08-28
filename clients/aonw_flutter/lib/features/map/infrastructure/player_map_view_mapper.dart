@@ -1,11 +1,13 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 
+import '../../artifacts/read_model/artifact_view.dart';
 import '../../cities/read_model/city_view.dart';
 import '../../turns/read_model/recipient_turn_view.dart';
 import '../../workers/infrastructure/worker_view_mapper.dart';
 import '../read_model/map_view.dart';
 import '../read_model/player_map_view.dart';
 import 'pending_action_view_mapper.dart';
+import 'recipient_projection_validator.dart';
 
 final class PlayerMapViewMapper {
   const PlayerMapViewMapper({
@@ -23,8 +25,21 @@ final class PlayerMapViewMapper {
     required MapView map,
     required String actorPlayerId,
   }) {
-    _validateSnapshot(wire, map: map, actorPlayerId: actorPlayerId);
+    if (actorPlayerId.isEmpty) {
+      throw const FormatException('Session actor player id is empty.');
+    }
+    RecipientProjectionValidator(map).validateSnapshot(wire);
     final units = _mapUnits(wire.units, map);
+    final cities = [for (final city in wire.cities) _mapCity(city)];
+    final artifacts = [
+      for (final artifact in wire.artifacts) _mapArtifact(artifact),
+    ];
+    _validateArtifactReferences(
+      artifacts,
+      units: units,
+      cities: cities,
+      actorPlayerId: actorPlayerId,
+    );
     final pendingAction = _pendingActionMapper.fromWire(
       wire.pendingAction,
       actorPlayerId: actorPlayerId,
@@ -54,7 +69,12 @@ final class PlayerMapViewMapper {
         ),
       ),
       units: units,
-      cities: [for (final city in wire.cities) _mapCity(city)],
+      cities: cities,
+      artifacts: artifacts,
+      diplomaticCounterpartPlayerIds: _counterparts(
+        wire.diplomacy,
+        actorPlayerId,
+      ),
       fieldImprovements: [
         for (final improvement in wire.fieldImprovements)
           _workerMapper.fieldImprovement(improvement, map),
@@ -64,29 +84,6 @@ final class PlayerMapViewMapper {
           ? null
           : _mapCityFoundingDraft(wire.cityFoundingDraft!),
     );
-  }
-
-  static void _validateSnapshot(
-    AonwPlayerViewSnapshot wire, {
-    required MapView map,
-    required String actorPlayerId,
-  }) {
-    if (actorPlayerId.isEmpty) {
-      throw const FormatException('Session actor player id is empty.');
-    }
-    _validateStamp(wire.stamp);
-    if (wire.stamp.mapHash != map.contentHash) {
-      throw const FormatException('Session snapshot belongs to another map.');
-    }
-    if (wire.turn < 1) {
-      throw const FormatException('Session snapshot turn is not positive.');
-    }
-  }
-
-  static void _validateStamp(AonwSessionStamp stamp) {
-    _validateHash(stamp.stateDigest, 'state digest');
-    _validateHash(stamp.mapHash, 'map hash');
-    _validateHash(stamp.rulesetHash, 'ruleset hash');
   }
 
   List<VisibleUnitView> _mapUnits(
@@ -150,6 +147,8 @@ final class PlayerMapViewMapper {
         workerAssignment: unit.workerAssignment == null
             ? null
             : _ownedCoordinate(unit.workerAssignment!, map),
+        carriedArtifactId: unit.carriedArtifactId,
+        excavatingArtifactId: unit.ownedDetails?.excavatingArtifactId,
       );
 
   static CityView _mapCity(AonwPlayerCityView city) => CityView(
@@ -209,6 +208,112 @@ final class PlayerMapViewMapper {
     },
   );
 
+  static WorldArtifactView _mapArtifact(AonwPlayerArtifactView value) =>
+      WorldArtifactView(
+        id: value.id,
+        kind: WorldArtifactKindView.values.byName(value.type.name),
+        location: switch (value.location) {
+          AonwMapArtifactLocation(:final coordinate) => MapArtifactLocationView(
+            _cityCoordinate(coordinate),
+          ),
+          AonwCarriedArtifactLocation(:final unitId) =>
+            CarriedArtifactLocationView(unitId),
+          AonwStoredArtifactLocation(:final cityId) =>
+            StoredArtifactLocationView(cityId),
+          AonwExcavationArtifactLocation(
+            :final unitId,
+            :final coordinate,
+            :final remainingTurns,
+          ) =>
+            remainingTurns < 1
+                ? throw const FormatException(
+                    'Artifact excavation duration is not positive.',
+                  )
+                : ExcavationArtifactLocationView(
+                    unitId: unitId,
+                    coordinate: _cityCoordinate(coordinate),
+                    remainingTurns: remainingTurns,
+                  ),
+        },
+      );
+
+  static void _validateArtifactReferences(
+    List<WorldArtifactView> artifacts, {
+    required List<VisibleUnitView> units,
+    required List<CityView> cities,
+    required String actorPlayerId,
+  }) {
+    final unitsById = {for (final unit in units) unit.id: unit};
+    final citiesById = {for (final city in cities) city.id: city};
+    final artifactsById = {
+      for (final artifact in artifacts) artifact.id: artifact,
+    };
+    for (final artifact in artifacts) {
+      switch (artifact.location) {
+        case MapArtifactLocationView():
+          break;
+        case CarriedArtifactLocationView(:final unitId):
+          final unit = unitsById[unitId];
+          if (unit == null || unit.carriedArtifactId != artifact.id) {
+            throw const FormatException('Artifact carrier is inconsistent.');
+          }
+        case StoredArtifactLocationView(:final cityId):
+          if (!citiesById.containsKey(cityId)) {
+            throw const FormatException('Artifact storage city is absent.');
+          }
+        case ExcavationArtifactLocationView(:final unitId, :final coordinate):
+          final unit = unitsById[unitId];
+          if (unit == null || unit.coordinate != coordinate) {
+            throw const FormatException('Artifact excavation is inconsistent.');
+          }
+          if (unit.ownerPlayerId == actorPlayerId &&
+              unit.excavatingArtifactId != artifact.id) {
+            throw const FormatException(
+              'Controlled artifact excavation is inconsistent.',
+            );
+          }
+      }
+    }
+    for (final unit in units) {
+      final carried = unit.carriedArtifactId;
+      if (carried != null) {
+        final location = artifactsById[carried]?.location;
+        if (location is! CarriedArtifactLocationView ||
+            location.unitId != unit.id) {
+          throw const FormatException(
+            'Unit artifact reference is inconsistent.',
+          );
+        }
+      }
+      final excavation = unit.excavatingArtifactId;
+      if (excavation != null) {
+        final location = artifactsById[excavation]?.location;
+        if (location is! ExcavationArtifactLocationView ||
+            location.unitId != unit.id) {
+          throw const FormatException(
+            'Unit excavation reference is inconsistent.',
+          );
+        }
+      }
+    }
+  }
+
+  static List<String> _counterparts(
+    AonwPlayerDiplomacyView diplomacy,
+    String actorPlayerId,
+  ) {
+    final seen = <String>{};
+    final result = <String>[];
+    for (final relation in diplomacy.relations) {
+      final id = relation.counterpartPlayerId;
+      if (id.isEmpty || id == actorPlayerId || !seen.add(id)) {
+        throw const FormatException('Diplomatic counterpart is invalid.');
+      }
+      result.add(id);
+    }
+    return result;
+  }
+
   static CityFoundingDraftView _mapCityFoundingDraft(
     AonwCityFoundingDraft draft,
   ) => CityFoundingDraftView(
@@ -242,12 +347,6 @@ final class PlayerMapViewMapper {
       throw const FormatException('Owned unit coordinate is outside the map.');
     }
     return value;
-  }
-
-  static void _validateHash(String value, String label) {
-    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(value)) {
-      throw FormatException('Session $label is not a canonical digest.');
-    }
   }
 
   static VisibleUnitKind _kind(AonwUnitKind value) =>

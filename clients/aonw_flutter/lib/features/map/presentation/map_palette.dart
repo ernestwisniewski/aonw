@@ -14,6 +14,9 @@ abstract final class MapPalette {
   static const controlledCity = Color(0xFFF4C95D);
   static const foreignCity = Color(0xFFCE6A85);
   static const cityOutline = Color(0xFF402A23);
+  static const artifact = Color(0xFFB388FF);
+  static const artifactExcavation = Color(0xFFFFD166);
+  static const artifactOutline = Color(0xFF291B3A);
 
   static const _terrain = {
     MapTerrain.ocean: Color(0xFF245B91),

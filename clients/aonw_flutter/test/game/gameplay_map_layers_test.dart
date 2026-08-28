@@ -1,3 +1,4 @@
+import 'package:aonw_flutter/features/artifacts/read_model/artifact_view.dart';
 import 'package:aonw_flutter/features/cities/read_model/city_view.dart';
 import 'package:aonw_flutter/features/combat/application/combat_state.dart';
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
@@ -219,7 +220,7 @@ void main() {
       expect(game.world.unitLayer.children, hasLength(120));
       expect(game.world.unitLayer.debugCreatedCount, 120);
       expect(game.world.unitLayer.debugSharedPaintCount, 3);
-      expect(game.world.children, hasLength(10));
+      expect(game.world.children, hasLength(11));
     },
   );
 
@@ -370,6 +371,78 @@ void main() {
       expect(game.world.cityLayer.debugSharedPaintCount, 3);
     },
   );
+
+  testWithGame<AonwFlameGame>(
+    'reconciles artifact markers across map excavation and carrying',
+    AonwFlameGame.new,
+    (game) async {
+      const artifactId = 'artifact-crown';
+      const coordinate = (col: 0, row: 0);
+      final unit = testVisibleUnit();
+      const onMap = WorldArtifactView(
+        id: artifactId,
+        kind: WorldArtifactKindView.ancientImperialCrown,
+        location: MapArtifactLocationView(coordinate),
+      );
+      final scene = testMapScene(units: [unit], artifacts: const [onMap]);
+      game.replaceScene(_snapshot(scene, player: scene.player));
+      await game.ready();
+      final stable = game.world.artifactLayer.debugComponentForArtifact(
+        artifactId,
+      );
+
+      const excavation = WorldArtifactView(
+        id: artifactId,
+        kind: WorldArtifactKindView.ancientImperialCrown,
+        location: ExcavationArtifactLocationView(
+          unitId: 'preview-commander',
+          coordinate: coordinate,
+          remainingTurns: 2,
+        ),
+      );
+      game.replaceScene(
+        _snapshot(
+          scene,
+          player: _player(
+            units: [testVisibleUnit(excavatingArtifactId: artifactId)],
+            artifacts: const [excavation],
+          ),
+        ),
+      );
+
+      expect(
+        game.world.artifactLayer.debugComponentForArtifact(artifactId),
+        same(stable),
+      );
+      expect(
+        stable!.debugArtifact.location,
+        isA<ExcavationArtifactLocationView>(),
+      );
+      expect(game.world.artifactLayer.debugCreatedCount, 1);
+      expect(game.world.artifactLayer.debugUpdatedCount, 1);
+      expect(game.world.artifactLayer.debugSharedPaintCount, 3);
+
+      const carried = WorldArtifactView(
+        id: artifactId,
+        kind: WorldArtifactKindView.ancientImperialCrown,
+        location: CarriedArtifactLocationView('preview-commander'),
+      );
+      game.replaceScene(
+        _snapshot(
+          scene,
+          player: _player(
+            units: [testVisibleUnit(carriedArtifactId: artifactId)],
+            artifacts: const [carried],
+          ),
+        ),
+      );
+
+      expect(game.world.artifactLayer.debugArtifactCount, 0);
+      expect(game.world.artifactLayer.debugRemovedCount, 1);
+      game.update(0);
+      expect(game.world.artifactLayer.children, isEmpty);
+    },
+  );
 }
 
 extension on CombatState {
@@ -402,6 +475,7 @@ PlayerMapView _player({
   String? digest,
   required List<VisibleUnitView> units,
   List<CityView> cities = const [],
+  List<WorldArtifactView> artifacts = const [],
   List<FieldImprovementView> fieldImprovements = const [],
   List<RoadView> roads = const [],
 }) => PlayerMapView.preview(
@@ -416,6 +490,7 @@ PlayerMapView _player({
   pendingAction: null,
   units: units,
   cities: cities,
+  artifacts: artifacts,
   fieldImprovements: fieldImprovements,
   roads: roads,
 );

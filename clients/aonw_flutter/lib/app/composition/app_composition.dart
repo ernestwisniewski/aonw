@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import '../../features/artifacts/application/artifact_session_port.dart';
 import '../../features/cities/application/city_session_port.dart';
 import '../../features/combat/application/combat_session_port.dart';
 import '../../features/logistics/application/unit_logistics_session_port.dart';
@@ -29,6 +30,7 @@ final class AppComposition {
     required UnitLogisticsSessionPort logisticsSession,
     WorkerSessionPort? workerSession,
     ProductionSessionPort? productionSession,
+    ArtifactSessionPort? artifactSession,
     required UnitActionSessionPort unitActionSession,
     required TurnSessionPort turnSession,
     MapInputSource? mapInputSource,
@@ -45,6 +47,8 @@ final class AppComposition {
            workers: workerSession ?? _requireWorkerSession(movementSession),
            production:
                productionSession ?? _requireProductionSession(movementSession),
+           artifacts:
+               artifactSession ?? _requireArtifactSession(movementSession),
            unitActions: unitActionSession,
            turns: turnSession,
          ),
@@ -68,6 +72,7 @@ final class AppComposition {
       logisticsSession: gateway,
       workerSession: gateway.workerSession,
       productionSession: gateway.productionSession,
+      artifactSession: gateway.artifactSession,
       unitActionSession: gateway,
       turnSession: gateway,
       mapInputSource: GamepadMapInputSource(),
@@ -112,5 +117,14 @@ ProductionSessionPort _requireProductionSession(MovementSessionPort movement) {
     movement,
     'movementSession',
     'must also provide the production session port',
+  );
+}
+
+ArtifactSessionPort _requireArtifactSession(MovementSessionPort movement) {
+  if (movement case final ArtifactSessionPort artifacts) return artifacts;
+  throw ArgumentError.value(
+    movement,
+    'movementSession',
+    'must also provide the artifact session port',
   );
 }

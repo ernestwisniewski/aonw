@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../artifacts/application/artifact_session_port.dart';
+import '../../artifacts/read_model/artifact_view.dart';
 import '../../cities/application/city_session_port.dart';
 import '../../cities/read_model/city_view.dart';
 import '../../combat/application/combat_session_port.dart';
@@ -30,6 +32,7 @@ final class MapPresentationController extends ChangeNotifier {
     required UnitLogisticsSessionPort logistics,
     WorkerSessionPort? workers,
     ProductionSessionPort? production,
+    ArtifactSessionPort? artifacts,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     MapAssetPaths assets = MapAssetPaths.starter,
@@ -43,6 +46,7 @@ final class MapPresentationController extends ChangeNotifier {
            logistics: logistics,
            workers: workers,
            production: production,
+           artifacts: artifacts,
            unitActions: unitActions,
            turns: turns,
            assets: assets,
@@ -79,6 +83,9 @@ final class MapPresentationController extends ChangeNotifier {
 
   void executeProductionAction(ProductionActionView action) =>
       _coordinator.executeProductionAction(action);
+
+  void executeArtifactAction(ArtifactActionView action) =>
+      _coordinator.executeArtifactAction(action);
 
   void confirmCombat() => _coordinator.confirmCombat();
 

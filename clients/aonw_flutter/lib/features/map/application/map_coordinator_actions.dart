@@ -20,6 +20,7 @@ extension MapCoordinatorActions on MapCoordinator {
               ? null
               : ProductionState.loading(cityId),
           clearProduction: city.ownedDetails == null,
+          artifact: const ArtifactState(),
           clearCombat: true,
           city: city.ownedDetails == null
               ? CityState(cityId: cityId)
@@ -107,6 +108,21 @@ extension MapCoordinatorActions on MapCoordinator {
       readState: () => _state,
       publish: _setState,
       isDisposed: () => _disposed,
+    );
+  }
+
+  void executeArtifactAction(ArtifactActionView action) {
+    _artifacts.execute(
+      action: action,
+      readState: () => _state,
+      publish: _setState,
+      isDisposed: () => _disposed,
+      refreshSelection: () {
+        final state = _state;
+        if (state is GameSessionReady && state.interaction.selected != null) {
+          unawaited(_select(state.interaction.selected));
+        }
+      },
     );
   }
 

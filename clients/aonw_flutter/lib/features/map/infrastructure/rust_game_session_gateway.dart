@@ -1,6 +1,9 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 
+import '../../artifacts/application/artifact_session_port.dart';
+import '../../artifacts/infrastructure/rust_artifact_gateway.dart';
+import '../../artifacts/read_model/artifact_view.dart';
 import '../../cities/application/city_session_port.dart';
 import '../../cities/infrastructure/rust_city_gateway.dart';
 import '../../cities/read_model/city_view.dart';
@@ -37,6 +40,7 @@ import 'rust_game_session_loader.dart';
 import 'rust_movement_gateway.dart';
 
 part 'rust_game_city_session.dart';
+part 'rust_game_artifact_session.dart';
 part 'rust_game_production_session.dart';
 part 'rust_game_worker_session.dart';
 
@@ -58,6 +62,7 @@ final class RustGameSessionGateway
     RustCityGateway cityGateway = const RustCityGateway(),
     RustWorkerGateway workerGateway = const RustWorkerGateway(),
     RustProductionGateway productionGateway = const RustProductionGateway(),
+    RustArtifactGateway artifactGateway = const RustArtifactGateway(),
     RustTurnGateway turnGateway = const RustTurnGateway(),
     RustUnitLogisticsGateway logisticsGateway =
         const RustUnitLogisticsGateway(),
@@ -74,6 +79,7 @@ final class RustGameSessionGateway
        _cityGateway = cityGateway,
        _workerGateway = workerGateway,
        _productionGateway = productionGateway,
+       _artifactGateway = artifactGateway,
        _turnGateway = turnGateway,
        _logisticsGateway = logisticsGateway,
        _unitActions = RustUnitActionGateway(
@@ -83,6 +89,7 @@ final class RustGameSessionGateway
     citySession = _RustGameCitySession(this);
     workerSession = _RustGameWorkerSession(this);
     productionSession = _RustGameProductionSession(this);
+    artifactSession = _RustGameArtifactSession(this);
   }
 
   final RustGameSessionLoader _loader;
@@ -92,12 +99,14 @@ final class RustGameSessionGateway
   final RustCityGateway _cityGateway;
   final RustWorkerGateway _workerGateway;
   final RustProductionGateway _productionGateway;
+  final RustArtifactGateway _artifactGateway;
   final RustTurnGateway _turnGateway;
   final RustUnitLogisticsGateway _logisticsGateway;
   final RustUnitActionGateway _unitActions;
   late final CitySessionPort citySession;
   late final WorkerSessionPort workerSession;
   late final ProductionSessionPort productionSession;
+  late final ArtifactSessionPort artifactSession;
   AonwRustSession? _session;
   MapView? _map;
   PlayerMapView? _player;

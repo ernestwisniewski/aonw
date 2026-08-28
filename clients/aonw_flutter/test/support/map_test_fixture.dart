@@ -1,3 +1,5 @@
+import 'package:aonw_flutter/features/artifacts/application/artifact_session_port.dart';
+import 'package:aonw_flutter/features/artifacts/read_model/artifact_view.dart';
 import 'package:aonw_flutter/features/cities/application/city_session_port.dart';
 import 'package:aonw_flutter/features/cities/read_model/city_view.dart';
 import 'package:aonw_flutter/features/combat/application/combat_session_port.dart';
@@ -35,6 +37,8 @@ MapScene testMapScene({
   double defaultZoom = 1,
   List<VisibleUnitView> units = const [],
   List<CityView> cities = const [],
+  List<WorldArtifactView> artifacts = const [],
+  List<String> diplomaticCounterpartPlayerIds = const [],
   List<FieldImprovementView> fieldImprovements = const [],
   List<RoadView> roads = const [],
   CityFoundingDraftView? cityFoundingDraft,
@@ -87,6 +91,8 @@ MapScene testMapScene({
       pendingAction: null,
       units: units,
       cities: cities,
+      artifacts: artifacts,
+      diplomaticCounterpartPlayerIds: diplomaticCounterpartPlayerIds,
       fieldImprovements: fieldImprovements,
       roads: roads,
       cityFoundingDraft: cityFoundingDraft,
@@ -103,6 +109,8 @@ VisibleUnitView testVisibleUnit({
   int workerBuildCharges = 0,
   WorkerJobView? workerJob,
   MapHexCoordinate? workerAssignment,
+  String? carriedArtifactId,
+  String? excavatingArtifactId,
 }) => VisibleUnitView(
   id: id,
   ownerPlayerId: ownerPlayerId,
@@ -114,6 +122,8 @@ VisibleUnitView testVisibleUnit({
   workerBuildCharges: workerBuildCharges,
   workerJob: workerJob,
   workerAssignment: workerAssignment,
+  carriedArtifactId: carriedArtifactId,
+  excavatingArtifactId: excavatingArtifactId,
 );
 
 SessionStampView testSessionStamp({int revision = 0, String? stateDigest}) =>
@@ -248,6 +258,7 @@ final class FakeGameSession
         UnitLogisticsSessionPort,
         WorkerSessionPort,
         ProductionSessionPort,
+        ArtifactSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   FakeGameSession.success(
@@ -270,6 +281,8 @@ final class FakeGameSession
     this.productionOverviewResults = const [],
     this.productionResult,
     this.productionFailure,
+    this.artifactResult,
+    this.artifactFailure,
     this.combatPreviewResult,
     this.combatResult,
     this.combatFailure,
@@ -298,6 +311,8 @@ final class FakeGameSession
       productionOverviewResults = const [],
       productionResult = null,
       productionFailure = null,
+      artifactResult = null,
+      artifactFailure = null,
       combatPreviewResult = null,
       combatResult = null,
       combatFailure = null,
@@ -330,6 +345,8 @@ final class FakeGameSession
   final List<ProductionOverviewFixture> productionOverviewResults;
   final ProductionCommandResultView? productionResult;
   final ProductionSessionException? productionFailure;
+  final ArtifactCommandResultView? artifactResult;
+  final ArtifactSessionException? artifactFailure;
   final CombatPreviewView? combatPreviewResult;
   final CombatCommandResultView? combatResult;
   final CombatSessionException? combatFailure;
@@ -355,6 +372,9 @@ final class FakeGameSession
   var productionCommandCalls = 0;
   ProductionActionView? lastProductionAction;
   int? lastProductionExpectedRevision;
+  var artifactCommandCalls = 0;
+  ArtifactActionView? lastArtifactAction;
+  int? lastArtifactExpectedRevision;
   var combatPreviewCalls = 0;
   var combatAttackCalls = 0;
   MapHexCoordinate? lastCombatDefender;
@@ -600,6 +620,19 @@ final class FakeGameSession
     if (error != null) throw error;
     return productionResult ??
         (throw StateError('No production result fixture.'));
+  }
+
+  @override
+  Future<ArtifactCommandResultView> executeArtifactAction({
+    required int expectedRevision,
+    required ArtifactActionView action,
+  }) async {
+    artifactCommandCalls += 1;
+    lastArtifactExpectedRevision = expectedRevision;
+    lastArtifactAction = action;
+    final error = artifactFailure;
+    if (error != null) throw error;
+    return artifactResult ?? (throw StateError('No artifact result fixture.'));
   }
 
   @override

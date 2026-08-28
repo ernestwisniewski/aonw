@@ -62,6 +62,7 @@ extension MapCoordinatorSelection on MapCoordinator {
           clearUnitLogistics: true,
           clearWorker: true,
           clearProduction: true,
+          clearArtifact: true,
           clearCombat: true,
           clearCity: true,
           movementPending: false,
@@ -83,6 +84,7 @@ extension MapCoordinatorSelection on MapCoordinator {
           clearUnitLogistics: true,
           clearWorker: true,
           clearProduction: true,
+          artifact: const ArtifactState(),
           clearCombat: true,
           clearCity: true,
           movementPending: false,
@@ -110,6 +112,7 @@ extension MapCoordinatorSelection on MapCoordinator {
           clearWorker: true,
           production: owned ? ProductionState.loading(city.id) : null,
           clearProduction: !owned,
+          artifact: const ArtifactState(),
           clearCombat: true,
           city: owned
               ? CityState.loadingCity(city.id)
@@ -157,6 +160,7 @@ extension MapCoordinatorSelection on MapCoordinator {
               ? null
               : ProductionState.loading(city!.id),
           clearProduction: city?.ownedDetails == null,
+          artifact: const ArtifactState(),
           clearReachable: true,
           clearRoute: true,
           movementPending: true,

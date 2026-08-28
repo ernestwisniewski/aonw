@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:aonw_flutter/app/composition/app_composition.dart';
 import 'package:aonw_flutter/app/telemetry/client_telemetry.dart';
+import 'package:aonw_flutter/features/artifacts/application/artifact_session_port.dart';
+import 'package:aonw_flutter/features/artifacts/read_model/artifact_view.dart';
 import 'package:aonw_flutter/features/cities/application/city_session_port.dart';
 import 'package:aonw_flutter/features/cities/read_model/city_view.dart';
 import 'package:aonw_flutter/features/combat/application/combat_session_port.dart';
@@ -267,6 +269,7 @@ final class _LifecycleGameSession
         UnitLogisticsSessionPort,
         WorkerSessionPort,
         ProductionSessionPort,
+        ArtifactSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   var loadCalls = 0;
@@ -364,6 +367,12 @@ final class _LifecycleGameSession
   Future<ProductionCommandResultView> executeProductionAction({
     required int expectedRevision,
     required ProductionActionView action,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<ArtifactCommandResultView> executeArtifactAction({
+    required int expectedRevision,
+    required ArtifactActionView action,
   }) => throw UnimplementedError();
 
   @override
