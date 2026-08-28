@@ -9,6 +9,8 @@ export 'protocol_artifact.dart';
 export 'protocol_city_view.dart';
 export 'protocol_coordinate.dart';
 export 'protocol_diplomacy.dart';
+export 'protocol_event.dart';
+export 'protocol_evidence.dart';
 export 'protocol_execution.dart';
 export 'protocol_map.dart';
 export 'protocol_outcome.dart';
@@ -136,6 +138,12 @@ final class AonwClientRequest {
   }) => AonwClientRequest._(
     _unitCommand('fortifyUnit', expectedRevision, unitId),
   );
+
+  factory AonwClientRequest.endTurn({required int expectedRevision}) =>
+      AonwClientRequest._({
+        'type': 'dispatch',
+        'command': {'type': 'endTurn', 'expectedRevision': expectedRevision},
+      });
 
   factory AonwClientRequest.exportSave() =>
       AonwClientRequest._(const {'type': 'exportSave'});
