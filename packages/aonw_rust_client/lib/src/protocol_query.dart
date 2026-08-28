@@ -9,6 +9,7 @@ import 'package:aonw_rust_client/src/protocol_values.dart';
 
 part 'protocol_city_query.dart';
 part 'protocol_production_query.dart';
+part 'protocol_research_query.dart';
 part 'protocol_worker_query.dart';
 
 sealed class AonwQueryResult {
@@ -28,6 +29,7 @@ sealed class AonwQueryResult {
       'strategicResourceProjection' =>
         AonwStrategicResourceProjectionResult.fromJson(value),
       'productionOptions' => AonwProductionOptionsResult.fromJson(value),
+      'researchOptions' => AonwResearchOptionsResult.fromJson(value),
       'workerOptions' => AonwWorkerOptionsResult.fromJson(value),
       final Object? type => throw FormatException(
         'Unknown AoNW query result $type.',
