@@ -186,10 +186,15 @@ turn finalization, and persistence identity validation with zero survivors.
 `cargo-fuzz 0.13.2` and `libfuzzer-sys 0.4.13` run bounded ASan smokes for strict
 persistence codecs, canonical DTO/domain mapping, and the live Flutter C ABI.
 Miri runs the feasible pure contract/domain boundary on
-`nightly-2026-08-24`. The strict repository policy validates tool provenance,
-the exact target census, bounds, and outcomes; it does not implement its own
-mutation engine, fuzzer, sanitizer, or interpreter. Expensive execution is a
-separate scheduled/manual workflow, while policy drift fails fast CI.
+`nightly-2026-08-24`. A separate C17 consumer harness links the actual Flutter
+cdylib and runs valid lifecycle/null cases plus intentional response/session
+double-free cases under Clang ASan/UBSan. The latter must fail with a sanitizer
+diagnostic; stale handles remain invalid by contract and are not hidden behind a
+runtime registry. CI pins Ubuntu 24.04 and Clang 18 for that gate. The strict
+repository policy validates tool provenance, exact target census, bounds, and
+outcomes; it does not implement its own mutation engine, fuzzer, sanitizer, or
+interpreter. Expensive execution is a separate scheduled/manual workflow, while
+policy drift fails fast CI.
 
 These quality artifacts describe the single current greenfield engine and
 successor-client contract. They introduce no legacy reader, adapter, upcaster,

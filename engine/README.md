@@ -89,14 +89,19 @@ make rust-security-policy-check
 ```
 
 Focused mutation testing uses pinned `cargo-mutants`; three bounded fuzz targets
-use pinned `cargo-fuzz`/LibFuzzer with AddressSanitizer; and Miri checks the pure
-contract/domain boundary on one pinned nightly. The policy is part of fast CI,
-while the expensive executions are scheduled or run manually:
+use pinned `cargo-fuzz`/LibFuzzer with AddressSanitizer; Miri checks the pure
+contract/domain boundary on one pinned nightly; and a real C consumer harness
+checks the Flutter ABI with Clang AddressSanitizer and UndefinedBehaviorSanitizer.
+The harness proves valid ownership/null lifecycle and requires both response and
+session double-free misuse to be diagnosed. It does not make invalid stale
+handles legal. The policy is part of fast CI, while the expensive executions are
+scheduled or run manually:
 
 ```sh
 make rust-mutation-check
 make rust-fuzz-smoke
 make rust-miri-check
+make rust-ffi-sanitizer-check
 make rust-engine-security-check
 ```
 

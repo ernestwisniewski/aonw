@@ -1,5 +1,25 @@
 {
   "reviewedDate": "2026-08-28",
+  "sanitizers": {
+    "ciRunner": "ubuntu-24.04",
+    "ciCompiler": "clang-18",
+    "localCompiler": "clang",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "header": "crates/aonw_flutter/include/aonw_flutter.h",
+    "harness": "crates/aonw_flutter/tests/c_abi_harness.c",
+    "positiveCases": [
+      "lifecycle",
+      "null_arguments"
+    ],
+    "negativeCases": [
+      "response_double_free",
+      "session_double_free"
+    ],
+    "requiredDiagnostic": "addresssanitizer"
+  },
   "mutation": {
     "tool": {
       "name": "cargo-mutants",

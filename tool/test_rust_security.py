@@ -68,6 +68,15 @@ def main() -> None:
             {"toolchain": "nightly-2026-08-23"}
         ),
         "an incomplete Miri package census": lambda value: value["miri"]["packages"].pop(),
+        "an unpinned sanitizer runner": lambda value: value["sanitizers"].update(
+            {"ciRunner": "ubuntu-latest"}
+        ),
+        "a missing sanitizer negative case": lambda value: value["sanitizers"][
+            "negativeCases"
+        ].pop(),
+        "a sanitizer harness outside engine": lambda value: value["sanitizers"].update(
+            {"harness": "../tool/check_rust_security.py"}
+        ),
     }
     for label, mutation in cases.items():
         expect_rejection(checker, baseline, label, mutation)

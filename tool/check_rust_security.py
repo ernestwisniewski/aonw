@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -16,7 +17,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "engine"
 POLICY_PATH = ENGINE / "quality/security_test_policy.json"
-TOP_LEVEL_KEYS = {"reviewedDate", "mutation", "fuzz", "miri"}
+TOP_LEVEL_KEYS = {"reviewedDate", "sanitizers", "mutation", "fuzz", "miri"}
 TOOL_KEYS = {"name", "version", "source"}
 TARGET_KEYS = {
     "package",
@@ -33,7 +34,9 @@ class SecurityFailure(RuntimeError):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["policy", "tools", "mutation", "fuzz", "miri"])
+    parser.add_argument(
+        "mode", choices=["policy", "tools", "mutation", "fuzz", "miri", "sanitizers"]
+    )
     return parser.parse_args()
 
 
@@ -57,6 +60,46 @@ def read_policy() -> dict[str, Any]:
         r"\d{4}-\d{2}-\d{2}", policy["reviewedDate"]
     ) is None:
         fail("reviewedDate must be ISO date")
+
+    sanitizers = strict_object(
+        policy["sanitizers"],
+        "sanitizers",
+        {
+            "ciRunner",
+            "ciCompiler",
+            "localCompiler",
+            "flags",
+            "header",
+            "harness",
+            "positiveCases",
+            "negativeCases",
+            "requiredDiagnostic",
+        },
+    )
+    if sanitizers["ciRunner"] != "ubuntu-24.04":
+        fail("sanitizer CI runner must be pinned to ubuntu-24.04")
+    if sanitizers["ciCompiler"] != "clang-18":
+        fail("sanitizer CI compiler must be pinned to clang-18")
+    if sanitizers["localCompiler"] != "clang":
+        fail("sanitizer local compiler must be clang")
+    if sanitizers["flags"] != [
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+    ]:
+        fail("sanitizer flags differ")
+    for key in ("header", "harness"):
+        path = ENGINE / sanitizers[key]
+        if not path.is_file() or ENGINE not in path.resolve().parents:
+            fail(f"sanitizer {key} path is invalid: {sanitizers[key]}")
+    if sanitizers["positiveCases"] != ["lifecycle", "null_arguments"]:
+        fail("sanitizer positive cases differ")
+    if sanitizers["negativeCases"] != [
+        "response_double_free",
+        "session_double_free",
+    ]:
+        fail("sanitizer negative cases differ")
+    if sanitizers["requiredDiagnostic"] != "addresssanitizer":
+        fail("sanitizer diagnostic must require AddressSanitizer")
 
     mutation = strict_object(
         policy["mutation"], "mutation", {"tool", "maximumSurvivors", "targets"}
@@ -325,6 +368,68 @@ def miri_gate(policy: dict[str, Any]) -> None:
     print(f"Rust Miri gate passed: {len(miri['packages'])} pure boundary crates.")
 
 
+def sanitizer_gate(policy: dict[str, Any]) -> None:
+    sanitizers = policy["sanitizers"]
+    compiler = os.environ.get("AONW_SANITIZER_CC", sanitizers["localCompiler"])
+    if compiler not in {sanitizers["localCompiler"], sanitizers["ciCompiler"]}:
+        fail(f"unreviewed sanitizer compiler: {compiler}")
+    output([compiler, "--version"])
+    run(["cargo", "build", "--locked", "--package", "aonw_flutter"], ENGINE)
+
+    library_directory = ENGINE / "target/debug"
+    with tempfile.TemporaryDirectory(prefix="aonw-rust-ffi-sanitizer-") as directory:
+        executable = Path(directory) / "aonw_flutter_c_abi_harness"
+        compile_command = [
+            compiler,
+            "-std=c17",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            *sanitizers["flags"],
+            "-I",
+            str((ENGINE / sanitizers["header"]).parent),
+            str(ENGINE / sanitizers["harness"]),
+            "-L",
+            str(library_directory),
+            "-laonw_flutter",
+            f"-Wl,-rpath,{library_directory}",
+            "-o",
+            str(executable),
+        ]
+        run(compile_command)
+
+        environment = os.environ.copy()
+        leak_detection = "0" if sys.platform == "darwin" else "1"
+        environment["ASAN_OPTIONS"] = (
+            f"detect_leaks={leak_detection}:halt_on_error=1:abort_on_error=1"
+        )
+        environment["UBSAN_OPTIONS"] = "halt_on_error=1:print_stacktrace=1"
+        for case in sanitizers["positiveCases"]:
+            run([str(executable), case], env=environment, quiet=True)
+        for case in sanitizers["negativeCases"]:
+            result = subprocess.run(
+                [str(executable), case],
+                cwd=ROOT,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            diagnostic = f"{result.stdout}\n{result.stderr}".lower()
+            if result.returncode == 0:
+                fail(f"sanitizer accepted invalid lifecycle case: {case}")
+            if sanitizers["requiredDiagnostic"] not in diagnostic:
+                fail(
+                    f"sanitizer did not diagnose invalid lifecycle case {case}:\n"
+                    f"{diagnostic[-2_000:]}"
+                )
+    print(
+        "Rust C ABI sanitizer gate passed: "
+        f"{len(sanitizers['positiveCases'])} valid and "
+        f"{len(sanitizers['negativeCases'])} rejected lifecycle cases."
+    )
+
+
 def main() -> None:
     args = parse_args()
     policy = read_policy()
@@ -334,7 +439,8 @@ def main() -> None:
         )
         print(
             "Rust security policy passed: "
-            f"{mutation_count} mutants, 3 fuzz targets, 3 Miri crates."
+            f"{mutation_count} mutants, 3 fuzz targets, 3 Miri crates, "
+            "and 4 C ABI sanitizer cases."
         )
         return
     if args.mode == "tools":
@@ -351,6 +457,8 @@ def main() -> None:
     elif args.mode == "miri":
         check_miri_tool(policy)
         miri_gate(policy)
+    elif args.mode == "sanitizers":
+        sanitizer_gate(policy)
 
 
 if __name__ == "__main__":

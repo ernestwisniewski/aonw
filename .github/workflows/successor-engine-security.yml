@@ -61,3 +61,25 @@ jobs:
 
       - name: Run pure-boundary Miri gate
         run: make --no-print-directory rust-miri-check
+
+  sanitizers:
+    name: Rust C ABI sanitizers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal
+
+      - name: Install pinned Clang major
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends clang-18
+
+      - name: Run C ABI ASan and UBSan harness
+        env:
+          AONW_SANITIZER_CC: clang-18
+        run: make --no-print-directory rust-ffi-sanitizer-check
