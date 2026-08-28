@@ -74,6 +74,36 @@ class AonwLocalizationsEn extends AonwLocalizations {
   String get movingUnit => 'Moving unit';
 
   @override
+  String unitActionLabel(String label) {
+    String _temp0 = intl.Intl.selectLogic(label, {
+      'title': 'Unit actions',
+      'fortify': 'Fortify',
+      'skip': 'Skip',
+      'cancel': 'Cancel action',
+      'executing': 'Executing unit action',
+      'other': 'Unit action',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String unitActionFailure(String failure) {
+    String _temp0 = intl.Intl.selectLogic(failure, {
+      'requestFailed': 'The unit action request could not be completed.',
+      'responseIncompatible':
+          'The unit action response is incompatible with this client.',
+      'sessionUnavailable': 'The local game session is unavailable.',
+      'stale': 'The game state changed. Review the unit and try again.',
+      'matchFinished': 'The match has already finished.',
+      'unitUnavailable': 'That unit is no longer available to command.',
+      'unitBusy': 'That unit is busy and cannot perform this action now.',
+      'internal': 'The unit action could not be applied. Try again.',
+      'other': 'The unit action could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String turnLabel(int turn) {
     return 'TURN $turn';
   }

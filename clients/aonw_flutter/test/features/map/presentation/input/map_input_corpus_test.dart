@@ -36,6 +36,7 @@ void main() {
       final controller = MapPresentationController(
         session: session,
         movement: session,
+        unitActions: session,
       );
       final flameGame = AonwFlameGame();
       await tester.pumpWidget(

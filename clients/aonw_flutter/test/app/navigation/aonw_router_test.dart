@@ -13,6 +13,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
 
     await tester.pumpWidget(AonwApp(mapController: controller));
@@ -42,6 +43,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
 
     await tester.pumpWidget(

@@ -1,11 +1,17 @@
 import 'dart:async';
 
+import '../../unit_actions/application/action_deck_state.dart';
+import '../../unit_actions/application/unit_action_command_runner.dart';
+import '../../unit_actions/application/unit_action_session_port.dart';
+import '../../unit_actions/read_model/unit_action_view.dart';
 import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
 import 'game_session_state.dart';
 import 'map_interaction_state.dart';
 import 'map_session_port.dart';
+import 'movement_command_runner.dart';
 import 'movement_session_port.dart';
+import 'unit_action_state_reducer.dart';
 
 typedef MapDiagnosticReporter =
     void Function(String code, Object error, StackTrace stackTrace);
@@ -14,14 +20,23 @@ final class MapCoordinator {
   MapCoordinator({
     required MapSessionPort session,
     required MovementSessionPort movement,
+    required UnitActionSessionPort unitActions,
     this.assets = MapAssetPaths.starter,
     MapDiagnosticReporter? diagnosticReporter,
   }) : _session = session,
-       _movement = movement,
+       _movement = MovementCommandRunner(
+         session: movement,
+         diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
+       _unitActions = UnitActionCommandRunner(
+         session: unitActions,
+         diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
        _diagnosticReporter = diagnosticReporter ?? _ignoreDiagnostic;
 
   final MapSessionPort _session;
-  final MovementSessionPort _movement;
+  final MovementCommandRunner _movement;
+  final UnitActionCommandRunner _unitActions;
   final MapDiagnosticReporter _diagnosticReporter;
   final MapAssetPaths assets;
   final StreamController<GameSessionState> _changes =
@@ -30,6 +45,7 @@ final class MapCoordinator {
   var _disposed = false;
   var _loadGeneration = 0;
   var _interactionGeneration = 0;
+  var _actionCorrelationId = 0;
 
   GameSessionState get state => _state;
 
@@ -84,7 +100,7 @@ final class MapCoordinator {
 
   Future<void> _select(MapHexCoordinate? coordinate) async {
     final current = _state;
-    if (current is! GameSessionReady || current.interaction.movementPending) {
+    if (current is! GameSessionReady || _interactionBusy(current.interaction)) {
       return;
     }
     final next = coordinate != null && current.scene.map.contains(coordinate)
@@ -120,6 +136,7 @@ final class MapCoordinator {
           clearSelectedUnit: true,
           clearReachable: true,
           clearRoute: true,
+          clearActionDeck: true,
           movementPending: false,
           clearMovementError: true,
         ),
@@ -135,6 +152,7 @@ final class MapCoordinator {
           clearSelectedUnit: true,
           clearReachable: true,
           clearRoute: true,
+          clearActionDeck: true,
           movementPending: false,
           clearMovementError: true,
         ),
@@ -153,6 +171,7 @@ final class MapCoordinator {
         current.interaction.copyWith(
           selected: coordinate,
           selectedUnitId: unitId,
+          actionDeck: ActionDeckViewState(unitId: unitId),
           clearReachable: true,
           clearRoute: true,
           movementPending: true,
@@ -160,25 +179,24 @@ final class MapCoordinator {
         ),
       ),
     );
-    try {
-      final reachable = await _movement.reachable(
-        expectedRevision: current.recipient.stamp.revision,
-        unitId: unitId,
-      );
-      final ready = _currentInteraction(generation);
-      if (ready == null) return;
+    final completion = await _movement.reachable(
+      expectedRevision: current.recipient.stamp.revision,
+      unitId: unitId,
+    );
+    final ready = _currentInteraction(generation);
+    if (ready == null) return;
+    final failure = completion.failure;
+    if (failure != null) {
+      _setState(_movementFailureState(ready, completion));
+    } else {
       _setState(
         ready.withInteraction(
           ready.interaction.copyWith(
-            reachable: reachable,
+            reachable: completion.result!,
             movementPending: false,
           ),
         ),
       );
-    } on MovementSessionException catch (error, stackTrace) {
-      _handleMovementFailure(generation, error, stackTrace);
-    } on Object catch (error, stackTrace) {
-      _handleUnexpectedMovementFailure(generation, error, stackTrace);
     }
   }
 
@@ -198,23 +216,25 @@ final class MapCoordinator {
         ),
       ),
     );
-    try {
-      final route = await _movement.routePlan(
-        expectedRevision: current.recipient.stamp.revision,
-        unitId: unitId,
-        target: target,
-      );
-      final ready = _currentInteraction(generation);
-      if (ready == null) return;
+    final completion = await _movement.routePlan(
+      expectedRevision: current.recipient.stamp.revision,
+      unitId: unitId,
+      target: target,
+    );
+    final ready = _currentInteraction(generation);
+    if (ready == null) return;
+    final failure = completion.failure;
+    if (failure != null) {
+      _setState(_movementFailureState(ready, completion));
+    } else {
       _setState(
         ready.withInteraction(
-          ready.interaction.copyWith(route: route, movementPending: false),
+          ready.interaction.copyWith(
+            route: completion.result!,
+            movementPending: false,
+          ),
         ),
       );
-    } on MovementSessionException catch (error, stackTrace) {
-      _handleMovementFailure(generation, error, stackTrace);
-    } on Object catch (error, stackTrace) {
-      _handleUnexpectedMovementFailure(generation, error, stackTrace);
     }
   }
 
@@ -224,7 +244,7 @@ final class MapCoordinator {
 
   Future<void> _confirmMove() async {
     final current = _state;
-    if (current is! GameSessionReady || current.interaction.movementPending) {
+    if (current is! GameSessionReady || _interactionBusy(current.interaction)) {
       return;
     }
     final route = current.interaction.route;
@@ -239,19 +259,60 @@ final class MapCoordinator {
         ),
       ),
     );
-    try {
-      final result = await _movement.moveUnit(
-        expectedRevision: current.recipient.stamp.revision,
-        unitId: unitId,
-        target: route.target,
+    final completion = await _movement.moveUnit(
+      expectedRevision: current.recipient.stamp.revision,
+      unitId: unitId,
+      target: route.target,
+    );
+    final ready = _currentInteraction(generation);
+    if (ready == null) return;
+    if (completion.failure != null) {
+      _setState(_movementFailureState(ready, completion));
+    } else {
+      _setState(
+        _moveResultState(ready, completion.result!, unitId, route.destination),
       );
-      final ready = _currentInteraction(generation);
-      if (ready == null) return;
-      _setState(_moveResultState(ready, result, unitId, route.destination));
-    } on MovementSessionException catch (error, stackTrace) {
-      _handleMovementFailure(generation, error, stackTrace);
-    } on Object catch (error, stackTrace) {
-      _handleUnexpectedMovementFailure(generation, error, stackTrace);
+    }
+  }
+
+  void executeUnitAction(UnitActionKindView action) {
+    unawaited(_executeUnitAction(action));
+  }
+
+  Future<void> _executeUnitAction(UnitActionKindView action) async {
+    final current = _state;
+    if (current is! GameSessionReady || _interactionBusy(current.interaction)) {
+      return;
+    }
+    final actionDeck = current.interaction.actionDeck;
+    final unitId = current.interaction.selectedUnitId;
+    if (actionDeck == null || unitId == null || actionDeck.unitId != unitId) {
+      return;
+    }
+    final generation = ++_interactionGeneration;
+    final correlationId = ++_actionCorrelationId;
+    _setState(
+      current.withInteraction(
+        current.interaction.copyWith(
+          clearReachable: true,
+          clearRoute: true,
+          clearMovementError: true,
+          actionDeck: actionDeck.copyWith(
+            correlationId: correlationId,
+            inFlightAction: action,
+            clearFailure: true,
+          ),
+        ),
+      ),
+    );
+    final completion = await _unitActions.execute(
+      expectedRevision: current.recipient.stamp.revision,
+      unitId: unitId,
+      action: action,
+    );
+    final ready = _currentUnitAction(generation, correlationId);
+    if (ready != null) {
+      _setState(reduceUnitActionCompletion(ready, completion));
     }
   }
 
@@ -268,11 +329,9 @@ final class MapCoordinator {
   }
 
   void completeTurnPresentation() {
-    final current = _state;
-    if (current is! GameSessionReady) return;
-    _setState(
-      current.withTurnPresentations(current.turnPresentations.completeActive()),
-    );
+    if (_state case final GameSessionReady current) {
+      _setState(current.completeTurnPresentation());
+    }
   }
 
   void dispose() {
@@ -293,53 +352,11 @@ final class MapCoordinator {
     return current is GameSessionReady ? current : null;
   }
 
-  void _handleMovementFailure(
-    int generation,
-    MovementSessionException error,
-    StackTrace stackTrace,
-  ) {
+  GameSessionReady? _currentUnitAction(int generation, int correlationId) {
     final ready = _currentInteraction(generation);
-    if (ready == null) return;
-    final cause = error.diagnosticCause;
-    if (cause != null) {
-      _diagnosticReporter(
-        error.code,
-        cause,
-        error.diagnosticStackTrace ?? stackTrace,
-      );
-    }
-    final resynchronized = error.resyncedPlayer;
-    final current = resynchronized == null
+    return ready?.interaction.actionDeck?.correlationId == correlationId
         ? ready
-        : ready.withRecipient(resynchronized);
-    _setState(
-      current.withInteraction(
-        ready.interaction.copyWith(
-          movementPending: false,
-          movementError: MapMovementFailure(_movementFailureCode(error.code)),
-        ),
-      ),
-    );
-  }
-
-  void _handleUnexpectedMovementFailure(
-    int generation,
-    Object error,
-    StackTrace stackTrace,
-  ) {
-    final ready = _currentInteraction(generation);
-    if (ready == null) return;
-    _diagnosticReporter('unexpected_movement_failure', error, stackTrace);
-    _setState(
-      ready.withInteraction(
-        ready.interaction.copyWith(
-          movementPending: false,
-          movementError: const MapMovementFailure(
-            MapMovementFailureViewCode.requestFailed,
-          ),
-        ),
-      ),
-    );
+        : null;
   }
 
   void _setState(GameSessionState value) {
@@ -378,12 +395,31 @@ GameSessionReady _moveResultState(
           clearSelectedUnit: true,
           clearReachable: true,
           clearRoute: true,
+          clearActionDeck: true,
           movementPending: false,
           clearMovementError: true,
           lastMovementExecution: result.execution,
         ),
       );
 }
+
+GameSessionReady _movementFailureState<T>(
+  GameSessionReady current,
+  MovementCommandCompletion<T> completion,
+) {
+  final player = completion.resyncedPlayer;
+  final synchronized = player == null ? current : current.withRecipient(player);
+  return synchronized.withInteraction(
+    synchronized.interaction.copyWith(
+      movementPending: false,
+      movementError: completion.failure!,
+    ),
+  );
+}
+
+bool _interactionBusy(MapInteractionState interaction) =>
+    interaction.movementPending ||
+    (interaction.actionDeck?.commandPending ?? false);
 
 MapLoadFailureViewCode _loadFailureCode(String code) => switch (code) {
   'rust_adapter_unavailable' ||
@@ -392,11 +428,4 @@ MapLoadFailureViewCode _loadFailureCode(String code) => switch (code) {
   'invalid_map_protocol' => MapLoadFailureViewCode.incompatibleClient,
   'map_load_superseded' => MapLoadFailureViewCode.loadSuperseded,
   _ => MapLoadFailureViewCode.mapUnavailable,
-};
-
-MapMovementFailureViewCode _movementFailureCode(String code) => switch (code) {
-  'session_not_open' => MapMovementFailureViewCode.sessionUnavailable,
-  'invalid_session_protocol' ||
-  'recipient_resynchronized' => MapMovementFailureViewCode.responseIncompatible,
-  _ => MapMovementFailureViewCode.requestFailed,
 };

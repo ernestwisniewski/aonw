@@ -18,6 +18,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     addTearDown(controller.dispose);
 
@@ -76,6 +77,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     addTearDown(controller.dispose);
 

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../unit_actions/application/unit_action_session_port.dart';
+import '../../unit_actions/read_model/unit_action_view.dart';
 import '../application/game_session_state.dart';
 import '../application/map_coordinator.dart';
 import '../application/map_session_port.dart';
@@ -12,12 +14,14 @@ final class MapPresentationController extends ChangeNotifier {
   MapPresentationController({
     required MapSessionPort session,
     required MovementSessionPort movement,
+    required UnitActionSessionPort unitActions,
     MapAssetPaths assets = MapAssetPaths.starter,
     MapDiagnosticReporter diagnosticReporter = _reportMapDiagnostic,
   }) : this.fromCoordinator(
          MapCoordinator(
            session: session,
            movement: movement,
+           unitActions: unitActions,
            assets: assets,
            diagnosticReporter: diagnosticReporter,
          ),
@@ -40,6 +44,9 @@ final class MapPresentationController extends ChangeNotifier {
   void select(MapHexCoordinate? coordinate) => _coordinator.select(coordinate);
 
   void confirmMove() => _coordinator.confirmMove();
+
+  void executeUnitAction(UnitActionKindView action) =>
+      _coordinator.executeUnitAction(action);
 
   void toggleReference() => _coordinator.toggleReference();
 

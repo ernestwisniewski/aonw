@@ -49,6 +49,9 @@ final class GameSessionReady extends GameSessionState {
         interaction: interaction,
         turnPresentations: value,
       );
+
+  GameSessionReady completeTurnPresentation() =>
+      withTurnPresentations(turnPresentations.completeActive());
 }
 
 enum MapLoadFailureViewCode {

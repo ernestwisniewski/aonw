@@ -5,6 +5,8 @@ import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
+import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
 
 MapScene testMapScene({
   int cols = 3,
@@ -149,20 +151,25 @@ MoveUnitExecutionView testMoveUnitExecutionView({
   ),
 );
 
-final class FakeGameSession implements MapSessionPort, MovementSessionPort {
+final class FakeGameSession
+    implements MapSessionPort, MovementSessionPort, UnitActionSessionPort {
   FakeGameSession.success(
     this.scene, {
     this.reachableResult,
     this.routeResult,
     this.moveResult,
     this.moveFailure,
+    this.unitActionResult,
+    this.unitActionFailure,
   }) : failure = null;
   FakeGameSession.failure(this.failure)
     : scene = null,
       reachableResult = null,
       routeResult = null,
       moveResult = null,
-      moveFailure = null;
+      moveFailure = null,
+      unitActionResult = null,
+      unitActionFailure = null;
 
   final MapScene? scene;
   final MapLoadException? failure;
@@ -170,6 +177,12 @@ final class FakeGameSession implements MapSessionPort, MovementSessionPort {
   final RoutePlanView? routeResult;
   final MoveUnitResultView? moveResult;
   final MovementSessionException? moveFailure;
+  final UnitActionResultView? unitActionResult;
+  final UnitActionSessionException? unitActionFailure;
+  var unitActionCalls = 0;
+  UnitActionKindView? lastUnitAction;
+  int? lastUnitActionExpectedRevision;
+  String? lastUnitActionUnitId;
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
@@ -200,6 +213,21 @@ final class FakeGameSession implements MapSessionPort, MovementSessionPort {
     final error = moveFailure;
     if (error != null) throw error;
     return moveResult ?? (throw StateError('No move fixture.'));
+  }
+
+  @override
+  Future<UnitActionResultView> executeUnitAction({
+    required int expectedRevision,
+    required String unitId,
+    required UnitActionKindView action,
+  }) async {
+    unitActionCalls += 1;
+    lastUnitAction = action;
+    lastUnitActionExpectedRevision = expectedRevision;
+    lastUnitActionUnitId = unitId;
+    final error = unitActionFailure;
+    if (error != null) throw error;
+    return unitActionResult ?? (throw StateError('No unit action fixture.'));
   }
 
   @override

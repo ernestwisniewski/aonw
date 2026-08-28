@@ -17,6 +17,8 @@
   "confirmMove": "Potwierdź ruch",
   "chooseHighlightedDestination": "Wybierz podświetlone pole docelowe.",
   "movingUnit": "Przemieszczanie jednostki",
+  "unitActionLabel": "{label, select, title{Akcje jednostki} fortify{Ufortyfikuj} skip{Pomiń} cancel{Anuluj akcję} executing{Wykonywanie akcji jednostki} other{Akcja jednostki}}",
+  "unitActionFailure": "{failure, select, requestFailed{Nie udało się wykonać żądania akcji jednostki.} responseIncompatible{Odpowiedź akcji jednostki jest niezgodna z tym klientem.} sessionUnavailable{Lokalna sesja gry jest niedostępna.} stale{Stan gry uległ zmianie. Sprawdź jednostkę i spróbuj ponownie.} matchFinished{Rozgrywka już się zakończyła.} unitUnavailable{Ta jednostka nie jest już dostępna do wydawania rozkazów.} unitBusy{Ta jednostka jest zajęta i nie może teraz wykonać tej akcji.} internal{Nie udało się zastosować akcji jednostki. Spróbuj ponownie.} other{Nie udało się wykonać akcji jednostki.}}",
   "turnLabel": "TURA {turn}",
   "loadingMap": "Wczytywanie mapy",
   "mapLoadingFailed": "Nie udało się wczytać mapy",

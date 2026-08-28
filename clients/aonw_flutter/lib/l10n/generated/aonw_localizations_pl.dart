@@ -74,6 +74,38 @@ class AonwLocalizationsPl extends AonwLocalizations {
   String get movingUnit => 'Przemieszczanie jednostki';
 
   @override
+  String unitActionLabel(String label) {
+    String _temp0 = intl.Intl.selectLogic(label, {
+      'title': 'Akcje jednostki',
+      'fortify': 'Ufortyfikuj',
+      'skip': 'Pomiń',
+      'cancel': 'Anuluj akcję',
+      'executing': 'Wykonywanie akcji jednostki',
+      'other': 'Akcja jednostki',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String unitActionFailure(String failure) {
+    String _temp0 = intl.Intl.selectLogic(failure, {
+      'requestFailed': 'Nie udało się wykonać żądania akcji jednostki.',
+      'responseIncompatible':
+          'Odpowiedź akcji jednostki jest niezgodna z tym klientem.',
+      'sessionUnavailable': 'Lokalna sesja gry jest niedostępna.',
+      'stale': 'Stan gry uległ zmianie. Sprawdź jednostkę i spróbuj ponownie.',
+      'matchFinished': 'Rozgrywka już się zakończyła.',
+      'unitUnavailable':
+          'Ta jednostka nie jest już dostępna do wydawania rozkazów.',
+      'unitBusy':
+          'Ta jednostka jest zajęta i nie może teraz wykonać tej akcji.',
+      'internal': 'Nie udało się zastosować akcji jednostki. Spróbuj ponownie.',
+      'other': 'Nie udało się wykonać akcji jednostki.',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String turnLabel(int turn) {
     return 'TURA $turn';
   }

@@ -200,6 +200,18 @@ abstract class AonwLocalizations {
   /// **'Moving unit'**
   String get movingUnit;
 
+  /// No description provided for @unitActionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{label, select, title{Unit actions} fortify{Fortify} skip{Skip} cancel{Cancel action} executing{Executing unit action} other{Unit action}}'**
+  String unitActionLabel(String label);
+
+  /// No description provided for @unitActionFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'{failure, select, requestFailed{The unit action request could not be completed.} responseIncompatible{The unit action response is incompatible with this client.} sessionUnavailable{The local game session is unavailable.} stale{The game state changed. Review the unit and try again.} matchFinished{The match has already finished.} unitUnavailable{That unit is no longer available to command.} unitBusy{That unit is busy and cannot perform this action now.} internal{The unit action could not be applied. Try again.} other{The unit action could not be completed.}}'**
+  String unitActionFailure(String failure);
+
   /// No description provided for @turnLabel.
   ///
   /// In en, this message translates to:

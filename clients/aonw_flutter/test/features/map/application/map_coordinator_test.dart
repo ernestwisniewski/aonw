@@ -9,6 +9,9 @@ import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/features/unit_actions/application/action_deck_state.dart';
+import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
+import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/map_test_fixture.dart';
@@ -16,7 +19,11 @@ import '../../../support/map_test_fixture.dart';
 void main() {
   test('loads ready state and keeps interaction local', () async {
     final session = FakeGameSession.success(testMapScene());
-    final controller = MapCoordinator(session: session, movement: session);
+    final controller = MapCoordinator(
+      session: session,
+      movement: session,
+      unitActions: session,
+    );
     addTearDown(controller.dispose);
 
     await controller.load();
@@ -47,7 +54,11 @@ void main() {
     final session = FakeGameSession.failure(
       const MapLoadException(code: 'invalid_map', message: 'Bad map'),
     );
-    final controller = MapCoordinator(session: session, movement: session);
+    final controller = MapCoordinator(
+      session: session,
+      movement: session,
+      unitActions: session,
+    );
     addTearDown(controller.dispose);
 
     await controller.load();
@@ -58,7 +69,11 @@ void main() {
 
   test('a slower old load cannot replace a newer result', () async {
     final session = _CompletingGameSession();
-    final controller = MapCoordinator(session: session, movement: session);
+    final controller = MapCoordinator(
+      session: session,
+      movement: session,
+      unitActions: session,
+    );
     addTearDown(controller.dispose);
 
     final firstLoad = controller.load();
@@ -89,6 +104,7 @@ void main() {
       final controller = MapCoordinator(
         session: session,
         movement: session,
+        unitActions: session,
         diagnosticReporter: (code, error, stackTrace) =>
             diagnostics.add((code: code, error: error, stackTrace: stackTrace)),
       );
@@ -126,7 +142,11 @@ void main() {
           execution: testMoveUnitExecutionView(),
         ),
       );
-      final controller = MapCoordinator(session: session, movement: session);
+      final controller = MapCoordinator(
+        session: session,
+        movement: session,
+        unitActions: session,
+      );
       addTearDown(controller.dispose);
 
       await controller.load();
@@ -169,7 +189,11 @@ void main() {
           code: CommandRejectionCodeView.moveTargetOccupied,
         ),
       );
-      final controller = MapCoordinator(session: session, movement: session);
+      final controller = MapCoordinator(
+        session: session,
+        movement: session,
+        unitActions: session,
+      );
       addTearDown(controller.dispose);
 
       await controller.load();
@@ -209,7 +233,11 @@ void main() {
         resyncedPlayer: resyncedPlayer,
       ),
     );
-    final controller = MapCoordinator(session: session, movement: session);
+    final controller = MapCoordinator(
+      session: session,
+      movement: session,
+      unitActions: session,
+    );
     addTearDown(controller.dispose);
 
     await controller.load();
@@ -229,10 +257,143 @@ void main() {
       MapMovementFailureViewCode.responseIncompatible,
     );
   });
+
+  test(
+    'executes one correlated unit action and adopts authoritative state',
+    () async {
+      final scene = testMapScene(units: [testVisibleUnit()]);
+      final fortified = VisibleUnitView(
+        id: 'preview-commander',
+        ownerPlayerId: 'preview-player',
+        kind: VisibleUnitKind.commander,
+        name: 'Commander',
+        coordinate: (col: 0, row: 0),
+        movementUnits: 12,
+        posture: VisibleUnitPosture.fortified,
+      );
+      final player = PlayerMapView(
+        actorPlayerId: 'preview-player',
+        stamp: testSessionStamp(revision: 1, stateDigest: 'd' * 64),
+        turn: 1,
+        pendingAction: null,
+        units: [fortified],
+      );
+      final session = FakeGameSession.success(
+        scene,
+        reachableResult: testReachableView(),
+        unitActionResult: UnitActionResultView.accepted(
+          action: UnitActionKindView.fortify,
+          unitId: fortified.id,
+          player: player,
+        ),
+      );
+      final controller = MapCoordinator(
+        session: session,
+        movement: session,
+        unitActions: session,
+      );
+      addTearDown(controller.dispose);
+
+      await controller.load();
+      controller.select(fortified.coordinate);
+      await pumpEventQueue();
+      controller.executeUnitAction(UnitActionKindView.fortify);
+      controller.executeUnitAction(UnitActionKindView.skip);
+      await pumpEventQueue();
+
+      final ready = controller.state as GameSessionReady;
+      expect(session.unitActionCalls, 1);
+      expect(session.lastUnitAction, UnitActionKindView.fortify);
+      expect(session.lastUnitActionExpectedRevision, 0);
+      expect(session.lastUnitActionUnitId, fortified.id);
+      expect(ready.recipient, same(player));
+      expect(
+        ready.recipient.units.single.posture,
+        VisibleUnitPosture.fortified,
+      );
+      expect(ready.interaction.actionDeck?.commandPending, isFalse);
+      expect(ready.interaction.actionDeck?.failure, isNull);
+      expect(ready.interaction.selectedUnitId, fortified.id);
+      expect(ready.interaction.reachable, isNull);
+    },
+  );
+
+  test('keeps rejected unit action typed without optimistic state', () async {
+    final scene = testMapScene(units: [testVisibleUnit()]);
+    final session = FakeGameSession.success(
+      scene,
+      reachableResult: testReachableView(),
+      unitActionResult: const UnitActionResultView.rejected(
+        action: UnitActionKindView.skip,
+        unitId: 'preview-commander',
+        code: UnitActionRejectionCodeView.unitBusy,
+      ),
+    );
+    final controller = MapCoordinator(
+      session: session,
+      movement: session,
+      unitActions: session,
+    );
+    addTearDown(controller.dispose);
+
+    await controller.load();
+    controller.select((col: 0, row: 0));
+    await pumpEventQueue();
+    controller.executeUnitAction(UnitActionKindView.skip);
+    await pumpEventQueue();
+
+    final ready = controller.state as GameSessionReady;
+    expect(ready.recipient, same(scene.player));
+    expect(
+      ready.interaction.actionDeck?.failure?.rejectionCode,
+      UnitActionRejectionCodeView.unitBusy,
+    );
+    expect(ready.interaction.actionDeck?.commandPending, isFalse);
+  });
+
+  test('adopts resynced recipient after invalid unit action patch', () async {
+    final scene = testMapScene(units: [testVisibleUnit()]);
+    final resyncedPlayer = PlayerMapView(
+      actorPlayerId: 'preview-player',
+      stamp: testSessionStamp(revision: 1, stateDigest: 'd' * 64),
+      turn: 2,
+      pendingAction: null,
+      units: [testVisibleUnit(movementUnits: 0)],
+    );
+    final session = FakeGameSession.success(
+      scene,
+      reachableResult: testReachableView(),
+      unitActionFailure: UnitActionSessionException(
+        code: 'recipient_resynchronized',
+        message: 'Recipient projection was resynchronized.',
+        resyncedPlayer: resyncedPlayer,
+      ),
+    );
+    final controller = MapCoordinator(
+      session: session,
+      movement: session,
+      unitActions: session,
+    );
+    addTearDown(controller.dispose);
+
+    await controller.load();
+    controller.select((col: 0, row: 0));
+    await pumpEventQueue();
+    controller.executeUnitAction(UnitActionKindView.cancel);
+    await pumpEventQueue();
+
+    final ready = controller.state as GameSessionReady;
+    expect(ready.recipient, same(resyncedPlayer));
+    expect(ready.turnPresentations.pending.single.turn, 2);
+    expect(
+      ready.interaction.actionDeck?.failure?.code,
+      UnitActionFailureViewCode.responseIncompatible,
+    );
+  });
 }
 
 final class _CompletingGameSession
-    implements MapSessionPort, MovementSessionPort {
+    implements MapSessionPort, MovementSessionPort, UnitActionSessionPort {
   final requests = <Completer<MapScene>>[];
 
   @override
@@ -260,6 +421,13 @@ final class _CompletingGameSession
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<UnitActionResultView> executeUnitAction({
+    required int expectedRevision,
+    required String unitId,
+    required UnitActionKindView action,
   }) => throw UnimplementedError();
 
   @override

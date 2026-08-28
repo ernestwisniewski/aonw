@@ -18,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/localized_test_app.dart';
 import '../../../../support/map_test_fixture.dart';
+import '../../../../support/test_map_input_source.dart';
 
 void main() {
   testWidgets('supports selection, pan, zoom and reference toggle', (
@@ -29,6 +30,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     final flameGame = AonwFlameGame();
     addTearDown(controller.dispose);
@@ -100,6 +102,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     addTearDown(controller.dispose);
 
@@ -138,6 +141,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     addTearDown(controller.dispose);
     await tester.binding.setSurfaceSize(const Size(900, 700));
@@ -198,6 +202,7 @@ void main() {
       final controller = MapPresentationController(
         session: session,
         movement: session,
+        unitActions: session,
       );
       final flameGame = AonwFlameGame();
       addTearDown(controller.dispose);
@@ -241,6 +246,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     final firstGame = AonwFlameGame();
     final secondGame = AonwFlameGame();
@@ -280,6 +286,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     addTearDown(controller.dispose);
 
@@ -305,6 +312,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     final flameGame = AonwFlameGame();
     addTearDown(controller.dispose);
@@ -334,11 +342,12 @@ void main() {
   testWidgets('keyboard and gamepad share the map cursor workflow', (
     tester,
   ) async {
-    final input = _TestMapInputSource();
+    final input = TestMapInputSource();
     final session = FakeGameSession.success(testMapScene(cols: 3, rows: 3));
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     addTearDown(input.close);
     addTearDown(controller.dispose);
@@ -383,11 +392,12 @@ void main() {
   testWidgets('a dialog suspends viewport and external map input', (
     tester,
   ) async {
-    final input = _TestMapInputSource();
+    final input = TestMapInputSource();
     final session = FakeGameSession.success(testMapScene(cols: 3, rows: 3));
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     final routeObserver = RouteObserver<ModalRoute<void>>();
     final games = <AonwFlameGame>[];
@@ -460,6 +470,7 @@ void main() {
     final controller = MapPresentationController(
       session: session,
       movement: session,
+      unitActions: session,
     );
     final flameGame = AonwFlameGame();
     addTearDown(settings.dispose);
@@ -480,16 +491,4 @@ void main() {
 
     expect(flameGame.inputSurface.debugCameraSensitivity, 2);
   });
-}
-
-final class _TestMapInputSource implements MapInputSource {
-  final _commands = StreamController<MapInputCommand>.broadcast(sync: true);
-
-  @override
-  Stream<MapInputCommand> get commands => _commands.stream;
-
-  void add(MapInputCommand command) => _commands.add(command);
-
-  @override
-  Future<void> close() => _commands.close();
 }

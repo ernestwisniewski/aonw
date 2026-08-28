@@ -10,6 +10,8 @@ import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
+import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
+import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,6 +33,7 @@ void main() {
       AppComposition(
         mapSession: first,
         movementSession: first,
+        unitActionSession: first,
         mapInputSource: firstInput,
       ).root,
     );
@@ -43,6 +46,7 @@ void main() {
       AppComposition(
         mapSession: second,
         movementSession: second,
+        unitActionSession: second,
         mapInputSource: secondInput,
       ).root,
     );
@@ -71,6 +75,7 @@ void main() {
       AppComposition(
         mapSession: session,
         movementSession: session,
+        unitActionSession: session,
         mapInputSource: input,
         flameGameFactory: () {
           final game = AonwFlameGame();
@@ -127,6 +132,7 @@ void main() {
       AppComposition(
         mapSession: firstSession,
         movementSession: firstSession,
+        unitActionSession: firstSession,
         mapInputSource: firstInput,
         flameGameFactory: createGame,
       ).root,
@@ -155,6 +161,7 @@ void main() {
       AppComposition(
         mapSession: secondSession,
         movementSession: secondSession,
+        unitActionSession: secondSession,
         mapInputSource: secondInput,
         flameGameFactory: createGame,
       ).root,
@@ -230,7 +237,7 @@ final class _LifecycleMapInputSource
 }
 
 final class _LifecycleGameSession
-    implements MapSessionPort, MovementSessionPort {
+    implements MapSessionPort, MovementSessionPort, UnitActionSessionPort {
   var loadCalls = 0;
   var closeCalls = 0;
 
@@ -258,6 +265,13 @@ final class _LifecycleGameSession
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<UnitActionResultView> executeUnitAction({
+    required int expectedRevision,
+    required String unitId,
+    required UnitActionKindView action,
   }) => throw UnimplementedError();
 
   @override
