@@ -257,7 +257,15 @@ impl GameStateBuilder {
         self.outcome
             .validate_for(self.match_lifecycle.identity())
             .map_err(GameStateBuildError::InvalidOutcome)?;
-        Ok(GameState {
+        Ok(self.build_with_indices(unit_indices_by_position, city_territory_indices))
+    }
+
+    fn build_with_indices(
+        self,
+        unit_indices_by_position: Vec<usize>,
+        city_territory_indices: Vec<(HexCoord, usize)>,
+    ) -> GameState {
+        GameState {
             revision: self.revision,
             turn: self.turn,
             match_lifecycle: self.match_lifecycle,
@@ -277,7 +285,7 @@ impl GameStateBuilder {
             fog_of_war: self.fog_of_war,
             diplomacy: self.diplomacy,
             infrastructure: self.infrastructure,
-        })
+        }
     }
 }
 

@@ -1,10 +1,13 @@
 use crate::{
-    City, CombatState, Diplomacy, EconomyState, FogOfWar, GameOutcome, InfrastructureState,
-    InteractionState, KnowledgeState, MatchLifecycle, ObjectiveState, StateRevision, Unit,
-    WorldArtifact,
+    ArtifactId, City, CityId, CombatState, Diplomacy, EconomyState, FogOfWar, GameOutcome,
+    InfrastructureState, InteractionState, KnowledgeState, MatchLifecycle, ObjectiveState,
+    StateRevision, Unit, UnitId, WorldArtifact,
 };
 
-use super::{GameState, GameStateBuildError};
+use super::{
+    GameState, GameStateBuildError,
+    validation::{city_territory_indices, unit_position_indices},
+};
 
 /// Complete replacement produced by one authoritative artifact transition.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -36,6 +39,165 @@ pub struct CombatStateUpdate {
     pub fog_of_war: FogOfWar,
     /// Diplomacy after attack consequences and discovered contacts.
     pub diplomacy: Diplomacy,
+}
+
+/// One unit replacement or removal inside a bounded combat-resolution batch.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum CombatUnitStateChange {
+    /// Replaces the unit identified by the replacement value.
+    Replace(Box<Unit>),
+    /// Removes a defeated unit.
+    Remove(UnitId),
+}
+
+/// One city replacement or removal inside a bounded combat-resolution batch.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum CombatCityStateChange {
+    /// Replaces the city identified by the replacement value.
+    Replace(Box<City>),
+    /// Removes a destroyed city.
+    Remove(CityId),
+}
+
+/// Sparse state change produced by one resolved attack in a combat batch.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CombatBatchStepUpdate {
+    /// Attacker and defender replacements or removals.
+    pub unit_changes: Vec<CombatUnitStateChange>,
+    /// Defender city replacement or removal.
+    pub city_changes: Vec<CombatCityStateChange>,
+    /// Artifact replacements for items dropped by a defeated carrier or city.
+    pub artifact_changes: Vec<WorldArtifact>,
+    /// Diplomacy after attack consequences; contact discovery is finalized once per batch.
+    pub diplomacy: Diplomacy,
+}
+
+/// Aggregate-owned scope that postpones full validation until all intended attacks resolve.
+pub struct CombatResolutionBatch {
+    state: GameState,
+}
+
+impl CombatResolutionBatch {
+    /// Returns the current read-only combat world between resolved attacks.
+    #[must_use]
+    pub const fn state(&self) -> &GameState {
+        &self.state
+    }
+
+    /// Applies one sparse, engine-resolved attack and refreshes lookup indices.
+    ///
+    /// # Errors
+    /// Returns an error if a changed entity is absent or entity topology becomes invalid.
+    pub fn into_after_step(
+        self,
+        update: CombatBatchStepUpdate,
+    ) -> Result<Self, GameStateBuildError> {
+        let mut state = self.state;
+        let mut units = core::mem::take(&mut state.units).into_vec();
+        let mut cities = core::mem::take(&mut state.cities).into_vec();
+        let mut artifacts = core::mem::take(&mut state.artifacts).into_vec();
+        apply_unit_changes(&mut units, update.unit_changes)?;
+        apply_city_changes(&mut cities, update.city_changes)?;
+        apply_artifact_changes(&mut artifacts, update.artifact_changes)?;
+
+        let unit_indices_by_position =
+            unit_position_indices(state.bounds, state.occupancy_policy, &units)?;
+        let city_territory_indices = city_territory_indices(state.bounds, &cities)?;
+
+        state.units = units.into_boxed_slice();
+        state.unit_indices_by_position = unit_indices_by_position.into_boxed_slice();
+        state.cities = cities.into_boxed_slice();
+        state.city_territory_indices = city_territory_indices.into_boxed_slice();
+        state.artifacts = artifacts.into_boxed_slice();
+        state.diplomacy = update.diplomacy;
+        Ok(Self { state })
+    }
+
+    /// Stores visibility and discovered contacts refreshed for the current combat world.
+    #[must_use]
+    pub fn after_visibility_refresh(
+        mut self,
+        fog_of_war: Option<FogOfWar>,
+        diplomacy: Diplomacy,
+    ) -> Self {
+        if let Some(fog_of_war) = fog_of_war {
+            self.state.fog_of_war = fog_of_war;
+        }
+        self.state.diplomacy = diplomacy;
+        self
+    }
+
+    /// Closes the batch, clears declarations, and performs one full aggregate validation.
+    ///
+    /// # Errors
+    /// Returns an error when the final aggregate violates any invariant.
+    pub fn finish(
+        self,
+        fog_of_war: FogOfWar,
+        diplomacy: Diplomacy,
+    ) -> Result<GameState, GameStateBuildError> {
+        let mut builder = self.state.into_builder();
+        builder.combat = CombatState::default();
+        builder.fog_of_war = fog_of_war;
+        builder.diplomacy = diplomacy;
+        builder.try_build()
+    }
+}
+
+fn apply_unit_changes(
+    units: &mut Vec<Unit>,
+    changes: Vec<CombatUnitStateChange>,
+) -> Result<(), GameStateBuildError> {
+    for change in changes {
+        let (id, replacement) = match change {
+            CombatUnitStateChange::Replace(unit) => (unit.id().clone(), Some(*unit)),
+            CombatUnitStateChange::Remove(id) => (id, None),
+        };
+        let index = units
+            .binary_search_by(|unit| unit.id().cmp(&id))
+            .map_err(|_| GameStateBuildError::UnitNotFound(id.clone()))?;
+        if let Some(replacement) = replacement {
+            units[index] = replacement;
+        } else {
+            units.remove(index);
+        }
+    }
+    Ok(())
+}
+
+fn apply_city_changes(
+    cities: &mut Vec<City>,
+    changes: Vec<CombatCityStateChange>,
+) -> Result<(), GameStateBuildError> {
+    for change in changes {
+        let (id, replacement) = match change {
+            CombatCityStateChange::Replace(city) => (city.id().clone(), Some(*city)),
+            CombatCityStateChange::Remove(id) => (id, None),
+        };
+        let index = cities
+            .binary_search_by(|city| city.id().cmp(&id))
+            .map_err(|_| GameStateBuildError::CityNotFound(id.clone()))?;
+        if let Some(replacement) = replacement {
+            cities[index] = replacement;
+        } else {
+            cities.remove(index);
+        }
+    }
+    Ok(())
+}
+
+fn apply_artifact_changes(
+    artifacts: &mut [WorldArtifact],
+    changes: Vec<WorldArtifact>,
+) -> Result<(), GameStateBuildError> {
+    for replacement in changes {
+        let id: ArtifactId = replacement.id().clone();
+        let index = artifacts
+            .binary_search_by(|artifact| artifact.id().cmp(&id))
+            .map_err(|_| GameStateBuildError::ArtifactNotFound(id))?;
+        artifacts[index] = replacement;
+    }
+    Ok(())
 }
 
 /// Complete replacement produced by one authoritative production transition.
@@ -107,6 +269,12 @@ pub struct TurnKernelStateUpdate {
 }
 
 impl GameState {
+    /// Opens a bounded simultaneous-combat resolution scope.
+    #[must_use]
+    pub fn into_combat_resolution_batch(self) -> CombatResolutionBatch {
+        CombatResolutionBatch { state: self }
+    }
+
     /// Consumes the aggregate and applies one complete artifact update.
     ///
     /// # Errors

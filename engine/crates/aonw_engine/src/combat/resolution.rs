@@ -1,5 +1,8 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
-use aonw_domain::{CityConquestAction, GameState, HexCoord, Unit, UnitKind};
+use aonw_domain::{
+    CityConquestAction, CombatBatchStepUpdate, CombatCityStateChange, CombatUnitStateChange,
+    GameState, HexCoord, Unit, UnitKind, WorldArtifactLocation,
+};
 
 use crate::{
     CommandRejectionCode, DomainEvent, EngineContext, MovementCost,
@@ -9,7 +12,8 @@ use crate::{
 
 use super::{
     CombatApplyError, CombatExecution, CombatOutcome, CombatRoll, CombatTarget, CombatUpdate,
-    PreparedCombat, PreparedTarget, RevisionMode, damage, retaliation_percent, scale_damage,
+    IntendedCombatUpdate, PreparedCombat, PreparedTarget, damage, retaliation_percent,
+    scale_damage,
 };
 
 mod support;
@@ -30,15 +34,66 @@ struct WorldAfterCombat {
     defender_gains: u32,
 }
 
+struct CombatWorldChanges {
+    unit_changes: Vec<CombatUnitStateChange>,
+    city_changes: Vec<CombatCityStateChange>,
+    artifact_changes: Vec<aonw_domain::WorldArtifact>,
+    visibility_players: Vec<aonw_domain::PlayerId>,
+    attacker_gains: u32,
+    defender_gains: u32,
+}
+
 pub(super) fn resolve(
     state: &GameState,
     context: EngineContext<'_>,
     prepared: PreparedCombat,
     city_action: CityConquestAction,
-    revision_mode: RevisionMode,
 ) -> Result<CombatUpdate, CombatApplyError> {
     let rolled = roll_combat(state, context, &prepared);
-    build_update(state, context, prepared, city_action, rolled, revision_mode)
+    build_update(state, context, prepared, city_action, rolled)
+}
+
+pub(super) fn resolve_intended(
+    state: &GameState,
+    context: EngineContext<'_>,
+    prepared: PreparedCombat,
+    city_action: CityConquestAction,
+) -> Result<IntendedCombatUpdate, CombatApplyError> {
+    let rolled = roll_combat(state, context, &prepared);
+    let changes = world_changes(
+        state,
+        context.ruleset(),
+        &prepared,
+        city_action,
+        &rolled.outcome,
+    );
+    let (diplomacy, score_events) = update_diplomacy(state, &prepared)?;
+    let events = combat_events(
+        state,
+        &prepared,
+        city_action,
+        &rolled.outcome,
+        changes.attacker_gains,
+        changes.defender_gains,
+        score_events,
+    );
+    let evidence = CombatExecution {
+        seed: rolled.seed,
+        rolls: rolled.rolls.into_boxed_slice(),
+        preview: prepared.preview,
+        outcome: rolled.outcome,
+    };
+    Ok(IntendedCombatUpdate {
+        state_update: CombatBatchStepUpdate {
+            unit_changes: changes.unit_changes,
+            city_changes: changes.city_changes,
+            artifact_changes: changes.artifact_changes,
+            diplomacy,
+        },
+        visibility_players: changes.visibility_players.into_boxed_slice(),
+        events: events.into_boxed_slice(),
+        evidence,
+    })
 }
 
 fn roll_combat(
@@ -168,28 +223,23 @@ fn build_update(
     prepared: PreparedCombat,
     city_action: CityConquestAction,
     rolled: RolledCombat,
-    revision_mode: RevisionMode,
 ) -> Result<CombatUpdate, CombatApplyError> {
-    let world = update_world(
+    let changes = world_changes(
         state,
         context.ruleset(),
         &prepared,
         city_action,
         &rolled.outcome,
     );
+    let world = materialize_world(state, changes);
     let (fog, diplomacy, score_events) =
         update_visibility_and_diplomacy(state, context, &prepared, &world.units, &world.cities)?;
-    let revision = match revision_mode {
-        RevisionMode::Advance => {
-            state
-                .revision()
-                .checked_next()
-                .ok_or(CombatApplyError::Rejected(
-                    CommandRejectionCode::StateRevisionOverflow,
-                ))?
-        }
-        RevisionMode::Preserve => state.revision(),
-    };
+    let revision = state
+        .revision()
+        .checked_next()
+        .ok_or(CombatApplyError::Rejected(
+            CommandRejectionCode::StateRevisionOverflow,
+        ))?;
     let events = combat_events(
         state,
         &prepared,
@@ -218,13 +268,38 @@ fn build_update(
     })
 }
 
-fn update_world(
+fn world_changes(
     state: &GameState,
     ruleset: &RulesetDefinition,
     prepared: &PreparedCombat,
     city_action: CityConquestAction,
     outcome: &CombatOutcome,
-) -> WorldAfterCombat {
+) -> CombatWorldChanges {
+    let attacker = &state.units()[prepared.attacker_index];
+    let (unit_changes, attacker_gains, defender_gains) =
+        combat_unit_changes(state, ruleset, prepared, outcome);
+    let (city_changes, destroyed_city) =
+        combat_city_changes(state, prepared, city_action, outcome, attacker);
+    let artifact_changes =
+        combat_artifact_changes(state, prepared, outcome, attacker, destroyed_city.as_ref());
+    let visibility_players =
+        combat_visibility_players(state, prepared, city_action, outcome, attacker);
+    CombatWorldChanges {
+        unit_changes,
+        city_changes,
+        artifact_changes,
+        visibility_players,
+        attacker_gains,
+        defender_gains,
+    }
+}
+
+fn combat_unit_changes(
+    state: &GameState,
+    ruleset: &RulesetDefinition,
+    prepared: &PreparedCombat,
+    outcome: &CombatOutcome,
+) -> (Vec<CombatUnitStateChange>, u32, u32) {
     let attacker = &state.units()[prepared.attacker_index];
     let attacker_gains = experience_gain(
         ruleset,
@@ -241,60 +316,77 @@ fn update_world(
         ),
         PreparedTarget::Unit(_) | PreparedTarget::City(_) => 0,
     };
-    let mut units = Vec::with_capacity(state.units().len());
-    for (index, unit) in state.units().iter().enumerate() {
-        if index == prepared.attacker_index {
-            if !outcome.attacker_killed {
-                units.push(unit.after_combat(
-                    unit.position(),
-                    canonical_hp(
-                        outcome.attacker_hit_points,
-                        prepared.preview.attacker.hit_points,
-                    ),
-                    unit.experience_points().saturating_add(attacker_gains),
-                    true,
-                ));
-            }
-        } else if matches!(prepared.target, PreparedTarget::Unit(target_index) if target_index == index)
-        {
-            if !outcome.defender_killed {
-                units.push(unit.after_combat(
-                    outcome.defender_retreat.unwrap_or(unit.position()),
-                    canonical_hp(
-                        outcome.defender_hit_points,
-                        prepared.preview.defender.hit_points,
-                    ),
-                    unit.experience_points().saturating_add(defender_gains),
-                    outcome.defender_retreat.is_some(),
-                ));
-            }
+    let mut unit_changes = Vec::with_capacity(2);
+    unit_changes.push(if outcome.attacker_killed {
+        CombatUnitStateChange::Remove(attacker.id().clone())
+    } else {
+        CombatUnitStateChange::Replace(Box::new(attacker.after_combat(
+            attacker.position(),
+            canonical_hp(
+                outcome.attacker_hit_points,
+                prepared.preview.attacker.hit_points,
+            ),
+            attacker.experience_points().saturating_add(attacker_gains),
+            true,
+        )))
+    });
+    if let PreparedTarget::Unit(index) = prepared.target {
+        let defender = &state.units()[index];
+        unit_changes.push(if outcome.defender_killed {
+            CombatUnitStateChange::Remove(defender.id().clone())
         } else {
-            units.push(unit.clone());
-        }
+            CombatUnitStateChange::Replace(Box::new(defender.after_combat(
+                outcome.defender_retreat.unwrap_or(defender.position()),
+                canonical_hp(
+                    outcome.defender_hit_points,
+                    prepared.preview.defender.hit_points,
+                ),
+                defender.experience_points().saturating_add(defender_gains),
+                outcome.defender_retreat.is_some(),
+            )))
+        });
     }
+    (unit_changes, attacker_gains, defender_gains)
+}
+
+fn combat_city_changes(
+    state: &GameState,
+    prepared: &PreparedCombat,
+    city_action: CityConquestAction,
+    outcome: &CombatOutcome,
+    attacker: &Unit,
+) -> (Vec<CombatCityStateChange>, Option<aonw_domain::CityId>) {
     let mut destroyed_city = None;
-    let mut cities = Vec::with_capacity(state.cities().len());
-    for (index, city) in state.cities().iter().enumerate() {
-        if matches!(prepared.target, PreparedTarget::City(target_index) if target_index == index) {
-            if outcome.defender_killed {
-                if city_action == CityConquestAction::Capture {
-                    let captured_hp = i64::from(prepared.preview.defender.hit_points.div_ceil(2));
-                    cities.push(
-                        city.after_combat(attacker.owner_player_id().clone(), Some(captured_hp)),
-                    );
-                } else {
-                    destroyed_city = Some(city.id().clone());
-                }
+    let mut city_changes = Vec::with_capacity(1);
+    if let PreparedTarget::City(index) = prepared.target {
+        let city = &state.cities()[index];
+        if outcome.defender_killed {
+            if city_action == CityConquestAction::Capture {
+                let captured_hp = i64::from(prepared.preview.defender.hit_points.div_ceil(2));
+                city_changes.push(CombatCityStateChange::Replace(Box::new(
+                    city.after_combat(attacker.owner_player_id().clone(), Some(captured_hp)),
+                )));
             } else {
-                cities.push(city.after_combat(
-                    city.owner_player_id().clone(),
-                    Some(i64::from(outcome.defender_hit_points)),
-                ));
+                destroyed_city = Some(city.id().clone());
+                city_changes.push(CombatCityStateChange::Remove(city.id().clone()));
             }
         } else {
-            cities.push(city.clone());
+            city_changes.push(CombatCityStateChange::Replace(Box::new(city.after_combat(
+                city.owner_player_id().clone(),
+                Some(i64::from(outcome.defender_hit_points)),
+            ))));
         }
     }
+    (city_changes, destroyed_city)
+}
+
+fn combat_artifact_changes(
+    state: &GameState,
+    prepared: &PreparedCombat,
+    outcome: &CombatOutcome,
+    attacker: &Unit,
+    destroyed_city: Option<&aonw_domain::CityId>,
+) -> Vec<aonw_domain::WorldArtifact> {
     let defeated_unit = match prepared.target {
         PreparedTarget::Unit(index) if outcome.defender_killed => Some(state.units()[index].id()),
         _ => None,
@@ -304,24 +396,103 @@ fn update_world(
         PreparedTarget::Unit(index) => state.units()[index].position(),
         PreparedTarget::City(index) => state.cities()[index].center(),
     };
-    let artifacts = state
+    state
         .artifacts()
         .iter()
-        .map(|artifact| {
-            let dropped = artifact.after_combat_loss(
-                defeated_unit,
-                destroyed_city.as_ref(),
-                target_coordinate,
-            );
-            dropped.after_combat_loss(attacker_loss, None, attacker.position())
+        .filter_map(|artifact| {
+            let affected = match artifact.location() {
+                WorldArtifactLocation::Carried(unit_id)
+                | WorldArtifactLocation::Excavation { unit_id, .. } => {
+                    defeated_unit == Some(unit_id) || attacker_loss == Some(unit_id)
+                }
+                WorldArtifactLocation::Stored(city_id) => destroyed_city == Some(city_id),
+                WorldArtifactLocation::Map(_) => false,
+            };
+            if !affected {
+                return None;
+            }
+            let dropped =
+                artifact.after_combat_loss(defeated_unit, destroyed_city, target_coordinate);
+            let updated = dropped.after_combat_loss(attacker_loss, None, attacker.position());
+            (updated != *artifact).then_some(updated)
         })
-        .collect::<Vec<_>>();
+        .collect()
+}
+
+fn combat_visibility_players(
+    state: &GameState,
+    prepared: &PreparedCombat,
+    city_action: CityConquestAction,
+    outcome: &CombatOutcome,
+    attacker: &Unit,
+) -> Vec<aonw_domain::PlayerId> {
+    let mut visibility_players = Vec::with_capacity(2);
+    if outcome.attacker_killed {
+        visibility_players.push(attacker.owner_player_id().clone());
+    }
+    match prepared.target {
+        PreparedTarget::Unit(index)
+            if outcome.defender_killed || outcome.defender_retreat.is_some() =>
+        {
+            visibility_players.push(state.units()[index].owner_player_id().clone());
+        }
+        PreparedTarget::City(index) if outcome.defender_killed => {
+            visibility_players.push(state.cities()[index].owner_player_id().clone());
+            if city_action == CityConquestAction::Capture {
+                visibility_players.push(attacker.owner_player_id().clone());
+            }
+        }
+        PreparedTarget::Unit(_) | PreparedTarget::City(_) => {}
+    }
+    visibility_players.sort_unstable();
+    visibility_players.dedup();
+    visibility_players
+}
+
+fn materialize_world(state: &GameState, changes: CombatWorldChanges) -> WorldAfterCombat {
+    let mut units = state.units().to_vec();
+    for change in changes.unit_changes {
+        let (id, replacement) = match change {
+            CombatUnitStateChange::Replace(unit) => (unit.id().clone(), Some(*unit)),
+            CombatUnitStateChange::Remove(id) => (id, None),
+        };
+        let index = units
+            .binary_search_by(|unit| unit.id().cmp(&id))
+            .expect("prepared combat unit change belongs to the source state");
+        if let Some(replacement) = replacement {
+            units[index] = replacement;
+        } else {
+            units.remove(index);
+        }
+    }
+    let mut cities = state.cities().to_vec();
+    for change in changes.city_changes {
+        let (id, replacement) = match change {
+            CombatCityStateChange::Replace(city) => (city.id().clone(), Some(*city)),
+            CombatCityStateChange::Remove(id) => (id, None),
+        };
+        let index = cities
+            .binary_search_by(|city| city.id().cmp(&id))
+            .expect("prepared combat city change belongs to the source state");
+        if let Some(replacement) = replacement {
+            cities[index] = replacement;
+        } else {
+            cities.remove(index);
+        }
+    }
+    let mut artifacts = state.artifacts().to_vec();
+    for replacement in changes.artifact_changes {
+        let index = artifacts
+            .binary_search_by(|artifact| artifact.id().cmp(replacement.id()))
+            .expect("prepared combat artifact change belongs to the source state");
+        artifacts[index] = replacement;
+    }
     WorldAfterCombat {
         units,
         cities,
         artifacts,
-        attacker_gains,
-        defender_gains,
+        attacker_gains: changes.attacker_gains,
+        defender_gains: changes.defender_gains,
     }
 }
 
@@ -339,12 +510,17 @@ fn update_visibility_and_diplomacy(
     ),
     CombatApplyError,
 > {
+    let (attacked_diplomacy, score_events) = update_diplomacy(state, prepared)?;
+    let (fog, diplomacy) =
+        recompute_visibility(state, context.map(), units, cities, &attacked_diplomacy);
+    Ok((fog, diplomacy, score_events))
+}
+
+fn update_diplomacy(
+    state: &GameState,
+    prepared: &PreparedCombat,
+) -> Result<(aonw_domain::Diplomacy, Vec<DomainEvent>), CombatApplyError> {
     let attacker = &state.units()[prepared.attacker_index];
-    let refs = units.iter().collect::<Vec<_>>();
-    let mut fog = state.fog_of_war().clone();
-    for participant in state.match_lifecycle().identity().participants() {
-        fog = recompute_after_move(&fog, context.map(), participant.id(), &refs, cities);
-    }
     let attacked_diplomacy = match prepared.target {
         PreparedTarget::Unit(_) => state.diplomacy().after_unit_attack(
             state.match_lifecycle().identity(),
@@ -374,7 +550,6 @@ fn update_visibility_and_diplomacy(
         observer_id(left, attacker.owner_player_id())
             .cmp(observer_id(right, attacker.owner_player_id()))
     });
-    let diplomacy = merge_discovered_contacts(&attacked_diplomacy, &fog, &refs, cities);
     let score_events = warmonger_entries
         .into_iter()
         .map(|entry| {
@@ -383,7 +558,62 @@ fn update_visibility_and_diplomacy(
             )
         })
         .collect();
-    Ok((fog, diplomacy, score_events))
+    Ok((attacked_diplomacy, score_events))
+}
+
+fn recompute_visibility(
+    state: &GameState,
+    map: &MapDefinition,
+    units: &[Unit],
+    cities: &[aonw_domain::City],
+    diplomacy: &aonw_domain::Diplomacy,
+) -> (aonw_domain::FogOfWar, aonw_domain::Diplomacy) {
+    let players = state
+        .match_lifecycle()
+        .identity()
+        .participants()
+        .iter()
+        .map(aonw_domain::Participant::id);
+    recompute_visibility_for_players(state, map, units, cities, diplomacy, players)
+}
+
+fn recompute_visibility_for_players<'player>(
+    state: &GameState,
+    map: &MapDefinition,
+    units: &[Unit],
+    cities: &[aonw_domain::City],
+    diplomacy: &aonw_domain::Diplomacy,
+    players: impl IntoIterator<Item = &'player aonw_domain::PlayerId>,
+) -> (aonw_domain::FogOfWar, aonw_domain::Diplomacy) {
+    let refs = units.iter().collect::<Vec<_>>();
+    let mut fog = state.fog_of_war().clone();
+    for player in players {
+        fog = recompute_after_move(&fog, map, player, &refs, cities);
+    }
+    let diplomacy = merge_discovered_contacts(diplomacy, &fog, &refs, cities);
+    (fog, diplomacy)
+}
+
+pub(super) fn refresh_batch_visibility(
+    state: &GameState,
+    map: &MapDefinition,
+    players: &[aonw_domain::PlayerId],
+) -> (Option<aonw_domain::FogOfWar>, aonw_domain::Diplomacy) {
+    if players.is_empty() {
+        let refs = state.units().iter().collect::<Vec<_>>();
+        let diplomacy =
+            merge_discovered_contacts(state.diplomacy(), state.fog_of_war(), &refs, state.cities());
+        return (None, diplomacy);
+    }
+    let (fog, diplomacy) = recompute_visibility_for_players(
+        state,
+        map,
+        state.units(),
+        state.cities(),
+        state.diplomacy(),
+        players,
+    );
+    (Some(fog), diplomacy)
 }
 
 fn combat_events(
@@ -460,9 +690,8 @@ fn retreat_destination(
             map.tile_at(*coordinate).is_some_and(|tile| {
                 matches!(terrain_entry_cost(tile, domain), MovementCost::Passable(_))
             }) && !state
-                .units()
-                .iter()
-                .any(|unit| unit.id() != defender.id() && unit.position() == *coordinate)
+                .units_at(*coordinate)
+                .any(|unit| unit.id() != defender.id())
         })
         .collect::<Vec<_>>();
     candidates.sort_unstable_by(|left, right| {

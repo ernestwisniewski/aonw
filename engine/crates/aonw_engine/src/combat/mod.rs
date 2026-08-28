@@ -12,13 +12,14 @@ pub use rng::CombatRng;
 
 use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_domain::{
-    CombatState, Diplomacy, DiplomacyStateBuildError, FogOfWar, FogVisibility, GameState, HexCoord,
-    MovementUnits, PlayerId, StateRevision, Unit, WorldArtifact,
+    CombatBatchStepUpdate, CombatState, Diplomacy, DiplomacyStateBuildError, FogOfWar,
+    FogVisibility, GameState, HexCoord, MovementUnits, PlayerId, StateRevision, Unit,
+    WorldArtifact,
 };
 
 use crate::{CommandRejectionCode, DiplomacyPolicyQuery, DomainEvent, EngineContext};
 
-use resolution::resolve;
+use resolution::{refresh_batch_visibility, resolve, resolve_intended};
 
 pub(crate) struct CombatUpdate {
     pub revision: StateRevision,
@@ -41,6 +42,13 @@ pub(crate) struct CombatPhaseUpdate {
     pub state: GameState,
     pub events: Box<[DomainEvent]>,
     pub executions: Box<[CombatExecution]>,
+}
+
+struct IntendedCombatUpdate {
+    state_update: CombatBatchStepUpdate,
+    visibility_players: Box<[PlayerId]>,
+    events: Box<[DomainEvent]>,
+    evidence: CombatExecution,
 }
 
 pub(crate) enum CombatPhaseError {
@@ -75,12 +83,6 @@ enum PreparationMode {
     Intended,
 }
 
-#[derive(Clone, Copy)]
-enum RevisionMode {
-    Advance,
-    Preserve,
-}
-
 pub(crate) fn preview(
     state: &GameState,
     context: EngineContext<'_>,
@@ -113,13 +115,7 @@ pub(crate) fn apply(
         command.defender,
     )
     .map_err(CombatApplyError::Rejected)?;
-    resolve(
-        state,
-        context,
-        prepared,
-        command.city_conquest_action,
-        RevisionMode::Advance,
-    )
+    resolve(state, context, prepared, command.city_conquest_action)
 }
 
 pub(crate) fn resolve_intended_attacks(
@@ -133,69 +129,59 @@ pub(crate) fn resolve_intended_attacks(
             .cmp(&right.declared_at_tick())
             .then_with(|| left.attacker_unit_id().cmp(right.attacker_unit_id()))
     });
-    let mut working = state;
+    if intended.is_empty() {
+        return Ok(CombatPhaseUpdate {
+            state,
+            events: Box::default(),
+            executions: Box::default(),
+        });
+    }
+    let mut batch = state.into_combat_resolution_batch();
     let mut events = Vec::new();
     let mut executions = Vec::new();
     for intent in intended {
         let actor = intent.declaring_player_id().clone();
         let context = EngineContext::canonical(&actor, map, ruleset);
-        let Ok(prepared) = prepare(
-            &working,
-            context.with_world(&working),
-            PreparationMode::Intended,
-            intent.attacker_unit_id(),
-            intent.defender(),
-        ) else {
-            continue;
-        };
-        let update = match resolve(
-            &working,
-            context,
-            prepared,
-            intent.city_conquest_action(),
-            RevisionMode::Preserve,
-        ) {
-            Ok(value) => value,
-            Err(CombatApplyError::Rejected(_)) => continue,
-            Err(CombatApplyError::Diplomacy(error)) => {
-                return Err(CombatPhaseError::Diplomacy(error));
+        let update = {
+            let working = batch.state();
+            let Ok(prepared) = prepare(
+                working,
+                context.with_world(working),
+                PreparationMode::Intended,
+                intent.attacker_unit_id(),
+                intent.defender(),
+            ) else {
+                continue;
+            };
+            match resolve_intended(working, context, prepared, intent.city_conquest_action()) {
+                Ok(value) => value,
+                Err(CombatApplyError::Rejected(_)) => continue,
+                Err(CombatApplyError::Diplomacy(error)) => {
+                    return Err(CombatPhaseError::Diplomacy(error));
+                }
             }
         };
-        events.extend(update.events.iter().cloned());
-        executions.push(update.evidence.clone());
-        working = working
-            .into_after_combat(aonw_domain::CombatStateUpdate {
-                revision: update.revision,
-                units: update.units,
-                cities: update.cities,
-                artifacts: update.artifacts,
-                combat: update.combat,
-                fog_of_war: update.fog_of_war,
-                diplomacy: update.diplomacy,
-            })
+        let IntendedCombatUpdate {
+            state_update,
+            visibility_players,
+            events: attack_events,
+            evidence,
+        } = update;
+        events.extend(attack_events);
+        executions.push(evidence);
+        batch = batch
+            .into_after_step(state_update)
             .map_err(CombatPhaseError::State)?;
+        let (fog, diplomacy) = refresh_batch_visibility(batch.state(), map, &visibility_players);
+        batch = batch.after_visibility_refresh(fog, diplomacy);
     }
-    if !working.combat().intended_attacks().is_empty() {
-        let revision = working.revision();
-        let units = working.units().to_vec();
-        let cities = working.cities().to_vec();
-        let artifacts = working.artifacts().to_vec();
-        let fog = working.fog_of_war().clone();
-        let diplomacy = working.diplomacy().clone();
-        working = working
-            .into_after_combat(aonw_domain::CombatStateUpdate {
-                revision,
-                units,
-                cities,
-                artifacts,
-                combat: CombatState::default(),
-                fog_of_war: fog,
-                diplomacy,
-            })
-            .map_err(CombatPhaseError::State)?;
-    }
+    let fog = batch.state().fog_of_war().clone();
+    let diplomacy = batch.state().diplomacy().clone();
+    let state = batch
+        .finish(fog, diplomacy)
+        .map_err(CombatPhaseError::State)?;
     Ok(CombatPhaseUpdate {
-        state: working,
+        state,
         events: events.into_boxed_slice(),
         executions: executions.into_boxed_slice(),
     })
@@ -215,8 +201,8 @@ fn prepare(
     }
     let attacker_index = state
         .units()
-        .iter()
-        .position(|unit| unit.id() == attacker_id)
+        .binary_search_by(|unit| unit.id().cmp(attacker_id))
+        .ok()
         .ok_or(CommandRejectionCode::AttackerNotFound)?;
     let attacker = &state.units()[attacker_index];
     validate_attacker(state, context, mode, attacker)?;
@@ -340,18 +326,25 @@ fn prepare_defender(
     coordinate: HexCoord,
 ) -> Result<PreparedDefender, CommandRejectionCode> {
     let target = state
-        .units()
-        .iter()
-        .enumerate()
-        .find(|(_, unit)| unit.id() != attacker.id() && unit.position() == coordinate)
-        .map(|(index, _)| PreparedTarget::Unit(index))
+        .units_at(coordinate)
+        .find(|unit| unit.id() != attacker.id())
+        .and_then(|unit| {
+            state
+                .units()
+                .binary_search_by(|candidate| candidate.id().cmp(unit.id()))
+                .ok()
+        })
+        .map(PreparedTarget::Unit)
         .or_else(|| {
             state
-                .cities()
-                .iter()
-                .enumerate()
-                .find(|(_, city)| city.center() == coordinate)
-                .map(|(index, _)| PreparedTarget::City(index))
+                .city_at(coordinate)
+                .and_then(|city| {
+                    state
+                        .cities()
+                        .binary_search_by(|candidate| candidate.id().cmp(city.id()))
+                        .ok()
+                })
+                .map(PreparedTarget::City)
         })
         .ok_or(CommandRejectionCode::AttackTargetNotFound)?;
     match target {

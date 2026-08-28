@@ -25,6 +25,8 @@ pub enum GameStateBuildError {
     },
     /// More than one city used an identifier.
     DuplicateCityId(CityId),
+    /// A requested city update does not belong to the aggregate.
+    CityNotFound(CityId),
     /// A city violates its entity-local numeric or topology invariants.
     InvalidCity {
         /// Invalid city.
@@ -43,6 +45,8 @@ pub enum GameStateBuildError {
     },
     /// More than one artifact used an identifier.
     DuplicateArtifactId(ArtifactId),
+    /// A requested artifact update does not belong to the aggregate.
+    ArtifactNotFound(ArtifactId),
     /// A city center or controlled coordinate is outside the map.
     CityOutOfBounds {
         /// City carrying invalid topology.
@@ -198,6 +202,7 @@ impl core::fmt::Display for GameStateBuildError {
                 position.row()
             ),
             Self::DuplicateCityId(id) => write!(formatter, "duplicate city id: {id}"),
+            Self::CityNotFound(id) => write!(formatter, "city not found: {id}"),
             Self::InvalidCity { city_id, error } => {
                 write!(formatter, "city {city_id} is invalid: {error}")
             }
@@ -212,6 +217,7 @@ impl core::fmt::Display for GameStateBuildError {
                 position.row()
             ),
             Self::DuplicateArtifactId(id) => write!(formatter, "duplicate artifact id: {id}"),
+            Self::ArtifactNotFound(id) => write!(formatter, "artifact not found: {id}"),
             Self::CityOutOfBounds { city_id, position } => write!(
                 formatter,
                 "city {city_id} references ({}, {}) outside the map",

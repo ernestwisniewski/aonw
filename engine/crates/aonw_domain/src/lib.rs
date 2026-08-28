@@ -54,7 +54,8 @@ pub use fog::{FogOfWar, FogVisibility, PlayerFog};
 pub use game_state::{
     GameState, GameStateBuildError, GameStateBuilder, UnitOccupancyPolicy,
     turn_update::{
-        ArtifactStateUpdate, CombatStateUpdate, DiplomacyStateUpdate, ProductionStateUpdate,
+        ArtifactStateUpdate, CombatBatchStepUpdate, CombatCityStateChange, CombatResolutionBatch,
+        CombatStateUpdate, CombatUnitStateChange, DiplomacyStateUpdate, ProductionStateUpdate,
         ResearchStateUpdate, TurnKernelStateUpdate,
     },
 };
