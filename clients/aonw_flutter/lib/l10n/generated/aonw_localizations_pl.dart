@@ -15,6 +15,12 @@ class AonwLocalizationsPl extends AonwLocalizations {
   String get mainMenuTitle => 'Menu główne';
 
   @override
+  String get continueGame => 'Kontynuuj';
+
+  @override
+  String get resumingGame => 'Wznawianie gry';
+
+  @override
   String get newGame => 'Nowa gra';
 
   @override
@@ -55,6 +61,39 @@ class AonwLocalizationsPl extends AonwLocalizations {
 
   @override
   String get localGameStartFailed => 'Nie udało się uruchomić gry lokalnej.';
+
+  @override
+  String get saveGame => 'Zapisz grę';
+
+  @override
+  String get savingGame => 'Zapisywanie gry';
+
+  @override
+  String get gameSaved => 'Gra została zapisana';
+
+  @override
+  String saveFailure(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'unavailable': 'Zapisywanie jest niedostępne dla tej sesji.',
+      'exportFailed': 'Nie udało się wyeksportować stanu gry.',
+      'writeFailed': 'Nie udało się zapisać pliku gry.',
+      'other': 'Nie udało się zapisać gry.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String resumeFailure(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'unavailable': 'Zapisane gry są niedostępne na tej platformie.',
+      'missing': 'Nie znaleziono zapisanej gry.',
+      'unreadable': 'Nie udało się odczytać zapisanej gry.',
+      'incompatible':
+          'Zapisana gra jest nieprawidłowa lub niezgodna z bieżącą grą.',
+      'other': 'Nie udało się wznowić gry.',
+    });
+    return '$_temp0';
+  }
 
   @override
   String get aiTurnRunning => 'Komputer wykonuje swoją turę.';

@@ -15,6 +15,7 @@ import '../../diplomacy/application/diplomacy_session_port.dart';
 import '../../diplomacy/application/diplomacy_workflow.dart';
 import '../../diplomacy/read_model/diplomacy_view.dart';
 import '../../local_game/application/local_ai_turn_state.dart';
+import '../../local_game/application/local_game_catalog.dart';
 import '../../local_game/application/local_game_session_port.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/application/unit_logistics_state.dart';
@@ -28,6 +29,10 @@ import '../../research/application/research_session_port.dart';
 import '../../research/application/research_state.dart';
 import '../../research/application/research_workflow.dart';
 import '../../research/read_model/research_view.dart';
+import '../../save_game/application/game_save_session_port.dart';
+import '../../save_game/application/local_save_state.dart';
+import '../../save_game/application/local_save_store.dart';
+import '../../save_game/application/local_save_workflow.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../turns/application/turn_workflow.dart';
 import '../../unit_actions/application/action_deck_state.dart';
@@ -70,6 +75,8 @@ final class MapCoordinator {
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     LocalGameSessionPort? localGame,
+    GameSaveSessionPort? saveSession,
+    LocalSaveStore? saveStore,
     this.assets = MapAssetPaths.starter,
     MapDiagnosticReporter? diagnosticReporter,
   }) : _session = session,
@@ -120,10 +127,15 @@ final class MapCoordinator {
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _localGame = localGame ?? _optionalLocalGame(session),
+       _saveWorkflow = LocalSaveWorkflow(
+         session: saveSession ?? _optionalSaveSession(session),
+         store: saveStore,
+         diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
        _diagnosticReporter = diagnosticReporter ?? _ignoreDiagnostic;
 
   final MapSessionPort _session;
-  LocalMatchSetupView? _localMatch;
+  LocalGameCatalogEntryView? _localGameEntry;
   final MovementCommandRunner _movement;
   final CombatWorkflow _combat;
   final CityWorkflow _cities;
@@ -136,6 +148,7 @@ final class MapCoordinator {
   final UnitActionWorkflow _unitActions;
   final TurnWorkflow _turns;
   final LocalGameSessionPort? _localGame;
+  final LocalSaveWorkflow _saveWorkflow;
   final MapDiagnosticReporter _diagnosticReporter;
   final MapAssetPaths assets;
   final StreamController<GameSessionState> _changes =
@@ -150,23 +163,92 @@ final class MapCoordinator {
   Stream<GameSessionState> get changes => _changes.stream;
 
   Future<void> load() async {
-    await _openSession(() => _session.load(assets), localMatch: null);
+    await _openSession(() => _session.load(assets), localGameEntry: null);
   }
 
-  Future<bool> startLocalMatch(LocalMatchSetupView setup) => _openSession(() {
-    final localGame = _localGame;
-    if (localGame == null) {
-      throw const LocalGameSessionException(
-        code: 'local_game_unavailable',
-        message: 'The local game session is unavailable.',
+  Future<bool> startLocalMatch(
+    LocalGameCatalogEntryView entry,
+    LocalMatchSetupView setup,
+  ) {
+    _validateCatalogSetup(entry, setup);
+    return _openSession(() {
+      final localGame = _localGame;
+      if (localGame == null) {
+        throw const LocalGameSessionException(
+          code: 'local_game_unavailable',
+          message: 'The local game session is unavailable.',
+        );
+      }
+      return localGame.startLocalMatch(setup);
+    }, localGameEntry: entry);
+  }
+
+  Future<bool> hasLocalSave() => _saveWorkflow.hasSave();
+
+  Future<LocalResumeResultView> resumeLatestLocalGame() async {
+    if (_disposed) {
+      return const LocalResumeResultView.failed(
+        LocalResumeFailureViewCode.unavailable,
       );
     }
-    return localGame.startLocalMatch(setup);
-  }, localMatch: setup);
+    final previous = _state;
+    final generation = ++_loadGeneration;
+    _interactionGeneration += 1;
+    _setState(const GameSessionLoading());
+    final attempt = await _saveWorkflow.resumeLatest();
+    if (!_isCurrent(generation)) {
+      return const LocalResumeResultView.failed(
+        LocalResumeFailureViewCode.unavailable,
+      );
+    }
+    if (attempt.started) {
+      _localGameEntry = attempt.entry;
+      _setState(GameSessionReady.initial(attempt.scene!));
+      return const LocalResumeResultView.started();
+    }
+    _setState(previous);
+    return LocalResumeResultView.failed(attempt.failure!);
+  }
+
+  void saveLocalGame() {
+    unawaited(_saveLocalGame());
+  }
+
+  Future<void> _saveLocalGame() async {
+    final current = _state;
+    if (current is! GameSessionReady ||
+        current.localSave.inFlight ||
+        current.localAiTurn.blocksGameplay) {
+      return;
+    }
+    final entry = _localGameEntry;
+    if (entry == null) {
+      _setState(
+        current.withLocalSave(
+          const LocalSaveState.failed(LocalSaveFailureViewCode.unavailable),
+        ),
+      );
+      return;
+    }
+    final generation = _loadGeneration;
+    _setState(current.withLocalSave(const LocalSaveState.saving()));
+    final failure = await _saveWorkflow.save(entry);
+    if (!_isCurrent(generation)) return;
+    final ready = _state;
+    if (ready is GameSessionReady) {
+      _setState(
+        ready.withLocalSave(
+          failure == null
+              ? const LocalSaveState.saved()
+              : LocalSaveState.failed(failure),
+        ),
+      );
+    }
+  }
 
   Future<bool> _openSession(
     Future<MapScene> Function() open, {
-    required LocalMatchSetupView? localMatch,
+    required LocalGameCatalogEntryView? localGameEntry,
   }) async {
     if (_disposed) return false;
     final generation = ++_loadGeneration;
@@ -175,7 +257,7 @@ final class MapCoordinator {
     try {
       final scene = await open();
       if (!_isCurrent(generation)) return false;
-      _localMatch = localMatch;
+      _localGameEntry = localGameEntry;
       _setState(GameSessionReady.initial(scene));
       return true;
     } on MapLoadException catch (error, stackTrace) {
@@ -282,28 +364,24 @@ final class MapCoordinator {
     final current = _state;
     return current is GameSessionReady &&
         !current.recipient.turnView.outcome.isTerminal &&
-        !current.localAiTurn.blocksGameplay;
+        !current.localAiTurn.blocksGameplay &&
+        !current.localSave.inFlight;
   }
 
   Future<void> _advanceLocalAiTurns(GameSessionReady afterHuman) async {
-    final setup = _localMatch;
+    final entry = _localGameEntry;
     final localGame = _localGame;
-    if (setup == null || localGame == null) return;
+    if (entry == null || localGame == null) return;
     final generation = _loadGeneration;
     var current = afterHuman;
-    for (final participant in setup.participants) {
-      if (participant.control != LocalPlayerControlView.ai ||
-          current.recipient.turnView.outcome.isTerminal) {
-        continue;
-      }
-      _setState(
-        current.withLocalAiTurn(LocalAiTurnState.running(participant.id)),
-      );
+    for (final aiPlayerId in entry.aiPlayerIds) {
+      if (current.recipient.turnView.outcome.isTerminal) break;
+      _setState(current.withLocalAiTurn(LocalAiTurnState.running(aiPlayerId)));
       try {
         final execution = await localGame.advanceAiTurn(
           LocalAiTurnRequestView(
-            aiPlayerId: participant.id,
-            humanPlayerId: setup.assets.actorPlayerId,
+            aiPlayerId: aiPlayerId,
+            humanPlayerId: entry.assets.actorPlayerId,
           ),
         );
         if (!_isCurrent(generation)) return;
@@ -551,6 +629,39 @@ DiplomacySessionPort _requireDiplomacySession(MovementSessionPort movement) {
 LocalGameSessionPort? _optionalLocalGame(MapSessionPort session) {
   if (session case final LocalGameSessionPort localGame) return localGame;
   return null;
+}
+
+GameSaveSessionPort? _optionalSaveSession(MapSessionPort session) {
+  if (session case final GameSaveSessionPort saveSession) return saveSession;
+  return null;
+}
+
+void _validateCatalogSetup(
+  LocalGameCatalogEntryView entry,
+  LocalMatchSetupView setup,
+) {
+  if (entry.assets.document != setup.assets.document ||
+      entry.assets.bundleManifest != setup.assets.bundleManifest ||
+      entry.assets.scenarioDocument != setup.assets.scenarioDocument ||
+      entry.assets.actorPlayerId != setup.assets.actorPlayerId) {
+    throw ArgumentError.value(
+      setup.assets,
+      'setup.assets',
+      'must match the selected catalog entry',
+    );
+  }
+  final aiPlayerIds = [
+    for (final participant in setup.participants)
+      if (participant.control == LocalPlayerControlView.ai) participant.id,
+  ];
+  if (aiPlayerIds.length != entry.aiPlayerIds.length ||
+      !entry.aiPlayerIds.every(aiPlayerIds.contains)) {
+    throw ArgumentError.value(
+      aiPlayerIds,
+      'setup.participants',
+      'AI participants must match the selected catalog entry',
+    );
+  }
 }
 
 MapLoadFailureViewCode _loadFailureCode(String code) => switch (code) {

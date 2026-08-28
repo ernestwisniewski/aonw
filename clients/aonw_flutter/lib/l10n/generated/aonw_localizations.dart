@@ -110,6 +110,18 @@ abstract class AonwLocalizations {
   /// **'Main menu'**
   String get mainMenuTitle;
 
+  /// No description provided for @continueGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueGame;
+
+  /// No description provided for @resumingGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Resuming game'**
+  String get resumingGame;
+
   /// No description provided for @newGame.
   ///
   /// In en, this message translates to:
@@ -181,6 +193,36 @@ abstract class AonwLocalizations {
   /// In en, this message translates to:
   /// **'The local game could not be started.'**
   String get localGameStartFailed;
+
+  /// No description provided for @saveGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Save game'**
+  String get saveGame;
+
+  /// No description provided for @savingGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving game'**
+  String get savingGame;
+
+  /// No description provided for @gameSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Game saved'**
+  String get gameSaved;
+
+  /// No description provided for @saveFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, unavailable{Saving is unavailable for this session.} exportFailed{The game could not be exported.} writeFailed{The save file could not be stored.} other{The game could not be saved.}}'**
+  String saveFailure(String value);
+
+  /// No description provided for @resumeFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, unavailable{Saved games are unavailable on this platform.} missing{No saved game was found.} unreadable{The saved game could not be read.} incompatible{The saved game is invalid or incompatible with the current game.} other{The saved game could not be resumed.}}'**
+  String resumeFailure(String value);
 
   /// No description provided for @aiTurnRunning.
   ///

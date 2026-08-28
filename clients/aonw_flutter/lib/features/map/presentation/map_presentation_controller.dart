@@ -10,6 +10,7 @@ import '../../combat/application/combat_session_port.dart';
 import '../../combat/read_model/combat_view.dart';
 import '../../diplomacy/application/diplomacy_session_port.dart';
 import '../../diplomacy/read_model/diplomacy_view.dart';
+import '../../local_game/application/local_game_catalog.dart';
 import '../../local_game/application/local_game_session_port.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
@@ -17,6 +18,9 @@ import '../../production/application/production_session_port.dart';
 import '../../production/read_model/production_view.dart';
 import '../../research/application/research_session_port.dart';
 import '../../research/read_model/research_view.dart';
+import '../../save_game/application/game_save_session_port.dart';
+import '../../save_game/application/local_save_state.dart';
+import '../../save_game/application/local_save_store.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
@@ -43,6 +47,8 @@ final class MapPresentationController extends ChangeNotifier {
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     LocalGameSessionPort? localGame,
+    GameSaveSessionPort? saveSession,
+    LocalSaveStore? saveStore,
     MapAssetPaths assets = MapAssetPaths.starter,
     MapDiagnosticReporter diagnosticReporter = _reportMapDiagnostic,
   }) : this.fromCoordinator(
@@ -60,6 +66,8 @@ final class MapPresentationController extends ChangeNotifier {
            unitActions: unitActions,
            turns: turns,
            localGame: localGame,
+           saveSession: saveSession,
+           saveStore: saveStore,
            assets: assets,
            diagnosticReporter: diagnosticReporter,
          ),
@@ -77,8 +85,17 @@ final class MapPresentationController extends ChangeNotifier {
 
   Future<void> load() => _coordinator.load();
 
-  Future<bool> startLocalMatch(LocalMatchSetupView setup) =>
-      _coordinator.startLocalMatch(setup);
+  Future<bool> startLocalMatch(
+    LocalGameCatalogEntryView entry,
+    LocalMatchSetupView setup,
+  ) => _coordinator.startLocalMatch(entry, setup);
+
+  Future<bool> hasLocalSave() => _coordinator.hasLocalSave();
+
+  Future<LocalResumeResultView> resumeLatestLocalGame() =>
+      _coordinator.resumeLatestLocalGame();
+
+  void saveLocalGame() => _coordinator.saveLocalGame();
 
   void hover(MapHexCoordinate? coordinate) => _coordinator.hover(coordinate);
 

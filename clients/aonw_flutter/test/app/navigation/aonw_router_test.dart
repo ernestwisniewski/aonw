@@ -1,7 +1,12 @@
 import 'package:aonw_flutter/app/navigation/aonw_app.dart';
 import 'package:aonw_flutter/app/navigation/aonw_router.dart';
+import 'package:aonw_flutter/features/local_game/application/local_game_catalog.dart';
 import 'package:aonw_flutter/features/local_game/application/local_game_session_port.dart';
+import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/presentation/map_presentation_controller.dart';
+import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
+import 'package:aonw_flutter/features/save_game/application/game_save_session_port.dart';
+import 'package:aonw_flutter/features/save_game/application/local_save_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -82,13 +87,17 @@ void main() {
   testWidgets('starts a typed local AI match from the main menu', (
     tester,
   ) async {
-    final session = FakeGameSession.success(testMapScene());
+    final scene = testMapScene();
+    final session = FakeGameSession.success(scene);
+    final saves = _SingleSaveStore();
     final controller = MapPresentationController(
       session: session,
       movement: session,
       unitActions: session,
       logistics: session,
       turns: session,
+      saveSession: _ResumeSession(scene),
+      saveStore: saves,
     );
 
     await tester.pumpWidget(AonwApp(mapController: controller));
@@ -113,7 +122,90 @@ void main() {
       LocalAiDifficultyView.normal,
     );
 
+    final saveButton = tester.widget<IconButton>(
+      find.byKey(const ValueKey('save-game')),
+    );
+    expect(saveButton.onPressed, isNotNull);
+    await tester.tap(find.byKey(const ValueKey('save-game')));
+    await tester.pumpAndSettle();
+    expect(saves.document, 'rust-save');
+    expect(find.text('Game saved'), findsOneWidget);
+
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
+
+  testWidgets('resumes the authoritative local save from the main menu', (
+    tester,
+  ) async {
+    final scene = testMapScene();
+    final gameplay = FakeGameSession.success(scene);
+    final saves = _SingleSaveStore('rust-save');
+    final persistence = _ResumeSession(scene);
+    final controller = MapPresentationController(
+      session: gameplay,
+      movement: gameplay,
+      unitActions: gameplay,
+      logistics: gameplay,
+      turns: gameplay,
+      saveSession: persistence,
+      saveStore: saves,
+    );
+
+    await tester.pumpWidget(AonwApp(mapController: controller));
+    await tester.pumpAndSettle();
+    final continueButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('continue-game')),
+    );
+    expect(continueButton.onPressed, isNotNull);
+
+    await tester.tap(find.byKey(const ValueKey('continue-game')));
+    await tester.pumpAndSettle();
+
+    expect(persistence.openedDocuments, ['rust-save']);
+    expect(find.byKey(const ValueKey('map-viewport')), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+}
+
+final class _ResumeSession implements GameSaveSessionPort {
+  _ResumeSession(this.scene);
+
+  final MapScene scene;
+  final openedDocuments = <String>[];
+
+  @override
+  Future<String> exportSaveDocument() async => 'rust-save';
+
+  @override
+  Future<MapScene> openSaveDocument({
+    required MapAssetPaths assets,
+    required String document,
+  }) async {
+    openedDocuments.add(document);
+    return scene;
+  }
+}
+
+final class _SingleSaveStore implements LocalSaveStore {
+  _SingleSaveStore([this.document]);
+
+  String? document;
+
+  @override
+  Future<bool> contains(LocalGameScenarioView scenario) async =>
+      document != null;
+
+  @override
+  Future<String?> read(
+    LocalGameScenarioView scenario,
+    LocalSaveCopyView copy,
+  ) async => copy == LocalSaveCopyView.primary ? document : null;
+
+  @override
+  Future<void> write(LocalGameScenarioView scenario, String document) async {
+    this.document = document;
+  }
 }

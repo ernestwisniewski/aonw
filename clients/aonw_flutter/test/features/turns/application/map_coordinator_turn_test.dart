@@ -1,4 +1,5 @@
 import 'package:aonw_flutter/features/local_game/application/local_ai_turn_state.dart';
+import 'package:aonw_flutter/features/local_game/application/local_game_catalog.dart';
 import 'package:aonw_flutter/features/local_game/application/local_game_session_port.dart';
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
 import 'package:aonw_flutter/features/map/application/map_coordinator.dart';
@@ -116,7 +117,7 @@ void main() {
       );
       final controller = _controller(session);
       addTearDown(controller.dispose);
-      await controller.startLocalMatch(_localSetup());
+      await controller.startLocalMatch(_localEntry, _localSetup());
 
       controller.endTurn();
       await Future<void>.delayed(Duration.zero);
@@ -163,7 +164,7 @@ void main() {
       );
       final controller = _controller(session);
       addTearDown(controller.dispose);
-      await controller.startLocalMatch(_localSetup());
+      await controller.startLocalMatch(_localEntry, _localSetup());
 
       controller.endTurn();
       await Future<void>.delayed(Duration.zero);
@@ -215,6 +216,17 @@ LocalMatchSetupView _localSetup() => LocalMatchSetupView(
     ),
   ],
   fogEnabled: true,
+);
+
+const _localEntry = LocalGameCatalogEntryView(
+  id: LocalGameScenarioView.starterDuel,
+  assets: MapAssetPaths(
+    document: 'map',
+    bundleManifest: 'manifest',
+    scenarioDocument: 'scenario',
+    actorPlayerId: 'player-1',
+  ),
+  aiPlayerIds: ['player-2'],
 );
 
 final _turnEvidence = TurnKernelEvidenceView(

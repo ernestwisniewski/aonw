@@ -187,6 +187,7 @@ final class _NewGameScreenState extends State<NewGameScreen> {
     });
     final l10n = context.aonwL10n;
     final started = await widget.mapController.startLocalMatch(
+      _scenario,
       LocalMatchSetupView(
         assets: _scenario.assets,
         participants: [

@@ -15,6 +15,12 @@ class AonwLocalizationsEn extends AonwLocalizations {
   String get mainMenuTitle => 'Main menu';
 
   @override
+  String get continueGame => 'Continue';
+
+  @override
+  String get resumingGame => 'Resuming game';
+
+  @override
   String get newGame => 'New game';
 
   @override
@@ -55,6 +61,39 @@ class AonwLocalizationsEn extends AonwLocalizations {
 
   @override
   String get localGameStartFailed => 'The local game could not be started.';
+
+  @override
+  String get saveGame => 'Save game';
+
+  @override
+  String get savingGame => 'Saving game';
+
+  @override
+  String get gameSaved => 'Game saved';
+
+  @override
+  String saveFailure(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'unavailable': 'Saving is unavailable for this session.',
+      'exportFailed': 'The game could not be exported.',
+      'writeFailed': 'The save file could not be stored.',
+      'other': 'The game could not be saved.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String resumeFailure(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'unavailable': 'Saved games are unavailable on this platform.',
+      'missing': 'No saved game was found.',
+      'unreadable': 'The saved game could not be read.',
+      'incompatible':
+          'The saved game is invalid or incompatible with the current game.',
+      'other': 'The saved game could not be resumed.',
+    });
+    return '$_temp0';
+  }
 
   @override
   String get aiTurnRunning => 'The computer is taking its turn.';

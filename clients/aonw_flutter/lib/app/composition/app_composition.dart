@@ -14,6 +14,9 @@ import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
 import '../../features/production/application/production_session_port.dart';
 import '../../features/research/application/research_session_port.dart';
+import '../../features/save_game/application/game_save_session_port.dart';
+import '../../features/save_game/application/local_save_store.dart';
+import '../../features/save_game/infrastructure/atomic_local_save_store.dart';
 import '../../features/settings/application/client_settings_store.dart';
 import '../../features/settings/infrastructure/shared_preferences_client_settings_store.dart';
 import '../../features/settings/presentation/client_settings_controller.dart';
@@ -40,6 +43,8 @@ final class AppComposition {
     required UnitActionSessionPort unitActionSession,
     required TurnSessionPort turnSession,
     LocalGameSessionPort? localGameSession,
+    GameSaveSessionPort? saveSession,
+    LocalSaveStore? saveStore,
     MapInputSource? mapInputSource,
     ClientSettingsStore? settingsStore,
     AonwFlameGameFactory flameGameFactory = AonwFlameGame.new,
@@ -64,6 +69,8 @@ final class AppComposition {
            unitActions: unitActionSession,
            turns: turnSession,
            localGame: localGameSession,
+           saveSession: saveSession,
+           saveStore: saveStore,
          ),
          mapInputSource: mapInputSource,
          flameGameFactory: flameGameFactory,
@@ -92,6 +99,8 @@ final class AppComposition {
       unitActionSession: gateway,
       turnSession: gateway,
       localGameSession: gateway,
+      saveSession: gateway,
+      saveStore: AtomicLocalSaveStore.production(),
       mapInputSource: GamepadMapInputSource(),
       settingsStore: SharedPreferencesClientSettingsStore(),
       telemetry: telemetry,

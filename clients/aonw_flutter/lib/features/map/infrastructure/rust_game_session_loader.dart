@@ -54,10 +54,16 @@ final class RustGameSessionLoader {
     fogEnabled: fogEnabled,
   );
 
+  Future<PreparedRustGameSession> prepareSave(
+    MapAssetPaths assets, {
+    required String saveDocument,
+  }) => _prepareCandidate(assets, saveDocument: saveDocument);
+
   Future<PreparedRustGameSession> _prepareCandidate(
     MapAssetPaths assets, {
     AonwMatchIdentity? matchIdentity,
     bool fogEnabled = false,
+    String? saveDocument,
   }) async {
     final candidate = await _sessionFactory();
     if (candidate == null) {
@@ -72,6 +78,7 @@ final class RustGameSessionLoader {
         assets,
         matchIdentity: matchIdentity,
         fogEnabled: fogEnabled,
+        saveDocument: saveDocument,
       );
     } on MapLoadException {
       await candidate.close();
@@ -95,22 +102,32 @@ final class RustGameSessionLoader {
     MapAssetPaths assets, {
     AonwMatchIdentity? matchIdentity,
     required bool fogEnabled,
+    String? saveDocument,
   }) async {
     await _verifyCapabilities(
       candidate,
-      matchIdentity == null ? _requiredClientFeatures : _localMatchFeatures,
+      saveDocument != null
+          ? _localSaveFeatures
+          : matchIdentity == null
+          ? _requiredClientFeatures
+          : _localMatchFeatures,
     );
     final document = await _assets.loadString(assets.document);
-    final scenario = await _assets.loadString(assets.scenarioDocument);
     final map = await _inspectMap(candidate, document);
-    final snapshot = await _openPlayer(
-      candidate,
-      mapDocument: document,
-      scenarioDocument: scenario,
-      actorPlayerId: assets.actorPlayerId,
-      matchIdentity: matchIdentity,
-      fogEnabled: fogEnabled,
-    );
+    final snapshot = saveDocument == null
+        ? await _openPlayer(
+            candidate,
+            mapDocument: document,
+            scenarioDocument: await _assets.loadString(assets.scenarioDocument),
+            actorPlayerId: assets.actorPlayerId,
+            matchIdentity: matchIdentity,
+            fogEnabled: fogEnabled,
+          )
+        : await _openSavedPlayer(
+            candidate,
+            mapDocument: document,
+            saveDocument: saveDocument,
+          );
     final player = _playerMapper.fromWire(
       snapshot,
       map: map,
@@ -125,6 +142,28 @@ final class RustGameSessionLoader {
       scene: MapScene(map: map, reference: reference, player: player),
       cache: RecipientProjectionCache.open(snapshot: snapshot, map: map),
     );
+  }
+
+  Future<AonwPlayerViewSnapshot> _openSavedPlayer(
+    AonwRustSession candidate, {
+    required String mapDocument,
+    required String saveDocument,
+  }) async {
+    final opened = await candidate.send(
+      AonwClientRequest.openSave(
+        mapDocument: mapDocument,
+        saveDocument: saveDocument,
+      ),
+    );
+    _loadResponse<AonwSaveOpenedResponse>(
+      opened,
+      'The saved game could not be opened.',
+    );
+    final snapshot = await candidate.send(AonwClientRequest.snapshot());
+    return _loadResponse<AonwSnapshotResponse>(
+      snapshot,
+      'The restored player view could not be loaded.',
+    ).snapshot;
   }
 
   Future<AonwPlayerViewSnapshot> _openPlayer(
@@ -233,6 +272,13 @@ const _requiredClientFeatures = <AonwClientFeature>{
 const _localMatchFeatures = <AonwClientFeature>{
   ..._requiredClientFeatures,
   AonwClientFeature.matchStart,
+  AonwClientFeature.actorHandoff,
+  AonwClientFeature.aiTurns,
+};
+
+const _localSaveFeatures = <AonwClientFeature>{
+  ..._requiredClientFeatures,
+  AonwClientFeature.saveGame,
   AonwClientFeature.actorHandoff,
   AonwClientFeature.aiTurns,
 };

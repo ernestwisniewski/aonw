@@ -56,6 +56,11 @@ final class AonwRouter {
               Navigator.of(context).pushNamed(AonwRoute.newGame.location),
           onOpenSettings: () =>
               Navigator.of(context).pushNamed(AonwRoute.settings.location),
+          hasLocalSave: mapController.hasLocalSave,
+          resumeLocalGame: mapController.resumeLatestLocalGame,
+          onResumed: () => Navigator.of(
+            context,
+          ).pushReplacementNamed(AonwRoute.map.location),
         ),
         AonwRoute.newGame => (context) => NewGameScreen(
           mapController: mapController,

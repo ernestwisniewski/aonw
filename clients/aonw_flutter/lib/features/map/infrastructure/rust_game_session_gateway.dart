@@ -24,6 +24,7 @@ import '../../production/read_model/production_view.dart';
 import '../../research/application/research_session_port.dart';
 import '../../research/infrastructure/rust_research_gateway.dart';
 import '../../research/read_model/research_view.dart';
+import '../../save_game/application/game_save_session_port.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../turns/infrastructure/rust_turn_gateway.dart';
 import '../../turns/read_model/turn_command_view.dart';
@@ -62,7 +63,8 @@ final class RustGameSessionGateway
         DiplomacySessionPort,
         TurnSessionPort,
         UnitActionSessionPort,
-        LocalGameSessionPort {
+        LocalGameSessionPort,
+        GameSaveSessionPort {
   RustGameSessionGateway({
     required AssetBundle assets,
     RustSessionFactory sessionFactory = createAonwRustSession,
@@ -164,6 +166,73 @@ final class RustGameSessionGateway
       return prepared.scene;
     } finally {
       if (!retained) await prepared.session.close();
+    }
+  }
+
+  @override
+  Future<String> exportSaveDocument() => _serialize(() async {
+    final context = _context();
+    try {
+      final response = await context.session.send(
+        AonwClientRequest.exportSave(),
+      );
+      if (!response.isSuccess) {
+        final error = response.error!;
+        throw GameSaveSessionException(
+          code: error.code,
+          message: 'The current game could not be exported.',
+          diagnosticCause: error,
+          diagnosticStackTrace: StackTrace.current,
+        );
+      }
+      return response.require<AonwSaveExportedResponse>().document;
+    } on GameSaveSessionException {
+      rethrow;
+    } on Object catch (error, stackTrace) {
+      throw GameSaveSessionException(
+        code: 'save_export_failed',
+        message: 'The current game could not be exported.',
+        diagnosticCause: error,
+        diagnosticStackTrace: stackTrace,
+      );
+    }
+  });
+
+  @override
+  Future<MapScene> openSaveDocument({
+    required MapAssetPaths assets,
+    required String document,
+  }) async {
+    final generation = ++_loadGeneration;
+    try {
+      final prepared = await _loader.prepareSave(
+        assets,
+        saveDocument: document,
+      );
+      var retained = false;
+      try {
+        await _activate(prepared, assets.actorPlayerId, generation);
+        retained = true;
+        return prepared.scene;
+      } finally {
+        if (!retained) await prepared.session.close();
+      }
+    } on MapLoadException catch (error, stackTrace) {
+      throw GameSaveSessionException(
+        code: error.code,
+        message: 'The saved game could not be opened.',
+        diagnosticCause: error.diagnosticCause ?? error,
+        diagnosticStackTrace: error.diagnosticStackTrace ?? stackTrace,
+      );
+    } on GameSaveSessionException {
+      rethrow;
+    } on Object catch (error, stackTrace) {
+      throw GameSaveSessionException(
+        code: 'save_open_failed',
+        message: 'The saved game could not be opened.',
+        diagnosticCause: error,
+        diagnosticStackTrace: stackTrace,
+      );
     }
   }
 
