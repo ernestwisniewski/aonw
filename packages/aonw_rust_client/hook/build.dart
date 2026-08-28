@@ -31,8 +31,21 @@ bool _rustBuildEnabled(BuildInput input) {
     );
   }
   if (enabled != true) return false;
+  _requireNativeHostTarget(input.config.code);
   _rustTarget(input.config.code);
   return true;
+}
+
+void _requireNativeHostTarget(CodeConfig code) {
+  final targetOS = code.targetOS;
+  final targetArchitecture = code.targetArchitecture;
+  if (targetOS == OS.current && targetArchitecture == Architecture.current) {
+    return;
+  }
+  throw UnsupportedError(
+    'Unsupported Rust host target: $targetOS/$targetArchitecture. '
+    'Refusing to substitute the unavailable C stub.',
+  );
 }
 
 Future<void> _buildRust(BuildInput input, BuildOutputBuilder output) async {

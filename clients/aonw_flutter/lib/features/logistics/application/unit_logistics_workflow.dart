@@ -112,35 +112,89 @@ final class UnitLogisticsWorkflow {
         expectedRevision: current.recipient.stamp.revision,
         action: action,
       );
-      if (isDisposed()) return;
-      final ready = _correlated(readState(), action.unitId, correlationId);
-      if (ready == null) return;
-      if (!result.accepted) {
-        publish(_rejected(ready, result.rejectionCode!));
-        return;
-      }
-      publish(_accepted(ready, result.player!, action.unitId));
-      load(
-        unitId: action.unitId,
+      _handleResult(
+        result: result,
+        action: action,
+        correlationId: correlationId,
         readState: readState,
         publish: publish,
         isDisposed: isDisposed,
       );
     } on UnitLogisticsSessionException catch (error, stackTrace) {
-      if (isDisposed()) return;
-      _report(error, stackTrace);
-      final ready = _correlated(readState(), action.unitId, correlationId);
-      if (ready != null) publish(_commandFailure(ready, error));
-    } on Object catch (error, stackTrace) {
-      if (isDisposed()) return;
-      _diagnosticReporter(
-        'unexpected_unit_logistics_failure',
-        error,
-        stackTrace,
+      _handleSessionFailure(
+        error: error,
+        stackTrace: stackTrace,
+        unitId: action.unitId,
+        correlationId: correlationId,
+        readState: readState,
+        publish: publish,
+        isDisposed: isDisposed,
       );
-      final ready = _correlated(readState(), action.unitId, correlationId);
-      if (ready != null) publish(_unexpectedCommandFailure(ready));
+    } on Object catch (error, stackTrace) {
+      _handleUnexpectedFailure(
+        error: error,
+        stackTrace: stackTrace,
+        unitId: action.unitId,
+        correlationId: correlationId,
+        readState: readState,
+        publish: publish,
+        isDisposed: isDisposed,
+      );
     }
+  }
+
+  void _handleResult({
+    required UnitLogisticsCommandResultView result,
+    required UnitLogisticsActionView action,
+    required int correlationId,
+    required LogisticsStateReader readState,
+    required LogisticsStatePublisher publish,
+    required LogisticsDisposed isDisposed,
+  }) {
+    if (isDisposed()) return;
+    final ready = _correlated(readState(), action.unitId, correlationId);
+    if (ready == null) return;
+    if (!result.accepted) {
+      publish(_rejected(ready, result.rejectionCode!));
+      return;
+    }
+    publish(_accepted(ready, result.player!, action.unitId));
+    load(
+      unitId: action.unitId,
+      readState: readState,
+      publish: publish,
+      isDisposed: isDisposed,
+    );
+  }
+
+  void _handleSessionFailure({
+    required UnitLogisticsSessionException error,
+    required StackTrace stackTrace,
+    required String unitId,
+    required int correlationId,
+    required LogisticsStateReader readState,
+    required LogisticsStatePublisher publish,
+    required LogisticsDisposed isDisposed,
+  }) {
+    if (isDisposed()) return;
+    _report(error, stackTrace);
+    final ready = _correlated(readState(), unitId, correlationId);
+    if (ready != null) publish(_commandFailure(ready, error));
+  }
+
+  void _handleUnexpectedFailure({
+    required Object error,
+    required StackTrace stackTrace,
+    required String unitId,
+    required int correlationId,
+    required LogisticsStateReader readState,
+    required LogisticsStatePublisher publish,
+    required LogisticsDisposed isDisposed,
+  }) {
+    if (isDisposed()) return;
+    _diagnosticReporter('unexpected_unit_logistics_failure', error, stackTrace);
+    final ready = _correlated(readState(), unitId, correlationId);
+    if (ready != null) publish(_unexpectedCommandFailure(ready));
   }
 
   void _report(UnitLogisticsSessionException error, StackTrace stackTrace) {
