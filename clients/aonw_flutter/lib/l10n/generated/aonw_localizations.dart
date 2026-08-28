@@ -224,6 +224,72 @@ abstract class AonwLocalizations {
   /// **'{value, select, unavailable{Saved games are unavailable on this platform.} missing{No saved game was found.} unreadable{The saved game could not be read.} incompatible{The saved game is invalid or incompatible with the current game.} other{The saved game could not be resumed.}}'**
   String resumeFailure(String value);
 
+  /// No description provided for @replayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay'**
+  String get replayTitle;
+
+  /// No description provided for @loadingReplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading replay'**
+  String get loadingReplay;
+
+  /// No description provided for @replayUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay playback is unavailable.'**
+  String get replayUnavailable;
+
+  /// No description provided for @replayFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, unavailable{Replay playback is unavailable on this platform.} missing{No replay was found. Save a local game first.} unreadable{The replay file could not be read.} incompatible{The replay is invalid or incompatible with the current game.} seekFailed{The requested replay frame could not be loaded.} other{The replay could not be opened.}}'**
+  String replayFailure(String value);
+
+  /// No description provided for @replayMapLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay map'**
+  String get replayMapLabel;
+
+  /// No description provided for @replayControls.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay controls'**
+  String get replayControls;
+
+  /// No description provided for @playReplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play replay'**
+  String get playReplay;
+
+  /// No description provided for @pauseReplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause replay'**
+  String get pauseReplay;
+
+  /// No description provided for @backToMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to main menu'**
+  String get backToMenu;
+
+  /// No description provided for @replayProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} of {entryCount}'**
+  String replayProgress(int position, int entryCount);
+
+  /// No description provided for @replaySpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}× speed'**
+  String replaySpeed(String value);
+
   /// No description provided for @aiTurnRunning.
   ///
   /// In en, this message translates to:

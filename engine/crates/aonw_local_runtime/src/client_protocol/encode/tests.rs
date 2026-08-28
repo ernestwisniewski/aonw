@@ -69,6 +69,75 @@ fn protocol_exercises_every_current_request_family() {
     success(&mut runtime, ClientRequestBodyDto::CloseSession);
 }
 
+#[test]
+fn replay_playback_seeks_across_a_full_segment() {
+    let map = authored_map();
+    let ruleset = RulesetDefinition::standard().clone();
+    let map_document = MapDocument::try_new(map.clone(), 1.0)
+        .expect("map document")
+        .to_versioned_json()
+        .expect("map JSON");
+    let mut runtime = LocalRuntime::default();
+    success(
+        &mut runtime,
+        ClientRequestBodyDto::OpenSession {
+            map_document: map_document.clone(),
+            scenario_document: scenario_json(&map, &ruleset),
+            actor_player_id: "player-1".to_owned(),
+        },
+    );
+    let entry_count = aonw_contracts::MAX_REPLAY_ENTRY_COUNT + 1;
+    for _ in 0..entry_count {
+        success(
+            &mut runtime,
+            ClientRequestBodyDto::Dispatch {
+                command: ClientCommandDto::CancelUnitAction {
+                    expected_revision: 0,
+                    unit_id: "unit-1".to_owned(),
+                },
+            },
+        );
+    }
+    let ClientResponseBodyDto::ReplayExported { document } =
+        success(&mut runtime, ClientRequestBodyDto::ExportReplay)
+    else {
+        panic!("replay export")
+    };
+    let ClientResponseBodyDto::ReplayFrame {
+        entry_count: opened_count,
+        ..
+    } = success(
+        &mut runtime,
+        ClientRequestBodyDto::OpenReplay {
+            map_document,
+            replay_document: document,
+            recipient_player_id: "player-1".to_owned(),
+        },
+    )
+    else {
+        panic!("replay open")
+    };
+    assert_eq!(
+        opened_count,
+        u64::try_from(entry_count).expect("entry count")
+    );
+    let boundary =
+        u64::try_from(aonw_contracts::MAX_REPLAY_ENTRY_COUNT).expect("segment entry count");
+    success(
+        &mut runtime,
+        ClientRequestBodyDto::SeekReplay { position: boundary },
+    );
+    let ClientResponseBodyDto::ReplayFrame { position, .. } = success(
+        &mut runtime,
+        ClientRequestBodyDto::SeekReplay {
+            position: opened_count,
+        },
+    ) else {
+        panic!("final replay frame")
+    };
+    assert_eq!(position, opened_count);
+}
+
 fn dispatch_queries(runtime: &mut LocalRuntime) {
     for query in [
         ClientQueryDto::Reachable {

@@ -21,6 +21,8 @@ import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../production/application/production_session_port.dart';
 import '../../production/infrastructure/rust_production_gateway.dart';
 import '../../production/read_model/production_view.dart';
+import '../../replay/application/replay_session_port.dart';
+import '../../replay/read_model/replay_frame_view.dart';
 import '../../research/application/research_session_port.dart';
 import '../../research/infrastructure/rust_research_gateway.dart';
 import '../../research/read_model/research_view.dart';
@@ -51,6 +53,7 @@ import 'rust_movement_gateway.dart';
 part 'rust_game_city_session.dart';
 part 'rust_game_artifact_session.dart';
 part 'rust_game_production_session.dart';
+part 'rust_game_replay_session.dart';
 part 'rust_game_worker_session.dart';
 
 final class RustGameSessionGateway
@@ -109,6 +112,7 @@ final class RustGameSessionGateway
     workerSession = _RustGameWorkerSession(this);
     productionSession = _RustGameProductionSession(this);
     artifactSession = _RustGameArtifactSession(this);
+    replaySession = _RustGameReplaySession(this);
   }
 
   final RustGameSessionLoader _loader;
@@ -129,11 +133,14 @@ final class RustGameSessionGateway
   late final WorkerSessionPort workerSession;
   late final ProductionSessionPort productionSession;
   late final ArtifactSessionPort artifactSession;
+  late final ReplaySessionPort replaySession;
   AonwRustSession? _session;
+  MapScene? _scene;
   MapView? _map;
   PlayerMapView? _player;
   RecipientProjectionCache? _cache;
   String? _actorPlayerId;
+  int? _replayEntryCount;
   Future<void> _requestTail = Future<void>.value();
   var _loadGeneration = 0;
 
@@ -248,10 +255,12 @@ final class RustGameSessionGateway
     if (previous != null) await previous.close();
     _ensureCurrentLoad(generation);
     _session = prepared.session;
+    _scene = prepared.scene;
     _map = prepared.scene.map;
     _player = prepared.scene.player;
     _cache = prepared.cache;
     _actorPlayerId = actorPlayerId;
+    _replayEntryCount = null;
   }
 
   void _ensureCurrentLoad(int generation) {
@@ -507,10 +516,12 @@ final class RustGameSessionGateway
     _loadGeneration += 1;
     final session = _session;
     _session = null;
+    _scene = null;
     _map = null;
     _player = null;
     _cache = null;
     _actorPlayerId = null;
+    _replayEntryCount = null;
     await _requestTail;
     if (session != null) await session.close();
   }

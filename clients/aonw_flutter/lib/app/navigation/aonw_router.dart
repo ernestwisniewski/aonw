@@ -6,6 +6,9 @@ import '../../features/main_menu/presentation/main_menu_screen.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
+import '../../features/replay/application/replay_state.dart';
+import '../../features/replay/presentation/replay_presentation_controller.dart';
+import '../../features/replay/presentation/replay_screen.dart';
 import '../../features/settings/presentation/client_settings_controller.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../game/aonw_flame_game.dart';
@@ -15,6 +18,7 @@ enum AonwRoute {
   menu('/'),
   newGame('/new-game'),
   map('/map'),
+  replay('/replay'),
   settings('/settings');
 
   const AonwRoute(this.location);
@@ -35,6 +39,7 @@ final class AonwRouter {
     required this.settingsController,
     required this.flameGameFactory,
     required this.routeObserver,
+    this.replayController,
     this.mapInputSource,
     this.autoLoadMap = false,
   });
@@ -43,6 +48,7 @@ final class AonwRouter {
   final ClientSettingsController settingsController;
   final AonwFlameGameFactory flameGameFactory;
   final RouteObserver<ModalRoute<void>> routeObserver;
+  final ReplayPresentationController? replayController;
   final MapInputSource? mapInputSource;
   final bool autoLoadMap;
 
@@ -61,6 +67,14 @@ final class AonwRouter {
           onResumed: () => Navigator.of(
             context,
           ).pushReplacementNamed(AonwRoute.map.location),
+          hasLocalReplay: replayController?.hasReplay ?? () async => false,
+          openReplay:
+              replayController?.openLatest ??
+              () async => const ReplayOpenResultView.failed(
+                ReplayFailureViewCode.unavailable,
+              ),
+          onReplayOpened: () =>
+              Navigator.of(context).pushNamed(AonwRoute.replay.location),
         ),
         AonwRoute.newGame => (context) => NewGameScreen(
           mapController: mapController,
@@ -81,6 +95,13 @@ final class AonwRouter {
             ),
           ),
         ),
+        AonwRoute.replay =>
+          (_) => replayController == null
+              ? const _UnavailableReplay()
+              : ReplayScreen(
+                  controller: replayController!,
+                  flameGameFactory: flameGameFactory,
+                ),
         AonwRoute.settings => (_) => SettingsScreen(
           controller: settingsController,
         ),
@@ -88,6 +109,23 @@ final class AonwRouter {
       },
     );
   }
+}
+
+final class _UnavailableReplay extends StatelessWidget {
+  const _UnavailableReplay();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: Center(
+        child: AonwMessagePanel(
+          semanticLabel: context.aonwL10n.replayUnavailable,
+          title: context.aonwL10n.replayTitle,
+          message: context.aonwL10n.replayUnavailable,
+        ),
+      ),
+    ),
+  );
 }
 
 final class _UnknownRoute extends StatelessWidget {

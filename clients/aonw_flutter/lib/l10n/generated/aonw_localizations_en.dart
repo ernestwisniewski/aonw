@@ -96,6 +96,54 @@ class AonwLocalizationsEn extends AonwLocalizations {
   }
 
   @override
+  String get replayTitle => 'Replay';
+
+  @override
+  String get loadingReplay => 'Loading replay';
+
+  @override
+  String get replayUnavailable => 'Replay playback is unavailable.';
+
+  @override
+  String replayFailure(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'unavailable': 'Replay playback is unavailable on this platform.',
+      'missing': 'No replay was found. Save a local game first.',
+      'unreadable': 'The replay file could not be read.',
+      'incompatible':
+          'The replay is invalid or incompatible with the current game.',
+      'seekFailed': 'The requested replay frame could not be loaded.',
+      'other': 'The replay could not be opened.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get replayMapLabel => 'Replay map';
+
+  @override
+  String get replayControls => 'Replay controls';
+
+  @override
+  String get playReplay => 'Play replay';
+
+  @override
+  String get pauseReplay => 'Pause replay';
+
+  @override
+  String get backToMenu => 'Back to main menu';
+
+  @override
+  String replayProgress(int position, int entryCount) {
+    return '$position of $entryCount';
+  }
+
+  @override
+  String replaySpeed(String value) {
+    return '$value× speed';
+  }
+
+  @override
   String get aiTurnRunning => 'The computer is taking its turn.';
 
   @override

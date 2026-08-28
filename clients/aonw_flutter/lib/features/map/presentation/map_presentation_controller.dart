@@ -16,6 +16,7 @@ import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../production/application/production_session_port.dart';
 import '../../production/read_model/production_view.dart';
+import '../../replay/application/replay_capture.dart';
 import '../../research/application/research_session_port.dart';
 import '../../research/read_model/research_view.dart';
 import '../../save_game/application/game_save_session_port.dart';
@@ -49,6 +50,7 @@ final class MapPresentationController extends ChangeNotifier {
     LocalGameSessionPort? localGame,
     GameSaveSessionPort? saveSession,
     LocalSaveStore? saveStore,
+    ReplayCapture? replayCapture,
     MapAssetPaths assets = MapAssetPaths.starter,
     MapDiagnosticReporter diagnosticReporter = _reportMapDiagnostic,
   }) : this.fromCoordinator(
@@ -68,6 +70,7 @@ final class MapPresentationController extends ChangeNotifier {
            localGame: localGame,
            saveSession: saveSession,
            saveStore: saveStore,
+           replayCapture: replayCapture,
            assets: assets,
            diagnosticReporter: diagnosticReporter,
          ),

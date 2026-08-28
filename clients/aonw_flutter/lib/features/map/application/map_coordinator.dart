@@ -25,6 +25,7 @@ import '../../production/application/production_session_port.dart';
 import '../../production/application/production_state.dart';
 import '../../production/application/production_workflow.dart';
 import '../../production/read_model/production_view.dart';
+import '../../replay/application/replay_capture.dart';
 import '../../research/application/research_session_port.dart';
 import '../../research/application/research_state.dart';
 import '../../research/application/research_workflow.dart';
@@ -77,6 +78,7 @@ final class MapCoordinator {
     LocalGameSessionPort? localGame,
     GameSaveSessionPort? saveSession,
     LocalSaveStore? saveStore,
+    ReplayCapture? replayCapture,
     this.assets = MapAssetPaths.starter,
     MapDiagnosticReporter? diagnosticReporter,
   }) : _session = session,
@@ -132,6 +134,7 @@ final class MapCoordinator {
          store: saveStore,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
+       _replayCapture = replayCapture,
        _diagnosticReporter = diagnosticReporter ?? _ignoreDiagnostic;
 
   final MapSessionPort _session;
@@ -149,6 +152,7 @@ final class MapCoordinator {
   final TurnWorkflow _turns;
   final LocalGameSessionPort? _localGame;
   final LocalSaveWorkflow _saveWorkflow;
+  final ReplayCapture? _replayCapture;
   final MapDiagnosticReporter _diagnosticReporter;
   final MapAssetPaths assets;
   final StreamController<GameSessionState> _changes =
@@ -234,6 +238,18 @@ final class MapCoordinator {
     _setState(current.withLocalSave(const LocalSaveState.saving()));
     final failure = await _saveWorkflow.save(entry);
     if (!_isCurrent(generation)) return;
+    if (failure == null) {
+      try {
+        await _replayCapture?.captureReplay(entry);
+      } on Object catch (error, stackTrace) {
+        _diagnosticReporter(
+          'unexpected_replay_capture_failure',
+          error,
+          stackTrace,
+        );
+      }
+      if (!_isCurrent(generation)) return;
+    }
     final ready = _state;
     if (ready is GameSessionReady) {
       _setState(

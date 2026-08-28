@@ -13,6 +13,8 @@ import '../../features/map/infrastructure/rust_game_session_gateway.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
 import '../../features/production/application/production_session_port.dart';
+import '../../features/replay/infrastructure/atomic_local_replay_store.dart';
+import '../../features/replay/presentation/replay_presentation_controller.dart';
 import '../../features/research/application/research_session_port.dart';
 import '../../features/save_game/application/game_save_session_port.dart';
 import '../../features/save_game/application/local_save_store.dart';
@@ -45,6 +47,7 @@ final class AppComposition {
     LocalGameSessionPort? localGameSession,
     GameSaveSessionPort? saveSession,
     LocalSaveStore? saveStore,
+    ReplayPresentationController? replayController,
     MapInputSource? mapInputSource,
     ClientSettingsStore? settingsStore,
     AonwFlameGameFactory flameGameFactory = AonwFlameGame.new,
@@ -71,10 +74,12 @@ final class AppComposition {
            localGame: localGameSession,
            saveSession: saveSession,
            saveStore: saveStore,
+           replayCapture: replayController,
          ),
          mapInputSource: mapInputSource,
          flameGameFactory: flameGameFactory,
          telemetry: telemetry,
+         replayController: replayController,
          initialRoute: initialRoute,
          settingsController: settingsStore == null
              ? ClientSettingsController.ephemeral()
@@ -85,6 +90,10 @@ final class AppComposition {
     ClientTelemetry telemetry = const DebugClientTelemetry(),
   }) {
     final gateway = RustGameSessionGateway(assets: rootBundle);
+    final replayController = ReplayPresentationController(
+      session: gateway.replaySession,
+      store: AtomicLocalReplayStore.production(),
+    );
     return AppComposition(
       mapSession: gateway,
       movementSession: gateway,
@@ -101,6 +110,7 @@ final class AppComposition {
       localGameSession: gateway,
       saveSession: gateway,
       saveStore: AtomicLocalSaveStore.production(),
+      replayController: replayController,
       mapInputSource: GamepadMapInputSource(),
       settingsStore: SharedPreferencesClientSettingsStore(),
       telemetry: telemetry,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../design_system/aonw_theme.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
+import '../../features/replay/presentation/replay_presentation_controller.dart';
 import '../../features/settings/presentation/client_settings_controller.dart';
 import '../../features/settings/presentation/client_settings_scope.dart';
 import '../../game/aonw_flame_game.dart';
@@ -18,6 +19,7 @@ final class AonwApp extends StatefulWidget {
     this.mapInputSource,
     this.flameGameFactory = AonwFlameGame.new,
     this.settingsController,
+    this.replayController,
     this.telemetry = const NoOpClientTelemetry(),
     this.locale,
     this.initialRoute = AonwRoute.menu,
@@ -28,6 +30,7 @@ final class AonwApp extends StatefulWidget {
   final MapInputSource? mapInputSource;
   final AonwFlameGameFactory flameGameFactory;
   final ClientSettingsController? settingsController;
+  final ReplayPresentationController? replayController;
   final ClientTelemetry telemetry;
   final Locale? locale;
   final AonwRoute initialRoute;
@@ -58,6 +61,9 @@ final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
     if (oldWidget.mapController != widget.mapController) {
       oldWidget.mapController.dispose();
     }
+    if (oldWidget.replayController != widget.replayController) {
+      oldWidget.replayController?.dispose();
+    }
     if (oldWidget.mapInputSource != widget.mapInputSource) {
       _setInputActive(oldWidget.mapInputSource, false);
       unawaited(oldWidget.mapInputSource?.close());
@@ -74,6 +80,7 @@ final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _setInputActive(widget.mapInputSource, false);
     widget.mapController.dispose();
+    widget.replayController?.dispose();
     unawaited(widget.mapInputSource?.close());
     _settingsController.dispose();
     super.dispose();
@@ -102,6 +109,7 @@ final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
       flameGameFactory: widget.flameGameFactory,
       routeObserver: _routeObserver,
       settingsController: _settingsController,
+      replayController: widget.replayController,
       autoLoadMap: widget.initialRoute == AonwRoute.map,
     );
     return ClientSettingsScope(

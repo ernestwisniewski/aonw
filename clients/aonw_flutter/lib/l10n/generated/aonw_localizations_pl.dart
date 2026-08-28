@@ -96,6 +96,54 @@ class AonwLocalizationsPl extends AonwLocalizations {
   }
 
   @override
+  String get replayTitle => 'Powtórka';
+
+  @override
+  String get loadingReplay => 'Wczytywanie powtórki';
+
+  @override
+  String get replayUnavailable => 'Odtwarzanie powtórki jest niedostępne.';
+
+  @override
+  String replayFailure(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'unavailable': 'Odtwarzanie powtórek jest niedostępne na tej platformie.',
+      'missing': 'Nie znaleziono powtórki. Najpierw zapisz grę lokalną.',
+      'unreadable': 'Nie udało się odczytać pliku powtórki.',
+      'incompatible':
+          'Powtórka jest nieprawidłowa lub niezgodna z bieżącą grą.',
+      'seekFailed': 'Nie udało się wczytać wybranej klatki powtórki.',
+      'other': 'Nie udało się otworzyć powtórki.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get replayMapLabel => 'Mapa powtórki';
+
+  @override
+  String get replayControls => 'Sterowanie powtórką';
+
+  @override
+  String get playReplay => 'Odtwórz powtórkę';
+
+  @override
+  String get pauseReplay => 'Wstrzymaj powtórkę';
+
+  @override
+  String get backToMenu => 'Wróć do menu głównego';
+
+  @override
+  String replayProgress(int position, int entryCount) {
+    return '$position z $entryCount';
+  }
+
+  @override
+  String replaySpeed(String value) {
+    return 'Szybkość $value×';
+  }
+
+  @override
   String get aiTurnRunning => 'Komputer wykonuje swoją turę.';
 
   @override

@@ -4,6 +4,7 @@ import 'package:aonw_flutter/features/map/application/game_session_state.dart';
 import 'package:aonw_flutter/features/map/application/map_coordinator.dart';
 import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
+import 'package:aonw_flutter/features/replay/application/replay_capture.dart';
 import 'package:aonw_flutter/features/save_game/application/game_save_session_port.dart';
 import 'package:aonw_flutter/features/save_game/application/local_save_state.dart';
 import 'package:aonw_flutter/features/save_game/application/local_save_store.dart';
@@ -18,7 +19,8 @@ void main() {
       final gameplay = FakeGameSession.success(testMapScene());
       final saveSession = _FakeSaveSession(exported: '{"rust":"save"}');
       final store = _MemorySaveStore();
-      final coordinator = _coordinator(gameplay, saveSession, store);
+      final replay = _ReplayCapture();
+      final coordinator = _coordinator(gameplay, saveSession, store, replay);
       addTearDown(coordinator.dispose);
       await coordinator.startLocalMatch(_entry, _setup());
 
@@ -29,6 +31,7 @@ void main() {
       final ready = coordinator.state as GameSessionReady;
       expect(saveSession.exportCalls, 1);
       expect(store.primary, '{"rust":"save"}');
+      expect(replay.entries, [_entry]);
       expect(ready.localSave.phase, LocalSavePhase.saved);
     },
   );
@@ -87,8 +90,9 @@ void main() {
 MapCoordinator _coordinator(
   FakeGameSession gameplay,
   GameSaveSessionPort saveSession,
-  LocalSaveStore store,
-) => MapCoordinator(
+  LocalSaveStore store, [
+  ReplayCapture? replayCapture,
+]) => MapCoordinator(
   session: gameplay,
   movement: gameplay,
   unitActions: gameplay,
@@ -96,6 +100,7 @@ MapCoordinator _coordinator(
   turns: gameplay,
   saveSession: saveSession,
   saveStore: store,
+  replayCapture: replayCapture,
 );
 
 const _assets = MapAssetPaths(
@@ -187,5 +192,14 @@ final class _MemorySaveStore implements LocalSaveStore {
   Future<void> write(LocalGameScenarioView scenario, String document) async {
     backup = primary;
     primary = document;
+  }
+}
+
+final class _ReplayCapture implements ReplayCapture {
+  final entries = <LocalGameCatalogEntryView>[];
+
+  @override
+  Future<void> captureReplay(LocalGameCatalogEntryView entry) async {
+    entries.add(entry);
   }
 }

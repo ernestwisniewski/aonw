@@ -5,6 +5,10 @@ import 'package:aonw_flutter/features/local_game/application/local_game_session_
 import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/presentation/map_presentation_controller.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
+import 'package:aonw_flutter/features/replay/application/local_replay_store.dart';
+import 'package:aonw_flutter/features/replay/application/replay_session_port.dart';
+import 'package:aonw_flutter/features/replay/presentation/replay_presentation_controller.dart';
+import 'package:aonw_flutter/features/replay/read_model/replay_frame_view.dart';
 import 'package:aonw_flutter/features/save_game/application/game_save_session_port.dart';
 import 'package:aonw_flutter/features/save_game/application/local_save_store.dart';
 import 'package:flutter/material.dart';
@@ -168,6 +172,53 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
+
+  testWidgets('opens and controls a stored authoritative replay', (
+    tester,
+  ) async {
+    final scene = testMapScene();
+    final gameplay = FakeGameSession.success(scene);
+    final replaySession = _ReplaySession(scene);
+    final replayController = ReplayPresentationController(
+      session: replaySession,
+      store: _SingleReplayStore('rust-replay'),
+      diagnosticReporter: (_, _, _) {},
+    );
+    final mapController = MapPresentationController(
+      session: gameplay,
+      movement: gameplay,
+      unitActions: gameplay,
+      logistics: gameplay,
+      turns: gameplay,
+    );
+
+    await tester.pumpWidget(
+      AonwApp(mapController: mapController, replayController: replayController),
+    );
+    await tester.pumpAndSettle();
+    final replayButton = tester.widget<OutlinedButton>(
+      find.byKey(const ValueKey('open-replay')),
+    );
+    expect(replayButton.onPressed, isNotNull);
+
+    await tester.tap(find.byKey(const ValueKey('open-replay')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('replay-viewport')), findsOneWidget);
+    expect(find.text('0 of 3'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('play-replay')));
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump();
+    expect(find.text('1 of 3'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('pause-replay')));
+    await tester.tap(find.byKey(const ValueKey('close-replay')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('open-replay')), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
 }
 
 final class _ResumeSession implements GameSaveSessionPort {
@@ -208,4 +259,42 @@ final class _SingleSaveStore implements LocalSaveStore {
   Future<void> write(LocalGameScenarioView scenario, String document) async {
     this.document = document;
   }
+}
+
+final class _ReplaySession implements ReplaySessionPort {
+  _ReplaySession(this.scene);
+
+  final MapScene scene;
+
+  @override
+  Future<String> exportReplayDocument() async => 'rust-replay';
+
+  @override
+  Future<ReplayFrameView> openReplayDocument({
+    required MapAssetPaths assets,
+    required String document,
+  }) async => ReplayFrameView(position: 0, entryCount: 3, scene: scene);
+
+  @override
+  Future<ReplayFrameView> seekReplay(int position) async =>
+      ReplayFrameView(position: position, entryCount: 3, scene: scene);
+}
+
+final class _SingleReplayStore implements LocalReplayStore {
+  _SingleReplayStore(this.document);
+
+  final String? document;
+
+  @override
+  Future<bool> contains(LocalGameScenarioView scenario) async =>
+      document != null;
+
+  @override
+  Future<String?> read(
+    LocalGameScenarioView scenario,
+    LocalReplayCopyView copy,
+  ) async => copy == LocalReplayCopyView.primary ? document : null;
+
+  @override
+  Future<void> write(LocalGameScenarioView scenario, String document) async {}
 }

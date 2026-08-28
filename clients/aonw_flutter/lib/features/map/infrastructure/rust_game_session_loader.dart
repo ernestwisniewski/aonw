@@ -1,6 +1,7 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 
+import '../../replay/read_model/replay_frame_view.dart';
 import '../application/map_session_port.dart';
 import '../read_model/map_scene.dart';
 import '../read_model/map_view.dart';
@@ -20,6 +21,18 @@ final class PreparedRustGameSession {
 
   final AonwRustSession session;
   final MapScene scene;
+  final RecipientProjectionCache cache;
+}
+
+final class PreparedRustReplaySession {
+  const PreparedRustReplaySession({
+    required this.session,
+    required this.frame,
+    required this.cache,
+  });
+
+  final AonwRustSession session;
+  final ReplayFrameView frame;
   final RecipientProjectionCache cache;
 }
 
@@ -58,6 +71,70 @@ final class RustGameSessionLoader {
     MapAssetPaths assets, {
     required String saveDocument,
   }) => _prepareCandidate(assets, saveDocument: saveDocument);
+
+  Future<PreparedRustReplaySession> prepareReplay(
+    MapAssetPaths assets, {
+    required String replayDocument,
+  }) async {
+    final candidate = await _sessionFactory();
+    if (candidate == null) {
+      throw const MapLoadException(
+        code: 'rust_adapter_unavailable',
+        message: 'The Rust map adapter is unavailable on this platform.',
+      );
+    }
+    try {
+      await _verifyCapabilities(candidate, _localReplayFeatures);
+      final document = await _assets.loadString(assets.document);
+      final map = await _inspectMap(candidate, document);
+      final response = await candidate.send(
+        AonwClientRequest.openReplay(
+          mapDocument: document,
+          replayDocument: replayDocument,
+          recipientPlayerId: assets.actorPlayerId,
+        ),
+      );
+      final frame = _loadResponse<AonwReplayFrameResponse>(
+        response,
+        'The replay could not be opened.',
+      );
+      final player = _playerMapper.fromWire(
+        frame.snapshot,
+        map: map,
+        actorPlayerId: assets.actorPlayerId,
+      );
+      final reference = await _bundleLoader.load(
+        manifestAsset: assets.bundleManifest,
+        map: map,
+      );
+      return PreparedRustReplaySession(
+        session: candidate,
+        frame: ReplayFrameView(
+          position: frame.position,
+          entryCount: frame.entryCount,
+          scene: MapScene(map: map, reference: reference, player: player),
+        ),
+        cache: RecipientProjectionCache.open(
+          snapshot: frame.snapshot,
+          map: map,
+        ),
+      );
+    } on MapLoadException {
+      await candidate.close();
+      rethrow;
+    } on FormatException catch (error, stackTrace) {
+      await candidate.close();
+      throw MapLoadException(
+        code: 'invalid_replay_protocol',
+        message: 'The replay data is incompatible with this client.',
+        diagnosticCause: error,
+        diagnosticStackTrace: stackTrace,
+      );
+    } on Object {
+      await candidate.close();
+      rethrow;
+    }
+  }
 
   Future<PreparedRustGameSession> _prepareCandidate(
     MapAssetPaths assets, {
@@ -281,4 +358,11 @@ const _localSaveFeatures = <AonwClientFeature>{
   AonwClientFeature.saveGame,
   AonwClientFeature.actorHandoff,
   AonwClientFeature.aiTurns,
+};
+
+const _localReplayFeatures = <AonwClientFeature>{
+  AonwClientFeature.inspectMap,
+  AonwClientFeature.snapshot,
+  AonwClientFeature.replayVerification,
+  AonwClientFeature.replayPlayback,
 };
