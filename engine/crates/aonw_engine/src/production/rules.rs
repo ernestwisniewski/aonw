@@ -14,7 +14,7 @@ use super::model::{
     CitySpecializationOption, ProductionOption, ProductionOptions, ProductionOptionsQuery,
     UnitProductionOption,
 };
-use super::supply::unit_supply_available;
+use super::supply::{UnitSupplyBudget, unit_supply_budget};
 use super::support::{
     city_territory, controlled_city, invalid, pace, spawn_candidates, technology_for,
     validate_revision,
@@ -39,6 +39,7 @@ pub(crate) fn query_options(
     validate_revision(state, query.expected_revision())?;
     let city = controlled_city(state, context, query.city_id())?;
     let technology = technology_for(state, context, city);
+    let supply = unit_supply_budget(state, context, city)?;
     let production = context.ruleset().production();
     let pace = pace(state);
     let buildings = production
@@ -62,7 +63,7 @@ pub(crate) fn query_options(
         .units()
         .iter()
         .copied()
-        .map(|definition| unit_option(state, context, city, technology, definition))
+        .map(|definition| unit_option(state, context, city, technology, &supply, definition))
         .collect::<Result<Vec<_>, ProductionError>>()?;
     let projects = PROJECTS
         .into_iter()
@@ -116,9 +117,18 @@ fn unit_option(
     context: EngineContext<'_>,
     city: &City,
     technology: TechnologyUnlockQuery<'_>,
+    supply: &UnitSupplyBudget,
     definition: UnitProductionDefinition,
 ) -> Result<UnitProductionOption, ProductionError> {
-    let evaluation = evaluate_unit(state, context, city, technology, definition, None)?;
+    let evaluation = evaluate_unit(
+        state,
+        context,
+        city,
+        technology,
+        Some(supply),
+        definition,
+        None,
+    )?;
     let cost = context
         .ruleset()
         .production()
@@ -147,6 +157,7 @@ pub(super) fn evaluate_unit(
     context: EngineContext<'_>,
     city: &City,
     technology: TechnologyUnlockQuery<'_>,
+    prepared_supply: Option<&UnitSupplyBudget>,
     definition: UnitProductionDefinition,
     preferred_option: Option<u32>,
 ) -> Result<UnitEvaluation, ProductionError> {
@@ -192,7 +203,10 @@ pub(super) fn evaluate_unit(
         Some(CommandRejectionCode::UnitProductionMissingStrategicResource)
     } else if !unit_has_required_coast(context, city, definition.unit()) {
         Some(CommandRejectionCode::UnitProductionRequiresCoast)
-    } else if !unit_supply_available(state, context, city, definition)? {
+    } else if !match prepared_supply {
+        Some(supply) => supply.permits(definition)?,
+        None => unit_supply_budget(state, context, city)?.permits(definition)?,
+    } {
         Some(CommandRejectionCode::UnitSupplyLimitReached)
     } else {
         None

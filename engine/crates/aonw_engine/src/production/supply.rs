@@ -7,12 +7,28 @@ use crate::EngineContext;
 use crate::economy::rules::query_city_yield;
 use crate::movement::{MovementCost, terrain_entry_cost};
 
-pub(super) fn unit_supply_available(
+pub(super) struct UnitSupplyBudget {
+    capacity: i64,
+    used: i64,
+}
+
+impl UnitSupplyBudget {
+    pub(super) fn permits(
+        &self,
+        requested: UnitProductionDefinition,
+    ) -> Result<bool, ProductionError> {
+        self.used
+            .checked_add(requested.supply_cost())
+            .map(|used| used <= self.capacity)
+            .ok_or_else(|| invalid("requested supply overflow"))
+    }
+}
+
+pub(super) fn unit_supply_budget(
     state: &GameState,
     context: EngineContext<'_>,
     replacing_city: &City,
-    requested: UnitProductionDefinition,
-) -> Result<bool, ProductionError> {
+) -> Result<UnitSupplyBudget, ProductionError> {
     let player = replacing_city.owner_player_id();
     let raw_capacity = state
         .cities()
@@ -71,25 +87,27 @@ pub(super) fn unit_supply_available(
                 .checked_add(cost)
                 .ok_or_else(|| invalid("queued supply overflow"))
         })?;
-    unit_supply
+    let used = unit_supply
         .checked_add(queued_supply)
-        .and_then(|used| used.checked_add(requested.supply_cost()))
-        .map(|used| used <= capacity)
-        .ok_or_else(|| invalid("requested supply overflow"))
+        .ok_or_else(|| invalid("requested supply overflow"))?;
+    Ok(UnitSupplyBudget { capacity, used })
 }
 
 fn map_supply_capacity(context: EngineContext<'_>) -> Result<i64, ProductionError> {
-    let land = context
-        .map()
-        .tiles()
-        .iter()
-        .filter(|tile| {
-            matches!(
-                terrain_entry_cost(tile, aonw_domain::UnitMovementDomain::Land),
-                MovementCost::Passable(_)
-            )
-        })
-        .count();
+    let domain = aonw_domain::UnitMovementDomain::Land;
+    let land = context.compiled_movement_map().map_or_else(
+        || {
+            context
+                .map()
+                .tiles()
+                .iter()
+                .filter(|tile| {
+                    matches!(terrain_entry_cost(tile, domain), MovementCost::Passable(_))
+                })
+                .count()
+        },
+        |compiled| compiled.passable_tile_count(domain),
+    );
     let land = i64::try_from(land).map_err(|_| invalid("map land count overflow"))?;
     let players = match context.map().map_id().trim().to_ascii_lowercase().as_str() {
         "verdantia" | "dravonia" => 4_i64,

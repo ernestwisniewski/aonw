@@ -90,6 +90,7 @@ pub(crate) fn apply_start_unit(
         context,
         city,
         technology,
+        None,
         definition,
         command.resource_option_index(),
     )?;
