@@ -331,4 +331,62 @@ class AonwLocalizationsPl extends AonwLocalizations {
 
   @override
   String get resetSettings => 'Przywróć domyślne';
+
+  @override
+  String get objectivesTitle => 'Cele strategiczne';
+
+  @override
+  String get openObjectives => 'Otwórz cele strategiczne';
+
+  @override
+  String get closeObjectives => 'Zamknij cele strategiczne';
+
+  @override
+  String get objectivesEmpty => 'Ta mapa nie ma celów.';
+
+  @override
+  String get objectivesAuthoredRules =>
+      'Wymagania mapy. Bieżący postęp pozostaje w silniku.';
+
+  @override
+  String objectiveType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'ruins': 'Ruiny',
+      'strategicPass': 'Przełęcz strategiczna',
+      'holySite': 'Święte miejsce',
+      'legendaryResource': 'Legendarny zasób',
+      'other': 'Cel strategiczny',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveDetails(
+    int col,
+    int row,
+    int holdTurns,
+    int victoryPoints,
+    int goldPerTurn,
+  ) {
+    return 'Heks $col, $row\nWymagane tury utrzymania: $holdTurns · Punkty zwycięstwa: $victoryPoints · Złoto na turę: $goldPerTurn';
+  }
+
+  @override
+  String get matchFinishedTitle => 'Rozgrywka zakończona';
+
+  @override
+  String outcomeWinner(String playerId) {
+    return 'Zwycięzca: $playerId';
+  }
+
+  @override
+  String get outcomeNoWinner => 'Brak zwycięzcy';
+
+  @override
+  String get outcomeFinalScore => 'Wynik końcowy';
+
+  @override
+  String outcomeScoreLine(String playerId, int score) {
+    return '$playerId: $score';
+  }
 }

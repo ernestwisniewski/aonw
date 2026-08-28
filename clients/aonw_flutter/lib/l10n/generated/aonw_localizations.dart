@@ -409,6 +409,84 @@ abstract class AonwLocalizations {
   /// In en, this message translates to:
   /// **'Restore defaults'**
   String get resetSettings;
+
+  /// No description provided for @objectivesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategic objectives'**
+  String get objectivesTitle;
+
+  /// No description provided for @openObjectives.
+  ///
+  /// In en, this message translates to:
+  /// **'Open objectives'**
+  String get openObjectives;
+
+  /// No description provided for @closeObjectives.
+  ///
+  /// In en, this message translates to:
+  /// **'Close objectives'**
+  String get closeObjectives;
+
+  /// No description provided for @objectivesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'This map has no objectives.'**
+  String get objectivesEmpty;
+
+  /// No description provided for @objectivesAuthoredRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Authored map requirements. Current progress remains in the engine.'**
+  String get objectivesAuthoredRules;
+
+  /// No description provided for @objectiveType.
+  ///
+  /// In en, this message translates to:
+  /// **'{type, select, ruins{Ruins} strategicPass{Strategic pass} holySite{Holy site} legendaryResource{Legendary resource} other{Strategic objective}}'**
+  String objectiveType(String type);
+
+  /// No description provided for @objectiveDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hex {col}, {row}\nRequired hold turns: {holdTurns} · Victory points: {victoryPoints} · Gold per turn: {goldPerTurn}'**
+  String objectiveDetails(
+    int col,
+    int row,
+    int holdTurns,
+    int victoryPoints,
+    int goldPerTurn,
+  );
+
+  /// No description provided for @matchFinishedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Match finished'**
+  String get matchFinishedTitle;
+
+  /// No description provided for @outcomeWinner.
+  ///
+  /// In en, this message translates to:
+  /// **'Winner: {playerId}'**
+  String outcomeWinner(String playerId);
+
+  /// No description provided for @outcomeNoWinner.
+  ///
+  /// In en, this message translates to:
+  /// **'No winner'**
+  String get outcomeNoWinner;
+
+  /// No description provided for @outcomeFinalScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Final score'**
+  String get outcomeFinalScore;
+
+  /// No description provided for @outcomeScoreLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{playerId}: {score}'**
+  String outcomeScoreLine(String playerId, int score);
 }
 
 class _AonwLocalizationsDelegate

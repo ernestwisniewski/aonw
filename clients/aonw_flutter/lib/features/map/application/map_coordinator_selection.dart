@@ -4,6 +4,7 @@ extension MapCoordinatorSelection on MapCoordinator {
   Future<void> _select(MapHexCoordinate? coordinate) async {
     final current = _state;
     if (current is! GameSessionReady ||
+        current.recipient.turnView.outcome.isTerminal ||
         current.research.commandPending ||
         current.diplomacy.commandPending ||
         _interactionBusy(current.interaction)) {

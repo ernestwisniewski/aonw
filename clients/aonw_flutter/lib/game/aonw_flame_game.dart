@@ -15,6 +15,7 @@ import 'map/city_map_layer.dart';
 import 'map/flame_map_camera.dart';
 import 'map/gameplay_map_layers.dart';
 import 'map/map_effect_host.dart';
+import 'map/objective_map_layer.dart';
 import 'map/static_map_layers.dart';
 import 'map/worker_infrastructure_layer.dart';
 import 'presentation/flame_scene_patch.dart';
@@ -30,6 +31,7 @@ final class AonwWorld extends World implements FlameSceneSink {
     unitLayer = MapUnitLayerComponent();
     cityLayer = MapCityLayerComponent();
     artifactLayer = MapArtifactLayerComponent();
+    objectiveLayer = MapObjectiveLayerComponent();
     reachableLayer = MapReachableLayerComponent();
     workerInfrastructureLayer = MapWorkerInfrastructureLayerComponent();
     routeLayer = MapRouteLayerComponent();
@@ -42,6 +44,7 @@ final class AonwWorld extends World implements FlameSceneSink {
       workerInfrastructureLayer,
       reachableLayer,
       routeLayer,
+      objectiveLayer,
       cityLayer,
       artifactLayer,
       unitLayer,
@@ -59,6 +62,7 @@ final class AonwWorld extends World implements FlameSceneSink {
   late final MapUnitLayerComponent unitLayer;
   late final MapCityLayerComponent cityLayer;
   late final MapArtifactLayerComponent artifactLayer;
+  late final MapObjectiveLayerComponent objectiveLayer;
   late final MapSelectionLayerComponent selectionLayer;
   late final MapEffectHostComponent effectHost;
   MapRenderSnapshot? _scene;
@@ -102,6 +106,7 @@ final class AonwWorld extends World implements FlameSceneSink {
     workerInfrastructureLayer.applyPatch(patch, cache);
     reachableLayer.applyReachable(cache, snapshot.interaction.reachable);
     routeLayer.applyRoute(cache, snapshot.interaction.route);
+    objectiveLayer.applyMap(snapshot.map, cache);
     cityLayer.applyPatch(patch, cache);
     artifactLayer.applyPatch(patch, cache);
     unitLayer.applyPatch(patch, cache);
@@ -121,6 +126,7 @@ final class AonwWorld extends World implements FlameSceneSink {
     workerInfrastructureLayer.clearLayer();
     reachableLayer.clearLayer();
     routeLayer.clearLayer();
+    objectiveLayer.clearLayer();
     cityLayer.clearLayer();
     artifactLayer.clearLayer();
     unitLayer.clearLayer();

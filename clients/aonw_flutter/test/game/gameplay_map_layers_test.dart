@@ -4,6 +4,7 @@ import 'package:aonw_flutter/features/combat/application/combat_state.dart';
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
+import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/pending_action_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/features/workers/read_model/worker_view.dart';
@@ -220,7 +221,55 @@ void main() {
       expect(game.world.unitLayer.children, hasLength(120));
       expect(game.world.unitLayer.debugCreatedCount, 120);
       expect(game.world.unitLayer.debugSharedPaintCount, 3);
-      expect(game.world.children, hasLength(11));
+      expect(game.world.children, hasLength(12));
+    },
+  );
+
+  testWithGame<AonwFlameGame>(
+    'keeps authored objective markers stable across recipient updates',
+    AonwFlameGame.new,
+    (game) async {
+      const ruins = MapObjectiveView(
+        id: 'ruins-1',
+        type: MapObjectiveType.ruins,
+        coordinate: (col: 1, row: 0),
+        requiredHoldTurns: 2,
+        victoryPoints: 3,
+        goldPerTurn: 1,
+      );
+      const holySite = MapObjectiveView(
+        id: 'holy-site-1',
+        type: MapObjectiveType.holySite,
+        coordinate: (col: 2, row: 1),
+        requiredHoldTurns: 3,
+        victoryPoints: 5,
+        goldPerTurn: 0,
+      );
+      final scene = testMapScene(objectives: const [ruins, holySite]);
+      game.replaceScene(_snapshot(scene, player: scene.player));
+      await game.ready();
+      final layer = game.world.objectiveLayer;
+      final stable = layer.debugComponentForObjective(ruins.id);
+
+      game.replaceScene(
+        _snapshot(
+          scene,
+          player: _player(revision: 1, digest: 'd' * 64, units: const []),
+        ),
+      );
+
+      expect(layer.debugObjectiveCount, 2);
+      expect(layer.debugComponentForObjective(ruins.id), same(stable));
+      expect(stable!.debugObjective, same(ruins));
+      expect(layer.debugCreatedCount, 2);
+      expect(layer.debugRemovedCount, 0);
+      expect(layer.debugSharedPaintCount, 5);
+
+      game.clearScene();
+      game.update(0);
+      expect(layer.debugObjectiveCount, 0);
+      expect(layer.debugRemovedCount, 2);
+      expect(layer.children, isEmpty);
     },
   );
 

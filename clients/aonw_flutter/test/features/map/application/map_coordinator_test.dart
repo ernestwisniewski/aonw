@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aonw_flutter/features/artifacts/application/artifact_session_port.dart';
 import 'package:aonw_flutter/features/artifacts/read_model/artifact_view.dart';
+import 'package:aonw_flutter/features/cities/read_model/city_view.dart';
 import 'package:aonw_flutter/features/combat/application/combat_session_port.dart';
 import 'package:aonw_flutter/features/combat/read_model/combat_view.dart';
 import 'package:aonw_flutter/features/diplomacy/application/diplomacy_session_port.dart';
@@ -22,6 +23,7 @@ import 'package:aonw_flutter/features/production/read_model/production_view.dart
 import 'package:aonw_flutter/features/research/application/research_session_port.dart';
 import 'package:aonw_flutter/features/research/read_model/research_view.dart';
 import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
+import 'package:aonw_flutter/features/turns/read_model/recipient_turn_view.dart';
 import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/action_deck_state.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
@@ -428,6 +430,68 @@ void main() {
       ready.interaction.actionDeck?.failure?.code,
       UnitActionFailureViewCode.responseIncompatible,
     );
+  });
+
+  test('blocks every gameplay command after authoritative outcome', () async {
+    final session = FakeGameSession.success(
+      testMapScene(
+        units: [testVisibleUnit()],
+        outcome: GameOutcomeView(
+          condition: GameOutcomeConditionView.score,
+          winnerPlayerId: 'preview-player',
+          scoreByPlayerId: const {'preview-player': 21, 'player-2': 18},
+        ),
+      ),
+    );
+    final controller = MapCoordinator(
+      session: session,
+      movement: session,
+      unitActions: session,
+      logistics: session,
+      turns: session,
+    );
+    addTearDown(controller.dispose);
+    await controller.load();
+
+    controller.select((col: 0, row: 0));
+    controller.confirmMove();
+    controller.executeUnitAction(UnitActionKindView.skip);
+    controller.executeUnitLogistics(
+      const AutoExploreActionView(unitId: 'preview-commander'),
+    );
+    controller.executeWorkerAction(
+      const CancelWorkerJobActionView(unitId: 'preview-commander'),
+    );
+    controller.executeProductionAction(
+      const StartBuildingActionView(cityId: 'city-1', building: 'granary'),
+    );
+    controller.executeArtifactAction(
+      const StartArtifactExcavationActionView(unitId: 'preview-commander'),
+    );
+    controller.executeCityAction(
+      const ToggleWorkedHexActionView(
+        cityId: 'city-1',
+        target: (col: 0, row: 0),
+      ),
+    );
+    controller.selectTechnology(TechnologyIdView.agriculture);
+    controller.executeDiplomacyAction(const DeclareWarActionView('player-2'));
+    controller.confirmCombat();
+    controller.endTurn();
+    await pumpEventQueue();
+
+    final ready = controller.state as GameSessionReady;
+    expect(ready.interaction.selected, isNull);
+    expect(session.unitActionCalls, 0);
+    expect(session.logisticsCommandCalls, 0);
+    expect(session.workerCommandCalls, 0);
+    expect(session.productionCommandCalls, 0);
+    expect(session.artifactCommandCalls, 0);
+    expect(session.cityCommandCalls, 0);
+    expect(session.researchCommandCalls, 0);
+    expect(session.diplomacyCommandCalls, 0);
+    expect(session.combatAttackCalls, 0);
+    expect(session.endTurnCalls, 0);
   });
 }
 

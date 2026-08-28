@@ -189,6 +189,7 @@ final class MapCoordinator {
   Future<void> _confirmMove() async {
     final current = _state;
     if (current is! GameSessionReady ||
+        current.recipient.turnView.outcome.isTerminal ||
         current.research.commandPending ||
         current.diplomacy.commandPending ||
         _interactionBusy(current.interaction)) {
@@ -233,6 +234,12 @@ final class MapCoordinator {
 
   bool _isCurrent(int generation) =>
       !_disposed && generation == _loadGeneration;
+
+  bool _gameplayActive() {
+    final current = _state;
+    return current is GameSessionReady &&
+        !current.recipient.turnView.outcome.isTerminal;
+  }
 
   GameSessionReady? _currentInteraction(int generation) {
     if (_disposed || generation != _interactionGeneration) return null;

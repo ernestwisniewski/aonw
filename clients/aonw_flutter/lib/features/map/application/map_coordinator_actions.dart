@@ -3,7 +3,10 @@ part of 'map_coordinator.dart';
 extension MapCoordinatorActions on MapCoordinator {
   void inspectSelectedCity(String cityId) {
     final current = _state;
-    if (current is! GameSessionReady) return;
+    if (current is! GameSessionReady ||
+        current.recipient.turnView.outcome.isTerminal) {
+      return;
+    }
     final city = current.recipient.cityById(cityId);
     if (city == null) return;
     _setState(
@@ -46,7 +49,10 @@ extension MapCoordinatorActions on MapCoordinator {
 
   void openCityFounding() {
     final state = _state;
-    if (state is! GameSessionReady) return;
+    if (state is! GameSessionReady ||
+        state.recipient.turnView.outcome.isTerminal) {
+      return;
+    }
     final unitId = state.interaction.selectedUnitId;
     if (unitId == null) return;
     _cities.openFounding(
@@ -58,6 +64,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void toggleCityFoundingHex(MapHexCoordinate coordinate) {
+    if (!_gameplayActive()) return;
     _cities.toggleFoundingHex(
       coordinate: coordinate,
       readState: () => _state,
@@ -66,6 +73,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void confirmCityFounding() {
+    if (!_gameplayActive()) return;
     _cities.confirmFounding(
       readState: () => _state,
       publish: _setState,
@@ -74,6 +82,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void executeCityAction(CityActionView action) {
+    if (!_gameplayActive()) return;
     _cities.execute(
       action: action,
       readState: () => _state,
@@ -103,6 +112,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void executeProductionAction(ProductionActionView action) {
+    if (!_gameplayActive()) return;
     _production.execute(
       action: action,
       readState: () => _state,
@@ -112,6 +122,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void executeArtifactAction(ArtifactActionView action) {
+    if (!_gameplayActive()) return;
     _artifacts.execute(
       action: action,
       readState: () => _state,
@@ -127,6 +138,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void selectTechnology(TechnologyIdView technology) {
+    if (!_gameplayActive()) return;
     _research.select(
       technology: technology,
       readState: () => _state,
@@ -144,6 +156,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void executeDiplomacyAction(DiplomacyActionView action) {
+    if (!_gameplayActive()) return;
     _diplomacy.execute(
       action: action,
       readState: () => _state,
@@ -153,6 +166,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void executeUnitAction(UnitActionKindView action) {
+    if (!_gameplayActive()) return;
     _unitActions.execute(
       action: action,
       readState: () => _state,
@@ -181,6 +195,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void executeWorkerAction(WorkerActionView action) {
+    if (!_gameplayActive()) return;
     _workers.execute(
       action: action,
       readState: () => _state,
@@ -190,6 +205,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void executeUnitLogistics(UnitLogisticsActionView action) {
+    if (!_gameplayActive()) return;
     _logistics.execute(
       action: action,
       readState: () => _state,
@@ -199,6 +215,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void confirmCombat() {
+    if (!_gameplayActive()) return;
     _combat.attack(
       readState: () => _state,
       publish: _setState,
@@ -207,6 +224,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void setCityConquestAction(CityConquestActionView action) {
+    if (!_gameplayActive()) return;
     _combat.setCityConquestAction(
       action: action,
       readState: () => _state,
@@ -215,6 +233,7 @@ extension MapCoordinatorActions on MapCoordinator {
   }
 
   void endTurn() {
+    if (!_gameplayActive()) return;
     _turns.endTurn(
       readState: () => _state,
       publish: _setState,

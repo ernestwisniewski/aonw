@@ -7,6 +7,7 @@ import '../../../../game/aonw_flame_game.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../diplomacy/application/diplomacy_state.dart';
 import '../../../diplomacy/presentation/diplomacy_overlay.dart';
+import '../../../objectives/presentation/objective_overlay.dart';
 import '../../../research/application/research_state.dart';
 import '../../../research/presentation/research_overlay.dart';
 import '../../../settings/presentation/client_settings_scope.dart';
@@ -373,6 +374,12 @@ final class _ReadyMap extends StatelessWidget {
           view: scene.player.diplomacy,
           state: diplomacy,
           onAction: controller.executeDiplomacyAction,
+        ),
+      ),
+      Positioned.fill(
+        child: ObjectiveOverlay(
+          objectives: scene.map.objectives,
+          outcome: scene.player.turnView.outcome,
         ),
       ),
     ],

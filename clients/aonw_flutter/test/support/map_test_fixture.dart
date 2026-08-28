@@ -20,6 +20,7 @@ import 'package:aonw_flutter/features/production/read_model/production_view.dart
 import 'package:aonw_flutter/features/research/application/research_session_port.dart';
 import 'package:aonw_flutter/features/research/read_model/research_view.dart';
 import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
+import 'package:aonw_flutter/features/turns/read_model/recipient_turn_view.dart';
 import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
 import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
@@ -69,6 +70,7 @@ MapScene testMapScene({
   String? mapId,
   String? contentHash,
   double defaultZoom = 1,
+  List<MapObjectiveView> objectives = const [],
   List<VisibleUnitView> units = const [],
   List<CityView> cities = const [],
   List<WorldArtifactView> artifacts = const [],
@@ -77,6 +79,7 @@ MapScene testMapScene({
   List<FieldImprovementView> fieldImprovements = const [],
   List<RoadView> roads = const [],
   CityFoundingDraftView? cityFoundingDraft,
+  GameOutcomeView? outcome,
 }) {
   final terrains = MapTerrain.values;
   final tiles = <MapTileView>[];
@@ -105,7 +108,7 @@ MapScene testMapScene({
       rows: rows,
       defaultZoom: defaultZoom,
       tiles: tiles,
-      objectives: const [],
+      objectives: objectives,
     ),
     reference: MapReferenceBundle(
       mapId: mapId ?? (cols == 7 && rows == 7 ? 'aonw2_starter' : 'test-map'),
@@ -124,6 +127,7 @@ MapScene testMapScene({
       ),
       turn: 1,
       pendingAction: null,
+      outcome: outcome,
       units: units,
       diplomacy:
           diplomacy ??

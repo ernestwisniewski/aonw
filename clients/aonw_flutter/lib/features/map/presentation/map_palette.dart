@@ -17,6 +17,11 @@ abstract final class MapPalette {
   static const artifact = Color(0xFFB388FF);
   static const artifactExcavation = Color(0xFFFFD166);
   static const artifactOutline = Color(0xFF291B3A);
+  static const objectiveRuins = Color(0xFFB8A58A);
+  static const objectiveStrategicPass = Color(0xFFE76F51);
+  static const objectiveHolySite = Color(0xFFE8D272);
+  static const objectiveLegendaryResource = Color(0xFF7FDBB6);
+  static const objectiveOutline = Color(0xFF17242D);
 
   static const _terrain = {
     MapTerrain.ocean: Color(0xFF245B91),

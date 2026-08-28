@@ -158,6 +158,7 @@ final class PlayerMapView {
     required int turn,
     required PendingActionView? pendingAction,
     required List<VisibleUnitView> units,
+    GameOutcomeView? outcome,
     DiplomacyView diplomacy = const DiplomacyView.empty(),
     List<CityView> cities = const [],
     List<WorldArtifactView> artifacts = const [],
@@ -174,11 +175,13 @@ final class PlayerMapView {
       requiredSubmissionCount: 1,
       submittedCount: 0,
       pendingAction: pendingAction,
-      outcome: GameOutcomeView(
-        condition: GameOutcomeConditionView.ongoing,
-        winnerPlayerId: null,
-        scoreByPlayerId: const {},
-      ),
+      outcome:
+          outcome ??
+          GameOutcomeView(
+            condition: GameOutcomeConditionView.ongoing,
+            winnerPlayerId: null,
+            scoreByPlayerId: const {},
+          ),
     ),
     diplomacy: diplomacy,
     units: units,

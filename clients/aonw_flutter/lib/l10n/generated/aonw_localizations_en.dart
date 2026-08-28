@@ -331,4 +331,62 @@ class AonwLocalizationsEn extends AonwLocalizations {
 
   @override
   String get resetSettings => 'Restore defaults';
+
+  @override
+  String get objectivesTitle => 'Strategic objectives';
+
+  @override
+  String get openObjectives => 'Open objectives';
+
+  @override
+  String get closeObjectives => 'Close objectives';
+
+  @override
+  String get objectivesEmpty => 'This map has no objectives.';
+
+  @override
+  String get objectivesAuthoredRules =>
+      'Authored map requirements. Current progress remains in the engine.';
+
+  @override
+  String objectiveType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'ruins': 'Ruins',
+      'strategicPass': 'Strategic pass',
+      'holySite': 'Holy site',
+      'legendaryResource': 'Legendary resource',
+      'other': 'Strategic objective',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveDetails(
+    int col,
+    int row,
+    int holdTurns,
+    int victoryPoints,
+    int goldPerTurn,
+  ) {
+    return 'Hex $col, $row\nRequired hold turns: $holdTurns · Victory points: $victoryPoints · Gold per turn: $goldPerTurn';
+  }
+
+  @override
+  String get matchFinishedTitle => 'Match finished';
+
+  @override
+  String outcomeWinner(String playerId) {
+    return 'Winner: $playerId';
+  }
+
+  @override
+  String get outcomeNoWinner => 'No winner';
+
+  @override
+  String get outcomeFinalScore => 'Final score';
+
+  @override
+  String outcomeScoreLine(String playerId, int score) {
+    return '$playerId: $score';
+  }
 }
