@@ -106,6 +106,22 @@ pub enum ClientResponseBodyDto {
         /// Current authoritative identity.
         stamp: ClientSessionStampDto,
     },
+    /// Recipient ownership was transferred inside a local hot-seat match.
+    ActorHandedOff {
+        /// Current authoritative identity after rebuilding recipient state.
+        stamp: ClientSessionStampDto,
+    },
+    /// One bounded AI turn was executed through public runtime commands.
+    AiTurnAdvanced {
+        /// Current authoritative identity after AI execution.
+        stamp: ClientSessionStampDto,
+        /// Participant controlled by the AI driver.
+        actor_player_id: String,
+        /// Number of authoritative commands executed.
+        executed_commands: u32,
+        /// Whether the planner completed the participant turn.
+        completed_turn: bool,
+    },
     /// The local session was closed.
     SessionClosed,
     /// Complete recipient-safe snapshot.
@@ -157,6 +173,12 @@ pub enum ClientFeatureDto {
     Combat,
     /// Stateless strict map inspection.
     InspectMap,
+    /// Atomic participant, lifecycle, and fog initialization.
+    MatchStart,
+    /// Local hot-seat recipient handoff.
+    ActorHandoff,
+    /// Bounded AI turn execution through an injected planner.
+    AiTurns,
     /// Complete player snapshot.
     Snapshot,
     /// Reachable movement overlay.

@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../design_system/aonw_theme.dart';
-import '../../features/map/application/map_controller.dart';
 import '../../features/map/presentation/input/map_input.dart';
-import '../../features/settings/application/client_settings_controller.dart';
+import '../../features/map/presentation/map_presentation_controller.dart';
+import '../../features/settings/presentation/client_settings_controller.dart';
 import '../../features/settings/presentation/client_settings_scope.dart';
 import '../../game/aonw_flame_game.dart';
 import '../../l10n/l10n.dart';
@@ -23,7 +23,7 @@ final class AonwApp extends StatefulWidget {
     super.key,
   });
 
-  final MapController mapController;
+  final MapPresentationController mapController;
   final MapInputSource? mapInputSource;
   final AonwFlameGameFactory flameGameFactory;
   final ClientSettingsController? settingsController;

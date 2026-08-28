@@ -1,6 +1,7 @@
 use aonw_content::{MapDefinition, MapDocument, RulesetDefinition, ScenarioDefinition};
-use aonw_contracts::client::{ClientCommandDto, ClientQueryDto};
-use aonw_contracts::{CityConquestActionDto, CoordinateDto};
+use aonw_contract_mapping::decode_match_identity;
+use aonw_contracts::client::{ClientCommandDto, ClientFogModeDto, ClientQueryDto};
+use aonw_contracts::{CityConquestActionDto, CoordinateDto, MatchIdentityDto};
 use aonw_domain::{ArtifactId, CityConquestAction, CityId, HexCoord, PlayerId};
 
 use crate::{
@@ -61,6 +62,32 @@ pub(super) fn open_session(
         .map_err(|error| ClientDecodeError::new("invalid_actor_player_id", error))?;
     OpenSession::from_scenario(map, ruleset, &scenario, actor)
         .map_err(|error| ClientDecodeError::new("invalid_session", error))
+}
+
+pub(super) fn start_match(
+    map_document: &str,
+    scenario_document: &str,
+    actor_player_id: &str,
+    match_identity: MatchIdentityDto,
+    fog_mode: ClientFogModeDto,
+) -> Result<OpenSession, ClientDecodeError> {
+    let map = map(map_document)?;
+    let ruleset = RulesetDefinition::standard().clone();
+    let scenario = ScenarioDefinition::from_json(scenario_document.as_bytes(), &map, &ruleset)
+        .map_err(|error| ClientDecodeError::new("invalid_scenario", error))?;
+    let actor = PlayerId::new(actor_player_id)
+        .map_err(|error| ClientDecodeError::new("invalid_actor_player_id", error))?;
+    let identity = decode_match_identity(match_identity)
+        .map_err(|error| ClientDecodeError::new("invalid_match_identity", error))?;
+    OpenSession::from_scenario_with_match(
+        map,
+        ruleset,
+        &scenario,
+        actor,
+        identity,
+        matches!(fog_mode, ClientFogModeDto::Enabled),
+    )
+    .map_err(|error| ClientDecodeError::new("invalid_match_start", error))
 }
 
 pub(super) fn map(document: &str) -> Result<MapDefinition, ClientDecodeError> {

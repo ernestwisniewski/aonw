@@ -1,6 +1,3 @@
-import 'package:flutter/foundation.dart';
-
-@immutable
 final class ClientSettings {
   const ClientSettings({
     required this.masterVolume,

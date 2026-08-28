@@ -1,139 +1,75 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 
-import '../application/map_repository.dart';
+import '../application/map_session_port.dart';
+import '../application/movement_session_port.dart';
 import '../read_model/map_scene.dart';
 import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
 import '../read_model/player_map_view.dart';
-import 'map_reference_bundle_loader.dart';
 import 'map_view_mapper.dart';
 import 'movement_view_mapper.dart';
 import 'player_map_view_mapper.dart';
+import 'recipient_projection_cache.dart';
+import 'rust_game_session_loader.dart';
 
-typedef RustSessionFactory = Future<AonwRustSession?> Function();
-
-final class RustMapRepository implements MapRepository {
-  RustMapRepository({
+final class RustGameSessionGateway
+    implements MapSessionPort, MovementSessionPort {
+  RustGameSessionGateway({
     required AssetBundle assets,
     RustSessionFactory sessionFactory = createAonwRustSession,
     MapViewMapper mapper = const MapViewMapper(),
     PlayerMapViewMapper playerMapper = const PlayerMapViewMapper(),
     MovementViewMapper movementMapper = const MovementViewMapper(),
-  }) : _assets = assets,
-       _sessionFactory = sessionFactory,
-       _mapper = mapper,
+  }) : _loader = RustGameSessionLoader(
+         assets: assets,
+         sessionFactory: sessionFactory,
+         mapMapper: mapper,
+         playerMapper: playerMapper,
+       ),
        _playerMapper = playerMapper,
-       _movementMapper = movementMapper,
-       _bundleLoader = MapReferenceBundleLoader(assets);
+       _movementMapper = movementMapper;
 
-  final AssetBundle _assets;
-  final RustSessionFactory _sessionFactory;
-  final MapViewMapper _mapper;
+  final RustGameSessionLoader _loader;
   final PlayerMapViewMapper _playerMapper;
   final MovementViewMapper _movementMapper;
-  final MapReferenceBundleLoader _bundleLoader;
   AonwRustSession? _session;
   MapView? _map;
   PlayerMapView? _player;
+  RecipientProjectionCache? _cache;
   String? _actorPlayerId;
+  Future<void> _requestTail = Future<void>.value();
   var _loadGeneration = 0;
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
     final generation = ++_loadGeneration;
-    final candidate = await _sessionFactory();
-    if (candidate == null) {
-      throw const MapLoadException(
-        code: 'rust_adapter_unavailable',
-        message: 'The Rust map adapter is unavailable on this platform.',
-      );
-    }
+    final prepared = await _loader.prepare(assets);
     var retained = false;
     try {
-      final scene = await _prepareScene(candidate, assets);
-      await _activate(candidate, scene, assets.actorPlayerId, generation);
+      await _activate(prepared, assets.actorPlayerId, generation);
       retained = true;
-      return scene;
-    } on MapLoadException {
-      rethrow;
-    } on FormatException catch (error, stackTrace) {
-      throw MapLoadException(
-        code: 'invalid_map_protocol',
-        message: 'The map data is incompatible with this client.',
-        diagnosticCause: error,
-        diagnosticStackTrace: stackTrace,
-      );
+      return prepared.scene;
     } finally {
-      if (!retained) await candidate.close();
+      if (!retained) await prepared.session.close();
     }
-  }
-
-  Future<MapScene> _prepareScene(
-    AonwRustSession candidate,
-    MapAssetPaths assets,
-  ) async {
-    await _verifyCapabilities(candidate);
-    final document = await _assets.loadString(assets.document);
-    final scenario = await _assets.loadString(assets.scenarioDocument);
-    final map = await _inspectMap(candidate, document, _mapper);
-    final player = await _openPlayer(
-      candidate,
-      mapDocument: document,
-      scenarioDocument: scenario,
-      actorPlayerId: assets.actorPlayerId,
-      map: map,
-    );
-    final reference = await _bundleLoader.load(
-      manifestAsset: assets.bundleManifest,
-      map: map,
-    );
-    return MapScene(map: map, reference: reference, player: player);
-  }
-
-  Future<PlayerMapView> _openPlayer(
-    AonwRustSession candidate, {
-    required String mapDocument,
-    required String scenarioDocument,
-    required String actorPlayerId,
-    required MapView map,
-  }) async {
-    final opened = await candidate.send(
-      AonwClientRequest.openSession(
-        mapDocument: mapDocument,
-        scenarioDocument: scenarioDocument,
-        actorPlayerId: actorPlayerId,
-      ),
-    );
-    _loadResponse<AonwSessionOpenedResponse>(
-      opened,
-      'The local game session could not be opened.',
-    );
-    final snapshot = await candidate.send(AonwClientRequest.snapshot());
-    final player = _loadResponse<AonwSnapshotResponse>(
-      snapshot,
-      'The player view could not be loaded.',
-    );
-    return _playerMapper.fromWire(
-      player.snapshot,
-      map: map,
-      actorPlayerId: actorPlayerId,
-    );
   }
 
   Future<void> _activate(
-    AonwRustSession candidate,
-    MapScene scene,
+    PreparedRustGameSession prepared,
     String actorPlayerId,
     int generation,
   ) async {
     _ensureCurrentLoad(generation);
+    await _requestTail;
+    _ensureCurrentLoad(generation);
     final previous = _session;
     if (previous != null) await previous.close();
     _ensureCurrentLoad(generation);
-    _session = candidate;
-    _map = scene.map;
-    _player = scene.player;
+    _session = prepared.session;
+    _map = prepared.scene.map;
+    _player = prepared.scene.player;
+    _cache = prepared.cache;
     _actorPlayerId = actorPlayerId;
   }
 
@@ -146,27 +82,11 @@ final class RustMapRepository implements MapRepository {
     }
   }
 
-  static T _loadResponse<T extends AonwClientResponseBody>(
-    AonwClientResponse response,
-    String message,
-  ) {
-    if (!response.isSuccess) {
-      final error = response.error!;
-      throw MapLoadException(
-        code: error.code,
-        message: message,
-        diagnosticCause: error,
-        diagnosticStackTrace: StackTrace.current,
-      );
-    }
-    return response.require<T>();
-  }
-
   @override
   Future<ReachableView> reachable({
     required int expectedRevision,
     required String unitId,
-  }) async {
+  }) => _serialize(() async {
     final context = _context();
     try {
       final response = await _send(
@@ -186,19 +106,19 @@ final class RustMapRepository implements MapRepository {
         expectedUnitId: unitId,
         expectedRevision: expectedRevision,
       );
-    } on MapSessionException {
+    } on MovementSessionException {
       rethrow;
     } on FormatException catch (error, stackTrace) {
       throw _invalidSessionResponse(error, stackTrace);
     }
-  }
+  });
 
   @override
   Future<RoutePlanView> routePlan({
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
-  }) async {
+  }) => _serialize(() async {
     final context = _context();
     try {
       final unit = _controlledUnit(context, unitId);
@@ -222,19 +142,19 @@ final class RustMapRepository implements MapRepository {
         expectedTarget: target,
         expectedRevision: expectedRevision,
       );
-    } on MapSessionException {
+    } on MovementSessionException {
       rethrow;
     } on FormatException catch (error, stackTrace) {
       throw _invalidSessionResponse(error, stackTrace);
     }
-  }
+  });
 
   @override
   Future<MoveUnitResultView> moveUnit({
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
-  }) async {
+  }) => _serialize(() async {
     final context = _context();
     try {
       _controlledUnit(context, unitId);
@@ -248,41 +168,26 @@ final class RustMapRepository implements MapRepository {
         ),
       );
       final command = response.require<AonwCommandResponse>().result;
-      _movementMapper.validateCommand(
+      final execution = _movementMapper.validateCommand(
         command,
         map: context.map,
         expectedUnitId: unitId,
         expectedRevision: expectedRevision,
         currentRevision: context.player.stamp.revision,
       );
+      final player = await _applyCommandPatch(context, command);
       if (!command.accepted) {
         return MoveUnitResultView.rejected(
           code: _movementMapper.rejectionCode(command.rejection!),
         );
       }
-      final snapshotResponse = await _send(
-        context.session,
-        AonwClientRequest.snapshot(),
-      );
-      final player = _playerMapper.fromWire(
-        snapshotResponse.require<AonwSnapshotResponse>().snapshot,
-        map: context.map,
-        actorPlayerId: context.actorPlayerId,
-      );
-      if (player.stamp.revision != command.stamp.revision ||
-          player.stamp.stateDigest != command.stamp.stateDigest) {
-        throw const FormatException(
-          'Command result and refreshed snapshot identities differ.',
-        );
-      }
-      _player = player;
-      return MoveUnitResultView.accepted(player: player);
-    } on MapSessionException {
+      return MoveUnitResultView.accepted(player: player, execution: execution);
+    } on MovementSessionException {
       rethrow;
     } on FormatException catch (error, stackTrace) {
       throw _invalidSessionResponse(error, stackTrace);
     }
-  }
+  });
 
   @override
   Future<void> close() async {
@@ -291,7 +196,9 @@ final class RustMapRepository implements MapRepository {
     _session = null;
     _map = null;
     _player = null;
+    _cache = null;
     _actorPlayerId = null;
+    await _requestTail;
     if (session != null) await session.close();
   }
 
@@ -299,18 +206,21 @@ final class RustMapRepository implements MapRepository {
     AonwRustSession session,
     MapView map,
     PlayerMapView player,
+    RecipientProjectionCache cache,
     String actorPlayerId,
   })
   _context() {
     final session = _session;
     final map = _map;
     final player = _player;
+    final cache = _cache;
     final actorPlayerId = _actorPlayerId;
     if (session == null ||
         map == null ||
         player == null ||
+        cache == null ||
         actorPlayerId == null) {
-      throw const MapSessionException(
+      throw const MovementSessionException(
         code: 'session_not_open',
         message: 'The local game session is not open.',
       );
@@ -319,6 +229,7 @@ final class RustMapRepository implements MapRepository {
       session: session,
       map: map,
       player: player,
+      cache: cache,
       actorPlayerId: actorPlayerId,
     );
   }
@@ -330,7 +241,7 @@ final class RustMapRepository implements MapRepository {
     final response = await session.send(request);
     if (!response.isSuccess) {
       final error = response.error!;
-      throw MapSessionException(
+      throw MovementSessionException(
         code: error.code,
         message: 'The movement request could not be completed.',
         diagnosticCause: error,
@@ -340,73 +251,87 @@ final class RustMapRepository implements MapRepository {
     return response;
   }
 
-  static MapSessionException _invalidSessionResponse(
+  static MovementSessionException _invalidSessionResponse(
     FormatException error,
     StackTrace stackTrace,
-  ) => MapSessionException(
+  ) => MovementSessionException(
     code: 'invalid_session_protocol',
     message: 'The movement response is incompatible with this client.',
     diagnosticCause: error,
     diagnosticStackTrace: stackTrace,
   );
-}
 
-Future<void> _verifyCapabilities(AonwRustSession candidate) async {
-  final response = await candidate.send(AonwClientRequest.capabilities());
-  if (!response.isSuccess) {
-    final error = response.error!;
-    throw MapLoadException(
-      code: 'rust_capability_mismatch',
-      message: 'The native game adapter is incompatible with this client.',
-      diagnosticCause: error,
-      diagnosticStackTrace: StackTrace.current,
-    );
+  Future<PlayerMapView> _applyCommandPatch(
+    ({
+      AonwRustSession session,
+      MapView map,
+      PlayerMapView player,
+      RecipientProjectionCache cache,
+      String actorPlayerId,
+    })
+    context,
+    AonwCommandResult command,
+  ) async {
+    try {
+      final snapshot = context.cache.apply(command);
+      final player = _playerMapper.fromWire(
+        snapshot,
+        map: context.map,
+        actorPlayerId: context.actorPlayerId,
+      );
+      _player = player;
+      return player;
+    } on FormatException catch (error, stackTrace) {
+      final resyncedPlayer = await _resync(context);
+      throw MovementSessionException(
+        code: 'recipient_resynchronized',
+        message:
+            'The recipient view was resynchronized after an invalid patch.',
+        diagnosticCause: error,
+        diagnosticStackTrace: stackTrace,
+        resyncedPlayer: resyncedPlayer,
+      );
+    }
   }
-  final capabilities = response.require<AonwCapabilitiesResponse>();
-  final missing = _requiredClientFeatures.difference(
-    capabilities.features.toSet(),
-  );
-  if (missing.isEmpty) return;
-  throw MapLoadException(
-    code: 'rust_capability_mismatch',
-    message: 'The native game adapter is incompatible with this client.',
-    diagnosticCause: StateError(
-      'Missing Rust client capabilities: '
-      '${missing.map((feature) => feature.name).join(', ')}',
-    ),
-    diagnosticStackTrace: StackTrace.current,
-  );
-}
 
-Future<MapView> _inspectMap(
-  AonwRustSession candidate,
-  String document,
-  MapViewMapper mapper,
-) async {
-  final response = await candidate.send(
-    AonwClientRequest.inspectMap(mapDocument: document),
-  );
-  final inspected = RustMapRepository._loadResponse<AonwMapInspectedResponse>(
-    response,
-    'The map could not be opened.',
-  );
-  return mapper.fromWire(inspected.map);
-}
+  Future<PlayerMapView> _resync(
+    ({
+      AonwRustSession session,
+      MapView map,
+      PlayerMapView player,
+      RecipientProjectionCache cache,
+      String actorPlayerId,
+    })
+    context,
+  ) async {
+    final response = await _send(context.session, AonwClientRequest.snapshot());
+    final snapshot = response.require<AonwSnapshotResponse>().snapshot;
+    context.cache.replaceAfterResync(snapshot);
+    final player = _playerMapper.fromWire(
+      snapshot,
+      map: context.map,
+      actorPlayerId: context.actorPlayerId,
+    );
+    _player = player;
+    return player;
+  }
 
-const _requiredClientFeatures = <AonwClientFeature>{
-  AonwClientFeature.inspectMap,
-  AonwClientFeature.snapshot,
-  AonwClientFeature.reachable,
-  AonwClientFeature.routePlan,
-  AonwClientFeature.moveUnit,
-  AonwClientFeature.unitActions,
-};
+  Future<T> _serialize<T>(Future<T> Function() operation) {
+    final result = _requestTail.then((_) => operation());
+    _requestTail = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return result;
+  }
+}
 
 VisibleUnitView _controlledUnit(
   ({
     AonwRustSession session,
     MapView map,
     PlayerMapView player,
+    RecipientProjectionCache cache,
     String actorPlayerId,
   })
   context,

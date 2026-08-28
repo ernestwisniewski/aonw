@@ -12,7 +12,7 @@ impl LocalRuntime {
     /// successful typed results with a rejection code.
     pub fn diplomacy(&mut self, command: &DiplomacyRequest) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_diplomacy(session, command)
         };
         self.complete_dispatch(result)

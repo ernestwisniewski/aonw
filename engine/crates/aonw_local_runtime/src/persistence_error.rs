@@ -19,6 +19,8 @@ pub enum PersistenceError {
     RulesetIdMismatch,
     /// Persisted ruleset hash differs from supplied content.
     RulesetHashMismatch,
+    /// Persisted engine behavior differs from this build.
+    BehaviorFingerprintMismatch,
     /// Immutable content identity could not be computed.
     ContentHash(String),
     /// Persisted actor identifier is invalid.
@@ -90,6 +92,9 @@ impl core::fmt::Display for PersistenceError {
             }
             Self::RulesetHashMismatch => {
                 formatter.write_str("save ruleset hash does not match content")
+            }
+            Self::BehaviorFingerprintMismatch => {
+                formatter.write_str("persistence behavior fingerprint does not match this build")
             }
             Self::ContentHash(source) => write!(formatter, "content hash failed: {source}"),
             Self::InvalidActor(source) => write!(formatter, "invalid actor: {source}"),

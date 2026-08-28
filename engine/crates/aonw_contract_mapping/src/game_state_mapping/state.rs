@@ -124,11 +124,16 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
 
 fn map_aggregate_error(error: &GameStateBuildError) -> GameStateMappingError {
     let path = match error {
-        GameStateBuildError::UnitPlayerNotFound { .. } => "$.units",
+        GameStateBuildError::UnitPlayerNotFound { .. }
+        | GameStateBuildError::UnitArtifactActivityConflict { .. } => "$.units",
         GameStateBuildError::CityPlayerNotFound { .. }
         | GameStateBuildError::InvalidCity { .. }
-        | GameStateBuildError::CityTerritoryOverlap { .. } => "$.cities",
-        GameStateBuildError::FogPlayerNotFound(_) => "$.fogOfWar",
+        | GameStateBuildError::CityTerritoryOverlap { .. }
+        | GameStateBuildError::CityWonderNotRegistered { .. }
+        | GameStateBuildError::DuplicateWonderHost { .. } => "$.cities",
+        GameStateBuildError::FogPlayerNotFound(_) | GameStateBuildError::FogPlayerMissing(_) => {
+            "$.fogOfWar"
+        }
         GameStateBuildError::InteractionPlayerNotFound(_) => "$.interaction",
         GameStateBuildError::InvalidDiplomacy(_) => "$.diplomacy",
         _ => "$",

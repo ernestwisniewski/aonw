@@ -11,7 +11,9 @@ pub use map::{
     MapGridLayoutDto, MapObjectiveViewDto, MapResourceDto, MapTerrainDto, MapTileViewDto,
     MapViewDto,
 };
-pub use request::{ClientCommandDto, ClientQueryDto, ClientRequestBodyDto, ClientRequestDto};
+pub use request::{
+    ClientCommandDto, ClientFogModeDto, ClientQueryDto, ClientRequestBodyDto, ClientRequestDto,
+};
 pub use response::{
     AutoExploreOptionDto, CityExpansionCandidateDto, CityFoundingDraftViewDto,
     CitySpecializationOptionDto, CityYieldContributionDto, CityYieldContributionKindDto,
@@ -34,4 +36,4 @@ pub use response::{
 };
 
 /// The only client protocol version accepted by this build.
-pub const CLIENT_API_VERSION: u16 = 5;
+pub const CLIENT_API_VERSION: u16 = 6;

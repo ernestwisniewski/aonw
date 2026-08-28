@@ -30,7 +30,7 @@ fn economy_manifest_is_strict_current_only_and_complete() {
         ["cityYield", "strategicResourceProjection"]
     );
     assert!(manifest.turn_processors.is_empty());
-    assert_eq!(manifest.client_api_version, 5);
+    assert_eq!(manifest.client_api_version, 6);
     assert!(!manifest.legacy_paths);
     assert!(manifest.cases.len() >= 12);
 

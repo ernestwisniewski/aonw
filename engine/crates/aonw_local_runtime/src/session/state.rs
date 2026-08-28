@@ -26,14 +26,15 @@ pub struct SessionStamp {
 
 #[derive(Clone, Debug)]
 pub(crate) struct Session {
-    world: PreparedWorld,
+    world: Arc<PreparedWorld>,
     state: Option<GameState>,
     actor: Arc<PlayerId>,
     state_digest: StateDigest,
-    visibility: MovementVisibility,
+    visibility: Arc<MovementVisibility>,
     event_offset: u64,
-    replay: ReplayRecorder,
-    projection: ProjectedView,
+    replay: Arc<ReplayRecorder>,
+    records_replay: bool,
+    projection: Arc<ProjectedView>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -72,13 +73,31 @@ impl EventReservation {
 
 impl Session {
     pub(super) fn try_open(request: OpenSession) -> Result<Self, OpenSessionError> {
-        let world = PreparedWorld::try_new(request.map, request.ruleset, &request.state)?;
+        let identity = request.state.match_lifecycle().identity();
+        if identity.participants().is_empty() {
+            return Err(OpenSessionError::EmptyParticipants);
+        }
+        if !identity.contains(&request.actor) {
+            return Err(OpenSessionError::UnknownActor(request.actor));
+        }
+        let world = Arc::new(PreparedWorld::try_new(
+            request.map,
+            request.ruleset,
+            &request.state,
+        )?);
         let actor = Arc::new(request.actor);
         let state_digest = GameEngine::state_digest(&request.state);
-        let visibility =
-            MovementVisibility::for_player(&request.state, world.map(), actor.as_ref());
-        let replay = ReplayRecorder::new(&request.state, state_digest, request.event_offset);
-        let projection = ProjectedView::for_recipient(&request.state, actor.clone());
+        let visibility = Arc::new(MovementVisibility::for_player(
+            &request.state,
+            world.map(),
+            actor.as_ref(),
+        ));
+        let replay = Arc::new(ReplayRecorder::new(
+            &request.state,
+            state_digest,
+            request.event_offset,
+        ));
+        let projection = Arc::new(ProjectedView::for_recipient(&request.state, actor.clone()));
         Ok(Self {
             world,
             state: Some(request.state),
@@ -87,6 +106,7 @@ impl Session {
             visibility,
             event_offset: request.event_offset,
             replay,
+            records_replay: true,
             projection,
         })
     }
@@ -105,17 +125,20 @@ impl Session {
 
     pub(crate) fn handoff_actor(&mut self, actor: PlayerId) {
         let actor = Arc::new(actor);
-        self.visibility =
-            MovementVisibility::for_player(self.state(), self.world.map(), actor.as_ref());
-        self.projection = ProjectedView::for_recipient(self.state(), actor.clone());
+        self.visibility = Arc::new(MovementVisibility::for_player(
+            self.state(),
+            self.world.map(),
+            actor.as_ref(),
+        ));
+        self.projection = Arc::new(ProjectedView::for_recipient(self.state(), actor.clone()));
         self.actor = actor;
     }
 
-    pub(crate) const fn map(&self) -> &MapDefinition {
+    pub(crate) fn map(&self) -> &MapDefinition {
         self.world.map()
     }
 
-    pub(crate) const fn ruleset(&self) -> &RulesetDefinition {
+    pub(crate) fn ruleset(&self) -> &RulesetDefinition {
         self.world.ruleset()
     }
 
@@ -140,30 +163,46 @@ impl Session {
         Ok(())
     }
 
-    pub(crate) const fn replay(&self) -> &ReplayRecorder {
-        &self.replay
+    pub(crate) fn replay(&self) -> &ReplayRecorder {
+        self.replay.as_ref()
     }
 
-    pub(crate) const fn projection(&self) -> &ProjectedView {
-        &self.projection
+    pub(crate) fn projection(&self) -> &ProjectedView {
+        self.projection.as_ref()
+    }
+
+    pub(crate) const fn records_replay(&self) -> bool {
+        self.records_replay
+    }
+
+    pub(crate) fn disable_replay(&mut self) {
+        self.records_replay = false;
     }
 
     pub(crate) fn prepare_replay_segment(&mut self) {
+        if !self.records_replay {
+            return;
+        }
         if self.replay.is_full() {
             let checkpoint =
                 ReplayRecorder::checkpoint(self.state(), self.state_digest, self.event_offset);
-            self.replay.rollover(checkpoint);
+            Arc::make_mut(&mut self.replay).rollover(checkpoint);
         }
     }
 
     pub(crate) fn push_replay(&mut self, entry: aonw_contracts::ReplayEntryDto) {
-        self.replay.push(entry);
+        if self.records_replay {
+            let replacement = self.replay.requires_checkpoint_for(&entry).then(|| {
+                ReplayRecorder::checkpoint(self.state(), self.state_digest, self.event_offset)
+            });
+            Arc::make_mut(&mut self.replay).push_bounded(entry, replacement);
+        }
     }
 
     pub(crate) fn context(&self) -> EngineContext<'_> {
         EngineContext::canonical(self.actor(), self.world.map(), self.world.ruleset())
             .with_compiled_movement_map(self.world.movement_map())
-            .with_movement_visibility(&self.visibility)
+            .with_movement_visibility(self.visibility.as_ref())
     }
 
     pub(crate) fn system_context(&self) -> SystemContext<'_> {
@@ -177,10 +216,13 @@ impl Session {
         projection: ProjectedView,
     ) {
         self.state_digest = state_digest;
-        self.visibility =
-            MovementVisibility::for_player(&state, self.world.map(), self.actor.as_ref());
+        self.visibility = Arc::new(MovementVisibility::for_player(
+            &state,
+            self.world.map(),
+            self.actor.as_ref(),
+        ));
         self.state = Some(state);
-        self.projection = projection;
+        self.projection = Arc::new(projection);
     }
 
     pub(crate) fn restore_rejected_state(&mut self, state: GameState) {

@@ -1,7 +1,7 @@
 use crate::{
     ArtifactId, CityBuildError, CityId, CombatStateValidationError, DiplomacyStateBuildError,
     EconomyStateBuildError, GameOutcomeBuildError, HexCoord, InfrastructureValidationError,
-    KnowledgeStateValidationError, ObjectiveStateBuildError, PlayerId, UnitId,
+    KnowledgeStateValidationError, ObjectiveStateBuildError, PlayerId, UnitId, WonderType,
 };
 
 /// Failure raised while constructing the canonical simulation aggregate.
@@ -108,6 +108,15 @@ pub enum GameStateBuildError {
         /// Referenced artifact.
         artifact_id: ArtifactId,
     },
+    /// A unit attempts to use both mutually exclusive artifact activity slots.
+    UnitArtifactActivityConflict {
+        /// Unit carrying and excavating simultaneously.
+        unit_id: UnitId,
+        /// Artifact already carried by the unit.
+        carried_artifact_id: ArtifactId,
+        /// Different artifact currently being excavated.
+        excavating_artifact_id: ArtifactId,
+    },
     /// Interaction state references an absent unit.
     InteractionUnitNotFound(UnitId),
     /// Interaction state references an absent city.
@@ -132,6 +141,8 @@ pub enum GameStateBuildError {
     },
     /// Fog state belongs to a player absent from the bound match identity.
     FogPlayerNotFound(PlayerId),
+    /// Enabled fog does not contain state for one match participant.
+    FogPlayerMissing(PlayerId),
     /// Interaction state belongs to a player absent from the bound match identity.
     InteractionPlayerNotFound(PlayerId),
     /// A pending turn skip does not match the skipped unit state.
@@ -142,6 +153,22 @@ pub enum GameStateBuildError {
     InvalidInfrastructure(InfrastructureValidationError),
     /// Research or wonder data references an identity outside the match.
     InvalidKnowledge(KnowledgeStateValidationError),
+    /// A city lists a wonder absent from the authoritative completion registry.
+    CityWonderNotRegistered {
+        /// City hosting the unregistered wonder.
+        city_id: CityId,
+        /// Wonder absent from the completion registry.
+        wonder: WonderType,
+    },
+    /// More than one city claims to host the same completed wonder.
+    DuplicateWonderHost {
+        /// Duplicated wonder.
+        wonder: WonderType,
+        /// First host in canonical city order.
+        first_city_id: CityId,
+        /// Second host in canonical city order.
+        second_city_id: CityId,
+    },
     /// Pending combat declarations violate aggregate references.
     InvalidCombat(CombatStateValidationError),
     /// Diplomacy data violates participant or contact references.
@@ -252,6 +279,14 @@ impl core::fmt::Display for GameStateBuildError {
                 formatter,
                 "unit {unit_id} references missing artifact {artifact_id}"
             ),
+            Self::UnitArtifactActivityConflict {
+                unit_id,
+                carried_artifact_id,
+                excavating_artifact_id,
+            } => write!(
+                formatter,
+                "unit {unit_id} carries {carried_artifact_id} while excavating {excavating_artifact_id}"
+            ),
             Self::InteractionUnitNotFound(id) => {
                 write!(formatter, "interaction references missing unit {id}")
             }
@@ -282,6 +317,9 @@ impl core::fmt::Display for GameStateBuildError {
             Self::FogPlayerNotFound(player_id) => {
                 write!(formatter, "fog references non-participant {player_id}")
             }
+            Self::FogPlayerMissing(player_id) => {
+                write!(formatter, "enabled fog is missing participant {player_id}")
+            }
             Self::InteractionPlayerNotFound(player_id) => {
                 write!(
                     formatter,
@@ -294,6 +332,20 @@ impl core::fmt::Display for GameStateBuildError {
             Self::InvalidEconomy(error) => error.fmt(formatter),
             Self::InvalidInfrastructure(error) => error.fmt(formatter),
             Self::InvalidKnowledge(error) => error.fmt(formatter),
+            Self::CityWonderNotRegistered { city_id, wonder } => {
+                write!(
+                    formatter,
+                    "city {city_id} hosts unregistered wonder {wonder:?}"
+                )
+            }
+            Self::DuplicateWonderHost {
+                wonder,
+                first_city_id,
+                second_city_id,
+            } => write!(
+                formatter,
+                "wonder {wonder:?} is hosted by both {first_city_id} and {second_city_id}"
+            ),
             Self::InvalidCombat(error) => error.fmt(formatter),
             Self::InvalidDiplomacy(error) => error.fmt(formatter),
             Self::InvalidObjectives(error) => error.fmt(formatter),

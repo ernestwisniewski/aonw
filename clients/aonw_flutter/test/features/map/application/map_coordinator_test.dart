@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
-import 'package:aonw_flutter/features/map/application/map_controller.dart';
-import 'package:aonw_flutter/features/map/application/map_repository.dart';
+import 'package:aonw_flutter/features/map/application/map_coordinator.dart';
+import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
+import 'package:aonw_flutter/features/map/application/map_session_port.dart';
+import 'package:aonw_flutter/features/map/application/movement_session_port.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
@@ -13,9 +15,8 @@ import '../../../support/map_test_fixture.dart';
 
 void main() {
   test('loads ready state and keeps interaction local', () async {
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene()),
-    );
+    final session = FakeGameSession.success(testMapScene());
+    final controller = MapCoordinator(session: session, movement: session);
     addTearDown(controller.dispose);
 
     await controller.load();
@@ -42,12 +43,11 @@ void main() {
     expect((controller.state as GameSessionReady).interaction.selected, isNull);
   });
 
-  test('exposes typed repository failure', () async {
-    final controller = MapController(
-      repository: FakeMapRepository.failure(
-        const MapLoadException(code: 'invalid_map', message: 'Bad map'),
-      ),
+  test('exposes a typed session failure', () async {
+    final session = FakeGameSession.failure(
+      const MapLoadException(code: 'invalid_map', message: 'Bad map'),
     );
+    final controller = MapCoordinator(session: session, movement: session);
     addTearDown(controller.dispose);
 
     await controller.load();
@@ -57,15 +57,15 @@ void main() {
   });
 
   test('a slower old load cannot replace a newer result', () async {
-    final repository = _CompletingMapRepository();
-    final controller = MapController(repository: repository);
+    final session = _CompletingGameSession();
+    final controller = MapCoordinator(session: session, movement: session);
     addTearDown(controller.dispose);
 
     final firstLoad = controller.load();
     final secondLoad = controller.load();
-    repository.requests[1].complete(testMapScene(mapId: 'new-map'));
+    session.requests[1].complete(testMapScene(mapId: 'new-map'));
     await secondLoad;
-    repository.requests[0].complete(testMapScene(mapId: 'old-map'));
+    session.requests[0].complete(testMapScene(mapId: 'old-map'));
     await firstLoad;
 
     final ready = controller.state as GameSessionReady;
@@ -78,15 +78,17 @@ void main() {
       final diagnostics =
           <({String code, Object error, StackTrace stackTrace})>[];
       final cause = FormatException('raw decoder details');
-      final controller = MapController(
-        repository: FakeMapRepository.failure(
-          MapLoadException(
-            code: 'invalid_map',
-            message: 'The map could not be opened.',
-            diagnosticCause: cause,
-            diagnosticStackTrace: StackTrace.current,
-          ),
+      final session = FakeGameSession.failure(
+        MapLoadException(
+          code: 'invalid_map',
+          message: 'The map could not be opened.',
+          diagnosticCause: cause,
+          diagnosticStackTrace: StackTrace.current,
         ),
+      );
+      final controller = MapCoordinator(
+        session: session,
+        movement: session,
         diagnosticReporter: (code, error, stackTrace) =>
             diagnostics.add((code: code, error: error, stackTrace: stackTrace)),
       );
@@ -115,13 +117,16 @@ void main() {
           testVisibleUnit(coordinate: (col: 1, row: 0), movementUnits: 8),
         ],
       );
-      final repository = FakeMapRepository.success(
+      final session = FakeGameSession.success(
         scene,
         reachableResult: testReachableView(),
         routeResult: testRoutePlanView(),
-        moveResult: MoveUnitResultView.accepted(player: movedPlayer),
+        moveResult: MoveUnitResultView.accepted(
+          player: movedPlayer,
+          execution: testMoveUnitExecutionView(),
+        ),
       );
-      final controller = MapController(repository: repository);
+      final controller = MapCoordinator(session: session, movement: session);
       addTearDown(controller.dispose);
 
       await controller.load();
@@ -145,6 +150,10 @@ void main() {
       expect(ready.interaction.selected, (col: 1, row: 0));
       expect(ready.interaction.selectedUnitId, isNull);
       expect(ready.interaction.route, isNull);
+      expect(
+        ready.interaction.lastMovementExecution?.events.single.unitId,
+        unit.id,
+      );
     },
   );
 
@@ -152,16 +161,15 @@ void main() {
     'keeps a rejected move typed and leaves the snapshot unchanged',
     () async {
       final scene = testMapScene(units: [testVisibleUnit()]);
-      final controller = MapController(
-        repository: FakeMapRepository.success(
-          scene,
-          reachableResult: testReachableView(),
-          routeResult: testRoutePlanView(),
-          moveResult: const MoveUnitResultView.rejected(
-            code: CommandRejectionCodeView.moveTargetOccupied,
-          ),
+      final session = FakeGameSession.success(
+        scene,
+        reachableResult: testReachableView(),
+        routeResult: testRoutePlanView(),
+        moveResult: const MoveUnitResultView.rejected(
+          code: CommandRejectionCodeView.moveTargetOccupied,
         ),
       );
+      final controller = MapCoordinator(session: session, movement: session);
       addTearDown(controller.dispose);
 
       await controller.load();
@@ -181,9 +189,50 @@ void main() {
       expect(ready.interaction.route, isNotNull);
     },
   );
+
+  test('adopts a typed recipient resync after an invalid patch', () async {
+    final scene = testMapScene(units: [testVisibleUnit()]);
+    final resyncedPlayer = PlayerMapView(
+      actorPlayerId: 'preview-player',
+      stamp: testSessionStamp(revision: 1, stateDigest: 'd' * 64),
+      turn: 2,
+      pendingAction: null,
+      units: [testVisibleUnit(coordinate: (col: 1, row: 0))],
+    );
+    final session = FakeGameSession.success(
+      scene,
+      reachableResult: testReachableView(),
+      routeResult: testRoutePlanView(),
+      moveFailure: MovementSessionException(
+        code: 'recipient_resynchronized',
+        message: 'Recipient projection was resynchronized.',
+        resyncedPlayer: resyncedPlayer,
+      ),
+    );
+    final controller = MapCoordinator(session: session, movement: session);
+    addTearDown(controller.dispose);
+
+    await controller.load();
+    controller.select((col: 0, row: 0));
+    await pumpEventQueue();
+    controller.select((col: 1, row: 0));
+    await pumpEventQueue();
+    controller.confirmMove();
+    await pumpEventQueue();
+
+    final ready = controller.state as GameSessionReady;
+    expect(ready.recipient, same(resyncedPlayer));
+    expect(ready.turnPresentations.active?.turn, 1);
+    expect(ready.turnPresentations.pending.single.turn, 2);
+    expect(
+      ready.interaction.movementError?.code,
+      MapMovementFailureViewCode.responseIncompatible,
+    );
+  });
 }
 
-final class _CompletingMapRepository implements MapRepository {
+final class _CompletingGameSession
+    implements MapSessionPort, MovementSessionPort {
   final requests = <Completer<MapScene>>[];
 
   @override

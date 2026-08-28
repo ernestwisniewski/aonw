@@ -1,6 +1,4 @@
 import '../read_model/map_scene.dart';
-import '../read_model/map_view.dart';
-import '../read_model/movement_view.dart';
 
 final class MapAssetPaths {
   const MapAssetPaths({
@@ -23,25 +21,8 @@ final class MapAssetPaths {
   final String actorPlayerId;
 }
 
-abstract interface class MapRepository {
+abstract interface class MapSessionPort {
   Future<MapScene> load(MapAssetPaths assets);
-
-  Future<ReachableView> reachable({
-    required int expectedRevision,
-    required String unitId,
-  });
-
-  Future<RoutePlanView> routePlan({
-    required int expectedRevision,
-    required String unitId,
-    required MapHexCoordinate target,
-  });
-
-  Future<MoveUnitResultView> moveUnit({
-    required int expectedRevision,
-    required String unitId,
-    required MapHexCoordinate target,
-  });
 
   Future<void> close();
 }
@@ -61,21 +42,4 @@ final class MapLoadException implements Exception {
 
   @override
   String toString() => 'MapLoadException($code): $message';
-}
-
-final class MapSessionException implements Exception {
-  const MapSessionException({
-    required this.code,
-    required this.message,
-    this.diagnosticCause,
-    this.diagnosticStackTrace,
-  });
-
-  final String code;
-  final String message;
-  final Object? diagnosticCause;
-  final StackTrace? diagnosticStackTrace;
-
-  @override
-  String toString() => 'MapSessionException($code): $message';
 }

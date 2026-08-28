@@ -70,6 +70,7 @@ dependencies = [
 name = "aonw_flutter"
 version = "0.1.0"
 dependencies = [
+ "aonw_ai",
  "aonw_contracts",
  "aonw_local_runtime",
 ]
@@ -78,6 +79,7 @@ dependencies = [
 name = "aonw_godot"
 version = "0.1.0"
 dependencies = [
+ "aonw_ai",
  "aonw_contracts",
  "aonw_local_runtime",
  "aonw_map_workbench",

@@ -110,6 +110,20 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('keeps accepted movement events and evidence typed', () {
+    final execution = mapper.validateCommand(
+      _command(),
+      map: testMapScene().map,
+      expectedUnitId: 'preview-commander',
+      expectedRevision: 0,
+      currentRevision: 0,
+    );
+
+    expect(execution.events.single.from, (col: 0, row: 0));
+    expect(execution.events.single.to, (col: 1, row: 0));
+    expect(execution.evidence?.steps.single.coordinate, (col: 1, row: 0));
+  });
 }
 
 AonwSessionStamp _stamp({int revision = 0}) => AonwSessionStamp(
@@ -117,4 +131,47 @@ AonwSessionStamp _stamp({int revision = 0}) => AonwSessionStamp(
   stateDigest: 'b' * 64,
   mapHash: 'a' * 64,
   rulesetHash: 'c' * 64,
+);
+
+AonwCommandResult _command() => AonwCommandResult(
+  stamp: _stamp(revision: 1),
+  outcome: const AonwCommandAccepted(),
+  events: const [
+    AonwUnitMovedEvent(
+      unitId: 'preview-commander',
+      from: AonwCoordinate(col: 0, row: 0),
+      to: AonwCoordinate(col: 1, row: 0),
+    ),
+  ],
+  evidence: const AonwUnitMovementEvidence(
+    unitId: 'preview-commander',
+    from: AonwCoordinate(col: 0, row: 0),
+    steps: [
+      AonwMovementStep(
+        coordinate: AonwCoordinate(col: 1, row: 0),
+        enterCostUnits: 4,
+        cumulativeCostUnits: 4,
+      ),
+    ],
+  ),
+  viewPatch: const AonwPlayerViewPatch(
+    fromRevision: 0,
+    toRevision: 1,
+    turn: 1,
+    turnLifecycle: null,
+    outcome: null,
+    upsertedUnits: [],
+    removedUnitIds: [],
+    upsertedCities: [],
+    removedCityIds: [],
+    upsertedArtifacts: [],
+    removedArtifactIds: [],
+    upsertedFieldImprovements: [],
+    removedFieldImprovementCoordinates: [],
+    upsertedRoads: [],
+    removedRoadCoordinates: [],
+    pendingAction: null,
+    cityFoundingDraft: null,
+    diplomacy: null,
+  ),
 );

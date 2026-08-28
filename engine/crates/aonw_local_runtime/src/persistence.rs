@@ -1,9 +1,9 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
-    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_SEGMENT_COUNT, ReplayContextDto,
-    ReplayEntryDto, ReplayLogDto, ReplayRecordDto, ReplayResultDto, ReplaySegmentDto,
-    ReplaySystemCommandDto, SaveGameDto,
+    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_REPLAY_SEGMENT_COUNT,
+    PERSISTENCE_FORMAT_VERSION, ReplayContextDto, ReplayEntryDto, ReplayLogDto, ReplayRecordDto,
+    ReplayResultDto, ReplaySegmentDto, ReplaySystemCommandDto, SaveGameDto,
 };
 use aonw_domain::{CityId, PlayerId, UnitId, UtcTimestamp};
 use aonw_engine::GameEngine;
@@ -28,6 +28,10 @@ use evidence::{encode_event, encode_evidence};
 use player_decode::decode_command;
 use verification::verify_replay;
 
+pub(crate) const ENGINE_BEHAVIOR_FINGERPRINT: &str =
+    concat!("aonw-engine/", env!("CARGO_PKG_VERSION"), "/behavior-1");
+const REPLAY_RECORDER_PAYLOAD_BYTES: usize = MAX_REPLAY_LOG_JSON_BYTES - 4 * 1024 * 1024;
+
 /// Result of deterministic replay verification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ReplayVerification {
@@ -42,7 +46,9 @@ pub struct ReplayVerification {
 #[derive(Clone, Debug)]
 pub(crate) struct ReplayRecorder {
     completed_segments: Vec<ReplaySegmentDto>,
+    completed_segment_bytes: Vec<usize>,
     current_segment: ReplaySegmentDto,
+    current_segment_bytes: usize,
 }
 
 impl ReplayRecorder {
@@ -51,9 +57,13 @@ impl ReplayRecorder {
         digest: aonw_engine::StateDigest,
         event_offset: u64,
     ) -> Self {
+        let current_segment = Self::checkpoint(state, digest, event_offset);
+        let current_segment_bytes = segment_json_bytes(&current_segment);
         Self {
             completed_segments: Vec::new(),
-            current_segment: Self::checkpoint(state, digest, event_offset),
+            completed_segment_bytes: Vec::new(),
+            current_segment,
+            current_segment_bytes,
         }
     }
 
@@ -75,15 +85,44 @@ impl ReplayRecorder {
     }
 
     pub(crate) fn rollover(&mut self, checkpoint: ReplaySegmentDto) {
-        if self.completed_segments.len() == MAX_REPLAY_SEGMENT_COUNT - 1 {
-            self.completed_segments.remove(0);
-        }
+        let checkpoint_bytes = segment_json_bytes(&checkpoint);
         let completed = core::mem::replace(&mut self.current_segment, checkpoint);
+        let completed_bytes = core::mem::replace(&mut self.current_segment_bytes, checkpoint_bytes);
         self.completed_segments.push(completed);
+        self.completed_segment_bytes.push(completed_bytes);
+        self.trim_completed();
     }
 
-    pub(crate) fn push(&mut self, entry: ReplayEntryDto) {
+    pub(crate) fn requires_checkpoint_for(&self, entry: &ReplayEntryDto) -> bool {
+        self.current_segment_bytes
+            .saturating_add(entry_json_bytes(entry))
+            > REPLAY_RECORDER_PAYLOAD_BYTES
+    }
+
+    pub(crate) fn push_bounded(
+        &mut self,
+        entry: ReplayEntryDto,
+        replacement_checkpoint: Option<ReplaySegmentDto>,
+    ) {
+        let entry_bytes = entry_json_bytes(&entry);
+        while self.archive_bytes().saturating_add(entry_bytes) > REPLAY_RECORDER_PAYLOAD_BYTES
+            && !self.completed_segments.is_empty()
+        {
+            self.completed_segments.remove(0);
+            self.completed_segment_bytes.remove(0);
+        }
+        if self.current_segment_bytes.saturating_add(entry_bytes) > REPLAY_RECORDER_PAYLOAD_BYTES {
+            let Some(checkpoint) = replacement_checkpoint else {
+                return;
+            };
+            self.completed_segments.clear();
+            self.completed_segment_bytes.clear();
+            self.current_segment_bytes = segment_json_bytes(&checkpoint);
+            self.current_segment = checkpoint;
+            return;
+        }
         self.current_mut().entries.push(entry);
+        self.current_segment_bytes = self.current_segment_bytes.saturating_add(entry_bytes);
     }
 
     pub(crate) fn current_entry_count(&self) -> usize {
@@ -98,11 +137,30 @@ impl ReplayRecorder {
         &mut self.current_segment
     }
 
+    fn archive_bytes(&self) -> usize {
+        self.completed_segment_bytes
+            .iter()
+            .copied()
+            .fold(self.current_segment_bytes, usize::saturating_add)
+    }
+
+    fn trim_completed(&mut self) {
+        while (self.completed_segments.len() + 1 > MAX_REPLAY_SEGMENT_COUNT
+            || self.archive_bytes() > REPLAY_RECORDER_PAYLOAD_BYTES)
+            && !self.completed_segments.is_empty()
+        {
+            self.completed_segments.remove(0);
+            self.completed_segment_bytes.remove(0);
+        }
+    }
+
     fn to_dto(&self, session: &Session) -> ReplayLogDto {
         let mut segments = Vec::with_capacity(self.completed_segments.len() + 1);
         segments.extend(self.completed_segments.iter().cloned());
         segments.push(self.current_segment.clone());
         ReplayLogDto {
+            format_version: PERSISTENCE_FORMAT_VERSION,
+            behavior_fingerprint: ENGINE_BEHAVIOR_FINGERPRINT.to_owned(),
             map_id: session.map().map_id().to_owned(),
             map_hash: session.stamp().map_hash.to_string(),
             ruleset_id: session.ruleset().ruleset_id().to_owned(),
@@ -111,6 +169,16 @@ impl ReplayRecorder {
             segments,
         }
     }
+}
+
+fn segment_json_bytes(segment: &ReplaySegmentDto) -> usize {
+    serde_json::to_vec(segment).map_or(REPLAY_RECORDER_PAYLOAD_BYTES, |bytes| bytes.len())
+}
+
+fn entry_json_bytes(entry: &ReplayEntryDto) -> usize {
+    serde_json::to_vec(entry)
+        .map_or(REPLAY_RECORDER_PAYLOAD_BYTES, |bytes| bytes.len())
+        .saturating_add(1)
 }
 
 impl LocalRuntime {
@@ -122,6 +190,8 @@ impl LocalRuntime {
     pub fn export_save_json(&self) -> Result<String, PersistenceError> {
         let session = self.session_ref().map_err(PersistenceError::Runtime)?;
         let dto = SaveGameDto {
+            format_version: PERSISTENCE_FORMAT_VERSION,
+            behavior_fingerprint: ENGINE_BEHAVIOR_FINGERPRINT.to_owned(),
             map_id: session.map().map_id().to_owned(),
             map_hash: session.stamp().map_hash.to_string(),
             ruleset_id: session.ruleset().ruleset_id().to_owned(),
@@ -221,6 +291,7 @@ fn replay_result(result: &CommandResult, session: &Session) -> ReplayResultDto {
         events: result.events.iter().map(encode_event).collect(),
         evidence: result.evidence.as_ref().map(encode_evidence),
         event_offset: session.event_offset(),
+        recipient_result_hash: crate::client_protocol::recipient_result_hash(result),
     }
 }
 

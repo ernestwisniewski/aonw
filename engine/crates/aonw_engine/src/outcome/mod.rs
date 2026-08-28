@@ -145,11 +145,6 @@ fn domination_winner(
     if valid_count == 0 {
         return Ok(None);
     }
-    let required_percent = victory
-        .domination_control_percent()
-        .as_str()
-        .parse::<f64>()
-        .map_err(|error| OutcomeResolutionError::new(error.to_string()))?;
     let candidates = alive.iter().copied().filter_map(|player| {
         let hold = objectives
             .domination_hold_turns_by_player_id()
@@ -171,8 +166,10 @@ fn domination_winner(
                 .count(),
         )
         .expect("validated map bounds cap controlled coordinates at u32");
-        let percent = f64::from(controlled) * 100.0 / f64::from(valid_count);
-        (percent >= required_percent).then(|| (player.clone(), hold))
+        victory
+            .domination_control_percent()
+            .percent_requirement_met(controlled, valid_count)
+            .then(|| (player.clone(), hold))
     });
     Ok(unique_highest(candidates))
 }

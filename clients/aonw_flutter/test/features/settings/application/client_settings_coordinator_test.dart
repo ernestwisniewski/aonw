@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:aonw_flutter/features/settings/application/client_settings.dart';
-import 'package:aonw_flutter/features/settings/application/client_settings_controller.dart';
+import 'package:aonw_flutter/features/settings/application/client_settings_coordinator.dart';
 import 'package:aonw_flutter/features/settings/application/client_settings_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,51 +12,51 @@ void main() {
       reducedMotion: true,
     );
     final store = _MemorySettingsStore(stored);
-    final controller = ClientSettingsController(store: store);
-    addTearDown(controller.dispose);
+    final coordinator = ClientSettingsCoordinator(store: store);
+    addTearDown(coordinator.dispose);
 
-    await controller.load();
-    expect(controller.settings, stored);
+    await coordinator.load();
+    expect(coordinator.settings, stored);
 
     final changed = stored.copyWith(masterVolume: 0.25, highContrast: true);
-    await controller.update(changed);
-    expect(controller.settings, changed);
+    await coordinator.update(changed);
+    expect(coordinator.settings, changed);
     expect(store.settings, changed);
 
-    await controller.reset();
-    expect(controller.settings, ClientSettings.defaults);
+    await coordinator.reset();
+    expect(coordinator.settings, ClientSettings.defaults);
     expect(store.settings, ClientSettings.defaults);
   });
 
   test('a late load never overwrites a newer user edit', () async {
     final load = Completer<ClientSettings>();
     final store = _DelayedSettingsStore(load.future);
-    final controller = ClientSettingsController(store: store);
-    addTearDown(controller.dispose);
+    final coordinator = ClientSettingsCoordinator(store: store);
+    addTearDown(coordinator.dispose);
 
-    final pendingLoad = controller.load();
+    final pendingLoad = coordinator.load();
     final changed = ClientSettings.defaults.copyWith(masterVolume: 0.4);
-    await controller.update(changed);
+    await coordinator.update(changed);
     load.complete(ClientSettings.defaults.copyWith(masterVolume: 0.9));
     await pendingLoad;
 
-    expect(controller.settings, changed);
+    expect(coordinator.settings, changed);
   });
 
   test('serializes concurrent writes and preserves their order', () async {
     final store = _ControlledSettingsStore();
-    final controller = ClientSettingsController(store: store);
-    addTearDown(controller.dispose);
+    final coordinator = ClientSettingsCoordinator(store: store);
+    addTearDown(coordinator.dispose);
     final first = ClientSettings.defaults.copyWith(masterVolume: 0.4);
     final second = ClientSettings.defaults.copyWith(masterVolume: 0.8);
 
-    final firstWrite = controller.update(first);
+    final firstWrite = coordinator.update(first);
     await store.firstStarted.future;
-    final secondWrite = controller.update(second);
+    final secondWrite = coordinator.update(second);
     await pumpEventQueue();
 
     expect(store.started, [first]);
-    expect(controller.settings, second);
+    expect(coordinator.settings, second);
 
     store.firstCompleted.complete();
     await firstWrite;

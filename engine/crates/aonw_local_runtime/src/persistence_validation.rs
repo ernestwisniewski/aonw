@@ -1,6 +1,7 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_contracts::{ReplayLogDto, SaveGameDto};
 
+use crate::persistence::ENGINE_BEHAVIOR_FINGERPRINT;
 use crate::persistence_error::PersistenceError;
 
 pub(crate) fn validate_save_header(
@@ -8,6 +9,9 @@ pub(crate) fn validate_save_header(
     map: &MapDefinition,
     ruleset: &RulesetDefinition,
 ) -> Result<(), PersistenceError> {
+    if save.behavior_fingerprint != ENGINE_BEHAVIOR_FINGERPRINT {
+        return Err(PersistenceError::BehaviorFingerprintMismatch);
+    }
     validate_identity(
         &save.map_id,
         &save.map_hash,
@@ -23,6 +27,9 @@ pub(crate) fn validate_replay_header(
     map: &MapDefinition,
     ruleset: &RulesetDefinition,
 ) -> Result<(), PersistenceError> {
+    if replay.behavior_fingerprint != ENGINE_BEHAVIOR_FINGERPRINT {
+        return Err(PersistenceError::BehaviorFingerprintMismatch);
+    }
     validate_identity(
         &replay.map_id,
         &replay.map_hash,

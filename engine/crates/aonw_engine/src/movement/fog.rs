@@ -16,6 +16,9 @@ pub(crate) fn recompute_after_move(
     units: &[&Unit],
     cities: &[City],
 ) -> FogOfWar {
+    if current.players().is_empty() {
+        return current.clone();
+    }
     let mut visible = Vec::new();
     for unit in units
         .iter()
@@ -113,11 +116,11 @@ pub(super) fn visible_from_source(
         return Vec::new();
     }
     let mut visible = vec![origin];
-    let mut best_costs = vec![u32::MAX; map.bounds().tile_count()];
     let Some(origin_index) = map.tile_index(origin) else {
         return Vec::new();
     };
-    best_costs[origin_index.get()] = 0;
+    let mut best_costs = Vec::with_capacity(64);
+    best_costs.push((origin_index.get(), 0_u32));
     let mut frontier = BinaryHeap::new();
     frontier.push(SightNode {
         coordinate: origin,
@@ -128,7 +131,11 @@ pub(super) fn visible_from_source(
         let Some(index) = map.tile_index(current.coordinate) else {
             continue;
         };
-        if best_costs[index.get()] != current.cost {
+        if best_costs
+            .iter()
+            .find(|(candidate, _)| *candidate == index.get())
+            .is_none_or(|(_, cost)| *cost != current.cost)
+        {
             continue;
         }
         let is_origin = current.coordinate == origin;
@@ -147,10 +154,17 @@ pub(super) fn visible_from_source(
             let Some(next_index) = map.tile_index(neighbor) else {
                 continue;
             };
-            if best_costs[next_index.get()] <= next_cost {
-                continue;
+            if let Some((_, best)) = best_costs
+                .iter_mut()
+                .find(|(candidate, _)| *candidate == next_index.get())
+            {
+                if *best <= next_cost {
+                    continue;
+                }
+                *best = next_cost;
+            } else {
+                best_costs.push((next_index.get(), next_cost));
             }
-            best_costs[next_index.get()] = next_cost;
             if blocks || tile.height() > observer_height.saturating_add(1) || next_cost > range {
                 continue;
             }

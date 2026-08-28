@@ -140,7 +140,7 @@ final class MovementViewMapper {
     }
   }
 
-  void validateCommand(
+  MoveUnitExecutionView validateCommand(
     AonwCommandResult wire, {
     required MapView map,
     required String expectedUnitId,
@@ -149,18 +149,93 @@ final class MovementViewMapper {
   }) {
     final nextRevision = wire.accepted ? expectedRevision + 1 : currentRevision;
     _validateStamp(wire.stamp, map: map, expectedRevision: nextRevision);
-    if (wire.accepted) {
-      final evidence = wire.evidence;
-      if (evidence != null &&
-          (evidence is! AonwUnitMovementEvidence ||
-              evidence.unitId != expectedUnitId)) {
+    if (!wire.accepted) {
+      return _validateRejectedCommand(wire);
+    }
+
+    final events = _movementEvents(
+      wire.events,
+      map: map,
+      expectedUnitId: expectedUnitId,
+    );
+    final evidence = _movementEvidence(
+      wire.evidence,
+      events: events,
+      map: map,
+      expectedUnitId: expectedUnitId,
+    );
+    return MoveUnitExecutionView(events: events, evidence: evidence);
+  }
+
+  static MoveUnitExecutionView _validateRejectedCommand(
+    AonwCommandResult wire,
+  ) {
+    if (wire.rejection == null ||
+        wire.events.isNotEmpty ||
+        wire.evidence != null) {
+      throw const FormatException(
+        'Rejected move has inconsistent execution details.',
+      );
+    }
+    return MoveUnitExecutionView(events: const [], evidence: null);
+  }
+
+  static List<UnitMovedEventView> _movementEvents(
+    List<AonwClientEvent> wire, {
+    required MapView map,
+    required String expectedUnitId,
+  }) {
+    final events = <UnitMovedEventView>[];
+    for (final event in wire) {
+      if (event is! AonwUnitMovedEvent || event.unitId != expectedUnitId) {
+        throw const FormatException(
+          'Accepted move has inconsistent movement events.',
+        );
+      }
+      final from = _coordinate(event.from);
+      final to = _coordinate(event.to);
+      if (!map.contains(from) || !map.contains(to)) {
+        throw const FormatException('Movement event is outside the map.');
+      }
+      events.add(UnitMovedEventView(unitId: event.unitId, from: from, to: to));
+    }
+    return events;
+  }
+
+  static UnitMovementEvidenceView? _movementEvidence(
+    AonwClientEvidence? evidence, {
+    required List<UnitMovedEventView> events,
+    required MapView map,
+    required String expectedUnitId,
+  }) {
+    if (evidence != null) {
+      if (evidence is! AonwUnitMovementEvidence ||
+          evidence.unitId != expectedUnitId) {
         throw const FormatException(
           'Accepted move has inconsistent movement evidence.',
         );
       }
-    } else if (wire.rejection == null) {
-      throw const FormatException('Rejected move has no rejection code.');
+      final from = _coordinate(evidence.from);
+      if (!map.contains(from)) {
+        throw const FormatException('Movement evidence is outside the map.');
+      }
+      final steps = _routeSteps(evidence.steps, map);
+      final mappedEvidence = UnitMovementEvidenceView(
+        unitId: evidence.unitId,
+        from: from,
+        steps: steps,
+      );
+      if (events.isNotEmpty &&
+          (events.first.from != from ||
+              steps.isEmpty ||
+              events.last.to != steps.last.coordinate)) {
+        throw const FormatException(
+          'Movement event and evidence endpoints differ.',
+        );
+      }
+      return mappedEvidence;
     }
+    return null;
   }
 
   CommandRejectionCodeView rejectionCode(AonwCommandRejectionCode value) =>

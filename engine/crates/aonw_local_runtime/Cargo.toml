@@ -16,9 +16,9 @@ aonw_contracts = { path = "../aonw_contracts" }
 aonw_domain = { path = "../aonw_domain" }
 aonw_engine = { path = "../aonw_engine" }
 serde_json.workspace = true
+sha2.workspace = true
 
 [dev-dependencies]
-sha2.workspace = true
 stats_alloc.workspace = true
 
 [[bench]]

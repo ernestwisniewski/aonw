@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
-import 'package:aonw_flutter/features/map/application/map_controller.dart';
 import 'package:aonw_flutter/features/map/infrastructure/gamepad_map_input_source.dart';
 import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
+import 'package:aonw_flutter/features/map/presentation/map_presentation_controller.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_screen.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
@@ -30,10 +30,12 @@ void main() {
     for (final value in oracle['inputCases'] as List<dynamic>) {
       final inputCase = value as Map<String, dynamic>;
       final input = _CorpusInputSource();
-      final controller = MapController(
-        repository: FakeMapRepository.success(
-          testMapScene(cols: cols, rows: rows),
-        ),
+      final session = FakeGameSession.success(
+        testMapScene(cols: cols, rows: rows),
+      );
+      final controller = MapPresentationController(
+        session: session,
+        movement: session,
       );
       final flameGame = AonwFlameGame();
       await tester.pumpWidget(

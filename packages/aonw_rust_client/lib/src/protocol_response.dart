@@ -26,6 +26,8 @@ final Map<String, _ResponseParser> _responseParsers = {
   'capabilities': AonwCapabilitiesResponse.fromJson,
   'mapInspected': AonwMapInspectedResponse.fromJson,
   'sessionOpened': AonwSessionOpenedResponse.fromJson,
+  'actorHandedOff': AonwActorHandedOffResponse.fromJson,
+  'aiTurnAdvanced': AonwAiTurnAdvancedResponse.fromJson,
   'sessionClosed': AonwSessionClosedResponse.fromJson,
   'snapshot': AonwSnapshotResponse.fromJson,
   'query': AonwQueryResponse.fromJson,
@@ -73,6 +75,56 @@ final class AonwSessionOpenedResponse extends AonwClientResponseBody {
   }
 
   final AonwSessionStamp stamp;
+}
+
+final class AonwActorHandedOffResponse extends AonwClientResponseBody {
+  const AonwActorHandedOffResponse(this.stamp);
+
+  factory AonwActorHandedOffResponse.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {'type', 'stamp'}, 'actor handed off response');
+    return AonwActorHandedOffResponse(
+      AonwSessionStamp.fromJson(value['stamp']),
+    );
+  }
+
+  final AonwSessionStamp stamp;
+}
+
+final class AonwAiTurnAdvancedResponse extends AonwClientResponseBody {
+  const AonwAiTurnAdvancedResponse({
+    required this.stamp,
+    required this.actorPlayerId,
+    required this.executedCommands,
+    required this.completedTurn,
+  });
+
+  factory AonwAiTurnAdvancedResponse.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {
+      'type',
+      'stamp',
+      'actorPlayerId',
+      'executedCommands',
+      'completedTurn',
+    }, 'AI turn advanced response');
+    final completedTurn = value['completedTurn'];
+    if (completedTurn is! bool) {
+      throw const FormatException('Invalid AI turn completion flag.');
+    }
+    return AonwAiTurnAdvancedResponse(
+      stamp: AonwSessionStamp.fromJson(value['stamp']),
+      actorPlayerId: readString(value['actorPlayerId'], 'AI actor player id'),
+      executedCommands: readUnsigned(
+        value['executedCommands'],
+        'AI executed command count',
+      ),
+      completedTurn: completedTurn,
+    );
+  }
+
+  final AonwSessionStamp stamp;
+  final String actorPlayerId;
+  final int executedCommands;
+  final bool completedTurn;
 }
 
 final class AonwSessionClosedResponse extends AonwClientResponseBody {

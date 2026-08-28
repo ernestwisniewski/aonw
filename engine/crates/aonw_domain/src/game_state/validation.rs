@@ -1,10 +1,37 @@
+use std::collections::BTreeMap;
+
 use crate::{
     City, CityFoundingDraft, Diplomacy, FogOfWar, HexGridBounds, InfrastructureState,
-    InteractionState, MatchIdentity, PendingInteraction, Unit, UnitPosture, WorldArtifact,
-    WorldArtifactLocation,
+    InteractionState, MatchIdentity, PendingInteraction, Unit, UnitPosture, WonderRegistry,
+    WonderType, WorldArtifact, WorldArtifactLocation,
 };
 
 use super::{GameStateBuildError, UnitOccupancyPolicy};
+
+pub(super) fn validate_wonder_hosts(
+    cities: &[City],
+    registry: &WonderRegistry,
+) -> Result<(), GameStateBuildError> {
+    let mut hosts = BTreeMap::<WonderType, crate::CityId>::new();
+    for city in cities {
+        for wonder in city.wonders() {
+            if !registry.completed_by().contains_key(wonder) {
+                return Err(GameStateBuildError::CityWonderNotRegistered {
+                    city_id: city.id().clone(),
+                    wonder: *wonder,
+                });
+            }
+            if let Some(first_city_id) = hosts.insert(*wonder, city.id().clone()) {
+                return Err(GameStateBuildError::DuplicateWonderHost {
+                    wonder: *wonder,
+                    first_city_id,
+                    second_city_id: city.id().clone(),
+                });
+            }
+        }
+    }
+    Ok(())
+}
 
 pub(super) fn validate_player_references(
     identity: &MatchIdentity,
@@ -44,6 +71,15 @@ pub(super) fn validate_player_references(
             return Err(GameStateBuildError::FogPlayerNotFound(
                 player.player_id().clone(),
             ));
+        }
+    }
+    if !fog_of_war.players().is_empty() {
+        for participant in identity.participants() {
+            if !fog_of_war.tracks(participant.id()) {
+                return Err(GameStateBuildError::FogPlayerMissing(
+                    participant.id().clone(),
+                ));
+            }
         }
     }
     for player_id in interaction
@@ -262,6 +298,16 @@ fn validate_unit_artifacts(
     unit: &Unit,
     artifacts: &[WorldArtifact],
 ) -> Result<(), GameStateBuildError> {
+    if let (Some(carried_artifact_id), Some(excavating_artifact_id)) = (
+        unit.carried_artifact_id(),
+        unit.activity().excavating_artifact_id(),
+    ) {
+        return Err(GameStateBuildError::UnitArtifactActivityConflict {
+            unit_id: unit.id().clone(),
+            carried_artifact_id: carried_artifact_id.clone(),
+            excavating_artifact_id: excavating_artifact_id.clone(),
+        });
+    }
     if let Some(artifact_id) = unit.carried_artifact_id() {
         let artifact = referenced_artifact(unit, artifact_id, artifacts)?;
         if artifact.location() != &WorldArtifactLocation::Carried(unit.id().clone()) {

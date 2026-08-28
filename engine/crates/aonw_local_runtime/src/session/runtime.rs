@@ -27,16 +27,36 @@ use crate::{
 use super::{OpenSession, OpenSessionError, RuntimeError, Session, SessionStamp};
 
 mod actor_handoff;
+mod ai_turn;
+
+pub use ai_turn::{AiTurnDriver, AiTurnError, AiTurnExecution};
 
 /// Mutable owner of at most one local game session.
 #[derive(Clone, Debug, Default)]
 pub struct LocalRuntime {
     session: Option<Session>,
+    poisoned: bool,
     workspace: MovementSearchWorkspace,
     query_cache: QueryCache,
 }
 
 impl LocalRuntime {
+    /// Creates an isolated simulation runtime without copying immutable world,
+    /// projection, visibility, or replay storage.
+    #[must_use]
+    pub fn simulation_clone(&self) -> Self {
+        let mut session = self.session.clone();
+        if let Some(session) = session.as_mut() {
+            session.disable_replay();
+        }
+        Self {
+            session,
+            poisoned: self.poisoned,
+            workspace: MovementSearchWorkspace::default(),
+            query_cache: QueryCache::default(),
+        }
+    }
+
     /// Schedules a validated city-founding job.
     ///
     /// # Errors
@@ -47,7 +67,7 @@ impl LocalRuntime {
         command: &FoundCityRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_found_city(session, command)
         };
         self.complete_dispatch(result)
@@ -63,7 +83,7 @@ impl LocalRuntime {
         command: &ToggleWorkedHexRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_toggle_worked_hex(session, command)
         };
         self.complete_dispatch(result)
@@ -79,7 +99,7 @@ impl LocalRuntime {
         command: &SelectCityExpansionHexRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_select_city_expansion_hex(session, command)
         };
         self.complete_dispatch(result)
@@ -96,7 +116,7 @@ impl LocalRuntime {
         command: &ProductionCommandRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_production(session, command)
         };
         self.complete_dispatch(result)
@@ -112,7 +132,7 @@ impl LocalRuntime {
         command: &WorkerImprovementRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_select_worker_improvement(session, command)
         };
         self.complete_dispatch(result)
@@ -128,7 +148,7 @@ impl LocalRuntime {
         command: &WorkerImprovementRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_confirm_worker_improvement(session, command)
         };
         self.complete_dispatch(result)
@@ -204,7 +224,7 @@ impl LocalRuntime {
         command: &AttackHexRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_attack(session, command)
         };
         self.complete_dispatch(result)
@@ -221,17 +241,46 @@ impl LocalRuntime {
         let candidate = Session::try_open(request)?;
         let stamp = candidate.stamp();
         self.session = Some(candidate);
+        self.poisoned = false;
         self.query_cache.clear();
         Ok(stamp)
     }
 
     pub(crate) fn session_ref(&self) -> Result<&Session, RuntimeError> {
+        self.ensure_healthy()?;
         self.session.as_ref().ok_or(RuntimeError::SessionNotOpen)
+    }
+
+    fn session_mut(&mut self) -> Result<&mut Session, RuntimeError> {
+        self.ensure_healthy()?;
+        self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)
+    }
+
+    fn ensure_healthy(&self) -> Result<(), RuntimeError> {
+        if self.poisoned {
+            Err(RuntimeError::SessionPoisoned)
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Returns whether an internal failure invalidated the previous session.
+    #[must_use]
+    pub const fn is_poisoned(&self) -> bool {
+        self.poisoned
+    }
+
+    /// Invalidates the current session after crossing a panic boundary.
+    pub fn poison(&mut self) {
+        self.session = None;
+        self.poisoned = true;
+        self.query_cache.clear();
     }
 
     /// Closes the current session. Repeated calls are harmless.
     pub fn close(&mut self) {
         self.session = None;
+        self.poisoned = false;
         self.query_cache.clear();
     }
 
@@ -239,9 +288,9 @@ impl LocalRuntime {
     ///
     /// # Errors
     ///
-    /// Returns [`RuntimeError::SessionNotOpen`] when closed.
+    /// Returns a stable closed or poisoned-session error.
     pub fn snapshot(&self) -> Result<PlayerViewSnapshot, RuntimeError> {
-        let session = self.session.as_ref().ok_or(RuntimeError::SessionNotOpen)?;
+        let session = self.session_ref()?;
         Ok(session.projection().snapshot(session.stamp()))
     }
 
@@ -251,6 +300,7 @@ impl LocalRuntime {
     ///
     /// Returns a stable query rejection or session error.
     pub fn query(&mut self, request: &RuntimeQuery) -> Result<RuntimeQueryResult, RuntimeError> {
+        self.ensure_healthy()?;
         let stamp = self
             .session
             .as_ref()
@@ -287,7 +337,7 @@ impl LocalRuntime {
     /// successful typed results with a rejection code.
     pub fn dispatch(&mut self, command: &MoveUnitRequest) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_move(session, command)
         };
         self.complete_dispatch(result)
@@ -303,7 +353,7 @@ impl LocalRuntime {
         command: &AutoExploreUnitRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_auto_explore(session, command)
         };
         self.complete_dispatch(result)
@@ -319,7 +369,7 @@ impl LocalRuntime {
         command: &MerchantCityRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_assign_merchant_route(session, command)
         };
         self.complete_dispatch(result)
@@ -335,7 +385,7 @@ impl LocalRuntime {
         command: &MerchantCityRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_move_merchant_to_city(session, command)
         };
         self.complete_dispatch(result)
@@ -351,7 +401,7 @@ impl LocalRuntime {
         command: &DetachTroopRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_detach_troop(session, command)
         };
         self.complete_dispatch(result)
@@ -424,7 +474,7 @@ impl LocalRuntime {
         command: &FinalizeTimedOutTurnRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_timeout(session, command)
         };
         self.complete_dispatch(result)
@@ -440,7 +490,7 @@ impl LocalRuntime {
         command: &KickParticipantRequest,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_kick(session, command)
         };
         self.complete_dispatch(result)
@@ -452,7 +502,7 @@ impl LocalRuntime {
         kind: RuntimeTurnKind,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_turn(session, command, kind)
         };
         self.complete_dispatch(result)
@@ -464,7 +514,7 @@ impl LocalRuntime {
         kind: RuntimeUnitActionKind,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_unit_action(session, command, kind)
         };
         self.complete_dispatch(result)
@@ -476,7 +526,7 @@ impl LocalRuntime {
         kind: RuntimeWorkerCommandKind,
     ) -> Result<CommandResult, RuntimeError> {
         let result = {
-            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            let session = self.session_mut()?;
             dispatch_worker_unit(session, command, kind)
         };
         self.complete_dispatch(result)
@@ -492,6 +542,7 @@ impl LocalRuntime {
             .is_some_and(|session| !session.is_valid())
         {
             self.session = None;
+            self.poisoned = true;
         }
         result
     }

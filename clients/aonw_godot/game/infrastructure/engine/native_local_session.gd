@@ -23,6 +23,33 @@ func client_api_version() -> int:
 	return ClientProtocol.API_VERSION
 
 func request(body: Dictionary) -> Dictionary:
+	var precondition := _request_precondition()
+	if not precondition.is_empty():
+		return precondition
+	var document := _request_document(body)
+	var response: Dictionary = _response_decoder.call(
+		"decode",
+		_session.request_json(document),
+	)
+	return response
+
+## Executes engine work on its serial native worker without blocking Godot's main thread.
+## Callers must use `await session.request_async(body)`.
+func request_async(body: Dictionary) -> Dictionary:
+	var precondition := _request_precondition()
+	if not precondition.is_empty():
+		return precondition
+	var job_id := int(_session.request_json_async(_request_document(body)))
+	if job_id < 0:
+		return _failure("engine_worker_unavailable", "The native engine worker is unavailable")
+	while not bool(_session.is_response_ready(job_id)):
+		await Engine.get_main_loop().process_frame
+	var response_json := str(_session.poll_response_json(job_id))
+	if response_json.is_empty():
+		return _failure("engine_worker_unavailable", "The native engine response was lost")
+	return _response_decoder.call("decode", response_json)
+
+func _request_precondition() -> Dictionary:
 	if _session == null:
 		return _failure(
 			"native_engine_unavailable",
@@ -33,15 +60,13 @@ func request(body: Dictionary) -> Dictionary:
 			"unsupported_client_api",
 			"The native engine uses an unsupported client API version",
 		)
-	var document := JSON.stringify({
+	return {}
+
+func _request_document(body: Dictionary) -> String:
+	return JSON.stringify({
 		"apiVersion": ClientProtocol.API_VERSION,
 		"request": body,
 	})
-	var response: Dictionary = _response_decoder.call(
-		"decode",
-		_session.request_json(document),
-	)
-	return response
 
 func _failure(code: String, message: String) -> Dictionary:
 	return {

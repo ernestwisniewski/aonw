@@ -1,5 +1,5 @@
 import 'package:aonw_flutter/app/navigation/aonw_app.dart';
-import 'package:aonw_flutter/features/map/application/map_controller.dart';
+import 'package:aonw_flutter/features/map/presentation/map_presentation_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,8 +9,10 @@ void main() {
   testWidgets('opens the map route and fails closed for an unknown route', (
     tester,
   ) async {
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene()),
+    final session = FakeGameSession.success(testMapScene());
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
 
     await tester.pumpWidget(AonwApp(mapController: controller));
@@ -36,8 +38,10 @@ void main() {
 
   testWidgets('uses Polish app shell and map translations', (tester) async {
     final semantics = tester.ensureSemantics();
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene()),
+    final session = FakeGameSession.success(testMapScene());
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
 
     await tester.pumpWidget(

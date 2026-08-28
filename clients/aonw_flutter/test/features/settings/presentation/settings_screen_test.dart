@@ -1,6 +1,6 @@
 import 'package:aonw_flutter/features/settings/application/client_settings.dart';
-import 'package:aonw_flutter/features/settings/application/client_settings_controller.dart';
 import 'package:aonw_flutter/features/settings/application/client_settings_store.dart';
+import 'package:aonw_flutter/features/settings/presentation/client_settings_controller.dart';
 import 'package:aonw_flutter/features/settings/presentation/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,34 +1,31 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
 import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
 import 'game_session_state.dart';
 import 'map_interaction_state.dart';
-import 'map_repository.dart';
+import 'map_session_port.dart';
+import 'movement_session_port.dart';
 
 typedef MapDiagnosticReporter =
     void Function(String code, Object error, StackTrace stackTrace);
 
-void _reportMapDiagnostic(String code, Object error, StackTrace stackTrace) {
-  debugPrintStack(
-    label: 'Map load diagnostic [$code]: $error',
-    stackTrace: stackTrace,
-  );
-}
-
-final class MapController extends ChangeNotifier {
-  MapController({
-    required MapRepository repository,
+final class MapCoordinator {
+  MapCoordinator({
+    required MapSessionPort session,
+    required MovementSessionPort movement,
     this.assets = MapAssetPaths.starter,
-    MapDiagnosticReporter diagnosticReporter = _reportMapDiagnostic,
-  }) : _repository = repository,
-       _diagnosticReporter = diagnosticReporter;
+    MapDiagnosticReporter? diagnosticReporter,
+  }) : _session = session,
+       _movement = movement,
+       _diagnosticReporter = diagnosticReporter ?? _ignoreDiagnostic;
 
-  final MapRepository _repository;
+  final MapSessionPort _session;
+  final MovementSessionPort _movement;
   final MapDiagnosticReporter _diagnosticReporter;
   final MapAssetPaths assets;
+  final StreamController<GameSessionState> _changes =
+      StreamController<GameSessionState>.broadcast(sync: true);
   GameSessionState _state = const GameSessionLoading();
   var _disposed = false;
   var _loadGeneration = 0;
@@ -36,13 +33,15 @@ final class MapController extends ChangeNotifier {
 
   GameSessionState get state => _state;
 
+  Stream<GameSessionState> get changes => _changes.stream;
+
   Future<void> load() async {
     if (_disposed) return;
     final generation = ++_loadGeneration;
     _interactionGeneration += 1;
     _setState(const GameSessionLoading());
     try {
-      final scene = await _repository.load(assets);
+      final scene = await _session.load(assets);
       if (!_isCurrent(generation)) return;
       _setState(GameSessionReady.initial(scene));
     } on MapLoadException catch (error, stackTrace) {
@@ -162,7 +161,7 @@ final class MapController extends ChangeNotifier {
       ),
     );
     try {
-      final reachable = await _repository.reachable(
+      final reachable = await _movement.reachable(
         expectedRevision: current.recipient.stamp.revision,
         unitId: unitId,
       );
@@ -176,7 +175,7 @@ final class MapController extends ChangeNotifier {
           ),
         ),
       );
-    } on MapSessionException catch (error, stackTrace) {
+    } on MovementSessionException catch (error, stackTrace) {
       _handleMovementFailure(generation, error, stackTrace);
     } on Object catch (error, stackTrace) {
       _handleUnexpectedMovementFailure(generation, error, stackTrace);
@@ -200,7 +199,7 @@ final class MapController extends ChangeNotifier {
       ),
     );
     try {
-      final route = await _repository.routePlan(
+      final route = await _movement.routePlan(
         expectedRevision: current.recipient.stamp.revision,
         unitId: unitId,
         target: target,
@@ -212,7 +211,7 @@ final class MapController extends ChangeNotifier {
           ready.interaction.copyWith(route: route, movementPending: false),
         ),
       );
-    } on MapSessionException catch (error, stackTrace) {
+    } on MovementSessionException catch (error, stackTrace) {
       _handleMovementFailure(generation, error, stackTrace);
     } on Object catch (error, stackTrace) {
       _handleUnexpectedMovementFailure(generation, error, stackTrace);
@@ -241,7 +240,7 @@ final class MapController extends ChangeNotifier {
       ),
     );
     try {
-      final result = await _repository.moveUnit(
+      final result = await _movement.moveUnit(
         expectedRevision: current.recipient.stamp.revision,
         unitId: unitId,
         target: route.target,
@@ -249,7 +248,7 @@ final class MapController extends ChangeNotifier {
       final ready = _currentInteraction(generation);
       if (ready == null) return;
       _setState(_moveResultState(ready, result, unitId, route.destination));
-    } on MapSessionException catch (error, stackTrace) {
+    } on MovementSessionException catch (error, stackTrace) {
       _handleMovementFailure(generation, error, stackTrace);
     } on Object catch (error, stackTrace) {
       _handleUnexpectedMovementFailure(generation, error, stackTrace);
@@ -276,14 +275,13 @@ final class MapController extends ChangeNotifier {
     );
   }
 
-  @override
   void dispose() {
     if (_disposed) return;
     _disposed = true;
     _loadGeneration += 1;
     _interactionGeneration += 1;
-    unawaited(_repository.close());
-    super.dispose();
+    unawaited(_session.close());
+    unawaited(_changes.close());
   }
 
   bool _isCurrent(int generation) =>
@@ -297,7 +295,7 @@ final class MapController extends ChangeNotifier {
 
   void _handleMovementFailure(
     int generation,
-    MapSessionException error,
+    MovementSessionException error,
     StackTrace stackTrace,
   ) {
     final ready = _currentInteraction(generation);
@@ -310,8 +308,12 @@ final class MapController extends ChangeNotifier {
         error.diagnosticStackTrace ?? stackTrace,
       );
     }
+    final resynchronized = error.resyncedPlayer;
+    final current = resynchronized == null
+        ? ready
+        : ready.withRecipient(resynchronized);
     _setState(
-      ready.withInteraction(
+      current.withInteraction(
         ready.interaction.copyWith(
           movementPending: false,
           movementError: MapMovementFailure(_movementFailureCode(error.code)),
@@ -343,9 +345,11 @@ final class MapController extends ChangeNotifier {
   void _setState(GameSessionState value) {
     if (_disposed) return;
     _state = value;
-    notifyListeners();
+    _changes.add(value);
   }
 }
+
+void _ignoreDiagnostic(String code, Object error, StackTrace stackTrace) {}
 
 GameSessionReady _moveResultState(
   GameSessionReady current,
@@ -376,6 +380,7 @@ GameSessionReady _moveResultState(
           clearRoute: true,
           movementPending: false,
           clearMovementError: true,
+          lastMovementExecution: result.execution,
         ),
       );
 }
@@ -391,6 +396,7 @@ MapLoadFailureViewCode _loadFailureCode(String code) => switch (code) {
 
 MapMovementFailureViewCode _movementFailureCode(String code) => switch (code) {
   'session_not_open' => MapMovementFailureViewCode.sessionUnavailable,
-  'invalid_session_protocol' => MapMovementFailureViewCode.responseIncompatible,
+  'invalid_session_protocol' ||
+  'recipient_resynchronized' => MapMovementFailureViewCode.responseIncompatible,
   _ => MapMovementFailureViewCode.requestFailed,
 };

@@ -7,8 +7,9 @@ use aonw_local_runtime::{
 
 use super::{PolicyDecision, optional_query};
 use crate::{
-    AiProfile, MctsPlanner, MctsPlanningOutcome, PlannedCommand, StrategicAssessment,
-    actions::best_move_command, policy_scoring::combat_is_acceptable,
+    AiProfile, MctsPlanner, MctsPlanningOutcome, PlannedCommand, RandomPlanner,
+    RandomPlanningOutcome, StrategicAssessment, actions::best_move_command,
+    policy_scoring::combat_is_acceptable, profile::AiTacticalStrategy,
 };
 
 pub(super) fn combat_command(
@@ -70,18 +71,37 @@ pub(super) fn movement_command(
 ) -> Result<Option<PolicyDecision>, RuntimeError> {
     let tactical_pressure = assessment.empire().hostile_relation_count() > 0
         && assessment.empire().visible_enemy_military_count() > 0;
-    if tactical_pressure && let Some(budget) = profile.difficulty().tactical_budget() {
-        return match MctsPlanner::new(profile.search_seed(snapshot.turn()), budget).plan(runtime)? {
-            MctsPlanningOutcome::Planned(plan) => {
-                let evidence = crate::TacticalSearchEvidence::new(
-                    plan.search_fingerprint(),
-                    plan.budget(),
-                    plan.stats(),
-                );
-                Ok(Some(PolicyDecision::searched(plan.command(), evidence)))
+    if tactical_pressure {
+        match profile.tactical_strategy() {
+            AiTacticalStrategy::Direct => {}
+            AiTacticalStrategy::Random => {
+                return match RandomPlanner::new(profile.search_seed(snapshot.turn()))
+                    .plan(runtime)?
+                {
+                    RandomPlanningOutcome::Planned(plan) => {
+                        Ok(Some(PolicyDecision::direct(plan.command())))
+                    }
+                    RandomPlanningOutcome::NoLegalCommand { .. } => Ok(None),
+                };
             }
-            MctsPlanningOutcome::NoLegalCommand { .. } => Ok(None),
-        };
+            AiTacticalStrategy::Mcts => {
+                if let Some(budget) = profile.difficulty().tactical_budget() {
+                    return match MctsPlanner::new(profile.search_seed(snapshot.turn()), budget)
+                        .plan(runtime)?
+                    {
+                        MctsPlanningOutcome::Planned(plan) => {
+                            let evidence = crate::TacticalSearchEvidence::new(
+                                plan.search_fingerprint(),
+                                plan.budget(),
+                                plan.stats(),
+                            );
+                            Ok(Some(PolicyDecision::searched(plan.command(), evidence)))
+                        }
+                        MctsPlanningOutcome::NoLegalCommand { .. } => Ok(None),
+                    };
+                }
+            }
+        }
     }
     Ok(best_move_command(runtime, snapshot)?.map(PolicyDecision::direct))
 }

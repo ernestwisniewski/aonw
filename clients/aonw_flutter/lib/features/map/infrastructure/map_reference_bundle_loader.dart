@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 
-import '../application/map_repository.dart';
+import '../application/map_session_port.dart';
 import '../read_model/map_reference_bundle.dart';
 import '../read_model/map_view.dart';
 

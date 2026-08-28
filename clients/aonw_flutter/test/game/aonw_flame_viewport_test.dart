@@ -1,4 +1,4 @@
-import 'package:aonw_flutter/features/map/application/map_controller.dart';
+import 'package:aonw_flutter/features/map/presentation/map_presentation_controller.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_screen.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:flame/game.dart';
@@ -14,8 +14,10 @@ void main() {
   ) async {
     final semantics = tester.ensureSemantics();
     final games = <AonwFlameGame>[];
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene()),
+    final session = FakeGameSession.success(testMapScene());
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     addTearDown(controller.dispose);
 
@@ -70,8 +72,10 @@ void main() {
     tester,
   ) async {
     final games = <AonwFlameGame>[];
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene()),
+    final session = FakeGameSession.success(testMapScene());
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     addTearDown(controller.dispose);
 

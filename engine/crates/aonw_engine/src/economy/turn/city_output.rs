@@ -119,31 +119,30 @@ fn wonder_yield(
     let mut value = YieldValue::default();
     let mut gold = 0_u32;
     let mut production = 0_u32;
-    for host in state
-        .cities()
-        .iter()
-        .filter(|candidate| candidate.owner_player_id() == city.owner_player_id())
-    {
-        for wonder in host.wonders() {
-            if registry.get(wonder) != Some(host.owner_player_id()) {
-                continue;
-            }
-            let definition = context
-                .ruleset()
-                .production()
-                .wonder(*wonder)
-                .ok_or_else(|| error("completed wonder is absent from production content"))?;
-            value = checked_add(value, from_content(definition.empire_yield_per_city()))?;
-            if host.id() == city.id() {
-                value = checked_add(value, from_content(definition.host_yield()))?;
-            }
-            gold = gold
-                .checked_add(definition.empire_gold_basis_points())
-                .ok_or_else(|| error("wonder gold multiplier overflow"))?;
-            production = production
-                .checked_add(definition.empire_production_basis_points())
-                .ok_or_else(|| error("wonder production multiplier overflow"))?;
+    for (wonder, owner) in registry {
+        if owner != city.owner_player_id() {
+            continue;
         }
+        let definition = context
+            .ruleset()
+            .production()
+            .wonder(*wonder)
+            .ok_or_else(|| error("completed wonder is absent from production content"))?;
+        value = checked_add(value, from_content(definition.empire_yield_per_city()))?;
+        if state
+            .cities()
+            .iter()
+            .find(|candidate| candidate.wonders().contains(wonder))
+            .is_some_and(|host| host.id() == city.id())
+        {
+            value = checked_add(value, from_content(definition.host_yield()))?;
+        }
+        gold = gold
+            .checked_add(definition.empire_gold_basis_points())
+            .ok_or_else(|| error("wonder gold multiplier overflow"))?;
+        production = production
+            .checked_add(definition.empire_production_basis_points())
+            .ok_or_else(|| error("wonder production multiplier overflow"))?;
     }
     Ok((value, gold, production))
 }

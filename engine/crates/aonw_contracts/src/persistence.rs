@@ -20,11 +20,17 @@ pub const MAX_REPLAY_LOG_JSON_BYTES: usize = 64 * 1024 * 1024;
 pub const MAX_REPLAY_ENTRY_COUNT: usize = 512;
 /// Maximum self-contained replay segments retained in one archive.
 pub const MAX_REPLAY_SEGMENT_COUNT: usize = 8;
+/// Current durable save and replay schema version.
+pub const PERSISTENCE_FORMAT_VERSION: u16 = 2;
 
 /// Complete canonical save envelope.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SaveGameDto {
+    /// Durable envelope schema version, independent from the client API.
+    pub format_version: u16,
+    /// Engine behavior identity required to interpret this snapshot.
+    pub behavior_fingerprint: String,
     /// Logical map identifier.
     pub map_id: String,
     /// SHA-256 identity of canonical map content.
@@ -154,6 +160,8 @@ pub struct ReplayResultDto {
     pub evidence: Option<ReplayEvidenceDto>,
     /// Event offset after execution.
     pub event_offset: u64,
+    /// Hash of the exact recipient-safe client command result.
+    pub recipient_result_hash: String,
 }
 
 /// One deterministic replay step.
@@ -188,6 +196,10 @@ pub struct ReplaySegmentDto {
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReplayLogDto {
+    /// Durable envelope schema version, independent from the client API.
+    pub format_version: u16,
+    /// Engine behavior identity required to replay this archive.
+    pub behavior_fingerprint: String,
     /// Logical map identifier.
     pub map_id: String,
     /// SHA-256 identity of canonical map content.
@@ -211,6 +223,13 @@ pub enum PersistenceCodecError {
         actual: usize,
         /// Maximum accepted size.
         maximum: usize,
+    },
+    /// The durable envelope uses another schema version.
+    UnsupportedFormatVersion {
+        /// Version found in the document.
+        found: u16,
+        /// Version supported by this build.
+        supported: u16,
     },
     /// Replay contains too many commands.
     TooManyReplayEntries {
@@ -241,6 +260,10 @@ impl core::fmt::Display for PersistenceCodecError {
                     "document is {actual} bytes; maximum is {maximum}"
                 )
             }
+            Self::UnsupportedFormatVersion { found, supported } => write!(
+                formatter,
+                "unsupported persistence format {found}; expected {supported}"
+            ),
             Self::TooManyReplayEntries { actual, maximum } => write!(
                 formatter,
                 "replay has {actual} entries; maximum is {maximum}"

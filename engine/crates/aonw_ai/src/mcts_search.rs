@@ -92,8 +92,9 @@ pub(crate) fn search(
 ) -> Result<SearchResult, RuntimeError> {
     let mut nodes = vec![SearchNode::root(root_actions)];
     let mut stats = MctsSearchStats::default();
+    let simulation_template = runtime.simulation_clone();
     for _ in 0..budget.iterations() {
-        let mut simulation = runtime.clone();
+        let mut simulation = simulation_template.clone();
         let iteration = run_iteration(
             &mut simulation,
             recipient,

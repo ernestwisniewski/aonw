@@ -126,6 +126,6 @@
     "unitLogisticsOptions",
     "workerOptions"
   ],
-  "clientApiVersion": 5,
+  "clientApiVersion": 6,
   "legacyPaths": false
 }

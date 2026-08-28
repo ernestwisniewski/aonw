@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../design_system/widgets/aonw_panel.dart';
-import '../../features/map/application/map_controller.dart';
 import '../../features/map/presentation/input/map_input.dart';
+import '../../features/map/presentation/map_presentation_controller.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
-import '../../features/settings/application/client_settings_controller.dart';
+import '../../features/settings/presentation/client_settings_controller.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../game/aonw_flame_game.dart';
 import '../../l10n/l10n.dart';
@@ -34,7 +34,7 @@ final class AonwRouter {
     this.mapInputSource,
   });
 
-  final MapController mapController;
+  final MapPresentationController mapController;
   final ClientSettingsController settingsController;
   final AonwFlameGameFactory flameGameFactory;
   final RouteObserver<ModalRoute<void>> routeObserver;

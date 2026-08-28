@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:aonw_flutter/features/map/application/map_repository.dart';
+import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/infrastructure/map_reference_bundle_loader.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

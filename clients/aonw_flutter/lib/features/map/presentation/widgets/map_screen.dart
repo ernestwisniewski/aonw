@@ -12,12 +12,12 @@ import '../../../settings/presentation/client_settings_scope.dart';
 import '../../../turns/application/turn_presentation_queue.dart';
 import '../../../turns/presentation/turn_banner.dart';
 import '../../application/game_session_state.dart';
-import '../../application/map_controller.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_scene.dart';
 import '../../read_model/map_view.dart';
 import '../input/map_input.dart';
 import '../input/map_viewport_intent.dart';
+import '../map_presentation_controller.dart';
 import '../map_render_snapshot.dart';
 import 'flame_map_viewport.dart';
 import 'map_failure_messages.dart';
@@ -33,7 +33,7 @@ final class MapScreen extends StatefulWidget {
     super.key,
   });
 
-  final MapController controller;
+  final MapPresentationController controller;
   final MapInputSource? inputSource;
   final VoidCallback? onOpenSettings;
   final AonwFlameGameFactory flameGameFactory;
@@ -284,7 +284,7 @@ final class _ReadyMap extends StatelessWidget {
   final MapScene scene;
   final MapInteractionState interaction;
   final TurnPresentationQueue turnPresentations;
-  final MapController controller;
+  final MapPresentationController controller;
   final ValueChanged<MapInputCommand> onInput;
   final VoidCallback? onOpenSettings;
   final AonwFlameGame flameGame;

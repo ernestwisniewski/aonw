@@ -38,6 +38,36 @@ final class AonwClientRequest {
     'actorPlayerId': actorPlayerId,
   });
 
+  factory AonwClientRequest.startMatch({
+    required String mapDocument,
+    required String scenarioDocument,
+    required String actorPlayerId,
+    required Map<String, Object?> matchIdentity,
+    required bool fogEnabled,
+  }) => AonwClientRequest._({
+    'type': 'startMatch',
+    'mapDocument': mapDocument,
+    'scenarioDocument': scenarioDocument,
+    'actorPlayerId': actorPlayerId,
+    'matchIdentity': matchIdentity,
+    'fogMode': fogEnabled ? 'enabled' : 'disabled',
+  });
+
+  factory AonwClientRequest.handoffActor({required String actorPlayerId}) =>
+      AonwClientRequest._({
+        'type': 'handoffActor',
+        'actorPlayerId': actorPlayerId,
+      });
+
+  factory AonwClientRequest.advanceAiTurn({
+    required String actorPlayerId,
+    required int commandBudget,
+  }) => AonwClientRequest._({
+    'type': 'advanceAiTurn',
+    'actorPlayerId': actorPlayerId,
+    'commandBudget': commandBudget,
+  });
+
   factory AonwClientRequest.closeSession() =>
       AonwClientRequest._(const {'type': 'closeSession'});
 

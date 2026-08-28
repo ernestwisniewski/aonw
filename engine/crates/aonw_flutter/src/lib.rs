@@ -4,12 +4,16 @@
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
+use aonw_ai::StrategicPlanner;
 use aonw_contracts::client::CLIENT_API_VERSION;
 use aonw_local_runtime::{ClientProtocol, LocalRuntime};
 
 static BUILD_IDENTITY: &[u8] = concat!("aonw_flutter/", env!("CARGO_PKG_VERSION")).as_bytes();
 
-struct FlutterSession(LocalRuntime);
+struct FlutterSession {
+    runtime: LocalRuntime,
+    ai_driver: StrategicPlanner,
+}
 
 struct FlutterResponse(Box<[u8]>);
 
@@ -45,7 +49,11 @@ pub extern "C" fn aonw_flutter_build_identity_data() -> *const u8 {
 #[allow(unsafe_code)]
 #[unsafe(no_mangle)]
 pub extern "C" fn aonw_flutter_session_new() -> *mut core::ffi::c_void {
-    Box::into_raw(Box::new(FlutterSession(LocalRuntime::default()))).cast()
+    Box::into_raw(Box::new(FlutterSession {
+        runtime: LocalRuntime::default(),
+        ai_driver: StrategicPlanner,
+    }))
+    .cast()
 }
 
 /// Releases a session previously returned by [`aonw_flutter_session_new`].
@@ -91,9 +99,19 @@ pub unsafe extern "C" fn aonw_flutter_session_request(
         };
         // SAFETY: The caller keeps the unique session handle live for this call.
         let session = unsafe { &mut *session.cast::<FlutterSession>() };
-        ClientProtocol::dispatch_json(&mut session.0, input)
-    }))
-    .unwrap_or_else(|_| adapter_failure("native_panic", "native request failed"));
+        ClientProtocol::dispatch_json_with_ai(&mut session.runtime, input, &mut session.ai_driver)
+    }));
+    let output = if let Ok(output) = output {
+        output
+    } else {
+        if !session.is_null() {
+            // SAFETY: The caller supplied the same live unique handle used by the failed call.
+            unsafe { &mut *session.cast::<FlutterSession>() }
+                .runtime
+                .poison();
+        }
+        adapter_failure("native_panic", "native request failed; session invalidated")
+    };
     Box::into_raw(Box::new(FlutterResponse(
         output.into_bytes().into_boxed_slice(),
     )))

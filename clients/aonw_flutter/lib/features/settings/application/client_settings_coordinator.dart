@@ -1,36 +1,40 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
 
 import 'client_settings.dart';
 import 'client_settings_store.dart';
 
-final class ClientSettingsController extends ChangeNotifier {
-  ClientSettingsController({required ClientSettingsStore store})
+final class ClientSettingsCoordinator {
+  ClientSettingsCoordinator({required ClientSettingsStore store})
     : _store = store;
 
-  factory ClientSettingsController.ephemeral() =>
-      ClientSettingsController(store: _EphemeralClientSettingsStore());
+  factory ClientSettingsCoordinator.ephemeral() =>
+      ClientSettingsCoordinator(store: _EphemeralClientSettingsStore());
 
   final ClientSettingsStore _store;
+  final StreamController<ClientSettings> _changes =
+      StreamController<ClientSettings>.broadcast(sync: true);
   ClientSettings _settings = ClientSettings.defaults;
   Future<void> _writeTail = Future<void>.value();
-  int _generation = 0;
-  bool _disposed = false;
+  var _generation = 0;
+  var _disposed = false;
 
   ClientSettings get settings => _settings;
+
+  Stream<ClientSettings> get changes => _changes.stream;
 
   Future<void> load() async {
     final generation = _generation;
     final loaded = await _store.load();
     if (_disposed || generation != _generation || loaded == _settings) return;
     _settings = loaded;
-    notifyListeners();
+    _changes.add(loaded);
   }
 
   Future<void> update(ClientSettings settings) async {
     if (_disposed || settings == _settings) return;
     _generation += 1;
     _settings = settings;
-    notifyListeners();
+    _changes.add(settings);
     final write = _writeTail.then((_) => _store.save(settings));
     _writeTail = write.then<void>((_) {}, onError: (Object _, StackTrace _) {});
     await write;
@@ -38,10 +42,10 @@ final class ClientSettingsController extends ChangeNotifier {
 
   Future<void> reset() => update(ClientSettings.defaults);
 
-  @override
   void dispose() {
+    if (_disposed) return;
     _disposed = true;
-    super.dispose();
+    unawaited(_changes.close());
   }
 }
 

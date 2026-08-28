@@ -12,7 +12,7 @@ use crate::{
 };
 use validation::{
     city_territory_indices, unit_position_indices, validate_artifact_ids, validate_artifacts,
-    validate_environment, validate_interaction, validate_player_references,
+    validate_environment, validate_interaction, validate_player_references, validate_wonder_hosts,
 };
 
 /// Occupancy policy selected by the immutable ruleset.
@@ -247,6 +247,7 @@ impl GameStateBuilder {
         self.knowledge
             .validate_for(self.match_lifecycle.identity())
             .map_err(GameStateBuildError::InvalidKnowledge)?;
+        validate_wonder_hosts(&self.cities, self.knowledge.wonder_registry())?;
         self.combat
             .validate_for(self.match_lifecycle.identity(), self.bounds, &self.units)
             .map_err(GameStateBuildError::InvalidCombat)?;
@@ -305,6 +306,25 @@ impl GameState {
         units: impl IntoIterator<Item = Unit>,
     ) -> Result<Self, GameStateBuildError> {
         Self::builder(revision, turn, bounds, occupancy_policy, units).try_build()
+    }
+
+    /// Consumes a scenario seed and binds complete match-start state atomically.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`GameStateBuildError`] when participant ownership, fog, or any
+    /// other cross-section invariant is violated by the bound match.
+    pub fn into_started_match(
+        self,
+        match_lifecycle: MatchLifecycle,
+        fog_of_war: FogOfWar,
+        diplomacy: Diplomacy,
+    ) -> Result<Self, GameStateBuildError> {
+        self.into_builder()
+            .with_match_lifecycle(match_lifecycle)
+            .with_fog_of_war(fog_of_war)
+            .with_diplomacy(diplomacy)
+            .try_build()
     }
 
     /// Returns the state revision.

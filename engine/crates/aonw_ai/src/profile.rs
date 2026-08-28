@@ -130,10 +130,26 @@ impl UtilityWeights {
 }
 
 /// Complete deterministic production policy profile.
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct AiProfile {
     difficulty: AiDifficulty,
     persona: AiPersona,
+    tactical_strategy: AiTacticalStrategy,
+    base_seed: u32,
+}
+
+impl Default for AiProfile {
+    fn default() -> Self {
+        Self::new(AiDifficulty::default(), AiPersona::default())
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub(crate) enum AiTacticalStrategy {
+    Direct,
+    Random,
+    #[default]
+    Mcts,
 }
 
 impl AiProfile {
@@ -143,7 +159,26 @@ impl AiProfile {
         Self {
             difficulty,
             persona,
+            tactical_strategy: AiTacticalStrategy::Mcts,
+            base_seed: 0xA10D_2000,
         }
+    }
+
+    pub(crate) const fn with_runtime_configuration(
+        mut self,
+        tactical_strategy: AiTacticalStrategy,
+        seed: i64,
+    ) -> Self {
+        let seed_bytes = seed.to_le_bytes();
+        let low = u32::from_le_bytes([seed_bytes[0], seed_bytes[1], seed_bytes[2], seed_bytes[3]]);
+        let high = u32::from_le_bytes([seed_bytes[4], seed_bytes[5], seed_bytes[6], seed_bytes[7]]);
+        self.tactical_strategy = tactical_strategy;
+        self.base_seed = 0xA10D_2000 ^ low ^ high;
+        self
+    }
+
+    pub(crate) const fn tactical_strategy(self) -> AiTacticalStrategy {
+        self.tactical_strategy
     }
     /// Returns the selected difficulty.
     #[must_use]
@@ -166,7 +201,7 @@ impl AiProfile {
     pub(crate) const fn search_seed(self, turn: u32) -> u32 {
         let difficulty = self.difficulty as u32 + 1;
         let persona = self.persona as u32 + 1;
-        0xA10D_2000 ^ turn.rotate_left(7) ^ (difficulty << 12) ^ (persona << 4)
+        self.base_seed ^ turn.rotate_left(7) ^ (difficulty << 12) ^ (persona << 4)
     }
 }
 

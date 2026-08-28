@@ -31,36 +31,52 @@ bool _rustBuildEnabled(BuildInput input) {
     );
   }
   if (enabled != true) return false;
-
-  final targetOS = input.config.code.targetOS;
-  final targetArchitecture = input.config.code.targetArchitecture;
-  if (targetOS != OS.current || targetArchitecture != Architecture.current) {
-    throw UnsupportedError(
-      'aonw_rust_client rust_backend:true requires a qualified native Rust '
-      'build for $targetOS/$targetArchitecture, but this hook currently '
-      'builds only the host $OS.current/$Architecture.current. Refusing to '
-      'substitute the unavailable C stub.',
-    );
-  }
+  _rustTarget(input.config.code);
   return true;
 }
 
 Future<void> _buildRust(BuildInput input, BuildOutputBuilder output) async {
   final engineRoot = input.packageRoot.resolve('../../engine/');
-  final result = await Process.run('cargo', const [
-    'build',
-    '--release',
-    '--locked',
-    '-p',
-    _rustCrateName,
-  ], workingDirectory: engineRoot.toFilePath());
+  final code = input.config.code;
+  final target = _rustTarget(code);
+  final environment = Map<String, String>.of(Platform.environment);
+  final cargoTarget = target.toUpperCase().replaceAll('-', '_');
+  if (code.cCompiler case final compiler?) {
+    environment['CARGO_TARGET_${cargoTarget}_LINKER'] = compiler.compiler
+        .toFilePath();
+  }
+  if (code.targetOS == OS.iOS) {
+    environment['IPHONEOS_DEPLOYMENT_TARGET'] = '${code.iOS.targetVersion}.0';
+  } else if (code.targetOS == OS.macOS) {
+    environment['MACOSX_DEPLOYMENT_TARGET'] = '${code.macOS.targetVersion}.0';
+  }
+  final result = await Process.run(
+    'cargo',
+    [
+      'build',
+      '--release',
+      '--locked',
+      '-p',
+      _rustCrateName,
+      '--target',
+      target,
+    ],
+    workingDirectory: engineRoot.toFilePath(),
+    environment: environment,
+  );
   if (result.exitCode != 0) {
     throw BuildError(
-      message: 'Rust Flutter adapter build failed:\n${result.stderr}',
+      message:
+          'Rust Flutter adapter build for $target failed. Install the '
+          'Rust target and target linker before retrying:\n${result.stderr}',
     );
   }
-  final libraryName = input.config.code.targetOS.dylibFileName(_rustCrateName);
-  final source = engineRoot.resolve('target/release/$libraryName');
+  final linkMode = _linkMode(code.linkModePreference);
+  final libraryName = switch (linkMode) {
+    StaticLinking() => code.targetOS.staticlibFileName(_rustCrateName),
+    _ => code.targetOS.dylibFileName(_rustCrateName),
+  };
+  final source = engineRoot.resolve('target/$target/release/$libraryName');
   final destination = input.outputDirectory.resolve(libraryName);
   await File.fromUri(source).copy(destination.toFilePath());
   await _addEngineDependencies(engineRoot, output);
@@ -68,10 +84,79 @@ Future<void> _buildRust(BuildInput input, BuildOutputBuilder output) async {
     CodeAsset(
       package: input.packageName,
       name: _assetName,
-      linkMode: DynamicLoadingBundled(),
+      linkMode: linkMode,
       file: destination,
     ),
   );
+}
+
+LinkMode _linkMode(LinkModePreference preference) => switch (preference) {
+  LinkModePreference.static ||
+  LinkModePreference.preferStatic => StaticLinking(),
+  _ => DynamicLoadingBundled(),
+};
+
+String _rustTarget(CodeConfig code) {
+  final os = code.targetOS;
+  final architecture = code.targetArchitecture;
+  if (os == OS.android) {
+    return switch (architecture) {
+      Architecture.arm => 'armv7-linux-androideabi',
+      Architecture.arm64 => 'aarch64-linux-android',
+      Architecture.ia32 => 'i686-linux-android',
+      Architecture.x64 => 'x86_64-linux-android',
+      _ => throw UnsupportedError(
+        'Unsupported Android Rust architecture: $architecture',
+      ),
+    };
+  }
+  if (os == OS.iOS) {
+    if (code.iOS.targetSdk == IOSSdk.iPhoneSimulator) {
+      return switch (architecture) {
+        Architecture.arm64 => 'aarch64-apple-ios-sim',
+        Architecture.x64 => 'x86_64-apple-ios',
+        _ => throw UnsupportedError(
+          'Unsupported iOS simulator architecture: $architecture',
+        ),
+      };
+    }
+    if (architecture == Architecture.arm64) return 'aarch64-apple-ios';
+    throw UnsupportedError(
+      'Unsupported iOS device architecture: $architecture',
+    );
+  }
+  if (os == OS.macOS) {
+    return switch (architecture) {
+      Architecture.arm64 => 'aarch64-apple-darwin',
+      Architecture.x64 => 'x86_64-apple-darwin',
+      _ => throw UnsupportedError(
+        'Unsupported macOS Rust architecture: $architecture',
+      ),
+    };
+  }
+  if (os == OS.linux) {
+    return switch (architecture) {
+      Architecture.arm => 'armv7-unknown-linux-gnueabihf',
+      Architecture.arm64 => 'aarch64-unknown-linux-gnu',
+      Architecture.ia32 => 'i686-unknown-linux-gnu',
+      Architecture.riscv64 => 'riscv64gc-unknown-linux-gnu',
+      Architecture.x64 => 'x86_64-unknown-linux-gnu',
+      _ => throw UnsupportedError(
+        'Unsupported Linux Rust architecture: $architecture',
+      ),
+    };
+  }
+  if (os == OS.windows) {
+    return switch (architecture) {
+      Architecture.arm64 => 'aarch64-pc-windows-msvc',
+      Architecture.ia32 => 'i686-pc-windows-msvc',
+      Architecture.x64 => 'x86_64-pc-windows-msvc',
+      _ => throw UnsupportedError(
+        'Unsupported Windows Rust architecture: $architecture',
+      ),
+    };
+  }
+  throw UnsupportedError('Unsupported Rust target: $os/$architecture');
 }
 
 Future<void> _addEngineDependencies(

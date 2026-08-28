@@ -422,7 +422,9 @@ pub(crate) fn dispatch_player(
     let event_reservation =
         session.reserve_event_capacity(command.event_budget(session.state()))?;
     session.prepare_replay_segment();
-    let before_context = replay_context(session, Some(session.actor()));
+    let before_context = session
+        .records_replay()
+        .then(|| replay_context(session, Some(session.actor())));
     let before_revision = session.state().revision().get();
     let before_digest = session.stamp().state_digest;
     let state = session.take_state();
@@ -470,8 +472,10 @@ pub(crate) fn dispatch_player(
         view_patch,
         recipient_disclosure,
     };
-    let replay = replay_entry(session, replay_record, before_context, &result);
-    session.push_replay(replay);
+    if let Some(before_context) = before_context {
+        let replay = replay_entry(session, replay_record, before_context, &result);
+        session.push_replay(replay);
+    }
     Ok(result)
 }
 pub(crate) use artifact::dispatch_artifact;

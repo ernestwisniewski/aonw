@@ -18,7 +18,7 @@
   "turnProcessors": [
     "outcome"
   ],
-  "clientApiVersion": 5,
+  "clientApiVersion": 6,
   "legacyPaths": false,
   "cases": [
     "bounded-full-game-reopen-every-turn",

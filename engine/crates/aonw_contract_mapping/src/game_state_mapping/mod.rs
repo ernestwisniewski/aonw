@@ -21,6 +21,7 @@ pub use city::{
 };
 pub use economy::{decode_resource, encode_resource};
 pub use error::GameStateMappingError;
+pub use match_lifecycle::decode_match_identity;
 pub use outcome::encode_game_outcome;
 pub use research::{decode_technology, encode_technology};
 pub use state::{canonicalize_game_state, decode_game_state, encode_game_state};

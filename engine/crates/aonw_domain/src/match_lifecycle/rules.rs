@@ -187,11 +187,7 @@ impl VictoryRules {
         cultural_required_artifacts: u32,
         cultural_hold_turns: u32,
     ) -> Result<Self, MatchRulesBuildError> {
-        let percent = domination_control_percent
-            .as_str()
-            .parse::<f64>()
-            .map_err(|_| MatchRulesBuildError::InvalidDominationPercent)?;
-        if !(percent > 0.0 && percent <= 100.0) {
+        if !domination_control_percent.is_positive_and_at_most_integer(100) {
             return Err(MatchRulesBuildError::InvalidDominationPercent);
         }
         if domination_hold_turns == 0

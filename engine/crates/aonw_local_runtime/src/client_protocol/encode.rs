@@ -39,7 +39,7 @@ pub(super) use simple::replay_verification;
 use simple::{field_improvement, road};
 pub(super) use snapshot::{snapshot, stamp};
 
-pub(super) fn command_result(value: &CommandResult) -> ClientCommandResultDto {
+pub(crate) fn command_result(value: &CommandResult) -> ClientCommandResultDto {
     ClientCommandResultDto {
         stamp: stamp(value.stamp),
         outcome: value

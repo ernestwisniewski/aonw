@@ -30,9 +30,7 @@ func decode(document: String) -> Dictionary:
 	return value
 
 func _matches_api_version(value: Variant) -> bool:
-	if not value is int and not value is float:
-		return false
-	return float(value) == float(_api_version)
+	return value is int and value == _api_version
 
 func _has_exact_fields(value: Dictionary, fields: Array) -> bool:
 	if value.size() != fields.size():

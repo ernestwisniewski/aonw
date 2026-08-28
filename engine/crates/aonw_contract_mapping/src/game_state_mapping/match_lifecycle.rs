@@ -18,7 +18,7 @@ pub(super) fn decode_match_lifecycle(
     identity: MatchIdentityDto,
     turn: TurnLifecycleDto,
 ) -> Result<MatchLifecycle, GameStateMappingError> {
-    let identity = decode_identity(identity)?;
+    let identity = decode_match_identity(identity)?;
     let turn = decode_turn(&identity, turn)?;
     Ok(MatchLifecycle::new(identity, turn))
 }
@@ -29,7 +29,14 @@ pub(super) fn encode_match_lifecycle(
     (encode_identity(value.identity()), encode_turn(value.turn()))
 }
 
-fn decode_identity(dto: MatchIdentityDto) -> Result<MatchIdentity, GameStateMappingError> {
+/// Validates and maps immutable match identity supplied at a client boundary.
+///
+/// # Errors
+///
+/// Returns a path-aware error for invalid participant identities or rules.
+pub fn decode_match_identity(
+    dto: MatchIdentityDto,
+) -> Result<MatchIdentity, GameStateMappingError> {
     let participants = dto
         .participants
         .into_iter()

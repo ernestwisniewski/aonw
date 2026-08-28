@@ -17,6 +17,9 @@ impl LocalRuntime {
         &mut self,
         actor: PlayerId,
     ) -> Result<super::SessionStamp, ActorHandoffError> {
+        if self.poisoned {
+            return Err(ActorHandoffError::SessionPoisoned);
+        }
         let session = self
             .session
             .as_mut()

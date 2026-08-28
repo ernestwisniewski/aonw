@@ -192,11 +192,6 @@ fn advance_domination(
         .map(aonw_content::TileDefinition::coordinate)
         .collect::<BTreeSet<_>>();
     let valid_count = u32::try_from(valid.len()).map_err(objective_error)?;
-    let required_percent = rules
-        .domination_control_percent()
-        .as_str()
-        .parse::<f64>()
-        .map_err(objective_error)?;
     let mut controlled = players
         .iter()
         .cloned()
@@ -219,12 +214,10 @@ fn advance_domination(
     let mut events = Vec::new();
     for (player, coordinates) in controlled {
         let controlled_count = u32::try_from(coordinates.len()).map_err(objective_error)?;
-        let control_percent = if valid_count == 0 {
-            0.0
-        } else {
-            f64::from(controlled_count) * 100.0 / f64::from(valid_count)
-        };
-        if valid_count == 0 || control_percent < required_percent {
+        if !rules
+            .domination_control_percent()
+            .percent_requirement_met(controlled_count, valid_count)
+        {
             continue;
         }
         let previous_hold = previous.get(&player).copied().unwrap_or_default();

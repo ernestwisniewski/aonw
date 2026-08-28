@@ -1,13 +1,19 @@
 use core::num::NonZeroU32;
 use std::collections::BTreeMap;
 
-use aonw_domain::StateRevision;
+use aonw_domain::{
+    AiDifficulty as DomainAiDifficulty, AiPersona as DomainAiPersona, AiPlayer,
+    AiStrategyId as DomainAiStrategyId, StateRevision,
+};
 use aonw_engine::{CommandRejectionCode, StateDigest};
-use aonw_local_runtime::{CommandResult, LocalRuntime, RuntimeError, SessionStamp};
+use aonw_local_runtime::{
+    AiTurnDriver, AiTurnExecution, CommandResult, LocalRuntime, RuntimeError, SessionStamp,
+};
 
 use crate::{
     AiProfile, MctsSearchStats, PlanFingerprint, PlannedCommand, PlannedCommandFamily,
     PlanningBudget, SearchFingerprint, StrategicAssessment, policy_actions,
+    profile::AiTacticalStrategy,
 };
 
 /// One deterministic policy command and the authoritative identity it read.
@@ -229,6 +235,63 @@ impl StrategicPlanner {
         Err(StrategicPlannerError::CommandBudgetExhausted {
             maximum: command_budget,
         })
+    }
+}
+
+impl AiTurnDriver for StrategicPlanner {
+    fn play_turn(
+        &mut self,
+        runtime: &mut LocalRuntime,
+        configuration: AiPlayer,
+        command_budget: NonZeroU32,
+    ) -> Result<AiTurnExecution, Box<str>> {
+        let profile = AiProfile::new(
+            match configuration.difficulty() {
+                DomainAiDifficulty::Easy => crate::AiDifficulty::Easy,
+                DomainAiDifficulty::Normal => crate::AiDifficulty::Normal,
+                DomainAiDifficulty::Hard => crate::AiDifficulty::Hard,
+                DomainAiDifficulty::VeryHard => crate::AiDifficulty::VeryHard,
+            },
+            match configuration.persona() {
+                DomainAiPersona::Balanced => crate::AiPersona::Balanced,
+                DomainAiPersona::Aggressive => crate::AiPersona::Aggressive,
+                DomainAiPersona::Expansive => crate::AiPersona::Expansive,
+                DomainAiPersona::Economic => crate::AiPersona::Economic,
+                DomainAiPersona::Scientific => crate::AiPersona::Scientific,
+            },
+        )
+        .with_runtime_configuration(
+            match configuration.strategy_id() {
+                DomainAiStrategyId::Random => AiTacticalStrategy::Random,
+                DomainAiStrategyId::Mcts => AiTacticalStrategy::Mcts,
+                DomainAiStrategyId::Basic
+                | DomainAiStrategyId::Scripted
+                | DomainAiStrategyId::Utility => AiTacticalStrategy::Direct,
+            },
+            configuration.seed(),
+        );
+        match self.play_turn_with_profile(runtime, command_budget, profile) {
+            Ok(report) => Ok(AiTurnExecution {
+                stamp: *report.final_stamp(),
+                executed_commands: report.executed_commands(),
+                completed_turn: report.completed_turn(),
+            }),
+            Err(StrategicPlannerError::CommandBudgetExhausted { .. }) => {
+                let stamp = *runtime
+                    .snapshot()
+                    .map_err(|error| error.to_string().into_boxed_str())?
+                    .stamp();
+                Ok(AiTurnExecution {
+                    stamp,
+                    executed_commands: command_budget.get(),
+                    completed_turn: false,
+                })
+            }
+            Err(error) => {
+                runtime.poison();
+                Err(error.to_string().into_boxed_str())
+            }
+        }
     }
 }
 

@@ -11,6 +11,9 @@ void main() {
       'cities',
       'combat',
       'inspectMap',
+      'matchStart',
+      'actorHandoff',
+      'aiTurns',
       'snapshot',
       'reachable',
       'routePlan',
@@ -104,6 +107,15 @@ void main() {
       }): AonwCapabilitiesResponse,
       _success({'type': 'sessionOpened', 'stamp': _stamp}):
           AonwSessionOpenedResponse,
+      _success({'type': 'actorHandedOff', 'stamp': _stamp}):
+          AonwActorHandedOffResponse,
+      _success({
+        'type': 'aiTurnAdvanced',
+        'stamp': _stamp,
+        'actorPlayerId': 'player-ai',
+        'executedCommands': 4,
+        'completedTurn': true,
+      }): AonwAiTurnAdvancedResponse,
       _success({'type': 'sessionClosed'}): AonwSessionClosedResponse,
       _success({'type': 'saveExported', 'document': '{}'}):
           AonwSaveExportedResponse,

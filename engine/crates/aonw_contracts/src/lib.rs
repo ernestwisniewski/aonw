@@ -44,10 +44,10 @@ pub use limits::{
 };
 pub use persistence::{
     MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_REPLAY_SEGMENT_COUNT,
-    MAX_SAVE_GAME_JSON_BYTES, PersistenceCodecError, ReplayCommandDto, ReplayContextDto,
-    ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto, ReplayLogisticsEvidenceDto,
-    ReplayRecordDto, ReplayResultDto, ReplaySegmentDto, ReplaySystemCommandDto,
-    ReplayUnitMovementExecutionDto, SaveGameDto,
+    MAX_SAVE_GAME_JSON_BYTES, PERSISTENCE_FORMAT_VERSION, PersistenceCodecError, ReplayCommandDto,
+    ReplayContextDto, ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto,
+    ReplayLogisticsEvidenceDto, ReplayRecordDto, ReplayResultDto, ReplaySegmentDto,
+    ReplaySystemCommandDto, ReplayUnitMovementExecutionDto, SaveGameDto,
 };
 
 /// Stable authored map-objective type shared by client and replay contracts.

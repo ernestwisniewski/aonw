@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
-import 'package:aonw_flutter/features/map/application/map_repository.dart';
+import 'package:aonw_flutter/features/map/application/map_session_port.dart';
+import 'package:aonw_flutter/features/map/application/movement_session_port.dart';
 import 'package:aonw_flutter/features/map/infrastructure/map_view_mapper.dart';
-import 'package:aonw_flutter/features/map/infrastructure/rust_map_repository.dart';
+import 'package:aonw_flutter/features/map/infrastructure/rust_game_session_gateway.dart';
 import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
@@ -46,7 +47,7 @@ void main() {
   ) async {
     var backendCreations = 0;
     late _TrackingRustSession backend;
-    final repository = RustMapRepository(
+    final gateway = RustGameSessionGateway(
       assets: _FileAssetBundle(),
       sessionFactory: () async {
         backendCreations += 1;
@@ -56,10 +57,10 @@ void main() {
         return backend;
       },
     );
-    addTearDown(repository.close);
+    addTearDown(gateway.close);
 
     final scene = await tester.runAsync(
-      () => repository.load(MapAssetPaths.starter),
+      () => gateway.load(MapAssetPaths.starter),
     );
 
     expect(scene, isNotNull);
@@ -70,16 +71,24 @@ void main() {
     expect(scene.player.units.single.ownerPlayerId, 'preview-player');
     expect(scene.player.units.single.coordinate, (col: 2, row: 1));
 
-    final reachable = await tester.runAsync(
-      () => repository.reachable(
-        expectedRevision: scene.player.stamp.revision,
-        unitId: 'preview-commander',
-      ),
+    final reachableResponses = await tester.runAsync(
+      () => Future.wait([
+        gateway.reachable(
+          expectedRevision: scene.player.stamp.revision,
+          unitId: 'preview-commander',
+        ),
+        gateway.reachable(
+          expectedRevision: scene.player.stamp.revision,
+          unitId: 'preview-commander',
+        ),
+      ]),
     );
+    final reachable = reachableResponses!.first;
     expect(reachable, isNotNull);
-    expect(reachable!.tiles, isNotEmpty);
+    expect(reachable.tiles, isNotEmpty);
+    expect(backend.maximumInFlightRequests, 1);
     final route = await tester.runAsync(
-      () => repository.routePlan(
+      () => gateway.routePlan(
         expectedRevision: scene.player.stamp.revision,
         unitId: 'preview-commander',
         target: (col: 2, row: 2),
@@ -89,7 +98,7 @@ void main() {
     expect(route!.steps.first.coordinate, (col: 2, row: 1));
     expect(route.steps.last.coordinate, (col: 2, row: 2));
     final moved = await tester.runAsync(
-      () => repository.moveUnit(
+      () => gateway.moveUnit(
         expectedRevision: scene.player.stamp.revision,
         unitId: 'preview-commander',
         target: route.target,
@@ -99,8 +108,10 @@ void main() {
     expect(moved!.accepted, isTrue);
     expect(moved.player!.stamp.revision, 1);
     expect(moved.player!.units.single.coordinate, (col: 2, row: 2));
+    expect(moved.execution!.events.single.unitId, 'preview-commander');
+    expect(moved.execution!.evidence!.steps.last.coordinate, (col: 2, row: 2));
     final rejected = await tester.runAsync(
-      () => repository.moveUnit(
+      () => gateway.moveUnit(
         expectedRevision: 0,
         unitId: 'preview-commander',
         target: (col: 2, row: 1),
@@ -109,6 +120,33 @@ void main() {
     expect(rejected, isNotNull);
     expect(rejected!.accepted, isFalse);
     expect(rejected.rejectionCode, CommandRejectionCodeView.staleRevision);
+    backend.corruptNextAcceptedPatch = true;
+    Object? resyncFailure;
+    await tester.runAsync(() async {
+      try {
+        await gateway.moveUnit(
+          expectedRevision: 1,
+          unitId: 'preview-commander',
+          target: (col: 2, row: 1),
+        );
+      } on Object catch (error) {
+        resyncFailure = error;
+      }
+    });
+    expect(
+      resyncFailure,
+      isA<MovementSessionException>()
+          .having((error) => error.code, 'code', 'recipient_resynchronized')
+          .having(
+            (error) => error.resyncedPlayer?.stamp.revision,
+            'resynced revision',
+            2,
+          ),
+    );
+    final recovered = await tester.runAsync(
+      () => gateway.reachable(expectedRevision: 2, unitId: 'preview-commander'),
+    );
+    expect(recovered?.stamp.revision, 2);
     expect(backendCreations, 1);
     expect(backend.requestTypes, [
       'capabilities',
@@ -117,11 +155,14 @@ void main() {
       'snapshot',
       'query',
       'query',
+      'query',
+      'dispatch',
+      'dispatch',
       'dispatch',
       'snapshot',
-      'dispatch',
+      'query',
     ]);
-    await tester.runAsync(repository.close);
+    await tester.runAsync(gateway.close);
     expect(backend.closeCalls, 1);
   });
 
@@ -229,13 +270,37 @@ final class _TrackingRustSession implements AonwRustSession {
   final AonwRustSession _delegate;
   final requestTypes = <String>[];
   var closeCalls = 0;
+  var _inFlightRequests = 0;
+  var maximumInFlightRequests = 0;
+  var corruptNextAcceptedPatch = false;
 
   @override
-  Future<String> requestJson(String request) {
+  Future<String> requestJson(String request) async {
     final envelope = jsonDecode(request) as Map<String, dynamic>;
     final body = envelope['request'] as Map<String, dynamic>;
     requestTypes.add(body['type'] as String);
-    return _delegate.requestJson(request);
+    _inFlightRequests += 1;
+    if (_inFlightRequests > maximumInFlightRequests) {
+      maximumInFlightRequests = _inFlightRequests;
+    }
+    try {
+      final response = await _delegate.requestJson(request);
+      if (!corruptNextAcceptedPatch || body['type'] != 'dispatch') {
+        return response;
+      }
+      final envelope = jsonDecode(response) as Map<String, dynamic>;
+      final outcome = envelope['outcome'] as Map<String, dynamic>;
+      final responseBody = outcome['response'] as Map<String, dynamic>;
+      final result = responseBody['result'] as Map<String, dynamic>;
+      final commandOutcome = result['outcome'] as Map<String, dynamic>;
+      if (commandOutcome['status'] != 'accepted') return response;
+      corruptNextAcceptedPatch = false;
+      final patch = result['viewPatch'] as Map<String, dynamic>;
+      patch['fromRevision'] = 99;
+      return jsonEncode(envelope);
+    } finally {
+      _inFlightRequests -= 1;
+    }
   }
 
   @override

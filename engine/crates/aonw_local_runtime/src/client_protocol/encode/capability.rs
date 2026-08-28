@@ -4,7 +4,13 @@ use crate::LocalRuntime;
 
 pub(crate) fn capabilities() -> ClientResponseBodyDto {
     let capabilities = LocalRuntime::capabilities();
-    let mut features = vec![ClientFeatureDto::InspectMap, ClientFeatureDto::Snapshot];
+    let mut features = vec![
+        ClientFeatureDto::InspectMap,
+        ClientFeatureDto::MatchStart,
+        ClientFeatureDto::ActorHandoff,
+        ClientFeatureDto::AiTurns,
+        ClientFeatureDto::Snapshot,
+    ];
     if capabilities.reachable() {
         features.push(ClientFeatureDto::Reachable);
     }

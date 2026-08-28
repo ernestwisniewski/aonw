@@ -1,12 +1,17 @@
 mod decode;
 mod encode;
 
+use core::num::NonZeroU32;
+use std::fmt::Write as _;
+
+use aonw_contracts::MatchIdentityDto;
 use aonw_contracts::client::{
-    CLIENT_API_VERSION, ClientCodecError, ClientErrorDto, ClientOutcomeDto, ClientRequestBodyDto,
-    ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
+    CLIENT_API_VERSION, ClientCodecError, ClientErrorDto, ClientFogModeDto, ClientOutcomeDto,
+    ClientRequestBodyDto, ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
 };
 
-use crate::{LocalRuntime, RuntimeError};
+use crate::{AiTurnDriver, LocalRuntime, RuntimeError};
+use sha2::{Digest, Sha256};
 
 use decode::DecodedCommand;
 
@@ -17,8 +22,26 @@ impl ClientProtocol {
     /// Decodes, dispatches, and encodes one strict client JSON document.
     #[must_use]
     pub fn dispatch_json(runtime: &mut LocalRuntime, input: &str) -> String {
+        Self::dispatch_json_inner(runtime, input, None)
+    }
+
+    /// Decodes and executes one request with a production AI driver available.
+    #[must_use]
+    pub fn dispatch_json_with_ai(
+        runtime: &mut LocalRuntime,
+        input: &str,
+        ai_driver: &mut dyn AiTurnDriver,
+    ) -> String {
+        Self::dispatch_json_inner(runtime, input, Some(ai_driver))
+    }
+
+    fn dispatch_json_inner(
+        runtime: &mut LocalRuntime,
+        input: &str,
+        ai_driver: Option<&mut dyn AiTurnDriver>,
+    ) -> String {
         let response = match ClientRequestDto::from_json(input) {
-            Ok(request) => Self::dispatch(runtime, request),
+            Ok(request) => Self::dispatch_inner(runtime, request, ai_driver),
             Err(error @ ClientCodecError::UnsupportedVersion { .. }) => {
                 failure("unsupported_client_api_version", error)
             }
@@ -32,6 +55,14 @@ impl ClientProtocol {
     /// Executes one validated current client request against a local runtime.
     #[must_use]
     pub fn dispatch(runtime: &mut LocalRuntime, request: ClientRequestDto) -> ClientResponseDto {
+        Self::dispatch_inner(runtime, request, None)
+    }
+
+    fn dispatch_inner(
+        runtime: &mut LocalRuntime,
+        request: ClientRequestDto,
+        ai_driver: Option<&mut dyn AiTurnDriver>,
+    ) -> ClientResponseDto {
         if request.api_version != CLIENT_API_VERSION {
             return failure(
                 "unsupported_client_api_version",
@@ -42,34 +73,58 @@ impl ClientProtocol {
             );
         }
 
+        if runtime.is_poisoned()
+            && !matches!(
+                &request.request,
+                ClientRequestBodyDto::Capabilities
+                    | ClientRequestBodyDto::InspectMap { .. }
+                    | ClientRequestBodyDto::OpenSession { .. }
+                    | ClientRequestBodyDto::StartMatch { .. }
+                    | ClientRequestBodyDto::CloseSession
+                    | ClientRequestBodyDto::OpenSave { .. }
+                    | ClientRequestBodyDto::VerifyReplay { .. }
+            )
+        {
+            return runtime_failure(RuntimeError::SessionPoisoned);
+        }
+
         match request.request {
             ClientRequestBodyDto::Capabilities => success(encode::capabilities()),
             ClientRequestBodyDto::InspectMap { map_document } => {
-                match decode::map_document(&map_document) {
-                    Ok(document) => match encode::map(&document) {
-                        Ok(map) => success(ClientResponseBodyDto::MapInspected { map }),
-                        Err(error) => failure("map_hash_failed", error),
-                    },
-                    Err(error) => error.into_response(),
-                }
+                dispatch_inspect_map(&map_document)
             }
             ClientRequestBodyDto::OpenSession {
                 map_document,
                 scenario_document,
                 actor_player_id,
-            } => match decode::open_session(&map_document, &scenario_document, &actor_player_id) {
-                Ok(request) => match runtime.open(request) {
-                    Ok(stamp) => success(ClientResponseBodyDto::SessionOpened {
-                        stamp: encode::stamp(stamp),
-                    }),
-                    Err(error) => failure("session_open_failed", error),
-                },
-                Err(error) => error.into_response(),
-            },
+            } => {
+                dispatch_open_session(runtime, &map_document, &scenario_document, &actor_player_id)
+            }
+            ClientRequestBodyDto::StartMatch {
+                map_document,
+                scenario_document,
+                actor_player_id,
+                match_identity,
+                fog_mode,
+            } => dispatch_start_match(
+                runtime,
+                &map_document,
+                &scenario_document,
+                &actor_player_id,
+                match_identity,
+                fog_mode,
+            ),
             ClientRequestBodyDto::CloseSession => {
                 runtime.close();
                 success(ClientResponseBodyDto::SessionClosed)
             }
+            ClientRequestBodyDto::HandoffActor { actor_player_id } => {
+                dispatch_handoff(runtime, actor_player_id)
+            }
+            ClientRequestBodyDto::AdvanceAiTurn {
+                actor_player_id,
+                command_budget,
+            } => dispatch_ai_turn(runtime, actor_player_id, command_budget, ai_driver),
             ClientRequestBodyDto::Snapshot => match runtime.snapshot() {
                 Ok(snapshot) => success(ClientResponseBodyDto::Snapshot {
                     snapshot: encode::snapshot(&snapshot),
@@ -96,19 +151,7 @@ impl ClientProtocol {
             ClientRequestBodyDto::OpenSave {
                 map_document,
                 save_document,
-            } => match decode::map(&map_document) {
-                Ok(map) => match runtime.open_save_json(
-                    map,
-                    aonw_content::RulesetDefinition::standard().clone(),
-                    &save_document,
-                ) {
-                    Ok(stamp) => success(ClientResponseBodyDto::SaveOpened {
-                        stamp: encode::stamp(stamp),
-                    }),
-                    Err(error) => failure("save_open_failed", error),
-                },
-                Err(error) => error.into_response(),
-            },
+            } => dispatch_open_save(runtime, &map_document, &save_document),
             ClientRequestBodyDto::ExportReplay => match runtime.export_replay_json() {
                 Ok(document) => success(ClientResponseBodyDto::ReplayExported { document }),
                 Err(error) => failure("replay_export_failed", error),
@@ -116,21 +159,162 @@ impl ClientProtocol {
             ClientRequestBodyDto::VerifyReplay {
                 map_document,
                 replay_document,
-            } => match decode::map(&map_document) {
-                Ok(map) => match LocalRuntime::verify_replay_json(
-                    map,
-                    aonw_content::RulesetDefinition::standard().clone(),
-                    &replay_document,
-                ) {
-                    Ok(verification) => success(ClientResponseBodyDto::ReplayVerified {
-                        verification: encode::replay_verification(verification),
-                    }),
-                    Err(error) => failure("replay_verification_failed", error),
-                },
-                Err(error) => error.into_response(),
-            },
+            } => dispatch_verify_replay(&map_document, &replay_document),
         }
     }
+
+    /// Encodes one adapter-level failure with the current protocol envelope.
+    #[must_use]
+    pub fn failure_json(code: &str, message: &str) -> String {
+        failure(code, message)
+            .to_json()
+            .unwrap_or_else(|_| serialization_failure())
+    }
+}
+
+fn dispatch_inspect_map(map_document: &str) -> ClientResponseDto {
+    match decode::map_document(map_document) {
+        Ok(document) => match encode::map(&document) {
+            Ok(map) => success(ClientResponseBodyDto::MapInspected { map }),
+            Err(error) => failure("map_hash_failed", error),
+        },
+        Err(error) => error.into_response(),
+    }
+}
+
+fn dispatch_open_session(
+    runtime: &mut LocalRuntime,
+    map_document: &str,
+    scenario_document: &str,
+    actor_player_id: &str,
+) -> ClientResponseDto {
+    match decode::open_session(map_document, scenario_document, actor_player_id) {
+        Ok(request) => match runtime.open(request) {
+            Ok(stamp) => success(ClientResponseBodyDto::SessionOpened {
+                stamp: encode::stamp(stamp),
+            }),
+            Err(error) => failure("session_open_failed", error),
+        },
+        Err(error) => error.into_response(),
+    }
+}
+
+fn dispatch_start_match(
+    runtime: &mut LocalRuntime,
+    map_document: &str,
+    scenario_document: &str,
+    actor_player_id: &str,
+    match_identity: MatchIdentityDto,
+    fog_mode: ClientFogModeDto,
+) -> ClientResponseDto {
+    match decode::start_match(
+        map_document,
+        scenario_document,
+        actor_player_id,
+        match_identity,
+        fog_mode,
+    ) {
+        Ok(request) => match runtime.open(request) {
+            Ok(stamp) => success(ClientResponseBodyDto::SessionOpened {
+                stamp: encode::stamp(stamp),
+            }),
+            Err(error) => failure("match_start_failed", error),
+        },
+        Err(error) => error.into_response(),
+    }
+}
+
+fn dispatch_handoff(runtime: &mut LocalRuntime, actor_player_id: String) -> ClientResponseDto {
+    match aonw_domain::PlayerId::new(actor_player_id) {
+        Ok(actor) => match runtime.handoff_hot_seat_actor(actor) {
+            Ok(stamp) => success(ClientResponseBodyDto::ActorHandedOff {
+                stamp: encode::stamp(stamp),
+            }),
+            Err(error) => failure("actor_handoff_failed", error),
+        },
+        Err(error) => failure("invalid_actor_player_id", error),
+    }
+}
+
+fn dispatch_ai_turn(
+    runtime: &mut LocalRuntime,
+    actor_player_id: String,
+    command_budget: u32,
+    ai_driver: Option<&mut dyn AiTurnDriver>,
+) -> ClientResponseDto {
+    let Some(driver) = ai_driver else {
+        return failure(
+            "ai_driver_unavailable",
+            "this protocol dispatcher has no AI driver",
+        );
+    };
+    let Some(command_budget) = NonZeroU32::new(command_budget) else {
+        return failure(
+            "invalid_ai_command_budget",
+            "command budget must be positive",
+        );
+    };
+    match aonw_domain::PlayerId::new(actor_player_id) {
+        Ok(actor) => {
+            let response_actor = actor.as_str().to_owned();
+            match runtime.advance_ai_turn(actor, command_budget, driver) {
+                Ok(execution) => success(ClientResponseBodyDto::AiTurnAdvanced {
+                    stamp: encode::stamp(execution.stamp),
+                    actor_player_id: response_actor,
+                    executed_commands: execution.executed_commands,
+                    completed_turn: execution.completed_turn,
+                }),
+                Err(error) => failure("ai_turn_failed", error),
+            }
+        }
+        Err(error) => failure("invalid_actor_player_id", error),
+    }
+}
+
+fn dispatch_open_save(
+    runtime: &mut LocalRuntime,
+    map_document: &str,
+    save_document: &str,
+) -> ClientResponseDto {
+    match decode::map(map_document) {
+        Ok(map) => match runtime.open_save_json(
+            map,
+            aonw_content::RulesetDefinition::standard().clone(),
+            save_document,
+        ) {
+            Ok(stamp) => success(ClientResponseBodyDto::SaveOpened {
+                stamp: encode::stamp(stamp),
+            }),
+            Err(error) => failure("save_open_failed", error),
+        },
+        Err(error) => error.into_response(),
+    }
+}
+
+fn dispatch_verify_replay(map_document: &str, replay_document: &str) -> ClientResponseDto {
+    match decode::map(map_document) {
+        Ok(map) => match LocalRuntime::verify_replay_json(
+            map,
+            aonw_content::RulesetDefinition::standard().clone(),
+            replay_document,
+        ) {
+            Ok(verification) => success(ClientResponseBodyDto::ReplayVerified {
+                verification: encode::replay_verification(verification),
+            }),
+            Err(error) => failure("replay_verification_failed", error),
+        },
+        Err(error) => error.into_response(),
+    }
+}
+
+pub(crate) fn recipient_result_hash(result: &crate::CommandResult) -> String {
+    let encoded = serde_json::to_vec(&encode::command_result(result)).unwrap_or_default();
+    let digest = Sha256::digest(encoded);
+    let mut output = String::with_capacity(digest.len() * 2);
+    for byte in digest {
+        let _ = write!(output, "{byte:02x}");
+    }
+    output
 }
 
 fn serialization_failure() -> String {

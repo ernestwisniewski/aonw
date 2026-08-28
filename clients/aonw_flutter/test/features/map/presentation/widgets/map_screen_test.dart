@@ -1,15 +1,15 @@
 import 'dart:async';
 
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
-import 'package:aonw_flutter/features/map/application/map_controller.dart';
-import 'package:aonw_flutter/features/map/application/map_repository.dart';
+import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
+import 'package:aonw_flutter/features/map/presentation/map_presentation_controller.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_screen.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/features/settings/application/client_settings.dart';
-import 'package:aonw_flutter/features/settings/application/client_settings_controller.dart';
+import 'package:aonw_flutter/features/settings/presentation/client_settings_controller.dart';
 import 'package:aonw_flutter/features/settings/presentation/client_settings_scope.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:flutter/material.dart';
@@ -23,10 +23,12 @@ void main() {
   testWidgets('supports selection, pan, zoom and reference toggle', (
     tester,
   ) async {
-    final controller = MapController(
-      repository: FakeMapRepository.success(
-        testMapScene(cols: 7, rows: 7, defaultZoom: 1.2),
-      ),
+    final session = FakeGameSession.success(
+      testMapScene(cols: 7, rows: 7, defaultZoom: 1.2),
+    );
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     final flameGame = AonwFlameGame();
     addTearDown(controller.dispose);
@@ -94,8 +96,10 @@ void main() {
   });
 
   testWidgets('renders a 25 by 19 map without overflow', (tester) async {
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene(cols: 25, rows: 19)),
+    final session = FakeGameSession.success(testMapScene(cols: 25, rows: 19));
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     addTearDown(controller.dispose);
 
@@ -122,13 +126,18 @@ void main() {
       units: [testVisibleUnit(coordinate: (col: 1, row: 0), movementUnits: 8)],
     );
     final flameGame = AonwFlameGame();
-    final controller = MapController(
-      repository: FakeMapRepository.success(
-        testMapScene(units: [testVisibleUnit()]),
-        reachableResult: testReachableView(),
-        routeResult: testRoutePlanView(),
-        moveResult: MoveUnitResultView.accepted(player: movedPlayer),
+    final session = FakeGameSession.success(
+      testMapScene(units: [testVisibleUnit()]),
+      reachableResult: testReachableView(),
+      routeResult: testRoutePlanView(),
+      moveResult: MoveUnitResultView.accepted(
+        player: movedPlayer,
+        execution: testMoveUnitExecutionView(),
       ),
+    );
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     addTearDown(controller.dispose);
     await tester.binding.setSurfaceSize(const Size(900, 700));
@@ -183,10 +192,12 @@ void main() {
   testWidgets(
     'initial camera fits authored zoom once and isolates static grid',
     (tester) async {
-      final controller = MapController(
-        repository: FakeMapRepository.success(
-          testMapScene(cols: 7, rows: 7, defaultZoom: 1.2),
-        ),
+      final session = FakeGameSession.success(
+        testMapScene(cols: 7, rows: 7, defaultZoom: 1.2),
+      );
+      final controller = MapPresentationController(
+        session: session,
+        movement: session,
       );
       final flameGame = AonwFlameGame();
       addTearDown(controller.dispose);
@@ -226,8 +237,10 @@ void main() {
   testWidgets('replaces the Flame game without retaining old camera state', (
     tester,
   ) async {
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene()),
+    final session = FakeGameSession.success(testMapScene());
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     final firstGame = AonwFlameGame();
     final secondGame = AonwFlameGame();
@@ -261,10 +274,12 @@ void main() {
   });
 
   testWidgets('shows typed failure and retry action', (tester) async {
-    final controller = MapController(
-      repository: FakeMapRepository.failure(
-        const MapLoadException(code: 'rust_unavailable', message: 'No Rust'),
-      ),
+    final session = FakeGameSession.failure(
+      const MapLoadException(code: 'rust_unavailable', message: 'No Rust'),
+    );
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     addTearDown(controller.dispose);
 
@@ -286,8 +301,10 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene()),
+    final session = FakeGameSession.success(testMapScene());
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     final flameGame = AonwFlameGame();
     addTearDown(controller.dispose);
@@ -318,8 +335,10 @@ void main() {
     tester,
   ) async {
     final input = _TestMapInputSource();
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene(cols: 3, rows: 3)),
+    final session = FakeGameSession.success(testMapScene(cols: 3, rows: 3));
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     addTearDown(input.close);
     addTearDown(controller.dispose);
@@ -365,8 +384,10 @@ void main() {
     tester,
   ) async {
     final input = _TestMapInputSource();
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene(cols: 3, rows: 3)),
+    final session = FakeGameSession.success(testMapScene(cols: 3, rows: 3));
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     final routeObserver = RouteObserver<ModalRoute<void>>();
     final games = <AonwFlameGame>[];
@@ -435,8 +456,10 @@ void main() {
     await settings.update(
       ClientSettings.defaults.copyWith(cameraSensitivity: 2),
     );
-    final controller = MapController(
-      repository: FakeMapRepository.success(testMapScene()),
+    final session = FakeGameSession.success(testMapScene());
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
     );
     final flameGame = AonwFlameGame();
     addTearDown(settings.dispose);

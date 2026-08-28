@@ -113,6 +113,25 @@ if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>
 fi
 echo "Dependency checker rejected Rust transport in presentation."
 
+mkdir -p "${dependency_fixture}/clients/aonw_flutter/lib/features/map/application"
+printf "import 'package:flutter/foundation.dart';\n" \
+  >"${dependency_fixture}/clients/aonw_flutter/lib/features/map/application/controller.dart"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted Flutter in successor application code." >&2
+  exit 1
+fi
+echo "Dependency checker rejected Flutter in successor application code."
+rm "${dependency_fixture}/clients/aonw_flutter/lib/features/map/application/controller.dart"
+
+printf 'final class ProtocolFallbackReader {}\n' \
+  >"${dependency_fixture}/clients/aonw_flutter/lib/features/map/application/protocol.dart"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted a successor protocol fallback." >&2
+  exit 1
+fi
+echo "Dependency checker rejected successor protocol fallback code."
+rm "${dependency_fixture}/clients/aonw_flutter/lib/features/map/application/protocol.dart"
+
 mkdir -p "${dependency_fixture}/clients/aonw_flutter/lib/game/rendering"
 printf "import '../../features/map/infrastructure/rust_map_repository.dart';\n" \
   >"${dependency_fixture}/clients/aonw_flutter/lib/game/rendering/map_layer.dart"

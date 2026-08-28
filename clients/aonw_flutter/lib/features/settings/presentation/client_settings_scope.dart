@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../application/client_settings.dart';
-import '../application/client_settings_controller.dart';
+import 'client_settings_controller.dart';
 
 final class ClientSettingsScope
     extends InheritedNotifier<ClientSettingsController> {

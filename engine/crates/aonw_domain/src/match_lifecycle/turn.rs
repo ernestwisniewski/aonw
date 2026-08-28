@@ -48,6 +48,16 @@ pub enum TurnLifecycleBuildError {
     UnknownPlayer(PlayerId),
     /// A timeout streak cannot be negative.
     NegativeTimeoutStreak(PlayerId),
+    /// A participant has no explicit current-turn state.
+    MissingTurnState(PlayerId),
+    /// A submitted participant is outside the explicit submission scope.
+    SubmittedPlayerNotRequired(PlayerId),
+    /// A submitted participant is not marked finished.
+    SubmittedPlayerNotFinished(PlayerId),
+    /// A kicked participant is not marked finished.
+    KickedPlayerNotFinished(PlayerId),
+    /// A kicked participant remains in the required submission scope.
+    KickedPlayerStillRequired(PlayerId),
 }
 
 impl core::fmt::Display for TurnLifecycleBuildError {
@@ -64,6 +74,21 @@ impl core::fmt::Display for TurnLifecycleBuildError {
                     formatter,
                     "timeout streak is negative for participant: {player}"
                 )
+            }
+            Self::MissingTurnState(player) => {
+                write!(formatter, "participant has no turn state: {player}")
+            }
+            Self::SubmittedPlayerNotRequired(player) => {
+                write!(formatter, "submitted participant is not required: {player}")
+            }
+            Self::SubmittedPlayerNotFinished(player) => {
+                write!(formatter, "submitted participant is not finished: {player}")
+            }
+            Self::KickedPlayerNotFinished(player) => {
+                write!(formatter, "kicked participant is not finished: {player}")
+            }
+            Self::KickedPlayerStillRequired(player) => {
+                write!(formatter, "kicked participant is still required: {player}")
             }
         }
     }
@@ -123,6 +148,37 @@ impl TurnLifecycle {
             return Err(TurnLifecycleBuildError::NegativeTimeoutStreak(
                 player.clone(),
             ));
+        }
+        for participant in identity.participants() {
+            if !turn_states_by_player_id.contains_key(participant.id()) {
+                return Err(TurnLifecycleBuildError::MissingTurnState(
+                    participant.id().clone(),
+                ));
+            }
+        }
+        for player in &submitted_player_ids {
+            if !required_submission_player_ids.contains(player) {
+                return Err(TurnLifecycleBuildError::SubmittedPlayerNotRequired(
+                    player.clone(),
+                ));
+            }
+            if turn_states_by_player_id.get(player) != Some(&PlayerTurnState::Finished) {
+                return Err(TurnLifecycleBuildError::SubmittedPlayerNotFinished(
+                    player.clone(),
+                ));
+            }
+        }
+        for player in &kicked_player_ids {
+            if turn_states_by_player_id.get(player) != Some(&PlayerTurnState::Finished) {
+                return Err(TurnLifecycleBuildError::KickedPlayerNotFinished(
+                    player.clone(),
+                ));
+            }
+            if required_submission_player_ids.contains(player) {
+                return Err(TurnLifecycleBuildError::KickedPlayerStillRequired(
+                    player.clone(),
+                ));
+            }
         }
         Ok(Self {
             turn_states_by_player_id,

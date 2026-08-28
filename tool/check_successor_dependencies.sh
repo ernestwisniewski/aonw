@@ -99,11 +99,15 @@ while IFS= read -r -d '' source_file; do
       grep -nHE "^import .*infrastructure/" "${source_file}" \
         >>"${violations}" || true
       ;;
-    */read_model/*)
-      grep -nHE "package:flutter/" "${source_file}" \
+    */application/*|*/read_model/*)
+      grep -nHE "(package:(flutter|flame)/|dart:ui)" "${source_file}" \
         >>"${violations}" || true
       ;;
   esac
+  grep -niHE \
+    '(legacy[^[:alnum:]]*(dto|adapter|reader|writer)|upcaster|protocol[^[:alnum:]]*fallback|compatibility[^[:alnum:]]*(adapter|reader|fallback)|dart[^[:alnum:]]*fallback|fallback[^[:alnum:]]*to[^[:alnum:]]*dart)' \
+    "${source_file}" \
+    >>"${violations}" || true
 done < <(
   find "${successor_flutter}/lib" \
     \( -path '*/.dart_tool' -o -path '*/build' \) -prune -o \

@@ -46,7 +46,7 @@ void main() {
   test('client response rejects foreign versions', () {
     expect(
       () => AonwClientResponse.parse(
-        '{"apiVersion":6,"outcome":{"status":"success",'
+        '{"apiVersion":7,"outcome":{"status":"success",'
         '"response":{"type":"sessionClosed"}}}',
       ),
       throwsFormatException,

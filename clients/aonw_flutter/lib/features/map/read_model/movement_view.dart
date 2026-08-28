@@ -93,17 +93,55 @@ enum CommandRejectionCodeView {
   final String wireCode;
 }
 
+final class UnitMovedEventView {
+  const UnitMovedEventView({
+    required this.unitId,
+    required this.from,
+    required this.to,
+  });
+
+  final String unitId;
+  final MapHexCoordinate from;
+  final MapHexCoordinate to;
+}
+
+final class UnitMovementEvidenceView {
+  UnitMovementEvidenceView({
+    required this.unitId,
+    required this.from,
+    required List<MovementStepView> steps,
+  }) : steps = List.unmodifiable(steps);
+
+  final String unitId;
+  final MapHexCoordinate from;
+  final List<MovementStepView> steps;
+}
+
+final class MoveUnitExecutionView {
+  MoveUnitExecutionView({
+    required List<UnitMovedEventView> events,
+    required this.evidence,
+  }) : events = List.unmodifiable(events);
+
+  final List<UnitMovedEventView> events;
+  final UnitMovementEvidenceView? evidence;
+}
+
 final class MoveUnitResultView {
-  const MoveUnitResultView.accepted({required this.player})
-    : accepted = true,
-      rejectionCode = null;
+  const MoveUnitResultView.accepted({
+    required this.player,
+    required this.execution,
+  }) : accepted = true,
+       rejectionCode = null;
 
   const MoveUnitResultView.rejected({required CommandRejectionCodeView code})
     : accepted = false,
       rejectionCode = code,
-      player = null;
+      player = null,
+      execution = null;
 
   final bool accepted;
   final CommandRejectionCodeView? rejectionCode;
   final PlayerMapView? player;
+  final MoveUnitExecutionView? execution;
 }

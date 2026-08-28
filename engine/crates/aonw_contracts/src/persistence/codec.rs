@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_REPLAY_SEGMENT_COUNT,
-    MAX_SAVE_GAME_JSON_BYTES, PersistenceCodecError, ReplayLogDto, SaveGameDto,
+    MAX_SAVE_GAME_JSON_BYTES, PERSISTENCE_FORMAT_VERSION, PersistenceCodecError, ReplayLogDto,
+    SaveGameDto,
 };
 
 impl SaveGameDto {
@@ -12,7 +13,9 @@ impl SaveGameDto {
     ///
     /// Returns an error for oversized or structurally invalid input.
     pub fn from_json(input: &str) -> Result<Self, PersistenceCodecError> {
-        parse_bounded(input, MAX_SAVE_GAME_JSON_BYTES)
+        let save: Self = parse_bounded(input, MAX_SAVE_GAME_JSON_BYTES)?;
+        validate_format_version(save.format_version)?;
+        Ok(save)
     }
 
     /// Serializes compact save JSON.
@@ -21,6 +24,7 @@ impl SaveGameDto {
     ///
     /// Returns an error if serialization fails.
     pub fn to_json(&self) -> Result<String, PersistenceCodecError> {
+        validate_format_version(self.format_version)?;
         serialize_bounded(self, MAX_SAVE_GAME_JSON_BYTES)
     }
 }
@@ -33,6 +37,7 @@ impl ReplayLogDto {
     /// Returns an error for oversized, structurally invalid, or unbounded input.
     pub fn from_json(input: &str) -> Result<Self, PersistenceCodecError> {
         let replay: Self = parse_bounded(input, MAX_REPLAY_LOG_JSON_BYTES)?;
+        validate_format_version(replay.format_version)?;
         replay.validate_bounds()?;
         Ok(replay)
     }
@@ -43,6 +48,7 @@ impl ReplayLogDto {
     ///
     /// Returns an error if serialization fails.
     pub fn to_json(&self) -> Result<String, PersistenceCodecError> {
+        validate_format_version(self.format_version)?;
         self.validate_bounds()?;
         serialize_bounded(self, MAX_REPLAY_LOG_JSON_BYTES)
     }
@@ -86,12 +92,65 @@ fn serialize_bounded<T>(value: &T, maximum: usize) -> Result<String, Persistence
 where
     T: Serialize,
 {
-    let output = serde_json::to_string(value).map_err(PersistenceCodecError::Json)?;
-    if output.len() > maximum {
+    let mut output = BoundedWriter::new(maximum);
+    let serialized = serde_json::to_writer(&mut output, value);
+    if output.overflowed {
         return Err(PersistenceCodecError::TooLarge {
-            actual: output.len(),
+            actual: maximum.saturating_add(1),
             maximum,
         });
     }
-    Ok(output)
+    serialized.map_err(PersistenceCodecError::Json)?;
+    String::from_utf8(output.bytes).map_err(|error| {
+        PersistenceCodecError::Json(serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            error,
+        )))
+    })
+}
+
+fn validate_format_version(found: u16) -> Result<(), PersistenceCodecError> {
+    if found == PERSISTENCE_FORMAT_VERSION {
+        Ok(())
+    } else {
+        Err(PersistenceCodecError::UnsupportedFormatVersion {
+            found,
+            supported: PERSISTENCE_FORMAT_VERSION,
+        })
+    }
+}
+
+struct BoundedWriter {
+    bytes: Vec<u8>,
+    maximum: usize,
+    overflowed: bool,
+}
+
+impl BoundedWriter {
+    fn new(maximum: usize) -> Self {
+        Self {
+            bytes: Vec::with_capacity(maximum.min(1024 * 1024)),
+            maximum,
+            overflowed: false,
+        }
+    }
+}
+
+impl std::io::Write for BoundedWriter {
+    fn write(&mut self, buffer: &[u8]) -> std::io::Result<usize> {
+        let Some(next_len) = self.bytes.len().checked_add(buffer.len()) else {
+            self.overflowed = true;
+            return Err(std::io::Error::other("persistence size overflow"));
+        };
+        if next_len > self.maximum {
+            self.overflowed = true;
+            return Err(std::io::Error::other("persistence size limit exceeded"));
+        }
+        self.bytes.extend_from_slice(buffer);
+        Ok(buffer.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
 }

@@ -13,6 +13,7 @@ mod context;
 mod diplomacy;
 mod diplomacy_policy;
 mod economy;
+mod match_start;
 mod movement;
 mod outcome;
 mod production;
@@ -70,6 +71,7 @@ pub use economy::{
     EconomyQueryError, StrategicResourceProjection, StrategicResourceProjectionQuery,
     StrategicResourceSource, YieldValue,
 };
+pub use match_start::{MatchStartError, start_match};
 pub use movement::{
     AssignMerchantTradeRouteCommand, AutoExploreOption, AutoExploreUnitCommand,
     CompiledMovementMap, CompiledMovementMapError, DetachTroopCommand, DetachmentOption,

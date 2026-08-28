@@ -31,6 +31,48 @@ func open(map_document: String, scenario_document: String, actor_player_id: Stri
 	}, "sessionOpened")
 	return _extract_stamp(result, "stamp")
 
+func start_match(
+	map_document: String,
+	scenario_document: String,
+	actor_player_id: String,
+	match_identity: Dictionary,
+	fog_enabled: bool,
+) -> Dictionary:
+	var result := _execute({
+		"type": "startMatch",
+		"mapDocument": map_document,
+		"scenarioDocument": scenario_document,
+		"actorPlayerId": actor_player_id,
+		"matchIdentity": match_identity,
+		"fogMode": "enabled" if fog_enabled else "disabled",
+	}, "sessionOpened")
+	return _extract_stamp(result, "stamp")
+
+func handoff_actor(actor_player_id: String) -> Dictionary:
+	var result := _execute({
+		"type": "handoffActor",
+		"actorPlayerId": actor_player_id,
+	}, "actorHandedOff")
+	return _extract_stamp(result, "stamp")
+
+func advance_ai_turn(actor_player_id: String, command_budget: int) -> Dictionary:
+	return _decode_ai_turn(_execute({
+		"type": "advanceAiTurn",
+		"actorPlayerId": actor_player_id,
+		"commandBudget": command_budget,
+	}, "aiTurnAdvanced"))
+
+## Runs the potentially expensive AI planner away from Godot's main thread.
+func advance_ai_turn_async(actor_player_id: String, command_budget: int) -> Dictionary:
+	if not _transport.has_method("request_async"):
+		return advance_ai_turn(actor_player_id, command_budget)
+	var result := await _execute_async({
+		"type": "advanceAiTurn",
+		"actorPlayerId": actor_player_id,
+		"commandBudget": command_budget,
+	}, "aiTurnAdvanced")
+	return _decode_ai_turn(result)
+
 func close() -> Dictionary:
 	var result := _execute({"type": "closeSession"}, "sessionClosed")
 	if result["ok"]:
@@ -151,6 +193,18 @@ func _execute(request: Dictionary, response_type: String) -> Dictionary:
 			"The client transport uses an unsupported API version",
 		)
 	var envelope: Dictionary = _transport.call("request", request)
+	return _decode_envelope(envelope, response_type)
+
+func _execute_async(request: Dictionary, response_type: String) -> Dictionary:
+	if int(_transport.call("client_api_version")) != ClientProtocol.API_VERSION:
+		return _failure(
+			"unsupported_client_api",
+			"The client transport uses an unsupported API version",
+		)
+	var envelope: Dictionary = await _transport.call("request_async", request)
+	return _decode_envelope(envelope, response_type)
+
+func _decode_envelope(envelope: Dictionary, response_type: String) -> Dictionary:
 	if int(envelope.get("apiVersion", -1)) != ClientProtocol.API_VERSION:
 		return _failure(
 			"unsupported_client_api",
@@ -168,6 +222,21 @@ func _execute(request: Dictionary, response_type: String) -> Dictionary:
 	if not response is Dictionary or response.get("type", "") != response_type:
 		return _failure("invalid_client_response", "Rust returned an unexpected response type")
 	return {"ok": true, "value": response}
+
+func _decode_ai_turn(result: Dictionary) -> Dictionary:
+	if not result["ok"]:
+		return result
+	var body: Dictionary = result["value"]
+	var stamp := ReadModelDecoder.decode_stamp(body.get("stamp"))
+	if (
+		stamp == null
+		or not body.get("actorPlayerId") is String
+		or not body.get("executedCommands") is int
+		or not body.get("completedTurn") is bool
+	):
+		return _failure("invalid_client_response", "Rust returned an invalid AI turn result")
+	_stamp = stamp
+	return {"ok": true, "value": body}
 
 func _extract(result: Dictionary, field: String) -> Dictionary:
 	if not result["ok"]:

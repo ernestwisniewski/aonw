@@ -4,7 +4,8 @@ import 'dart:io';
 
 import 'package:aonw_flutter/app/composition/app_composition.dart';
 import 'package:aonw_flutter/app/telemetry/client_telemetry.dart';
-import 'package:aonw_flutter/features/map/application/map_repository.dart';
+import 'package:aonw_flutter/features/map/application/map_session_port.dart';
+import 'package:aonw_flutter/features/map/application/movement_session_port.dart';
 import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
@@ -18,16 +19,20 @@ import '../../support/map_test_fixture.dart';
 void main() {
   final lifecycle = _lifecycleOracle();
 
-  testWidgets('composition owns one controller and closes its repository', (
+  testWidgets('composition owns one controller and closes its session', (
     tester,
   ) async {
-    final first = _LifecycleMapRepository();
-    final second = _LifecycleMapRepository();
+    final first = _LifecycleGameSession();
+    final second = _LifecycleGameSession();
     final firstInput = _LifecycleMapInputSource();
     final secondInput = _LifecycleMapInputSource();
 
     await tester.pumpWidget(
-      AppComposition(mapRepository: first, mapInputSource: firstInput).root,
+      AppComposition(
+        mapSession: first,
+        movementSession: first,
+        mapInputSource: firstInput,
+      ).root,
     );
     await tester.pump();
     expect(first.loadCalls, 1);
@@ -35,7 +40,11 @@ void main() {
     expect(firstInput.closeCalls, 0);
 
     await tester.pumpWidget(
-      AppComposition(mapRepository: second, mapInputSource: secondInput).root,
+      AppComposition(
+        mapSession: second,
+        movementSession: second,
+        mapInputSource: secondInput,
+      ).root,
     );
     await tester.pump();
     final expected = lifecycle['routeReplace'] as Map<String, dynamic>;
@@ -52,7 +61,7 @@ void main() {
   testWidgets('application lifecycle pauses and resumes gamepad input', (
     tester,
   ) async {
-    final repository = _LifecycleMapRepository();
+    final session = _LifecycleGameSession();
     final input = _LifecycleMapInputSource();
     final telemetry = _RecordingClientTelemetry();
     final games = <AonwFlameGame>[];
@@ -60,7 +69,8 @@ void main() {
 
     await tester.pumpWidget(
       AppComposition(
-        mapRepository: repository,
+        mapSession: session,
+        movementSession: session,
         mapInputSource: input,
         flameGameFactory: () {
           final game = AonwFlameGame();
@@ -78,7 +88,7 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pump();
     expect(input.activeStates.last, isFalse);
-    expect(repository.closeCalls, 0);
+    expect(session.closeCalls, 0);
     expect(telemetry.events.last, ClientTelemetryEvent.appSuspended);
     expect(games.single.debugViewportActive, isFalse);
 
@@ -86,10 +96,7 @@ void main() {
     await tester.pump();
     expect(input.activeStates.last, isTrue);
     final expected = lifecycle['pauseResume'] as Map<String, dynamic>;
-    expect(
-      repository.closeCalls,
-      expected['repositoryCloseCallsBeforeUnmount'],
-    );
+    expect(session.closeCalls, expected['repositoryCloseCallsBeforeUnmount']);
     expect(input.activeStates, expected['inputActiveStates']);
     expect(telemetry.events.map((event) => event.code), expected['telemetry']);
     expect(games.single.debugViewportActive, isTrue);
@@ -97,7 +104,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
     expect(input.activeStates.last, isFalse);
-    expect(repository.closeCalls, 1);
+    expect(session.closeCalls, 1);
     expect(games.single.debugDisposed, isTrue);
   });
 
@@ -105,8 +112,8 @@ void main() {
     tester,
   ) async {
     final games = <AonwFlameGame>[];
-    final firstRepository = _LifecycleMapRepository();
-    final secondRepository = _LifecycleMapRepository();
+    final firstSession = _LifecycleGameSession();
+    final secondSession = _LifecycleGameSession();
     final firstInput = _LifecycleMapInputSource();
     final secondInput = _LifecycleMapInputSource();
 
@@ -118,7 +125,8 @@ void main() {
 
     await tester.pumpWidget(
       AppComposition(
-        mapRepository: firstRepository,
+        mapSession: firstSession,
+        movementSession: firstSession,
         mapInputSource: firstInput,
         flameGameFactory: createGame,
       ).root,
@@ -128,13 +136,13 @@ void main() {
     expect(games, hasLength(1));
     expect(games.single.debugMountCount, 1);
     expect(games.single.debugViewportActive, isTrue);
-    expect(firstRepository.loadCalls, 1);
+    expect(firstSession.loadCalls, 1);
     expect(firstInput.listenCalls, 1);
 
     await tester.tap(find.byKey(const ValueKey('open-settings')));
     await tester.pumpAndSettle();
     expect(games.single.debugViewportActive, isFalse);
-    expect(firstRepository.closeCalls, 0);
+    expect(firstSession.closeCalls, 0);
     expect(firstInput.listenCalls, 1);
     expect(firstInput.cancelCalls, 0);
 
@@ -145,7 +153,8 @@ void main() {
 
     await tester.pumpWidget(
       AppComposition(
-        mapRepository: secondRepository,
+        mapSession: secondSession,
+        movementSession: secondSession,
         mapInputSource: secondInput,
         flameGameFactory: createGame,
       ).root,
@@ -154,18 +163,18 @@ void main() {
 
     expect(games, hasLength(2));
     expect(games.first.debugDisposed, isTrue);
-    expect(firstRepository.closeCalls, 1);
+    expect(firstSession.closeCalls, 1);
     expect(firstInput.listenCalls, 1);
     expect(firstInput.cancelCalls, 1);
     expect(firstInput.closeCalls, 1);
-    expect(secondRepository.loadCalls, 1);
+    expect(secondSession.loadCalls, 1);
     expect(secondInput.listenCalls, 1);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
 
     expect(games.last.debugDisposed, isTrue);
-    expect(secondRepository.closeCalls, 1);
+    expect(secondSession.closeCalls, 1);
     expect(secondInput.cancelCalls, 1);
     expect(secondInput.closeCalls, 1);
   });
@@ -220,7 +229,8 @@ final class _LifecycleMapInputSource
   void setActive(bool active) => activeStates.add(active);
 }
 
-final class _LifecycleMapRepository implements MapRepository {
+final class _LifecycleGameSession
+    implements MapSessionPort, MovementSessionPort {
   var loadCalls = 0;
   var closeCalls = 0;
 

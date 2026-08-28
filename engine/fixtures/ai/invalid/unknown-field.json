@@ -14,7 +14,7 @@
   "wallClockBudget": false,
   "commands": [],
   "queries": [],
-  "clientApiVersion": 5,
+  "clientApiVersion": 6,
   "legacyPaths": false,
   "compatibilityReader": true
 }

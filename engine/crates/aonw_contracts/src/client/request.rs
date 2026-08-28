@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     CityBuildingTypeDto, CityConquestActionDto, CityProjectTypeDto, CitySpecializationTypeDto,
-    CoordinateDto, FieldImprovementKindDto, ResourceTypeDto, TechnologyIdDto, TroopKindDto,
-    UnitKindDto, WonderTypeDto,
+    CoordinateDto, FieldImprovementKindDto, MatchIdentityDto, ResourceTypeDto, TechnologyIdDto,
+    TroopKindDto, UnitKindDto, WonderTypeDto,
 };
 
 /// One current client protocol request.
@@ -42,8 +42,33 @@ pub enum ClientRequestBodyDto {
         /// Player receiving the local view.
         actor_player_id: String,
     },
+    /// Starts a fully configured playable match from authored content.
+    StartMatch {
+        /// Strict canonical map document.
+        map_document: String,
+        /// Strict current scenario document.
+        scenario_document: String,
+        /// Player receiving the initial local view.
+        actor_player_id: String,
+        /// Immutable rules, participants, control kinds, and game mode.
+        match_identity: MatchIdentityDto,
+        /// Explicit global fog mode for the match.
+        fog_mode: ClientFogModeDto,
+    },
     /// Closes the current session.
     CloseSession,
+    /// Changes the recipient in one explicitly local hot-seat match.
+    HandoffActor {
+        /// Participant receiving subsequent snapshots and commands.
+        actor_player_id: String,
+    },
+    /// Executes one complete, bounded turn for an AI participant.
+    AdvanceAiTurn {
+        /// AI participant whose turn should be executed.
+        actor_player_id: String,
+        /// Maximum number of authoritative commands for this turn.
+        command_budget: u32,
+    },
     /// Returns a complete recipient-safe snapshot.
     Snapshot,
     /// Executes one recipient-safe query.
@@ -74,6 +99,16 @@ pub enum ClientRequestBodyDto {
         /// Strict current replay document.
         replay_document: String,
     },
+}
+
+/// Explicit visibility mode selected when a new match starts.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ClientFogModeDto {
+    /// Every participant has unrestricted world visibility.
+    Disabled,
+    /// Every participant receives complete fail-closed fog state.
+    Enabled,
 }
 
 /// Authoritative commands available to local clients.

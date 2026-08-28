@@ -1,4 +1,5 @@
-import 'package:aonw_flutter/features/map/application/map_repository.dart';
+import 'package:aonw_flutter/features/map/application/map_session_port.dart';
+import 'package:aonw_flutter/features/map/application/movement_session_port.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
@@ -129,24 +130,46 @@ RoutePlanView testRoutePlanView({
   ],
 );
 
-final class FakeMapRepository implements MapRepository {
-  FakeMapRepository.success(
+MoveUnitExecutionView testMoveUnitExecutionView({
+  String unitId = 'preview-commander',
+  MapHexCoordinate from = const (col: 0, row: 0),
+  MapHexCoordinate to = const (col: 1, row: 0),
+}) => MoveUnitExecutionView(
+  events: [UnitMovedEventView(unitId: unitId, from: from, to: to)],
+  evidence: UnitMovementEvidenceView(
+    unitId: unitId,
+    from: from,
+    steps: [
+      MovementStepView(
+        coordinate: to,
+        enterCostUnits: 4,
+        cumulativeCostUnits: 4,
+      ),
+    ],
+  ),
+);
+
+final class FakeGameSession implements MapSessionPort, MovementSessionPort {
+  FakeGameSession.success(
     this.scene, {
     this.reachableResult,
     this.routeResult,
     this.moveResult,
+    this.moveFailure,
   }) : failure = null;
-  FakeMapRepository.failure(this.failure)
+  FakeGameSession.failure(this.failure)
     : scene = null,
       reachableResult = null,
       routeResult = null,
-      moveResult = null;
+      moveResult = null,
+      moveFailure = null;
 
   final MapScene? scene;
   final MapLoadException? failure;
   final ReachableView? reachableResult;
   final RoutePlanView? routeResult;
   final MoveUnitResultView? moveResult;
+  final MovementSessionException? moveFailure;
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
@@ -173,7 +196,11 @@ final class FakeMapRepository implements MapRepository {
     required int expectedRevision,
     required String unitId,
     required MapHexCoordinate target,
-  }) async => moveResult ?? (throw StateError('No move fixture.'));
+  }) async {
+    final error = moveFailure;
+    if (error != null) throw error;
+    return moveResult ?? (throw StateError('No move fixture.'));
+  }
 
   @override
   Future<void> close() async {}

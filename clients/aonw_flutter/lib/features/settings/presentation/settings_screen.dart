@@ -6,7 +6,7 @@ import '../../../design_system/aonw_tokens.dart';
 import '../../../design_system/widgets/aonw_panel.dart';
 import '../../../l10n/l10n.dart';
 import '../application/client_settings.dart';
-import '../application/client_settings_controller.dart';
+import 'client_settings_controller.dart';
 
 final class SettingsScreen extends StatelessWidget {
   const SettingsScreen({required this.controller, super.key});

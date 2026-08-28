@@ -5,6 +5,8 @@ use aonw_engine::{CanonicalEngineError, CanonicalQueryError};
 pub enum RuntimeError {
     /// No session is open.
     SessionNotOpen,
+    /// A prior internal failure invalidated the in-memory session transaction.
+    SessionPoisoned,
     /// A read-only query was rejected.
     Query(CanonicalQueryError),
     /// Canonical transition construction failed.
@@ -26,6 +28,7 @@ impl RuntimeError {
     pub const fn code(&self) -> &'static str {
         match self {
             Self::SessionNotOpen => "session_not_open",
+            Self::SessionPoisoned => "session_poisoned",
             Self::Query(error) => error.code(),
             Self::Engine(_) => "canonical_engine_failed",
             Self::EventOffsetOverflow => "event_offset_overflow",
@@ -38,6 +41,9 @@ impl core::fmt::Display for RuntimeError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::SessionNotOpen => formatter.write_str("session is not open"),
+            Self::SessionPoisoned => {
+                formatter.write_str("session was invalidated by a prior internal failure")
+            }
             Self::Query(source) => source.fmt(formatter),
             Self::Engine(source) => source.fmt(formatter),
             Self::EventOffsetOverflow => formatter.write_str("event offset overflow"),

@@ -36,6 +36,12 @@ struct RouteRecord {
     enter_cost: MovementUnits,
 }
 
+#[derive(Clone, Copy, Debug)]
+struct BestRouteRecord {
+    score: RouteScore,
+    record_index: usize,
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct FrontierNode {
     record_index: usize,
@@ -68,7 +74,8 @@ struct PreparedRouteSearch {
     maximum_movement: MovementUnits,
     occupied: MovementOccupancy,
     records: Vec<RouteRecord>,
-    best_by_tile: Vec<Vec<(u32, bool, RouteScore, usize)>>,
+    best_by_state: Vec<Option<BestRouteRecord>>,
+    remaining_slots: usize,
     frontier: BinaryHeap<FrontierNode>,
     metrics: MovementSearchMetrics,
     movement_domain: aonw_domain::UnitMovementDomain,
@@ -184,6 +191,13 @@ fn prepare_route_search(
         return None;
     }
     let occupied = MovementOccupancy::for_unit(units, map, unit, context);
+    let maximum_movement = maximum_override.unwrap_or_else(|| {
+        maximum_movement_units(
+            context.ruleset(),
+            unit.kind(),
+            unit.carried_artifact_id().is_some(),
+        )
+    });
 
     let start_state = RouteState {
         tile_index: start_index,
@@ -201,9 +215,20 @@ fn prepare_route_search(
         parent: None,
         enter_cost: MovementUnits::ZERO,
     }];
-    let mut best_by_tile =
-        vec![Vec::<(u32, bool, RouteScore, usize)>::new(); map.bounds().tile_count()];
-    best_by_tile[start_index].push((start_state.remaining, start_state.started, start_score, 0));
+    let remaining_slots = usize::try_from(maximum_movement.get().max(available_movement.get()))
+        .ok()?
+        .checked_add(1)?;
+    let state_slot_count = map
+        .bounds()
+        .tile_count()
+        .checked_mul(remaining_slots)?
+        .checked_mul(2)?;
+    let mut best_by_state = vec![None; state_slot_count];
+    let start_slot = route_state_slot(start_state, remaining_slots)?;
+    best_by_state[start_slot] = Some(BestRouteRecord {
+        score: start_score,
+        record_index: 0,
+    });
     let mut frontier = BinaryHeap::new();
     let start_node = frontier_node(map, 0, records[0])?;
     frontier.push(start_node);
@@ -212,16 +237,11 @@ fn prepare_route_search(
     metrics.pushed();
     Some(PreparedRouteSearch {
         target_indices: target_indices.into_boxed_slice(),
-        maximum_movement: maximum_override.unwrap_or_else(|| {
-            maximum_movement_units(
-                context.ruleset(),
-                unit.kind(),
-                unit.carried_artifact_id().is_some(),
-            )
-        }),
+        maximum_movement,
         occupied,
         records,
-        best_by_tile,
+        best_by_state,
+        remaining_slots,
         frontier,
         metrics,
         movement_domain: definition.capabilities().movement_domain.domain(),
@@ -236,7 +256,7 @@ fn run_route_search(
 ) -> RouteSearchResult {
     while let Some(current_node) = search.frontier.pop() {
         search.metrics.popped();
-        if !is_current_best(&search.best_by_tile, current_node) {
+        if !is_current_best(&search.best_by_state, search.remaining_slots, current_node) {
             continue;
         }
         let current = search.records[current_node.record_index];
@@ -304,7 +324,8 @@ fn run_route_search(
                 ..next_score
             };
             if !record_if_better(
-                &mut search.best_by_tile[next_index],
+                &mut search.best_by_state,
+                search.remaining_slots,
                 next_state,
                 next_score,
                 search.records.len(),
@@ -348,36 +369,49 @@ fn frontier_node(
 }
 
 fn is_current_best(
-    best_by_tile: &[Vec<(u32, bool, RouteScore, usize)>],
+    best_by_state: &[Option<BestRouteRecord>],
+    remaining_slots: usize,
     node: FrontierNode,
 ) -> bool {
-    best_by_tile[node.state.tile_index]
-        .iter()
-        .any(|(remaining, started, score, record_index)| {
-            *remaining == node.state.remaining
-                && *started == node.state.started
-                && *score == node.score
-                && *record_index == node.record_index
-        })
+    route_state_slot(node.state, remaining_slots)
+        .and_then(|slot| best_by_state.get(slot).copied().flatten())
+        .is_some_and(|best| best.score == node.score && best.record_index == node.record_index)
 }
 
 fn record_if_better(
-    best: &mut Vec<(u32, bool, RouteScore, usize)>,
+    best_by_state: &mut [Option<BestRouteRecord>],
+    remaining_slots: usize,
     state: RouteState,
     score: RouteScore,
     record_index: usize,
 ) -> bool {
-    if let Some(existing) = best.iter_mut().find(|(remaining, started, _, _)| {
-        *remaining == state.remaining && *started == state.started
-    }) {
-        if existing.2 <= score {
-            return false;
-        }
-        *existing = (state.remaining, state.started, score, record_index);
-        return true;
+    let Some(slot) = route_state_slot(state, remaining_slots) else {
+        return false;
+    };
+    let Some(best) = best_by_state.get_mut(slot) else {
+        return false;
+    };
+    if best.is_some_and(|existing| existing.score <= score) {
+        return false;
     }
-    best.push((state.remaining, state.started, score, record_index));
+    *best = Some(BestRouteRecord {
+        score,
+        record_index,
+    });
     true
+}
+
+fn route_state_slot(state: RouteState, remaining_slots: usize) -> Option<usize> {
+    let remaining = usize::try_from(state.remaining).ok()?;
+    if remaining >= remaining_slots {
+        return None;
+    }
+    state
+        .tile_index
+        .checked_mul(remaining_slots)?
+        .checked_add(remaining)?
+        .checked_mul(2)?
+        .checked_add(usize::from(state.started))
 }
 
 fn next_score(score: RouteScore, enter_cost: MovementUnits) -> Option<RouteScore> {

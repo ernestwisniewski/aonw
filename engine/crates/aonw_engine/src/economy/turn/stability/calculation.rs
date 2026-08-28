@@ -272,15 +272,8 @@ fn artifact_source(state: &GameState, player: &PlayerId, values: StabilityValues
 
 fn wonder_source(state: &GameState, ruleset: &RulesetDefinition, player: &PlayerId) -> Option<i64> {
     let mut total = 0_i64;
-    for city in state
-        .cities()
-        .iter()
-        .filter(|city| city.owner_player_id() == player)
-    {
-        for wonder in city.wonders() {
-            if !state.wonder_registry().completed_by().contains_key(wonder) {
-                continue;
-            }
+    for (wonder, owner) in state.wonder_registry().completed_by() {
+        if owner == player {
             total = total.checked_add(ruleset.production().wonder(*wonder)?.stability_delta())?;
         }
     }

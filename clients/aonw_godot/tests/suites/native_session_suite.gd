@@ -31,7 +31,7 @@ class ForeignVersionTransport:
 
 	func request(_body: Dictionary) -> Dictionary:
 		return {
-			"apiVersion": 5,
+			"apiVersion": 6,
 			"outcome": {
 				"status": "success",
 				"response": {"type": "capabilities"},
@@ -47,7 +47,7 @@ class UnsupportedClientTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 6
+		return 7
 
 	func request(_body: Dictionary) -> Dictionary:
 		requested = true
@@ -60,7 +60,7 @@ class MalformedSnapshotTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 5
+		return 6
 
 	func request(body: Dictionary) -> Dictionary:
 		if body.get("type", "") == "openSession":
@@ -74,7 +74,7 @@ class MalformedSnapshotTransport:
 
 	func _success(response: Dictionary) -> Dictionary:
 		return {
-			"apiVersion": 5,
+			"apiVersion": 6,
 			"outcome": {"status": "success", "response": response},
 		}
 
@@ -475,7 +475,7 @@ func _test_shared_client_contract() -> void:
 		var inspect_request: Variant = JSON.parse_string(inspect_request_file.get_as_text())
 		_check(
 			inspect_request is Dictionary
-			and inspect_request["apiVersion"] == 5
+			and inspect_request["apiVersion"] == 6
 			and inspect_request["request"]["type"] == "inspectMap",
 			"Godot consumes the shared inspectMap request contract",
 		)
@@ -489,7 +489,7 @@ func _test_shared_client_contract() -> void:
 		var request: Variant = JSON.parse_string(request_file.get_as_text())
 		_check(
 			request is Dictionary
-			and request["apiVersion"] == 5
+			and request["apiVersion"] == 6
 			and request["request"]["command"]["type"] == "moveUnit",
 			"Godot consumes the shared move request contract",
 		)
@@ -500,7 +500,7 @@ func _test_shared_client_contract() -> void:
 	)
 	_check(response_file != null, "shared client response golden opens in Godot")
 	if response_file != null:
-		var decoder := ClientResponseDecoder.new(5)
+		var decoder := ClientResponseDecoder.new(6)
 		var decoded := decoder.decode(response_file.get_as_text())
 		_check(
 			decoded.get("outcome", {}).get("status", "") == "success",
@@ -531,7 +531,7 @@ func _test_shared_client_contract() -> void:
 			"Godot rejects an unknown command rejection code",
 		)
 		var invalid_version := decoder.decode(
-			'{"apiVersion":"5","outcome":{"status":"success","response":{}}}'
+			'{"apiVersion":"6","outcome":{"status":"success","response":{}}}'
 		)
 		_check(
 			invalid_version.get("outcome", {}).get("status", "") == "failure",
@@ -557,7 +557,7 @@ func _test_shared_client_contract() -> void:
 	)
 	_check(map_response_file != null, "shared map response golden opens in Godot")
 	if map_response_file != null:
-		var decoded_map := ClientResponseDecoder.new(5).decode(map_response_file.get_as_text())
+		var decoded_map := ClientResponseDecoder.new(6).decode(map_response_file.get_as_text())
 		var map_body: Dictionary = decoded_map.get("outcome", {}).get("response", {})
 		var mapped := MapViewMapper.new().from_wire(map_body.get("map"))
 		_check(

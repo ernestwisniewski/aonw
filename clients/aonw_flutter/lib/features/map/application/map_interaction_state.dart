@@ -27,6 +27,7 @@ final class MapInteractionState {
     this.route,
     this.movementPending = false,
     this.movementError,
+    this.lastMovementExecution,
     this.referenceVisible = true,
   });
 
@@ -37,6 +38,7 @@ final class MapInteractionState {
   final RoutePlanView? route;
   final bool movementPending;
   final MapMovementFailure? movementError;
+  final MoveUnitExecutionView? lastMovementExecution;
   final bool referenceVisible;
 
   MapInteractionState copyWith({
@@ -53,6 +55,7 @@ final class MapInteractionState {
     bool? movementPending,
     MapMovementFailure? movementError,
     bool clearMovementError = false,
+    MoveUnitExecutionView? lastMovementExecution,
     bool? referenceVisible,
   }) => MapInteractionState(
     hovered: clearHovered ? null : hovered ?? this.hovered,
@@ -66,6 +69,7 @@ final class MapInteractionState {
     movementError: clearMovementError
         ? null
         : movementError ?? this.movementError,
+    lastMovementExecution: lastMovementExecution ?? this.lastMovementExecution,
     referenceVisible: referenceVisible ?? this.referenceVisible,
   );
 }

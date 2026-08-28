@@ -238,11 +238,7 @@ pub(super) fn wonder_rejection(
         .production()
         .wonder(wonder)
         .ok_or_else(|| invalid("wonder is absent from production content"))?;
-    let completed = state.wonder_registry().completed_by().contains_key(&wonder)
-        || state
-            .cities()
-            .iter()
-            .any(|candidate| candidate.wonders().contains(&wonder));
+    let completed = state.wonder_registry().completed_by().contains_key(&wonder);
     let city_builds_wonder = matches!(
         city.production_queue().map(CityProductionQueue::target),
         Some(CityProductionTarget::Wonder(_))

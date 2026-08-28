@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:aonw_flutter/features/map/application/map_repository.dart';
-import 'package:aonw_flutter/features/map/infrastructure/rust_map_repository.dart';
+import 'package:aonw_flutter/features/map/application/map_session_port.dart';
+import 'package:aonw_flutter/features/map/infrastructure/rust_game_session_gateway.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,13 +10,13 @@ void main() {
   test('rejects missing capabilities before loading map assets', () async {
     final assets = _GuardedAssetBundle();
     final session = _IncompleteRustSession();
-    final repository = RustMapRepository(
+    final gateway = RustGameSessionGateway(
       assets: assets,
       sessionFactory: () async => session,
     );
 
     await expectLater(
-      repository.load(MapAssetPaths.starter),
+      gateway.load(MapAssetPaths.starter),
       throwsA(
         isA<MapLoadException>()
             .having((error) => error.code, 'code', 'rust_capability_mismatch')

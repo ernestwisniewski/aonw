@@ -203,22 +203,18 @@ fn wonder_science_per_city(
     player: &PlayerId,
 ) -> Result<i64, ResearchError> {
     state
-        .cities()
+        .wonder_registry()
+        .completed_by()
         .iter()
-        .filter(|city| city.owner_player_id() == player)
-        .try_fold(0_i64, |total, city| {
-            city.wonders().iter().try_fold(total, |sum, wonder| {
-                if state.wonder_registry().completed_by().get(wonder) != Some(player) {
-                    return Ok(sum);
-                }
-                let amount = context
-                    .ruleset()
-                    .production()
-                    .wonder(*wonder)
-                    .ok_or_else(|| invalid("completed wonder is absent from production content"))?
-                    .empire_science_per_city();
-                checked_sum([sum, amount])
-            })
+        .filter(|(_, owner)| *owner == player)
+        .try_fold(0_i64, |total, (wonder, _)| {
+            let amount = context
+                .ruleset()
+                .production()
+                .wonder(*wonder)
+                .ok_or_else(|| invalid("completed wonder is absent from production content"))?
+                .empire_science_per_city();
+            checked_sum([total, amount])
         })
 }
 
