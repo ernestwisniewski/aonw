@@ -176,7 +176,7 @@ MapRenderSnapshot _largeSnapshot() {
       worldHeight: bounds.height,
       pages: const [],
     ),
-    player: PlayerMapView(
+    player: PlayerMapView.preview(
       actorPlayerId: 'pilot-player',
       stamp: const SessionStampView(
         revision: 0,

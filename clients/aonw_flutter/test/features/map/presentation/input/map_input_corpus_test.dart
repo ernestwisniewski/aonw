@@ -37,6 +37,7 @@ void main() {
         session: session,
         movement: session,
         unitActions: session,
+        turns: session,
       );
       final flameGame = AonwFlameGame();
       await tester.pumpWidget(

@@ -10,6 +10,8 @@ import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
+import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
+import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
 import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
@@ -34,6 +36,7 @@ void main() {
         mapSession: first,
         movementSession: first,
         unitActionSession: first,
+        turnSession: first,
         mapInputSource: firstInput,
       ).root,
     );
@@ -47,6 +50,7 @@ void main() {
         mapSession: second,
         movementSession: second,
         unitActionSession: second,
+        turnSession: second,
         mapInputSource: secondInput,
       ).root,
     );
@@ -76,6 +80,7 @@ void main() {
         mapSession: session,
         movementSession: session,
         unitActionSession: session,
+        turnSession: session,
         mapInputSource: input,
         flameGameFactory: () {
           final game = AonwFlameGame();
@@ -133,6 +138,7 @@ void main() {
         mapSession: firstSession,
         movementSession: firstSession,
         unitActionSession: firstSession,
+        turnSession: firstSession,
         mapInputSource: firstInput,
         flameGameFactory: createGame,
       ).root,
@@ -162,6 +168,7 @@ void main() {
         mapSession: secondSession,
         movementSession: secondSession,
         unitActionSession: secondSession,
+        turnSession: secondSession,
         mapInputSource: secondInput,
         flameGameFactory: createGame,
       ).root,
@@ -237,7 +244,11 @@ final class _LifecycleMapInputSource
 }
 
 final class _LifecycleGameSession
-    implements MapSessionPort, MovementSessionPort, UnitActionSessionPort {
+    implements
+        MapSessionPort,
+        MovementSessionPort,
+        TurnSessionPort,
+        UnitActionSessionPort {
   var loadCalls = 0;
   var closeCalls = 0;
 
@@ -273,6 +284,10 @@ final class _LifecycleGameSession
     required String unitId,
     required UnitActionKindView action,
   }) => throw UnimplementedError();
+
+  @override
+  Future<TurnCommandResultView> endTurn({required int expectedRevision}) =>
+      throw UnimplementedError();
 
   @override
   Future<void> close() async {

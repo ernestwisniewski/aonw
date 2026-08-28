@@ -1,6 +1,9 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 
+import '../../turns/application/turn_session_port.dart';
+import '../../turns/infrastructure/turn_view_mapper.dart';
+import '../../turns/read_model/turn_command_view.dart';
 import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/infrastructure/rust_unit_action_gateway.dart';
 import '../../unit_actions/infrastructure/unit_action_view_mapper.dart';
@@ -19,13 +22,18 @@ import 'rust_game_session_context.dart';
 import 'rust_game_session_loader.dart';
 
 final class RustGameSessionGateway
-    implements MapSessionPort, MovementSessionPort, UnitActionSessionPort {
+    implements
+        MapSessionPort,
+        MovementSessionPort,
+        TurnSessionPort,
+        UnitActionSessionPort {
   RustGameSessionGateway({
     required AssetBundle assets,
     RustSessionFactory sessionFactory = createAonwRustSession,
     MapViewMapper mapper = const MapViewMapper(),
     PlayerMapViewMapper playerMapper = const PlayerMapViewMapper(),
     MovementViewMapper movementMapper = const MovementViewMapper(),
+    TurnViewMapper turnMapper = const TurnViewMapper(),
     UnitActionViewMapper unitActionMapper = const UnitActionViewMapper(),
   }) : _loader = RustGameSessionLoader(
          assets: assets,
@@ -35,6 +43,7 @@ final class RustGameSessionGateway
        ),
        _playerMapper = playerMapper,
        _movementMapper = movementMapper,
+       _turnMapper = turnMapper,
        _unitActions = RustUnitActionGateway(
          playerMapper: playerMapper,
          mapper: unitActionMapper,
@@ -43,6 +52,7 @@ final class RustGameSessionGateway
   final RustGameSessionLoader _loader;
   final PlayerMapViewMapper _playerMapper;
   final MovementViewMapper _movementMapper;
+  final TurnViewMapper _turnMapper;
   final RustUnitActionGateway _unitActions;
   AonwRustSession? _session;
   MapView? _map;
@@ -224,6 +234,56 @@ final class RustGameSessionGateway
       );
     }
   });
+
+  @override
+  Future<TurnCommandResultView> endTurn({required int expectedRevision}) =>
+      _serialize(() async {
+        final context = _context();
+        try {
+          final response = await _send(
+            context.session,
+            AonwClientRequest.endTurn(expectedRevision: expectedRevision),
+          );
+          final command = response.require<AonwCommandResponse>().result;
+          if (!command.accepted) {
+            final rejection = _turnMapper.rejected(
+              command,
+              map: context.map,
+              currentRevision: context.player.stamp.revision,
+            );
+            await _applyCommandPatch(context, command);
+            return TurnCommandResultView.rejected(code: rejection);
+          }
+          final execution = _turnMapper.accepted(
+            command,
+            map: context.map,
+            expectedRevision: expectedRevision,
+          );
+          final player = await _applyCommandPatch(context, command);
+          return TurnCommandResultView.accepted(
+            player: player,
+            activities: execution.activities,
+            evidence: execution.evidence,
+          );
+        } on TurnSessionException {
+          rethrow;
+        } on MovementSessionException catch (error) {
+          throw TurnSessionException(
+            code: error.code,
+            message: 'The turn request could not be completed.',
+            diagnosticCause: error.diagnosticCause,
+            diagnosticStackTrace: error.diagnosticStackTrace,
+            resyncedPlayer: error.resyncedPlayer,
+          );
+        } on FormatException catch (error, stackTrace) {
+          throw TurnSessionException(
+            code: 'invalid_session_protocol',
+            message: 'The turn response is incompatible with this client.',
+            diagnosticCause: error,
+            diagnosticStackTrace: stackTrace,
+          );
+        }
+      });
 
   @override
   Future<void> close() async {

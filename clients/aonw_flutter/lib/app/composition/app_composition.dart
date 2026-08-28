@@ -9,6 +9,7 @@ import '../../features/map/presentation/map_presentation_controller.dart';
 import '../../features/settings/application/client_settings_store.dart';
 import '../../features/settings/infrastructure/shared_preferences_client_settings_store.dart';
 import '../../features/settings/presentation/client_settings_controller.dart';
+import '../../features/turns/application/turn_session_port.dart';
 import '../../features/unit_actions/application/unit_action_session_port.dart';
 import '../../game/aonw_flame_game.dart';
 import '../navigation/aonw_app.dart';
@@ -19,6 +20,7 @@ final class AppComposition {
     required MapSessionPort mapSession,
     required MovementSessionPort movementSession,
     required UnitActionSessionPort unitActionSession,
+    required TurnSessionPort turnSession,
     MapInputSource? mapInputSource,
     ClientSettingsStore? settingsStore,
     AonwFlameGameFactory flameGameFactory = AonwFlameGame.new,
@@ -28,6 +30,7 @@ final class AppComposition {
            session: mapSession,
            movement: movementSession,
            unitActions: unitActionSession,
+           turns: turnSession,
          ),
          mapInputSource: mapInputSource,
          flameGameFactory: flameGameFactory,
@@ -45,6 +48,7 @@ final class AppComposition {
       mapSession: gateway,
       movementSession: gateway,
       unitActionSession: gateway,
+      turnSession: gateway,
       mapInputSource: GamepadMapInputSource(),
       settingsStore: SharedPreferencesClientSettingsStore(),
       telemetry: telemetry,

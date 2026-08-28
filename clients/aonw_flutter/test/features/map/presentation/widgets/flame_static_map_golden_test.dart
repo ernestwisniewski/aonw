@@ -176,7 +176,7 @@ MapRenderSnapshot _gameplaySnapshot(
 );
 
 PlayerMapView _player(MapView map, {List<VisibleUnitView> units = const []}) =>
-    PlayerMapView(
+    PlayerMapView.preview(
       actorPlayerId: 'preview-player',
       stamp: starterMapGoldenStamp(map.contentHash),
       turn: 1,

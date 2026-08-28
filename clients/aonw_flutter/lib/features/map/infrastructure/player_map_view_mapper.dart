@@ -1,5 +1,6 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 
+import '../../turns/read_model/recipient_turn_view.dart';
 import '../read_model/map_view.dart';
 import '../read_model/player_map_view.dart';
 import 'pending_action_view_mapper.dart';
@@ -19,15 +20,33 @@ final class PlayerMapViewMapper {
   }) {
     _validateSnapshot(wire, map: map, actorPlayerId: actorPlayerId);
     final units = _mapUnits(wire.units, map);
+    final pendingAction = _pendingActionMapper.fromWire(
+      wire.pendingAction,
+      actorPlayerId: actorPlayerId,
+      units: units,
+      map: map,
+    );
     return PlayerMapView(
       actorPlayerId: actorPlayerId,
       stamp: _mapStamp(wire.stamp),
-      turn: wire.turn,
-      pendingAction: _pendingActionMapper.fromWire(
-        wire.pendingAction,
-        actorPlayerId: actorPlayerId,
-        units: units,
-        map: map,
+      turnView: RecipientTurnView(
+        number: wire.turn,
+        ownState: switch (wire.turnLifecycle.ownState) {
+          AonwPlayerTurnState.active => RecipientTurnStateView.active,
+          AonwPlayerTurnState.finished => RecipientTurnStateView.finished,
+          null => null,
+        },
+        ownSubmitted: wire.turnLifecycle.ownSubmitted,
+        requiredSubmissionCount: wire.turnLifecycle.requiredSubmissionCount,
+        submittedCount: wire.turnLifecycle.submittedCount,
+        pendingAction: pendingAction,
+        outcome: GameOutcomeView(
+          condition: GameOutcomeConditionView.values.byName(
+            wire.outcome.condition.name,
+          ),
+          winnerPlayerId: wire.outcome.winnerPlayerId,
+          scoreByPlayerId: wire.outcome.scoreByPlayerId,
+        ),
       ),
       units: units,
     );

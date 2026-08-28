@@ -12,6 +12,7 @@ import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/features/turns/read_model/turn_activity_view.dart';
 import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
@@ -211,6 +212,40 @@ void main() {
     expect(backend.closeCalls, 1);
   });
 
+  test('advances multiple complete local turns through Rust patches', () async {
+    late _TrackingRustSession backend;
+    final gateway = RustGameSessionGateway(
+      assets: _FileAssetBundle(),
+      sessionFactory: () async {
+        final native = await createAonwRustSession();
+        if (native == null) return null;
+        backend = _TrackingRustSession(native);
+        return backend;
+      },
+    );
+    addTearDown(gateway.close);
+
+    var player = (await gateway.load(MapAssetPaths.starter)).player;
+    final identities = <TurnActivityIdentityView>{};
+    for (var step = 0; step < 3; step++) {
+      final result = await gateway.endTurn(
+        expectedRevision: player.stamp.revision,
+      );
+      expect(result.accepted, isTrue);
+      expect(result.evidence, isNotNull);
+      expect(result.activities, isNotEmpty);
+      expect(
+        result.activities.every((item) => identities.add(item.identity)),
+        isTrue,
+      );
+      player = result.player!;
+      expect(player.stamp.revision, step + 1);
+      expect(player.turn, step + 2);
+    }
+    expect(identities, isNotEmpty);
+    expect(backend.maximumInFlightRequests, 1);
+  });
+
   testWidgets('renders the Rust-backed 40 by 30 Dravonia map', (tester) async {
     final loadedMap = await tester.runAsync(_loadDravonia);
     expect(loadedMap, isNotNull);
@@ -288,7 +323,7 @@ Future<MapView?> _loadMap(String path) async {
   }
 }
 
-PlayerMapView _emptyPlayer(String mapHash) => PlayerMapView(
+PlayerMapView _emptyPlayer(String mapHash) => PlayerMapView.preview(
   actorPlayerId: 'preview-player',
   stamp: SessionStampView(
     revision: 0,

@@ -187,4 +187,5 @@ const _requiredClientFeatures = <AonwClientFeature>{
   AonwClientFeature.routePlan,
   AonwClientFeature.moveUnit,
   AonwClientFeature.unitActions,
+  AonwClientFeature.turnKernel,
 };

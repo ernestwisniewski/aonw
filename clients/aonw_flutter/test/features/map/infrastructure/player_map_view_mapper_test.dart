@@ -1,6 +1,7 @@
 import 'package:aonw_flutter/features/map/infrastructure/player_map_view_mapper.dart';
 import 'package:aonw_flutter/features/map/read_model/pending_action_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/features/turns/read_model/recipient_turn_view.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,6 +24,12 @@ void main() {
     expect(player.stamp.mapHash, map.contentHash);
     expect(player.stamp.revision, 7);
     expect(player.turn, 7);
+    expect(player.turnView.ownState, RecipientTurnStateView.active);
+    expect(player.turnView.ownSubmitted, isFalse);
+    expect(player.turnView.requiredSubmissionCount, 1);
+    expect(player.turnView.submittedCount, 0);
+    expect(player.turnView.outcome.condition, GameOutcomeConditionView.ongoing);
+    expect(player.turnView.canEndTurn, isTrue);
     expect(player.units.map((unit) => unit.id), ['unit-a', 'unit-b']);
     expect(player.units.first.kind, VisibleUnitKind.commander);
     expect(player.units.first.posture, VisibleUnitPosture.active);

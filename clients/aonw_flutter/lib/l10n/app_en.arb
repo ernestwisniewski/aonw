@@ -70,6 +70,39 @@
       "turn": {"type": "int"}
     }
   },
+  "turnSubmissionProgress": "Ready: {submitted} of {required}",
+  "@turnSubmissionProgress": {
+    "placeholders": {
+      "submitted": {"type": "int"},
+      "required": {"type": "int"}
+    }
+  },
+  "turnActive": "Your turn",
+  "turnFinished": "Turn finished",
+  "turnSubmitted": "Turn submitted",
+  "turnWaiting": "Waiting",
+  "turnPendingAction": "Action required",
+  "endTurn": "End turn",
+  "endingTurn": "Ending turn",
+  "turnFailure": "{failure, select, requestFailed{The turn request could not be completed.} responseIncompatible{The turn response is incompatible with this client.} sessionUnavailable{The local game session is unavailable.} stale_revision{The game state changed. Review it and try again.} match_finished{The match has already finished.} turn_player_not_controlled{This player cannot end the current turn.} turn_player_not_active{This player is not active.} turn_scope_invalid{The current turn scope is invalid.} turn_processor_unsupported{A required turn processor is unavailable.} turn_number_overflow{The next turn cannot be represented.} state_revision_overflow{The game revision cannot be advanced.} other{The turn could not be completed.}}",
+  "@turnFailure": {
+    "placeholders": {
+      "failure": {"type": "String"}
+    }
+  },
+  "gameOutcome": "{condition, select, conquest{Conquest victory} domination{Domination victory} cultural{Cultural victory} score{Score victory} resignation{Match ended by resignation} draw{Draw} ongoing{Match in progress} other{Match ended}}",
+  "@gameOutcome": {
+    "placeholders": {
+      "condition": {"type": "String"}
+    }
+  },
+  "activityLog": "Activity",
+  "activityEvent": "{category, select, artifact{Artifact activity} city{City activity} research{Research progress} objective{Strategic objective update} outcome{Match outcome updated} combat{Combat activity} diplomacy{Diplomatic activity} unit{Unit activity} turn{Turn updated} worker{Worker job completed} other{Game activity}}",
+  "@activityEvent": {
+    "placeholders": {
+      "category": {"type": "String"}
+    }
+  },
   "loadingMap": "Loading map",
   "mapLoadingFailed": "Map loading failed",
   "mapUnavailable": "Map unavailable",

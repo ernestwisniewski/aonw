@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../turns/application/turn_session_port.dart';
 import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
 import '../application/game_session_state.dart';
@@ -15,6 +16,7 @@ final class MapPresentationController extends ChangeNotifier {
     required MapSessionPort session,
     required MovementSessionPort movement,
     required UnitActionSessionPort unitActions,
+    required TurnSessionPort turns,
     MapAssetPaths assets = MapAssetPaths.starter,
     MapDiagnosticReporter diagnosticReporter = _reportMapDiagnostic,
   }) : this.fromCoordinator(
@@ -22,6 +24,7 @@ final class MapPresentationController extends ChangeNotifier {
            session: session,
            movement: movement,
            unitActions: unitActions,
+           turns: turns,
            assets: assets,
            diagnosticReporter: diagnosticReporter,
          ),
@@ -47,6 +50,8 @@ final class MapPresentationController extends ChangeNotifier {
 
   void executeUnitAction(UnitActionKindView action) =>
       _coordinator.executeUnitAction(action);
+
+  void endTurn() => _coordinator.endTurn();
 
   void toggleReference() => _coordinator.toggleReference();
 

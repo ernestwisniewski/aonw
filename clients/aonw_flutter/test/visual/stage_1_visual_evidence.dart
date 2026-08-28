@@ -68,7 +68,7 @@ Future<void> _captureEvidence(
       worldHeight: bounds.height,
       pages: const [],
     ),
-    player: PlayerMapView(
+    player: PlayerMapView.preview(
       actorPlayerId: 'preview-player',
       stamp: SessionStampView(
         revision: 0,

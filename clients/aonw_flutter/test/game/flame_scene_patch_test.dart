@@ -104,7 +104,7 @@ PlayerMapView _player({
   int revision = 0,
   String? digest,
   required List<VisibleUnitView> units,
-}) => PlayerMapView(
+}) => PlayerMapView.preview(
   actorPlayerId: 'preview-player',
   stamp: SessionStampView(
     revision: revision,

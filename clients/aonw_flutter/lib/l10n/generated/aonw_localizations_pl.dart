@@ -111,6 +111,89 @@ class AonwLocalizationsPl extends AonwLocalizations {
   }
 
   @override
+  String turnSubmissionProgress(int submitted, int required) {
+    return 'Gotowi: $submitted z $required';
+  }
+
+  @override
+  String get turnActive => 'Twoja tura';
+
+  @override
+  String get turnFinished => 'Tura zakończona';
+
+  @override
+  String get turnSubmitted => 'Tura zgłoszona';
+
+  @override
+  String get turnWaiting => 'Oczekiwanie';
+
+  @override
+  String get turnPendingAction => 'Wymagana akcja';
+
+  @override
+  String get endTurn => 'Zakończ turę';
+
+  @override
+  String get endingTurn => 'Kończenie tury';
+
+  @override
+  String turnFailure(String failure) {
+    String _temp0 = intl.Intl.selectLogic(failure, {
+      'requestFailed': 'Nie udało się wykonać żądania zakończenia tury.',
+      'responseIncompatible': 'Odpowiedź tury jest niezgodna z tym klientem.',
+      'sessionUnavailable': 'Lokalna sesja gry jest niedostępna.',
+      'stale_revision':
+          'Stan gry uległ zmianie. Sprawdź go i spróbuj ponownie.',
+      'match_finished': 'Rozgrywka już się zakończyła.',
+      'turn_player_not_controlled':
+          'Ten gracz nie może zakończyć bieżącej tury.',
+      'turn_player_not_active': 'Ten gracz nie jest aktywny.',
+      'turn_scope_invalid': 'Zakres bieżącej tury jest nieprawidłowy.',
+      'turn_processor_unsupported': 'Wymagany procesor tury jest niedostępny.',
+      'turn_number_overflow': 'Nie można zapisać numeru następnej tury.',
+      'state_revision_overflow': 'Nie można zwiększyć rewizji gry.',
+      'other': 'Nie udało się zakończyć tury.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String gameOutcome(String condition) {
+    String _temp0 = intl.Intl.selectLogic(condition, {
+      'conquest': 'Zwycięstwo przez podbój',
+      'domination': 'Zwycięstwo przez dominację',
+      'cultural': 'Zwycięstwo kulturowe',
+      'score': 'Zwycięstwo punktowe',
+      'resignation': 'Rozgrywka zakończona rezygnacją',
+      'draw': 'Remis',
+      'ongoing': 'Rozgrywka trwa',
+      'other': 'Rozgrywka zakończona',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get activityLog => 'Aktywność';
+
+  @override
+  String activityEvent(String category) {
+    String _temp0 = intl.Intl.selectLogic(category, {
+      'artifact': 'Aktywność artefaktu',
+      'city': 'Aktywność miasta',
+      'research': 'Postęp badań',
+      'objective': 'Aktualizacja celu strategicznego',
+      'outcome': 'Zaktualizowano wynik rozgrywki',
+      'combat': 'Aktywność bojowa',
+      'diplomacy': 'Aktywność dyplomatyczna',
+      'unit': 'Aktywność jednostki',
+      'turn': 'Zaktualizowano turę',
+      'worker': 'Robotnik ukończył zadanie',
+      'other': 'Aktywność w grze',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String get loadingMap => 'Wczytywanie mapy';
 
   @override

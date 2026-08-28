@@ -109,6 +109,88 @@ class AonwLocalizationsEn extends AonwLocalizations {
   }
 
   @override
+  String turnSubmissionProgress(int submitted, int required) {
+    return 'Ready: $submitted of $required';
+  }
+
+  @override
+  String get turnActive => 'Your turn';
+
+  @override
+  String get turnFinished => 'Turn finished';
+
+  @override
+  String get turnSubmitted => 'Turn submitted';
+
+  @override
+  String get turnWaiting => 'Waiting';
+
+  @override
+  String get turnPendingAction => 'Action required';
+
+  @override
+  String get endTurn => 'End turn';
+
+  @override
+  String get endingTurn => 'Ending turn';
+
+  @override
+  String turnFailure(String failure) {
+    String _temp0 = intl.Intl.selectLogic(failure, {
+      'requestFailed': 'The turn request could not be completed.',
+      'responseIncompatible':
+          'The turn response is incompatible with this client.',
+      'sessionUnavailable': 'The local game session is unavailable.',
+      'stale_revision': 'The game state changed. Review it and try again.',
+      'match_finished': 'The match has already finished.',
+      'turn_player_not_controlled': 'This player cannot end the current turn.',
+      'turn_player_not_active': 'This player is not active.',
+      'turn_scope_invalid': 'The current turn scope is invalid.',
+      'turn_processor_unsupported': 'A required turn processor is unavailable.',
+      'turn_number_overflow': 'The next turn cannot be represented.',
+      'state_revision_overflow': 'The game revision cannot be advanced.',
+      'other': 'The turn could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String gameOutcome(String condition) {
+    String _temp0 = intl.Intl.selectLogic(condition, {
+      'conquest': 'Conquest victory',
+      'domination': 'Domination victory',
+      'cultural': 'Cultural victory',
+      'score': 'Score victory',
+      'resignation': 'Match ended by resignation',
+      'draw': 'Draw',
+      'ongoing': 'Match in progress',
+      'other': 'Match ended',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get activityLog => 'Activity';
+
+  @override
+  String activityEvent(String category) {
+    String _temp0 = intl.Intl.selectLogic(category, {
+      'artifact': 'Artifact activity',
+      'city': 'City activity',
+      'research': 'Research progress',
+      'objective': 'Strategic objective update',
+      'outcome': 'Match outcome updated',
+      'combat': 'Combat activity',
+      'diplomacy': 'Diplomatic activity',
+      'unit': 'Unit activity',
+      'turn': 'Turn updated',
+      'worker': 'Worker job completed',
+      'other': 'Game activity',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String get loadingMap => 'Loading map';
 
   @override

@@ -14,6 +14,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      turns: session,
     );
 
     await tester.pumpWidget(AonwApp(mapController: controller));
@@ -44,6 +45,7 @@ void main() {
       session: session,
       movement: session,
       unitActions: session,
+      turns: session,
     );
 
     await tester.pumpWidget(

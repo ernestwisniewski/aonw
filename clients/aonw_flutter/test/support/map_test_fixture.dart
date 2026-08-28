@@ -5,6 +5,8 @@ import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
+import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
 import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
 
@@ -52,7 +54,7 @@ MapScene testMapScene({
       worldHeight: 103.92304845413263 * (rows + (cols > 1 ? 0.5 : 0)),
       pages: const [],
     ),
-    player: PlayerMapView(
+    player: PlayerMapView.preview(
       actorPlayerId: 'preview-player',
       stamp: SessionStampView(
         revision: 0,
@@ -152,7 +154,11 @@ MoveUnitExecutionView testMoveUnitExecutionView({
 );
 
 final class FakeGameSession
-    implements MapSessionPort, MovementSessionPort, UnitActionSessionPort {
+    implements
+        MapSessionPort,
+        MovementSessionPort,
+        TurnSessionPort,
+        UnitActionSessionPort {
   FakeGameSession.success(
     this.scene, {
     this.reachableResult,
@@ -161,6 +167,8 @@ final class FakeGameSession
     this.moveFailure,
     this.unitActionResult,
     this.unitActionFailure,
+    this.turnResult,
+    this.turnFailure,
   }) : failure = null;
   FakeGameSession.failure(this.failure)
     : scene = null,
@@ -169,7 +177,9 @@ final class FakeGameSession
       moveResult = null,
       moveFailure = null,
       unitActionResult = null,
-      unitActionFailure = null;
+      unitActionFailure = null,
+      turnResult = null,
+      turnFailure = null;
 
   final MapScene? scene;
   final MapLoadException? failure;
@@ -179,10 +189,14 @@ final class FakeGameSession
   final MovementSessionException? moveFailure;
   final UnitActionResultView? unitActionResult;
   final UnitActionSessionException? unitActionFailure;
+  final TurnCommandResultView? turnResult;
+  final TurnSessionException? turnFailure;
   var unitActionCalls = 0;
   UnitActionKindView? lastUnitAction;
   int? lastUnitActionExpectedRevision;
   String? lastUnitActionUnitId;
+  var endTurnCalls = 0;
+  int? lastEndTurnExpectedRevision;
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
@@ -228,6 +242,15 @@ final class FakeGameSession
     final error = unitActionFailure;
     if (error != null) throw error;
     return unitActionResult ?? (throw StateError('No unit action fixture.'));
+  }
+
+  @override
+  Future<TurnCommandResultView> endTurn({required int expectedRevision}) async {
+    endTurnCalls += 1;
+    lastEndTurnExpectedRevision = expectedRevision;
+    final error = turnFailure;
+    if (error != null) throw error;
+    return turnResult ?? (throw StateError('No turn fixture.'));
   }
 
   @override
