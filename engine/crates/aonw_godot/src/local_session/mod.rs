@@ -219,12 +219,12 @@ impl Drop for SessionWorker {
     fn drop(&mut self) {
         self.cancelled.store(true, Ordering::Release);
         self.requests.take();
-        if let Some(thread) = self.thread.take() {
-            if thread.is_finished() {
-                let _ = thread.join();
-            }
-            // Dropping a running handle detaches it. The cancellation flag stops queued work,
-            // while the current bounded request may finish without blocking Godot's main thread.
+        // Dropping a running handle detaches it. The cancellation flag stops queued work,
+        // while the current bounded request may finish without blocking Godot's main thread.
+        if let Some(thread) = self.thread.take()
+            && thread.is_finished()
+        {
+            let _ = thread.join();
         }
     }
 }
