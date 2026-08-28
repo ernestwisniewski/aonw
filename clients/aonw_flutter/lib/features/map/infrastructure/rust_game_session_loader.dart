@@ -41,7 +41,24 @@ final class RustGameSessionLoader {
   final PlayerMapViewMapper _playerMapper;
   final MapReferenceBundleLoader _bundleLoader;
 
-  Future<PreparedRustGameSession> prepare(MapAssetPaths assets) async {
+  Future<PreparedRustGameSession> prepare(MapAssetPaths assets) =>
+      _prepareCandidate(assets);
+
+  Future<PreparedRustGameSession> prepareMatch(
+    MapAssetPaths assets, {
+    required AonwMatchIdentity matchIdentity,
+    required bool fogEnabled,
+  }) => _prepareCandidate(
+    assets,
+    matchIdentity: matchIdentity,
+    fogEnabled: fogEnabled,
+  );
+
+  Future<PreparedRustGameSession> _prepareCandidate(
+    MapAssetPaths assets, {
+    AonwMatchIdentity? matchIdentity,
+    bool fogEnabled = false,
+  }) async {
     final candidate = await _sessionFactory();
     if (candidate == null) {
       throw const MapLoadException(
@@ -50,7 +67,12 @@ final class RustGameSessionLoader {
       );
     }
     try {
-      return await _prepare(candidate, assets);
+      return await _prepare(
+        candidate,
+        assets,
+        matchIdentity: matchIdentity,
+        fogEnabled: fogEnabled,
+      );
     } on MapLoadException {
       await candidate.close();
       rethrow;
@@ -70,9 +92,14 @@ final class RustGameSessionLoader {
 
   Future<PreparedRustGameSession> _prepare(
     AonwRustSession candidate,
-    MapAssetPaths assets,
-  ) async {
-    await _verifyCapabilities(candidate);
+    MapAssetPaths assets, {
+    AonwMatchIdentity? matchIdentity,
+    required bool fogEnabled,
+  }) async {
+    await _verifyCapabilities(
+      candidate,
+      matchIdentity == null ? _requiredClientFeatures : _localMatchFeatures,
+    );
     final document = await _assets.loadString(assets.document);
     final scenario = await _assets.loadString(assets.scenarioDocument);
     final map = await _inspectMap(candidate, document);
@@ -81,6 +108,8 @@ final class RustGameSessionLoader {
       mapDocument: document,
       scenarioDocument: scenario,
       actorPlayerId: assets.actorPlayerId,
+      matchIdentity: matchIdentity,
+      fogEnabled: fogEnabled,
     );
     final player = _playerMapper.fromWire(
       snapshot,
@@ -103,13 +132,23 @@ final class RustGameSessionLoader {
     required String mapDocument,
     required String scenarioDocument,
     required String actorPlayerId,
+    required AonwMatchIdentity? matchIdentity,
+    required bool fogEnabled,
   }) async {
     final opened = await candidate.send(
-      AonwClientRequest.openSession(
-        mapDocument: mapDocument,
-        scenarioDocument: scenarioDocument,
-        actorPlayerId: actorPlayerId,
-      ),
+      matchIdentity == null
+          ? AonwClientRequest.openSession(
+              mapDocument: mapDocument,
+              scenarioDocument: scenarioDocument,
+              actorPlayerId: actorPlayerId,
+            )
+          : AonwClientRequest.startMatch(
+              mapDocument: mapDocument,
+              scenarioDocument: scenarioDocument,
+              actorPlayerId: actorPlayerId,
+              matchIdentity: matchIdentity,
+              fogEnabled: fogEnabled,
+            ),
     );
     _loadResponse<AonwSessionOpenedResponse>(
       opened,
@@ -152,7 +191,10 @@ final class RustGameSessionLoader {
     return response.require<T>();
   }
 
-  static Future<void> _verifyCapabilities(AonwRustSession candidate) async {
+  static Future<void> _verifyCapabilities(
+    AonwRustSession candidate,
+    Set<AonwClientFeature> required,
+  ) async {
     final response = await candidate.send(AonwClientRequest.capabilities());
     if (!response.isSuccess) {
       final error = response.error!;
@@ -164,9 +206,7 @@ final class RustGameSessionLoader {
       );
     }
     final capabilities = response.require<AonwCapabilitiesResponse>();
-    final missing = _requiredClientFeatures.difference(
-      capabilities.features.toSet(),
-    );
+    final missing = required.difference(capabilities.features.toSet());
     if (missing.isEmpty) return;
     throw MapLoadException(
       code: 'rust_capability_mismatch',
@@ -188,4 +228,11 @@ const _requiredClientFeatures = <AonwClientFeature>{
   AonwClientFeature.moveUnit,
   AonwClientFeature.unitActions,
   AonwClientFeature.turnKernel,
+};
+
+const _localMatchFeatures = <AonwClientFeature>{
+  ..._requiredClientFeatures,
+  AonwClientFeature.matchStart,
+  AonwClientFeature.actorHandoff,
+  AonwClientFeature.aiTurns,
 };

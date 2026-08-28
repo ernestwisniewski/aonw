@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/match_identity_test_fixture.dart';
+
 void main() {
   test('keeps native combat exact, recipient-safe and replayable', _runSmoke);
 }
@@ -174,46 +176,4 @@ final _scenarioDocument = jsonEncode(const {
   ],
 });
 
-const _matchIdentity = <String, Object?>{
-  'matchRules': {
-    'gameLength': {
-      'kind': 'unlimited',
-      'targetMinutes': null,
-      'turnLimit': null,
-      'paceProfile': 'unlimited',
-      'scoreFallbackEnabled': false,
-    },
-    'victory': {
-      'conquestEnabled': true,
-      'dominationEnabled': true,
-      'dominationControlPercent': 60,
-      'dominationHoldTurns': 5,
-      'scoreFallbackEnabled': false,
-      'turnLimit': null,
-      'hardTimeLimitMinutes': null,
-      'culturalEnabled': true,
-      'culturalRequiredArtifacts': 6,
-      'culturalHoldTurns': 5,
-    },
-    'balance': <String, Object?>{},
-  },
-  'participants': [
-    {
-      'id': 'player-1',
-      'name': 'Player 1',
-      'colorValue': 4282212264,
-      'country': 'poland',
-      'kind': 'human',
-      'ai': null,
-    },
-    {
-      'id': 'player-2',
-      'name': 'Player 2',
-      'colorValue': 4290263610,
-      'country': 'japan',
-      'kind': 'human',
-      'ai': null,
-    },
-  ],
-  'gameMode': 'hotSeat',
-};
+final _matchIdentity = testMatchIdentity();

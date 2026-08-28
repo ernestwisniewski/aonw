@@ -13,6 +13,8 @@ import '../../combat/read_model/combat_view.dart';
 import '../../diplomacy/application/diplomacy_session_port.dart';
 import '../../diplomacy/infrastructure/rust_diplomacy_gateway.dart';
 import '../../diplomacy/read_model/diplomacy_view.dart';
+import '../../local_game/application/local_game_session_port.dart';
+import '../../local_game/infrastructure/local_match_mapper.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/infrastructure/rust_unit_logistics_gateway.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
@@ -59,7 +61,8 @@ final class RustGameSessionGateway
         ResearchSessionPort,
         DiplomacySessionPort,
         TurnSessionPort,
-        UnitActionSessionPort {
+        UnitActionSessionPort,
+        LocalGameSessionPort {
   RustGameSessionGateway({
     required AssetBundle assets,
     RustSessionFactory sessionFactory = createAonwRustSession,
@@ -77,6 +80,7 @@ final class RustGameSessionGateway
     RustUnitLogisticsGateway logisticsGateway =
         const RustUnitLogisticsGateway(),
     UnitActionViewMapper unitActionMapper = const UnitActionViewMapper(),
+    LocalMatchMapper localMatchMapper = const LocalMatchMapper(),
   }) : _loader = RustGameSessionLoader(
          assets: assets,
          sessionFactory: sessionFactory,
@@ -94,6 +98,7 @@ final class RustGameSessionGateway
        _diplomacyGateway = diplomacyGateway,
        _turnGateway = turnGateway,
        _logisticsGateway = logisticsGateway,
+       _localMatchMapper = localMatchMapper,
        _unitActions = RustUnitActionGateway(
          playerMapper: playerMapper,
          mapper: unitActionMapper,
@@ -116,6 +121,7 @@ final class RustGameSessionGateway
   final RustDiplomacyGateway _diplomacyGateway;
   final RustTurnGateway _turnGateway;
   final RustUnitLogisticsGateway _logisticsGateway;
+  final LocalMatchMapper _localMatchMapper;
   final RustUnitActionGateway _unitActions;
   late final CitySessionPort citySession;
   late final WorkerSessionPort workerSession;
@@ -136,6 +142,24 @@ final class RustGameSessionGateway
     var retained = false;
     try {
       await _activate(prepared, assets.actorPlayerId, generation);
+      retained = true;
+      return prepared.scene;
+    } finally {
+      if (!retained) await prepared.session.close();
+    }
+  }
+
+  @override
+  Future<MapScene> startLocalMatch(LocalMatchSetupView setup) async {
+    final generation = ++_loadGeneration;
+    final prepared = await _loader.prepareMatch(
+      setup.assets,
+      matchIdentity: _localMatchMapper.toWire(setup),
+      fogEnabled: setup.fogEnabled,
+    );
+    var retained = false;
+    try {
+      await _activate(prepared, setup.assets.actorPlayerId, generation);
       retained = true;
       return prepared.scene;
     } finally {
@@ -346,6 +370,70 @@ final class RustGameSessionGateway
       );
 
   @override
+  Future<LocalAiTurnExecutionView> advanceAiTurn(
+    LocalAiTurnRequestView request,
+  ) => _serialize(() async {
+    final context = _context();
+    if (context.actorPlayerId != request.humanPlayerId) {
+      throw const LocalGameSessionException(
+        code: 'local_actor_mismatch',
+        message: 'The local game actor does not match the requested human.',
+      );
+    }
+    AonwClientResponse response;
+    try {
+      response = await context.session.send(
+        AonwClientRequest.advanceAiTurn(
+          actorPlayerId: request.aiPlayerId,
+          commandBudget: request.commandBudget,
+        ),
+      );
+    } on Object catch (error, stackTrace) {
+      final player = await _tryRestoreHuman(context, request.humanPlayerId);
+      throw LocalGameSessionException(
+        code: 'ai_turn_request_failed',
+        message: 'The AI turn could not be completed.',
+        diagnosticCause: error,
+        diagnosticStackTrace: stackTrace,
+        resyncedPlayer: player,
+      );
+    }
+    final player = await _restoreHuman(context, request.humanPlayerId);
+    if (!response.isSuccess) {
+      final error = response.error!;
+      throw LocalGameSessionException(
+        code: error.code,
+        message: 'The AI turn could not be completed.',
+        diagnosticCause: error,
+        diagnosticStackTrace: StackTrace.current,
+        resyncedPlayer: player,
+      );
+    }
+    try {
+      final execution = response.require<AonwAiTurnAdvancedResponse>();
+      if (execution.actorPlayerId != request.aiPlayerId) {
+        throw const FormatException(
+          'AI response actor does not match request.',
+        );
+      }
+      return LocalAiTurnExecutionView(
+        aiPlayerId: execution.actorPlayerId,
+        executedCommands: execution.executedCommands,
+        completedTurn: execution.completedTurn,
+        player: player,
+      );
+    } on FormatException catch (error, stackTrace) {
+      throw LocalGameSessionException(
+        code: 'invalid_ai_turn_protocol',
+        message: 'The AI turn response is incompatible with this client.',
+        diagnosticCause: error,
+        diagnosticStackTrace: stackTrace,
+        resyncedPlayer: player,
+      );
+    }
+  });
+
+  @override
   Future<void> close() async {
     _loadGeneration += 1;
     final session = _session;
@@ -437,6 +525,58 @@ final class RustGameSessionGateway
     );
     _player = player;
     return player;
+  }
+
+  Future<PlayerMapView> _restoreHuman(
+    RustGameSessionContext context,
+    String humanPlayerId,
+  ) async {
+    final handoff = await context.session.send(
+      AonwClientRequest.handoffActor(actorPlayerId: humanPlayerId),
+    );
+    if (!handoff.isSuccess) {
+      final error = handoff.error!;
+      throw LocalGameSessionException(
+        code: error.code,
+        message: 'The human player view could not be restored.',
+        diagnosticCause: error,
+        diagnosticStackTrace: StackTrace.current,
+      );
+    }
+    handoff.require<AonwActorHandedOffResponse>();
+    final snapshotResponse = await context.session.send(
+      AonwClientRequest.snapshot(),
+    );
+    if (!snapshotResponse.isSuccess) {
+      final error = snapshotResponse.error!;
+      throw LocalGameSessionException(
+        code: error.code,
+        message: 'The human player view could not be restored.',
+        diagnosticCause: error,
+        diagnosticStackTrace: StackTrace.current,
+      );
+    }
+    final snapshot = snapshotResponse.require<AonwSnapshotResponse>().snapshot;
+    context.cache.replaceAfterResync(snapshot);
+    final player = _playerMapper.fromWire(
+      snapshot,
+      map: context.map,
+      actorPlayerId: humanPlayerId,
+    );
+    _player = player;
+    _actorPlayerId = humanPlayerId;
+    return player;
+  }
+
+  Future<PlayerMapView?> _tryRestoreHuman(
+    RustGameSessionContext context,
+    String humanPlayerId,
+  ) async {
+    try {
+      return await _restoreHuman(context, humanPlayerId);
+    } on Object {
+      return null;
+    }
   }
 
   void _retainPlayer(PlayerMapView player) => _player = player;

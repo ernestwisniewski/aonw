@@ -6,6 +6,7 @@ import 'package:aonw_rust_client/src/protocol_city_view.dart';
 import 'package:aonw_rust_client/src/protocol_coordinate.dart';
 import 'package:aonw_rust_client/src/protocol_diplomacy.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
+import 'package:aonw_rust_client/src/protocol_match.dart';
 import 'package:aonw_rust_client/src/protocol_pending_action.dart';
 import 'package:aonw_rust_client/src/protocol_query.dart';
 import 'package:aonw_rust_client/src/protocol_response.dart';
@@ -19,6 +20,7 @@ export 'protocol_event.dart';
 export 'protocol_evidence.dart';
 export 'protocol_execution.dart';
 export 'protocol_map.dart';
+export 'protocol_match.dart';
 export 'protocol_outcome.dart';
 export 'protocol_pending_action.dart';
 export 'protocol_player_view.dart';
@@ -57,14 +59,14 @@ final class AonwClientRequest {
     required String mapDocument,
     required String scenarioDocument,
     required String actorPlayerId,
-    required Map<String, Object?> matchIdentity,
+    required AonwMatchIdentity matchIdentity,
     required bool fogEnabled,
   }) => AonwClientRequest._({
     'type': 'startMatch',
     'mapDocument': mapDocument,
     'scenarioDocument': scenarioDocument,
     'actorPlayerId': actorPlayerId,
-    'matchIdentity': matchIdentity,
+    'matchIdentity': matchIdentity.toJson(),
     'fogMode': fogEnabled ? 'enabled' : 'disabled',
   });
 
