@@ -5,7 +5,10 @@
 - Production authority today: `packages/aonw_core`
 - Successor implementation: `engine/`
 
-Age of New Worlds is moving authoritative gameplay rules from Dart to Rust so the same engine can serve Flutter, Godot, AI, replay, and Serverpod. This is a compatibility port, not a gameplay rewrite.
+Age of New Worlds is moving authoritative gameplay rules from Dart to Rust so
+the same engine can serve Flutter, Godot, AI, replay, and Serverpod. Required
+game semantics remain deliberate, but Rust is free to use a simpler, safer, or
+more efficient design instead of copying Dart line for line.
 
 ```mermaid
 flowchart LR
@@ -22,13 +25,32 @@ flowchart LR
 
 ## Current checkpoint
 
-The Rust workspace has a working vertical slice for strict content, canonical state, movement queries and transitions, fog, diplomacy, cities, roads, save/replay contracts, local runtime sessions, recipient-safe patches, initial unit actions, and thin Godot/Flutter native adapters.
+The Rust workspace now owns the complete reviewed engine inventory through
+E0-PS11: strict content and canonical state, all current command families and
+queries, integrated turn processing, recipient-safe projection, deterministic
+strategic AI, current save/replay, local sessions, persistence recovery, and
+thin native boundaries. The active work is the final engine completion gate,
+not another gameplay family.
 
-The shared fixture corpus covers the current movement and unit-action slice. Godot can open a Rust local session, query reachable tiles, execute movement, and consume exact movement evidence.
-
-This does **not** make Rust the production backend. Flutter local play and Serverpod still use the Dart engine by default. The next work must continue through complete command families and turn-driven behavior rather than introducing client-specific rules.
+This does **not** make Rust the production backend. Flutter local play and
+Serverpod still use Dart by default until their later migration and cutover.
 
 The current crate inventory and commands are documented in [`../engine/README.md`](../engine/README.md).
+
+## Engine-to-client handoff
+
+The handoff is intentionally smaller than production cutover. New clean clients
+may start when one reviewed commit has complete E0-PS11 behavior, one current
+recipient-safe client/native contract, and a green `make
+rust-engine-completion-check` (or green pinned fast, evidence, deep, and security
+jobs for that same commit).
+
+Client platform coverage, packaging, Serverpod hosting, shadow/canary modes,
+retiring Dart authority, and the final Web transport are not prerequisites for
+starting the clients. They are delivered later by client qualification and
+server cutover. No extra readiness framework or parallel compatibility adapter
+is required. Focused checks are used while developing; the full completion gate
+runs only at the handoff checkpoint and in CI.
 
 ## Rules that do not change during migration
 

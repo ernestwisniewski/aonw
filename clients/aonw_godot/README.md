@@ -25,6 +25,8 @@ models before it reaches presentation.
   replays.
 - Godot owns rendering, input, camera, editor interaction, and local animation.
 - One session controller retains one native Rust transport for its lifecycle.
+- The loaded GDExtension exposes both `client_api_version()` and
+  `build_identity()` before the first session request; mismatches fail closed.
 - The runtime requires canonical map bundles and compiled Terrain3D artifacts;
   it has no mesh-terrain or procedural-texture fallback.
 - The client has no legacy adapter, legacy protocol, alternate engine, or

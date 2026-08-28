@@ -5,8 +5,9 @@ Worlds. Rust owns canonical state, gameplay rules, recipient projections,
 current save/replay contracts, and the native boundaries used by Flutter and
 Godot.
 
-`packages/aonw_core/` remains the production reference until functional parity,
-platform qualification, shadow, canary, and rollback gates are complete.
+`packages/aonw_core/` remains the production authority until the later server
+cutover. It is not a runtime dependency of this engine and does not block the
+handoff to clean clients once the engine completion gate is green.
 
 ## Workspace
 
@@ -41,6 +42,25 @@ The engine and successor clients are greenfield and update one current contract
 atomically. Internal DTOs do not carry speculative versions, legacy readers,
 upcasters, aliases, or compatibility fallbacks. Shared API and artifact versions
 remain because independently built components consume them.
+
+## Client handoff
+
+Client development starts after one reviewed engine commit satisfies all three
+conditions below:
+
+1. E0-PS11 functionality is complete in Rust: commands, queries, integrated
+   turn, AI, recipient projection, current save/replay, and local sessions.
+2. The current client protocol and native ownership/panic contracts are frozen
+   as the only input for the new Flutter and Godot clients.
+3. `make rust-engine-completion-check` passes on that commit, or its fast,
+   evidence, deep, and security components pass in pinned GitHub jobs for the
+   same commit.
+
+This handoff does not wait for client platform coverage, Serverpod hosting,
+shadow/canary rollout, Dart retirement, or the final Web transport decision.
+Those belong to client qualification and production cutover after the clients
+exist. During normal engine work, run the focused gate for the changed area;
+reserve the full completion command for the final handoff and CI.
 
 ## Quick start
 
