@@ -89,8 +89,11 @@ final _eventSchemas = <String, Map<String, _FieldReader>>{
     'reason': _scoreReasonField,
     'sourceId': _nullableStringField,
   },
-  'diplomaticProposalSent': _proposalExpirySchema,
-  'diplomaticProposalExpired': _proposalExpirySchema,
+  'diplomaticProposalSent': {
+    ..._proposalSchema,
+    'expiresOnTurn': _unsignedField,
+  },
+  'diplomaticProposalExpired': _proposalSchema,
   'diplomaticProposalResponded': {
     'proposalId': _stringField,
     'fromPlayerId': _stringField,
@@ -171,12 +174,11 @@ final _combatUnitSchema = <String, _FieldReader>{
   ..._combatSubjectSchema,
   'subjectUnitId': _stringField,
 };
-final _proposalExpirySchema = <String, _FieldReader>{
+final _proposalSchema = <String, _FieldReader>{
   'proposalId': _stringField,
   'fromPlayerId': _stringField,
   'toPlayerId': _stringField,
   'kind': AonwDiplomaticProposalKind.fromJson,
-  'expiresOnTurn': _unsignedField,
 };
 
 void _stringField(Object? value) => readString(value, 'client event field');

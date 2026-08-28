@@ -267,7 +267,6 @@ List<Map<String, Object?>> _diplomacyEvents() => [
     'fromPlayerId': 'p1',
     'toPlayerId': 'p2',
     'kind': 'friendship',
-    'expiresOnTurn': 8,
   },
   {
     'type': 'diplomaticMessageSent',
