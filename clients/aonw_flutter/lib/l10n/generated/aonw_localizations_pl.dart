@@ -106,35 +106,47 @@ class AonwLocalizationsPl extends AonwLocalizations {
   }
 
   @override
-  String turnLabel(int turn) {
-    return 'TURA $turn';
+  String turnSummary(String kind, int turn, int submitted, int required) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'label': 'TURA $turn',
+      'progress': 'Gotowi: $submitted z $required',
+      'other': 'TURA $turn',
+    });
+    return '$_temp0';
   }
 
   @override
-  String turnSubmissionProgress(int submitted, int required) {
-    return 'Gotowi: $submitted z $required';
+  String turnText(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'statusActive': 'Twoja tura',
+      'statusFinished': 'Tura zakończona',
+      'statusSubmitted': 'Tura zgłoszona',
+      'statusWaiting': 'Oczekiwanie',
+      'statusPendingAction': 'Wymagana akcja',
+      'actionEnd': 'Zakończ turę',
+      'actionEnding': 'Kończenie tury',
+      'outcomeConquest': 'Zwycięstwo przez podbój',
+      'outcomeDomination': 'Zwycięstwo przez dominację',
+      'outcomeCultural': 'Zwycięstwo kulturowe',
+      'outcomeScore': 'Zwycięstwo punktowe',
+      'outcomeResignation': 'Rozgrywka zakończona rezygnacją',
+      'outcomeDraw': 'Remis',
+      'outcomeOngoing': 'Rozgrywka trwa',
+      'activityTitle': 'Aktywność',
+      'activityArtifact': 'Aktywność artefaktu',
+      'activityCity': 'Aktywność miasta',
+      'activityResearch': 'Postęp badań',
+      'activityObjective': 'Aktualizacja celu strategicznego',
+      'activityOutcome': 'Zaktualizowano wynik rozgrywki',
+      'activityCombat': 'Aktywność bojowa',
+      'activityDiplomacy': 'Aktywność dyplomatyczna',
+      'activityUnit': 'Aktywność jednostki',
+      'activityTurn': 'Zaktualizowano turę',
+      'activityWorker': 'Robotnik ukończył zadanie',
+      'other': 'Aktywność w grze',
+    });
+    return '$_temp0';
   }
-
-  @override
-  String get turnActive => 'Twoja tura';
-
-  @override
-  String get turnFinished => 'Tura zakończona';
-
-  @override
-  String get turnSubmitted => 'Tura zgłoszona';
-
-  @override
-  String get turnWaiting => 'Oczekiwanie';
-
-  @override
-  String get turnPendingAction => 'Wymagana akcja';
-
-  @override
-  String get endTurn => 'Zakończ turę';
-
-  @override
-  String get endingTurn => 'Kończenie tury';
 
   @override
   String turnFailure(String failure) {
@@ -153,42 +165,6 @@ class AonwLocalizationsPl extends AonwLocalizations {
       'turn_number_overflow': 'Nie można zapisać numeru następnej tury.',
       'state_revision_overflow': 'Nie można zwiększyć rewizji gry.',
       'other': 'Nie udało się zakończyć tury.',
-    });
-    return '$_temp0';
-  }
-
-  @override
-  String gameOutcome(String condition) {
-    String _temp0 = intl.Intl.selectLogic(condition, {
-      'conquest': 'Zwycięstwo przez podbój',
-      'domination': 'Zwycięstwo przez dominację',
-      'cultural': 'Zwycięstwo kulturowe',
-      'score': 'Zwycięstwo punktowe',
-      'resignation': 'Rozgrywka zakończona rezygnacją',
-      'draw': 'Remis',
-      'ongoing': 'Rozgrywka trwa',
-      'other': 'Rozgrywka zakończona',
-    });
-    return '$_temp0';
-  }
-
-  @override
-  String get activityLog => 'Aktywność';
-
-  @override
-  String activityEvent(String category) {
-    String _temp0 = intl.Intl.selectLogic(category, {
-      'artifact': 'Aktywność artefaktu',
-      'city': 'Aktywność miasta',
-      'research': 'Postęp badań',
-      'objective': 'Aktualizacja celu strategicznego',
-      'outcome': 'Zaktualizowano wynik rozgrywki',
-      'combat': 'Aktywność bojowa',
-      'diplomacy': 'Aktywność dyplomatyczna',
-      'unit': 'Aktywność jednostki',
-      'turn': 'Zaktualizowano turę',
-      'worker': 'Robotnik ukończył zadanie',
-      'other': 'Aktywność w grze',
     });
     return '$_temp0';
   }

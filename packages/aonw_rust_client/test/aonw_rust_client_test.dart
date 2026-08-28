@@ -136,7 +136,13 @@ void main() {
   });
 }
 
-List<Map<String, Object?>> _eventCorpus() {
+List<Map<String, Object?>> _eventCorpus() => [
+  ..._worldEvents(),
+  ..._diplomacyEvents(),
+  ..._unitAndTurnEvents(),
+];
+
+List<Map<String, Object?>> _worldEvents() {
   const coordinate = {'col': 1, 'row': 2};
   const target = {'type': 'unit', 'unitId': 'target-1'};
   const outcome = {
@@ -226,76 +232,86 @@ List<Map<String, Object?>> _eventCorpus() {
     {'type': 'unitAttacked', 'attackerUnitId': 'u1', 'target': target},
     {'type': 'cityAttacked', 'attackerUnitId': 'u1', 'target': target},
     {'type': 'combatResolved', 'attackerUnitId': 'u1', 'target': target},
-    {
-      'type': 'diplomaticScoreChanged',
-      'playerAId': 'p1',
-      'playerBId': 'p2',
-      'delta': -1,
-      'scoreAfter': 2,
-      'reason': 'unitAttack',
-      'sourceId': 'u1',
-    },
-    {
-      'type': 'diplomaticProposalSent',
-      'proposalId': 'd1',
-      'fromPlayerId': 'p1',
-      'toPlayerId': 'p2',
-      'kind': 'friendship',
-      'expiresOnTurn': 8,
-    },
-    {
-      'type': 'diplomaticProposalResponded',
-      'proposalId': 'd1',
-      'fromPlayerId': 'p1',
-      'toPlayerId': 'p2',
-      'kind': 'friendship',
-      'accepted': true,
-    },
-    {
-      'type': 'diplomaticProposalExpired',
-      'proposalId': 'd1',
-      'fromPlayerId': 'p1',
-      'toPlayerId': 'p2',
-      'kind': 'friendship',
-      'expiresOnTurn': 8,
-    },
-    {
-      'type': 'diplomaticMessageSent',
-      'messageId': 'm1',
-      'fromPlayerId': 'p1',
-      'toPlayerId': 'p2',
-      'topic': 'peacefulPraise',
-      'category': 'praise',
-      'expiresOnTurn': 8,
-    },
-    {
-      'type': 'diplomaticMessageResponded',
-      'messageId': 'm1',
-      'fromPlayerId': 'p1',
-      'toPlayerId': 'p2',
-      'topic': 'peacefulPraise',
-      'response': 'conciliatory',
-      'relationDelta': 1,
-      'relationScoreAfter': 3,
-      'promiseDueTurn': null,
-    },
-    {
-      'type': 'diplomaticPromiseBroken',
-      'messageId': 'm1',
-      'playerAId': 'p1',
-      'playerBId': 'p2',
-      'delta': -2,
-      'scoreAfter': 1,
-    },
-    {
-      'type': 'diplomaticRelationChanged',
-      'playerAId': 'p1',
-      'playerBId': 'p2',
-      'oldStatus': 'neutral',
-      'newStatus': 'friendly',
-      'reason': 'proposalAccepted',
-      'expiresOnTurn': null,
-    },
+  ];
+}
+
+List<Map<String, Object?>> _diplomacyEvents() => [
+  {
+    'type': 'diplomaticScoreChanged',
+    'playerAId': 'p1',
+    'playerBId': 'p2',
+    'delta': -1,
+    'scoreAfter': 2,
+    'reason': 'unitAttack',
+    'sourceId': 'u1',
+  },
+  {
+    'type': 'diplomaticProposalSent',
+    'proposalId': 'd1',
+    'fromPlayerId': 'p1',
+    'toPlayerId': 'p2',
+    'kind': 'friendship',
+    'expiresOnTurn': 8,
+  },
+  {
+    'type': 'diplomaticProposalResponded',
+    'proposalId': 'd1',
+    'fromPlayerId': 'p1',
+    'toPlayerId': 'p2',
+    'kind': 'friendship',
+    'accepted': true,
+  },
+  {
+    'type': 'diplomaticProposalExpired',
+    'proposalId': 'd1',
+    'fromPlayerId': 'p1',
+    'toPlayerId': 'p2',
+    'kind': 'friendship',
+    'expiresOnTurn': 8,
+  },
+  {
+    'type': 'diplomaticMessageSent',
+    'messageId': 'm1',
+    'fromPlayerId': 'p1',
+    'toPlayerId': 'p2',
+    'topic': 'peacefulPraise',
+    'category': 'praise',
+    'expiresOnTurn': 8,
+  },
+  {
+    'type': 'diplomaticMessageResponded',
+    'messageId': 'm1',
+    'fromPlayerId': 'p1',
+    'toPlayerId': 'p2',
+    'topic': 'peacefulPraise',
+    'response': 'conciliatory',
+    'relationDelta': 1,
+    'relationScoreAfter': 3,
+    'promiseDueTurn': null,
+  },
+  {
+    'type': 'diplomaticPromiseBroken',
+    'messageId': 'm1',
+    'playerAId': 'p1',
+    'playerBId': 'p2',
+    'delta': -2,
+    'scoreAfter': 1,
+  },
+  {
+    'type': 'diplomaticRelationChanged',
+    'playerAId': 'p1',
+    'playerBId': 'p2',
+    'oldStatus': 'neutral',
+    'newStatus': 'friendly',
+    'reason': 'proposalAccepted',
+    'expiresOnTurn': null,
+  },
+];
+
+List<Map<String, Object?>> _unitAndTurnEvents() {
+  const coordinate = {'col': 1, 'row': 2};
+  const target = {'type': 'unit', 'unitId': 'target-1'};
+  return [
     {
       'type': 'unitGainedExperience',
       'attackerUnitId': 'u1',

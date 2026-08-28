@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import '../../turns/application/turn_action_state.dart';
-import '../../turns/application/turn_command_runner.dart';
 import '../../turns/application/turn_session_port.dart';
+import '../../turns/application/turn_workflow.dart';
 import '../../unit_actions/application/action_deck_state.dart';
 import '../../unit_actions/application/unit_action_command_runner.dart';
 import '../../unit_actions/application/unit_action_session_port.dart';
@@ -36,7 +35,7 @@ final class MapCoordinator {
          session: unitActions,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
-       _turns = TurnCommandRunner(
+       _turns = TurnWorkflow(
          session: turns,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
@@ -45,7 +44,7 @@ final class MapCoordinator {
   final MapSessionPort _session;
   final MovementCommandRunner _movement;
   final UnitActionCommandRunner _unitActions;
-  final TurnCommandRunner _turns;
+  final TurnWorkflow _turns;
   final MapDiagnosticReporter _diagnosticReporter;
   final MapAssetPaths assets;
   final StreamController<GameSessionState> _changes =
@@ -55,7 +54,6 @@ final class MapCoordinator {
   var _loadGeneration = 0;
   var _interactionGeneration = 0;
   var _actionCorrelationId = 0;
-  var _turnCorrelationId = 0;
 
   GameSessionState get state => _state;
 
@@ -93,15 +91,8 @@ final class MapCoordinator {
   void hover(MapHexCoordinate? coordinate) {
     final current = _state;
     if (current is! GameSessionReady) return;
-    final next = coordinate != null && current.scene.map.contains(coordinate)
-        ? coordinate
-        : null;
-    if (next == current.interaction.hovered) return;
-    _setState(
-      current.withInteraction(
-        current.interaction.copyWith(hovered: next, clearHovered: next == null),
-      ),
-    );
+    final updated = _hoverState(current, coordinate);
+    if (updated != null) _setState(updated);
   }
 
   void select(MapHexCoordinate? coordinate) {
@@ -327,79 +318,17 @@ final class MapCoordinator {
   }
 
   void endTurn() {
-    unawaited(_endTurn());
-  }
-
-  Future<void> _endTurn() async {
-    final current = _state;
-    if (current is! GameSessionReady ||
-        current.turnAction.inFlight ||
-        !current.recipient.turnView.canEndTurn) {
-      return;
-    }
-    final correlationId = ++_turnCorrelationId;
-    _setState(
-      current.withTurnAction(
-        current.turnAction.copyWith(
-          correlationId: correlationId,
-          inFlight: true,
-          clearFailure: true,
-        ),
-      ),
-    );
-    final completion = await _turns.endTurn(
-      expectedRevision: current.recipient.stamp.revision,
-    );
-    final ready = _currentTurn(correlationId);
-    if (ready == null) return;
-    final resynced = completion.resyncedPlayer;
-    var synchronized = resynced == null ? ready : ready.withRecipient(resynced);
-    final failure = completion.failure;
-    if (failure != null) {
-      _setState(
-        synchronized.withTurnAction(
-          synchronized.turnAction.copyWith(inFlight: false, failure: failure),
-        ),
-      );
-      return;
-    }
-    final result = completion.result!;
-    if (!result.accepted) {
-      _setState(
-        synchronized.withTurnAction(
-          synchronized.turnAction.copyWith(
-            inFlight: false,
-            failure: TurnActionFailureView.rejected(result.rejectionCode!),
-          ),
-        ),
-      );
-      return;
-    }
-    synchronized = synchronized.withRecipient(result.player!);
-    _setState(
-      synchronized
-          .withTurnPresentations(
-            synchronized.turnPresentations.observeActivities(result.activities),
-          )
-          .withTurnAction(
-            synchronized.turnAction.copyWith(
-              inFlight: false,
-              clearFailure: true,
-            ),
-          ),
+    _turns.endTurn(
+      readState: () => _state,
+      publish: _setState,
+      isDisposed: () => _disposed,
     );
   }
 
   void toggleReference() {
     final current = _state;
     if (current is! GameSessionReady) return;
-    _setState(
-      current.withInteraction(
-        current.interaction.copyWith(
-          referenceVisible: !current.interaction.referenceVisible,
-        ),
-      ),
-    );
+    _setState(_toggleReferenceState(current));
   }
 
   void completeTurnPresentation() {
@@ -433,15 +362,6 @@ final class MapCoordinator {
         : null;
   }
 
-  GameSessionReady? _currentTurn(int correlationId) {
-    if (_disposed) return null;
-    final current = _state;
-    return current is GameSessionReady &&
-            current.turnAction.correlationId == correlationId
-        ? current
-        : null;
-  }
-
   void _setState(GameSessionState value) {
     if (_disposed) return;
     _state = value;
@@ -450,6 +370,26 @@ final class MapCoordinator {
 }
 
 void _ignoreDiagnostic(String code, Object error, StackTrace stackTrace) {}
+
+GameSessionReady? _hoverState(
+  GameSessionReady current,
+  MapHexCoordinate? coordinate,
+) {
+  final next = coordinate != null && current.scene.map.contains(coordinate)
+      ? coordinate
+      : null;
+  if (next == current.interaction.hovered) return null;
+  return current.withInteraction(
+    current.interaction.copyWith(hovered: next, clearHovered: next == null),
+  );
+}
+
+GameSessionReady _toggleReferenceState(GameSessionReady current) =>
+    current.withInteraction(
+      current.interaction.copyWith(
+        referenceVisible: !current.interaction.referenceVisible,
+      ),
+    );
 
 GameSessionReady _moveResultState(
   GameSessionReady current,

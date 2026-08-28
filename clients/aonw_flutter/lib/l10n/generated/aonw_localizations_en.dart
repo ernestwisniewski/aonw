@@ -104,35 +104,47 @@ class AonwLocalizationsEn extends AonwLocalizations {
   }
 
   @override
-  String turnLabel(int turn) {
-    return 'TURN $turn';
+  String turnSummary(String kind, int turn, int submitted, int required) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'label': 'TURN $turn',
+      'progress': 'Ready: $submitted of $required',
+      'other': 'TURN $turn',
+    });
+    return '$_temp0';
   }
 
   @override
-  String turnSubmissionProgress(int submitted, int required) {
-    return 'Ready: $submitted of $required';
+  String turnText(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'statusActive': 'Your turn',
+      'statusFinished': 'Turn finished',
+      'statusSubmitted': 'Turn submitted',
+      'statusWaiting': 'Waiting',
+      'statusPendingAction': 'Action required',
+      'actionEnd': 'End turn',
+      'actionEnding': 'Ending turn',
+      'outcomeConquest': 'Conquest victory',
+      'outcomeDomination': 'Domination victory',
+      'outcomeCultural': 'Cultural victory',
+      'outcomeScore': 'Score victory',
+      'outcomeResignation': 'Match ended by resignation',
+      'outcomeDraw': 'Draw',
+      'outcomeOngoing': 'Match in progress',
+      'activityTitle': 'Activity',
+      'activityArtifact': 'Artifact activity',
+      'activityCity': 'City activity',
+      'activityResearch': 'Research progress',
+      'activityObjective': 'Strategic objective update',
+      'activityOutcome': 'Match outcome updated',
+      'activityCombat': 'Combat activity',
+      'activityDiplomacy': 'Diplomatic activity',
+      'activityUnit': 'Unit activity',
+      'activityTurn': 'Turn updated',
+      'activityWorker': 'Worker job completed',
+      'other': 'Game activity',
+    });
+    return '$_temp0';
   }
-
-  @override
-  String get turnActive => 'Your turn';
-
-  @override
-  String get turnFinished => 'Turn finished';
-
-  @override
-  String get turnSubmitted => 'Turn submitted';
-
-  @override
-  String get turnWaiting => 'Waiting';
-
-  @override
-  String get turnPendingAction => 'Action required';
-
-  @override
-  String get endTurn => 'End turn';
-
-  @override
-  String get endingTurn => 'Ending turn';
 
   @override
   String turnFailure(String failure) {
@@ -150,42 +162,6 @@ class AonwLocalizationsEn extends AonwLocalizations {
       'turn_number_overflow': 'The next turn cannot be represented.',
       'state_revision_overflow': 'The game revision cannot be advanced.',
       'other': 'The turn could not be completed.',
-    });
-    return '$_temp0';
-  }
-
-  @override
-  String gameOutcome(String condition) {
-    String _temp0 = intl.Intl.selectLogic(condition, {
-      'conquest': 'Conquest victory',
-      'domination': 'Domination victory',
-      'cultural': 'Cultural victory',
-      'score': 'Score victory',
-      'resignation': 'Match ended by resignation',
-      'draw': 'Draw',
-      'ongoing': 'Match in progress',
-      'other': 'Match ended',
-    });
-    return '$_temp0';
-  }
-
-  @override
-  String get activityLog => 'Activity';
-
-  @override
-  String activityEvent(String category) {
-    String _temp0 = intl.Intl.selectLogic(category, {
-      'artifact': 'Artifact activity',
-      'city': 'City activity',
-      'research': 'Research progress',
-      'objective': 'Strategic objective update',
-      'outcome': 'Match outcome updated',
-      'combat': 'Combat activity',
-      'diplomacy': 'Diplomatic activity',
-      'unit': 'Unit activity',
-      'turn': 'Turn updated',
-      'worker': 'Worker job completed',
-      'other': 'Game activity',
     });
     return '$_temp0';
   }

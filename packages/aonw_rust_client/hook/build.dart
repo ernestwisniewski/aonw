@@ -99,65 +99,65 @@ LinkMode _linkMode(LinkModePreference preference) => switch (preference) {
 String _rustTarget(CodeConfig code) {
   final os = code.targetOS;
   final architecture = code.targetArchitecture;
-  if (os == OS.android) {
-    return switch (architecture) {
-      Architecture.arm => 'armv7-linux-androideabi',
-      Architecture.arm64 => 'aarch64-linux-android',
-      Architecture.ia32 => 'i686-linux-android',
-      Architecture.x64 => 'x86_64-linux-android',
-      _ => throw UnsupportedError(
-        'Unsupported Android Rust architecture: $architecture',
-      ),
-    };
-  }
-  if (os == OS.iOS) {
-    if (code.iOS.targetSdk == IOSSdk.iPhoneSimulator) {
-      return switch (architecture) {
-        Architecture.arm64 => 'aarch64-apple-ios-sim',
-        Architecture.x64 => 'x86_64-apple-ios',
-        _ => throw UnsupportedError(
-          'Unsupported iOS simulator architecture: $architecture',
-        ),
-      };
-    }
-    if (architecture == Architecture.arm64) return 'aarch64-apple-ios';
-    throw UnsupportedError(
-      'Unsupported iOS device architecture: $architecture',
-    );
-  }
-  if (os == OS.macOS) {
-    return switch (architecture) {
-      Architecture.arm64 => 'aarch64-apple-darwin',
-      Architecture.x64 => 'x86_64-apple-darwin',
-      _ => throw UnsupportedError(
-        'Unsupported macOS Rust architecture: $architecture',
-      ),
-    };
-  }
-  if (os == OS.linux) {
-    return switch (architecture) {
-      Architecture.arm => 'armv7-unknown-linux-gnueabihf',
-      Architecture.arm64 => 'aarch64-unknown-linux-gnu',
-      Architecture.ia32 => 'i686-unknown-linux-gnu',
-      Architecture.riscv64 => 'riscv64gc-unknown-linux-gnu',
-      Architecture.x64 => 'x86_64-unknown-linux-gnu',
-      _ => throw UnsupportedError(
-        'Unsupported Linux Rust architecture: $architecture',
-      ),
-    };
-  }
-  if (os == OS.windows) {
-    return switch (architecture) {
-      Architecture.arm64 => 'aarch64-pc-windows-msvc',
-      Architecture.ia32 => 'i686-pc-windows-msvc',
-      Architecture.x64 => 'x86_64-pc-windows-msvc',
-      _ => throw UnsupportedError(
-        'Unsupported Windows Rust architecture: $architecture',
-      ),
-    };
-  }
+  if (os == OS.android) return _androidRustTarget(architecture);
+  if (os == OS.iOS) return _iosRustTarget(code, architecture);
+  if (os == OS.macOS) return _macosRustTarget(architecture);
+  if (os == OS.linux) return _linuxRustTarget(architecture);
+  if (os == OS.windows) return _windowsRustTarget(architecture);
   throw UnsupportedError('Unsupported Rust target: $os/$architecture');
 }
+
+String _androidRustTarget(Architecture architecture) => switch (architecture) {
+  Architecture.arm => 'armv7-linux-androideabi',
+  Architecture.arm64 => 'aarch64-linux-android',
+  Architecture.ia32 => 'i686-linux-android',
+  Architecture.x64 => 'x86_64-linux-android',
+  _ => throw UnsupportedError(
+    'Unsupported Android Rust architecture: $architecture',
+  ),
+};
+
+String _iosRustTarget(CodeConfig code, Architecture architecture) {
+  if (code.iOS.targetSdk == IOSSdk.iPhoneSimulator) {
+    return switch (architecture) {
+      Architecture.arm64 => 'aarch64-apple-ios-sim',
+      Architecture.x64 => 'x86_64-apple-ios',
+      _ => throw UnsupportedError(
+        'Unsupported iOS simulator architecture: $architecture',
+      ),
+    };
+  }
+  if (architecture == Architecture.arm64) return 'aarch64-apple-ios';
+  throw UnsupportedError('Unsupported iOS device architecture: $architecture');
+}
+
+String _macosRustTarget(Architecture architecture) => switch (architecture) {
+  Architecture.arm64 => 'aarch64-apple-darwin',
+  Architecture.x64 => 'x86_64-apple-darwin',
+  _ => throw UnsupportedError(
+    'Unsupported macOS Rust architecture: $architecture',
+  ),
+};
+
+String _linuxRustTarget(Architecture architecture) => switch (architecture) {
+  Architecture.arm => 'armv7-unknown-linux-gnueabihf',
+  Architecture.arm64 => 'aarch64-unknown-linux-gnu',
+  Architecture.ia32 => 'i686-unknown-linux-gnu',
+  Architecture.riscv64 => 'riscv64gc-unknown-linux-gnu',
+  Architecture.x64 => 'x86_64-unknown-linux-gnu',
+  _ => throw UnsupportedError(
+    'Unsupported Linux Rust architecture: $architecture',
+  ),
+};
+
+String _windowsRustTarget(Architecture architecture) => switch (architecture) {
+  Architecture.arm64 => 'aarch64-pc-windows-msvc',
+  Architecture.ia32 => 'i686-pc-windows-msvc',
+  Architecture.x64 => 'x86_64-pc-windows-msvc',
+  _ => throw UnsupportedError(
+    'Unsupported Windows Rust architecture: $architecture',
+  ),
+};
 
 Future<void> _addEngineDependencies(
   Uri engineRoot,

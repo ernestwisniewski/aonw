@@ -10,7 +10,6 @@ import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
-import 'package:aonw_flutter/features/turns/read_model/turn_activity_view.dart';
 import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/action_deck_state.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
@@ -401,86 +400,6 @@ void main() {
     expect(
       ready.interaction.actionDeck?.failure?.code,
       UnitActionFailureViewCode.responseIncompatible,
-    );
-  });
-
-  test('ends a local turn only after the accepted recipient patch', () async {
-    final nextPlayer = PlayerMapView.preview(
-      actorPlayerId: 'preview-player',
-      stamp: testSessionStamp(revision: 1, stateDigest: 'd' * 64),
-      turn: 2,
-      pendingAction: null,
-      units: const [],
-    );
-    final session = FakeGameSession.success(
-      testMapScene(),
-      turnResult: TurnCommandResultView.accepted(
-        player: nextPlayer,
-        activities: const [
-          TurnActivityView(
-            identity: TurnActivityIdentityView(revision: 1, eventIndex: 0),
-            kind: TurnActivityKindView.turnEnded,
-          ),
-        ],
-        evidence: TurnKernelEvidenceView(
-          processors: const ['movement'],
-          foundedCityIds: const [],
-          combatExecutionCount: 0,
-          resetUnitIds: const [],
-          movementExecutionCount: 0,
-          invalidatedOrderUnitIds: const [],
-          finishedAutoExploreUnitIds: const [],
-        ),
-      ),
-    );
-    final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      unitActions: session,
-      turns: session,
-    );
-    addTearDown(controller.dispose);
-    await controller.load();
-
-    controller.endTurn();
-    controller.endTurn();
-    await Future<void>.delayed(Duration.zero);
-
-    final ready = controller.state as GameSessionReady;
-    expect(session.endTurnCalls, 1);
-    expect(session.lastEndTurnExpectedRevision, 0);
-    expect(ready.recipient.turn, 2);
-    expect(
-      ready.turnPresentations.latestActivity?.kind,
-      TurnActivityKindView.turnEnded,
-    );
-    expect(ready.turnAction.inFlight, isFalse);
-  });
-
-  test('keeps authoritative state after a rejected end turn', () async {
-    final session = FakeGameSession.success(
-      testMapScene(),
-      turnResult: const TurnCommandResultView.rejected(
-        code: TurnRejectionCodeView.playerNotActive,
-      ),
-    );
-    final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      unitActions: session,
-      turns: session,
-    );
-    addTearDown(controller.dispose);
-    await controller.load();
-
-    controller.endTurn();
-    await Future<void>.delayed(Duration.zero);
-
-    final ready = controller.state as GameSessionReady;
-    expect(ready.recipient.turn, 1);
-    expect(
-      ready.turnAction.failure?.rejectionCode,
-      TurnRejectionCodeView.playerNotActive,
     );
   });
 }

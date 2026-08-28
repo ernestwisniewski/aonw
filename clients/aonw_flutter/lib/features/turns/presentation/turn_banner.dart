@@ -87,7 +87,7 @@ final class _TurnBannerContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = context.aonwL10n.turnLabel(turn);
+    final label = context.aonwL10n.turnSummary('label', turn, 0, 0);
     return AonwPanel(
       key: const ValueKey('turn-banner'),
       semanticLabel: label,

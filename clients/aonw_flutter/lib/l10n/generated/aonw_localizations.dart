@@ -212,83 +212,23 @@ abstract class AonwLocalizations {
   /// **'{failure, select, requestFailed{The unit action request could not be completed.} responseIncompatible{The unit action response is incompatible with this client.} sessionUnavailable{The local game session is unavailable.} stale{The game state changed. Review the unit and try again.} matchFinished{The match has already finished.} unitUnavailable{That unit is no longer available to command.} unitBusy{That unit is busy and cannot perform this action now.} internal{The unit action could not be applied. Try again.} other{The unit action could not be completed.}}'**
   String unitActionFailure(String failure);
 
-  /// No description provided for @turnLabel.
+  /// No description provided for @turnSummary.
   ///
   /// In en, this message translates to:
-  /// **'TURN {turn}'**
-  String turnLabel(int turn);
+  /// **'{kind, select, label{TURN {turn}} progress{Ready: {submitted} of {required}} other{TURN {turn}}}'**
+  String turnSummary(String kind, int turn, int submitted, int required);
 
-  /// No description provided for @turnSubmissionProgress.
+  /// No description provided for @turnText.
   ///
   /// In en, this message translates to:
-  /// **'Ready: {submitted} of {required}'**
-  String turnSubmissionProgress(int submitted, int required);
-
-  /// No description provided for @turnActive.
-  ///
-  /// In en, this message translates to:
-  /// **'Your turn'**
-  String get turnActive;
-
-  /// No description provided for @turnFinished.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn finished'**
-  String get turnFinished;
-
-  /// No description provided for @turnSubmitted.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn submitted'**
-  String get turnSubmitted;
-
-  /// No description provided for @turnWaiting.
-  ///
-  /// In en, this message translates to:
-  /// **'Waiting'**
-  String get turnWaiting;
-
-  /// No description provided for @turnPendingAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Action required'**
-  String get turnPendingAction;
-
-  /// No description provided for @endTurn.
-  ///
-  /// In en, this message translates to:
-  /// **'End turn'**
-  String get endTurn;
-
-  /// No description provided for @endingTurn.
-  ///
-  /// In en, this message translates to:
-  /// **'Ending turn'**
-  String get endingTurn;
+  /// **'{value, select, statusActive{Your turn} statusFinished{Turn finished} statusSubmitted{Turn submitted} statusWaiting{Waiting} statusPendingAction{Action required} actionEnd{End turn} actionEnding{Ending turn} outcomeConquest{Conquest victory} outcomeDomination{Domination victory} outcomeCultural{Cultural victory} outcomeScore{Score victory} outcomeResignation{Match ended by resignation} outcomeDraw{Draw} outcomeOngoing{Match in progress} activityTitle{Activity} activityArtifact{Artifact activity} activityCity{City activity} activityResearch{Research progress} activityObjective{Strategic objective update} activityOutcome{Match outcome updated} activityCombat{Combat activity} activityDiplomacy{Diplomatic activity} activityUnit{Unit activity} activityTurn{Turn updated} activityWorker{Worker job completed} other{Game activity}}'**
+  String turnText(String value);
 
   /// No description provided for @turnFailure.
   ///
   /// In en, this message translates to:
   /// **'{failure, select, requestFailed{The turn request could not be completed.} responseIncompatible{The turn response is incompatible with this client.} sessionUnavailable{The local game session is unavailable.} stale_revision{The game state changed. Review it and try again.} match_finished{The match has already finished.} turn_player_not_controlled{This player cannot end the current turn.} turn_player_not_active{This player is not active.} turn_scope_invalid{The current turn scope is invalid.} turn_processor_unsupported{A required turn processor is unavailable.} turn_number_overflow{The next turn cannot be represented.} state_revision_overflow{The game revision cannot be advanced.} other{The turn could not be completed.}}'**
   String turnFailure(String failure);
-
-  /// No description provided for @gameOutcome.
-  ///
-  /// In en, this message translates to:
-  /// **'{condition, select, conquest{Conquest victory} domination{Domination victory} cultural{Cultural victory} score{Score victory} resignation{Match ended by resignation} draw{Draw} ongoing{Match in progress} other{Match ended}}'**
-  String gameOutcome(String condition);
-
-  /// No description provided for @activityLog.
-  ///
-  /// In en, this message translates to:
-  /// **'Activity'**
-  String get activityLog;
-
-  /// No description provided for @activityEvent.
-  ///
-  /// In en, this message translates to:
-  /// **'{category, select, artifact{Artifact activity} city{City activity} research{Research progress} objective{Strategic objective update} outcome{Match outcome updated} combat{Combat activity} diplomacy{Diplomatic activity} unit{Unit activity} turn{Turn updated} worker{Worker job completed} other{Game activity}}'**
-  String activityEvent(String category);
 
   /// No description provided for @loadingMap.
   ///

@@ -55,34 +55,11 @@ final class TurnPresentationQueue {
 
   TurnPresentationQueue observeActivities(List<TurnActivityView> values) {
     if (values.isEmpty) return this;
-    final next = [...activities];
-    final identities = {for (final item in activities) item.identity};
-    TurnActivityIdentityView? previous = activities.isEmpty
-        ? null
-        : activities.last.identity;
-    for (final item in values) {
-      _validateActivityIdentity(item.identity);
-      if (!identities.add(item.identity)) continue;
-      if (previous case final last?) {
-        if (item.identity.revision < last.revision ||
-            (item.identity.revision == last.revision &&
-                item.identity.eventIndex <= last.eventIndex)) {
-          throw const FormatException(
-            'Turn activity events are not in authoritative order.',
-          );
-        }
-      }
-      next.add(item);
-      previous = item.identity;
-    }
-    final bounded = next.length <= maximumActivityBacklog
-        ? next
-        : next.sublist(next.length - maximumActivityBacklog);
     return TurnPresentationQueue._(
       latestTurn: latestTurn,
       active: active,
       pending: pending,
-      activities: bounded,
+      activities: _mergeActivities(activities, values),
     );
   }
 
@@ -118,3 +95,36 @@ final class TurnPresentationQueue {
 
   static const maximumActivityBacklog = 64;
 }
+
+List<TurnActivityView> _mergeActivities(
+  List<TurnActivityView> current,
+  List<TurnActivityView> incoming,
+) {
+  final next = [...current];
+  final identities = {for (final item in current) item.identity};
+  TurnActivityIdentityView? previous = current.lastOrNull?.identity;
+  for (final item in incoming) {
+    TurnPresentationQueue._validateActivityIdentity(item.identity);
+    if (!identities.add(item.identity)) continue;
+    if (previous case final last? when !_isAfter(item.identity, last)) {
+      throw const FormatException(
+        'Turn activity events are not in authoritative order.',
+      );
+    }
+    next.add(item);
+    previous = item.identity;
+  }
+  return next.length <= TurnPresentationQueue.maximumActivityBacklog
+      ? next
+      : next.sublist(
+          next.length - TurnPresentationQueue.maximumActivityBacklog,
+        );
+}
+
+bool _isAfter(
+  TurnActivityIdentityView candidate,
+  TurnActivityIdentityView previous,
+) =>
+    candidate.revision > previous.revision ||
+    (candidate.revision == previous.revision &&
+        candidate.eventIndex > previous.eventIndex);

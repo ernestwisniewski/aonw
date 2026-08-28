@@ -8,41 +8,54 @@ GameSessionReady reduceUnitActionCompletion(
   UnitActionCommandCompletion completion,
 ) {
   final failure = completion.failure;
-  if (failure == null) {
-    final result = completion.result!;
-    if (!result.accepted) {
-      return current.withInteraction(
-        current.interaction.copyWith(
+  if (failure == null) return _successfulCompletion(current, completion);
+
+  return _failedCompletion(current, completion, failure);
+}
+
+GameSessionReady _successfulCompletion(
+  GameSessionReady current,
+  UnitActionCommandCompletion completion,
+) {
+  final result = completion.result!;
+  if (!result.accepted) {
+    return current.withInteraction(
+      current.interaction.copyWith(
+        actionDeck: current.interaction.actionDeck?.copyWith(
+          clearInFlightAction: true,
+          failure: UnitActionFailure.rejected(result.rejectionCode!),
+        ),
+      ),
+    );
+  }
+  final player = result.player!;
+  final selectedUnit = _unit(player, result.unitId);
+  final interaction = selectedUnit == null
+      ? current.interaction.copyWith(
+          clearSelected: true,
+          clearSelectedUnit: true,
+          clearReachable: true,
+          clearRoute: true,
+          clearActionDeck: true,
+        )
+      : current.interaction.copyWith(
+          selected: selectedUnit.coordinate,
+          selectedUnitId: selectedUnit.id,
+          clearReachable: true,
+          clearRoute: true,
           actionDeck: current.interaction.actionDeck?.copyWith(
             clearInFlightAction: true,
-            failure: UnitActionFailure.rejected(result.rejectionCode!),
+            clearFailure: true,
           ),
-        ),
-      );
-    }
-    final player = result.player!;
-    final selectedUnit = _unit(player, result.unitId);
-    final interaction = selectedUnit == null
-        ? current.interaction.copyWith(
-            clearSelected: true,
-            clearSelectedUnit: true,
-            clearReachable: true,
-            clearRoute: true,
-            clearActionDeck: true,
-          )
-        : current.interaction.copyWith(
-            selected: selectedUnit.coordinate,
-            selectedUnitId: selectedUnit.id,
-            clearReachable: true,
-            clearRoute: true,
-            actionDeck: current.interaction.actionDeck?.copyWith(
-              clearInFlightAction: true,
-              clearFailure: true,
-            ),
-          );
-    return current.withRecipient(player).withInteraction(interaction);
-  }
+        );
+  return current.withRecipient(player).withInteraction(interaction);
+}
 
+GameSessionReady _failedCompletion(
+  GameSessionReady current,
+  UnitActionCommandCompletion completion,
+  UnitActionFailure failure,
+) {
   final player = completion.resyncedPlayer;
   final synchronized = player == null ? current : current.withRecipient(player);
   final actionDeck = synchronized.interaction.actionDeck;

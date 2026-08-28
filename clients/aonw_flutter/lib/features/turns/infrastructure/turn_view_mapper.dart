@@ -63,27 +63,13 @@ final class TurnViewMapper {
         command.evidence != null) {
       throw const FormatException('Rejected turn has execution details.');
     }
-    return switch (command.rejection!) {
-      AonwCommandRejectionCode.staleRevision =>
-        TurnRejectionCodeView.staleRevision,
-      AonwCommandRejectionCode.matchFinished =>
-        TurnRejectionCodeView.matchFinished,
-      AonwCommandRejectionCode.turnPlayerNotControlled =>
-        TurnRejectionCodeView.playerNotControlled,
-      AonwCommandRejectionCode.turnPlayerNotActive =>
-        TurnRejectionCodeView.playerNotActive,
-      AonwCommandRejectionCode.turnScopeInvalid =>
-        TurnRejectionCodeView.scopeInvalid,
-      AonwCommandRejectionCode.turnProcessorUnsupported =>
-        TurnRejectionCodeView.processorUnsupported,
-      AonwCommandRejectionCode.turnNumberOverflow =>
-        TurnRejectionCodeView.numberOverflow,
-      AonwCommandRejectionCode.stateRevisionOverflow =>
-        TurnRejectionCodeView.stateRevisionOverflow,
-      _ => throw const FormatException(
+    final rejection = _turnRejections[command.rejection!];
+    if (rejection == null) {
+      throw const FormatException(
         'Turn command returned an unrelated rejection code.',
-      ),
-    };
+      );
+    }
+    return rejection;
   }
 
   static void _validateStamp(
@@ -105,3 +91,19 @@ final class TurnViewMapper {
     }
   }
 }
+
+const _turnRejections = <AonwCommandRejectionCode, TurnRejectionCodeView>{
+  AonwCommandRejectionCode.staleRevision: TurnRejectionCodeView.staleRevision,
+  AonwCommandRejectionCode.matchFinished: TurnRejectionCodeView.matchFinished,
+  AonwCommandRejectionCode.turnPlayerNotControlled:
+      TurnRejectionCodeView.playerNotControlled,
+  AonwCommandRejectionCode.turnPlayerNotActive:
+      TurnRejectionCodeView.playerNotActive,
+  AonwCommandRejectionCode.turnScopeInvalid: TurnRejectionCodeView.scopeInvalid,
+  AonwCommandRejectionCode.turnProcessorUnsupported:
+      TurnRejectionCodeView.processorUnsupported,
+  AonwCommandRejectionCode.turnNumberOverflow:
+      TurnRejectionCodeView.numberOverflow,
+  AonwCommandRejectionCode.stateRevisionOverflow:
+      TurnRejectionCodeView.stateRevisionOverflow,
+};
