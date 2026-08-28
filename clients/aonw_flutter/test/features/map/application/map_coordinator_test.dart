@@ -21,6 +21,7 @@ import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.d
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/map_test_fixture.dart';
+import '../../../support/unsupported_city_session.dart';
 
 void main() {
   test('loads ready state and keeps interaction local', () async {
@@ -28,6 +29,7 @@ void main() {
     final controller = MapCoordinator(
       session: session,
       movement: session,
+      cities: const UnsupportedCitySession(),
       unitActions: session,
       logistics: session,
       turns: session,
@@ -82,6 +84,7 @@ void main() {
     final controller = MapCoordinator(
       session: session,
       movement: session,
+      cities: const UnsupportedCitySession(),
       unitActions: session,
       logistics: session,
       turns: session,

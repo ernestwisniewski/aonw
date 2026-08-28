@@ -1,3 +1,4 @@
+import '../../features/cities/read_model/city_view.dart';
 import '../../features/map/presentation/map_render_snapshot.dart';
 import '../../features/map/read_model/map_view.dart';
 import '../../features/map/read_model/player_map_view.dart';
@@ -12,10 +13,14 @@ final class FlameScenePatch {
     required this.snapshot,
     required List<VisibleUnitView> unitUpserts,
     required List<String> removedUnitIds,
+    required List<CityView> cityUpserts,
+    required List<String> removedCityIds,
     required List<FlameUnitMovementTransition> movements,
     required List<FlameCombatTransition> combats,
   }) : unitUpserts = List.unmodifiable(unitUpserts),
        removedUnitIds = List.unmodifiable(removedUnitIds),
+       cityUpserts = List.unmodifiable(cityUpserts),
+       removedCityIds = List.unmodifiable(removedCityIds),
        movements = List.unmodifiable(movements),
        combats = List.unmodifiable(combats);
 
@@ -29,11 +34,15 @@ final class FlameScenePatch {
 
     final previousUnits = _unitsById(previous);
     final nextUnits = _unitsById(next);
+    final previousCities = _citiesById(previous);
+    final nextCities = _citiesById(next);
 
     return FlameScenePatch._(
       snapshot: next,
       unitUpserts: _unitUpserts(previous, next, previousUnits),
       removedUnitIds: _removedUnitIds(previous, nextUnits),
+      cityUpserts: _cityUpserts(previous, next, previousCities),
+      removedCityIds: _removedCityIds(previous, nextCities),
       movements: _movementBetween(previous, next, previousUnits, nextUnits),
       combats: _combatBetween(previous, next),
     );
@@ -42,6 +51,8 @@ final class FlameScenePatch {
   final MapRenderSnapshot snapshot;
   final List<VisibleUnitView> unitUpserts;
   final List<String> removedUnitIds;
+  final List<CityView> cityUpserts;
+  final List<String> removedCityIds;
   final List<FlameUnitMovementTransition> movements;
   final List<FlameCombatTransition> combats;
 
@@ -54,11 +65,18 @@ final class FlameScenePatch {
     removedUnitIds:
         previous?.player.units.map((unit) => unit.id).toList() ?? const [],
     movements: const [],
+    cityUpserts: next.player.cities,
+    removedCityIds:
+        previous?.player.cities.map((city) => city.id).toList() ?? const [],
     combats: const [],
   );
 
   static Map<String, VisibleUnitView> _unitsById(MapRenderSnapshot snapshot) =>
       {for (final unit in snapshot.player.units) unit.id: unit};
+
+  static Map<String, CityView> _citiesById(MapRenderSnapshot snapshot) => {
+    for (final city in snapshot.player.cities) city.id: city,
+  };
 
   static List<VisibleUnitView> _unitUpserts(
     MapRenderSnapshot previous,
@@ -82,6 +100,27 @@ final class FlameScenePatch {
   ) => [
     for (final unit in previous.player.units)
       if (!nextUnits.containsKey(unit.id)) unit.id,
+  ];
+
+  static List<CityView> _cityUpserts(
+    MapRenderSnapshot previous,
+    MapRenderSnapshot next,
+    Map<String, CityView> previousCities,
+  ) {
+    final actorChanged =
+        previous.player.actorPlayerId != next.player.actorPlayerId;
+    return [
+      for (final city in next.player.cities)
+        if (actorChanged || !_sameCity(previousCities[city.id], city)) city,
+    ];
+  }
+
+  static List<String> _removedCityIds(
+    MapRenderSnapshot previous,
+    Map<String, CityView> nextCities,
+  ) => [
+    for (final city in previous.player.cities)
+      if (!nextCities.containsKey(city.id)) city.id,
   ];
 
   static List<FlameUnitMovementTransition> _movementBetween(
@@ -158,6 +197,15 @@ final class FlameScenePatch {
       left.coordinate == right.coordinate &&
       left.movementUnits == right.movementUnits &&
       left.posture == right.posture;
+
+  static bool _sameCity(CityView? left, CityView right) =>
+      left != null &&
+      left.id == right.id &&
+      left.ownerPlayerId == right.ownerPlayerId &&
+      left.name == right.name &&
+      left.center == right.center &&
+      left.hitPoints == right.hitPoints &&
+      left.visibleControlledHexes.length == right.visibleControlledHexes.length;
 }
 
 final class FlameCombatTransition {

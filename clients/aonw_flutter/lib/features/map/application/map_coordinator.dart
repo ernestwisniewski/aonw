@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import '../../cities/application/city_session_port.dart';
+import '../../cities/application/city_state.dart';
+import '../../cities/application/city_workflow.dart';
+import '../../cities/read_model/city_view.dart';
 import '../../combat/application/combat_session_port.dart';
 import '../../combat/application/combat_workflow.dart';
 import '../../combat/read_model/combat_view.dart';
@@ -23,6 +27,7 @@ import 'movement_session_port.dart';
 import 'unit_action_workflow.dart';
 
 part 'map_coordinator_actions.dart';
+part 'map_coordinator_selection.dart';
 
 typedef MapDiagnosticReporter =
     void Function(String code, Object error, StackTrace stackTrace);
@@ -32,6 +37,7 @@ final class MapCoordinator {
     required MapSessionPort session,
     required MovementSessionPort movement,
     CombatSessionPort? combat,
+    CitySessionPort? cities,
     required UnitLogisticsSessionPort logistics,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
@@ -44,6 +50,10 @@ final class MapCoordinator {
        ),
        _combat = CombatWorkflow(
          session: combat ?? _requireCombatSession(movement),
+         diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
+       _cities = CityWorkflow(
+         session: cities ?? _requireCitySession(movement),
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _logistics = UnitLogisticsWorkflow(
@@ -65,6 +75,7 @@ final class MapCoordinator {
   final MapSessionPort _session;
   final MovementCommandRunner _movement;
   final CombatWorkflow _combat;
+  final CityWorkflow _cities;
   final UnitLogisticsWorkflow _logistics;
   final UnitActionWorkflow _unitActions;
   final TurnWorkflow _turns;
@@ -119,169 +130,6 @@ final class MapCoordinator {
 
   void select(MapHexCoordinate? coordinate) {
     unawaited(_select(coordinate));
-  }
-
-  Future<void> _select(MapHexCoordinate? coordinate) async {
-    final current = _state;
-    if (current is! GameSessionReady || _interactionBusy(current.interaction)) {
-      return;
-    }
-    final next = coordinate != null && current.scene.map.contains(coordinate)
-        ? coordinate
-        : null;
-    final generation = ++_interactionGeneration;
-    if (next == null) {
-      _clearSelection(current);
-      return;
-    }
-
-    final unit = current.recipient.controlledUnitAt(next);
-    if (unit != null) {
-      await _selectControlledUnit(current, next, unit.id, generation);
-      return;
-    }
-
-    final selectedUnitId = current.interaction.selectedUnitId;
-    final reachable = current.interaction.reachable;
-    if (selectedUnitId != null && reachable?.tileAt(next) != null) {
-      await _previewRoute(current, next, selectedUnitId, generation);
-      return;
-    }
-
-    if (selectedUnitId != null) {
-      _combat.preview(
-        attackerUnitId: selectedUnitId,
-        defender: next,
-        readState: () => _state,
-        publish: _setState,
-        isDisposed: () => _disposed,
-      );
-      return;
-    }
-
-    _selectPlainHex(current, next);
-  }
-
-  void _clearSelection(GameSessionReady current) {
-    _setState(
-      current.withInteraction(
-        current.interaction.copyWith(
-          clearSelected: true,
-          clearSelectedUnit: true,
-          clearReachable: true,
-          clearRoute: true,
-          clearActionDeck: true,
-          clearUnitLogistics: true,
-          clearCombat: true,
-          movementPending: false,
-          clearMovementError: true,
-        ),
-      ),
-    );
-  }
-
-  void _selectPlainHex(GameSessionReady current, MapHexCoordinate coordinate) {
-    _setState(
-      current.withInteraction(
-        current.interaction.copyWith(
-          selected: coordinate,
-          clearSelectedUnit: true,
-          clearReachable: true,
-          clearRoute: true,
-          clearActionDeck: true,
-          clearUnitLogistics: true,
-          clearCombat: true,
-          movementPending: false,
-          clearMovementError: true,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _selectControlledUnit(
-    GameSessionReady current,
-    MapHexCoordinate coordinate,
-    String unitId,
-    int generation,
-  ) async {
-    _setState(
-      current.withInteraction(
-        current.interaction.copyWith(
-          selected: coordinate,
-          selectedUnitId: unitId,
-          actionDeck: ActionDeckViewState(unitId: unitId),
-          unitLogistics: UnitLogisticsState.loading(unitId),
-          clearReachable: true,
-          clearRoute: true,
-          movementPending: true,
-          clearMovementError: true,
-          clearCombat: true,
-        ),
-      ),
-    );
-    _logistics.load(
-      unitId: unitId,
-      readState: () => _state,
-      publish: _setState,
-      isDisposed: () => _disposed,
-    );
-    final completion = await _movement.reachable(
-      expectedRevision: current.recipient.stamp.revision,
-      unitId: unitId,
-    );
-    final ready = _currentInteraction(generation);
-    if (ready == null) return;
-    final failure = completion.failure;
-    if (failure != null) {
-      _setState(_movementFailureState(ready, completion));
-    } else {
-      _setState(
-        ready.withInteraction(
-          ready.interaction.copyWith(
-            reachable: completion.result!,
-            movementPending: false,
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> _previewRoute(
-    GameSessionReady current,
-    MapHexCoordinate target,
-    String unitId,
-    int generation,
-  ) async {
-    _setState(
-      current.withInteraction(
-        current.interaction.copyWith(
-          selected: target,
-          clearRoute: true,
-          movementPending: true,
-          clearMovementError: true,
-        ),
-      ),
-    );
-    final completion = await _movement.routePlan(
-      expectedRevision: current.recipient.stamp.revision,
-      unitId: unitId,
-      target: target,
-    );
-    final ready = _currentInteraction(generation);
-    if (ready == null) return;
-    final failure = completion.failure;
-    if (failure != null) {
-      _setState(_movementFailureState(ready, completion));
-    } else {
-      _setState(
-        ready.withInteraction(
-          ready.interaction.copyWith(
-            route: completion.result!,
-            movementPending: false,
-          ),
-        ),
-      );
-    }
   }
 
   void confirmMove() {
@@ -423,6 +271,8 @@ bool _interactionBusy(MapInteractionState interaction) =>
     interaction.movementPending ||
     (interaction.combat?.commandPending ?? false) ||
     (interaction.combat?.loading ?? false) ||
+    (interaction.city?.commandPending ?? false) ||
+    (interaction.city?.loading ?? false) ||
     (interaction.actionDeck?.commandPending ?? false) ||
     (interaction.unitLogistics?.commandPending ?? false);
 
@@ -432,6 +282,15 @@ CombatSessionPort _requireCombatSession(MovementSessionPort movement) {
     movement,
     'movement',
     'must also provide the combat session port',
+  );
+}
+
+CitySessionPort _requireCitySession(MovementSessionPort movement) {
+  if (movement case final CitySessionPort cities) return cities;
+  throw ArgumentError.value(
+    movement,
+    'movement',
+    'must also provide the city session port',
   );
 }
 

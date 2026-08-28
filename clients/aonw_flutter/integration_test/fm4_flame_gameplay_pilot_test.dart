@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:aonw_flutter/features/cities/read_model/city_view.dart';
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
@@ -40,7 +41,9 @@ void main() {
 
     expect(game.world.unitLayer.debugUnitCount, 120);
     expect(game.world.unitLayer.debugSharedPaintCount, 3);
-    expect(game.world.children, hasLength(8));
+    expect(game.world.cityLayer.debugCityCount, 40);
+    expect(game.world.cityLayer.debugSharedPaintCount, 3);
+    expect(game.world.children, hasLength(9));
     expect(game.paused, isTrue, reason: 'the turn-based world starts idle');
     final idleUpdates = game.world.effectHost.debugActiveUpdateCount;
     for (var frame = 0; frame < 12; frame++) {
@@ -89,6 +92,7 @@ void main() {
         'mapId': 'fm5-cutover-40x30',
         'dimensions': {'cols': 40, 'rows': 30},
         'visibleUnits': 120,
+        'visibleCities': 40,
         'warmupFrames': 12,
         'timedFrames': 60,
         'worldComponents': game.world.children.length,
@@ -150,6 +154,18 @@ MapRenderSnapshot _largeSnapshot() {
         posture: VisibleUnitPosture.active,
       ),
   ];
+  final cities = <CityView>[
+    for (var index = 0; index < 40; index++)
+      CityView(
+        id: 'pilot-city-$index',
+        ownerPlayerId: index.isEven ? 'pilot-player' : 'foreign-player',
+        name: 'Pilot city $index',
+        center: (col: index % cols, row: 5 + index ~/ cols),
+        visibleControlledHexes: [(col: index % cols, row: 5 + index ~/ cols)],
+        hitPoints: 10,
+        ownedDetails: null,
+      ),
+  ];
   const geometry = AonwOddQFlatTopGeometry(
     cols: cols,
     rows: rows,
@@ -189,6 +205,7 @@ MapRenderSnapshot _largeSnapshot() {
       turn: 1,
       pendingAction: null,
       units: units,
+      cities: cities,
     ),
   );
 }

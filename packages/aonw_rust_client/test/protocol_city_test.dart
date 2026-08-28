@@ -7,7 +7,7 @@ void main() {
   test('serializes every current city query and command exactly', () {
     expect(
       _request(
-        AonwClientRequest.cityFoundingOptions(
+        AonwCityRequest.foundingOptions(
           expectedRevision: 7,
           founderUnitId: 'founder',
         ),
@@ -16,31 +16,23 @@ void main() {
     );
     expect(
       _request(
-        AonwClientRequest.cityWorkedHexOptions(
-          expectedRevision: 7,
-          cityId: 'city',
-        ),
+        AonwCityRequest.workedHexOptions(expectedRevision: 7, cityId: 'city'),
       ),
       _query('cityWorkedHexOptions', 7, {'cityId': 'city'}),
     );
     expect(
       _request(
-        AonwClientRequest.cityExpansionOptions(
-          expectedRevision: 7,
-          cityId: 'city',
-        ),
+        AonwCityRequest.expansionOptions(expectedRevision: 7, cityId: 'city'),
       ),
       _query('cityExpansionOptions', 7, {'cityId': 'city'}),
     );
     expect(
-      _request(
-        AonwClientRequest.cityYield(expectedRevision: 7, cityId: 'city'),
-      ),
+      _request(AonwCityRequest.cityYield(expectedRevision: 7, cityId: 'city')),
       _query('cityYield', 7, {'cityId': 'city'}),
     );
     expect(
       _request(
-        AonwClientRequest.foundCity(
+        AonwCityRequest.found(
           expectedRevision: 7,
           founderUnitId: 'founder',
           controlledHexes: const [AonwCoordinate(col: 1, row: 2)],
@@ -55,7 +47,7 @@ void main() {
     );
     expect(
       _request(
-        AonwClientRequest.toggleWorkedHex(
+        AonwCityRequest.toggleWorkedHex(
           expectedRevision: 7,
           cityId: 'city',
           targetCol: 2,
@@ -69,7 +61,7 @@ void main() {
     );
     expect(
       _request(
-        AonwClientRequest.selectCityExpansionHex(
+        AonwCityRequest.selectExpansionHex(
           expectedRevision: 7,
           cityId: 'city',
           targetCol: 3,

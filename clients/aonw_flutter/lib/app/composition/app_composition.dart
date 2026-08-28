@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import '../../features/cities/application/city_session_port.dart';
 import '../../features/combat/application/combat_session_port.dart';
 import '../../features/logistics/application/unit_logistics_session_port.dart';
 import '../../features/map/application/map_session_port.dart';
@@ -22,6 +23,7 @@ final class AppComposition {
     required MapSessionPort mapSession,
     required MovementSessionPort movementSession,
     CombatSessionPort? combatSession,
+    CitySessionPort? citySession,
     required UnitLogisticsSessionPort logisticsSession,
     required UnitActionSessionPort unitActionSession,
     required TurnSessionPort turnSession,
@@ -34,6 +36,7 @@ final class AppComposition {
            session: mapSession,
            movement: movementSession,
            combat: combatSession ?? _requireCombatSession(movementSession),
+           cities: citySession ?? _requireCitySession(movementSession),
            logistics: logisticsSession,
            unitActions: unitActionSession,
            turns: turnSession,
@@ -54,6 +57,7 @@ final class AppComposition {
       mapSession: gateway,
       movementSession: gateway,
       combatSession: gateway,
+      citySession: gateway.citySession,
       logisticsSession: gateway,
       unitActionSession: gateway,
       turnSession: gateway,
@@ -72,5 +76,14 @@ CombatSessionPort _requireCombatSession(MovementSessionPort movement) {
     movement,
     'movementSession',
     'must also provide the combat session port',
+  );
+}
+
+CitySessionPort _requireCitySession(MovementSessionPort movement) {
+  if (movement case final CitySessionPort cities) return cities;
+  throw ArgumentError.value(
+    movement,
+    'movementSession',
+    'must also provide the city session port',
   );
 }

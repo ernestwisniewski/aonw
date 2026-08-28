@@ -1,3 +1,4 @@
+import 'package:aonw_flutter/features/cities/read_model/city_view.dart';
 import 'package:aonw_flutter/features/combat/application/combat_state.dart';
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
@@ -119,6 +120,24 @@ void main() {
     expect(patch.combats.single.revision, 1);
     expect(patch.combats.single.eventCount, 3);
   });
+
+  test('reconciles city markers by stable engine identity', () {
+    final stable = testCityView(id: 'stable-city');
+    final removed = testCityView(id: 'removed-city', center: (col: 2, row: 1));
+    final added = testCityView(id: 'added-city', center: (col: 0, row: 1));
+    final scene = testMapScene(cities: [stable, removed]);
+
+    final patch = FlameScenePatch.between(
+      _snapshot(scene, player: scene.player),
+      _snapshot(
+        scene,
+        player: _player(units: const [], cities: [stable, added]),
+      ),
+    );
+
+    expect(patch.cityUpserts, [same(added)]);
+    expect(patch.removedCityIds, ['removed-city']);
+  });
 }
 
 extension on CombatState {
@@ -145,6 +164,7 @@ PlayerMapView _player({
   int revision = 0,
   String? digest,
   required List<VisibleUnitView> units,
+  List<CityView> cities = const [],
 }) => PlayerMapView.preview(
   actorPlayerId: 'preview-player',
   stamp: SessionStampView(
@@ -156,4 +176,5 @@ PlayerMapView _player({
   turn: 1,
   pendingAction: null,
   units: units,
+  cities: cities,
 );

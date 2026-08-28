@@ -1,6 +1,9 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 
+import '../../cities/application/city_session_port.dart';
+import '../../cities/infrastructure/rust_city_gateway.dart';
+import '../../cities/read_model/city_view.dart';
 import '../../combat/application/combat_session_port.dart';
 import '../../combat/infrastructure/rust_combat_gateway.dart';
 import '../../combat/read_model/combat_view.dart';
@@ -27,6 +30,8 @@ import 'rust_game_session_context.dart';
 import 'rust_game_session_loader.dart';
 import 'rust_movement_gateway.dart';
 
+part 'rust_game_city_session.dart';
+
 final class RustGameSessionGateway
     implements
         MapSessionPort,
@@ -42,6 +47,7 @@ final class RustGameSessionGateway
     PlayerMapViewMapper playerMapper = const PlayerMapViewMapper(),
     RustMovementGateway movementGateway = const RustMovementGateway(),
     RustCombatGateway combatGateway = const RustCombatGateway(),
+    RustCityGateway cityGateway = const RustCityGateway(),
     RustTurnGateway turnGateway = const RustTurnGateway(),
     RustUnitLogisticsGateway logisticsGateway =
         const RustUnitLogisticsGateway(),
@@ -55,20 +61,25 @@ final class RustGameSessionGateway
        _playerMapper = playerMapper,
        _movementGateway = movementGateway,
        _combatGateway = combatGateway,
+       _cityGateway = cityGateway,
        _turnGateway = turnGateway,
        _logisticsGateway = logisticsGateway,
        _unitActions = RustUnitActionGateway(
          playerMapper: playerMapper,
          mapper: unitActionMapper,
-       );
+       ) {
+    citySession = _RustGameCitySession(this);
+  }
 
   final RustGameSessionLoader _loader;
   final PlayerMapViewMapper _playerMapper;
   final RustMovementGateway _movementGateway;
   final RustCombatGateway _combatGateway;
+  final RustCityGateway _cityGateway;
   final RustTurnGateway _turnGateway;
   final RustUnitLogisticsGateway _logisticsGateway;
   final RustUnitActionGateway _unitActions;
+  late final CitySessionPort citySession;
   AonwRustSession? _session;
   MapView? _map;
   PlayerMapView? _player;

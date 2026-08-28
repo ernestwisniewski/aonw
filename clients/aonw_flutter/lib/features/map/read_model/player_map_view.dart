@@ -1,3 +1,4 @@
+import '../../cities/read_model/city_view.dart';
 import '../../turns/read_model/recipient_turn_view.dart';
 import 'map_view.dart';
 import 'pending_action_view.dart';
@@ -77,7 +78,10 @@ final class PlayerMapView {
     required this.stamp,
     required this.turnView,
     required List<VisibleUnitView> units,
-  }) : units = List.unmodifiable(units) {
+    List<CityView> cities = const [],
+    this.cityFoundingDraft,
+  }) : units = List.unmodifiable(units),
+       cities = List.unmodifiable(cities) {
     final byCoordinate = <MapHexCoordinate, List<VisibleUnitView>>{};
     final controlledById = <String, VisibleUnitView>{};
     for (final unit in units) {
@@ -89,6 +93,14 @@ final class PlayerMapView {
         entry.key: List<VisibleUnitView>.unmodifiable(entry.value),
     });
     _controlledUnitsById = Map.unmodifiable(controlledById);
+    _citiesByCoordinate = Map.unmodifiable({
+      for (final city in cities) city.center: city,
+    });
+    _citiesById = Map.unmodifiable({for (final city in cities) city.id: city});
+    _controlledCitiesById = Map.unmodifiable({
+      for (final city in cities)
+        if (city.ownerPlayerId == actorPlayerId) city.id: city,
+    });
   }
 
   factory PlayerMapView.preview({
@@ -97,6 +109,8 @@ final class PlayerMapView {
     required int turn,
     required PendingActionView? pendingAction,
     required List<VisibleUnitView> units,
+    List<CityView> cities = const [],
+    CityFoundingDraftView? cityFoundingDraft,
   }) => PlayerMapView(
     actorPlayerId: actorPlayerId,
     stamp: stamp,
@@ -114,14 +128,21 @@ final class PlayerMapView {
       ),
     ),
     units: units,
+    cities: cities,
+    cityFoundingDraft: cityFoundingDraft,
   );
 
   final String actorPlayerId;
   final SessionStampView stamp;
   final RecipientTurnView turnView;
   final List<VisibleUnitView> units;
+  final List<CityView> cities;
+  final CityFoundingDraftView? cityFoundingDraft;
   late final Map<MapHexCoordinate, List<VisibleUnitView>> _unitsByCoordinate;
   late final Map<String, VisibleUnitView> _controlledUnitsById;
+  late final Map<MapHexCoordinate, CityView> _citiesByCoordinate;
+  late final Map<String, CityView> _citiesById;
+  late final Map<String, CityView> _controlledCitiesById;
 
   int get turn => turnView.number;
 
@@ -139,4 +160,11 @@ final class PlayerMapView {
 
   VisibleUnitView? controlledUnitById(String unitId) =>
       _controlledUnitsById[unitId];
+
+  CityView? cityAt(MapHexCoordinate coordinate) =>
+      _citiesByCoordinate[coordinate];
+
+  CityView? cityById(String cityId) => _citiesById[cityId];
+
+  CityView? controlledCityById(String cityId) => _controlledCitiesById[cityId];
 }

@@ -1,3 +1,4 @@
+import '../../cities/application/city_state.dart';
 import '../../combat/application/combat_state.dart';
 import '../../logistics/application/unit_logistics_state.dart';
 import '../../unit_actions/application/action_deck_state.dart';
@@ -34,6 +35,7 @@ final class MapInteractionState {
     this.actionDeck,
     this.unitLogistics,
     this.combat,
+    this.city,
     this.referenceVisible = true,
   });
 
@@ -48,6 +50,7 @@ final class MapInteractionState {
   final ActionDeckViewState? actionDeck;
   final UnitLogisticsState? unitLogistics;
   final CombatState? combat;
+  final CityState? city;
   final bool referenceVisible;
 
   MapInteractionState copyWith({
@@ -71,25 +74,37 @@ final class MapInteractionState {
     bool clearUnitLogistics = false,
     CombatState? combat,
     bool clearCombat = false,
+    CityState? city,
+    bool clearCity = false,
     bool? referenceVisible,
   }) => MapInteractionState(
-    hovered: clearHovered ? null : hovered ?? this.hovered,
-    selected: clearSelected ? null : selected ?? this.selected,
-    selectedUnitId: clearSelectedUnit
-        ? null
-        : selectedUnitId ?? this.selectedUnitId,
-    reachable: clearReachable ? null : reachable ?? this.reachable,
-    route: clearRoute ? null : route ?? this.route,
+    hovered: _replaceNullable(this.hovered, hovered, clearHovered),
+    selected: _replaceNullable(this.selected, selected, clearSelected),
+    selectedUnitId: _replaceNullable(
+      this.selectedUnitId,
+      selectedUnitId,
+      clearSelectedUnit,
+    ),
+    reachable: _replaceNullable(this.reachable, reachable, clearReachable),
+    route: _replaceNullable(this.route, route, clearRoute),
     movementPending: movementPending ?? this.movementPending,
-    movementError: clearMovementError
-        ? null
-        : movementError ?? this.movementError,
+    movementError: _replaceNullable(
+      this.movementError,
+      movementError,
+      clearMovementError,
+    ),
     lastMovementExecution: lastMovementExecution ?? this.lastMovementExecution,
-    actionDeck: clearActionDeck ? null : actionDeck ?? this.actionDeck,
-    unitLogistics: clearUnitLogistics
-        ? null
-        : unitLogistics ?? this.unitLogistics,
-    combat: clearCombat ? null : combat ?? this.combat,
+    actionDeck: _replaceNullable(this.actionDeck, actionDeck, clearActionDeck),
+    unitLogistics: _replaceNullable(
+      this.unitLogistics,
+      unitLogistics,
+      clearUnitLogistics,
+    ),
+    combat: _replaceNullable(this.combat, combat, clearCombat),
+    city: _replaceNullable(this.city, city, clearCity),
     referenceVisible: referenceVisible ?? this.referenceVisible,
   );
 }
+
+T? _replaceNullable<T>(T? current, T? replacement, bool clear) =>
+    clear ? null : replacement ?? current;

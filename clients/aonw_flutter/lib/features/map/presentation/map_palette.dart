@@ -11,6 +11,9 @@ abstract final class MapPalette {
   static const controlledUnit = Color(0xFF38BDF8);
   static const foreignUnit = Color(0xFFE76F51);
   static const unitOutline = Color(0xFF102A3A);
+  static const controlledCity = Color(0xFFF4C95D);
+  static const foreignCity = Color(0xFFCE6A85);
+  static const cityOutline = Color(0xFF402A23);
 
   static const _terrain = {
     MapTerrain.ocean: Color(0xFF245B91),

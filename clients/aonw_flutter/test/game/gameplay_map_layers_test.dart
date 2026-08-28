@@ -1,3 +1,4 @@
+import 'package:aonw_flutter/features/cities/read_model/city_view.dart';
 import 'package:aonw_flutter/features/combat/application/combat_state.dart';
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
@@ -216,7 +217,7 @@ void main() {
       expect(game.world.unitLayer.children, hasLength(120));
       expect(game.world.unitLayer.debugCreatedCount, 120);
       expect(game.world.unitLayer.debugSharedPaintCount, 3);
-      expect(game.world.children, hasLength(8));
+      expect(game.world.children, hasLength(9));
     },
   );
 
@@ -263,6 +264,45 @@ void main() {
       expect(game.world.effectHost.debugActiveCombatEffectCount, 0);
     },
   );
+
+  testWithGame<AonwFlameGame>(
+    'reconciles stable city markers without rebuilding unchanged cities',
+    AonwFlameGame.new,
+    (game) async {
+      final stable = testCityView(id: 'stable-city');
+      final changing = testCityView(
+        id: 'changing-city',
+        center: (col: 2, row: 1),
+      );
+      final scene = testMapScene(cities: [stable, changing]);
+      game.replaceScene(_snapshot(scene, player: scene.player));
+      await game.ready();
+      final stableComponent = game.world.cityLayer.debugComponentForCity(
+        stable.id,
+      );
+
+      final changed = testCityView(
+        id: changing.id,
+        name: 'Changed City',
+        center: changing.center,
+      );
+      game.replaceScene(
+        _snapshot(
+          scene,
+          player: _player(units: const [], cities: [stable, changed]),
+        ),
+      );
+
+      expect(
+        game.world.cityLayer.debugComponentForCity(stable.id),
+        same(stableComponent),
+      );
+      expect(game.world.cityLayer.debugCityCount, 2);
+      expect(game.world.cityLayer.debugCreatedCount, 2);
+      expect(game.world.cityLayer.debugUpdatedCount, 1);
+      expect(game.world.cityLayer.debugSharedPaintCount, 3);
+    },
+  );
 }
 
 extension on CombatState {
@@ -294,6 +334,7 @@ PlayerMapView _player({
   int revision = 0,
   String? digest,
   required List<VisibleUnitView> units,
+  List<CityView> cities = const [],
 }) => PlayerMapView.preview(
   actorPlayerId: 'preview-player',
   stamp: SessionStampView(
@@ -305,4 +346,5 @@ PlayerMapView _player({
   turn: 1,
   pendingAction: null,
   units: units,
+  cities: cities,
 );

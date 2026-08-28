@@ -4,6 +4,9 @@ import '../../../../design_system/aonw_tokens.dart';
 import '../../../../design_system/widgets/aonw_panel.dart';
 import '../../../../design_system/widgets/aonw_progress_indicator.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../cities/presentation/city_copy.dart';
+import '../../../cities/presentation/city_panel.dart';
+import '../../../cities/read_model/city_view.dart';
 import '../../../combat/presentation/combat_panel.dart';
 import '../../../combat/read_model/combat_view.dart';
 import '../../../logistics/read_model/unit_logistics_view.dart';
@@ -42,11 +45,18 @@ final class MapSelectionOverlay extends StatelessWidget {
         unit: selectedUnitId == null
             ? null
             : scene.player.controlledUnitById(selectedUnitId),
+        city: interaction.city?.cityId == null
+            ? scene.player.cityAt(selected)
+            : scene.player.cityById(interaction.city!.cityId!),
         onConfirmMove: controller.confirmMove,
         onUnitAction: controller.executeUnitAction,
         onUnitLogistics: controller.executeUnitLogistics,
         onConfirmCombat: controller.confirmCombat,
         onCityConquestAction: controller.setCityConquestAction,
+        onOpenCityFounding: controller.openCityFounding,
+        onToggleCityFoundingHex: controller.toggleCityFoundingHex,
+        onConfirmCityFounding: controller.confirmCityFounding,
+        onCityAction: controller.executeCityAction,
       ),
     );
   }
@@ -57,21 +67,31 @@ final class _MapSelectionPanel extends StatelessWidget {
     required this.coordinate,
     required this.interaction,
     required this.unit,
+    required this.city,
     required this.onConfirmMove,
     required this.onUnitAction,
     required this.onUnitLogistics,
     required this.onConfirmCombat,
     required this.onCityConquestAction,
+    required this.onOpenCityFounding,
+    required this.onToggleCityFoundingHex,
+    required this.onConfirmCityFounding,
+    required this.onCityAction,
   });
 
   final MapHexCoordinate coordinate;
   final MapInteractionState interaction;
   final VisibleUnitView? unit;
+  final CityView? city;
   final VoidCallback onConfirmMove;
   final ValueChanged<UnitActionKindView> onUnitAction;
   final ValueChanged<UnitLogisticsActionView> onUnitLogistics;
   final VoidCallback onConfirmCombat;
   final ValueChanged<CityConquestActionView> onCityConquestAction;
+  final VoidCallback onOpenCityFounding;
+  final ValueChanged<MapHexCoordinate> onToggleCityFoundingHex;
+  final VoidCallback onConfirmCityFounding;
+  final ValueChanged<CityActionView> onCityAction;
 
   @override
   Widget build(BuildContext context) {
@@ -105,12 +125,27 @@ final class _MapSelectionPanel extends StatelessWidget {
                 onAction: onUnitAction,
                 onLogisticsAction: onUnitLogistics,
               ),
+            if (interaction.city?.founderUnitId == null)
+              TextButton.icon(
+                key: const ValueKey('open-city-founding'),
+                onPressed: onOpenCityFounding,
+                icon: const Icon(Icons.add_location_alt),
+                label: Text(CityCopy.of(context).text(CityText.foundingOpen)),
+              ),
           ],
           if (interaction.combat case final combat?)
             CombatPanel(
               state: combat,
               onConfirm: onConfirmCombat,
               onCityConquestAction: onCityConquestAction,
+            ),
+          if (interaction.city case final cityState?)
+            CityPanel(
+              state: cityState,
+              city: city,
+              onToggleFoundingHex: onToggleCityFoundingHex,
+              onConfirmFounding: onConfirmCityFounding,
+              onAction: onCityAction,
             ),
           _MovementFeedback(interaction: interaction),
         ],

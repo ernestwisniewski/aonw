@@ -1,0 +1,228 @@
+part of 'map_coordinator.dart';
+
+extension MapCoordinatorSelection on MapCoordinator {
+  Future<void> _select(MapHexCoordinate? coordinate) async {
+    final current = _state;
+    if (current is! GameSessionReady || _interactionBusy(current.interaction)) {
+      return;
+    }
+    final next = _selectableCoordinate(current, coordinate);
+    final generation = ++_interactionGeneration;
+    if (next == null) {
+      _clearSelection(current);
+      return;
+    }
+
+    final unit = current.recipient.controlledUnitAt(next);
+    if (unit != null) {
+      await _selectControlledUnit(
+        current,
+        next,
+        unit.id,
+        current.recipient.cityAt(next),
+        generation,
+      );
+      return;
+    }
+
+    final selectedUnitId = current.interaction.selectedUnitId;
+    if (selectedUnitId != null) {
+      if (current.interaction.reachable?.tileAt(next) != null) {
+        await _previewRoute(current, next, selectedUnitId, generation);
+        return;
+      }
+      _combat.preview(
+        attackerUnitId: selectedUnitId,
+        defender: next,
+        readState: () => _state,
+        publish: _setState,
+        isDisposed: () => _disposed,
+      );
+      return;
+    }
+
+    final city = current.recipient.cityAt(next);
+    if (city != null) {
+      _selectCity(current, next, city);
+      return;
+    }
+
+    _selectPlainHex(current, next);
+  }
+
+  void _clearSelection(GameSessionReady current) {
+    _setState(
+      current.withInteraction(
+        current.interaction.copyWith(
+          clearSelected: true,
+          clearSelectedUnit: true,
+          clearReachable: true,
+          clearRoute: true,
+          clearActionDeck: true,
+          clearUnitLogistics: true,
+          clearCombat: true,
+          clearCity: true,
+          movementPending: false,
+          clearMovementError: true,
+        ),
+      ),
+    );
+  }
+
+  void _selectPlainHex(GameSessionReady current, MapHexCoordinate coordinate) {
+    _setState(
+      current.withInteraction(
+        current.interaction.copyWith(
+          selected: coordinate,
+          clearSelectedUnit: true,
+          clearReachable: true,
+          clearRoute: true,
+          clearActionDeck: true,
+          clearUnitLogistics: true,
+          clearCombat: true,
+          clearCity: true,
+          movementPending: false,
+          clearMovementError: true,
+        ),
+      ),
+    );
+  }
+
+  void _selectCity(
+    GameSessionReady current,
+    MapHexCoordinate coordinate,
+    CityView city,
+  ) {
+    final owned = city.ownedDetails != null;
+    _setState(
+      current.withInteraction(
+        current.interaction.copyWith(
+          selected: coordinate,
+          clearSelectedUnit: true,
+          clearReachable: true,
+          clearRoute: true,
+          clearActionDeck: true,
+          clearUnitLogistics: true,
+          clearCombat: true,
+          city: owned
+              ? CityState.loadingCity(city.id)
+              : CityState(cityId: city.id),
+          movementPending: false,
+          clearMovementError: true,
+        ),
+      ),
+    );
+    if (owned) {
+      _cities.inspect(
+        cityId: city.id,
+        readState: () => _state,
+        publish: _setState,
+        isDisposed: () => _disposed,
+      );
+    }
+  }
+
+  Future<void> _selectControlledUnit(
+    GameSessionReady current,
+    MapHexCoordinate coordinate,
+    String unitId,
+    CityView? city,
+    int generation,
+  ) async {
+    _setState(
+      current.withInteraction(
+        current.interaction.copyWith(
+          selected: coordinate,
+          selectedUnitId: unitId,
+          actionDeck: ActionDeckViewState(unitId: unitId),
+          unitLogistics: UnitLogisticsState.loading(unitId),
+          clearReachable: true,
+          clearRoute: true,
+          movementPending: true,
+          clearMovementError: true,
+          clearCombat: true,
+          city: city == null
+              ? null
+              : city.ownedDetails == null
+              ? CityState(cityId: city.id)
+              : CityState.loadingCity(city.id),
+          clearCity: city == null,
+        ),
+      ),
+    );
+    _logistics.load(
+      unitId: unitId,
+      readState: () => _state,
+      publish: _setState,
+      isDisposed: () => _disposed,
+    );
+    if (city?.ownedDetails != null) {
+      _cities.inspect(
+        cityId: city!.id,
+        readState: () => _state,
+        publish: _setState,
+        isDisposed: () => _disposed,
+      );
+    }
+    final completion = await _movement.reachable(
+      expectedRevision: current.recipient.stamp.revision,
+      unitId: unitId,
+    );
+    final ready = _currentInteraction(generation);
+    if (ready == null) return;
+    final failure = completion.failure;
+    _setState(
+      failure == null
+          ? ready.withInteraction(
+              ready.interaction.copyWith(
+                reachable: completion.result!,
+                movementPending: false,
+              ),
+            )
+          : _movementFailureState(ready, completion),
+    );
+  }
+
+  Future<void> _previewRoute(
+    GameSessionReady current,
+    MapHexCoordinate target,
+    String unitId,
+    int generation,
+  ) async {
+    _setState(
+      current.withInteraction(
+        current.interaction.copyWith(
+          selected: target,
+          clearRoute: true,
+          movementPending: true,
+          clearMovementError: true,
+        ),
+      ),
+    );
+    final completion = await _movement.routePlan(
+      expectedRevision: current.recipient.stamp.revision,
+      unitId: unitId,
+      target: target,
+    );
+    final ready = _currentInteraction(generation);
+    if (ready == null) return;
+    final failure = completion.failure;
+    _setState(
+      failure == null
+          ? ready.withInteraction(
+              ready.interaction.copyWith(
+                route: completion.result!,
+                movementPending: false,
+              ),
+            )
+          : _movementFailureState(ready, completion),
+    );
+  }
+}
+
+MapHexCoordinate? _selectableCoordinate(
+  GameSessionReady current,
+  MapHexCoordinate? coordinate,
+) => coordinate != null && current.scene.map.contains(coordinate)
+    ? coordinate
+    : null;

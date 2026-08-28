@@ -1,3 +1,5 @@
+import 'package:aonw_flutter/features/cities/application/city_session_port.dart';
+import 'package:aonw_flutter/features/cities/read_model/city_view.dart';
 import 'package:aonw_flutter/features/combat/application/combat_session_port.dart';
 import 'package:aonw_flutter/features/combat/read_model/combat_view.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
@@ -14,6 +16,8 @@ import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
 import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
 
+part 'city_test_fixture.dart';
+
 MapScene testMapScene({
   int cols = 3,
   int rows = 2,
@@ -21,6 +25,8 @@ MapScene testMapScene({
   String? contentHash,
   double defaultZoom = 1,
   List<VisibleUnitView> units = const [],
+  List<CityView> cities = const [],
+  CityFoundingDraftView? cityFoundingDraft,
 }) {
   final terrains = MapTerrain.values;
   final tiles = <MapTileView>[];
@@ -69,6 +75,8 @@ MapScene testMapScene({
       turn: 1,
       pendingAction: null,
       units: units,
+      cities: cities,
+      cityFoundingDraft: cityFoundingDraft,
     ),
   );
 }
@@ -215,6 +223,7 @@ final class FakeGameSession
     implements
         MapSessionPort,
         MovementSessionPort,
+        CitySessionPort,
         CombatSessionPort,
         UnitLogisticsSessionPort,
         TurnSessionPort,
@@ -235,6 +244,10 @@ final class FakeGameSession
     this.combatPreviewResult,
     this.combatResult,
     this.combatFailure,
+    this.cityFoundingOptionsResult,
+    this.cityInspection,
+    this.cityResult,
+    this.cityFailure,
   }) : failure = null;
   FakeGameSession.failure(this.failure)
     : scene = null,
@@ -251,7 +264,11 @@ final class FakeGameSession
       logisticsFailure = null,
       combatPreviewResult = null,
       combatResult = null,
-      combatFailure = null;
+      combatFailure = null,
+      cityFoundingOptionsResult = null,
+      cityInspection = null,
+      cityResult = null,
+      cityFailure = null;
 
   final MapScene? scene;
   final MapLoadException? failure;
@@ -269,6 +286,10 @@ final class FakeGameSession
   final CombatPreviewView? combatPreviewResult;
   final CombatCommandResultView? combatResult;
   final CombatSessionException? combatFailure;
+  final CityFoundingOptionsView? cityFoundingOptionsResult;
+  final CityInspectionView? cityInspection;
+  final CityCommandResultView? cityResult;
+  final CitySessionException? cityFailure;
   var unitActionCalls = 0;
   UnitActionKindView? lastUnitAction;
   int? lastUnitActionExpectedRevision;
@@ -283,6 +304,10 @@ final class FakeGameSession
   var combatAttackCalls = 0;
   MapHexCoordinate? lastCombatDefender;
   CombatAttackView? lastCombatAttack;
+  var cityFoundingOptionCalls = 0;
+  var cityInspectionCalls = 0;
+  var cityCommandCalls = 0;
+  CityActionView? lastCityAction;
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
@@ -339,6 +364,41 @@ final class FakeGameSession
     final error = combatFailure;
     if (error != null) throw error;
     return combatResult ?? (throw StateError('No combat result fixture.'));
+  }
+
+  @override
+  Future<CityFoundingOptionsView> cityFoundingOptions({
+    required int expectedRevision,
+    required String founderUnitId,
+  }) async {
+    cityFoundingOptionCalls += 1;
+    final error = cityFailure;
+    if (error != null) throw error;
+    return cityFoundingOptionsResult ??
+        (throw StateError('No city founding fixture.'));
+  }
+
+  @override
+  Future<CityInspectionView> inspectCity({
+    required int expectedRevision,
+    required String cityId,
+  }) async {
+    cityInspectionCalls += 1;
+    final error = cityFailure;
+    if (error != null) throw error;
+    return cityInspection ?? (throw StateError('No city inspection fixture.'));
+  }
+
+  @override
+  Future<CityCommandResultView> executeCityAction({
+    required int expectedRevision,
+    required CityActionView action,
+  }) async {
+    cityCommandCalls += 1;
+    lastCityAction = action;
+    final error = cityFailure;
+    if (error != null) throw error;
+    return cityResult ?? (throw StateError('No city command fixture.'));
   }
 
   @override

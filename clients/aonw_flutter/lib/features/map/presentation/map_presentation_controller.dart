@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../cities/application/city_session_port.dart';
+import '../../cities/read_model/city_view.dart';
 import '../../combat/application/combat_session_port.dart';
 import '../../combat/read_model/combat_view.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
@@ -20,6 +22,7 @@ final class MapPresentationController extends ChangeNotifier {
     required MapSessionPort session,
     required MovementSessionPort movement,
     CombatSessionPort? combat,
+    CitySessionPort? cities,
     required UnitLogisticsSessionPort logistics,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
@@ -30,6 +33,7 @@ final class MapPresentationController extends ChangeNotifier {
            session: session,
            movement: movement,
            combat: combat,
+           cities: cities,
            logistics: logistics,
            unitActions: unitActions,
            turns: turns,
@@ -66,6 +70,19 @@ final class MapPresentationController extends ChangeNotifier {
 
   void setCityConquestAction(CityConquestActionView action) =>
       _coordinator.setCityConquestAction(action);
+
+  void inspectSelectedCity(String cityId) =>
+      _coordinator.inspectSelectedCity(cityId);
+
+  void openCityFounding() => _coordinator.openCityFounding();
+
+  void toggleCityFoundingHex(MapHexCoordinate coordinate) =>
+      _coordinator.toggleCityFoundingHex(coordinate);
+
+  void confirmCityFounding() => _coordinator.confirmCityFounding();
+
+  void executeCityAction(CityActionView action) =>
+      _coordinator.executeCityAction(action);
 
   void endTurn() => _coordinator.endTurn();
 

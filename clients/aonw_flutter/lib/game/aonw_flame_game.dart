@@ -10,6 +10,7 @@ import '../features/map/presentation/input/map_viewport_intent.dart';
 import '../features/map/presentation/map_render_snapshot.dart';
 import '../features/map/read_model/map_view.dart';
 import 'input/flame_map_input_surface.dart';
+import 'map/city_map_layer.dart';
 import 'map/flame_map_camera.dart';
 import 'map/gameplay_map_layers.dart';
 import 'map/map_effect_host.dart';
@@ -25,6 +26,7 @@ final class AonwWorld extends World implements FlameSceneSink {
       referenceLayer = MapReferenceLayerComponent(),
       gridLayer = MapGridLayerComponent() {
     unitLayer = MapUnitLayerComponent();
+    cityLayer = MapCityLayerComponent();
     reachableLayer = MapReachableLayerComponent();
     routeLayer = MapRouteLayerComponent();
     selectionLayer = MapSelectionLayerComponent(units: unitLayer);
@@ -35,6 +37,7 @@ final class AonwWorld extends World implements FlameSceneSink {
       gridLayer,
       reachableLayer,
       routeLayer,
+      cityLayer,
       unitLayer,
       selectionLayer,
       effectHost,
@@ -47,6 +50,7 @@ final class AonwWorld extends World implements FlameSceneSink {
   late final MapReachableLayerComponent reachableLayer;
   late final MapRouteLayerComponent routeLayer;
   late final MapUnitLayerComponent unitLayer;
+  late final MapCityLayerComponent cityLayer;
   late final MapSelectionLayerComponent selectionLayer;
   late final MapEffectHostComponent effectHost;
   MapRenderSnapshot? _scene;
@@ -89,6 +93,7 @@ final class AonwWorld extends World implements FlameSceneSink {
     gridLayer.applyCache(cache);
     reachableLayer.applyReachable(cache, snapshot.interaction.reachable);
     routeLayer.applyRoute(cache, snapshot.interaction.route);
+    cityLayer.applyPatch(patch, cache);
     unitLayer.applyPatch(patch, cache);
     selectionLayer.applySelection(cache, snapshot.interaction);
     effectHost.applyPatch(patch, cache);
@@ -105,6 +110,7 @@ final class AonwWorld extends World implements FlameSceneSink {
     gridLayer.clearCache();
     reachableLayer.clearLayer();
     routeLayer.clearLayer();
+    cityLayer.clearLayer();
     unitLayer.clearLayer();
     selectionLayer.clearLayer();
     effectHost.clearEffects();

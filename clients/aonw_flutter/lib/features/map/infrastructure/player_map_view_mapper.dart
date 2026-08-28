@@ -1,5 +1,6 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 
+import '../../cities/read_model/city_view.dart';
 import '../../turns/read_model/recipient_turn_view.dart';
 import '../read_model/map_view.dart';
 import '../read_model/player_map_view.dart';
@@ -49,6 +50,10 @@ final class PlayerMapViewMapper {
         ),
       ),
       units: units,
+      cities: [for (final city in wire.cities) _mapCity(city)],
+      cityFoundingDraft: wire.cityFoundingDraft == null
+          ? null
+          : _mapCityFoundingDraft(wire.cityFoundingDraft!),
     );
   }
 
@@ -131,6 +136,45 @@ final class PlayerMapViewMapper {
         unit.ownedDetails?.merchantTradeRoute?.destinationCityId,
   );
 
+  static CityView _mapCity(AonwPlayerCityView city) => CityView(
+    id: city.id,
+    ownerPlayerId: city.ownerPlayerId,
+    name: city.name,
+    center: _cityCoordinate(city.center),
+    visibleControlledHexes: [
+      for (final coordinate in city.visibleControlledHexes)
+        _cityCoordinate(coordinate),
+    ],
+    hitPoints: city.hitPoints,
+    ownedDetails: city.ownedDetails == null
+        ? null
+        : OwnedCityDetailsView(
+            population: city.ownedDetails!.population,
+            storedFood: city.ownedDetails!.storedFood,
+            maxHexes: city.ownedDetails!.maxHexes,
+            territoryRadius: city.ownedDetails!.territoryRadius,
+            workedHexes: [
+              for (final coordinate in city.ownedDetails!.workedHexes)
+                _cityCoordinate(coordinate),
+            ],
+            preferredExpansionHex:
+                city.ownedDetails!.preferredExpansionHex == null
+                ? null
+                : _cityCoordinate(city.ownedDetails!.preferredExpansionHex!),
+          ),
+  );
+
+  static CityFoundingDraftView _mapCityFoundingDraft(
+    AonwCityFoundingDraft draft,
+  ) => CityFoundingDraftView(
+    founderUnitId: draft.founderUnitId,
+    center: _cityCoordinate(draft.center),
+    controlledHexes: [
+      for (final coordinate in draft.controlledHexes)
+        _cityCoordinate(coordinate),
+    ],
+  );
+
   static SessionStampView _mapStamp(AonwSessionStamp stamp) => SessionStampView(
     revision: stamp.revision,
     stateDigest: stamp.stateDigest,
@@ -140,6 +184,9 @@ final class PlayerMapViewMapper {
 
   static ({int col, int row}) _coordinate(AonwPlayerUnitView unit) =>
       (col: unit.coordinate.col, row: unit.coordinate.row);
+
+  static MapHexCoordinate _cityCoordinate(AonwCoordinate coordinate) =>
+      (col: coordinate.col, row: coordinate.row);
 
   static void _validateHash(String value, String label) {
     if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(value)) {
