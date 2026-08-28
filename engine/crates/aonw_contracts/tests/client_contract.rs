@@ -109,6 +109,7 @@ fn command_result() -> ClientCommandResultDto {
         view_patch: PlayerViewPatchDto {
             from_revision: 7,
             to_revision: 8,
+            turn: 7,
             turn_lifecycle: None,
             outcome: None,
             upserted_units: vec![unit()],

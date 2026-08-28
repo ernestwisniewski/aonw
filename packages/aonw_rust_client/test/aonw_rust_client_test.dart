@@ -23,6 +23,7 @@ void main() {
     final response = AonwClientResponse.parse(responseGolden);
     final command = response.require<AonwCommandResponse>().result;
     expect(command.stamp.revision, 8);
+    expect(command.viewPatch.turn, 7);
     expect(command.viewPatch.upsertedUnits.single.kind, AonwUnitKind.commander);
     expect(command.events.single, isA<AonwUnitMovedEvent>());
     expect(command.evidence, isA<AonwUnitMovementEvidence>());

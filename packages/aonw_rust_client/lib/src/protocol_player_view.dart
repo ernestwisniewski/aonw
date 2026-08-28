@@ -324,6 +324,7 @@ final class AonwPlayerViewPatch {
   const AonwPlayerViewPatch({
     required this.fromRevision,
     required this.toRevision,
+    required this.turn,
     required this.turnLifecycle,
     required this.outcome,
     required this.upsertedUnits,
@@ -349,6 +350,7 @@ final class AonwPlayerViewPatch {
     return AonwPlayerViewPatch(
       fromRevision: readUnsigned(value['fromRevision'], 'source revision'),
       toRevision: readUnsigned(value['toRevision'], 'patch target revision'),
+      turn: readUnsigned(value['turn'], 'patch turn'),
       turnLifecycle: _optional(
         value['turnLifecycle'],
         AonwPlayerTurnLifecycle.fromJson,
@@ -382,6 +384,7 @@ final class AonwPlayerViewPatch {
 
   final int fromRevision;
   final int toRevision;
+  final int turn;
   final AonwPlayerTurnLifecycle? turnLifecycle;
   final AonwGameOutcome? outcome;
   final List<AonwPlayerUnitView> upsertedUnits;
@@ -459,6 +462,7 @@ void _requirePlayerViewPatchKeys(Map<String, Object?> value) {
   requireKeys(value, const {
     'fromRevision',
     'toRevision',
+    'turn',
     'turnLifecycle',
     'outcome',
     'upsertedUnits',

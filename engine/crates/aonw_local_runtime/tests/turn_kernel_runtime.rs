@@ -52,6 +52,7 @@ fn player_and_system_records_replay_with_exact_lifecycle_and_offsets() {
         .expect("submit");
     assert!(submitted.is_accepted());
     assert!(submitted.events.is_empty());
+    assert_eq!(submitted.view_patch.turn, 7);
     assert!(submitted.view_patch.turn_lifecycle.is_some());
     assert!(submitted.view_patch.upserted_units.is_empty());
 
@@ -76,6 +77,7 @@ fn player_and_system_records_replay_with_exact_lifecycle_and_offsets() {
         .expect("trusted timeout");
     assert!(finalized.is_accepted());
     assert_eq!(finalized.events.len(), 4);
+    assert_eq!(finalized.view_patch.turn, 8);
     assert!(finalized.view_patch.turn_lifecycle.is_some());
 
     let replay_json = runtime.export_replay_json().expect("replay");

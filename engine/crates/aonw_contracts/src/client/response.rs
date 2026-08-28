@@ -277,6 +277,8 @@ pub struct PlayerViewPatchDto {
     pub from_revision: u64,
     /// Revision represented after the patch.
     pub to_revision: u64,
+    /// Authoritative turn number represented after the patch.
+    pub turn: u32,
     /// Replacement lifecycle projection when turn/readiness changed.
     pub turn_lifecycle: Option<PlayerTurnLifecycleViewDto>,
     /// Replacement match result when it changed.

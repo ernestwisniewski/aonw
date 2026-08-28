@@ -308,6 +308,7 @@ Map<String, Object?> _commandResult(Map<String, Object?> outcome) => {
   'viewPatch': const {
     'fromRevision': 7,
     'toRevision': 7,
+    'turn': 7,
     'turnLifecycle': null,
     'outcome': null,
     'upsertedUnits': <Object?>[],

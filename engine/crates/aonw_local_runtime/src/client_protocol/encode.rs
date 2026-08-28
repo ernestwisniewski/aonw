@@ -133,6 +133,7 @@ fn patch(value: &PlayerViewPatch) -> PlayerViewPatchDto {
     PlayerViewPatchDto {
         from_revision: value.from_revision,
         to_revision: value.to_revision,
+        turn: value.turn,
         turn_lifecycle: value.turn_lifecycle.map(turn_lifecycle),
         outcome: value
             .outcome

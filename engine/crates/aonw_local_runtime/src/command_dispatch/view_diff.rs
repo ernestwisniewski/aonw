@@ -18,6 +18,8 @@ pub struct PlayerViewPatch {
     pub from_revision: u64,
     /// Revision after the patch.
     pub to_revision: u64,
+    /// Authoritative turn number after the patch.
+    pub turn: u32,
     /// Replacement turn projection when lifecycle state changed.
     pub turn_lifecycle: Option<PlayerTurnLifecycleView>,
     /// Replacement authoritative match result when it changed.
@@ -203,6 +205,7 @@ pub(crate) fn diff_view(
     PlayerViewPatch {
         from_revision,
         to_revision,
+        turn: after.turn_number,
         turn_lifecycle: (before.turn != after.turn).then_some(after.turn),
         outcome,
         upserted_units: upserted_units.into_boxed_slice(),
@@ -225,6 +228,7 @@ pub(crate) fn unchanged_view(revision: u64, view: &ProjectedView) -> PlayerViewP
     PlayerViewPatch {
         from_revision: revision,
         to_revision: revision,
+        turn: view.turn_number,
         turn_lifecycle: None,
         outcome: None,
         upserted_units: Box::new([]),
@@ -383,6 +387,7 @@ mod tests {
 
         assert_eq!(patch.from_revision, 4);
         assert_eq!(patch.to_revision, 5);
+        assert_eq!(patch.turn, 0);
         assert_eq!(
             patch
                 .upserted_units
