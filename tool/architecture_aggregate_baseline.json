@@ -1,6 +1,13 @@
 {
   "schema": 1,
   "scopes": {
+    "asset_ui_tool": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "client_lib": {
       "sourceLines": {},
       "callableCount": {},

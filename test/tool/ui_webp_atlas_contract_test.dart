@@ -39,6 +39,7 @@ void main() {
       '6.webp',
       'README.md',
       'auto_trim_coordinates.dart',
+      'auto_trim_models.dart',
       'build_preview.sh',
       'sync_readme_from_atlas_json.dart',
     ]);
@@ -85,108 +86,130 @@ void main() {
 
     var totalRegions = 0;
     for (final entry in expectedRegionCounts.entries) {
-      final section = _sheetSection(markdown, entry.key);
-      final readmeRegions = _parseRegions(section);
-
-      final image = img.decodeWebP(
-        File('${uiDirectory.path}/${entry.key}.webp').readAsBytesSync(),
+      totalRegions += _verifyAtlasSheet(
+        uiDirectory: uiDirectory,
+        markdown: markdown,
+        sheet: entry.key,
+        expectedRegionCount: entry.value,
+        sheetSize: sheetSize,
       );
-      expect(
-        image,
-        isNotNull,
-        reason: 'sheet ${entry.key} must decode as WebP',
-      );
-      expect(image!.width, sheetSize, reason: 'sheet ${entry.key} width');
-      expect(image.height, sheetSize, reason: 'sheet ${entry.key} height');
-
-      final freeTexturePacker =
-          jsonDecode(
-                File(
-                  '${uiDirectory.path}/${entry.key}.json',
-                ).readAsStringSync(),
-              )
-              as Map<String, dynamic>;
-      final frames = freeTexturePacker['frames'] as Map<String, dynamic>;
-      final meta = freeTexturePacker['meta'] as Map<String, dynamic>;
-      final regions = <_AtlasRegion>[
-        for (final frameEntry in frames.entries)
-          _regionFromFrame(frameEntry.key, frameEntry.value),
-      ];
-      totalRegions += regions.length;
-
-      expect(frames, hasLength(regions.length), reason: 'sheet ${entry.key}');
-      expect(regions, hasLength(entry.value), reason: 'sheet ${entry.key}');
-      expect(
-        regions.map((region) => region.id).toSet(),
-        hasLength(regions.length),
-        reason: 'sheet ${entry.key} region identifiers must be unique',
-      );
-      expect(
-        readmeRegions.map((region) => region.signature),
-        regions.map((region) => region.signature),
-        reason: 'README must mirror sheet ${entry.key} JSON frames',
-      );
-      expect(meta['app'], 'http://free-tex-packer.com');
-      expect(meta['version'], '0.6.7');
-      expect(meta['image'], '${entry.key}.webp');
-      expect(meta['format'], 'webp');
-      expect(meta['size'], <String, dynamic>{'w': sheetSize, 'h': sheetSize});
-      expect(meta['scale'], 1);
-
-      for (final region in regions) {
-        expect(region.x, greaterThanOrEqualTo(0), reason: region.id);
-        expect(region.y, greaterThanOrEqualTo(0), reason: region.id);
-        expect(region.width, greaterThan(0), reason: region.id);
-        expect(region.height, greaterThan(0), reason: region.id);
-        expect(region.right, lessThanOrEqualTo(sheetSize), reason: region.id);
-        expect(region.bottom, lessThanOrEqualTo(sheetSize), reason: region.id);
-
-        final frame = frames['${region.id}.webp'] as Map<String, dynamic>;
-        expect(frame['frame'], <String, dynamic>{
-          'x': region.x,
-          'y': region.y,
-          'w': region.width,
-          'h': region.height,
-        });
-        expect(frame['rotated'], isFalse);
-        expect(frame['trimmed'], isFalse);
-        expect(frame['spriteSourceSize'], <String, dynamic>{
-          'x': 0,
-          'y': 0,
-          'w': region.width,
-          'h': region.height,
-        });
-        expect(frame['sourceSize'], <String, dynamic>{
-          'w': region.width,
-          'h': region.height,
-        });
-        expect(frame['pivot'], <String, dynamic>{'x': 0.5, 'y': 0.5});
-
-        var topEdge = false;
-        var rightEdge = false;
-        var bottomEdge = false;
-        var leftEdge = false;
-        for (var y = region.y; y < region.bottom; y++) {
-          for (var x = region.x; x < region.right; x++) {
-            if (image.getPixel(x, y).a.toInt() > 2) {
-              if (y == region.y) topEdge = true;
-              if (x == region.right - 1) rightEdge = true;
-              if (y == region.bottom - 1) bottomEdge = true;
-              if (x == region.x) leftEdge = true;
-            }
-          }
-        }
-        expect(
-          [topEdge, rightEdge, bottomEdge, leftEdge],
-          everyElement(isTrue),
-          reason:
-              'sheet ${entry.key} region ${region.id} must touch every bound',
-        );
-      }
     }
 
     expect(totalRegions, 263);
   });
+}
+
+int _verifyAtlasSheet({
+  required Directory uiDirectory,
+  required String markdown,
+  required String sheet,
+  required int expectedRegionCount,
+  required int sheetSize,
+}) {
+  final readmeRegions = _parseRegions(_sheetSection(markdown, sheet));
+  final image = img.decodeWebP(
+    File('${uiDirectory.path}/$sheet.webp').readAsBytesSync(),
+  );
+  expect(image, isNotNull, reason: 'sheet $sheet must decode as WebP');
+  expect(image!.width, sheetSize, reason: 'sheet $sheet width');
+  expect(image.height, sheetSize, reason: 'sheet $sheet height');
+
+  final document = _readAtlasDocument(uiDirectory, sheet);
+  final frames = document['frames'] as Map<String, dynamic>;
+  final meta = document['meta'] as Map<String, dynamic>;
+  final regions = <_AtlasRegion>[
+    for (final entry in frames.entries)
+      _regionFromFrame(entry.key, entry.value),
+  ];
+  expect(frames, hasLength(regions.length), reason: 'sheet $sheet');
+  expect(regions, hasLength(expectedRegionCount), reason: 'sheet $sheet');
+  expect(
+    regions.map((region) => region.id).toSet(),
+    hasLength(regions.length),
+    reason: 'sheet $sheet region identifiers must be unique',
+  );
+  expect(
+    readmeRegions.map((region) => region.signature),
+    regions.map((region) => region.signature),
+    reason: 'README must mirror sheet $sheet JSON frames',
+  );
+  _verifyMetadata(meta, sheet, sheetSize);
+  for (final region in regions) {
+    _verifyRegion(image, frames, region, sheet, sheetSize);
+  }
+  return regions.length;
+}
+
+Map<String, dynamic> _readAtlasDocument(Directory directory, String sheet) {
+  return jsonDecode(File('${directory.path}/$sheet.json').readAsStringSync())
+      as Map<String, dynamic>;
+}
+
+void _verifyMetadata(Map<String, dynamic> meta, String sheet, int sheetSize) {
+  expect(meta['app'], 'http://free-tex-packer.com');
+  expect(meta['version'], '0.6.7');
+  expect(meta['image'], '$sheet.webp');
+  expect(meta['format'], 'webp');
+  expect(meta['size'], <String, dynamic>{'w': sheetSize, 'h': sheetSize});
+  expect(meta['scale'], 1);
+}
+
+void _verifyRegion(
+  img.Image image,
+  Map<String, dynamic> frames,
+  _AtlasRegion region,
+  String sheet,
+  int sheetSize,
+) {
+  expect(region.x, greaterThanOrEqualTo(0), reason: region.id);
+  expect(region.y, greaterThanOrEqualTo(0), reason: region.id);
+  expect(region.width, greaterThan(0), reason: region.id);
+  expect(region.height, greaterThan(0), reason: region.id);
+  expect(region.right, lessThanOrEqualTo(sheetSize), reason: region.id);
+  expect(region.bottom, lessThanOrEqualTo(sheetSize), reason: region.id);
+
+  final frame = frames['${region.id}.webp'] as Map<String, dynamic>;
+  expect(frame['frame'], <String, dynamic>{
+    'x': region.x,
+    'y': region.y,
+    'w': region.width,
+    'h': region.height,
+  });
+  expect(frame['rotated'], isFalse);
+  expect(frame['trimmed'], isFalse);
+  expect(frame['spriteSourceSize'], <String, dynamic>{
+    'x': 0,
+    'y': 0,
+    'w': region.width,
+    'h': region.height,
+  });
+  expect(frame['sourceSize'], <String, dynamic>{
+    'w': region.width,
+    'h': region.height,
+  });
+  expect(frame['pivot'], <String, dynamic>{'x': 0.5, 'y': 0.5});
+  expect(
+    _opaqueEdges(image, region),
+    everyElement(isTrue),
+    reason: 'sheet $sheet region ${region.id} must touch every bound',
+  );
+}
+
+List<bool> _opaqueEdges(img.Image image, _AtlasRegion region) {
+  var top = false;
+  var right = false;
+  var bottom = false;
+  var left = false;
+  for (var y = region.y; y < region.bottom; y++) {
+    for (var x = region.x; x < region.right; x++) {
+      if (image.getPixel(x, y).a.toInt() <= 2) continue;
+      if (y == region.y) top = true;
+      if (x == region.right - 1) right = true;
+      if (y == region.bottom - 1) bottom = true;
+      if (x == region.x) left = true;
+    }
+  }
+  return [top, right, bottom, left];
 }
 
 String _sheetSection(String markdown, String sheet) {

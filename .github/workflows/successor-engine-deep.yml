@@ -20,6 +20,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.97.1 --profile minimal --component clippy --component llvm-tools-preview --component rustfmt
 

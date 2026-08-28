@@ -1,6 +1,15 @@
 {
   "schema": 2,
   "scopes": {
+    "asset_ui_tool": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "client_lib": {
       "files": {},
       "legacyFiles": {},

@@ -24,7 +24,10 @@ Future<void> main(List<String> arguments) async {
     return;
   }
 
-  final checkOnly = arguments.contains('--check');
+  await _synchronizeReadme(arguments.contains('--check'));
+}
+
+Future<void> _synchronizeReadme(bool checkOnly) async {
   final uiDirectory = File.fromUri(Platform.script).absolute.parent;
   final boundsBySheet = await _loadBounds(uiDirectory);
   final expectedFrames = boundsBySheet.values.fold<int>(
@@ -43,6 +46,40 @@ Future<void> main(List<String> arguments) async {
   final lines = source.split('\n');
   if (trailingNewline) lines.removeLast();
 
+  final seen = _mirrorRows(lines, boundsBySheet);
+  final missing = _missingFrames(boundsBySheet, seen);
+  if (missing.isNotEmpty) {
+    throw FormatException(
+      '${missing.length} JSON frames are missing from README: '
+      '${missing.take(20).join(', ')}',
+    );
+  }
+
+  final updated = '${lines.join('\n')}${trailingNewline ? '\n' : ''}';
+  if (updated == source) {
+    stdout.writeln(
+      'README mirrors all $expectedFrames FreeTexturePacker JSON frames.',
+    );
+    return;
+  }
+  if (checkOnly) {
+    stderr.writeln(
+      'README coordinates are out of sync with FreeTexturePacker JSON.',
+    );
+    exitCode = 1;
+    return;
+  }
+
+  await _writeAtomically(readme, updated);
+  stdout.writeln(
+    'Mirrored $expectedFrames FreeTexturePacker JSON frames to README.md.',
+  );
+}
+
+Set<String> _mirrorRows(
+  List<String> lines,
+  Map<String, Map<String, _Bounds>> boundsBySheet,
+) {
   final seen = <String>{};
   String? sheet;
   for (var index = 0; index < lines.length; index++) {
@@ -65,34 +102,21 @@ Future<void> main(List<String> arguments) async {
     if (!seen.add(key)) throw FormatException('Duplicate README frame: $key');
     lines[index] = bounds.markdownRow(id, regionMatch.group(6)?.trim());
   }
+  return seen;
+}
 
-  if (seen.length != expectedFrames) {
-    final missing = <String>[
-      for (final sheetEntry in boundsBySheet.entries)
-        for (final id in sheetEntry.value.keys)
-          if (!seen.contains('${sheetEntry.key}/$id')) '${sheetEntry.key}/$id',
-    ];
-    throw FormatException(
-      '${missing.length} JSON frames are missing from README: '
-      '${missing.take(20).join(', ')}',
-    );
-  }
+List<String> _missingFrames(
+  Map<String, Map<String, _Bounds>> boundsBySheet,
+  Set<String> seen,
+) {
+  return <String>[
+    for (final sheetEntry in boundsBySheet.entries)
+      for (final id in sheetEntry.value.keys)
+        if (!seen.contains('${sheetEntry.key}/$id')) '${sheetEntry.key}/$id',
+  ];
+}
 
-  final updated = '${lines.join('\n')}${trailingNewline ? '\n' : ''}';
-  if (updated == source) {
-    stdout.writeln(
-      'README mirrors all $expectedFrames FreeTexturePacker JSON frames.',
-    );
-    return;
-  }
-  if (checkOnly) {
-    stderr.writeln(
-      'README coordinates are out of sync with FreeTexturePacker JSON.',
-    );
-    exitCode = 1;
-    return;
-  }
-
+Future<void> _writeAtomically(File readme, String updated) async {
   final temporary = File('${readme.path}.atlas-json.tmp');
   await temporary.writeAsString(updated, flush: true);
   try {
@@ -100,9 +124,6 @@ Future<void> main(List<String> arguments) async {
   } finally {
     if (await temporary.exists()) await temporary.delete();
   }
-  stdout.writeln(
-    'Mirrored $expectedFrames FreeTexturePacker JSON frames to README.md.',
-  );
 }
 
 Future<Map<String, Map<String, _Bounds>>> _loadBounds(

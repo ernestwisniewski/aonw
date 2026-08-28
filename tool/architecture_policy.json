@@ -102,6 +102,12 @@
     }
   },
   "scopes": {
+    "asset_ui_tool": {
+      "sourceRoot": "assets/ui",
+      "generatedPrefixes": [],
+      "defaultRole": "tool",
+      "roleAssignments": {}
+    },
     "client_lib": {
       "sourceRoot": "packages/aonw_server_client/lib",
       "generatedPrefixes": [

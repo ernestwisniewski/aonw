@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+part 'auto_trim_models.dart';
+
 const _alphaThreshold = '1%';
 const _segmentationThresholds = ['1%', '5%', '10%', '20%', '30%'];
 const _secondaryAreaRatio = 0.005;
@@ -33,36 +35,13 @@ Future<void> main(List<String> arguments) async {
     return;
   }
 
-  final checkOnly = arguments.contains('--check');
-  final uiDirectory = File.fromUri(Platform.script).absolute.parent;
-  final jsonFiles = await uiDirectory
-      .list()
-      .where((entity) {
-        return entity is File &&
-            _atlasJsonPattern.hasMatch(entity.uri.pathSegments.last);
-      })
-      .cast<File>()
-      .toList();
-  jsonFiles.sort((left, right) {
-    final leftSheet = int.parse(
-      _atlasJsonPattern.firstMatch(left.uri.pathSegments.last)!.group(1)!,
-    );
-    final rightSheet = int.parse(
-      _atlasJsonPattern.firstMatch(right.uri.pathSegments.last)!.group(1)!,
-    );
-    return leftSheet.compareTo(rightSheet);
-  });
+  await _synchronizeAtlasCoordinates(arguments.contains('--check'));
+}
 
-  final atlases = <String, _AtlasDocument>{};
-  final regions = <_Region>[];
-  for (final file in jsonFiles) {
-    final sheet = _atlasJsonPattern
-        .firstMatch(file.uri.pathSegments.last)!
-        .group(1)!;
-    final atlas = await _AtlasDocument.load(file, sheet);
-    atlases[sheet] = atlas;
-    regions.addAll(atlas.regions);
-  }
+Future<void> _synchronizeAtlasCoordinates(bool checkOnly) async {
+  final uiDirectory = File.fromUri(Platform.script).absolute.parent;
+  final atlases = await _loadAtlases(uiDirectory);
+  final regions = atlases.values.expand((atlas) => atlas.regions).toList();
   if (regions.isEmpty) {
     throw const FormatException('No FreeTexturePacker JSON frames were found.');
   }
@@ -133,6 +112,34 @@ Future<void> main(List<String> arguments) async {
     'Updated ${changedDocuments.length} FreeTexturePacker JSON files; trimmed '
     '${changed.length} of ${regions.length} UI regions at alpha threshold '
     '$_alphaThreshold.',
+  );
+}
+
+Future<Map<String, _AtlasDocument>> _loadAtlases(Directory directory) async {
+  final files = await directory
+      .list()
+      .where(
+        (entity) =>
+            entity is File &&
+            _atlasJsonPattern.hasMatch(entity.uri.pathSegments.last),
+      )
+      .cast<File>()
+      .toList();
+  files.sort(
+    (left, right) => _sheetNumber(left).compareTo(_sheetNumber(right)),
+  );
+
+  final atlases = <String, _AtlasDocument>{};
+  for (final file in files) {
+    final sheet = _sheetNumber(file).toString();
+    atlases[sheet] = await _AtlasDocument.load(file, sheet);
+  }
+  return atlases;
+}
+
+int _sheetNumber(File file) {
+  return int.parse(
+    _atlasJsonPattern.firstMatch(file.uri.pathSegments.last)!.group(1)!,
   );
 }
 
@@ -245,44 +252,88 @@ _Cell _cellSeparating(
   var right = region.width;
   var bottom = region.height;
   for (final component in secondary) {
-    final overlapsHorizontally =
-        component.x < main.right && component.right > main.x;
-    final overlapsVertically =
-        component.y < main.bottom && component.bottom > main.y;
-    final isLeft = component.right <= main.x;
-    final isRight = component.x >= main.right;
-    final isAbove = component.bottom <= main.y;
-    final isBelow = component.y >= main.bottom;
-
-    if (isLeft && overlapsVertically) {
-      left = _max(left, (component.right + main.x) ~/ 2);
-    } else if (isRight && overlapsVertically) {
-      right = _min(right, (main.right + component.x + 1) ~/ 2);
-    } else if (isAbove && overlapsHorizontally) {
-      top = _max(top, (component.bottom + main.y) ~/ 2);
-    } else if (isBelow && overlapsHorizontally) {
-      bottom = _min(bottom, (main.bottom + component.y + 1) ~/ 2);
-    } else if ((isLeft || isRight) && (isAbove || isBelow)) {
-      final horizontalGap = isLeft
-          ? main.x - component.right
-          : component.x - main.right;
-      final verticalGap = isAbove
-          ? main.y - component.bottom
-          : component.y - main.bottom;
-      if (horizontalGap <= verticalGap) {
-        if (isLeft) {
-          left = _max(left, (component.right + main.x) ~/ 2);
-        } else {
-          right = _min(right, (main.right + component.x + 1) ~/ 2);
-        }
-      } else if (isAbove) {
+    switch (_separationSide(main, component)) {
+      case _SeparationSide.left:
+        left = _max(left, (component.right + main.x) ~/ 2);
+      case _SeparationSide.right:
+        right = _min(right, (main.right + component.x + 1) ~/ 2);
+      case _SeparationSide.above:
         top = _max(top, (component.bottom + main.y) ~/ 2);
-      } else {
+      case _SeparationSide.below:
         bottom = _min(bottom, (main.bottom + component.y + 1) ~/ 2);
-      }
+      case _SeparationSide.none:
+        break;
     }
   }
   return _Cell(left: left, top: top, right: right, bottom: bottom);
+}
+
+_SeparationSide _separationSide(_Component main, _Component component) {
+  final horizontal = _horizontalSide(main, component);
+  final vertical = _verticalSide(main, component);
+  if (vertical == _VerticalSide.overlap) return horizontal.separation;
+  if (horizontal == _HorizontalSide.overlap) return vertical.separation;
+  if (horizontal == _HorizontalSide.intersecting ||
+      vertical == _VerticalSide.intersecting) {
+    return _SeparationSide.none;
+  }
+
+  final horizontalGap = horizontal == _HorizontalSide.left
+      ? main.x - component.right
+      : component.x - main.right;
+  final verticalGap = vertical == _VerticalSide.above
+      ? main.y - component.bottom
+      : component.y - main.bottom;
+  if (horizontalGap <= verticalGap) {
+    return horizontal.separation;
+  }
+  return vertical.separation;
+}
+
+enum _SeparationSide { left, right, above, below, none }
+
+_HorizontalSide _horizontalSide(_Component main, _Component component) {
+  if (component.right <= main.x) return _HorizontalSide.left;
+  if (component.x >= main.right) return _HorizontalSide.right;
+  if (component.x < main.right && component.right > main.x) {
+    return _HorizontalSide.overlap;
+  }
+  return _HorizontalSide.intersecting;
+}
+
+enum _HorizontalSide {
+  left,
+  right,
+  overlap,
+  intersecting;
+
+  _SeparationSide get separation => switch (this) {
+    left => _SeparationSide.left,
+    right => _SeparationSide.right,
+    overlap || intersecting => _SeparationSide.none,
+  };
+}
+
+_VerticalSide _verticalSide(_Component main, _Component component) {
+  if (component.bottom <= main.y) return _VerticalSide.above;
+  if (component.y >= main.bottom) return _VerticalSide.below;
+  if (component.y < main.bottom && component.bottom > main.y) {
+    return _VerticalSide.overlap;
+  }
+  return _VerticalSide.intersecting;
+}
+
+enum _VerticalSide {
+  above,
+  below,
+  overlap,
+  intersecting;
+
+  _SeparationSide get separation => switch (this) {
+    above => _SeparationSide.above,
+    below => _SeparationSide.below,
+    overlap || intersecting => _SeparationSide.none,
+  };
 }
 
 Future<_Region> _trimCell(File atlas, _Region region, _Cell cell) async {
@@ -344,207 +395,3 @@ Future<_Region> _trimCell(File atlas, _Region region, _Cell cell) async {
 
 int _min(int left, int right) => left < right ? left : right;
 int _max(int left, int right) => left > right ? left : right;
-
-final class _Cell {
-  const _Cell({
-    required this.left,
-    required this.top,
-    required this.right,
-    required this.bottom,
-  });
-
-  factory _Cell.full(_Region region) {
-    return _Cell(left: 0, top: 0, right: region.width, bottom: region.height);
-  }
-
-  final int left;
-  final int top;
-  final int right;
-  final int bottom;
-
-  int get width => right - left;
-  int get height => bottom - top;
-
-  bool isConstrained(_Region region) {
-    return left > 0 ||
-        top > 0 ||
-        right < region.width ||
-        bottom < region.height;
-  }
-
-  _Cell intersect(_Cell other) {
-    final intersection = _Cell(
-      left: _max(left, other.left),
-      top: _max(top, other.top),
-      right: _min(right, other.right),
-      bottom: _min(bottom, other.bottom),
-    );
-    if (intersection.width <= 0 || intersection.height <= 0) return this;
-    return intersection;
-  }
-}
-
-final class _Component {
-  const _Component({
-    required this.x,
-    required this.y,
-    required this.width,
-    required this.height,
-    required this.area,
-  });
-
-  final int x;
-  final int y;
-  final int width;
-  final int height;
-  final int area;
-
-  int get right => x + width;
-  int get bottom => y + height;
-}
-
-final class _Region {
-  const _Region({
-    required this.sheet,
-    required this.id,
-    required this.frameName,
-    required this.x,
-    required this.y,
-    required this.width,
-    required this.height,
-  });
-
-  final String sheet;
-  final String id;
-  final String frameName;
-  final int x;
-  final int y;
-  final int width;
-  final int height;
-
-  String get bounds => '[$x,$y,$width,$height]';
-
-  bool hasSameBounds(_Region other) {
-    return x == other.x &&
-        y == other.y &&
-        width == other.width &&
-        height == other.height;
-  }
-
-  _Region withBounds({
-    required int x,
-    required int y,
-    required int width,
-    required int height,
-  }) {
-    return _Region(
-      sheet: sheet,
-      id: id,
-      frameName: frameName,
-      x: x,
-      y: y,
-      width: width,
-      height: height,
-    );
-  }
-}
-
-final class _AtlasDocument {
-  _AtlasDocument({
-    required this.file,
-    required this.sheet,
-    required this.source,
-    required this.document,
-    required this.regions,
-  });
-
-  static const _encoder = JsonEncoder.withIndent('  ');
-
-  final File file;
-  final String sheet;
-  final String source;
-  final Map<String, dynamic> document;
-  final List<_Region> regions;
-
-  static Future<_AtlasDocument> load(File file, String sheet) async {
-    final source = await file.readAsString();
-    final decoded = jsonDecode(source);
-    if (decoded is! Map<String, dynamic>) {
-      throw FormatException('${file.path} must contain a JSON object.');
-    }
-    final framesValue = decoded['frames'];
-    if (framesValue is! Map<String, dynamic>) {
-      throw FormatException('${file.path} must contain a frames object.');
-    }
-    final regions = <_Region>[];
-    for (final entry in framesValue.entries) {
-      if (!entry.key.endsWith('.webp')) {
-        throw FormatException(
-          '${file.path} frame name must end in .webp: ${entry.key}',
-        );
-      }
-      final value = entry.value;
-      if (value is! Map<String, dynamic>) {
-        throw FormatException('${file.path} frame ${entry.key} is invalid.');
-      }
-      if (value['rotated'] == true) {
-        throw FormatException(
-          '${file.path} frame ${entry.key} must not be rotated.',
-        );
-      }
-      final bounds = value['frame'];
-      if (bounds is! Map<String, dynamic>) {
-        throw FormatException(
-          '${file.path} frame ${entry.key} has no frame bounds.',
-        );
-      }
-      regions.add(
-        _Region(
-          sheet: sheet,
-          id: entry.key.substring(0, entry.key.length - '.webp'.length),
-          frameName: entry.key,
-          x: _readInt(bounds, 'x', file, entry.key),
-          y: _readInt(bounds, 'y', file, entry.key),
-          width: _readInt(bounds, 'w', file, entry.key),
-          height: _readInt(bounds, 'h', file, entry.key),
-        ),
-      );
-    }
-    return _AtlasDocument(
-      file: file,
-      sheet: sheet,
-      source: source,
-      document: decoded,
-      regions: regions,
-    );
-  }
-
-  void update(_Region region) {
-    final frames = document['frames'] as Map<String, dynamic>;
-    final frame = frames[region.frameName] as Map<String, dynamic>;
-    frame['frame'] = <String, int>{
-      'x': region.x,
-      'y': region.y,
-      'w': region.width,
-      'h': region.height,
-    };
-    frame['rotated'] = false;
-    frame['trimmed'] = false;
-    frame['spriteSourceSize'] = <String, int>{
-      'x': 0,
-      'y': 0,
-      'w': region.width,
-      'h': region.height,
-    };
-    frame['sourceSize'] = <String, int>{'w': region.width, 'h': region.height};
-    frame['pivot'] = <String, double>{'x': 0.5, 'y': 0.5};
-  }
-
-  String encode() => '${_encoder.convert(document)}\n';
-}
-
-int _readInt(Map<String, dynamic> values, String key, File file, String frame) {
-  final value = values[key];
-  if (value is int) return value;
-  throw FormatException('${file.path} frame $frame has invalid $key: $value');
-}
