@@ -29,5 +29,19 @@ jobs:
       - name: Install pinned dependency policy tool
         run: cargo +1.97.1 install --locked --force --version 0.20.2 cargo-deny
 
+      - name: Install pinned release metadata tools
+        run: |
+          cargo +1.97.1 install --locked --force --version 0.5.9 cargo-cyclonedx
+          cargo +1.97.1 install --locked --force --version 0.9.2 --features cli cargo-about
+
       - name: Run release-mode successor engine checks
         run: make --no-print-directory successor-engine-deep-check
+
+      - name: Upload Rust release metadata
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rust-release-metadata-${{ github.sha }}
+          path: /tmp/aonw-rust-release-metadata
+          if-no-files-found: warn
+          retention-days: 30

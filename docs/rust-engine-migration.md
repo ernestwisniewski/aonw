@@ -180,6 +180,20 @@ introduced by the EXR/zerocopy and serde proc-macro chains; it is owned by the
 engine foundation, expires on 2027-08-24, and must be removed or re-reviewed at
 expiry. OSV continues to scan every committed lockfile independently.
 
+Release metadata is generated, not handwritten. Pinned OWASP
+`cargo-cyclonedx 0.5.9` emits target-specific CycloneDX 1.5 JSON with
+`SOURCE_DATE_EPOCH` bound to the source commit; pinned `cargo-about 0.9.2` with
+the explicit `cli` feature emits matching third-party notices while excluding
+dev/build-only dependencies. The gate works in an isolated engine copy because
+the upstream CycloneDX workspace command writes beside every member manifest.
+Only the current Flutter cdylib, Godot cdylib, and map-compiler CLI outputs are
+published. Environment-specific local workspace paths in CycloneDX `bom-ref`
+values are normalized to the stable virtual `/aonw/engine` root without changing
+the generated dependency graph. Two independent generations must be
+byte-identical, and the uploaded manifest records each SHA-256. Repository code
+validates and orchestrates these external generators; it does not implement an
+SBOM or license scanner.
+
 Security-oriented test tooling is also external and pinned. `cargo-mutants
 27.1.0` runs 19 focused mutations across codec bounds, state digest finalization,
 turn finalization, and persistence identity validation with zero survivors.

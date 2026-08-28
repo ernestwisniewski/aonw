@@ -86,6 +86,7 @@ make rust-architecture-check
 make rust-dependency-check
 make rust-determinism-check
 make rust-security-policy-check
+make rust-release-metadata-policy-check
 ```
 
 Focused mutation testing uses pinned `cargo-mutants`; three bounded fuzz targets
@@ -108,6 +109,22 @@ make rust-engine-security-check
 The fuzz workspace has its own committed lockfile because it is intentionally
 separate from the production workspace. Generated corpora and crash artifacts
 are local evidence and are not committed.
+
+Release supply-chain files use pinned external generators: OWASP
+`cargo-cyclonedx 0.5.9` for CycloneDX 1.5 JSON and `cargo-about 0.9.2` with its
+explicit `cli` feature for third-party notices. The repository checker isolates
+workspace-wide generation from the source tree, selects the current Flutter,
+Godot, and map-compiler artifacts, binds output to the exact target and commit
+epoch, and requires two byte-identical generations:
+
+```sh
+make rust-release-metadata-tool-versions
+make rust-release-metadata-check
+```
+
+Generated SBOMs, notices, and their SHA-256 manifest are release artifacts under
+`/tmp/aonw-rust-release-metadata`; they are uploaded by the scheduled deep gate
+and are not committed as source.
 
 ## Documentation
 
