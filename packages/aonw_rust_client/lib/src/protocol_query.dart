@@ -1,10 +1,12 @@
 import 'package:aonw_rust_client/src/protocol_coordinate.dart';
 import 'package:aonw_rust_client/src/protocol_evidence.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
+import 'package:aonw_rust_client/src/protocol_pending_action.dart';
 import 'package:aonw_rust_client/src/protocol_player_view.dart';
 import 'package:aonw_rust_client/src/protocol_values.dart';
 
 part 'protocol_city_query.dart';
+part 'protocol_worker_query.dart';
 
 sealed class AonwQueryResult {
   const AonwQueryResult();
@@ -20,6 +22,7 @@ sealed class AonwQueryResult {
       'cityWorkedHexOptions' => AonwCityWorkedHexOptionsResult.fromJson(value),
       'cityExpansionOptions' => AonwCityExpansionOptionsResult.fromJson(value),
       'cityYield' => AonwCityYieldResult.fromJson(value),
+      'workerOptions' => AonwWorkerOptionsResult.fromJson(value),
       final Object? type => throw FormatException(
         'Unknown AoNW query result $type.',
       ),
