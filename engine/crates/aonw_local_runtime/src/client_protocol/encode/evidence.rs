@@ -22,7 +22,7 @@ use aonw_engine::{
     UnitMovementExecution,
 };
 
-use crate::command_dispatch::RecipientDisclosure;
+use aonw_projection::RecipientDisclosure;
 
 use super::coordinate;
 use super::worker::automation_option;

@@ -3,7 +3,7 @@ use aonw_domain::{
     WorldArtifactLocation, WorldArtifactType,
 };
 
-/// Recipient-safe artifact read model.
+/// Recipient-safe current artifact read model.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlayerArtifactView {
     id: ArtifactId,

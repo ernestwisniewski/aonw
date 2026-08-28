@@ -3,10 +3,11 @@ use core::cmp::Ordering;
 use aonw_domain::{CityId, PlayerId, UnitId};
 use aonw_engine::{CombatExecution, CombatTarget, DomainEvent, ExecutionEvidence};
 
-use crate::player_view::{PlayerCityView, PlayerUnitView};
+use crate::{PlayerCityView, PlayerUnitView};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct RecipientDisclosure {
+/// Recipient-specific visibility policy for events and execution evidence.
+pub struct RecipientDisclosure {
     actor: PlayerId,
     unit_ids: Box<[UnitId]>,
     city_ids: Box<[CityId]>,
@@ -14,7 +15,9 @@ pub(crate) struct RecipientDisclosure {
 }
 
 impl RecipientDisclosure {
-    pub(crate) fn new(
+    /// Captures visibility before one accepted transition.
+    #[must_use]
+    pub fn new(
         actor: PlayerId,
         visible_units: &[PlayerUnitView],
         visible_cities: &[PlayerCityView],
@@ -60,7 +63,9 @@ impl RecipientDisclosure {
         }
     }
 
-    pub(crate) fn empty(actor: PlayerId) -> Self {
+    /// Creates a disclosure that reveals no entity-specific details.
+    #[must_use]
+    pub fn empty(actor: PlayerId) -> Self {
         Self {
             actor,
             unit_ids: Box::new([]),
@@ -69,22 +74,30 @@ impl RecipientDisclosure {
         }
     }
 
-    pub(crate) fn allows_unit(&self, unit_id: &UnitId) -> bool {
+    /// Returns whether one unit is visible to the recipient.
+    #[must_use]
+    pub fn allows_unit(&self, unit_id: &UnitId) -> bool {
         self.unit_ids.binary_search(unit_id).is_ok()
     }
 
-    pub(crate) fn allows_combat(&self, execution: &CombatExecution) -> bool {
+    /// Returns whether all parties of one combat are visible.
+    #[must_use]
+    pub fn allows_combat(&self, execution: &CombatExecution) -> bool {
         self.allows(
             &execution.preview.attacker_unit_id,
             &execution.preview.target,
         )
     }
 
-    pub(crate) fn allows_city(&self, city_id: &CityId) -> bool {
+    /// Returns whether one city is visible to the recipient.
+    #[must_use]
+    pub fn allows_city(&self, city_id: &CityId) -> bool {
         self.city_ids.binary_search(city_id).is_ok()
     }
 
-    pub(crate) fn allows_event(&self, event: &DomainEvent) -> bool {
+    /// Returns whether one authoritative event is safe for the recipient.
+    #[must_use]
+    pub fn allows_event(&self, event: &DomainEvent) -> bool {
         match event {
             DomainEvent::ArtifactExcavationStarted(value) => {
                 value.owner_player_id() == &self.actor || self.allows_unit(value.unit_id())

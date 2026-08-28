@@ -14,6 +14,8 @@ members = [
   "crates/aonw_map_compiler",
   "crates/aonw_map_compiler_cli",
   "crates/aonw_map_workbench",
+  "crates/aonw_projection",
+  "crates/aonw_server_runtime",
   "crates/aonw_testkit",
 ]
 

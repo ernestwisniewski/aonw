@@ -8,13 +8,19 @@ mod persistence;
 mod persistence_error;
 mod persistence_file;
 mod persistence_validation;
-mod player_view;
 mod prepared_world;
 mod query_cache;
 mod query_dispatch;
 mod session;
 mod turn_dispatch;
 
+pub use aonw_projection::{
+    CityFoundingDraftView, OwnedCityDetailsView, OwnedUnitDetailsView, PendingActionView,
+    PlayerArtifactLocationView, PlayerArtifactView, PlayerCityView, PlayerDiplomacyView,
+    PlayerDiplomaticMessageView, PlayerDiplomaticProposalView, PlayerDiplomaticRelationView,
+    PlayerFieldImprovementView, PlayerResourceTradeAgreementView, PlayerRoadView,
+    PlayerTurnLifecycleView, PlayerUnitView, PlayerViewSnapshot,
+};
 pub use client_protocol::ClientProtocol;
 pub use command_dispatch::{
     ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CommandResult,
@@ -25,13 +31,6 @@ pub use command_dispatch::{
 };
 pub use persistence::{PersistenceError, ReplayVerification};
 pub use persistence_file::{PersistenceFileError, PersistenceFileStore, PersistenceRestoreSource};
-pub use player_view::{
-    CityFoundingDraftView, OwnedCityDetailsView, OwnedUnitDetailsView, PendingActionView,
-    PlayerArtifactLocationView, PlayerArtifactView, PlayerCityView, PlayerDiplomacyView,
-    PlayerDiplomaticMessageView, PlayerDiplomaticProposalView, PlayerDiplomaticRelationView,
-    PlayerFieldImprovementView, PlayerResourceTradeAgreementView, PlayerRoadView,
-    PlayerTurnLifecycleView, PlayerUnitView, PlayerViewSnapshot,
-};
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{
     AutoExploreOptionView, CityExpansionOptionsRequest, CityFoundingOptionsRequest,

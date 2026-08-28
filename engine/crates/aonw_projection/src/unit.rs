@@ -47,7 +47,7 @@ impl OwnedUnitDetailsView {
     }
 }
 
-/// Recipient-safe unit view for local presentation.
+/// Recipient-safe unit view for presentation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlayerUnitView {
     id: UnitId,

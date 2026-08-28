@@ -96,6 +96,7 @@ dependencies = [
  "aonw_contracts",
  "aonw_domain",
  "aonw_engine",
+ "aonw_projection",
  "serde_json",
  "sha2",
  "stats_alloc",
@@ -145,6 +146,25 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+]
+
+[[package]]
+name = "aonw_projection"
+version = "0.1.0"
+dependencies = [
+ "aonw_content",
+ "aonw_domain",
+ "aonw_engine",
+]
+
+[[package]]
+name = "aonw_server_runtime"
+version = "0.1.0"
+dependencies = [
+ "aonw_content",
+ "aonw_domain",
+ "aonw_engine",
+ "aonw_projection",
 ]
 
 [[package]]

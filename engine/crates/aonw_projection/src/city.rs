@@ -77,7 +77,7 @@ impl OwnedCityDetailsView {
     }
 }
 
-/// Recipient-safe city projection.
+/// Recipient-safe current city projection.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlayerCityView {
     id: CityId,

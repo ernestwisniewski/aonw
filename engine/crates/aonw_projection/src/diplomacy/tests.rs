@@ -106,7 +106,7 @@ fn fixture() -> Fixture {
             agreement("trade-23", p3.clone(), p2.clone()),
         ],
     )
-    .expect("diplomacy");
+    .expect("recipient diplomacy");
     let state = GameState::builder(
         StateRevision::new(11),
         7,

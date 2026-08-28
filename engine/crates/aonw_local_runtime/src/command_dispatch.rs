@@ -9,20 +9,17 @@ use aonw_engine::{
 
 mod artifact;
 mod diplomacy;
-mod disclosure;
 mod production;
 mod research;
-mod view_diff;
 mod worker;
 
+pub use aonw_projection::PlayerViewPatch;
+pub(crate) use aonw_projection::{ProjectedView, RecipientDisclosure, diff_view, unchanged_view};
 pub(crate) use diplomacy::dispatch_diplomacy;
-pub(crate) use disclosure::RecipientDisclosure;
 pub use production::ProductionCommandRequest;
 pub(crate) use production::dispatch_production;
 pub use research::SelectTechnologyRequest;
 pub(crate) use research::dispatch_select_technology;
-pub use view_diff::PlayerViewPatch;
-pub(crate) use view_diff::{ProjectedView, diff_view, unchanged_view};
 pub(crate) use worker::{
     RuntimeWorkerCommandKind, dispatch_confirm_worker_improvement,
     dispatch_select_worker_improvement, dispatch_worker_unit,

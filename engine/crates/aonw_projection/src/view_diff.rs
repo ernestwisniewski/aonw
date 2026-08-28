@@ -3,12 +3,11 @@ use std::sync::Arc;
 
 use aonw_domain::{ArtifactId, CityId, GameOutcome, GameState, HexCoord, PlayerId, UnitId};
 
-use crate::SessionStamp;
-use crate::player_view::{
+use crate::{
     CityFoundingDraftView, PendingActionView, PlayerArtifactView, PlayerCityView,
     PlayerDiplomacyView, PlayerFieldImprovementView, PlayerRoadView, PlayerTurnLifecycleView,
-    PlayerUnitView, PlayerViewSnapshot, city_founding_draft, diplomacy_view, pending_action,
-    visible_artifacts, visible_cities, visible_infrastructure, visible_units,
+    PlayerUnitView, PlayerViewSnapshot, SessionStamp, city_founding_draft, diplomacy_view,
+    pending_action, visible_artifacts, visible_cities, visible_infrastructure, visible_units,
 };
 
 /// Recipient-safe view delta produced by one dispatch.
@@ -53,7 +52,8 @@ pub struct PlayerViewPatch {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct ProjectedView {
+/// Complete reusable recipient projection used to build snapshots and deltas.
+pub struct ProjectedView {
     recipient_player_id: Arc<PlayerId>,
     turn_number: u32,
     turn: PlayerTurnLifecycleView,
@@ -96,7 +96,9 @@ impl ProjectedView {
         }
     }
 
-    pub(crate) fn for_recipient(state: &GameState, actor: Arc<PlayerId>) -> Self {
+    /// Builds a complete recipient-safe projection from canonical state.
+    #[must_use]
+    pub fn for_recipient(state: &GameState, actor: Arc<PlayerId>) -> Self {
         let recipient = actor.as_ref();
         let (field_improvements, roads) = visible_infrastructure(state, recipient);
         let turn = PlayerTurnLifecycleView::new(state, recipient);
@@ -122,7 +124,9 @@ impl ProjectedView {
         }
     }
 
-    pub(crate) fn snapshot(&self, stamp: SessionStamp) -> PlayerViewSnapshot {
+    /// Materializes a complete recipient snapshot with authoritative identity.
+    #[must_use]
+    pub fn snapshot(&self, stamp: SessionStamp) -> PlayerViewSnapshot {
         PlayerViewSnapshot::from_parts(
             self.recipient_player_id.clone(),
             stamp,
@@ -140,16 +144,22 @@ impl ProjectedView {
         )
     }
 
-    pub(crate) fn units(&self) -> &[PlayerUnitView] {
+    /// Returns visible units in stable identity order.
+    #[must_use]
+    pub fn units(&self) -> &[PlayerUnitView] {
         &self.units
     }
 
-    pub(crate) fn cities(&self) -> &[PlayerCityView] {
+    /// Returns visible cities in stable identity order.
+    #[must_use]
+    pub fn cities(&self) -> &[PlayerCityView] {
         &self.cities
     }
 }
 
-pub(crate) fn diff_view(
+/// Computes one recipient-safe projection delta.
+#[must_use]
+pub fn diff_view(
     from_revision: u64,
     to_revision: u64,
     before: &ProjectedView,
@@ -224,7 +234,9 @@ pub(crate) fn diff_view(
     }
 }
 
-pub(crate) fn unchanged_view(revision: u64, view: &ProjectedView) -> PlayerViewPatch {
+/// Returns an empty delta carrying current recipient-owned workflow state.
+#[must_use]
+pub fn unchanged_view(revision: u64, view: &ProjectedView) -> PlayerViewPatch {
     PlayerViewPatch {
         from_revision: revision,
         to_revision: revision,
@@ -357,7 +369,7 @@ mod tests {
     use aonw_domain::{GameOutcome, HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind};
 
     use super::{ProjectedView, diff_coordinate_views, diff_view};
-    use crate::player_view::{PlayerDiplomacyView, PlayerTurnLifecycleView, PlayerUnitView};
+    use crate::{PlayerDiplomacyView, PlayerTurnLifecycleView, PlayerUnitView};
 
     #[test]
     fn sorted_view_diff_reports_updates_insertions_and_removals() {

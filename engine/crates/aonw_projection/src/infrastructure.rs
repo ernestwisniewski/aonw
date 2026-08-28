@@ -2,7 +2,7 @@ use aonw_domain::{
     FieldImprovementKind, FogVisibility, GameState, HexCoord, PlayerId, TransportCondition,
 };
 
-/// Recipient-safe dynamic field improvement.
+/// Recipient-safe current field improvement.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PlayerFieldImprovementView {
     coordinate: HexCoord,

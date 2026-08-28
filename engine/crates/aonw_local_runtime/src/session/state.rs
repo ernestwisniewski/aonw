@@ -1,28 +1,16 @@
-use aonw_content::{ContentHash, MapDefinition, RulesetDefinition};
-use aonw_domain::{GameState, PlayerId, StateRevision};
+use aonw_content::{MapDefinition, RulesetDefinition};
+use aonw_domain::{GameState, PlayerId};
 use aonw_engine::{
     EngineContext, EventBudget, GameEngine, MovementVisibility, StateDigest, SystemContext,
 };
+use aonw_projection::ProjectedView;
 use std::sync::Arc;
 
-use crate::command_dispatch::ProjectedView;
+use crate::SessionStamp;
 use crate::persistence::ReplayRecorder;
 use crate::prepared_world::PreparedWorld;
 
 use super::{OpenSession, OpenSessionError, RuntimeError};
-
-/// Identity metadata carried by every session response.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct SessionStamp {
-    /// Canonical state revision.
-    pub revision: StateRevision,
-    /// Canonical state digest.
-    pub state_digest: StateDigest,
-    /// Validated map hash.
-    pub map_hash: ContentHash,
-    /// Validated ruleset hash.
-    pub ruleset_hash: ContentHash,
-}
 
 #[derive(Clone, Debug)]
 pub(crate) struct Session {

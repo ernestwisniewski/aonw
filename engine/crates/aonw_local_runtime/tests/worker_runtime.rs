@@ -207,7 +207,8 @@ fn assert_query_cache_job_and_mid_save(
             .iter()
             .find(|unit| unit.id() == worker_id)
             .expect("owned worker")
-            .worker_job()
+            .owned_details()
+            .and_then(|details| details.activity().worker_job())
             .is_some()
     );
     let mid_save = runtime.export_save_json().expect("mid-job save");

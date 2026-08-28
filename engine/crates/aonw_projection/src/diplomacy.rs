@@ -5,7 +5,7 @@ use aonw_domain::{
     ResourceTradeAgreement, ResourceType,
 };
 
-/// Complete bilateral diplomacy state visible to one recipient.
+/// Complete bilateral diplomacy state visible to the authenticated recipient.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct PlayerDiplomacyView {
     relations: Box<[PlayerDiplomaticRelationView]>,

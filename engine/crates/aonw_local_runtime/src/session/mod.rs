@@ -5,6 +5,7 @@ mod open;
 mod runtime;
 mod state;
 
+pub use aonw_projection::SessionStamp;
 pub use capabilities::RuntimeCapabilities;
 pub use error::RuntimeError;
 pub use handoff::ActorHandoffError;
@@ -13,6 +14,5 @@ pub use runtime::{
     AiTurnDriver, AiTurnError, AiTurnExecution, LocalRuntime, MAX_AI_TURN_COMMAND_BUDGET,
     ReplayFrame,
 };
-pub use state::SessionStamp;
 
 pub(crate) use state::Session;

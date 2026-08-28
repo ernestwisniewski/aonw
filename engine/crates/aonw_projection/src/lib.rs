@@ -1,16 +1,23 @@
+//! Framework-independent recipient-safe projections for every authoritative host.
+
+#![forbid(unsafe_code)]
+
 use aonw_domain::{
     CityId, FieldImprovementKind, GameState, HexCoord, PendingInteraction, PlayerId,
     PlayerTurnState, UnitId,
 };
 use std::sync::Arc;
 
-use crate::SessionStamp;
+use aonw_content::ContentHash;
+use aonw_engine::StateDigest;
 
 mod artifact;
 mod city;
 mod diplomacy;
+mod disclosure;
 mod infrastructure;
 mod unit;
+mod view_diff;
 
 pub(crate) use artifact::visible_artifacts;
 pub use artifact::{PlayerArtifactLocationView, PlayerArtifactView};
@@ -21,10 +28,25 @@ pub use diplomacy::{
     PlayerDiplomacyView, PlayerDiplomaticMessageView, PlayerDiplomaticProposalView,
     PlayerDiplomaticRelationView, PlayerResourceTradeAgreementView,
 };
+pub use disclosure::RecipientDisclosure;
 pub(crate) use infrastructure::visible_infrastructure;
 pub use infrastructure::{PlayerFieldImprovementView, PlayerRoadView};
 pub(crate) use unit::visible_units;
 pub use unit::{OwnedUnitDetailsView, PlayerUnitView};
+pub use view_diff::{PlayerViewPatch, ProjectedView, diff_view, unchanged_view};
+
+/// Identity metadata carried by every recipient projection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SessionStamp {
+    /// Canonical state revision.
+    pub revision: aonw_domain::StateRevision,
+    /// Canonical state digest.
+    pub state_digest: StateDigest,
+    /// Validated map hash.
+    pub map_hash: ContentHash,
+    /// Validated ruleset hash.
+    pub ruleset_hash: ContentHash,
+}
 
 /// Recipient-owned action currently awaiting player input.
 #[allow(missing_docs)]

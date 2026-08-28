@@ -10,7 +10,6 @@ use crate::command_dispatch::{
     dispatch_production, dispatch_select_city_expansion_hex, dispatch_select_worker_improvement,
     dispatch_toggle_worked_hex, dispatch_unit_action, dispatch_worker_unit,
 };
-use crate::player_view::PlayerViewSnapshot;
 use crate::query_cache::{QueryCache, QueryCacheStats};
 use crate::query_dispatch::dispatch_query;
 use crate::turn_dispatch::{
@@ -23,6 +22,7 @@ use crate::{
     RuntimeQueryResult, SelectCityExpansionHexRequest, ToggleWorkedHexRequest, UnitActionRequest,
     WorkerImprovementRequest, WorkerUnitRequest,
 };
+use aonw_projection::PlayerViewSnapshot;
 
 use super::{OpenSession, OpenSessionError, RuntimeError, Session, SessionStamp};
 
