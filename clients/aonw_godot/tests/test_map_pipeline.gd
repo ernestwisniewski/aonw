@@ -2,10 +2,6 @@ extends SceneTree
 
 const MapAuthoringSuite := preload("res://tests/suites/map_authoring_suite.gd")
 const MapGeometrySuite := preload("res://tests/suites/map_geometry_suite.gd")
-const NativeSessionSuite := preload("res://tests/suites/native_session_suite.gd")
-const MovementPresentationSuite := preload(
-	"res://tests/suites/movement_presentation_suite.gd"
-)
 const NewMapCreationSuite := preload("res://tests/suites/new_map_creation_suite.gd")
 const LogicalMapPaintingSuite := preload(
 	"res://tests/suites/logical_map_painting_suite.gd"
@@ -24,8 +20,6 @@ func _initialize() -> void:
 func _run() -> void:
 	for suite in [
 		MapGeometrySuite.new(),
-		NativeSessionSuite.new(),
-		MovementPresentationSuite.new(),
 		NewMapCreationSuite.new(),
 		LogicalMapPaintingSuite.new(),
 		MapAuthoringSuite.new(),

@@ -61,6 +61,7 @@ const Set<String> _staticAssetFiles = {
   'ui/6.webp',
   'ui/README.md',
   'ui/auto_trim_coordinates.dart',
+  'ui/auto_trim_models.dart',
   'ui/build_preview.sh',
   'ui/sync_readme_from_atlas_json.dart',
 };
