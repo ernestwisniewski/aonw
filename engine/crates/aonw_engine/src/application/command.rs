@@ -136,19 +136,15 @@ impl GameEngine {
         if !matches!(
             command,
             PlayerCommand::EndTurn(_) | PlayerCommand::SubmitTurn(_)
-        ) {
-            if let Some(code) = player_action_lifecycle_rejection(
-                &state,
-                context.actor_player_id(),
-                context.can_act(),
-            ) {
-                return Ok(DomainTransition::rejected(
-                    state,
-                    code,
-                    map_hash,
-                    ruleset_hash,
-                ));
-            }
+        ) && let Some(code) =
+            player_action_lifecycle_rejection(&state, context.actor_player_id(), context.can_act())
+        {
+            return Ok(DomainTransition::rejected(
+                state,
+                code,
+                map_hash,
+                ruleset_hash,
+            ));
         }
         let map = context.map();
         match command {
