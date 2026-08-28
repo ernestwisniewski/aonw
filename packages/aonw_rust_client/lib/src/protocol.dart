@@ -4,6 +4,7 @@ import 'package:aonw_rust_client/src/api.dart';
 import 'package:aonw_rust_client/src/native_identity.dart';
 import 'package:aonw_rust_client/src/protocol_city_view.dart';
 import 'package:aonw_rust_client/src/protocol_coordinate.dart';
+import 'package:aonw_rust_client/src/protocol_diplomacy.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 import 'package:aonw_rust_client/src/protocol_pending_action.dart';
 import 'package:aonw_rust_client/src/protocol_query.dart';
@@ -27,6 +28,7 @@ export 'protocol_values.dart';
 
 part 'protocol_city_request.dart';
 part 'protocol_artifact_request.dart';
+part 'protocol_diplomacy_request.dart';
 part 'protocol_production_request.dart';
 part 'protocol_research_request.dart';
 part 'protocol_worker_request.dart';
