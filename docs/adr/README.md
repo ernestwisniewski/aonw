@@ -18,6 +18,7 @@ ADRs explain why a long-lived boundary exists and what new code must preserve. R
 | [0010](0010-terrain-backend-for-godot-authoring.md) | Terrain Backend For Godot Authoring | Accepted | In progress |
 | [0011](0011-logical-map-workbench-and-generation.md) | Logical Map Workbench And Procedural Generation Boundary | Accepted | Implemented |
 | [0012](0012-flame-renderer-for-successor-flutter.md) | Flame Renderer For Successor Flutter | Accepted | In progress |
+| [0013](0013-in-process-rust-host-for-successor-multiplayer.md) | In-Process Rust Host For Successor Multiplayer | Accepted | In progress |
 
 ## Status
 
