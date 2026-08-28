@@ -236,9 +236,14 @@ class ReachableTile:
 
 class UnitMovedEvent:
 	extends RefCounted
+	var kind := &"unitMoved"
 	var unit_id: String
 	var from: Vector2i
 	var to: Vector2i
+
+class CommandEvent:
+	extends RefCounted
+	var kind: StringName
 
 class PendingActionView:
 	extends RefCounted
@@ -310,11 +315,21 @@ class MovementEvidence:
 	var from: Vector2i
 	var steps: Array[MovementStep]
 
+class TurnKernelEvidence:
+	extends RefCounted
+	var processors: Array[StringName]
+	var founded_city_ids: Array[String]
+	var combat_execution_count: int
+	var reset_unit_ids: Array[String]
+	var movement_execution_count: int
+	var invalidated_order_unit_ids: Array[String]
+	var finished_auto_explore_unit_ids: Array[String]
+
 class CommandResult:
 	extends RefCounted
 	var stamp: Stamp
 	var accepted: bool
 	var rejection: StringName
-	var events: Array[UnitMovedEvent]
+	var events: Array
 	var patch: ViewPatch
-	var evidence: MovementEvidence
+	var evidence: Variant

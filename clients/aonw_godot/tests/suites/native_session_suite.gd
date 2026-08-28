@@ -475,7 +475,7 @@ func _test_shared_client_contract() -> void:
 		var inspect_request: Variant = JSON.parse_string(inspect_request_file.get_as_text())
 		_check(
 			inspect_request is Dictionary
-			and inspect_request["apiVersion"] == 6
+			and inspect_request["apiVersion"] == 7
 			and inspect_request["request"]["type"] == "inspectMap",
 			"Godot consumes the shared inspectMap request contract",
 		)
@@ -489,7 +489,7 @@ func _test_shared_client_contract() -> void:
 		var request: Variant = JSON.parse_string(request_file.get_as_text())
 		_check(
 			request is Dictionary
-			and request["apiVersion"] == 6
+			and request["apiVersion"] == 7
 			and request["request"]["command"]["type"] == "moveUnit",
 			"Godot consumes the shared move request contract",
 		)
@@ -529,6 +529,25 @@ func _test_shared_client_contract() -> void:
 		_check(
 			ClientReadModelDecoder.decode_command(rejected_result) == null,
 			"Godot rejects an unknown command rejection code",
+		)
+		var turn_result: Dictionary = body["result"].duplicate(true)
+		turn_result["events"] = [{"type": "turnEnded", "playerId": "player-1"}]
+		turn_result["evidence"] = {
+			"type": "turnKernel",
+			"processors": ["submission", "lifecycle"],
+			"foundedCityIds": [],
+			"combatExecutions": [],
+			"resetUnitIds": [],
+			"movementExecutions": [],
+			"invalidatedOrderUnitIds": [],
+			"finishedAutoExploreUnitIds": [],
+		}
+		var turn_command := ClientReadModelDecoder.decode_command(turn_result)
+		_check(
+			turn_command != null
+			and turn_command.events[0].kind == &"turnEnded"
+			and turn_command.evidence.processors == [&"submission", &"lifecycle"],
+			"Godot decodes recipient-safe turn events and evidence",
 		)
 		var invalid_version := decoder.decode(
 			'{"apiVersion":"7","outcome":{"status":"success","response":{}}}'

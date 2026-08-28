@@ -135,6 +135,12 @@ func skip_unit_turn(unit_id: String) -> Dictionary:
 func fortify_unit(unit_id: String) -> Dictionary:
 	return _unit_action("fortifyUnit", unit_id)
 
+func end_turn() -> Dictionary:
+	return _command({
+		"type": "endTurn",
+		"expectedRevision": revision(),
+	})
+
 func save_game() -> Dictionary:
 	return _extract(_execute({"type": "exportSave"}, "saveExported"), "document")
 

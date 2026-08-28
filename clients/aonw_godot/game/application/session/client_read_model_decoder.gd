@@ -2,6 +2,7 @@ class_name AonwClientReadModelDecoder
 extends RefCounted
 
 const ReadModels := preload("res://game/application/session/client_read_models.gd")
+const ClientEventSchema := preload("res://game/application/session/client_event_schema.gd")
 const UNIT_KINDS := [
 	"commander", "warrior", "archer", "settler", "worker", "merchant", "scout",
 	"spearman", "cavalry", "catapult", "heavyInfantry", "fieldCannon", "rifleman",
@@ -308,7 +309,7 @@ static func decode_command(raw: Variant) -> AonwClientReadModels.CommandResult:
 	if not raw["events"] is Array:
 		return null
 	var events: Variant = _decode_events(raw["events"])
-	var evidence := _decode_evidence(raw["evidence"])
+	var evidence: Variant = _decode_evidence(raw["evidence"])
 	if stamp == null or patch == null or (raw["evidence"] != null and evidence == null):
 		return null
 	if events == null:
@@ -1356,9 +1357,13 @@ static func _decode_pending_action(raw: Variant) -> AonwClientReadModels.Pending
 static func _valid_unit_id(value: Variant) -> bool:
 	return value is String and not value.is_empty()
 
-static func _decode_evidence(raw: Variant) -> AonwClientReadModels.MovementEvidence:
+static func _decode_evidence(raw: Variant) -> Variant:
 	if raw == null:
 		return null
+	if not raw is Dictionary or not raw.get("type") is String:
+		return null
+	if raw["type"] == "turnKernel":
+		return _decode_turn_kernel_evidence(raw)
 	if not _has_exact_fields(raw, ["type", "unitId", "from", "steps"]):
 		return null
 	if raw["type"] != "unitMovement" or not raw["unitId"] is String or not raw["steps"] is Array:
@@ -1372,6 +1377,52 @@ static func _decode_evidence(raw: Variant) -> AonwClientReadModels.MovementEvide
 	result.from = from
 	result.steps = steps
 	return result
+
+static func _decode_turn_kernel_evidence(raw: Dictionary) -> AonwClientReadModels.TurnKernelEvidence:
+	if not _has_exact_fields(raw, [
+		"type", "processors", "foundedCityIds", "combatExecutions", "resetUnitIds",
+		"movementExecutions", "invalidatedOrderUnitIds", "finishedAutoExploreUnitIds",
+	]):
+		return null
+	if not _arrays(raw, [
+		"processors", "foundedCityIds", "combatExecutions", "resetUnitIds",
+		"movementExecutions", "invalidatedOrderUnitIds", "finishedAutoExploreUnitIds",
+	]):
+		return null
+	var processors: Array[StringName] = []
+	for value in raw["processors"]:
+		if not value is String or not ClientEventSchema.TURN_PROCESSORS.has(value):
+			return null
+		processors.append(StringName(value))
+	processors.make_read_only()
+	var founded: Variant = _decode_string_ids(raw["foundedCityIds"])
+	var reset: Variant = _decode_string_ids(raw["resetUnitIds"])
+	var invalidated: Variant = _decode_string_ids(raw["invalidatedOrderUnitIds"])
+	var finished: Variant = _decode_string_ids(raw["finishedAutoExploreUnitIds"])
+	if founded == null or reset == null or invalidated == null or finished == null:
+		return null
+	for execution in raw["combatExecutions"]:
+		if not execution is Dictionary:
+			return null
+	for execution in raw["movementExecutions"]:
+		if not _valid_movement_execution(execution):
+			return null
+	var result := ReadModels.TurnKernelEvidence.new()
+	result.processors = processors
+	result.founded_city_ids = founded
+	result.combat_execution_count = raw["combatExecutions"].size()
+	result.reset_unit_ids = reset
+	result.movement_execution_count = raw["movementExecutions"].size()
+	result.invalidated_order_unit_ids = invalidated
+	result.finished_auto_explore_unit_ids = finished
+	return result
+
+static func _valid_movement_execution(raw: Variant) -> bool:
+	if not _has_exact_fields(raw, ["unitId", "from", "steps"]):
+		return false
+	if not _valid_unit_id(raw["unitId"]) or not raw["steps"] is Array:
+		return false
+	return _decode_coordinate(raw["from"]) != null and _decode_steps(raw["steps"]) != null
 
 static func _decode_steps(raw: Array) -> Variant:
 	var steps: Array[AonwClientReadModels.MovementStep] = []
@@ -1394,20 +1445,30 @@ static func _decode_steps(raw: Array) -> Variant:
 	return steps
 
 static func _decode_events(raw: Array) -> Variant:
-	var events: Array[AonwClientReadModels.UnitMovedEvent] = []
+	var events: Array = []
 	for value in raw:
-		if not _has_exact_fields(value, ["type", "unitId", "from", "to"]):
+		if not value is Dictionary or not value.get("type") is String:
 			return null
-		if value["type"] != "unitMoved" or not value["unitId"] is String:
+		if not ClientEventSchema.FIELDS.has(value["type"]):
 			return null
-		var from: Variant = _decode_coordinate(value["from"])
-		var to: Variant = _decode_coordinate(value["to"])
-		if from == null or to == null:
+		var fields: Array = ClientEventSchema.FIELDS[value["type"]]
+		if not _has_exact_fields(value, fields):
 			return null
-		var event := ReadModels.UnitMovedEvent.new()
-		event.unit_id = value["unitId"]
-		event.from = from
-		event.to = to
+		if value["type"] == "unitMoved":
+			if not _valid_unit_id(value["unitId"]):
+				return null
+			var from: Variant = _decode_coordinate(value["from"])
+			var to: Variant = _decode_coordinate(value["to"])
+			if from == null or to == null:
+				return null
+			var movement := ReadModels.UnitMovedEvent.new()
+			movement.unit_id = value["unitId"]
+			movement.from = from
+			movement.to = to
+			events.append(movement)
+			continue
+		var event := ReadModels.CommandEvent.new()
+		event.kind = StringName(value["type"])
 		events.append(event)
 	events.make_read_only()
 	return events
