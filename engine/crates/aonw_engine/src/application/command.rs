@@ -1,5 +1,5 @@
 use aonw_content::ContentHash;
-use aonw_domain::GameState;
+use aonw_domain::{GameState, PlayerId, PlayerTurnState};
 
 use super::{CommandRejectionCode, DomainTransition, ExecutionEvidence};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
@@ -132,6 +132,23 @@ impl GameEngine {
                 map_hash,
                 ruleset_hash,
             ));
+        }
+        if !matches!(
+            command,
+            PlayerCommand::EndTurn(_) | PlayerCommand::SubmitTurn(_)
+        ) {
+            if let Some(code) = player_action_lifecycle_rejection(
+                &state,
+                context.actor_player_id(),
+                context.can_act(),
+            ) {
+                return Ok(DomainTransition::rejected(
+                    state,
+                    code,
+                    map_hash,
+                    ruleset_hash,
+                ));
+            }
         }
         let map = context.map();
         match command {
@@ -361,6 +378,31 @@ impl GameEngine {
     pub fn state_digest(state: &GameState) -> StateDigest {
         crate::state_digest::digest_state(state)
     }
+}
+
+fn player_action_lifecycle_rejection(
+    state: &GameState,
+    actor_player_id: &PlayerId,
+    boundary_can_act: bool,
+) -> Option<CommandRejectionCode> {
+    if !boundary_can_act {
+        return Some(CommandRejectionCode::TurnPlayerNotActive);
+    }
+    let lifecycle = state.match_lifecycle();
+    let identity = lifecycle.identity();
+    if identity.participants().is_empty() {
+        // Bare engine states predate match startup and remain useful for embedders and fixtures.
+        return None;
+    }
+    let turn = lifecycle.turn();
+    if !identity.contains(actor_player_id)
+        || turn.kicked_player_ids().contains(actor_player_id)
+        || turn.submitted_player_ids().contains(actor_player_id)
+        || turn.turn_states_by_player_id().get(actor_player_id) != Some(&PlayerTurnState::Active)
+    {
+        return Some(CommandRejectionCode::TurnPlayerNotActive);
+    }
+    None
 }
 
 fn apply_worker_command<Command>(
