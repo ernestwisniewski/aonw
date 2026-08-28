@@ -12,6 +12,7 @@ import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/features/unit_actions/read_model/unit_action_view.dart';
 import 'package:aonw_flutter/game/aonw_flame_game.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flame/game.dart';
@@ -148,6 +149,63 @@ void main() {
       'dispatch',
       'snapshot',
       'query',
+    ]);
+    await gateway.close();
+    expect(backend.closeCalls, 1);
+  });
+
+  test('executes the current unit action family through one session', () async {
+    late _TrackingRustSession backend;
+    final gateway = RustGameSessionGateway(
+      assets: _FileAssetBundle(),
+      sessionFactory: () async {
+        final native = await createAonwRustSession();
+        if (native == null) return null;
+        backend = _TrackingRustSession(native);
+        return backend;
+      },
+    );
+    addTearDown(gateway.close);
+
+    final scene = await gateway.load(MapAssetPaths.starter);
+    final unitId = scene.player.units.single.id;
+    final skipped = await gateway.executeUnitAction(
+      expectedRevision: 0,
+      unitId: unitId,
+      action: UnitActionKindView.skip,
+    );
+    final cancelled = await gateway.executeUnitAction(
+      expectedRevision: 1,
+      unitId: unitId,
+      action: UnitActionKindView.cancel,
+    );
+    final fortified = await gateway.executeUnitAction(
+      expectedRevision: 2,
+      unitId: unitId,
+      action: UnitActionKindView.fortify,
+    );
+
+    expect(skipped.accepted, isTrue);
+    expect(skipped.player?.stamp.revision, 1);
+    expect(skipped.player?.units.single.movementUnits, 0);
+    expect(cancelled.accepted, isTrue);
+    expect(cancelled.player?.stamp.revision, 2);
+    expect(cancelled.player!.units.single.movementUnits, greaterThan(0));
+    expect(fortified.accepted, isTrue);
+    expect(fortified.player?.stamp.revision, 3);
+    expect(
+      fortified.player?.units.single.posture,
+      VisibleUnitPosture.fortified,
+    );
+    expect(backend.maximumInFlightRequests, 1);
+    expect(backend.requestTypes, [
+      'capabilities',
+      'inspectMap',
+      'openSession',
+      'snapshot',
+      'dispatch',
+      'dispatch',
+      'dispatch',
     ]);
     await gateway.close();
     expect(backend.closeCalls, 1);

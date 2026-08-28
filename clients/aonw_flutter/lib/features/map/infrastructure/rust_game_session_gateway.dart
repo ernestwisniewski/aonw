@@ -1,6 +1,10 @@
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 
+import '../../unit_actions/application/unit_action_session_port.dart';
+import '../../unit_actions/infrastructure/rust_unit_action_gateway.dart';
+import '../../unit_actions/infrastructure/unit_action_view_mapper.dart';
+import '../../unit_actions/read_model/unit_action_view.dart';
 import '../application/map_session_port.dart';
 import '../application/movement_session_port.dart';
 import '../read_model/map_scene.dart';
@@ -11,16 +15,18 @@ import 'map_view_mapper.dart';
 import 'movement_view_mapper.dart';
 import 'player_map_view_mapper.dart';
 import 'recipient_projection_cache.dart';
+import 'rust_game_session_context.dart';
 import 'rust_game_session_loader.dart';
 
 final class RustGameSessionGateway
-    implements MapSessionPort, MovementSessionPort {
+    implements MapSessionPort, MovementSessionPort, UnitActionSessionPort {
   RustGameSessionGateway({
     required AssetBundle assets,
     RustSessionFactory sessionFactory = createAonwRustSession,
     MapViewMapper mapper = const MapViewMapper(),
     PlayerMapViewMapper playerMapper = const PlayerMapViewMapper(),
     MovementViewMapper movementMapper = const MovementViewMapper(),
+    UnitActionViewMapper unitActionMapper = const UnitActionViewMapper(),
   }) : _loader = RustGameSessionLoader(
          assets: assets,
          sessionFactory: sessionFactory,
@@ -28,11 +34,16 @@ final class RustGameSessionGateway
          playerMapper: playerMapper,
        ),
        _playerMapper = playerMapper,
-       _movementMapper = movementMapper;
+       _movementMapper = movementMapper,
+       _unitActions = RustUnitActionGateway(
+         playerMapper: playerMapper,
+         mapper: unitActionMapper,
+       );
 
   final RustGameSessionLoader _loader;
   final PlayerMapViewMapper _playerMapper;
   final MovementViewMapper _movementMapper;
+  final RustUnitActionGateway _unitActions;
   AonwRustSession? _session;
   MapView? _map;
   PlayerMapView? _player;
@@ -121,7 +132,7 @@ final class RustGameSessionGateway
   }) => _serialize(() async {
     final context = _context();
     try {
-      final unit = _controlledUnit(context, unitId);
+      final unit = requireControlledUnit(context, unitId);
       final response = await _send(
         context.session,
         AonwClientRequest.routePlan(
@@ -157,7 +168,7 @@ final class RustGameSessionGateway
   }) => _serialize(() async {
     final context = _context();
     try {
-      _controlledUnit(context, unitId);
+      requireControlledUnit(context, unitId);
       final response = await _send(
         context.session,
         AonwClientRequest.moveUnit(
@@ -190,6 +201,31 @@ final class RustGameSessionGateway
   });
 
   @override
+  Future<UnitActionResultView> executeUnitAction({
+    required int expectedRevision,
+    required String unitId,
+    required UnitActionKindView action,
+  }) => _serialize(() async {
+    try {
+      return await _unitActions.execute(
+        context: _context(),
+        expectedRevision: expectedRevision,
+        unitId: unitId,
+        action: action,
+        retainPlayer: _retainPlayer,
+      );
+    } on MovementSessionException catch (error) {
+      throw UnitActionSessionException(
+        code: error.code,
+        message: 'The unit action request could not be completed.',
+        diagnosticCause: error.diagnosticCause,
+        diagnosticStackTrace: error.diagnosticStackTrace,
+        resyncedPlayer: error.resyncedPlayer,
+      );
+    }
+  });
+
+  @override
   Future<void> close() async {
     _loadGeneration += 1;
     final session = _session;
@@ -202,14 +238,7 @@ final class RustGameSessionGateway
     if (session != null) await session.close();
   }
 
-  ({
-    AonwRustSession session,
-    MapView map,
-    PlayerMapView player,
-    RecipientProjectionCache cache,
-    String actorPlayerId,
-  })
-  _context() {
+  RustGameSessionContext _context() {
     final session = _session;
     final map = _map;
     final player = _player;
@@ -262,14 +291,7 @@ final class RustGameSessionGateway
   );
 
   Future<PlayerMapView> _applyCommandPatch(
-    ({
-      AonwRustSession session,
-      MapView map,
-      PlayerMapView player,
-      RecipientProjectionCache cache,
-      String actorPlayerId,
-    })
-    context,
+    RustGameSessionContext context,
     AonwCommandResult command,
   ) async {
     try {
@@ -294,16 +316,7 @@ final class RustGameSessionGateway
     }
   }
 
-  Future<PlayerMapView> _resync(
-    ({
-      AonwRustSession session,
-      MapView map,
-      PlayerMapView player,
-      RecipientProjectionCache cache,
-      String actorPlayerId,
-    })
-    context,
-  ) async {
+  Future<PlayerMapView> _resync(RustGameSessionContext context) async {
     final response = await _send(context.session, AonwClientRequest.snapshot());
     final snapshot = response.require<AonwSnapshotResponse>().snapshot;
     context.cache.replaceAfterResync(snapshot);
@@ -316,6 +329,8 @@ final class RustGameSessionGateway
     return player;
   }
 
+  void _retainPlayer(PlayerMapView player) => _player = player;
+
   Future<T> _serialize<T>(Future<T> Function() operation) {
     final result = _requestTail.then((_) => operation());
     _requestTail = result.then<void>(
@@ -324,27 +339,4 @@ final class RustGameSessionGateway
     );
     return result;
   }
-}
-
-VisibleUnitView _controlledUnit(
-  ({
-    AonwRustSession session,
-    MapView map,
-    PlayerMapView player,
-    RecipientProjectionCache cache,
-    String actorPlayerId,
-  })
-  context,
-  String unitId,
-) {
-  // Unit ownership remains a recipient-view concern; Rust still validates
-  // control and legality authoritatively for every query and command.
-  for (final unit in context.player.units) {
-    if (unit.id == unitId && unit.ownerPlayerId == context.actorPlayerId) {
-      return unit;
-    }
-  }
-  throw const FormatException(
-    'Movement request references an uncontrolled or absent unit.',
-  );
 }
