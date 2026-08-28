@@ -525,6 +525,11 @@ func _test_shared_client_contract() -> void:
 			rejected != null and rejected.rejection == &"stale_revision",
 			"Godot maps a shared command rejection to a validated code",
 		)
+		rejected_result["outcome"]["code"] = "match_finished"
+		_check(
+			ClientReadModelDecoder.decode_command(rejected_result) != null,
+			"Godot accepts the global terminal-match rejection",
+		)
 		rejected_result["outcome"]["code"] = "future_rejection"
 		_check(
 			ClientReadModelDecoder.decode_command(rejected_result) == null,

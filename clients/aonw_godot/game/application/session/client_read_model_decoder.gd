@@ -3,6 +3,7 @@ extends RefCounted
 
 const ReadModels := preload("res://game/application/session/client_read_models.gd")
 const ClientEventSchema := preload("res://game/application/session/client_event_schema.gd")
+const ClientCommandSchema := preload("res://game/application/session/client_command_schema.gd")
 const UNIT_KINDS := [
 	"commander", "warrior", "archer", "settler", "worker", "merchant", "scout",
 	"spearman", "cavalry", "catapult", "heavyInfantry", "fieldCannon", "rifleman",
@@ -65,94 +66,6 @@ const FIELD_IMPROVEMENTS := [
 	"prospectorCamp", "horseRanch", "pearlDivers", "coalShaft", "oilWell",
 	"bauxiteMine", "uraniumMine",
 ]
-const COMMAND_REJECTION_CODES := [
-	"stale_revision",
-	"unit_not_found",
-	"unit_not_controlled",
-	"unit_unavailable",
-	"unit_uses_trade_routes",
-	"unit_out_of_bounds",
-	"move_target_out_of_bounds",
-	"move_target_is_current_tile",
-	"move_target_is_foreign_city_center",
-	"move_target_occupied",
-	"unit_movement_capacity_insufficient",
-	"move_path_not_found",
-	"unit_not_scout",
-	"unit_exhausted",
-	"unit_has_path",
-	"auto_explore_no_target",
-	"unit_not_merchant",
-	"merchant_not_in_city",
-	"destination_city_not_found",
-	"destination_city_not_controlled",
-	"destination_city_is_origin",
-	"destination_city_is_current",
-	"merchant_route_not_found",
-	"merchant_city_path_not_found",
-	"troop_not_available",
-	"detachment_source_out_of_bounds",
-	"detachment_destination_unavailable",
-	"detached_unit_id_unavailable",
-	"unit_busy",
-	"unit_definition_missing",
-	"state_revision_overflow",
-	"invalid_queued_movement_path",
-	"invalid_unit",
-	"movement_unit_update_failed",
-	"turn_player_not_controlled",
-	"turn_player_not_active",
-	"turn_scope_invalid",
-	"turn_processor_unsupported",
-	"turn_number_overflow",
-	"attacker_not_found",
-	"attacker_not_controlled",
-	"attacker_unavailable",
-	"attacker_exhausted",
-	"attacker_out_of_bounds",
-	"attacker_cannot_attack",
-	"attack_target_not_visible",
-	"attack_target_out_of_bounds",
-	"attack_target_not_found",
-	"attack_target_not_enemy",
-	"attack_target_protected_by_treaty",
-	"attack_target_out_of_range",
-	"attack_city_has_no_health",
-	"city_founder_not_found",
-	"city_founder_not_controlled",
-	"city_founder_busy",
-	"city_founder_invalid",
-	"city_founder_no_settlers",
-	"city_site_invalid",
-	"city_center_occupied",
-	"city_center_claimed",
-	"city_center_too_close",
-	"city_controlled_hexes_invalid",
-	"city_not_found",
-	"city_not_controlled",
-	"worked_hex_unavailable",
-	"worked_hex_limit_reached",
-	"city_expansion_hex_unavailable",
-	"worker_not_found",
-	"worker_not_controlled",
-	"worker_unavailable",
-	"worker_no_movement_points",
-	"worker_queued_path_active",
-	"worker_improvement_not_selected",
-	"worker_action_not_controlled",
-	"worker_improvement_unavailable",
-	"worker_job_not_active",
-	"worker_assignment_unavailable",
-	"worker_assignment_not_active",
-	"worker_road_unavailable",
-	"road_construction_existingRoad",
-	"road_construction_city",
-	"road_construction_enemyTerritory",
-	"road_construction_impassableTerrain",
-	"worker_automation_not_active",
-	"worker_automation_no_target",
-]
-
 static func decode_stamp(raw: Variant) -> AonwClientReadModels.Stamp:
 	if not _has_exact_fields(raw, [
 		"revision", "stateDigest", "mapHash", "rulesetHash",
@@ -328,7 +241,7 @@ static func decode_command(raw: Variant) -> AonwClientReadModels.CommandResult:
 			if (
 				not _has_exact_fields(outcome, ["status", "code"])
 				or not outcome["code"] is String
-				or not COMMAND_REJECTION_CODES.has(outcome["code"])
+				or not ClientCommandSchema.REJECTION_CODES.has(outcome["code"])
 			):
 				return null
 			rejection = StringName(outcome["code"])
