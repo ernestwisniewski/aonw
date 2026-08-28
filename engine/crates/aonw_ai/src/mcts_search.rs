@@ -18,6 +18,7 @@ pub struct MctsSearchStats {
     rollout_commands: u32,
     rejected_commands: u32,
     max_depth_reached: u32,
+    quality_guarded_selections: u32,
 }
 
 impl MctsSearchStats {
@@ -52,7 +53,13 @@ impl MctsSearchStats {
         self.max_depth_reached
     }
 
-    pub(crate) fn fingerprint_counters(self) -> [u64; 6] {
+    /// Returns root selections replaced by the deterministic immediate-quality guard.
+    #[must_use]
+    pub const fn quality_guarded_selections(self) -> u32 {
+        self.quality_guarded_selections
+    }
+
+    pub(crate) fn fingerprint_counters(self) -> [u64; 7] {
         [
             u64::from(self.iterations),
             u64::from(self.expanded_nodes),
@@ -60,7 +67,12 @@ impl MctsSearchStats {
             u64::from(self.rollout_commands),
             u64::from(self.rejected_commands),
             u64::from(self.max_depth_reached),
+            u64::from(self.quality_guarded_selections),
         ]
+    }
+
+    pub(crate) fn record_quality_guard(&mut self) {
+        self.quality_guarded_selections += 1;
     }
 }
 

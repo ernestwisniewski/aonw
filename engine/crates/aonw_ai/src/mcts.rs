@@ -117,23 +117,33 @@ impl MctsPlanner {
         let stamp = *root_snapshot.stamp();
         let revision = stamp.revision;
         let recipient = root_snapshot.recipient_player_id().clone();
-        let root_actions = bounded_tactical_move_candidates(
+        let root_candidates = bounded_tactical_move_candidates(
             runtime,
             &root_snapshot,
             usize::try_from(self.budget.max_nodes() - 1).unwrap_or(usize::MAX),
-        )?
-        .into_iter()
-        .map(crate::actions::MoveCandidate::into_request)
-        .collect::<Vec<_>>();
-        if root_actions.is_empty() {
+        )?;
+        let Some(immediate_best) = root_candidates.first() else {
             return Ok(MctsPlanningOutcome::NoLegalCommand { revision });
-        }
+        };
+        let quality_floor = root_snapshot
+            .units()
+            .iter()
+            .position(|unit| unit.id() == &immediate_best.request().unit_id)
+            .map(|unit_index| QualityFloor {
+                unit_index,
+                target: immediate_best.request().target,
+                distance_to_known_opponent: immediate_best.distance_to_known_opponent(),
+            });
+        let root_actions = root_candidates
+            .into_iter()
+            .map(crate::actions::MoveCandidate::into_request)
+            .collect::<Vec<_>>();
 
         let initial_rng = AiRng::from_turn(root_snapshot.turn(), &recipient, self.base_seed);
         let mut rng = initial_rng;
         let mut draws = Vec::new();
         let initial_movement = owned_movement(&root_snapshot, &recipient);
-        let result = search(
+        let mut result = search(
             runtime,
             &recipient,
             initial_movement,
@@ -142,6 +152,19 @@ impl MctsPlanner {
             &mut rng,
             &mut draws,
         )?;
+        if let Some(floor) = quality_floor
+            && known_opponent_distance(&root_snapshot, &recipient, result.command.target)
+                .unwrap_or(u64::MAX)
+                > floor.distance_to_known_opponent.unwrap_or(u64::MAX)
+            && let Some(unit) = root_snapshot.units().get(floor.unit_index)
+        {
+            result.command = aonw_local_runtime::MoveUnitRequest {
+                expected_revision: revision.get(),
+                unit_id: unit.id().clone(),
+                target: floor.target,
+            };
+            result.stats.record_quality_guard();
+        }
 
         let rng_trace = AiRngTrace::new(initial_rng.state(), rng.state(), draws);
         let fingerprint = PlanFingerprint::for_move(stamp, &recipient, &result.command);
@@ -166,4 +189,31 @@ impl MctsPlanner {
             stats: result.stats,
         })))
     }
+}
+
+#[derive(Clone, Copy)]
+struct QualityFloor {
+    unit_index: usize,
+    target: aonw_domain::HexCoord,
+    distance_to_known_opponent: Option<u64>,
+}
+
+fn known_opponent_distance(
+    snapshot: &aonw_local_runtime::PlayerViewSnapshot,
+    recipient: &aonw_domain::PlayerId,
+    target: aonw_domain::HexCoord,
+) -> Option<u64> {
+    snapshot
+        .units()
+        .iter()
+        .filter(|unit| unit.owner_player_id() != recipient)
+        .map(|unit| target.distance_to(aonw_domain::HexCoord::new(unit.col(), unit.row())))
+        .chain(
+            snapshot
+                .cities()
+                .iter()
+                .filter(|city| city.owner_player_id() != recipient)
+                .map(|city| target.distance_to(city.center())),
+        )
+        .min()
 }

@@ -133,7 +133,7 @@ fn run_full_game() -> FullGameEvidence {
         "game reached terminal state before save/reopen checkpoint"
     );
     let terminal = runtime.snapshot().expect("terminal snapshot");
-    assert_eq!(terminal.outcome().condition(), GameOutcomeCondition::Draw);
+    assert_eq!(terminal.outcome().condition(), GameOutcomeCondition::Score);
     let final_stamp = *terminal.stamp();
     let final_replay = runtime.export_replay_json().expect("final replay");
     assert_eq!(

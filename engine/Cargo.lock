@@ -16,6 +16,7 @@ dependencies = [
  "aonw_domain",
  "aonw_engine",
  "aonw_local_runtime",
+ "serde_json",
  "sha2",
  "stats_alloc",
 ]

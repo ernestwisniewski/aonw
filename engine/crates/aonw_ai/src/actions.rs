@@ -27,6 +27,10 @@ impl MoveCandidate {
     pub(crate) fn into_command(self) -> PlannedCommand {
         PlannedCommand::MoveUnit(self.request)
     }
+
+    pub(crate) const fn distance_to_known_opponent(&self) -> Option<u64> {
+        self.distance_to_known_opponent
+    }
 }
 
 pub(crate) fn legal_move_candidates(
@@ -144,9 +148,13 @@ pub(crate) fn compare_move_requests(left: &MoveUnitRequest, right: &MoveUnitRequ
 }
 
 fn compare_candidates(left: &MoveCandidate, right: &MoveCandidate) -> Ordering {
+    compare_immediate_utility(left, right)
+        .then_with(|| compare_move_requests(&left.request, &right.request))
+}
+
+fn compare_immediate_utility(left: &MoveCandidate, right: &MoveCandidate) -> Ordering {
     left.distance_to_known_opponent
         .unwrap_or(u64::MAX)
         .cmp(&right.distance_to_known_opponent.unwrap_or(u64::MAX))
         .then_with(|| left.cost.cmp(&right.cost))
-        .then_with(|| compare_move_requests(&left.request, &right.request))
 }

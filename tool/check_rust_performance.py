@@ -232,6 +232,7 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
                 "AiProfile",
                 "BaselinePlanner",
                 "MctsPlanner",
+                "MctsSearchStats",
                 "PlanFingerprint",
                 "PlannedCommand",
                 "PlanningBudget",
@@ -242,7 +243,7 @@ def load_stages(path: Path) -> dict[str, dict[str, Any]]:
                 "TacticalSearchEvidence",
                 "StrategicTurnReport",
             ],
-            "fixtureCount": 34,
+            "fixtureCount": 36,
         },
         "E0": {
             "target": "rust-foundation-check",
@@ -596,6 +597,31 @@ def validate_a10_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("A10 randomness inventory differs")
     if manifest.get("wallClockBudget") is not False:
         raise PerformanceFailure("A10 wall-clock budget must remain disabled")
+    if manifest.get("strengthCorpus") != "strength-corpus.json":
+        raise PerformanceFailure("A10 strength corpus identity differs")
+    if manifest.get("strengthBaseline") != "strength-baseline.json":
+        raise PerformanceFailure("A10 strength baseline identity differs")
+    strength = read_json(
+        repo_root / "engine/fixtures/ai/strength-corpus.json",
+        "A10 strength corpus",
+    )
+    if (
+        not isinstance(strength, dict)
+        or strength.get("capability") != "deterministic-ai-strength-gate"
+        or strength.get("currentOnly") is not True
+        or strength.get("legacyPaths") is not False
+    ):
+        raise PerformanceFailure("A10 strength corpus policy differs")
+    baseline = read_json(
+        repo_root / "engine/fixtures/ai/strength-baseline.json",
+        "A10 strength baseline",
+    )
+    if (
+        not isinstance(baseline, dict)
+        or baseline.get("caseCount") != 6
+        or baseline.get("unhandledDecisions") != 0
+    ):
+        raise PerformanceFailure("A10 strength baseline evidence differs")
     if manifest.get("clientApiVersion") != 5:
         raise PerformanceFailure("A10 shared client API version differs")
     if manifest.get("legacyPaths") is not False:

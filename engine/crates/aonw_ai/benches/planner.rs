@@ -1,18 +1,23 @@
 //! Structural allocation baseline for deterministic planning.
 
 use std::alloc::System;
+use std::collections::BTreeMap;
 use std::hint::black_box;
 use std::time::Instant;
 
 use aonw_ai::{
     BaselinePlanner, BaselinePlanningOutcome, MctsPlanner, MctsPlanningOutcome, PlanningBudget,
-    RandomPlanner, RandomPlanningOutcome,
+    RandomPlanner, RandomPlanningOutcome, StrategicPlanner, StrategicPlanningOutcome,
 };
 use aonw_content::{
     GridLayout, MapDefinition, RulesetDefinition, ScenarioDefinition, ScenarioUnitDefinition,
     TerrainType, TileDefinition,
 };
-use aonw_domain::{HexCoord, PlayerId, UnitId, UnitKind};
+use aonw_domain::{
+    GameMode, GameState, HexCoord, KnowledgeState, MatchIdentity, MatchLifecycle, MatchRules,
+    Participant, PlayerCountry, PlayerId, PlayerKind, PlayerResearchState, PlayerTurnState,
+    ResearchState, StateRevision, TechnologyId, TurnLifecycle, UnitId, UnitKind, WonderRegistry,
+};
 use aonw_local_runtime::{LocalRuntime, OpenSession};
 use stats_alloc::{INSTRUMENTED_SYSTEM, Region, Stats, StatsAlloc};
 
@@ -37,6 +42,8 @@ fn benchmark(unit_count: usize) {
     benchmark_baseline(&base, unit_count);
     benchmark_random(&base, unit_count);
     benchmark_mcts(&base, unit_count);
+    let strategic_base = opened_strategic_runtime(unit_count);
+    benchmark_strategic(&strategic_base, unit_count);
 }
 
 fn benchmark_baseline(base: &LocalRuntime, unit_count: usize) {
@@ -155,6 +162,42 @@ fn benchmark_mcts(base: &LocalRuntime, unit_count: usize) {
     );
 }
 
+fn benchmark_strategic(base: &LocalRuntime, unit_count: usize) {
+    report_with_setup(
+        "strategic_plan",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let StrategicPlanningOutcome::Planned(plan) =
+                StrategicPlanner.plan(&mut runtime).expect("strategic plan")
+            else {
+                panic!("planned strategic command")
+            };
+            (fingerprint_signature(plan.fingerprint().as_bytes()), 32)
+        },
+    );
+    report_with_setup(
+        "strategic_plan_execute",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let StrategicPlanningOutcome::Planned(plan) =
+                StrategicPlanner.plan(&mut runtime).expect("strategic plan")
+            else {
+                panic!("planned strategic command")
+            };
+            let result = plan.execute(&mut runtime).expect("strategic execute");
+            (
+                mix(
+                    fingerprint_signature(plan.fingerprint().as_bytes()),
+                    result.stamp.revision.get(),
+                ),
+                32,
+            )
+        },
+    );
+}
+
 fn mcts_budget() -> PlanningBudget {
     PlanningBudget::try_new(8, 8, 2).expect("static benchmark budget")
 }
@@ -221,6 +264,66 @@ fn opened_runtime(unit_count: usize) -> LocalRuntime {
     let request = OpenSession::from_scenario(map, ruleset, &scenario, actor).expect("request");
     let mut runtime = LocalRuntime::default();
     runtime.open(request).expect("open");
+    runtime
+}
+
+fn opened_strategic_runtime(unit_count: usize) -> LocalRuntime {
+    let map = map();
+    let ruleset = RulesetDefinition::standard().clone();
+    let actor = PlayerId::new("player-1").expect("actor");
+    let scenario = ScenarioDefinition::try_new(
+        "ai-strategic-benchmark",
+        &map,
+        &ruleset,
+        scenario_units(unit_count, &actor),
+    )
+    .expect("scenario");
+    let bootstrapped = scenario.bootstrap(&map, &ruleset).expect("bootstrap");
+    let identity = MatchIdentity::try_new(
+        MatchRules::default(),
+        [Participant::try_new(
+            actor.clone(),
+            "AI",
+            0xff00_0000,
+            PlayerCountry::Poland,
+            PlayerKind::Ai,
+            None,
+        )
+        .expect("participant")],
+        GameMode::HotSeat,
+    )
+    .expect("identity");
+    let lifecycle = TurnLifecycle::try_new(
+        &identity,
+        BTreeMap::from([(actor.clone(), PlayerTurnState::Active)]),
+        [actor.clone()],
+        [],
+        BTreeMap::new(),
+        [],
+        [],
+        None,
+    )
+    .expect("lifecycle");
+    let research = ResearchState::try_new([(
+        actor.clone(),
+        PlayerResearchState::try_new([], Some(TechnologyId::Agriculture), [], 0).expect("research"),
+    )])
+    .expect("research state");
+    let state = GameState::builder(
+        StateRevision::INITIAL,
+        1,
+        map.bounds(),
+        ruleset.occupancy_policy(),
+        bootstrapped.units().iter().cloned(),
+    )
+    .with_knowledge(KnowledgeState::new(research, WonderRegistry::default()))
+    .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
+    .try_build()
+    .expect("strategic state");
+    let mut runtime = LocalRuntime::default();
+    runtime
+        .open(OpenSession::from_state(map, ruleset, state, actor))
+        .expect("open strategic runtime");
     runtime
 }
 

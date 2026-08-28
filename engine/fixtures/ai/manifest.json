@@ -11,8 +11,9 @@
     "deterministic-mcts-search",
     "deterministic-plan-fingerprint",
     "deterministic-random-plan",
-    "diplomacy-response-policy",
+    "deterministic-strength-league",
     "difficulty-budget-policy",
+    "diplomacy-response-policy",
     "every-public-command-wire-shape",
     "every-public-runtime-command-path",
     "family-artifact-policy",
@@ -34,7 +35,8 @@
     "research-production-worker-turn",
     "search-fingerprint",
     "selective-tactical-search",
-    "stale-plan-rejection"
+    "stale-plan-rejection",
+    "tactical-quality-guard"
   ],
   "strategies": [
     "baseline",
@@ -72,6 +74,8 @@
   ],
   "randomness": "ai-turn-lcg32",
   "wallClockBudget": false,
+  "strengthCorpus": "strength-corpus.json",
+  "strengthBaseline": "strength-baseline.json",
   "commands": [
     "assignMerchantTradeRoute",
     "assignWorkerToHex",

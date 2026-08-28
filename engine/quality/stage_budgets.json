@@ -6,6 +6,7 @@
       "AiProfile",
       "BaselinePlanner",
       "MctsPlanner",
+      "MctsSearchStats",
       "PlanFingerprint",
       "PlannedCommand",
       "PlanningBudget",
@@ -27,6 +28,7 @@
       "deterministic-mcts-search",
       "deterministic-plan-fingerprint",
       "deterministic-random-plan",
+      "deterministic-strength-league",
       "difficulty-budget-policy",
       "diplomacy-response-policy",
       "every-public-command-wire-shape",
@@ -50,7 +52,8 @@
       "research-production-worker-turn",
       "search-fingerprint",
       "selective-tactical-search",
-      "stale-plan-rejection"
+      "stale-plan-rejection",
+      "tactical-quality-guard"
     ],
     "maxEventsPerCommand": 1,
     "maxMeasuredPayloadBytes": 124,
