@@ -43,7 +43,7 @@ pub use query_dispatch::{
 };
 pub use session::{
     ActorHandoffError, AiTurnDriver, AiTurnError, AiTurnExecution, LocalRuntime,
-    MAX_AI_TURN_COMMAND_BUDGET, OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError,
-    SessionStamp,
+    MAX_AI_TURN_COMMAND_BUDGET, OpenSession, OpenSessionError, ReplayFrame, RuntimeCapabilities,
+    RuntimeError, SessionStamp,
 };
 pub use turn_dispatch::{FinalizeTimedOutTurnRequest, KickParticipantRequest, TurnCommandRequest};

@@ -161,6 +161,15 @@ pub enum ClientResponseBodyDto {
         /// Verification summary.
         verification: ClientReplayVerificationDto,
     },
+    /// One recipient-safe replay frame at an authoritative entry boundary.
+    ReplayFrame {
+        /// Number of replay entries applied in this frame.
+        position: u64,
+        /// Total number of entries in the verified replay archive.
+        entry_count: u64,
+        /// Recipient-safe snapshot at this exact entry boundary.
+        snapshot: PlayerViewSnapshotDto,
+    },
 }
 
 /// Stable client-visible feature identifiers.
@@ -197,6 +206,8 @@ pub enum ClientFeatureDto {
     SaveGame,
     /// Replay export and verification.
     ReplayVerification,
+    /// Recipient-safe replay open and random access playback.
+    ReplayPlayback,
     /// Auto-exploration, merchant routing, and troop detachment.
     MovementLogistics,
     /// Worker improvements, assignments, roads, automation, and progression.

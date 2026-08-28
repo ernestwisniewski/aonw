@@ -28,13 +28,16 @@ use super::{OpenSession, OpenSessionError, RuntimeError, Session, SessionStamp};
 
 mod actor_handoff;
 mod ai_turn;
+mod replay;
 
 pub use ai_turn::{AiTurnDriver, AiTurnError, AiTurnExecution, MAX_AI_TURN_COMMAND_BUDGET};
+pub use replay::ReplayFrame;
 
 /// Mutable owner of at most one local game session.
 #[derive(Clone, Debug, Default)]
 pub struct LocalRuntime {
     session: Option<Session>,
+    replay_playback: Option<replay::ReplayPlayback>,
     poisoned: bool,
     workspace: MovementSearchWorkspace,
     query_cache: QueryCache,
@@ -51,6 +54,7 @@ impl LocalRuntime {
         }
         Self {
             session,
+            replay_playback: None,
             poisoned: self.poisoned,
             workspace: MovementSearchWorkspace::default(),
             query_cache: QueryCache::default(),
@@ -241,6 +245,7 @@ impl LocalRuntime {
         let candidate = Session::try_open(request)?;
         let stamp = candidate.stamp();
         self.session = Some(candidate);
+        self.replay_playback = None;
         self.poisoned = false;
         self.query_cache.clear();
         Ok(stamp)
@@ -273,6 +278,7 @@ impl LocalRuntime {
     /// Invalidates the current session after crossing a panic boundary.
     pub fn poison(&mut self) {
         self.session = None;
+        self.replay_playback = None;
         self.poisoned = true;
         self.query_cache.clear();
     }
@@ -280,6 +286,7 @@ impl LocalRuntime {
     /// Closes the current session. Repeated calls are harmless.
     pub fn close(&mut self) {
         self.session = None;
+        self.replay_playback = None;
         self.poisoned = false;
         self.query_cache.clear();
     }

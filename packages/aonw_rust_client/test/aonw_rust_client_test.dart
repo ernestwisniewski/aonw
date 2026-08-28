@@ -18,6 +18,31 @@ void main() {
     );
   });
 
+  test('replay playback requests stay recipient-bound and current-only', () {
+    expect(
+      jsonDecode(
+        AonwClientRequest.openReplay(
+          mapDocument: 'map',
+          replayDocument: 'replay',
+          recipientPlayerId: 'player-1',
+        ).toJson(),
+      ),
+      {
+        'apiVersion': aonwClientApiVersion,
+        'request': {
+          'type': 'openReplay',
+          'mapDocument': 'map',
+          'replayDocument': 'replay',
+          'recipientPlayerId': 'player-1',
+        },
+      },
+    );
+    expect(jsonDecode(AonwClientRequest.seekReplay(position: 4).toJson()), {
+      'apiVersion': aonwClientApiVersion,
+      'request': {'type': 'seekReplay', 'position': 4},
+    });
+  });
+
   test('turn parser preserves complete ordered event and evidence corpus', () {
     final events = _eventCorpus().map(AonwClientEvent.fromJson).toList();
     expect(events.map((event) => event.kind), AonwClientEventKind.values);

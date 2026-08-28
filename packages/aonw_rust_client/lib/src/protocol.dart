@@ -275,6 +275,20 @@ final class AonwClientRequest {
     'replayDocument': replayDocument,
   });
 
+  factory AonwClientRequest.openReplay({
+    required String mapDocument,
+    required String replayDocument,
+    required String recipientPlayerId,
+  }) => AonwClientRequest._({
+    'type': 'openReplay',
+    'mapDocument': mapDocument,
+    'replayDocument': replayDocument,
+    'recipientPlayerId': recipientPlayerId,
+  });
+
+  factory AonwClientRequest.seekReplay({required int position}) =>
+      AonwClientRequest._({'type': 'seekReplay', 'position': position});
+
   final Map<String, Object?> request;
 
   String toJson() =>

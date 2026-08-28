@@ -99,6 +99,20 @@ pub enum ClientRequestBodyDto {
         /// Strict current replay document.
         replay_document: String,
     },
+    /// Validates and opens a replay for recipient-safe visual playback.
+    OpenReplay {
+        /// Strict canonical map document.
+        map_document: String,
+        /// Strict current replay document.
+        replay_document: String,
+        /// Participant receiving every projected playback frame.
+        recipient_player_id: String,
+    },
+    /// Seeks the open replay to an exact authoritative entry boundary.
+    SeekReplay {
+        /// Number of replay entries applied in the requested frame.
+        position: u64,
+    },
 }
 
 /// Explicit visibility mode selected when a new match starts.

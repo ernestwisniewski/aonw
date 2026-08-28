@@ -55,6 +55,7 @@ pub(crate) fn capabilities() -> ClientResponseBodyDto {
     }
     if capabilities.replay_verification() {
         features.push(ClientFeatureDto::ReplayVerification);
+        features.push(ClientFeatureDto::ReplayPlayback);
     }
     ClientResponseBodyDto::Capabilities { features }
 }

@@ -22,6 +22,7 @@ void main() {
       'turnKernel',
       'saveGame',
       'replayVerification',
+      'replayPlayback',
       'movementLogistics',
       'workers',
       'production',
@@ -130,6 +131,12 @@ void main() {
           'finalStamp': _stamp,
         },
       }): AonwReplayVerifiedResponse,
+      _success({
+        'type': 'replayFrame',
+        'position': 2,
+        'entryCount': 3,
+        'snapshot': _snapshot,
+      }): AonwReplayFrameResponse,
     };
 
     for (final MapEntry(key: source, value: expectedType) in cases.entries) {
@@ -305,6 +312,35 @@ const _stamp = {
   'stateDigest': 'digest-7',
   'mapHash': 'map-hash',
   'rulesetHash': 'ruleset-hash',
+};
+
+const _snapshot = {
+  'stamp': _stamp,
+  'turn': 1,
+  'outcome': {
+    'condition': 'ongoing',
+    'winnerPlayerId': null,
+    'scoreByPlayerId': <String, int>{},
+  },
+  'turnLifecycle': {
+    'ownState': 'active',
+    'ownSubmitted': false,
+    'requiredSubmissionCount': 1,
+    'submittedCount': 0,
+  },
+  'pendingAction': null,
+  'cityFoundingDraft': null,
+  'diplomacy': {
+    'relations': <Object?>[],
+    'proposals': <Object?>[],
+    'messages': <Object?>[],
+    'resourceTradeAgreements': <Object?>[],
+  },
+  'units': <Object?>[],
+  'cities': <Object?>[],
+  'artifacts': <Object?>[],
+  'fieldImprovements': <Object?>[],
+  'roads': <Object?>[],
 };
 
 String _success(Map<String, Object?> response) => jsonEncode({

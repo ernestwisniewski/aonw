@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{LocalRuntime, OpenSession};
 
-pub(super) fn verify_replay(
+pub(crate) fn verify_replay(
     map: MapDefinition,
     ruleset: RulesetDefinition,
     input: &str,
@@ -86,52 +86,62 @@ fn verify_segment(
     entries: &[aonw_contracts::ReplayEntryDto],
 ) -> Result<(), PersistenceError> {
     for (entry_index, entry) in entries.iter().enumerate() {
-        let expected_index =
-            u64::try_from(entry_index).map_err(|_| PersistenceError::ReplayIndexOverflow)?;
-        if entry.index != expected_index {
-            return Err(PersistenceError::ReplayIndexMismatch {
-                segment: segment_index,
-                expected: expected_index,
-                found: entry.index,
-            });
+        verify_entry(runtime, segment_index, entry_index, entry)?;
+    }
+    Ok(())
+}
+
+pub(crate) fn verify_entry(
+    runtime: &mut LocalRuntime,
+    segment_index: usize,
+    entry_index: usize,
+    entry: &aonw_contracts::ReplayEntryDto,
+) -> Result<(), PersistenceError> {
+    let expected_index =
+        u64::try_from(entry_index).map_err(|_| PersistenceError::ReplayIndexOverflow)?;
+    if entry.index != expected_index {
+        return Err(PersistenceError::ReplayIndexMismatch {
+            segment: segment_index,
+            expected: expected_index,
+            found: entry.index,
+        });
+    }
+    if matches!(entry.record, ReplayRecordDto::Player { .. })
+        && let Some(recorded_actor) = entry.context.actor_player_id.as_deref()
+    {
+        let current_actor = runtime
+            .session_ref()
+            .map_err(PersistenceError::Runtime)?
+            .actor();
+        if current_actor.as_str() != recorded_actor {
+            let recorded_actor =
+                PlayerId::new(recorded_actor.to_owned()).map_err(PersistenceError::InvalidActor)?;
+            runtime
+                .handoff_hot_seat_actor(recorded_actor)
+                .map_err(|_| PersistenceError::ReplayContextMismatch {
+                    segment: segment_index,
+                    entry: entry_index,
+                })?;
         }
-        if matches!(entry.record, ReplayRecordDto::Player { .. })
-            && let Some(recorded_actor) = entry.context.actor_player_id.as_deref()
-        {
-            let current_actor = runtime
-                .session_ref()
-                .map_err(PersistenceError::Runtime)?
-                .actor();
-            if current_actor.as_str() != recorded_actor {
-                let recorded_actor = PlayerId::new(recorded_actor.to_owned())
-                    .map_err(PersistenceError::InvalidActor)?;
-                runtime
-                    .handoff_hot_seat_actor(recorded_actor)
-                    .map_err(|_| PersistenceError::ReplayContextMismatch {
-                        segment: segment_index,
-                        entry: entry_index,
-                    })?;
-            }
-        }
-        let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-        let context_actor = match &entry.record {
-            ReplayRecordDto::Player { .. } => Some(session.actor()),
-            ReplayRecordDto::System { .. } => None,
-        };
-        if entry.context != replay_context(session, context_actor) {
-            return Err(PersistenceError::ReplayContextMismatch {
-                segment: segment_index,
-                entry: entry_index,
-            });
-        }
-        let result = dispatch_replay(runtime, decode_record(&entry.record)?)?;
-        let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-        if entry.result != replay_result(&result, session) {
-            return Err(PersistenceError::ReplayResultMismatch {
-                segment: segment_index,
-                entry: entry_index,
-            });
-        }
+    }
+    let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
+    let context_actor = match &entry.record {
+        ReplayRecordDto::Player { .. } => Some(session.actor()),
+        ReplayRecordDto::System { .. } => None,
+    };
+    if entry.context != replay_context(session, context_actor) {
+        return Err(PersistenceError::ReplayContextMismatch {
+            segment: segment_index,
+            entry: entry_index,
+        });
+    }
+    let result = dispatch_replay(runtime, decode_record(&entry.record)?)?;
+    let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
+    if entry.result != replay_result(&result, session) {
+        return Err(PersistenceError::ReplayResultMismatch {
+            segment: segment_index,
+            entry: entry_index,
+        });
     }
     Ok(())
 }

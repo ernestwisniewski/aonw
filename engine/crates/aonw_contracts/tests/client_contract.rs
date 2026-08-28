@@ -266,17 +266,8 @@ fn every_current_request_variant_round_trips() {
                 expected_revision: 8,
             },
         },
-        ClientRequestBodyDto::ExportSave,
-        ClientRequestBodyDto::OpenSave {
-            map_document: "map".to_owned(),
-            save_document: "save".to_owned(),
-        },
-        ClientRequestBodyDto::ExportReplay,
-        ClientRequestBodyDto::VerifyReplay {
-            map_document: "map".to_owned(),
-            replay_document: "replay".to_owned(),
-        },
     ];
+    requests.extend(persistence_requests());
     requests.extend(logistics_requests());
     requests.extend(artifact_contract::requests());
     requests.extend(production_contract::requests());
@@ -295,6 +286,27 @@ fn every_current_request_variant_round_trips() {
             envelope
         );
     }
+}
+
+fn persistence_requests() -> [ClientRequestBodyDto; 6] {
+    [
+        ClientRequestBodyDto::ExportSave,
+        ClientRequestBodyDto::OpenSave {
+            map_document: "map".to_owned(),
+            save_document: "save".to_owned(),
+        },
+        ClientRequestBodyDto::ExportReplay,
+        ClientRequestBodyDto::VerifyReplay {
+            map_document: "map".to_owned(),
+            replay_document: "replay".to_owned(),
+        },
+        ClientRequestBodyDto::OpenReplay {
+            map_document: "map".to_owned(),
+            replay_document: "replay".to_owned(),
+            recipient_player_id: "player-1".to_owned(),
+        },
+        ClientRequestBodyDto::SeekReplay { position: 3 },
+    ]
 }
 
 fn logistics_requests() -> [ClientRequestBodyDto; 4] {
@@ -439,6 +451,11 @@ fn remaining_response_variants() -> Vec<ClientResponseBodyDto> {
                 final_event_offset: 7,
                 final_stamp: stamp(),
             },
+        },
+        ClientResponseBodyDto::ReplayFrame {
+            position: 3,
+            entry_count: 4,
+            snapshot: player_snapshot(),
         },
     ]
 }

@@ -73,19 +73,8 @@ impl ClientProtocol {
             );
         }
 
-        if runtime.is_poisoned()
-            && !matches!(
-                &request.request,
-                ClientRequestBodyDto::Capabilities
-                    | ClientRequestBodyDto::InspectMap { .. }
-                    | ClientRequestBodyDto::OpenSession { .. }
-                    | ClientRequestBodyDto::StartMatch { .. }
-                    | ClientRequestBodyDto::CloseSession
-                    | ClientRequestBodyDto::OpenSave { .. }
-                    | ClientRequestBodyDto::VerifyReplay { .. }
-            )
-        {
-            return runtime_failure(RuntimeError::SessionPoisoned);
+        if let Some(response) = request_state_failure(runtime, &request.request) {
+            return response;
         }
 
         match request.request {
@@ -144,22 +133,14 @@ impl ClientProtocol {
                 Ok(command) => dispatch_command(runtime, command),
                 Err(error) => error.into_response(),
             },
-            ClientRequestBodyDto::ExportSave => match runtime.export_save_json() {
-                Ok(document) => success(ClientResponseBodyDto::SaveExported { document }),
-                Err(error) => failure("save_export_failed", error),
-            },
-            ClientRequestBodyDto::OpenSave {
-                map_document,
-                save_document,
-            } => dispatch_open_save(runtime, &map_document, &save_document),
-            ClientRequestBodyDto::ExportReplay => match runtime.export_replay_json() {
-                Ok(document) => success(ClientResponseBodyDto::ReplayExported { document }),
-                Err(error) => failure("replay_export_failed", error),
-            },
-            ClientRequestBodyDto::VerifyReplay {
-                map_document,
-                replay_document,
-            } => dispatch_verify_replay(&map_document, &replay_document),
+            persistence @ (ClientRequestBodyDto::ExportSave
+            | ClientRequestBodyDto::OpenSave { .. }
+            | ClientRequestBodyDto::ExportReplay
+            | ClientRequestBodyDto::VerifyReplay { .. }
+            | ClientRequestBodyDto::OpenReplay { .. }
+            | ClientRequestBodyDto::SeekReplay { .. }) => {
+                dispatch_persistence(runtime, persistence)
+            }
         }
     }
 
@@ -170,6 +151,44 @@ impl ClientProtocol {
             .to_json()
             .unwrap_or_else(|_| serialization_failure())
     }
+}
+
+fn request_state_failure(
+    runtime: &LocalRuntime,
+    request: &ClientRequestBodyDto,
+) -> Option<ClientResponseDto> {
+    let can_recover_poisoned = matches!(
+        request,
+        ClientRequestBodyDto::Capabilities
+            | ClientRequestBodyDto::InspectMap { .. }
+            | ClientRequestBodyDto::OpenSession { .. }
+            | ClientRequestBodyDto::StartMatch { .. }
+            | ClientRequestBodyDto::CloseSession
+            | ClientRequestBodyDto::OpenSave { .. }
+            | ClientRequestBodyDto::OpenReplay { .. }
+            | ClientRequestBodyDto::VerifyReplay { .. }
+    );
+    if runtime.is_poisoned() && !can_recover_poisoned {
+        return Some(runtime_failure(RuntimeError::SessionPoisoned));
+    }
+    let allowed_during_replay = matches!(
+        request,
+        ClientRequestBodyDto::Capabilities
+            | ClientRequestBodyDto::InspectMap { .. }
+            | ClientRequestBodyDto::OpenSession { .. }
+            | ClientRequestBodyDto::StartMatch { .. }
+            | ClientRequestBodyDto::OpenSave { .. }
+            | ClientRequestBodyDto::OpenReplay { .. }
+            | ClientRequestBodyDto::SeekReplay { .. }
+            | ClientRequestBodyDto::Snapshot
+            | ClientRequestBodyDto::CloseSession
+    );
+    (runtime.is_replay_playback() && !allowed_during_replay).then(|| {
+        failure(
+            "replay_read_only",
+            "replay playback accepts only snapshot, seek, open, or close operations",
+        )
+    })
 }
 
 fn dispatch_inspect_map(map_document: &str) -> ClientResponseDto {
@@ -297,6 +316,49 @@ fn dispatch_open_save(
     }
 }
 
+fn dispatch_persistence(
+    runtime: &mut LocalRuntime,
+    request: ClientRequestBodyDto,
+) -> ClientResponseDto {
+    match request {
+        ClientRequestBodyDto::ExportSave => match runtime.export_save_json() {
+            Ok(document) => success(ClientResponseBodyDto::SaveExported { document }),
+            Err(error) => failure("save_export_failed", error),
+        },
+        ClientRequestBodyDto::OpenSave {
+            map_document,
+            save_document,
+        } => dispatch_open_save(runtime, &map_document, &save_document),
+        ClientRequestBodyDto::ExportReplay => match runtime.export_replay_json() {
+            Ok(document) => success(ClientResponseBodyDto::ReplayExported { document }),
+            Err(error) => failure("replay_export_failed", error),
+        },
+        ClientRequestBodyDto::VerifyReplay {
+            map_document,
+            replay_document,
+        } => dispatch_verify_replay(&map_document, &replay_document),
+        ClientRequestBodyDto::OpenReplay {
+            map_document,
+            replay_document,
+            recipient_player_id,
+        } => dispatch_open_replay(
+            runtime,
+            &map_document,
+            &replay_document,
+            recipient_player_id,
+        ),
+        ClientRequestBodyDto::SeekReplay { position } => match runtime.seek_replay(position) {
+            Ok(frame) => success(ClientResponseBodyDto::ReplayFrame {
+                position: frame.position,
+                entry_count: frame.entry_count,
+                snapshot: encode::snapshot(&frame.snapshot),
+            }),
+            Err(error) => failure("replay_seek_failed", error),
+        },
+        _ => unreachable!("only persistence requests are routed here"),
+    }
+}
+
 fn dispatch_verify_replay(map_document: &str, replay_document: &str) -> ClientResponseDto {
     match decode::map(map_document) {
         Ok(map) => match LocalRuntime::verify_replay_json(
@@ -308,6 +370,34 @@ fn dispatch_verify_replay(map_document: &str, replay_document: &str) -> ClientRe
                 verification: encode::replay_verification(verification),
             }),
             Err(error) => failure("replay_verification_failed", error),
+        },
+        Err(error) => error.into_response(),
+    }
+}
+
+fn dispatch_open_replay(
+    runtime: &mut LocalRuntime,
+    map_document: &str,
+    replay_document: &str,
+    recipient_player_id: String,
+) -> ClientResponseDto {
+    let recipient = match aonw_domain::PlayerId::new(recipient_player_id) {
+        Ok(recipient) => recipient,
+        Err(error) => return failure("invalid_replay_recipient", error),
+    };
+    match decode::map(map_document) {
+        Ok(map) => match runtime.open_replay_json(
+            map,
+            aonw_content::RulesetDefinition::standard().clone(),
+            replay_document,
+            recipient,
+        ) {
+            Ok(frame) => success(ClientResponseBodyDto::ReplayFrame {
+                position: frame.position,
+                entry_count: frame.entry_count,
+                snapshot: encode::snapshot(&frame.snapshot),
+            }),
+            Err(error) => failure("replay_open_failed", error),
         },
         Err(error) => error.into_response(),
     }

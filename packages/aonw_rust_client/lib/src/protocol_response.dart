@@ -36,6 +36,7 @@ final Map<String, _ResponseParser> _responseParsers = {
   'saveOpened': AonwSaveOpenedResponse.fromJson,
   'replayExported': AonwReplayExportedResponse.fromJson,
   'replayVerified': AonwReplayVerifiedResponse.fromJson,
+  'replayFrame': AonwReplayFrameResponse.fromJson,
 };
 
 final class AonwMapInspectedResponse extends AonwClientResponseBody {
@@ -222,6 +223,32 @@ final class AonwReplayVerifiedResponse extends AonwClientResponseBody {
   }
 
   final AonwReplayVerification verification;
+}
+
+final class AonwReplayFrameResponse extends AonwClientResponseBody {
+  const AonwReplayFrameResponse({
+    required this.position,
+    required this.entryCount,
+    required this.snapshot,
+  });
+
+  factory AonwReplayFrameResponse.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {
+      'type',
+      'position',
+      'entryCount',
+      'snapshot',
+    }, 'replay frame response');
+    return AonwReplayFrameResponse(
+      position: readUnsigned(value['position'], 'replay position'),
+      entryCount: readUnsigned(value['entryCount'], 'replay entry count'),
+      snapshot: AonwPlayerViewSnapshot.fromJson(value['snapshot']),
+    );
+  }
+
+  final int position;
+  final int entryCount;
+  final AonwPlayerViewSnapshot snapshot;
 }
 
 final class AonwReplayVerification {

@@ -26,7 +26,7 @@ mod verification;
 
 use evidence::{encode_event, encode_evidence};
 use player_decode::decode_command;
-use verification::verify_replay;
+pub(crate) use verification::{verify_entry, verify_replay};
 
 pub(crate) const ENGINE_BEHAVIOR_FINGERPRINT: &str =
     concat!("aonw-engine/", env!("CARGO_PKG_VERSION"), "/behavior-1");

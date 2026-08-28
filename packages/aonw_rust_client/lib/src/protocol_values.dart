@@ -17,6 +17,7 @@ enum AonwClientFeature {
   turnKernel,
   saveGame,
   replayVerification,
+  replayPlayback,
   movementLogistics,
   workers,
   production,

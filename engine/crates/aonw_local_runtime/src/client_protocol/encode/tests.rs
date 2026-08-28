@@ -178,13 +178,55 @@ fn round_trip_persistence(runtime: &mut LocalRuntime, map_document: String) {
             save_document: save,
         },
     );
-    success(
+    let verified = success(
         runtime,
         ClientRequestBodyDto::VerifyReplay {
-            map_document,
-            replay_document: replay,
+            map_document: map_document.clone(),
+            replay_document: replay.clone(),
         },
     );
+    let ClientResponseBodyDto::ReplayVerified { verification } = verified else {
+        panic!("replay verification response")
+    };
+    let opened = success(
+        runtime,
+        ClientRequestBodyDto::OpenReplay {
+            map_document,
+            replay_document: replay,
+            recipient_player_id: "player-1".to_owned(),
+        },
+    );
+    let ClientResponseBodyDto::ReplayFrame {
+        position,
+        entry_count,
+        ..
+    } = opened
+    else {
+        panic!("initial replay frame")
+    };
+    assert_eq!(position, 0);
+    assert_eq!(entry_count, verification.entry_count);
+    assert!(entry_count > 0);
+    let sequential = success(runtime, ClientRequestBodyDto::SeekReplay { position: 1 });
+    let ClientResponseBodyDto::ReplayFrame { position, .. } = sequential else {
+        panic!("sequential replay frame")
+    };
+    assert_eq!(position, 1);
+    success(runtime, ClientRequestBodyDto::SeekReplay { position: 0 });
+    let final_frame = success(
+        runtime,
+        ClientRequestBodyDto::SeekReplay {
+            position: entry_count,
+        },
+    );
+    let ClientResponseBodyDto::ReplayFrame {
+        position, snapshot, ..
+    } = final_frame
+    else {
+        panic!("final replay frame")
+    };
+    assert_eq!(position, entry_count);
+    assert_eq!(snapshot.stamp, verification.final_stamp);
 }
 
 #[test]

@@ -2,7 +2,7 @@ use aonw_contract_mapping::GameStateMappingError;
 use aonw_contracts::PersistenceCodecError;
 use aonw_domain::IdentifierError;
 
-use crate::{OpenSessionError, RuntimeError};
+use crate::{ActorHandoffError, OpenSessionError, RuntimeError};
 
 /// Save or replay validation failure.
 #[derive(Debug)]
@@ -74,6 +74,17 @@ pub enum PersistenceError {
         /// Zero-based replay entry.
         entry: usize,
     },
+    /// No verified replay is currently open for playback.
+    ReplayPlaybackNotOpen,
+    /// Requested playback boundary lies beyond the verified replay.
+    ReplayPositionOutOfBounds {
+        /// Requested number of applied entries.
+        requested: u64,
+        /// Total number of entries in the replay.
+        entry_count: u64,
+    },
+    /// The requested replay recipient cannot receive this local match.
+    ReplayRecipient(ActorHandoffError),
     /// Session preparation failed.
     Open(OpenSessionError),
     /// Command replay failed internally.
@@ -139,6 +150,17 @@ impl core::fmt::Display for PersistenceError {
                     formatter,
                     "replay result differs at segment {segment} entry {entry}"
                 )
+            }
+            Self::ReplayPlaybackNotOpen => formatter.write_str("replay playback is not open"),
+            Self::ReplayPositionOutOfBounds {
+                requested,
+                entry_count,
+            } => write!(
+                formatter,
+                "replay position {requested} exceeds entry count {entry_count}"
+            ),
+            Self::ReplayRecipient(source) => {
+                write!(formatter, "invalid replay recipient: {source}")
             }
             Self::Open(source) => source.fmt(formatter),
             Self::Runtime(source) => source.fmt(formatter),
