@@ -17,6 +17,7 @@ final class TurnViewMapper {
       command.stamp,
       map: map,
       expectedRevision: expectedRevision + 1,
+      allowPreviousRevision: true,
     );
     if (!command.accepted || command.rejection != null) {
       throw const FormatException('Expected an accepted turn result.');
@@ -89,13 +90,17 @@ final class TurnViewMapper {
     AonwSessionStamp value, {
     required MapView map,
     required int expectedRevision,
+    bool allowPreviousRevision = false,
   }) {
     final digest = RegExp(r'^[0-9a-f]{64}$');
+    final revisionMatches =
+        value.revision == expectedRevision ||
+        allowPreviousRevision && value.revision == expectedRevision - 1;
     if (!digest.hasMatch(value.stateDigest) ||
         !digest.hasMatch(value.mapHash) ||
         !digest.hasMatch(value.rulesetHash) ||
         value.mapHash != map.contentHash ||
-        value.revision != expectedRevision) {
+        !revisionMatches) {
       throw const FormatException('Turn session identity is stale.');
     }
   }

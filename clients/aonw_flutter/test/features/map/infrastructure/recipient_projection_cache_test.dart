@@ -73,6 +73,24 @@ void main() {
     expect(after.units.single.coordinate.col, 0);
   });
 
+  test('retains the cached snapshot for an accepted identity patch', () {
+    final initial = _snapshot(
+      revision: 1,
+      pendingAction: const AonwPendingResearchSelection(),
+    );
+    final cache = _cache(initial);
+
+    final after = cache.apply(
+      _command(
+        stamp: initial.stamp,
+        patch: _patch(fromRevision: 1, toRevision: 1, turn: 1),
+      ),
+    );
+
+    expect(after, same(initial));
+    expect(after.pendingAction, same(initial.pendingAction));
+  });
+
   test('rejects stale, unknown-removal and out-of-bounds patches', () {
     final stale = _cache(_snapshot());
     expect(

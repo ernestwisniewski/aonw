@@ -41,6 +41,29 @@ void main() {
     expect(result.evidence.processors, ['movement', 'production']);
   });
 
+  test('accepts an idempotent turn submission without a revision advance', () {
+    final result = mapper.accepted(
+      _command(
+        revision: 7,
+        outcome: const AonwCommandAccepted(),
+        evidence: AonwTurnKernelEvidence(
+          processors: const ['submission', 'lifecycle'],
+          foundedCityIds: const [],
+          combatExecutions: const [],
+          resetUnitIds: const [],
+          movementExecutions: const [],
+          invalidatedOrderUnitIds: const [],
+          finishedAutoExploreUnitIds: const [],
+        ),
+      ),
+      map: testMapScene().map,
+      expectedRevision: 7,
+    );
+
+    expect(result.activities, isEmpty);
+    expect(result.evidence.processors, ['submission', 'lifecycle']);
+  });
+
   test('maps only turn rejection codes and rejects execution residue', () {
     expect(
       mapper.rejected(

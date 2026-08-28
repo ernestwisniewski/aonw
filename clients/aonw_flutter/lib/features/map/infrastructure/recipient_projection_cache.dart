@@ -25,6 +25,9 @@ final class RecipientProjectionCache {
     final patch = command.viewPatch;
     _validateCommandIdentity(command, before);
     _validatePatchIdentity(patch, command: command, before: before);
+    if (command.accepted && patch.toRevision == patch.fromRevision) {
+      return before;
+    }
 
     final units = _collections.applyIdPatch(
       current: before.units,
@@ -121,17 +124,22 @@ final class RecipientProjectionCache {
       );
     }
     if (command.accepted) {
-      _validateAcceptedPatchRevision(patch);
+      _validateAcceptedPatch(patch, command: command, before: before);
       return;
     }
     _validateRejectedPatch(patch, before);
   }
 
-  static void _validateAcceptedPatchRevision(AonwPlayerViewPatch patch) {
-    if (patch.toRevision != patch.fromRevision + 1) {
-      throw const FormatException(
-        'Accepted command patch must advance one revision.',
-      );
+  static void _validateAcceptedPatch(
+    AonwPlayerViewPatch patch, {
+    required AonwCommandResult command,
+    required AonwPlayerViewSnapshot before,
+  }) {
+    if (patch.toRevision == patch.fromRevision + 1) return;
+    if (patch.toRevision != patch.fromRevision ||
+        command.stamp.stateDigest != before.stamp.stateDigest ||
+        _changesAuthoritativeState(patch, before)) {
+      throw const FormatException('Accepted command patch is not canonical.');
     }
   }
 
@@ -139,18 +147,23 @@ final class RecipientProjectionCache {
     AonwPlayerViewPatch patch,
     AonwPlayerViewSnapshot before,
   ) {
-    final changesScalarState =
-        patch.toRevision != patch.fromRevision ||
-        patch.turn != before.turn ||
-        patch.turnLifecycle != null ||
-        patch.outcome != null ||
-        patch.diplomacy != null;
-    if (changesScalarState || _changesCollections(patch)) {
+    if (patch.toRevision != patch.fromRevision ||
+        _changesAuthoritativeState(patch, before)) {
       throw const FormatException(
         'Rejected command returned a mutating patch.',
       );
     }
   }
+
+  static bool _changesAuthoritativeState(
+    AonwPlayerViewPatch patch,
+    AonwPlayerViewSnapshot before,
+  ) =>
+      patch.turn != before.turn ||
+      patch.turnLifecycle != null ||
+      patch.outcome != null ||
+      patch.diplomacy != null ||
+      _changesCollections(patch);
 
   static bool _changesCollections(AonwPlayerViewPatch patch) => <bool>[
     patch.upsertedUnits.isNotEmpty,
