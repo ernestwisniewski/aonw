@@ -63,6 +63,39 @@ void main() {
       );
     },
   );
+
+  test(
+    'completes a bounded multi-turn AI soak through the native client',
+    () async {
+      final gateway = RustGameSessionGateway(assets: _FileAssetBundle());
+      addTearDown(gateway.close);
+      var player = (await gateway.startLocalMatch(_setup())).player;
+      var completedTurns = 0;
+
+      for (var turn = 0; turn < 12; turn += 1) {
+        if (player.turnView.outcome.isTerminal) break;
+        final previousRevision = player.stamp.revision;
+        final humanTurn = await gateway.endTurn(
+          expectedRevision: previousRevision,
+        );
+        expect(humanTurn.accepted, isTrue);
+
+        final execution = await gateway.advanceAiTurn(
+          LocalAiTurnRequestView(
+            aiPlayerId: 'player-2',
+            humanPlayerId: 'player-1',
+          ),
+        );
+        expect(execution.completedTurn, isTrue);
+        expect(execution.player.actorPlayerId, 'player-1');
+        expect(execution.player.stamp.revision, greaterThan(previousRevision));
+        player = execution.player;
+        completedTurns += 1;
+      }
+
+      expect(completedTurns, greaterThanOrEqualTo(4));
+    },
+  );
 }
 
 LocalMatchSetupView _setup() => LocalMatchSetupView(

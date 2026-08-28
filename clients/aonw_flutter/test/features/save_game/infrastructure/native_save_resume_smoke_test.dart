@@ -48,6 +48,40 @@ void main() {
       expect(await gateway.exportSaveDocument(), save);
     },
   );
+
+  test(
+    'reopens an exact authoritative save after the native session closes',
+    () async {
+      final first = RustGameSessionGateway(assets: _FileAssetBundle());
+      final initial = await first.startLocalMatch(_setup());
+      final humanTurn = await first.endTurn(
+        expectedRevision: initial.player.stamp.revision,
+      );
+      expect(humanTurn.accepted, isTrue);
+      final aiTurn = await first.advanceAiTurn(
+        LocalAiTurnRequestView(
+          aiPlayerId: 'player-2',
+          humanPlayerId: 'player-1',
+        ),
+      );
+      final document = await first.exportSaveDocument();
+      final expected = aiTurn.player.stamp;
+      await first.close();
+
+      final reopened = RustGameSessionGateway(assets: _FileAssetBundle());
+      addTearDown(reopened.close);
+      final restored = await reopened.openSaveDocument(
+        assets: LocalGameCatalog.entries.first.assets,
+        document: document,
+      );
+
+      expect(restored.player.stamp.revision, expected.revision);
+      expect(restored.player.stamp.stateDigest, expected.stateDigest);
+      expect(restored.player.stamp.mapHash, expected.mapHash);
+      expect(restored.player.stamp.rulesetHash, expected.rulesetHash);
+      expect(await reopened.exportSaveDocument(), document);
+    },
+  );
 }
 
 LocalMatchSetupView _setup() => LocalMatchSetupView(

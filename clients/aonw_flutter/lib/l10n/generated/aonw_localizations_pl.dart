@@ -24,6 +24,99 @@ class AonwLocalizationsPl extends AonwLocalizations {
   String get newGame => 'Nowa gra';
 
   @override
+  String get helpTitle => 'Jak grać';
+
+  @override
+  String get helpIntroduction =>
+      'Rozwijaj cywilizację tura po turze. Silnik rozstrzyga wszystkie zasady, a ten przewodnik wyjaśnia decyzje dostępne w kliencie.';
+
+  @override
+  String get helpObjectiveTitle => 'Realizuj cel';
+
+  @override
+  String get helpObjectiveBody =>
+      'Rozwijaj terytorium i miasta oraz ukończ cele scenariusza przed przeciwnikiem. Na mapie otwórz Cele strategiczne, aby sprawdzić zaprojektowane zadania.';
+
+  @override
+  String get helpMapTitle => 'Odkrywaj i dowódź';
+
+  @override
+  String get helpMapBody =>
+      'Wybierz widoczny heks, aby go sprawdzić. Wybierz swoją jednostkę, wskaż podświetlony cel i potwierdź trasę. Klawiatura, gamepad i dotyk korzystają z tych samych poleceń.';
+
+  @override
+  String get helpDevelopmentTitle => 'Rozwijaj cywilizację';
+
+  @override
+  String get helpDevelopmentBody =>
+      'Korzystaj z paneli miasta, badań, produkcji, robotników, logistyki, artefaktów i dyplomacji, gdy ich akcje staną się dostępne.';
+
+  @override
+  String get helpTurnTitle => 'Kończ turę świadomie';
+
+  @override
+  String get helpTurnBody =>
+      'Zakończ swoje działania, a następnie turę. Komputer wykonuje swoją autorytatywną turę, zanim sterowanie wróci do ciebie.';
+
+  @override
+  String get helpSaveReplayTitle => 'Zapisuj i analizuj';
+
+  @override
+  String get helpSaveReplayBody =>
+      'Zapisuj grę z mapy. Kontynuuj otwiera ostatni poprawny zapis, a Powtórka pokazuje autorytatywną historię poleceń bez zmieniania gry.';
+
+  @override
+  String get startOnboarding => 'Rozpocznij przewodnik';
+
+  @override
+  String get onboardingTitle => 'Przewodnik po grze';
+
+  @override
+  String onboardingProgress(int step, int count) {
+    return 'Krok $step z $count';
+  }
+
+  @override
+  String get onboardingExploreTitle => 'Czytaj mapę';
+
+  @override
+  String get onboardingExploreBody =>
+      'Mapa pokazuje tylko informacje widoczne dla twojego gracza. Wybieraj heksy, aby sprawdzać teren, miasta i jednostki, a potem przesuwaj lub przybliżaj widok, planując kolejną akcję.';
+
+  @override
+  String get onboardingCommandTitle => 'Wydawaj precyzyjne polecenia';
+
+  @override
+  String get onboardingCommandBody =>
+      'Dostępne cele i akcje pochodzą z silnika Rust. Wybierz akcję, sprawdź podgląd i ją potwierdź; odrzucone lub nieaktualne polecenia nigdy nie zmieniają rozgrywki.';
+
+  @override
+  String get onboardingDevelopTitle => 'Buduj długoterminową przewagę';
+
+  @override
+  String get onboardingDevelopBody =>
+      'Miasta, produkcja, badania, robotnicy, logistyka, artefakty i dyplomacja kształtują strategię. Ich panele pokazują wyłącznie akcje aktualnie dozwolone przez silnik.';
+
+  @override
+  String get onboardingContinueTitle => 'Wracaj do gry bez obaw';
+
+  @override
+  String get onboardingContinueBody =>
+      'Przed wyjściem zapisz autorytatywny stan gry. Kontynuuj waliduje go w nowej sesji silnika, a Powtórka pozwala tylko odczytywać tę samą historię.';
+
+  @override
+  String get previousOnboardingStep => 'Wstecz';
+
+  @override
+  String get nextOnboardingStep => 'Dalej';
+
+  @override
+  String get skipOnboarding => 'Pomiń';
+
+  @override
+  String get finishOnboarding => 'Utwórz grę';
+
+  @override
   String get newGameTitle => 'Utwórz grę lokalną';
 
   @override

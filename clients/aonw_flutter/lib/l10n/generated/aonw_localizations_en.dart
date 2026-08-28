@@ -24,6 +24,99 @@ class AonwLocalizationsEn extends AonwLocalizations {
   String get newGame => 'New game';
 
   @override
+  String get helpTitle => 'How to play';
+
+  @override
+  String get helpIntroduction =>
+      'Build a civilization turn by turn. The engine resolves every rule; this guide explains the decisions available in the client.';
+
+  @override
+  String get helpObjectiveTitle => 'Pursue the objective';
+
+  @override
+  String get helpObjectiveBody =>
+      'Expand, develop cities and complete the scenario objectives before your opponent. Open Strategic objectives on the map to review the authored goals.';
+
+  @override
+  String get helpMapTitle => 'Explore and command';
+
+  @override
+  String get helpMapBody =>
+      'Select a visible hex to inspect it. Select your unit, choose a highlighted destination and confirm the route. Keyboard, gamepad and touch controls use the same commands.';
+
+  @override
+  String get helpDevelopmentTitle => 'Develop your civilization';
+
+  @override
+  String get helpDevelopmentBody =>
+      'Use city, research, production, worker, logistics, artifact and diplomacy panels when their actions become available.';
+
+  @override
+  String get helpTurnTitle => 'End the turn deliberately';
+
+  @override
+  String get helpTurnBody =>
+      'Finish your actions, then end the turn. The computer completes its authoritative turn before control returns to you.';
+
+  @override
+  String get helpSaveReplayTitle => 'Save and review';
+
+  @override
+  String get helpSaveReplayBody =>
+      'Save from the map. Continue opens the latest valid save, and Replay reviews the authoritative command history without changing the game.';
+
+  @override
+  String get startOnboarding => 'Start guided introduction';
+
+  @override
+  String get onboardingTitle => 'Guided introduction';
+
+  @override
+  String onboardingProgress(int step, int count) {
+    return 'Step $step of $count';
+  }
+
+  @override
+  String get onboardingExploreTitle => 'Read the map';
+
+  @override
+  String get onboardingExploreBody =>
+      'The map shows only information visible to your player. Select hexes to inspect terrain, cities and units, then pan or zoom to plan your next action.';
+
+  @override
+  String get onboardingCommandTitle => 'Give precise commands';
+
+  @override
+  String get onboardingCommandBody =>
+      'Available destinations and actions come from the Rust engine. Choose one, review the preview and confirm; rejected or stale commands never change the match.';
+
+  @override
+  String get onboardingDevelopTitle => 'Build a long-term advantage';
+
+  @override
+  String get onboardingDevelopBody =>
+      'Cities, production, research, workers, logistics, artifacts and diplomacy shape your strategy. Their panels expose only actions currently allowed by the engine.';
+
+  @override
+  String get onboardingContinueTitle => 'Continue with confidence';
+
+  @override
+  String get onboardingContinueBody =>
+      'Save the authoritative match before leaving. Continue validates it in a fresh engine session, while Replay provides a read-only review of the same history.';
+
+  @override
+  String get previousOnboardingStep => 'Previous';
+
+  @override
+  String get nextOnboardingStep => 'Next';
+
+  @override
+  String get skipOnboarding => 'Skip';
+
+  @override
+  String get finishOnboarding => 'Create a game';
+
+  @override
   String get newGameTitle => 'Create local game';
 
   @override

@@ -16,6 +16,7 @@ final class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({
     required this.onNewGame,
     required this.onOpenSettings,
+    required this.onOpenHelp,
     required this.hasLocalSave,
     required this.resumeLocalGame,
     required this.onResumed,
@@ -27,6 +28,7 @@ final class MainMenuScreen extends StatefulWidget {
 
   final VoidCallback onNewGame;
   final VoidCallback onOpenSettings;
+  final VoidCallback onOpenHelp;
   final LocalSaveAvailabilityReader hasLocalSave;
   final LocalGameResume resumeLocalGame;
   final VoidCallback onResumed;
@@ -116,6 +118,13 @@ final class _MainMenuScreenState extends State<MainMenuScreen> {
                         : context.aonwL10n.replayTitle,
                   ),
                 ),
+              ),
+              const SizedBox(height: AonwSpacing.sm),
+              OutlinedButton.icon(
+                key: const ValueKey('menu-help'),
+                onPressed: _busy ? null : widget.onOpenHelp,
+                icon: const Icon(Icons.help_outline),
+                label: Text(context.aonwL10n.helpTitle),
               ),
               const SizedBox(height: AonwSpacing.sm),
               OutlinedButton.icon(

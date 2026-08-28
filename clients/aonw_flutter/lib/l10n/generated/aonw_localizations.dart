@@ -128,6 +128,168 @@ abstract class AonwLocalizations {
   /// **'New game'**
   String get newGame;
 
+  /// No description provided for @helpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How to play'**
+  String get helpTitle;
+
+  /// No description provided for @helpIntroduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a civilization turn by turn. The engine resolves every rule; this guide explains the decisions available in the client.'**
+  String get helpIntroduction;
+
+  /// No description provided for @helpObjectiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pursue the objective'**
+  String get helpObjectiveTitle;
+
+  /// No description provided for @helpObjectiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand, develop cities and complete the scenario objectives before your opponent. Open Strategic objectives on the map to review the authored goals.'**
+  String get helpObjectiveBody;
+
+  /// No description provided for @helpMapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore and command'**
+  String get helpMapTitle;
+
+  /// No description provided for @helpMapBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a visible hex to inspect it. Select your unit, choose a highlighted destination and confirm the route. Keyboard, gamepad and touch controls use the same commands.'**
+  String get helpMapBody;
+
+  /// No description provided for @helpDevelopmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Develop your civilization'**
+  String get helpDevelopmentTitle;
+
+  /// No description provided for @helpDevelopmentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use city, research, production, worker, logistics, artifact and diplomacy panels when their actions become available.'**
+  String get helpDevelopmentBody;
+
+  /// No description provided for @helpTurnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'End the turn deliberately'**
+  String get helpTurnTitle;
+
+  /// No description provided for @helpTurnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish your actions, then end the turn. The computer completes its authoritative turn before control returns to you.'**
+  String get helpTurnBody;
+
+  /// No description provided for @helpSaveReplayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and review'**
+  String get helpSaveReplayTitle;
+
+  /// No description provided for @helpSaveReplayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Save from the map. Continue opens the latest valid save, and Replay reviews the authoritative command history without changing the game.'**
+  String get helpSaveReplayBody;
+
+  /// No description provided for @startOnboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Start guided introduction'**
+  String get startOnboarding;
+
+  /// No description provided for @onboardingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Guided introduction'**
+  String get onboardingTitle;
+
+  /// No description provided for @onboardingProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {step} of {count}'**
+  String onboardingProgress(int step, int count);
+
+  /// No description provided for @onboardingExploreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the map'**
+  String get onboardingExploreTitle;
+
+  /// No description provided for @onboardingExploreBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The map shows only information visible to your player. Select hexes to inspect terrain, cities and units, then pan or zoom to plan your next action.'**
+  String get onboardingExploreBody;
+
+  /// No description provided for @onboardingCommandTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Give precise commands'**
+  String get onboardingCommandTitle;
+
+  /// No description provided for @onboardingCommandBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Available destinations and actions come from the Rust engine. Choose one, review the preview and confirm; rejected or stale commands never change the match.'**
+  String get onboardingCommandBody;
+
+  /// No description provided for @onboardingDevelopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a long-term advantage'**
+  String get onboardingDevelopTitle;
+
+  /// No description provided for @onboardingDevelopBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Cities, production, research, workers, logistics, artifacts and diplomacy shape your strategy. Their panels expose only actions currently allowed by the engine.'**
+  String get onboardingDevelopBody;
+
+  /// No description provided for @onboardingContinueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with confidence'**
+  String get onboardingContinueTitle;
+
+  /// No description provided for @onboardingContinueBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the authoritative match before leaving. Continue validates it in a fresh engine session, while Replay provides a read-only review of the same history.'**
+  String get onboardingContinueBody;
+
+  /// No description provided for @previousOnboardingStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get previousOnboardingStep;
+
+  /// No description provided for @nextOnboardingStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get nextOnboardingStep;
+
+  /// No description provided for @skipOnboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skipOnboarding;
+
+  /// No description provided for @finishOnboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a game'**
+  String get finishOnboarding;
+
   /// No description provided for @newGameTitle.
   ///
   /// In en, this message translates to:

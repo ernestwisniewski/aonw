@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../design_system/widgets/aonw_panel.dart';
+import '../../features/help/presentation/help_screen.dart';
 import '../../features/local_game/presentation/new_game_screen.dart';
 import '../../features/main_menu/presentation/main_menu_screen.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/replay/application/replay_state.dart';
 import '../../features/replay/presentation/replay_presentation_controller.dart';
 import '../../features/replay/presentation/replay_screen.dart';
@@ -16,6 +18,8 @@ import '../../l10n/l10n.dart';
 
 enum AonwRoute {
   menu('/'),
+  help('/help'),
+  onboarding('/onboarding'),
   newGame('/new-game'),
   map('/map'),
   replay('/replay'),
@@ -62,6 +66,8 @@ final class AonwRouter {
               Navigator.of(context).pushNamed(AonwRoute.newGame.location),
           onOpenSettings: () =>
               Navigator.of(context).pushNamed(AonwRoute.settings.location),
+          onOpenHelp: () =>
+              Navigator.of(context).pushNamed(AonwRoute.help.location),
           hasLocalSave: mapController.hasLocalSave,
           resumeLocalGame: mapController.resumeLatestLocalGame,
           onResumed: () => Navigator.of(
@@ -75,6 +81,16 @@ final class AonwRouter {
               ),
           onReplayOpened: () =>
               Navigator.of(context).pushNamed(AonwRoute.replay.location),
+        ),
+        AonwRoute.help => (context) => HelpScreen(
+          onStartOnboarding: () => Navigator.of(
+            context,
+          ).pushReplacementNamed(AonwRoute.onboarding.location),
+        ),
+        AonwRoute.onboarding => (context) => OnboardingScreen(
+          onFinished: () => Navigator.of(
+            context,
+          ).pushReplacementNamed(AonwRoute.newGame.location),
         ),
         AonwRoute.newGame => (context) => NewGameScreen(
           mapController: mapController,

@@ -139,6 +139,58 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('opens localized help and completes the guided onboarding', (
+    tester,
+  ) async {
+    final session = FakeGameSession.success(testMapScene());
+    final controller = MapPresentationController(
+      session: session,
+      movement: session,
+      unitActions: session,
+      logistics: session,
+      turns: session,
+    );
+
+    await tester.pumpWidget(
+      AonwApp(mapController: controller, locale: const Locale('pl')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('menu-help')));
+    await tester.pumpAndSettle();
+    expect(find.text('Jak grać'), findsOneWidget);
+    expect(find.text('Realizuj cel'), findsOneWidget);
+    expect(find.text('Zapisuj i analizuj'), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const ValueKey('start-onboarding')));
+    await tester.tap(find.byKey(const ValueKey('start-onboarding')));
+    await tester.pumpAndSettle();
+    expect(find.text('Przewodnik po grze'), findsOneWidget);
+    expect(find.text('Czytaj mapę'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('next-onboarding-step')));
+    await tester.pump();
+    expect(find.text('Wydawaj precyzyjne polecenia'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('previous-onboarding-step')));
+    await tester.pump();
+    expect(find.text('Czytaj mapę'), findsOneWidget);
+
+    for (var step = 0; step < 3; step += 1) {
+      await tester.tap(find.byKey(const ValueKey('next-onboarding-step')));
+      await tester.pump();
+    }
+    expect(find.text('Wracaj do gry bez obaw'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('finish-onboarding')));
+    await tester.pumpAndSettle();
+    expect(find.text('Utwórz grę lokalną'), findsOneWidget);
+    expect(find.byKey(const ValueKey('start-game')), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
   testWidgets('resumes the authoritative local save from the main menu', (
     tester,
   ) async {
@@ -176,6 +228,7 @@ void main() {
   testWidgets('opens and controls a stored authoritative replay', (
     tester,
   ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     final scene = testMapScene();
     final gameplay = FakeGameSession.success(scene);
     final replaySession = _ReplaySession(scene);
@@ -207,6 +260,17 @@ void main() {
     expect(find.text('0 of 3'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('play-replay')));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('0 of 3'), findsOneWidget);
+    expect(find.byKey(const ValueKey('play-replay')), findsOneWidget);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('0 of 3'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('play-replay')));
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pump();
     expect(find.text('1 of 3'), findsOneWidget);
@@ -218,6 +282,7 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
   });
 }
 
