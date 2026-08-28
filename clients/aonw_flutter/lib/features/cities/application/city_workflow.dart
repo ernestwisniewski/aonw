@@ -134,12 +134,14 @@ final class CityWorkflow {
     required CityStateReader readState,
     required CityStatePublisher publish,
     required CityDisposed isDisposed,
+    void Function(String cityId)? onSelectionRetained,
   }) => unawaited(
     _execute(
       action: action,
       readState: readState,
       publish: publish,
       isDisposed: isDisposed,
+      onSelectionRetained: onSelectionRetained,
     ),
   );
 

@@ -14,6 +14,7 @@ final class CityPanel extends StatelessWidget {
     required this.onToggleFoundingHex,
     required this.onConfirmFounding,
     required this.onAction,
+    this.enabled = true,
     super.key,
   });
 
@@ -22,6 +23,7 @@ final class CityPanel extends StatelessWidget {
   final ValueChanged<MapHexCoordinate> onToggleFoundingHex;
   final VoidCallback onConfirmFounding;
   final ValueChanged<CityActionView> onAction;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +60,7 @@ final class CityPanel extends StatelessWidget {
               if (state.inspection case final inspection?)
                 _OwnedCityInspection(
                   inspection: inspection,
-                  enabled: !state.commandPending,
+                  enabled: enabled && !state.commandPending,
                   onAction: onAction,
                 ),
               if (state.commandPending)

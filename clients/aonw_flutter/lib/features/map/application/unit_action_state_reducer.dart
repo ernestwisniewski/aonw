@@ -39,6 +39,7 @@ GameSessionReady _successfulCompletion(
           clearActionDeck: true,
           clearUnitLogistics: true,
           clearWorker: true,
+          clearProduction: true,
           clearCombat: true,
         )
       : current.interaction.copyWith(
@@ -74,6 +75,7 @@ GameSessionReady _failedCompletion(
         clearActionDeck: true,
         clearUnitLogistics: true,
         clearWorker: true,
+        clearProduction: true,
         clearCombat: true,
       ),
     );

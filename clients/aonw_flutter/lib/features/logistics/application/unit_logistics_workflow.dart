@@ -363,6 +363,7 @@ MapInteractionState _clearUnitSelection(GameSessionReady current) =>
       clearRoute: true,
       clearActionDeck: true,
       clearUnitLogistics: true,
+      clearProduction: true,
     );
 
 bool _containsAction(

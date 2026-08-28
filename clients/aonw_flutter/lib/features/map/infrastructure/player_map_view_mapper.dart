@@ -177,7 +177,36 @@ final class PlayerMapViewMapper {
                 city.ownedDetails!.preferredExpansionHex == null
                 ? null
                 : _cityCoordinate(city.ownedDetails!.preferredExpansionHex!),
+            buildings: [
+              for (final building in city.ownedDetails!.buildings)
+                building.name,
+            ],
+            wonders: [
+              for (final wonder in city.ownedDetails!.wonders) wonder.name,
+            ],
+            productionQueue: city.ownedDetails!.productionQueue == null
+                ? null
+                : _mapProductionQueue(city.ownedDetails!.productionQueue!),
+            productionOverflow: city.ownedDetails!.productionOverflow,
+            specialization: city.ownedDetails!.specialization?.name,
           ),
+  );
+
+  static CityProductionQueueView _mapProductionQueue(
+    AonwCityProductionQueue value,
+  ) => CityProductionQueueView(
+    targetKind: value.target.kind.name,
+    target: switch (value.target.kind) {
+      AonwCityProductionTargetKind.building => value.target.buildingType!.name,
+      AonwCityProductionTargetKind.unit => value.target.unitType!.name,
+      AonwCityProductionTargetKind.project => value.target.projectType!.name,
+      AonwCityProductionTargetKind.wonder => value.target.wonderType!.name,
+    },
+    investedProduction: value.investedProduction,
+    resourceAllocation: {
+      for (final entry in value.resourceAllocation.entries)
+        MapResource.values.byName(entry.key.name): entry.value,
+    },
   );
 
   static CityFoundingDraftView _mapCityFoundingDraft(

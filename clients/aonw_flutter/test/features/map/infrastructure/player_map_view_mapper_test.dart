@@ -1,4 +1,5 @@
 import 'package:aonw_flutter/features/map/infrastructure/player_map_view_mapper.dart';
+import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/pending_action_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/features/turns/read_model/recipient_turn_view.dart';
@@ -225,6 +226,24 @@ void main() {
     );
   });
 
+  test('maps the complete owned city production snapshot exactly', () {
+    final player = mapper.fromWire(
+      _snapshot(const [], cities: [_city()]),
+      map: testMapScene().map,
+      actorPlayerId: 'player-1',
+    );
+
+    final details = player.controlledCityById('city-a')!.ownedDetails!;
+    expect(details.buildings, ['workshop']);
+    expect(details.wonders, ['greatLibrary']);
+    expect(details.productionOverflow, 3);
+    expect(details.specialization, 'industry');
+    expect(details.productionQueue?.targetKind, 'unit');
+    expect(details.productionQueue?.target, 'tank');
+    expect(details.productionQueue?.investedProduction, 7);
+    expect(details.productionQueue?.resourceAllocation, {MapResource.oil: 2});
+  });
+
   test(
     'rejects pending actions for an uncontrolled unit or invalid target',
     () {
@@ -266,6 +285,7 @@ AonwPlayerViewSnapshot _snapshot(
   List<AonwPlayerUnitView> units, {
   String? mapHash,
   AonwPendingActionView? pendingAction,
+  List<AonwPlayerCityView> cities = const [],
   List<AonwFieldImprovementView> fieldImprovements = const [],
   List<AonwRoadView> roads = const [],
 }) => AonwPlayerViewSnapshot(
@@ -296,10 +316,39 @@ AonwPlayerViewSnapshot _snapshot(
     resourceTradeAgreements: [],
   ),
   units: units,
-  cities: const [],
+  cities: cities,
   artifacts: const [],
   fieldImprovements: fieldImprovements,
   roads: roads,
+);
+
+AonwPlayerCityView _city() => AonwPlayerCityView(
+  id: 'city-a',
+  ownerPlayerId: 'player-1',
+  name: 'Capital',
+  center: const AonwCoordinate(col: 1, row: 1),
+  visibleControlledHexes: const [AonwCoordinate(col: 1, row: 1)],
+  hitPoints: 10,
+  ownedDetails: AonwOwnedCityDetails(
+    population: 3,
+    storedFood: 2,
+    maxHexes: 6,
+    territoryRadius: 2,
+    workedHexes: const [AonwCoordinate(col: 1, row: 1)],
+    buildings: const [AonwCityBuildingType.workshop],
+    wonders: const [AonwWonderType.greatLibrary],
+    productionQueue: AonwCityProductionQueue(
+      target: AonwCityProductionTarget.fromJson(const {
+        'kind': 'unit',
+        'unitType': 'tank',
+      }),
+      investedProduction: 7,
+      resourceAllocation: const {AonwResourceType.oil: 2},
+    ),
+    productionOverflow: 3,
+    specialization: AonwCitySpecialization.industry,
+    preferredExpansionHex: const AonwCoordinate(col: 2, row: 1),
+  ),
 );
 
 AonwPlayerUnitView _unit(

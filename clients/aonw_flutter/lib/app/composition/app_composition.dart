@@ -9,6 +9,7 @@ import '../../features/map/infrastructure/gamepad_map_input_source.dart';
 import '../../features/map/infrastructure/rust_game_session_gateway.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
+import '../../features/production/application/production_session_port.dart';
 import '../../features/settings/application/client_settings_store.dart';
 import '../../features/settings/infrastructure/shared_preferences_client_settings_store.dart';
 import '../../features/settings/presentation/client_settings_controller.dart';
@@ -27,6 +28,7 @@ final class AppComposition {
     CitySessionPort? citySession,
     required UnitLogisticsSessionPort logisticsSession,
     WorkerSessionPort? workerSession,
+    ProductionSessionPort? productionSession,
     required UnitActionSessionPort unitActionSession,
     required TurnSessionPort turnSession,
     MapInputSource? mapInputSource,
@@ -41,6 +43,8 @@ final class AppComposition {
            cities: citySession ?? _requireCitySession(movementSession),
            logistics: logisticsSession,
            workers: workerSession ?? _requireWorkerSession(movementSession),
+           production:
+               productionSession ?? _requireProductionSession(movementSession),
            unitActions: unitActionSession,
            turns: turnSession,
          ),
@@ -63,6 +67,7 @@ final class AppComposition {
       citySession: gateway.citySession,
       logisticsSession: gateway,
       workerSession: gateway.workerSession,
+      productionSession: gateway.productionSession,
       unitActionSession: gateway,
       turnSession: gateway,
       mapInputSource: GamepadMapInputSource(),
@@ -98,5 +103,14 @@ WorkerSessionPort _requireWorkerSession(MovementSessionPort movement) {
     movement,
     'movementSession',
     'must also provide the worker session port',
+  );
+}
+
+ProductionSessionPort _requireProductionSession(MovementSessionPort movement) {
+  if (movement case final ProductionSessionPort production) return production;
+  throw ArgumentError.value(
+    movement,
+    'movementSession',
+    'must also provide the production session port',
   );
 }

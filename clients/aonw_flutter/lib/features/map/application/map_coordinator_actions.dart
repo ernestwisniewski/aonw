@@ -16,6 +16,10 @@ extension MapCoordinatorActions on MapCoordinator {
           clearActionDeck: true,
           clearUnitLogistics: true,
           clearWorker: true,
+          production: city.ownedDetails == null
+              ? null
+              : ProductionState.loading(cityId),
+          clearProduction: city.ownedDetails == null,
           clearCombat: true,
           city: city.ownedDetails == null
               ? CityState(cityId: cityId)
@@ -25,6 +29,12 @@ extension MapCoordinatorActions on MapCoordinator {
     );
     if (city.ownedDetails != null) {
       _cities.inspect(
+        cityId: cityId,
+        readState: () => _state,
+        publish: _setState,
+        isDisposed: () => _disposed,
+      );
+      _production.load(
         cityId: cityId,
         readState: () => _state,
         publish: _setState,
@@ -64,6 +74,35 @@ extension MapCoordinatorActions on MapCoordinator {
 
   void executeCityAction(CityActionView action) {
     _cities.execute(
+      action: action,
+      readState: () => _state,
+      publish: _setState,
+      isDisposed: () => _disposed,
+      onSelectionRetained: (cityId) {
+        final state = _state;
+        if (state is! GameSessionReady ||
+            state.interaction.city?.cityId != cityId) {
+          return;
+        }
+        _setState(
+          state.withInteraction(
+            state.interaction.copyWith(
+              production: ProductionState.loading(cityId),
+            ),
+          ),
+        );
+        _production.load(
+          cityId: cityId,
+          readState: () => _state,
+          publish: _setState,
+          isDisposed: () => _disposed,
+        );
+      },
+    );
+  }
+
+  void executeProductionAction(ProductionActionView action) {
+    _production.execute(
       action: action,
       readState: () => _state,
       publish: _setState,

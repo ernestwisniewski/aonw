@@ -29,7 +29,14 @@ final class OwnedCityDetailsView {
     required this.territoryRadius,
     required List<MapHexCoordinate> workedHexes,
     required this.preferredExpansionHex,
-  }) : workedHexes = List.unmodifiable(workedHexes);
+    List<String> buildings = const [],
+    List<String> wonders = const [],
+    this.productionQueue,
+    this.productionOverflow = 0,
+    this.specialization,
+  }) : workedHexes = List.unmodifiable(workedHexes),
+       buildings = List.unmodifiable(buildings),
+       wonders = List.unmodifiable(wonders);
 
   final int population;
   final int storedFood;
@@ -37,6 +44,25 @@ final class OwnedCityDetailsView {
   final int territoryRadius;
   final List<MapHexCoordinate> workedHexes;
   final MapHexCoordinate? preferredExpansionHex;
+  final List<String> buildings;
+  final List<String> wonders;
+  final CityProductionQueueView? productionQueue;
+  final int productionOverflow;
+  final String? specialization;
+}
+
+final class CityProductionQueueView {
+  CityProductionQueueView({
+    required this.targetKind,
+    required this.target,
+    required this.investedProduction,
+    required Map<MapResource, int> resourceAllocation,
+  }) : resourceAllocation = Map.unmodifiable(resourceAllocation);
+
+  final String targetKind;
+  final String target;
+  final int investedProduction;
+  final Map<MapResource, int> resourceAllocation;
 }
 
 final class CityFoundingDraftView {

@@ -11,6 +11,8 @@ import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
+import 'package:aonw_flutter/features/production/application/production_session_port.dart';
+import 'package:aonw_flutter/features/production/read_model/production_view.dart';
 import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
 import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
@@ -19,6 +21,11 @@ import 'package:aonw_flutter/features/workers/application/worker_session_port.da
 import 'package:aonw_flutter/features/workers/read_model/worker_view.dart';
 
 part 'city_test_fixture.dart';
+
+typedef ProductionOverviewFixture = ({
+  ProductionOptionsView options,
+  StrategicResourceProjectionView resources,
+});
 
 MapScene testMapScene({
   int cols = 3,
@@ -240,6 +247,7 @@ final class FakeGameSession
         CombatSessionPort,
         UnitLogisticsSessionPort,
         WorkerSessionPort,
+        ProductionSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   FakeGameSession.success(
@@ -258,6 +266,10 @@ final class FakeGameSession
     this.workerOptionsResult,
     this.workerResult,
     this.workerFailure,
+    this.productionOverviewResult,
+    this.productionOverviewResults = const [],
+    this.productionResult,
+    this.productionFailure,
     this.combatPreviewResult,
     this.combatResult,
     this.combatFailure,
@@ -282,6 +294,10 @@ final class FakeGameSession
       workerOptionsResult = null,
       workerResult = null,
       workerFailure = null,
+      productionOverviewResult = null,
+      productionOverviewResults = const [],
+      productionResult = null,
+      productionFailure = null,
       combatPreviewResult = null,
       combatResult = null,
       combatFailure = null,
@@ -306,6 +322,14 @@ final class FakeGameSession
   final WorkerOptionsView? workerOptionsResult;
   final WorkerCommandResultView? workerResult;
   final WorkerSessionException? workerFailure;
+  final ({
+    ProductionOptionsView options,
+    StrategicResourceProjectionView resources,
+  })?
+  productionOverviewResult;
+  final List<ProductionOverviewFixture> productionOverviewResults;
+  final ProductionCommandResultView? productionResult;
+  final ProductionSessionException? productionFailure;
   final CombatPreviewView? combatPreviewResult;
   final CombatCommandResultView? combatResult;
   final CombatSessionException? combatFailure;
@@ -327,6 +351,10 @@ final class FakeGameSession
   var workerCommandCalls = 0;
   int? lastWorkerExpectedRevision;
   WorkerActionView? lastWorkerAction;
+  var productionOverviewCalls = 0;
+  var productionCommandCalls = 0;
+  ProductionActionView? lastProductionAction;
+  int? lastProductionExpectedRevision;
   var combatPreviewCalls = 0;
   var combatAttackCalls = 0;
   MapHexCoordinate? lastCombatDefender;
@@ -518,6 +546,60 @@ final class FakeGameSession
     final error = workerFailure;
     if (error != null) throw error;
     return workerResult ?? (throw StateError('No worker result fixture.'));
+  }
+
+  @override
+  Future<
+    ({ProductionOptionsView options, StrategicResourceProjectionView resources})
+  >
+  productionOverview({
+    required int expectedRevision,
+    required String cityId,
+  }) async {
+    productionOverviewCalls += 1;
+    final error = productionFailure;
+    if (error != null) throw error;
+    if (productionOverviewResults.isNotEmpty) {
+      final index = productionOverviewCalls <= productionOverviewResults.length
+          ? productionOverviewCalls - 1
+          : productionOverviewResults.length - 1;
+      return productionOverviewResults[index];
+    }
+    return productionOverviewResult ??
+        (
+          options: ProductionOptionsView(
+            stamp: testSessionStamp(revision: expectedRevision),
+            cityId: cityId,
+            currentTarget: null,
+            investedProduction: 0,
+            productionOverflow: 0,
+            buildings: const [],
+            units: const [],
+            projects: const [],
+            wonders: const [],
+            specializations: const [],
+          ),
+          resources: StrategicResourceProjectionView(
+            stamp: testSessionStamp(revision: expectedRevision),
+            playerId: scene?.player.actorPlayerId ?? 'preview-player',
+            output: const [],
+            sources: const [],
+          ),
+        );
+  }
+
+  @override
+  Future<ProductionCommandResultView> executeProductionAction({
+    required int expectedRevision,
+    required ProductionActionView action,
+  }) async {
+    productionCommandCalls += 1;
+    lastProductionExpectedRevision = expectedRevision;
+    lastProductionAction = action;
+    final error = productionFailure;
+    if (error != null) throw error;
+    return productionResult ??
+        (throw StateError('No production result fixture.'));
   }
 
   @override

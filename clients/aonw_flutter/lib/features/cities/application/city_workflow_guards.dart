@@ -31,7 +31,13 @@ GameSessionReady? _selectedUnitAtRevision(
 GameSessionReady? _executable(GameSessionState state, CityActionView action) {
   if (state is! GameSessionReady) return null;
   final city = state.interaction.city;
-  if (city == null || city.loading || city.commandPending) return null;
+  if (city == null ||
+      city.loading ||
+      city.commandPending ||
+      (state.interaction.production?.loading ?? false) ||
+      (state.interaction.production?.commandPending ?? false)) {
+    return null;
+  }
   final allowed = switch (action) {
     final FoundCityActionView value => _matchesFounding(city, value),
     final ToggleWorkedHexActionView value => _matchesWorkedHex(city, value),
@@ -106,6 +112,7 @@ GameSessionReady _accepted(
         clearActionDeck: true,
         clearUnitLogistics: true,
         clearCity: true,
+        clearProduction: true,
       ),
     );
   }
@@ -117,13 +124,14 @@ GameSessionReady _accepted(
   final city = synchronized.recipient.controlledCityById(cityId);
   if (city == null) {
     return synchronized.withInteraction(
-      synchronized.interaction.copyWith(clearCity: true),
+      synchronized.interaction.copyWith(clearCity: true, clearProduction: true),
     );
   }
   return synchronized.withInteraction(
     synchronized.interaction.copyWith(
       selected: city.center,
       city: CityState.loadingCity(cityId),
+      clearProduction: true,
     ),
   );
 }

@@ -10,6 +10,8 @@ import '../../../cities/read_model/city_view.dart';
 import '../../../combat/presentation/combat_panel.dart';
 import '../../../combat/read_model/combat_view.dart';
 import '../../../logistics/read_model/unit_logistics_view.dart';
+import '../../../production/presentation/production_panel.dart';
+import '../../../production/read_model/production_view.dart';
 import '../../../unit_actions/presentation/unit_action_deck.dart';
 import '../../../unit_actions/read_model/unit_action_view.dart';
 import '../../../workers/presentation/worker_panel.dart';
@@ -65,6 +67,7 @@ final class MapSelectionOverlay extends StatelessWidget {
         onToggleCityFoundingHex: controller.toggleCityFoundingHex,
         onConfirmCityFounding: controller.confirmCityFounding,
         onCityAction: controller.executeCityAction,
+        onProductionAction: controller.executeProductionAction,
       ),
     );
   }
@@ -87,6 +90,7 @@ final class _MapSelectionPanel extends StatelessWidget {
     required this.onToggleCityFoundingHex,
     required this.onConfirmCityFounding,
     required this.onCityAction,
+    required this.onProductionAction,
   });
 
   final MapHexCoordinate coordinate;
@@ -104,6 +108,7 @@ final class _MapSelectionPanel extends StatelessWidget {
   final ValueChanged<MapHexCoordinate> onToggleCityFoundingHex;
   final VoidCallback onConfirmCityFounding;
   final ValueChanged<CityActionView> onCityAction;
+  final ValueChanged<ProductionActionView> onProductionAction;
 
   @override
   Widget build(BuildContext context) {
@@ -115,68 +120,89 @@ final class _MapSelectionPanel extends StatelessWidget {
         horizontal: AonwSpacing.md,
         vertical: AonwSpacing.sm,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.hexLabel(coordinate.col, coordinate.row)),
-          if (interaction.selectedUnitId case final unitId?) ...[
-            const SizedBox(height: AonwSpacing.xs),
-            Text(l10n.unitLabel(unitId)),
-            if (unit case final unit?) Text(unit.name),
-            if (interaction.combat == null)
-              _MovementControls(
-                interaction: interaction,
-                onConfirmMove: onConfirmMove,
-              ),
-            if (interaction.actionDeck case final actionDeck?)
-              UnitActionDeck(
-                state: actionDeck,
-                logistics: interaction.unitLogistics,
-                enabled:
-                    !interaction.movementPending &&
-                    !(interaction.worker?.commandPending ?? false),
-                onAction: onUnitAction,
-                onLogisticsAction: onUnitLogistics,
-              ),
-            if (interaction.worker case final workerState?)
-              if (unit case final unit?)
-                WorkerPanel(
-                  state: workerState,
-                  unit: unit,
-                  pendingAction: pendingWorkerAction?.unitId == unit.id
-                      ? pendingWorkerAction
-                      : null,
-                  enabled:
-                      !interaction.movementPending &&
-                      !(interaction.actionDeck?.commandPending ?? false) &&
-                      !(interaction.unitLogistics?.commandPending ?? false),
-                  onAction: onWorkerAction,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height - AonwSpacing.xl,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.hexLabel(coordinate.col, coordinate.row)),
+              if (interaction.selectedUnitId case final unitId?) ...[
+                const SizedBox(height: AonwSpacing.xs),
+                Text(l10n.unitLabel(unitId)),
+                if (unit case final unit?) Text(unit.name),
+                if (interaction.combat == null)
+                  _MovementControls(
+                    interaction: interaction,
+                    onConfirmMove: onConfirmMove,
+                  ),
+                if (interaction.actionDeck case final actionDeck?)
+                  UnitActionDeck(
+                    state: actionDeck,
+                    logistics: interaction.unitLogistics,
+                    enabled:
+                        !interaction.movementPending &&
+                        !(interaction.worker?.commandPending ?? false) &&
+                        !(interaction.production?.commandPending ?? false),
+                    onAction: onUnitAction,
+                    onLogisticsAction: onUnitLogistics,
+                  ),
+                if (interaction.worker case final workerState?)
+                  if (unit case final unit?)
+                    WorkerPanel(
+                      state: workerState,
+                      unit: unit,
+                      pendingAction: pendingWorkerAction?.unitId == unit.id
+                          ? pendingWorkerAction
+                          : null,
+                      enabled:
+                          !interaction.movementPending &&
+                          !(interaction.actionDeck?.commandPending ?? false) &&
+                          !(interaction.unitLogistics?.commandPending ??
+                              false) &&
+                          !(interaction.production?.commandPending ?? false),
+                      onAction: onWorkerAction,
+                    ),
+                if (interaction.city?.founderUnitId == null)
+                  TextButton.icon(
+                    key: const ValueKey('open-city-founding'),
+                    onPressed: onOpenCityFounding,
+                    icon: const Icon(Icons.add_location_alt),
+                    label: Text(
+                      CityCopy.of(context).text(CityText.foundingOpen),
+                    ),
+                  ),
+              ],
+              if (interaction.combat case final combat?)
+                CombatPanel(
+                  state: combat,
+                  onConfirm: onConfirmCombat,
+                  onCityConquestAction: onCityConquestAction,
                 ),
-            if (interaction.city?.founderUnitId == null)
-              TextButton.icon(
-                key: const ValueKey('open-city-founding'),
-                onPressed: onOpenCityFounding,
-                icon: const Icon(Icons.add_location_alt),
-                label: Text(CityCopy.of(context).text(CityText.foundingOpen)),
-              ),
-          ],
-          if (interaction.combat case final combat?)
-            CombatPanel(
-              state: combat,
-              onConfirm: onConfirmCombat,
-              onCityConquestAction: onCityConquestAction,
-            ),
-          if (interaction.city case final cityState?)
-            CityPanel(
-              state: cityState,
-              city: city,
-              onToggleFoundingHex: onToggleCityFoundingHex,
-              onConfirmFounding: onConfirmCityFounding,
-              onAction: onCityAction,
-            ),
-          _MovementFeedback(interaction: interaction),
-        ],
+              if (interaction.city case final cityState?)
+                CityPanel(
+                  state: cityState,
+                  city: city,
+                  onToggleFoundingHex: onToggleCityFoundingHex,
+                  onConfirmFounding: onConfirmCityFounding,
+                  onAction: onCityAction,
+                  enabled: !(interaction.production?.commandPending ?? false),
+                ),
+              if (interaction.production case final productionState?)
+                ProductionPanel(
+                  state: productionState,
+                  enabled:
+                      !(interaction.city?.commandPending ?? false) &&
+                      !interaction.movementPending,
+                  onAction: onProductionAction,
+                ),
+              _MovementFeedback(interaction: interaction),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -204,7 +230,8 @@ final class _MovementControls extends StatelessWidget {
         interaction.movementPending ||
         (interaction.actionDeck?.commandPending ?? false) ||
         (interaction.unitLogistics?.commandPending ?? false) ||
-        (interaction.worker?.commandPending ?? false);
+        (interaction.worker?.commandPending ?? false) ||
+        (interaction.production?.commandPending ?? false);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,

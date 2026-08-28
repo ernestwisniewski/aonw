@@ -189,7 +189,56 @@ Future<AonwSessionStamp> _inspectAndConfigure(
     ),
   )).require<AonwCommandResponse>().result;
   expect(selected.accepted, isTrue);
-  return selected.stamp;
+  return _configureProduction(session, cityId, selected.stamp.revision);
+}
+
+Future<AonwSessionStamp> _configureProduction(
+  AonwRustSession session,
+  String cityId,
+  int revision,
+) async {
+  final resources = await _query<AonwStrategicResourceProjectionResult>(
+    session,
+    AonwProductionRequest.strategicResources(expectedRevision: revision),
+  );
+  expect(resources.playerId, 'player-1');
+  final options = await _query<AonwProductionOptionsResult>(
+    session,
+    AonwProductionRequest.options(expectedRevision: revision, cityId: cityId),
+  );
+  expect(options.cityId, cityId);
+  final building = options.buildings.firstWhere(
+    (option) => option.rejection == null,
+  );
+  final buildingType = building.target.buildingType;
+  expect(buildingType, isNotNull);
+  final started = (await session.send(
+    AonwProductionRequest.startBuilding(
+      expectedRevision: revision,
+      cityId: cityId,
+      building: buildingType!,
+    ),
+  )).require<AonwCommandResponse>().result;
+  expect(started.accepted, isTrue);
+  expect(started.events, isEmpty);
+  expect(started.evidence, isNull);
+  final snapshot = (await session.send(
+    AonwClientRequest.snapshot(),
+  )).require<AonwSnapshotResponse>().snapshot;
+  final queue = snapshot.cities
+      .singleWhere((city) => city.id == cityId)
+      .ownedDetails
+      ?.productionQueue;
+  expect(queue?.target.buildingType, buildingType);
+  final refreshed = await _query<AonwProductionOptionsResult>(
+    session,
+    AonwProductionRequest.options(
+      expectedRevision: started.stamp.revision,
+      cityId: cityId,
+    ),
+  );
+  expect(refreshed.currentTarget?.buildingType, buildingType);
+  return started.stamp;
 }
 
 Future<T> _query<T extends AonwQueryResult>(
@@ -221,6 +270,14 @@ Future<void> _assertForeignRecipient(
   );
   expect(privateQuery.isSuccess, isFalse);
   expect(privateQuery.error?.code, 'city_not_controlled');
+  final privateProduction = await session.send(
+    AonwProductionRequest.options(
+      expectedRevision: snapshot.stamp.revision,
+      cityId: cityId,
+    ),
+  );
+  expect(privateProduction.isSuccess, isFalse);
+  expect(privateProduction.error?.code, 'city_not_controlled');
 }
 
 Future<void> _assertPersistence(
@@ -240,7 +297,7 @@ Future<void> _assertPersistence(
       replayDocument: replay,
     ),
   )).require<AonwReplayVerifiedResponse>().verification;
-  expect(verification.entryCount, 5);
+  expect(verification.entryCount, 6);
   expect(verification.finalStamp.stateDigest, finalStamp.stateDigest);
 }
 

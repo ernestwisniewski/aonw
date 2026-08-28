@@ -10,6 +10,9 @@ import '../../combat/read_model/combat_view.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/infrastructure/rust_unit_logistics_gateway.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
+import '../../production/application/production_session_port.dart';
+import '../../production/infrastructure/rust_production_gateway.dart';
+import '../../production/read_model/production_view.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../turns/infrastructure/rust_turn_gateway.dart';
 import '../../turns/read_model/turn_command_view.dart';
@@ -34,6 +37,7 @@ import 'rust_game_session_loader.dart';
 import 'rust_movement_gateway.dart';
 
 part 'rust_game_city_session.dart';
+part 'rust_game_production_session.dart';
 part 'rust_game_worker_session.dart';
 
 final class RustGameSessionGateway
@@ -53,6 +57,7 @@ final class RustGameSessionGateway
     RustCombatGateway combatGateway = const RustCombatGateway(),
     RustCityGateway cityGateway = const RustCityGateway(),
     RustWorkerGateway workerGateway = const RustWorkerGateway(),
+    RustProductionGateway productionGateway = const RustProductionGateway(),
     RustTurnGateway turnGateway = const RustTurnGateway(),
     RustUnitLogisticsGateway logisticsGateway =
         const RustUnitLogisticsGateway(),
@@ -68,6 +73,7 @@ final class RustGameSessionGateway
        _combatGateway = combatGateway,
        _cityGateway = cityGateway,
        _workerGateway = workerGateway,
+       _productionGateway = productionGateway,
        _turnGateway = turnGateway,
        _logisticsGateway = logisticsGateway,
        _unitActions = RustUnitActionGateway(
@@ -76,6 +82,7 @@ final class RustGameSessionGateway
        ) {
     citySession = _RustGameCitySession(this);
     workerSession = _RustGameWorkerSession(this);
+    productionSession = _RustGameProductionSession(this);
   }
 
   final RustGameSessionLoader _loader;
@@ -84,11 +91,13 @@ final class RustGameSessionGateway
   final RustCombatGateway _combatGateway;
   final RustCityGateway _cityGateway;
   final RustWorkerGateway _workerGateway;
+  final RustProductionGateway _productionGateway;
   final RustTurnGateway _turnGateway;
   final RustUnitLogisticsGateway _logisticsGateway;
   final RustUnitActionGateway _unitActions;
   late final CitySessionPort citySession;
   late final WorkerSessionPort workerSession;
+  late final ProductionSessionPort productionSession;
   AonwRustSession? _session;
   MapView? _map;
   PlayerMapView? _player;

@@ -61,6 +61,7 @@ extension MapCoordinatorSelection on MapCoordinator {
           clearActionDeck: true,
           clearUnitLogistics: true,
           clearWorker: true,
+          clearProduction: true,
           clearCombat: true,
           clearCity: true,
           movementPending: false,
@@ -81,6 +82,7 @@ extension MapCoordinatorSelection on MapCoordinator {
           clearActionDeck: true,
           clearUnitLogistics: true,
           clearWorker: true,
+          clearProduction: true,
           clearCombat: true,
           clearCity: true,
           movementPending: false,
@@ -106,6 +108,8 @@ extension MapCoordinatorSelection on MapCoordinator {
           clearActionDeck: true,
           clearUnitLogistics: true,
           clearWorker: true,
+          production: owned ? ProductionState.loading(city.id) : null,
+          clearProduction: !owned,
           clearCombat: true,
           city: owned
               ? CityState.loadingCity(city.id)
@@ -117,6 +121,12 @@ extension MapCoordinatorSelection on MapCoordinator {
     );
     if (owned) {
       _cities.inspect(
+        cityId: city.id,
+        readState: () => _state,
+        publish: _setState,
+        isDisposed: () => _disposed,
+      );
+      _production.load(
         cityId: city.id,
         readState: () => _state,
         publish: _setState,
@@ -143,6 +153,10 @@ extension MapCoordinatorSelection on MapCoordinator {
           unitLogistics: UnitLogisticsState.loading(unitId),
           worker: isWorker ? WorkerState.loading(unitId) : null,
           clearWorker: !isWorker,
+          production: city?.ownedDetails == null
+              ? null
+              : ProductionState.loading(city!.id),
+          clearProduction: city?.ownedDetails == null,
           clearReachable: true,
           clearRoute: true,
           movementPending: true,
@@ -174,6 +188,12 @@ extension MapCoordinatorSelection on MapCoordinator {
     if (city?.ownedDetails != null) {
       _cities.inspect(
         cityId: city!.id,
+        readState: () => _state,
+        publish: _setState,
+        isDisposed: () => _disposed,
+      );
+      _production.load(
+        cityId: city.id,
         readState: () => _state,
         publish: _setState,
         isDisposed: () => _disposed,

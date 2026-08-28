@@ -8,6 +8,8 @@ import '../../combat/application/combat_session_port.dart';
 import '../../combat/read_model/combat_view.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
+import '../../production/application/production_session_port.dart';
+import '../../production/read_model/production_view.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
@@ -27,6 +29,7 @@ final class MapPresentationController extends ChangeNotifier {
     CitySessionPort? cities,
     required UnitLogisticsSessionPort logistics,
     WorkerSessionPort? workers,
+    ProductionSessionPort? production,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     MapAssetPaths assets = MapAssetPaths.starter,
@@ -39,6 +42,7 @@ final class MapPresentationController extends ChangeNotifier {
            cities: cities,
            logistics: logistics,
            workers: workers,
+           production: production,
            unitActions: unitActions,
            turns: turns,
            assets: assets,
@@ -72,6 +76,9 @@ final class MapPresentationController extends ChangeNotifier {
 
   void executeWorkerAction(WorkerActionView action) =>
       _coordinator.executeWorkerAction(action);
+
+  void executeProductionAction(ProductionActionView action) =>
+      _coordinator.executeProductionAction(action);
 
   void confirmCombat() => _coordinator.confirmCombat();
 

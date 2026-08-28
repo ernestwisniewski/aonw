@@ -16,6 +16,8 @@ import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
 import 'package:aonw_flutter/features/map/read_model/map_scene.dart';
 import 'package:aonw_flutter/features/map/read_model/map_view.dart';
 import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
+import 'package:aonw_flutter/features/production/application/production_session_port.dart';
+import 'package:aonw_flutter/features/production/read_model/production_view.dart';
 import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
 import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
@@ -264,6 +266,7 @@ final class _LifecycleGameSession
         CombatSessionPort,
         UnitLogisticsSessionPort,
         WorkerSessionPort,
+        ProductionSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   var loadCalls = 0;
@@ -348,6 +351,19 @@ final class _LifecycleGameSession
   Future<WorkerCommandResultView> executeWorkerAction({
     required int expectedRevision,
     required WorkerActionView action,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<
+    ({ProductionOptionsView options, StrategicResourceProjectionView resources})
+  >
+  productionOverview({required int expectedRevision, required String cityId}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<ProductionCommandResultView> executeProductionAction({
+    required int expectedRevision,
+    required ProductionActionView action,
   }) => throw UnimplementedError();
 
   @override

@@ -82,6 +82,7 @@ MapInteractionState _clearWorkerSelection(GameSessionReady current) =>
       clearActionDeck: true,
       clearUnitLogistics: true,
       clearWorker: true,
+      clearProduction: true,
     );
 
 WorkerFailureCode _failureCode(String code) => switch (code) {

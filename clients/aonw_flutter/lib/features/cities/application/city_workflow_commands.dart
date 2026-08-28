@@ -6,6 +6,7 @@ extension CityWorkflowCommands on CityWorkflow {
     required CityStateReader readState,
     required CityStatePublisher publish,
     required CityDisposed isDisposed,
+    required void Function(String cityId)? onSelectionRetained,
   }) async {
     final current = _executable(readState(), action);
     if (current == null) return;
@@ -28,6 +29,7 @@ extension CityWorkflowCommands on CityWorkflow {
       if (action
           case ToggleWorkedHexActionView(:final cityId) ||
               SelectCityExpansionActionView(:final cityId)) {
+        onSelectionRetained?.call(cityId);
         inspect(
           cityId: cityId,
           readState: readState,
