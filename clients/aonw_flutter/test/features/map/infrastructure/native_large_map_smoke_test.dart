@@ -42,9 +42,7 @@ void main() {
     expect(map.gridLayout.name, identity['gridLayout']);
   });
 
-  testWidgets('runs the recipient-safe starter movement session', (
-    tester,
-  ) async {
+  test('runs the recipient-safe starter movement session', () async {
     var backendCreations = 0;
     late _TrackingRustSession backend;
     final gateway = RustGameSessionGateway(
@@ -59,80 +57,68 @@ void main() {
     );
     addTearDown(gateway.close);
 
-    final scene = await tester.runAsync(
-      () => gateway.load(MapAssetPaths.starter),
-    );
+    final scene = await gateway.load(MapAssetPaths.starter);
 
     expect(scene, isNotNull);
-    expect(scene!.player.stamp.mapHash, scene.map.contentHash);
+    expect(scene.player.stamp.mapHash, scene.map.contentHash);
     expect(scene.player.stamp.revision, 0);
     expect(scene.player.units, hasLength(1));
     expect(scene.player.units.single.id, 'preview-commander');
     expect(scene.player.units.single.ownerPlayerId, 'preview-player');
     expect(scene.player.units.single.coordinate, (col: 2, row: 1));
 
-    final reachableResponses = await tester.runAsync(
-      () => Future.wait([
-        gateway.reachable(
-          expectedRevision: scene.player.stamp.revision,
-          unitId: 'preview-commander',
-        ),
-        gateway.reachable(
-          expectedRevision: scene.player.stamp.revision,
-          unitId: 'preview-commander',
-        ),
-      ]),
-    );
-    final reachable = reachableResponses!.first;
+    final reachableResponses = await Future.wait([
+      gateway.reachable(
+        expectedRevision: scene.player.stamp.revision,
+        unitId: 'preview-commander',
+      ),
+      gateway.reachable(
+        expectedRevision: scene.player.stamp.revision,
+        unitId: 'preview-commander',
+      ),
+    ]);
+    final reachable = reachableResponses.first;
     expect(reachable, isNotNull);
     expect(reachable.tiles, isNotEmpty);
     expect(backend.maximumInFlightRequests, 1);
-    final route = await tester.runAsync(
-      () => gateway.routePlan(
-        expectedRevision: scene.player.stamp.revision,
-        unitId: 'preview-commander',
-        target: (col: 2, row: 2),
-      ),
+    final route = await gateway.routePlan(
+      expectedRevision: scene.player.stamp.revision,
+      unitId: 'preview-commander',
+      target: (col: 2, row: 2),
     );
     expect(route, isNotNull);
-    expect(route!.steps.first.coordinate, (col: 2, row: 1));
+    expect(route.steps.first.coordinate, (col: 2, row: 1));
     expect(route.steps.last.coordinate, (col: 2, row: 2));
-    final moved = await tester.runAsync(
-      () => gateway.moveUnit(
-        expectedRevision: scene.player.stamp.revision,
-        unitId: 'preview-commander',
-        target: route.target,
-      ),
+    final moved = await gateway.moveUnit(
+      expectedRevision: scene.player.stamp.revision,
+      unitId: 'preview-commander',
+      target: route.target,
     );
     expect(moved, isNotNull);
-    expect(moved!.accepted, isTrue);
+    expect(moved.accepted, isTrue);
     expect(moved.player!.stamp.revision, 1);
     expect(moved.player!.units.single.coordinate, (col: 2, row: 2));
     expect(moved.execution!.events.single.unitId, 'preview-commander');
     expect(moved.execution!.evidence!.steps.last.coordinate, (col: 2, row: 2));
-    final rejected = await tester.runAsync(
-      () => gateway.moveUnit(
-        expectedRevision: 0,
-        unitId: 'preview-commander',
-        target: (col: 2, row: 1),
-      ),
+    final rejected = await gateway.moveUnit(
+      expectedRevision: 0,
+      unitId: 'preview-commander',
+      target: (col: 2, row: 1),
     );
     expect(rejected, isNotNull);
-    expect(rejected!.accepted, isFalse);
+    expect(rejected.accepted, isFalse);
     expect(rejected.rejectionCode, CommandRejectionCodeView.staleRevision);
     backend.corruptNextAcceptedPatch = true;
     Object? resyncFailure;
-    await tester.runAsync(() async {
-      try {
-        await gateway.moveUnit(
-          expectedRevision: 1,
-          unitId: 'preview-commander',
-          target: (col: 2, row: 1),
-        );
-      } on Object catch (error) {
-        resyncFailure = error;
-      }
-    });
+    try {
+      await gateway.moveUnit(
+        expectedRevision: 1,
+        unitId: 'preview-commander',
+        target: (col: 2, row: 1),
+      );
+    } on Object catch (error) {
+      resyncFailure = error;
+    }
     expect(
       resyncFailure,
       isA<MovementSessionException>()
@@ -143,10 +129,11 @@ void main() {
             2,
           ),
     );
-    final recovered = await tester.runAsync(
-      () => gateway.reachable(expectedRevision: 2, unitId: 'preview-commander'),
+    final recovered = await gateway.reachable(
+      expectedRevision: 2,
+      unitId: 'preview-commander',
     );
-    expect(recovered?.stamp.revision, 2);
+    expect(recovered.stamp.revision, 2);
     expect(backendCreations, 1);
     expect(backend.requestTypes, [
       'capabilities',
@@ -162,7 +149,7 @@ void main() {
       'snapshot',
       'query',
     ]);
-    await tester.runAsync(gateway.close);
+    await gateway.close();
     expect(backend.closeCalls, 1);
   });
 
