@@ -10,8 +10,7 @@ use super::planner_support::{
     automation_assignment_capacity, optionless_interaction, reserved_coordinates,
 };
 use super::rules::{
-    WorkerMutation, WorkerRuleError, WorkerUpdate, assignment_city, improvement_city,
-    start_improvement,
+    WorkerMutation, WorkerRuleError, WorkerUpdate, improvement_city, start_improvement,
 };
 use super::score::{assignment_score, improvement_score};
 use crate::movement::{
@@ -369,15 +368,18 @@ fn best_assignment(
     metrics: &mut WorkerAutomationMetrics,
 ) -> Option<Candidate> {
     let mut best: Option<Candidate> = None;
+    let mut evaluated_city = None;
+    let mut city_has_capacity = false;
     for target in targets {
-        if !automation_assignment_capacity(state, context, unit, target.city) {
+        if evaluated_city != Some(target.city.id()) {
+            evaluated_city = Some(target.city.id());
+            city_has_capacity = automation_assignment_capacity(state, context, unit, target.city);
+        }
+        if !city_has_capacity {
             continue;
         }
         if !record_legality(context, metrics) {
             break;
-        }
-        if assignment_city(state, context, unit, target.coordinate, false).is_none() {
-            continue;
         }
         let Some(tile) = context.map().tile_at(target.coordinate) else {
             continue;
