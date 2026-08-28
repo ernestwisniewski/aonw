@@ -6,6 +6,7 @@
 #
 # Format:
 # case <id> <family> <command> <oracle-outcome> <oracle-reason-or-dash> <structural-status> <execution-status> <checkpoint> <blocker-or-dash> <canonical-artifact-or-dash>
+# current-contract-evidence <family> <engine-test> <runtime-test>
 
 source-corpus test/fixtures/reducer_parity
 source-corpus-oid b6f6c696a672e4e54babe76c307d6fd4e7bf8541
@@ -14,8 +15,23 @@ authoritative-inventory engine/migration/authoritative_inventory
 expected-case-count 120
 expected-round-trip-count 9
 expected-engine-parity-count 9
-expected-blocked-count 64
-expected-historical-count 47
+expected-blocked-count 0
+expected-historical-count 111
+
+current-contract-evidence artifacts engine/crates/aonw_engine/tests/artifact.rs engine/crates/aonw_local_runtime/tests/artifact_runtime.rs
+current-contract-evidence auto-explore engine/crates/aonw_engine/tests/movement_logistics.rs engine/crates/aonw_local_runtime/tests/movement_logistics_runtime.rs
+current-contract-evidence city-expansion engine/crates/aonw_engine/tests/city.rs engine/crates/aonw_local_runtime/tests/city_runtime.rs
+current-contract-evidence city-founding engine/crates/aonw_engine/tests/city.rs engine/crates/aonw_local_runtime/tests/city_runtime.rs
+current-contract-evidence city-production engine/crates/aonw_engine/tests/production.rs engine/crates/aonw_local_runtime/tests/production_runtime.rs
+current-contract-evidence city-worked-hex engine/crates/aonw_engine/tests/city.rs engine/crates/aonw_local_runtime/tests/city_runtime.rs
+current-contract-evidence combat engine/crates/aonw_engine/tests/combat.rs engine/crates/aonw_local_runtime/tests/combat_runtime.rs
+current-contract-evidence detachment engine/crates/aonw_engine/tests/movement_logistics.rs engine/crates/aonw_local_runtime/tests/movement_logistics_runtime.rs
+current-contract-evidence infrastructure engine/crates/aonw_engine/tests/worker.rs engine/crates/aonw_local_runtime/tests/worker_runtime.rs
+current-contract-evidence merchant-routing engine/crates/aonw_engine/tests/movement_logistics.rs engine/crates/aonw_local_runtime/tests/movement_logistics_runtime.rs
+current-contract-evidence research engine/crates/aonw_engine/tests/research.rs engine/crates/aonw_local_runtime/tests/research_runtime.rs
+current-contract-evidence resource-trade engine/crates/aonw_engine/tests/diplomacy/resource_trade.rs engine/crates/aonw_local_runtime/tests/diplomacy_runtime.rs
+current-contract-evidence turn-finalization engine/crates/aonw_engine/tests/turn_kernel.rs engine/crates/aonw_local_runtime/tests/turn_kernel_runtime.rs
+current-contract-evidence worker engine/crates/aonw_engine/tests/worker.rs engine/crates/aonw_local_runtime/tests/worker_runtime.rs
 
 case artifact-city-slot-full-rejected artifacts StoreArtifactInCity rejected city_artifact_slot_full historical reference-only current superseded-by-current-contract -
 case artifact-excavation-accepted artifacts StartArtifactExcavation accepted - historical reference-only current superseded-by-current-contract -
@@ -35,58 +51,58 @@ case city-founding-controlled-hexes-invalid-rejected city-founding FoundCity rej
 case city-founding-explicit-payload-accepted city-founding FoundCity accepted - historical reference-only current superseded-by-current-contract -
 case city-founding-founder-not-controlled-rejected city-founding FoundCity rejected city_founder_not_controlled historical reference-only current superseded-by-current-contract -
 case city-founding-founder-not-found-rejected city-founding FoundCity rejected city_founder_not_found historical reference-only current superseded-by-current-contract -
-case city-production-building-already-built-rejected city-production StartBuilding rejected building_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-building-locked-rejected city-production StartBuilding rejected building_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-building-map-requirement-rejected city-production StartBuilding rejected building_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-building-map-requirement-replacement-accepted city-production StartBuilding accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-building-not-found-rejected city-production StartBuilding rejected city_not_found blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-building-same-target-no-op-accepted city-production StartBuilding accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-building-wrong-actor-unavailable-rejected city-production StartBuilding rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-overflow-accepted city-production StartBuilding accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-project-accepted city-production StartCityProject accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-project-not-controlled-rejected city-production StartCityProject rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-project-not-found-rejected city-production StartCityProject rejected city_not_found blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-building-completed-accepted city-production RushProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-complete-queue-rejected city-production RushProduction rejected rush_production_unavailable blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-empty-queue-rejected city-production RushProduction rejected production_queue_empty blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-insufficient-gold-rejected city-production RushProduction rejected rush_production_unavailable blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-not-found-rejected city-production RushProduction rejected city_not_found blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-project-rejected city-production RushProduction rejected project_cannot_be_rushed blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-unit-completed-accepted city-production RushProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-unit-spawn-blocked-accepted city-production RushProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-unrest-accepted city-production RushProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-wonder-completed-accepted city-production RushProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-wonder-precompleted-refund-accepted city-production RushProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-wrong-actor-compound-rejected city-production RushProduction rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-rush-wrong-actor-rejected city-production RushProduction rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-specialization-accepted city-production SetCitySpecialization accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-specialization-locked-rejected city-production SetCitySpecialization rejected city_specialization_locked blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-specialization-missing-building-rejected city-production SetCitySpecialization rejected city_specialization_missing_building blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-specialization-not-controlled-rejected city-production SetCitySpecialization rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-specialization-not-found-rejected city-production SetCitySpecialization rejected city_not_found blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-specialization-unchanged-rejected city-production SetCitySpecialization rejected city_specialization_unchanged blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-coast-required-rejected city-production StartUnitProduction rejected unit_production_requires_coast blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-import-coast-replacement-accepted city-production StartUnitProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-not-available-rejected city-production StartUnitProduction rejected unit_production_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-not-found-rejected city-production StartUnitProduction rejected city_not_found blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-overflow-accepted city-production StartUnitProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-resource-required-rejected city-production StartUnitProduction rejected unit_production_requires_resource blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-same-target-no-op-accepted city-production StartUnitProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-supply-bonuses-accepted city-production StartUnitProduction accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-supply-full-rejected city-production StartUnitProduction rejected unit_supply_limit_reached blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-wrong-actor-compound-rejected city-production StartUnitProduction rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-unit-wrong-actor-rejected city-production StartUnitProduction rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-completed-rejected city-production StartWonder rejected wonder_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-locked-rejected city-production StartWonder rejected wonder_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-map-requirement-rejected city-production StartWonder rejected wonder_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-map-requirement-replacement-accepted city-production StartWonder accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-not-found-rejected city-production StartWonder rejected city_not_found blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-other-city-active-rejected city-production StartWonder rejected wonder_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-overflow-accepted city-production StartWonder accepted - blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-same-target-rejected city-production StartWonder rejected wonder_not_available blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-wrong-actor-rejected city-production StartWonder rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wonder-wrong-actor-unavailable-rejected city-production StartWonder rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
-case city-production-wrong-actor-rejected city-production StartBuilding rejected city_not_controlled blocked reference-only CP12 awaits-independent-current-contract-review -
+case city-production-building-already-built-rejected city-production StartBuilding rejected building_not_available historical reference-only current superseded-by-current-contract -
+case city-production-building-locked-rejected city-production StartBuilding rejected building_not_available historical reference-only current superseded-by-current-contract -
+case city-production-building-map-requirement-rejected city-production StartBuilding rejected building_not_available historical reference-only current superseded-by-current-contract -
+case city-production-building-map-requirement-replacement-accepted city-production StartBuilding accepted - historical reference-only current superseded-by-current-contract -
+case city-production-building-not-found-rejected city-production StartBuilding rejected city_not_found historical reference-only current superseded-by-current-contract -
+case city-production-building-same-target-no-op-accepted city-production StartBuilding accepted - historical reference-only current superseded-by-current-contract -
+case city-production-building-wrong-actor-unavailable-rejected city-production StartBuilding rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-production-overflow-accepted city-production StartBuilding accepted - historical reference-only current superseded-by-current-contract -
+case city-production-project-accepted city-production StartCityProject accepted - historical reference-only current superseded-by-current-contract -
+case city-production-project-not-controlled-rejected city-production StartCityProject rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-production-project-not-found-rejected city-production StartCityProject rejected city_not_found historical reference-only current superseded-by-current-contract -
+case city-production-rush-building-completed-accepted city-production RushProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-rush-complete-queue-rejected city-production RushProduction rejected rush_production_unavailable historical reference-only current superseded-by-current-contract -
+case city-production-rush-empty-queue-rejected city-production RushProduction rejected production_queue_empty historical reference-only current superseded-by-current-contract -
+case city-production-rush-insufficient-gold-rejected city-production RushProduction rejected rush_production_unavailable historical reference-only current superseded-by-current-contract -
+case city-production-rush-not-found-rejected city-production RushProduction rejected city_not_found historical reference-only current superseded-by-current-contract -
+case city-production-rush-project-rejected city-production RushProduction rejected project_cannot_be_rushed historical reference-only current superseded-by-current-contract -
+case city-production-rush-unit-completed-accepted city-production RushProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-rush-unit-spawn-blocked-accepted city-production RushProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-rush-unrest-accepted city-production RushProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-rush-wonder-completed-accepted city-production RushProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-rush-wonder-precompleted-refund-accepted city-production RushProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-rush-wrong-actor-compound-rejected city-production RushProduction rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-production-rush-wrong-actor-rejected city-production RushProduction rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-production-specialization-accepted city-production SetCitySpecialization accepted - historical reference-only current superseded-by-current-contract -
+case city-production-specialization-locked-rejected city-production SetCitySpecialization rejected city_specialization_locked historical reference-only current superseded-by-current-contract -
+case city-production-specialization-missing-building-rejected city-production SetCitySpecialization rejected city_specialization_missing_building historical reference-only current superseded-by-current-contract -
+case city-production-specialization-not-controlled-rejected city-production SetCitySpecialization rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-production-specialization-not-found-rejected city-production SetCitySpecialization rejected city_not_found historical reference-only current superseded-by-current-contract -
+case city-production-specialization-unchanged-rejected city-production SetCitySpecialization rejected city_specialization_unchanged historical reference-only current superseded-by-current-contract -
+case city-production-unit-coast-required-rejected city-production StartUnitProduction rejected unit_production_requires_coast historical reference-only current superseded-by-current-contract -
+case city-production-unit-import-coast-replacement-accepted city-production StartUnitProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-unit-not-available-rejected city-production StartUnitProduction rejected unit_production_not_available historical reference-only current superseded-by-current-contract -
+case city-production-unit-not-found-rejected city-production StartUnitProduction rejected city_not_found historical reference-only current superseded-by-current-contract -
+case city-production-unit-overflow-accepted city-production StartUnitProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-unit-resource-required-rejected city-production StartUnitProduction rejected unit_production_requires_resource historical reference-only current superseded-by-current-contract -
+case city-production-unit-same-target-no-op-accepted city-production StartUnitProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-unit-supply-bonuses-accepted city-production StartUnitProduction accepted - historical reference-only current superseded-by-current-contract -
+case city-production-unit-supply-full-rejected city-production StartUnitProduction rejected unit_supply_limit_reached historical reference-only current superseded-by-current-contract -
+case city-production-unit-wrong-actor-compound-rejected city-production StartUnitProduction rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-production-unit-wrong-actor-rejected city-production StartUnitProduction rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-production-wonder-completed-rejected city-production StartWonder rejected wonder_not_available historical reference-only current superseded-by-current-contract -
+case city-production-wonder-locked-rejected city-production StartWonder rejected wonder_not_available historical reference-only current superseded-by-current-contract -
+case city-production-wonder-map-requirement-rejected city-production StartWonder rejected wonder_not_available historical reference-only current superseded-by-current-contract -
+case city-production-wonder-map-requirement-replacement-accepted city-production StartWonder accepted - historical reference-only current superseded-by-current-contract -
+case city-production-wonder-not-found-rejected city-production StartWonder rejected city_not_found historical reference-only current superseded-by-current-contract -
+case city-production-wonder-other-city-active-rejected city-production StartWonder rejected wonder_not_available historical reference-only current superseded-by-current-contract -
+case city-production-wonder-overflow-accepted city-production StartWonder accepted - historical reference-only current superseded-by-current-contract -
+case city-production-wonder-same-target-rejected city-production StartWonder rejected wonder_not_available historical reference-only current superseded-by-current-contract -
+case city-production-wonder-wrong-actor-rejected city-production StartWonder rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-production-wonder-wrong-actor-unavailable-rejected city-production StartWonder rejected city_not_controlled historical reference-only current superseded-by-current-contract -
+case city-production-wrong-actor-rejected city-production StartBuilding rejected city_not_controlled historical reference-only current superseded-by-current-contract -
 case city-worked-hex-add-accepted city-worked-hex ToggleWorkedHex accepted - historical reference-only current superseded-by-current-contract -
 case city-worked-hex-limit-reached-rejected city-worked-hex ToggleWorkedHex rejected worked_hex_limit_reached historical reference-only current superseded-by-current-contract -
 case city-worked-hex-remove-accepted city-worked-hex ToggleWorkedHex accepted - historical reference-only current superseded-by-current-contract -
@@ -106,21 +122,21 @@ case merchant-route-wrong-actor-rejected merchant-routing AssignMerchantTradeRou
 case movement-adjacent-accepted movement MoveUnit accepted - round-trip engine-parity current - engine/fixtures/canonical_commands/movement-adjacent-accepted.json
 case movement-out-of-bounds-rejected movement MoveUnit rejected move_target_out_of_bounds round-trip engine-parity current - engine/fixtures/canonical_commands/movement-out-of-bounds-rejected.json
 case movement-wrong-actor-rejected movement MoveUnit rejected unit_not_controlled round-trip engine-parity current - engine/fixtures/canonical_commands/movement-wrong-actor-rejected.json
-case research-overflow-accepted research SelectTechnology accepted - blocked reference-only CP13 awaits-independent-current-contract-review -
-case research-prerequisite-missing-rejected research SelectTechnology rejected technology_not_available blocked reference-only CP13 awaits-independent-current-contract-review -
-case research-wrong-actor-rejected research SelectTechnology rejected technology_player_not_controlled blocked reference-only CP13 awaits-independent-current-contract-review -
-case resource-trade-exchange-accepted resource-trade OpenResourceExchange accepted - blocked reference-only CP14 awaits-independent-current-contract-review -
-case resource-trade-export-unavailable-rejected resource-trade OpenResourceTrade rejected resource_trade_export_unavailable blocked reference-only CP14 awaits-independent-current-contract-review -
-case resource-trade-gold-accepted resource-trade OpenResourceTrade accepted - blocked reference-only CP14 awaits-independent-current-contract-review -
-case resource-trade-wrong-actor-rejected resource-trade OpenResourceTrade rejected resource_trade_player_not_controlled blocked reference-only CP14 awaits-independent-current-contract-review -
+case research-overflow-accepted research SelectTechnology accepted - historical reference-only current superseded-by-current-contract -
+case research-prerequisite-missing-rejected research SelectTechnology rejected technology_not_available historical reference-only current superseded-by-current-contract -
+case research-wrong-actor-rejected research SelectTechnology rejected technology_player_not_controlled historical reference-only current superseded-by-current-contract -
+case resource-trade-exchange-accepted resource-trade OpenResourceExchange accepted - historical reference-only current superseded-by-current-contract -
+case resource-trade-export-unavailable-rejected resource-trade OpenResourceTrade rejected resource_trade_export_unavailable historical reference-only current superseded-by-current-contract -
+case resource-trade-gold-accepted resource-trade OpenResourceTrade accepted - historical reference-only current superseded-by-current-contract -
+case resource-trade-wrong-actor-rejected resource-trade OpenResourceTrade rejected resource_trade_player_not_controlled historical reference-only current superseded-by-current-contract -
 case road-construction-accepted infrastructure BuildRoad accepted - historical reference-only current superseded-by-current-contract -
 case road-construction-existing-road-rejected infrastructure BuildRoad rejected road_construction_existingRoad historical reference-only current superseded-by-current-contract -
 case road-construction-wrong-actor-rejected infrastructure BuildRoad rejected worker_not_controlled historical reference-only current superseded-by-current-contract -
-case turn-final-submit-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP9 awaits-full-turn-pipeline -
-case turn-first-submit-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP9 awaits-full-turn-pipeline -
-case turn-inactive-player-rejected turn-finalization SubmitTurn rejected turn_player_not_active blocked reference-only CP9 awaits-full-turn-pipeline -
-case turn-rich-map-finalization-accepted turn-finalization SubmitTurn accepted - blocked reference-only CP9 awaits-full-turn-pipeline -
-case turn-wrong-actor-rejected turn-finalization SubmitTurn rejected turn_player_not_controlled blocked reference-only CP9 awaits-full-turn-pipeline -
+case turn-final-submit-accepted turn-finalization SubmitTurn accepted - historical reference-only current superseded-by-current-contract -
+case turn-first-submit-accepted turn-finalization SubmitTurn accepted - historical reference-only current superseded-by-current-contract -
+case turn-inactive-player-rejected turn-finalization SubmitTurn rejected turn_player_not_active historical reference-only current superseded-by-current-contract -
+case turn-rich-map-finalization-accepted turn-finalization SubmitTurn accepted - historical reference-only current superseded-by-current-contract -
+case turn-wrong-actor-rejected turn-finalization SubmitTurn rejected turn_player_not_controlled historical reference-only current superseded-by-current-contract -
 case unit-action-cancel-orders-accepted unit-actions CancelUnitAction accepted - round-trip engine-parity current - engine/fixtures/canonical_commands/unit-action-cancel-orders-accepted.json
 case unit-action-cancel-skipped-accepted unit-actions CancelUnitAction accepted - round-trip engine-parity current - engine/fixtures/canonical_commands/unit-action-cancel-skipped-accepted.json
 case unit-action-fortify-busy-rejected unit-actions FortifyUnit rejected unit_busy round-trip engine-parity current - engine/fixtures/canonical_commands/unit-action-fortify-busy-rejected.json

@@ -31,10 +31,11 @@ the system clock or system randomness.
 by filename census and aggregate Git blob OID without parsing its historical
 envelope. Every case records family, command, accepted/rejected oracle result,
 structural status, execution status, and either a strict current canonical
-artifact or a concrete future checkpoint with one explicit blocker. Rust
-crates are forbidden from reading the source corpus. Only cases backed by a
-current `GameStateDto` round-trip and complete canonical command fixture may be
-promoted to `engine-parity` and executed by the Rust evidence gate.
+artifact or a reviewed historical disposition. Each historical family is bound
+to existing current-contract engine and runtime tests. Rust crates are forbidden
+from reading the source corpus. Only cases backed by a current `GameStateDto`
+round-trip and complete canonical command fixture may be promoted to
+`engine-parity` and executed by the Rust evidence gate.
 
 The status vocabulary is closed:
 
@@ -48,36 +49,27 @@ The status vocabulary is closed:
 - `shadow-ready`
 - `cutover`
 
-Active Rust fixtures now own typed canonical input and compare complete output
+Active Rust fixtures own typed canonical input and compare complete output
 returned by the engine, so `partial-parity-mode` is `full-state`. The historical
-opaque splice adapter and its execution gate have been removed. State
-representation is `state-contract-ready`; command/query surfaces remain at
-their independently evidenced status until their own parity gate is met.
-The current T1+U2+C3+C4+W5 lifecycle surface is `turn-kernel-ready`: submission,
-lifecycle progression, movement reset, reversible-skip cleanup, queued
-movement, merchant routes, scout auto-exploration, multiplayer intended combat,
-worker construction, and bounded worker automation are implemented. Economy,
-diplomatic turn processing, research, agreements, and objectives remain disabled
-and fail closed when their state is detected. The five
-historical integrated-turn fixtures therefore remain blocked until the
-complete O9 pipeline; they are
-not reclassified as full `engine-parity` by the smaller greenfield kernel.
+opaque splice adapter and its execution gate have been removed. The complete
+T1 through O9 lifecycle surface is current: submission, lifecycle, combat,
+city founding, workers, economy, production, artifacts, movement/logistics,
+research, diplomacy, agreements, objectives, and outcome run in one explicit
+deterministic processor order. No processor remains disabled. The five frozen
+integrated-turn cases are historical evidence superseded by this strict current
+turn contract; they are not executed through a compatibility reader.
 
-The CP7/DP read-only substrate is `state-contract-ready` rather than command
-parity. `DiplomacyPolicyQuery` centralizes relation-dependent legality and
-recipient disclosure, and its accepted/rejected/hidden manifest is exercised
-by `make rust-diplomacy-policy-check`. All diplomatic mutation commands and
-events retain their existing `reference-only` inventory status until D8.
+The CP7/DP policy substrate remains the single owner of relation-dependent
+legality and recipient disclosure. D8 now routes all diplomatic mutation
+commands, resource trade, recipient views, and agreement turn processing
+through that policy and the public engine boundary.
 
-The CP7/TG read-only substrate is also `state-contract-ready` rather than
-research-command parity. The immutable ruleset owns all 54 technology nodes and
-their canonical catalog hash. One `TechnologyUnlockQuery` supplies prerequisite
-availability, deterministic fixed-point costs, unlock breakdowns, accumulated
-combat/economy modifiers, and production/worker/resource gates. Its strict
-accepted/rejected manifest is exercised by `make rust-tech-gate-check`.
-`SelectTechnology` and research turn progression remain `reference-only` until
-R7; no legacy reader, fallback, local unlock table, or internal version was
-introduced.
+The CP7/TG substrate and R7 share one immutable 54-node technology catalog and
+canonical hash. `TechnologyUnlockQuery`, `ResearchOptions`,
+`SelectTechnology`, research projects, turn progression, ordered unlock events,
+and production/worker/resource gates use the same deterministic costs and
+prerequisites. No legacy reader, fallback, local unlock table, or internal
+version was introduced.
 
 The CP9/C3 surface is `runtime-ready`. `AttackHex`, `CombatPreview`, direct
 apply, and simultaneous intended attacks share one deterministic resolver,
@@ -104,17 +96,18 @@ gold atomically, preserves a complete unit queue when deterministic spawn is
 blocked, resolves global wonder races in canonical city order, and emits
 recipient-filtered completion/refund events. Its strict client and replay
 contracts reject unknown fields, while save/reopen/replay executes the current
-command directly. The historical reducer documents remain reference evidence;
-no reader, adapter, upcaster, fallback, or internal format version was added.
+command directly. The historical reducer documents are superseded reference
+evidence; no reader, adapter, upcaster, fallback, or internal format version was
+added.
 
 The CP12/E6.2 turn-production surface is `runtime-ready`. A distinct
 `production` turn processor advances scoped players in canonical player/city
 order, reuses the same yield, spawn, completion, and wonder resolvers as rush,
 and persists its typed events through client projection, save, and replay.
 Wealth projects convert current production through the content-owned divisor;
-research projects still require the separate fail-closed R7 processor. The
-general economy processor therefore remains unsupported instead of hiding
-growth, upkeep, or stability no-ops. No client API version or compatibility
+research projects feed the R7 processor. O9 enables the complete economy,
+research, diplomacy, objectives, and outcome phases, so the current turn
+manifest has no disabled processor. No client API version or compatibility
 path was added.
 
 The file deliberately has no `v1` suffix or schema-version field. The engine

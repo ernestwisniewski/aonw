@@ -59,9 +59,13 @@ source_ids="${scratch}/source.ids"
 canonical_paths="${scratch}/canonical.paths"
 engine_commands="${scratch}/engine.commands"
 inventory_engine_commands="${scratch}/inventory-engine.commands"
+current_contract_families="${scratch}/current-contract.families"
+historical_families="${scratch}/historical.families"
 : >"${case_ids}"
 : >"${canonical_paths}"
 : >"${engine_commands}"
+: >"${current_contract_families}"
+: >"${historical_families}"
 
 source_corpus=""
 source_corpus_oid=""
@@ -100,6 +104,14 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
         expected-blocked-count) [[ -z "${expected_blocked_count}" ]] || fail "duplicate expected-blocked-count"; expected_blocked_count="${value}" ;;
         expected-historical-count) [[ -z "${expected_historical_count}" ]] || fail "duplicate expected-historical-count"; expected_historical_count="${value}" ;;
       esac
+      ;;
+    current-contract-evidence)
+      [[ "${#fields[@]}" -eq 4 ]] || fail "${manifest}:${line_number}: current-contract-evidence requires family, engine test, and runtime test"
+      family="${fields[1]}"
+      [[ "${family}" =~ ^[a-z][a-z0-9-]*$ ]] || fail "invalid current-contract evidence family: ${family}"
+      require_relative_file "${fields[2]}"
+      require_relative_file "${fields[3]}"
+      printf '%s\n' "${family}" >>"${current_contract_families}"
       ;;
     case)
       [[ "${#fields[@]}" -eq 11 ]] || fail "${manifest}:${line_number}: case requires ten values"
@@ -152,6 +164,7 @@ while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
           [[ "${checkpoint}" == "current" ]] || fail "historical ${id} must use checkpoint current"
           [[ "${blocker}" == "superseded-by-current-contract" ]] || fail "historical ${id} requires the current-contract disposition"
           [[ "${canonical_artifact}" == "-" ]] || fail "historical ${id} cannot claim a canonical artifact"
+          printf '%s\n' "${family}" >>"${historical_families}"
           historical_count=$((historical_count + 1))
           ;;
         *)
@@ -189,6 +202,15 @@ duplicates="$(sort "${case_ids}" | uniq -d)"
 [[ -z "${duplicates}" ]] || fail "duplicate case id: ${duplicates}"
 duplicates="$(sort "${canonical_paths}" | uniq -d)"
 [[ -z "${duplicates}" ]] || fail "duplicate canonical artifact: ${duplicates}"
+duplicates="$(sort "${current_contract_families}" | uniq -d)"
+[[ -z "${duplicates}" ]] || fail "duplicate current-contract evidence family: ${duplicates}"
+
+sort -u "${historical_families}" -o "${historical_families}"
+sort -u "${current_contract_families}" -o "${current_contract_families}"
+if ! cmp -s "${historical_families}" "${current_contract_families}"; then
+  diff -u "${historical_families}" "${current_contract_families}" >&2 || true
+  fail "historical family set differs from current-contract evidence"
+fi
 
 find "${repo_root}/${source_corpus}" -maxdepth 1 -type f -name '*.json' -print \
   | sed "s#^${repo_root}/${source_corpus}/##" \

@@ -28,12 +28,13 @@ The separate frozen `test/fixtures/reducer_parity` corpus is classified by
 in `canonical_commands/`; their input and expected states round-trip through
 the complete current domain and their full outcomes execute through Rust.
 
-Of the remaining cases, 85 do not receive synthetic defaults or an adapter.
-Each is blocked `reference-only` with a named future checkpoint and the blocker
-`awaits-independent-current-contract-review`. Twenty-six historical U2, C3,
-and C4 cases are also `reference-only`, but are marked
-`superseded-by-current-contract`: their behavior is covered by separate strict
-movement-logistics, combat, and city-territory manifests and tests, without a
-reader for the historical envelope. A future checkpoint must rewrite any
-blocked case into the current canonical contract, review its full state and
-outcome, and atomically promote the matching capability before execution.
+The other 111 cases remain historical `reference-only` evidence and are marked
+`superseded-by-current-contract`. Their U2 through O9 checkpoints are complete:
+the disposition ledger binds every historical family to existing engine and
+runtime tests for the corresponding current contract. There are no outstanding
+blocked cases.
+
+This classification deliberately does not claim byte-for-byte execution parity
+with the old envelope. The successor behavior is exercised through strict
+current DTOs, recipient-safe output, save, and replay without synthetic defaults,
+an adapter, or a reader for the historical corpus.

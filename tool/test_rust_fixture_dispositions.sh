@@ -85,6 +85,14 @@ sed -i.bak 's/reference-only CP9/reference-only current/' "${manifest}"
 rm -f "${manifest}.bak"
 expect_rejection "a blocked case without a checkpoint"
 
+sed -i.bak \
+  -e 's/expected-blocked-count 1/expected-blocked-count 0/' \
+  -e 's/expected-historical-count 0/expected-historical-count 1/' \
+  -e 's/blocked reference-only CP9 awaits-independent-current-contract-review/historical reference-only current superseded-by-current-contract/' \
+  "${manifest}"
+rm -f "${manifest}.bak"
+expect_rejection "a historical family without current-contract evidence"
+
 sed -i.bak 's/example engine-parity A/example characterized A/' "${fixture_root}/engine/migration/authoritative_inventory"
 rm -f "${fixture_root}/engine/migration/authoritative_inventory.bak"
 expect_rejection "execution parity absent from the authoritative inventory"

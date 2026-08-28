@@ -558,7 +558,7 @@ rust-fixture-disposition-test:
 	@tool/test_rust_fixture_dispositions.sh
 
 rust-corpus-parity-check: rust-fixture-disposition-check rust-fixture-disposition-test
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test canonical_fixture_engine reviewed_reducer_dispositions_gate_execution_by_capability -- --exact
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test canonical_fixture_engine review::reviewed_reducer_dispositions_gate_execution_by_capability -- --exact
 
 rust-architecture-policy-check:
 	@tool/check_rust_architecture.py
