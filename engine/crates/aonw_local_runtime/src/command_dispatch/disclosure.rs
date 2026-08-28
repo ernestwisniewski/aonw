@@ -1,3 +1,5 @@
+use core::cmp::Ordering;
+
 use aonw_domain::{CityId, PlayerId, UnitId};
 use aonw_engine::{CombatExecution, CombatTarget, DomainEvent, ExecutionEvidence};
 
@@ -18,6 +20,16 @@ impl RecipientDisclosure {
         visible_cities: &[PlayerCityView],
         evidence: Option<&ExecutionEvidence>,
     ) -> Self {
+        debug_assert!(
+            visible_units
+                .windows(2)
+                .all(|pair| pair[0].id() < pair[1].id())
+        );
+        debug_assert!(
+            visible_cities
+                .windows(2)
+                .all(|pair| pair[0].id() < pair[1].id())
+        );
         let mut combats = Vec::new();
         match evidence {
             Some(ExecutionEvidence::Combat(execution)) => {
@@ -35,6 +47,8 @@ impl RecipientDisclosure {
             )
             | None => {}
         }
+        combats.sort_unstable_by(compare_combat);
+        combats.dedup();
         Self {
             actor,
             unit_ids: visible_units.iter().map(|unit| unit.id().clone()).collect(),
@@ -56,7 +70,7 @@ impl RecipientDisclosure {
     }
 
     pub(crate) fn allows_unit(&self, unit_id: &UnitId) -> bool {
-        self.unit_ids.contains(unit_id)
+        self.unit_ids.binary_search(unit_id).is_ok()
     }
 
     pub(crate) fn allows_combat(&self, execution: &CombatExecution) -> bool {
@@ -67,7 +81,7 @@ impl RecipientDisclosure {
     }
 
     pub(crate) fn allows_city(&self, city_id: &CityId) -> bool {
-        self.city_ids.contains(city_id)
+        self.city_ids.binary_search(city_id).is_ok()
     }
 
     pub(crate) fn allows_event(&self, event: &DomainEvent) -> bool {
@@ -150,8 +164,8 @@ impl RecipientDisclosure {
 
     fn allows(&self, attacker: &UnitId, target: &CombatTarget) -> bool {
         self.combats
-            .iter()
-            .any(|candidate| &candidate.0 == attacker && &candidate.1 == target)
+            .binary_search_by(|candidate| compare_combat_parts(candidate, attacker, target))
+            .is_ok()
     }
 }
 
@@ -163,13 +177,40 @@ fn push_visible_combat(
 ) {
     let preview = &execution.preview;
     let attacker_visible = visible_units
-        .iter()
-        .any(|unit| unit.id() == &preview.attacker_unit_id);
+        .binary_search_by(|unit| unit.id().cmp(&preview.attacker_unit_id))
+        .is_ok();
     let target_visible = match &preview.target {
-        CombatTarget::Unit(id) => visible_units.iter().any(|unit| unit.id() == id),
-        CombatTarget::City(id) => visible_cities.iter().any(|city| city.id() == id),
+        CombatTarget::Unit(id) => visible_units
+            .binary_search_by(|unit| unit.id().cmp(id))
+            .is_ok(),
+        CombatTarget::City(id) => visible_cities
+            .binary_search_by(|city| city.id().cmp(id))
+            .is_ok(),
     };
     if attacker_visible && target_visible {
         output.push((preview.attacker_unit_id.clone(), preview.target.clone()));
+    }
+}
+
+fn compare_combat(left: &(UnitId, CombatTarget), right: &(UnitId, CombatTarget)) -> Ordering {
+    compare_combat_parts(left, &right.0, &right.1)
+}
+
+fn compare_combat_parts(
+    left: &(UnitId, CombatTarget),
+    right_attacker: &UnitId,
+    right_target: &CombatTarget,
+) -> Ordering {
+    left.0
+        .cmp(right_attacker)
+        .then_with(|| compare_target(&left.1, right_target))
+}
+
+fn compare_target(left: &CombatTarget, right: &CombatTarget) -> Ordering {
+    match (left, right) {
+        (CombatTarget::Unit(left), CombatTarget::Unit(right)) => left.cmp(right),
+        (CombatTarget::City(left), CombatTarget::City(right)) => left.cmp(right),
+        (CombatTarget::Unit(_), CombatTarget::City(_)) => Ordering::Less,
+        (CombatTarget::City(_), CombatTarget::Unit(_)) => Ordering::Greater,
     }
 }
