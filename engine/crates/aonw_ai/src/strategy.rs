@@ -166,8 +166,8 @@ impl StrategicAssessment {
             .cities()
             .iter()
             .filter(|city| city.owner_player_id() == actor)
-            .filter_map(aonw_local_runtime::PlayerCityView::owned_planning)
-            .map(aonw_local_runtime::OwnedCityPlanningView::population)
+            .filter_map(aonw_local_runtime::PlayerCityView::owned_details)
+            .map(aonw_local_runtime::OwnedCityDetailsView::population)
             .sum();
         let worker_count = count(
             snapshot

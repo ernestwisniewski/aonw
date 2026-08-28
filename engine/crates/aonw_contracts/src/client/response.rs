@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, GameOutcomeDto, PlayerTurnStateDto, UnitKindDto, UnitPostureDto};
+use crate::{
+    ArmyTroopDto, CoordinateDto, GameOutcomeDto, MerchantTradeRouteDto, PlayerTurnStateDto,
+    QueuedMovePathDto, UnitKindDto, UnitPostureDto,
+};
 
 use super::MapViewDto;
 
@@ -19,8 +22,7 @@ mod worker;
 
 pub use artifact::{PlayerArtifactLocationViewDto, PlayerArtifactViewDto};
 pub use city::{
-    CityExpansionCandidateDto, CityFoundingDraftViewDto, OwnedCityPlanningViewDto,
-    PlayerCityViewDto,
+    CityExpansionCandidateDto, CityFoundingDraftViewDto, OwnedCityDetailsViewDto, PlayerCityViewDto,
 };
 pub use diplomacy::{
     PlayerDiplomacyViewDto, PlayerDiplomaticMessageViewDto, PlayerDiplomaticProposalViewDto,
@@ -283,12 +285,50 @@ pub struct PlayerUnitViewDto {
     pub movement_units: u32,
     /// Persistent unit posture.
     pub posture: UnitPostureDto,
+    /// Public combat health when the unit type uses explicit health.
+    pub hit_points: Option<u32>,
+    /// Publicly visible carried artifact, when present.
+    pub carried_artifact_id: Option<String>,
+    /// Complete private command and progression state for a recipient-owned unit.
+    pub owned_details: Option<OwnedUnitDetailsViewDto>,
+}
+
+/// Complete unit state disclosed only to the owning recipient.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct OwnedUnitDetailsViewDto {
+    /// Army composition in canonical troop order.
+    pub army: Vec<ArmyTroopDto>,
+    /// Persisted manual route, when one is queued.
+    pub queued_path: Option<QueuedMovePathDto>,
+    /// Persisted merchant route, when assigned.
+    pub merchant_trade_route: Option<MerchantTradeRouteDto>,
+    /// Current worker construction.
+    pub worker_job: Option<WorkerJobViewDto>,
+    /// Current city-founding work.
+    pub city_founding_job: Option<CityFoundingJobViewDto>,
+    /// Current worker assignment.
+    pub worker_assignment: Option<CoordinateDto>,
+    /// Artifact currently being excavated.
+    pub excavating_artifact_id: Option<String>,
     /// Remaining improvement charges for workers.
     pub worker_build_charges: u32,
-    /// Current worker construction, when visible.
-    pub worker_job: Option<WorkerJobViewDto>,
-    /// Current worker assignment, when visible.
-    pub worker_assignment: Option<CoordinateDto>,
+    /// Accumulated unit experience.
+    pub experience_points: u32,
+}
+
+/// Recipient-owned city-founding activity retained by a settler.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CityFoundingJobViewDto {
+    /// Planned city center.
+    pub center: CoordinateDto,
+    /// Canonically ordered planned non-center territory.
+    pub controlled_hexes: Vec<CoordinateDto>,
+    /// Turns still required.
+    pub remaining_turns: u32,
+    /// Original activity duration.
+    pub total_turns: u32,
 }
 
 /// Recipient-safe view update produced by one command.

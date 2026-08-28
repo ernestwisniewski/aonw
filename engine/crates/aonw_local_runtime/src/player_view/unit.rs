@@ -1,6 +1,51 @@
 use aonw_domain::{
-    FogVisibility, GameState, HexCoord, PlayerId, Unit, UnitId, UnitKind, UnitPosture, WorkerJob,
+    ArmyTroop, ArtifactId, FogVisibility, GameState, MerchantTradeRoute, PlayerId, QueuedMovePath,
+    Unit, UnitActivity, UnitId, UnitKind, UnitPosture,
 };
+
+/// Complete unit state disclosed only to the owning recipient.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct OwnedUnitDetailsView {
+    army: Box<[ArmyTroop]>,
+    queued_path: Option<QueuedMovePath>,
+    merchant_trade_route: Option<MerchantTradeRoute>,
+    activity: UnitActivity,
+    worker_build_charges: u32,
+    experience_points: u32,
+}
+
+impl OwnedUnitDetailsView {
+    /// Returns army troops in canonical order.
+    #[must_use]
+    pub const fn army(&self) -> &[ArmyTroop] {
+        &self.army
+    }
+    /// Returns the persisted manual route.
+    #[must_use]
+    pub const fn queued_path(&self) -> Option<&QueuedMovePath> {
+        self.queued_path.as_ref()
+    }
+    /// Returns the persisted merchant route.
+    #[must_use]
+    pub const fn merchant_trade_route(&self) -> Option<&MerchantTradeRoute> {
+        self.merchant_trade_route.as_ref()
+    }
+    /// Returns all mutually exclusive and independent activity slots.
+    #[must_use]
+    pub const fn activity(&self) -> &UnitActivity {
+        &self.activity
+    }
+    /// Returns remaining worker construction charges.
+    #[must_use]
+    pub const fn worker_build_charges(&self) -> u32 {
+        self.worker_build_charges
+    }
+    /// Returns accumulated unit experience.
+    #[must_use]
+    pub const fn experience_points(&self) -> u32 {
+        self.experience_points
+    }
+}
 
 /// Recipient-safe unit view for local presentation.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -13,9 +58,9 @@ pub struct PlayerUnitView {
     row: i32,
     movement_units: u32,
     posture: UnitPosture,
-    worker_build_charges: u32,
-    worker_job: Option<WorkerJob>,
-    worker_assignment: Option<HexCoord>,
+    hit_points: Option<u32>,
+    carried_artifact_id: Option<ArtifactId>,
+    owned_details: Option<OwnedUnitDetailsView>,
 }
 
 impl PlayerUnitView {
@@ -29,17 +74,16 @@ impl PlayerUnitView {
             row: unit.position().row(),
             movement_units: unit.movement_units().get(),
             posture: unit.posture(),
-            worker_build_charges: if disclose_worker {
-                unit.worker_build_charges()
-            } else {
-                0
-            },
-            worker_job: disclose_worker
-                .then(|| unit.activity().worker_job().cloned())
-                .flatten(),
-            worker_assignment: disclose_worker
-                .then(|| unit.activity().worker_assignment())
-                .flatten(),
+            hit_points: unit.hit_points(),
+            carried_artifact_id: unit.carried_artifact_id().cloned(),
+            owned_details: disclose_worker.then(|| OwnedUnitDetailsView {
+                army: unit.army().to_vec().into_boxed_slice(),
+                queued_path: unit.queued_path().cloned(),
+                merchant_trade_route: unit.merchant_trade_route().cloned(),
+                activity: unit.activity().clone(),
+                worker_build_charges: unit.worker_build_charges(),
+                experience_points: unit.experience_points(),
+            }),
         }
     }
 
@@ -83,20 +127,20 @@ impl PlayerUnitView {
     pub const fn posture(&self) -> UnitPosture {
         self.posture
     }
-    /// Returns remaining worker construction charges.
+    /// Returns public combat health when the unit type uses it.
     #[must_use]
-    pub const fn worker_build_charges(&self) -> u32 {
-        self.worker_build_charges
+    pub const fn hit_points(&self) -> Option<u32> {
+        self.hit_points
     }
-    /// Returns current worker construction when recipient-owned.
+    /// Returns the publicly visible carried artifact.
     #[must_use]
-    pub const fn worker_job(&self) -> Option<&WorkerJob> {
-        self.worker_job.as_ref()
+    pub const fn carried_artifact_id(&self) -> Option<&ArtifactId> {
+        self.carried_artifact_id.as_ref()
     }
-    /// Returns current worker assignment when recipient-owned.
+    /// Returns complete private state only for a recipient-owned unit.
     #[must_use]
-    pub const fn worker_assignment(&self) -> Option<HexCoord> {
-        self.worker_assignment
+    pub const fn owned_details(&self) -> Option<&OwnedUnitDetailsView> {
+        self.owned_details.as_ref()
     }
 }
 

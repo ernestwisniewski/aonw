@@ -14,7 +14,7 @@ mod unit;
 
 pub(crate) use artifact::visible_artifacts;
 pub use artifact::{PlayerArtifactLocationView, PlayerArtifactView};
-pub use city::{CityFoundingDraftView, OwnedCityPlanningView, PlayerCityView};
+pub use city::{CityFoundingDraftView, OwnedCityDetailsView, PlayerCityView};
 pub(crate) use city::{city_founding_draft, visible_cities};
 pub(crate) use diplomacy::diplomacy_view;
 pub use diplomacy::{
@@ -23,8 +23,8 @@ pub use diplomacy::{
 };
 pub(crate) use infrastructure::visible_infrastructure;
 pub use infrastructure::{PlayerFieldImprovementView, PlayerRoadView};
-pub use unit::PlayerUnitView;
 pub(crate) use unit::visible_units;
+pub use unit::{OwnedUnitDetailsView, PlayerUnitView};
 
 /// Recipient-owned action currently awaiting player input.
 #[allow(missing_docs)]

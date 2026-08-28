@@ -126,7 +126,9 @@ pub(super) fn worker_command(
         unit.owner_player_id() == actor
             && unit.kind() == UnitKind::Worker
             && unit.posture() == UnitPosture::Active
-            && unit.worker_job().is_none()
+            && unit
+                .owned_details()
+                .is_some_and(|details| details.activity().worker_job().is_none())
     }) {
         let result = runtime_result!(runtime.query(&RuntimeQuery::WorkerOptions(
             WorkerOptionsRequest {

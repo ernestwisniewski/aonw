@@ -26,11 +26,11 @@ pub use command_dispatch::{
 pub use persistence::{PersistenceError, ReplayVerification};
 pub use persistence_file::{PersistenceFileError, PersistenceFileStore, PersistenceRestoreSource};
 pub use player_view::{
-    CityFoundingDraftView, OwnedCityPlanningView, PendingActionView, PlayerArtifactLocationView,
-    PlayerArtifactView, PlayerCityView, PlayerDiplomacyView, PlayerDiplomaticMessageView,
-    PlayerDiplomaticProposalView, PlayerDiplomaticRelationView, PlayerFieldImprovementView,
-    PlayerResourceTradeAgreementView, PlayerRoadView, PlayerTurnLifecycleView, PlayerUnitView,
-    PlayerViewSnapshot,
+    CityFoundingDraftView, OwnedCityDetailsView, OwnedUnitDetailsView, PendingActionView,
+    PlayerArtifactLocationView, PlayerArtifactView, PlayerCityView, PlayerDiplomacyView,
+    PlayerDiplomaticMessageView, PlayerDiplomaticProposalView, PlayerDiplomaticRelationView,
+    PlayerFieldImprovementView, PlayerResourceTradeAgreementView, PlayerRoadView,
+    PlayerTurnLifecycleView, PlayerUnitView, PlayerViewSnapshot,
 };
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{

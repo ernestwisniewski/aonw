@@ -16,13 +16,14 @@ pub use request::{
 };
 pub use response::{
     AutoExploreOptionDto, CityExpansionCandidateDto, CityFoundingDraftViewDto,
-    CitySpecializationOptionDto, CityYieldContributionDto, CityYieldContributionKindDto,
-    ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto,
-    ClientEventDto, ClientEvidenceDto, ClientFeatureDto, ClientLogisticsEvidenceDto,
-    ClientOutcomeDto, ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto,
-    ClientResponseDto, ClientSessionStampDto, DetachmentOptionDto, FieldImprovementViewDto,
-    MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
-    OwnedCityPlanningViewDto, PendingActionViewDto, PlayerArtifactLocationViewDto,
+    CityFoundingJobViewDto, CitySpecializationOptionDto, CityYieldContributionDto,
+    CityYieldContributionKindDto, ClientCommandOutcomeDto, ClientCommandRejectionCodeDto,
+    ClientCommandResultDto, ClientErrorDto, ClientEventDto, ClientEvidenceDto, ClientFeatureDto,
+    ClientLogisticsEvidenceDto, ClientOutcomeDto, ClientQueryResultDto,
+    ClientReplayVerificationDto, ClientResponseBodyDto, ClientResponseDto, ClientSessionStampDto,
+    DetachmentOptionDto, FieldImprovementViewDto, MerchantDestinationOptionDto,
+    MovementSearchMetricsDto, MovementStepViewDto, OwnedCityDetailsViewDto,
+    OwnedUnitDetailsViewDto, PendingActionViewDto, PlayerArtifactLocationViewDto,
     PlayerArtifactViewDto, PlayerCityViewDto, PlayerDiplomacyViewDto,
     PlayerDiplomaticMessageViewDto, PlayerDiplomaticProposalViewDto,
     PlayerDiplomaticRelationViewDto, PlayerResourceTradeAgreementViewDto,
@@ -36,4 +37,4 @@ pub use response::{
 };
 
 /// The only client protocol version accepted by this build.
-pub const CLIENT_API_VERSION: u16 = 6;
+pub const CLIENT_API_VERSION: u16 = 7;

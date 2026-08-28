@@ -17,10 +17,60 @@ class UnitView:
 	var coordinate: Vector2i
 	var movement_units: int
 	var posture: String
+	var has_hit_points: bool
+	var hit_points: int
+	var has_carried_artifact_id: bool
+	var carried_artifact_id: String
+	var owned_details: OwnedUnitDetailsView
+	# Compatibility conveniences derived from owned_details.
 	var worker_build_charges: int
 	var worker_job: WorkerJobView
 	var has_worker_assignment: bool
 	var worker_assignment: Vector2i
+
+class ArmyTroopView:
+	extends RefCounted
+	var kind: StringName
+	var count: int
+
+class PersistedMovementStepView:
+	extends RefCounted
+	var coordinate: Vector2i
+	var enter_cost_units: int
+	var cumulative_cost_units: int
+
+class QueuedMovePathView:
+	extends RefCounted
+	var target: Vector2i
+	var steps: Array[PersistedMovementStepView]
+
+class MerchantTradeRouteView:
+	extends RefCounted
+	var origin_city_id: String
+	var destination_city_id: String
+	var steps: Array[PersistedMovementStepView]
+	var transport_network_fingerprint: String
+
+class CityFoundingJobView:
+	extends RefCounted
+	var center: Vector2i
+	var controlled_hexes: Array[Vector2i]
+	var remaining_turns: int
+	var total_turns: int
+
+class OwnedUnitDetailsView:
+	extends RefCounted
+	var army: Array[ArmyTroopView]
+	var queued_path: QueuedMovePathView
+	var merchant_trade_route: MerchantTradeRouteView
+	var worker_job: WorkerJobView
+	var city_founding_job: CityFoundingJobView
+	var has_worker_assignment: bool
+	var worker_assignment: Vector2i
+	var has_excavating_artifact_id: bool
+	var excavating_artifact_id: String
+	var worker_build_charges: int
+	var experience_points: int
 
 class WorkerJobView:
 	extends RefCounted
@@ -126,9 +176,28 @@ class CityFoundingDraftView:
 class OwnedCityPlanningView:
 	extends RefCounted
 	var population: int
+	var stored_food: int
+	var max_hexes: int
+	var territory_radius: int
 	var worked_hexes: Array[Vector2i]
+	var buildings: Array[StringName]
+	var wonders: Array[StringName]
+	var production_queue: CityProductionQueueView
+	var production_overflow: int
+	var specialization: StringName
 	var has_preferred_expansion_hex: bool
 	var preferred_expansion_hex: Vector2i
+
+class CityProductionTargetView:
+	extends RefCounted
+	var kind: StringName
+	var value: StringName
+
+class CityProductionQueueView:
+	extends RefCounted
+	var target: CityProductionTargetView
+	var invested_production: int
+	var resource_allocation: Dictionary
 
 class CityView:
 	extends RefCounted
@@ -137,6 +206,10 @@ class CityView:
 	var display_name: String
 	var center: Vector2i
 	var visible_controlled_hexes: Array[Vector2i]
+	var has_hit_points: bool
+	var hit_points: int
+	var owned_details: OwnedCityPlanningView
+	# Compatibility alias for existing presentation code.
 	var owned_planning: OwnedCityPlanningView
 
 class FieldImprovementView:

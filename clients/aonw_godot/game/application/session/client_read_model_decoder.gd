@@ -8,6 +8,27 @@ const UNIT_KINDS := [
 	"tank", "scoutShip", "warship", "reconPlane",
 ]
 const UNIT_POSTURES := ["active", "fortified", "autoExploring", "autoWorking"]
+const TROOP_KINDS := ["warrior", "archer", "settler"]
+const CITY_SPECIALIZATIONS := ["growth", "industry", "commerce", "science", "military"]
+const CITY_PROJECTS := ["wealth", "research"]
+const WONDER_TYPES := [
+	"greatLibrary", "hangingGardens", "greatWall", "petra", "centralBank",
+	"imperialUniversity", "grandCathedral", "motherFactory", "nationalObservatory",
+	"svalbardSeedVault", "grandExposition",
+]
+const CITY_BUILDINGS := [
+	"granary", "waterMill", "workshop", "storehouse", "housing", "merchantHall",
+	"stonemason", "barracks", "marketplace", "port", "aqueduct", "forge", "stable",
+	"bank", "buildersGuild", "factory", "lighthouse", "trainingGrounds", "townHall",
+	"monument", "archive", "academy", "university", "observatory", "laboratory",
+	"reactor", "courthouse", "court", "governorsOffice", "surveyorsOffice",
+	"planningOffice", "apothecary", "publicBaths", "hospital", "ministries", "walls",
+	"armory", "siegeWorkshop", "citadel", "warCollege", "conscriptionOffice",
+	"borderFort", "airfield", "artisansGuild", "masterWorkshop", "steelworks",
+	"railDepot", "powerPlant", "assemblyPlant", "refinery", "mapRoom", "shipyard",
+	"dryDock", "navalAcademy", "harborCustoms", "museum", "parliament",
+	"broadcastTower", "worldFairGrounds",
+]
 const PLAYER_TURN_STATES := ["active", "finished"]
 const GAME_OUTCOME_CONDITIONS := [
 	"ongoing", "conquest", "domination", "cultural", "score", "resignation", "draw",
@@ -324,7 +345,7 @@ static func decode_command(raw: Variant) -> AonwClientReadModels.CommandResult:
 static func _decode_unit(raw: Variant) -> AonwClientReadModels.UnitView:
 	if not _has_exact_fields(raw, [
 		"id", "ownerPlayerId", "kind", "name", "coordinate", "movementUnits", "posture",
-		"workerBuildCharges", "workerJob", "workerAssignment",
+		"hitPoints", "carriedArtifactId", "ownedDetails",
 	]):
 		return null
 	if not _strings(raw, ["id", "ownerPlayerId", "kind", "name", "posture"]):
@@ -337,17 +358,20 @@ static func _decode_unit(raw: Variant) -> AonwClientReadModels.UnitView:
 		or not UNIT_POSTURES.has(raw["posture"])
 	):
 		return null
-	if not _integers(raw, ["movementUnits", "workerBuildCharges"], true):
+	if (
+		not _integers(raw, ["movementUnits"], true)
+		or not _is_nullable_integer(raw["hitPoints"], true)
+		or (
+			raw["carriedArtifactId"] != null
+			and (not raw["carriedArtifactId"] is String or raw["carriedArtifactId"].is_empty())
+		)
+	):
 		return null
 	var coordinate: Variant = _decode_coordinate(raw["coordinate"])
-	var worker_job := _decode_worker_job(raw["workerJob"])
-	var worker_assignment: Variant = null
-	if raw["workerAssignment"] != null:
-		worker_assignment = _decode_coordinate(raw["workerAssignment"])
+	var owned_details := _decode_owned_unit_details(raw["ownedDetails"])
 	if (
 		coordinate == null
-		or (raw["workerJob"] != null and worker_job == null)
-		or (raw["workerAssignment"] != null and worker_assignment == null)
+		or (raw["ownedDetails"] != null and owned_details == null)
 	):
 		return null
 	var result := ReadModels.UnitView.new()
@@ -358,11 +382,169 @@ static func _decode_unit(raw: Variant) -> AonwClientReadModels.UnitView:
 	result.coordinate = coordinate
 	result.movement_units = int(raw["movementUnits"])
 	result.posture = raw["posture"]
-	result.worker_build_charges = int(raw["workerBuildCharges"])
+	result.has_hit_points = raw["hitPoints"] != null
+	if result.has_hit_points:
+		result.hit_points = int(raw["hitPoints"])
+	result.has_carried_artifact_id = raw["carriedArtifactId"] != null
+	if result.has_carried_artifact_id:
+		result.carried_artifact_id = raw["carriedArtifactId"]
+	result.owned_details = owned_details
+	if owned_details != null:
+		result.worker_build_charges = owned_details.worker_build_charges
+		result.worker_job = owned_details.worker_job
+		result.has_worker_assignment = owned_details.has_worker_assignment
+		if result.has_worker_assignment:
+			result.worker_assignment = owned_details.worker_assignment
+	return result
+
+static func _decode_owned_unit_details(
+	raw: Variant,
+) -> AonwClientReadModels.OwnedUnitDetailsView:
+	if raw == null:
+		return null
+	if not _has_exact_fields(raw, [
+		"army", "queuedPath", "merchantTradeRoute", "workerJob", "cityFoundingJob",
+		"workerAssignment", "excavatingArtifactId", "workerBuildCharges", "experiencePoints",
+	]):
+		return null
+	if (
+		not raw["army"] is Array
+		or not _integers(raw, ["workerBuildCharges", "experiencePoints"], true)
+		or (
+			raw["excavatingArtifactId"] != null
+			and (
+				not raw["excavatingArtifactId"] is String
+				or raw["excavatingArtifactId"].is_empty()
+			)
+		)
+	):
+		return null
+	var army: Array[AonwClientReadModels.ArmyTroopView] = []
+	for value: Variant in raw["army"]:
+		if (
+			not _has_exact_fields(value, ["kind", "count"])
+			or not value["kind"] is String
+			or not TROOP_KINDS.has(value["kind"])
+			or not _integers(value, ["count"], true)
+		):
+			return null
+		var troop := ReadModels.ArmyTroopView.new()
+		troop.kind = StringName(value["kind"])
+		troop.count = int(value["count"])
+		army.append(troop)
+	army.make_read_only()
+	var queued_path := _decode_queued_path(raw["queuedPath"])
+	var merchant_route := _decode_merchant_route(raw["merchantTradeRoute"])
+	var worker_job := _decode_worker_job(raw["workerJob"])
+	var founding_job := _decode_city_founding_job(raw["cityFoundingJob"])
+	var worker_assignment: Variant = null
+	if raw["workerAssignment"] != null:
+		worker_assignment = _decode_coordinate(raw["workerAssignment"])
+	if (
+		(raw["queuedPath"] != null and queued_path == null)
+		or (raw["merchantTradeRoute"] != null and merchant_route == null)
+		or (raw["workerJob"] != null and worker_job == null)
+		or (raw["cityFoundingJob"] != null and founding_job == null)
+		or (raw["workerAssignment"] != null and worker_assignment == null)
+	):
+		return null
+	var result := ReadModels.OwnedUnitDetailsView.new()
+	result.army = army
+	result.queued_path = queued_path
+	result.merchant_trade_route = merchant_route
 	result.worker_job = worker_job
+	result.city_founding_job = founding_job
 	result.has_worker_assignment = worker_assignment != null
-	if worker_assignment != null:
+	if result.has_worker_assignment:
 		result.worker_assignment = worker_assignment
+	result.has_excavating_artifact_id = raw["excavatingArtifactId"] != null
+	if result.has_excavating_artifact_id:
+		result.excavating_artifact_id = raw["excavatingArtifactId"]
+	result.worker_build_charges = int(raw["workerBuildCharges"])
+	result.experience_points = int(raw["experiencePoints"])
+	return result
+
+static func _decode_queued_path(raw: Variant) -> AonwClientReadModels.QueuedMovePathView:
+	if raw == null:
+		return null
+	if (
+		not _has_exact_fields(raw, ["targetCol", "targetRow", "steps"])
+		or not _integers(raw, ["targetCol", "targetRow"], false)
+		or not raw["steps"] is Array
+	):
+		return null
+	var steps: Variant = _decode_persisted_steps(raw["steps"])
+	if steps == null:
+		return null
+	var result := ReadModels.QueuedMovePathView.new()
+	result.target = Vector2i(int(raw["targetCol"]), int(raw["targetRow"]))
+	result.steps = steps
+	return result
+
+static func _decode_merchant_route(
+	raw: Variant,
+) -> AonwClientReadModels.MerchantTradeRouteView:
+	if raw == null:
+		return null
+	if not _has_exact_fields(raw, [
+		"originCityId", "destinationCityId", "steps", "transportNetworkFingerprint",
+	]):
+		return null
+	if not _strings(raw, [
+		"originCityId", "destinationCityId", "transportNetworkFingerprint",
+	]) or not raw["steps"] is Array:
+		return null
+	if raw["originCityId"].is_empty() or raw["destinationCityId"].is_empty():
+		return null
+	var steps: Variant = _decode_persisted_steps(raw["steps"])
+	if steps == null:
+		return null
+	var result := ReadModels.MerchantTradeRouteView.new()
+	result.origin_city_id = raw["originCityId"]
+	result.destination_city_id = raw["destinationCityId"]
+	result.steps = steps
+	result.transport_network_fingerprint = raw["transportNetworkFingerprint"]
+	return result
+
+static func _decode_persisted_steps(raw: Array) -> Variant:
+	var steps: Array[AonwClientReadModels.PersistedMovementStepView] = []
+	for value: Variant in raw:
+		if (
+			not _has_exact_fields(value, [
+				"col", "row", "enterCostUnits", "cumulativeCostUnits",
+			])
+			or not _integers(value, ["col", "row"], false)
+			or not _integers(value, ["enterCostUnits", "cumulativeCostUnits"], true)
+		):
+			return null
+		var step := ReadModels.PersistedMovementStepView.new()
+		step.coordinate = Vector2i(int(value["col"]), int(value["row"]))
+		step.enter_cost_units = int(value["enterCostUnits"])
+		step.cumulative_cost_units = int(value["cumulativeCostUnits"])
+		steps.append(step)
+	steps.make_read_only()
+	return steps
+
+static func _decode_city_founding_job(
+	raw: Variant,
+) -> AonwClientReadModels.CityFoundingJobView:
+	if raw == null:
+		return null
+	if not _has_exact_fields(raw, [
+		"center", "controlledHexes", "remainingTurns", "totalTurns",
+	]) or not raw["controlledHexes"] is Array:
+		return null
+	if not _integers(raw, ["remainingTurns", "totalTurns"], true):
+		return null
+	var center: Variant = _decode_coordinate(raw["center"])
+	var controlled: Variant = _decode_coordinates(raw["controlledHexes"])
+	if center == null or controlled == null:
+		return null
+	var result := ReadModels.CityFoundingJobView.new()
+	result.center = center
+	result.controlled_hexes = controlled
+	result.remaining_turns = int(raw["remainingTurns"])
+	result.total_turns = int(raw["totalTurns"])
 	return result
 
 static func _decode_worker_job(raw: Variant) -> AonwClientReadModels.WorkerJobView:
@@ -798,7 +980,8 @@ static func _decode_cities(raw: Array) -> Variant:
 
 static func _decode_city(raw: Variant) -> AonwClientReadModels.CityView:
 	if not _has_exact_fields(raw, [
-		"id", "ownerPlayerId", "name", "center", "visibleControlledHexes", "ownedPlanning",
+		"id", "ownerPlayerId", "name", "center", "visibleControlledHexes", "hitPoints",
+		"ownedDetails",
 	]):
 		return null
 	if not _strings(raw, ["id", "ownerPlayerId", "name"]):
@@ -807,13 +990,15 @@ static func _decode_city(raw: Variant) -> AonwClientReadModels.CityView:
 		return null
 	if not raw["visibleControlledHexes"] is Array:
 		return null
+	if not _is_nullable_integer(raw["hitPoints"], true):
+		return null
 	var center: Variant = _decode_coordinate(raw["center"])
 	var controlled_hexes: Variant = _decode_coordinates(raw["visibleControlledHexes"])
-	var planning := _decode_owned_city_planning(raw["ownedPlanning"])
+	var details := _decode_owned_city_details(raw["ownedDetails"])
 	if (
 		center == null
 		or controlled_hexes == null
-		or (raw["ownedPlanning"] != null and planning == null)
+		or (raw["ownedDetails"] != null and details == null)
 	):
 		return null
 	var result := ReadModels.CityView.new()
@@ -822,35 +1007,140 @@ static func _decode_city(raw: Variant) -> AonwClientReadModels.CityView:
 	result.display_name = raw["name"]
 	result.center = center
 	result.visible_controlled_hexes = controlled_hexes
-	result.owned_planning = planning
+	result.has_hit_points = raw["hitPoints"] != null
+	if result.has_hit_points:
+		result.hit_points = int(raw["hitPoints"])
+	result.owned_details = details
+	result.owned_planning = details
 	return result
 
-static func _decode_owned_city_planning(
+static func _decode_owned_city_details(
 	raw: Variant,
 ) -> AonwClientReadModels.OwnedCityPlanningView:
 	if raw == null:
 		return null
 	if not _has_exact_fields(raw, [
-		"population", "workedHexes", "preferredExpansionHex",
+		"population", "storedFood", "maxHexes", "territoryRadius", "workedHexes",
+		"buildings", "wonders", "productionQueue", "productionOverflow", "specialization",
+		"preferredExpansionHex",
 	]):
 		return null
-	if not _integers(raw, ["population"], false) or not raw["workedHexes"] is Array:
+	if (
+		not _integers(raw, [
+			"population", "storedFood", "maxHexes", "territoryRadius", "productionOverflow",
+		], true)
+		or not raw["workedHexes"] is Array
+		or not raw["buildings"] is Array
+		or not raw["wonders"] is Array
+		or (
+			raw["specialization"] != null
+			and (
+				not raw["specialization"] is String
+				or not CITY_SPECIALIZATIONS.has(raw["specialization"])
+			)
+		)
+	):
 		return null
 	var worked_hexes: Variant = _decode_coordinates(raw["workedHexes"])
+	var buildings: Variant = _decode_named_values(raw["buildings"], CITY_BUILDINGS)
+	var wonders: Variant = _decode_named_values(raw["wonders"], WONDER_TYPES)
+	var production_queue := _decode_city_production_queue(raw["productionQueue"])
 	var preferred_expansion: Variant = null
 	if raw["preferredExpansionHex"] != null:
 		preferred_expansion = _decode_coordinate(raw["preferredExpansionHex"])
 	if (
 		worked_hexes == null
+		or buildings == null
+		or wonders == null
+		or (raw["productionQueue"] != null and production_queue == null)
 		or (raw["preferredExpansionHex"] != null and preferred_expansion == null)
 	):
 		return null
 	var result := ReadModels.OwnedCityPlanningView.new()
 	result.population = int(raw["population"])
+	result.stored_food = int(raw["storedFood"])
+	result.max_hexes = int(raw["maxHexes"])
+	result.territory_radius = int(raw["territoryRadius"])
 	result.worked_hexes = worked_hexes
+	result.buildings = buildings
+	result.wonders = wonders
+	result.production_queue = production_queue
+	result.production_overflow = int(raw["productionOverflow"])
+	if raw["specialization"] != null:
+		result.specialization = StringName(raw["specialization"])
 	result.has_preferred_expansion_hex = preferred_expansion != null
 	if preferred_expansion != null:
 		result.preferred_expansion_hex = preferred_expansion
+	return result
+
+static func _decode_named_values(raw: Array, allowed: Array) -> Variant:
+	var values: Array[StringName] = []
+	for value: Variant in raw:
+		if not value is String or not allowed.has(value):
+			return null
+		values.append(StringName(value))
+	values.make_read_only()
+	return values
+
+static func _decode_city_production_queue(
+	raw: Variant,
+) -> AonwClientReadModels.CityProductionQueueView:
+	if raw == null:
+		return null
+	if not _has_exact_fields(raw, ["target", "investedProduction", "resourceAllocation"]):
+		return null
+	if (
+		not _integers(raw, ["investedProduction"], true)
+		or not raw["resourceAllocation"] is Dictionary
+	):
+		return null
+	var target := _decode_city_production_target(raw["target"])
+	if target == null:
+		return null
+	var allocation: Dictionary = {}
+	for resource: Variant in raw["resourceAllocation"]:
+		var amount: Variant = raw["resourceAllocation"][resource]
+		if not resource is String or not RESOURCE_TYPES.has(resource) or not _is_integer(amount, true):
+			return null
+		allocation[StringName(resource)] = int(amount)
+	allocation.make_read_only()
+	var result := ReadModels.CityProductionQueueView.new()
+	result.target = target
+	result.invested_production = int(raw["investedProduction"])
+	result.resource_allocation = allocation
+	return result
+
+static func _decode_city_production_target(
+	raw: Variant,
+) -> AonwClientReadModels.CityProductionTargetView:
+	if not raw is Dictionary or not raw.get("kind") is String:
+		return null
+	var value_field := ""
+	var allowed: Array = []
+	match raw["kind"]:
+		"building":
+			value_field = "buildingType"
+			allowed = CITY_BUILDINGS
+		"unit":
+			value_field = "unitType"
+			allowed = UNIT_KINDS
+		"project":
+			value_field = "projectType"
+			allowed = CITY_PROJECTS
+		"wonder":
+			value_field = "wonderType"
+			allowed = WONDER_TYPES
+		_:
+			return null
+	if (
+		not _has_exact_fields(raw, ["kind", value_field])
+		or not raw[value_field] is String
+		or not allowed.has(raw[value_field])
+	):
+		return null
+	var result := ReadModels.CityProductionTargetView.new()
+	result.kind = StringName(raw["kind"])
+	result.value = StringName(raw[value_field])
 	return result
 
 static func _decode_field_improvements(raw: Array) -> Variant:

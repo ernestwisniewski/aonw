@@ -31,7 +31,7 @@ class ForeignVersionTransport:
 
 	func request(_body: Dictionary) -> Dictionary:
 		return {
-			"apiVersion": 6,
+			"apiVersion": 7,
 			"outcome": {
 				"status": "success",
 				"response": {"type": "capabilities"},
@@ -60,7 +60,7 @@ class MalformedSnapshotTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 6
+		return 7
 
 	func request(body: Dictionary) -> Dictionary:
 		if body.get("type", "") == "openSession":
@@ -74,7 +74,7 @@ class MalformedSnapshotTransport:
 
 	func _success(response: Dictionary) -> Dictionary:
 		return {
-			"apiVersion": 6,
+			"apiVersion": 7,
 			"outcome": {"status": "success", "response": response},
 		}
 
@@ -500,7 +500,7 @@ func _test_shared_client_contract() -> void:
 	)
 	_check(response_file != null, "shared client response golden opens in Godot")
 	if response_file != null:
-		var decoder := ClientResponseDecoder.new(6)
+		var decoder := ClientResponseDecoder.new(7)
 		var decoded := decoder.decode(response_file.get_as_text())
 		_check(
 			decoded.get("outcome", {}).get("status", "") == "success",
@@ -531,7 +531,7 @@ func _test_shared_client_contract() -> void:
 			"Godot rejects an unknown command rejection code",
 		)
 		var invalid_version := decoder.decode(
-			'{"apiVersion":"6","outcome":{"status":"success","response":{}}}'
+			'{"apiVersion":"7","outcome":{"status":"success","response":{}}}'
 		)
 		_check(
 			invalid_version.get("outcome", {}).get("status", "") == "failure",
@@ -557,7 +557,7 @@ func _test_shared_client_contract() -> void:
 	)
 	_check(map_response_file != null, "shared map response golden opens in Godot")
 	if map_response_file != null:
-		var decoded_map := ClientResponseDecoder.new(6).decode(map_response_file.get_as_text())
+		var decoded_map := ClientResponseDecoder.new(7).decode(map_response_file.get_as_text())
 		var map_body: Dictionary = decoded_map.get("outcome", {}).get("response", {})
 		var mapped := MapViewMapper.new().from_wire(map_body.get("map"))
 		_check(
@@ -607,9 +607,9 @@ func _test_shared_client_contract() -> void:
 		"coordinate": {"col": 0, "row": 0},
 		"movementUnits": 12,
 		"posture": "active",
-		"workerBuildCharges": 0,
-		"workerJob": null,
-		"workerAssignment": null,
+		"hitPoints": null,
+		"carriedArtifactId": null,
+		"ownedDetails": null,
 	}
 	var turn_lifecycle := {
 		"ownState": "active",

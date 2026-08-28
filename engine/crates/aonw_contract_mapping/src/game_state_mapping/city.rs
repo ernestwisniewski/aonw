@@ -154,6 +154,12 @@ fn encode_queue(value: &CityProductionQueue) -> CityProductionQueueDto {
     }
 }
 
+/// Converts a validated city production queue into its stable wire representation.
+#[must_use]
+pub fn encode_city_production_queue(value: &CityProductionQueue) -> CityProductionQueueDto {
+    encode_queue(value)
+}
+
 const fn decode_target(value: CityProductionTargetDto) -> CityProductionTarget {
     match value {
         CityProductionTargetDto::Building { building_type } => {

@@ -1,9 +1,14 @@
-use aonw_contract_mapping::{encode_improvement, encode_unit_kind, encode_unit_posture};
-use aonw_contracts::CoordinateDto;
-use aonw_contracts::client::{
-    ClientCommandOutcomeDto, ClientCommandResultDto, OwnedCityPlanningViewDto, PlayerCityViewDto,
-    PlayerUnitViewDto, PlayerViewPatchDto, WorkerJobViewDto,
+use aonw_contract_mapping::{
+    encode_city_building, encode_city_production_queue, encode_city_specialization,
+    encode_city_wonder, encode_improvement, encode_merchant_trade_route, encode_queued_path,
+    encode_troop, encode_unit_kind, encode_unit_posture,
 };
+use aonw_contracts::client::{
+    CityFoundingJobViewDto, ClientCommandOutcomeDto, ClientCommandResultDto,
+    OwnedCityDetailsViewDto, OwnedUnitDetailsViewDto, PlayerCityViewDto, PlayerUnitViewDto,
+    PlayerViewPatchDto, WorkerJobViewDto,
+};
+use aonw_contracts::{ArmyTroopDto, CoordinateDto};
 
 use crate::{CommandResult, PlayerCityView, PlayerUnitView, PlayerViewPatch};
 
@@ -75,30 +80,70 @@ fn unit(value: &PlayerUnitView) -> PlayerUnitViewDto {
         },
         movement_units: value.movement_units(),
         posture: encode_unit_posture(value.posture()),
-        worker_build_charges: value.worker_build_charges(),
-        worker_job: value.worker_job().map(|job| match job {
-            aonw_domain::WorkerJob::FieldImprovement {
-                target,
-                improvement,
-                remaining_turns,
-                total_turns,
-            } => WorkerJobViewDto::FieldImprovement {
-                target: coordinate(*target),
-                improvement: encode_improvement(*improvement),
-                remaining_turns: *remaining_turns,
-                total_turns: *total_turns,
-            },
-            aonw_domain::WorkerJob::RoadConstruction {
-                target,
-                remaining_turns,
-                total_turns,
-            } => WorkerJobViewDto::RoadConstruction {
-                target: coordinate(*target),
-                remaining_turns: *remaining_turns,
-                total_turns: *total_turns,
-            },
+        hit_points: value.hit_points(),
+        carried_artifact_id: value.carried_artifact_id().map(|id| id.as_str().to_owned()),
+        owned_details: value.owned_details().map(|details| {
+            let activity = details.activity();
+            OwnedUnitDetailsViewDto {
+                army: details
+                    .army()
+                    .iter()
+                    .map(|troop| ArmyTroopDto {
+                        kind: encode_troop(troop.kind()),
+                        count: troop.count(),
+                    })
+                    .collect(),
+                queued_path: details.queued_path().map(encode_queued_path),
+                merchant_trade_route: details
+                    .merchant_trade_route()
+                    .map(encode_merchant_trade_route),
+                worker_job: activity.worker_job().map(worker_job),
+                city_founding_job: activity
+                    .city_founding_job()
+                    .map(|job| CityFoundingJobViewDto {
+                        center: coordinate(job.center()),
+                        controlled_hexes: job
+                            .controlled_hexes()
+                            .iter()
+                            .copied()
+                            .map(coordinate)
+                            .collect(),
+                        remaining_turns: job.remaining_turns(),
+                        total_turns: job.total_turns(),
+                    }),
+                worker_assignment: activity.worker_assignment().map(coordinate),
+                excavating_artifact_id: activity
+                    .excavating_artifact_id()
+                    .map(|id| id.as_str().to_owned()),
+                worker_build_charges: details.worker_build_charges(),
+                experience_points: details.experience_points(),
+            }
         }),
-        worker_assignment: value.worker_assignment().map(coordinate),
+    }
+}
+
+fn worker_job(job: &aonw_domain::WorkerJob) -> WorkerJobViewDto {
+    match job {
+        aonw_domain::WorkerJob::FieldImprovement {
+            target,
+            improvement,
+            remaining_turns,
+            total_turns,
+        } => WorkerJobViewDto::FieldImprovement {
+            target: coordinate(*target),
+            improvement: encode_improvement(*improvement),
+            remaining_turns: *remaining_turns,
+            total_turns: *total_turns,
+        },
+        aonw_domain::WorkerJob::RoadConstruction {
+            target,
+            remaining_turns,
+            total_turns,
+        } => WorkerJobViewDto::RoadConstruction {
+            target: coordinate(*target),
+            remaining_turns: *remaining_turns,
+            total_turns: *total_turns,
+        },
     }
 }
 
@@ -114,17 +159,36 @@ fn city(value: &PlayerCityView) -> PlayerCityViewDto {
             .copied()
             .map(coordinate)
             .collect(),
-        owned_planning: value
-            .owned_planning()
-            .map(|planning| OwnedCityPlanningViewDto {
-                population: planning.population(),
-                worked_hexes: planning
+        hit_points: value.hit_points(),
+        owned_details: value
+            .owned_details()
+            .map(|details| OwnedCityDetailsViewDto {
+                population: details.population(),
+                stored_food: details.stored_food(),
+                max_hexes: details.max_hexes(),
+                territory_radius: details.territory_radius(),
+                worked_hexes: details
                     .worked_hexes()
                     .iter()
                     .copied()
                     .map(coordinate)
                     .collect(),
-                preferred_expansion_hex: planning.preferred_expansion_hex().map(coordinate),
+                buildings: details
+                    .buildings()
+                    .iter()
+                    .copied()
+                    .map(encode_city_building)
+                    .collect(),
+                wonders: details
+                    .wonders()
+                    .iter()
+                    .copied()
+                    .map(encode_city_wonder)
+                    .collect(),
+                production_queue: details.production_queue().map(encode_city_production_queue),
+                production_overflow: details.production_overflow(),
+                specialization: details.specialization().map(encode_city_specialization),
+                preferred_expansion_hex: details.preferred_expansion_hex().map(coordinate),
             }),
     }
 }

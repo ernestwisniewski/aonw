@@ -1,25 +1,74 @@
 use aonw_domain::{
-    City, CityFoundingDraft, CityId, FogVisibility, GameState, HexCoord, PlayerId, UnitId,
+    City, CityBuildingType, CityFoundingDraft, CityId, CityProductionQueue, CitySpecializationType,
+    FogVisibility, GameState, HexCoord, PlayerId, UnitId, WonderType,
 };
 
-/// Private city-planning fields visible only to the owning recipient.
+/// Complete city state visible only to the owning recipient.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct OwnedCityPlanningView {
+pub struct OwnedCityDetailsView {
     population: i64,
+    stored_food: i64,
+    max_hexes: i64,
+    territory_radius: i64,
     worked_hexes: Box<[HexCoord]>,
+    buildings: Box<[CityBuildingType]>,
+    wonders: Box<[WonderType]>,
+    production_queue: Option<CityProductionQueue>,
+    production_overflow: i64,
+    specialization: Option<CitySpecializationType>,
     preferred_expansion_hex: Option<HexCoord>,
 }
 
-impl OwnedCityPlanningView {
+impl OwnedCityDetailsView {
     /// Returns current population.
     #[must_use]
     pub const fn population(&self) -> i64 {
         self.population
     }
+    /// Returns stored food.
+    #[must_use]
+    pub const fn stored_food(&self) -> i64 {
+        self.stored_food
+    }
+    /// Returns current territory capacity.
+    #[must_use]
+    pub const fn max_hexes(&self) -> i64 {
+        self.max_hexes
+    }
+    /// Returns current territory radius.
+    #[must_use]
+    pub const fn territory_radius(&self) -> i64 {
+        self.territory_radius
+    }
     /// Returns canonical manual worked coordinates.
     #[must_use]
     pub const fn worked_hexes(&self) -> &[HexCoord] {
         &self.worked_hexes
+    }
+    /// Returns constructed buildings in stable order.
+    #[must_use]
+    pub const fn buildings(&self) -> &[CityBuildingType] {
+        &self.buildings
+    }
+    /// Returns constructed wonders in stable order.
+    #[must_use]
+    pub const fn wonders(&self) -> &[WonderType] {
+        &self.wonders
+    }
+    /// Returns the current production queue.
+    #[must_use]
+    pub const fn production_queue(&self) -> Option<&CityProductionQueue> {
+        self.production_queue.as_ref()
+    }
+    /// Returns stored production overflow.
+    #[must_use]
+    pub const fn production_overflow(&self) -> i64 {
+        self.production_overflow
+    }
+    /// Returns the current city specialization.
+    #[must_use]
+    pub const fn specialization(&self) -> Option<CitySpecializationType> {
+        self.specialization
     }
     /// Returns the private preferred expansion coordinate.
     #[must_use]
@@ -36,7 +85,8 @@ pub struct PlayerCityView {
     name: Box<str>,
     center: HexCoord,
     visible_controlled_hexes: Box<[HexCoord]>,
-    owned_planning: Option<OwnedCityPlanningView>,
+    hit_points: Option<i64>,
+    owned_details: Option<OwnedCityDetailsView>,
 }
 
 impl PlayerCityView {
@@ -50,12 +100,20 @@ impl PlayerCityView {
                 owned || state.fog_of_war().visibility(actor, *coordinate) != FogVisibility::Hidden
             })
             .collect::<Vec<_>>();
-        let owned_planning = owned.then(|| {
+        let owned_details = owned.then(|| {
             let mut worked_hexes = city.worked_hexes().to_vec();
             worked_hexes.sort_unstable();
-            OwnedCityPlanningView {
+            OwnedCityDetailsView {
                 population: city.population(),
+                stored_food: city.stored_food(),
+                max_hexes: city.max_hexes(),
+                territory_radius: city.territory_radius(),
                 worked_hexes: worked_hexes.into_boxed_slice(),
+                buildings: city.buildings().iter().copied().collect(),
+                wonders: city.wonders().iter().copied().collect(),
+                production_queue: city.production_queue().cloned(),
+                production_overflow: city.production_overflow(),
+                specialization: city.specialization(),
                 preferred_expansion_hex: city.preferred_expansion_hex(),
             }
         });
@@ -65,7 +123,8 @@ impl PlayerCityView {
             name: city.name().into(),
             center: city.center(),
             visible_controlled_hexes: visible_controlled_hexes.into_boxed_slice(),
-            owned_planning,
+            hit_points: city.hit_points(),
+            owned_details,
         }
     }
 
@@ -94,10 +153,15 @@ impl PlayerCityView {
     pub const fn visible_controlled_hexes(&self) -> &[HexCoord] {
         &self.visible_controlled_hexes
     }
-    /// Returns private planning fields only for an owned city.
+    /// Returns public combat health when present.
     #[must_use]
-    pub const fn owned_planning(&self) -> Option<&OwnedCityPlanningView> {
-        self.owned_planning.as_ref()
+    pub const fn hit_points(&self) -> Option<i64> {
+        self.hit_points
+    }
+    /// Returns complete private state only for an owned city.
+    #[must_use]
+    pub const fn owned_details(&self) -> Option<&OwnedCityDetailsView> {
+        self.owned_details.as_ref()
     }
 }
 
