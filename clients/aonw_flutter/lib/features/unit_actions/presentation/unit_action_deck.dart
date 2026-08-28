@@ -201,7 +201,8 @@ List<Widget> _logisticsButtons(
         unitId: options.unitId,
         troopKind: option.troopKind,
       ),
-      '${l10n.unitActionLabel('detachTroop')} · ${option.troopKind.name}',
+      '${l10n.unitActionLabel('detachTroop')} · '
+      '${l10n.presentationName(option.troopKind.name)}',
       Icons.call_split,
     );
   }

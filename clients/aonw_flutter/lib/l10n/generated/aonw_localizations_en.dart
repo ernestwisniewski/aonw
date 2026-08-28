@@ -389,4 +389,667 @@ class AonwLocalizationsEn extends AonwLocalizations {
   String outcomeScoreLine(String playerId, int score) {
     return '$playerId: $score';
   }
+
+  @override
+  String cityText(String key) {
+    String _temp0 = intl.Intl.selectLogic(key, {
+      'title': 'City',
+      'foundingTitle': 'Found a city',
+      'loading': 'Loading city details',
+      'owner': 'Owner',
+      'health': 'Health',
+      'population': 'Population',
+      'territory': 'Territory',
+      'foundingSelection': 'Initial territory',
+      'foundingConfirm': 'Confirm city founding',
+      'executing': 'Applying city action',
+      'cityYield': 'Yield',
+      'food': 'Food',
+      'production': 'Production',
+      'gold': 'Gold',
+      'defense': 'Defense',
+      'workedHexes': 'Worked hexes',
+      'expansion': 'Preferred expansion',
+      'foundingOpen': 'Plan a city',
+      'other': 'City',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String cityFailure(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'requestFailed': 'The city request could not be completed.',
+      'responseIncompatible':
+          'The city response is incompatible with this client.',
+      'sessionUnavailable': 'The local game session is unavailable.',
+      'staleRevision': 'The game state changed. Review the city and try again.',
+      'matchFinished': 'The match has already finished.',
+      'cityFounderNotFound': 'The founding unit is no longer available.',
+      'cityFounderNotControlled':
+          'The founding unit is not controlled by this player.',
+      'cityFounderBusy': 'The founding unit is busy.',
+      'cityFounderInvalid': 'That unit cannot found a city.',
+      'cityFounderNoSettlers': 'The founding unit has no settlers.',
+      'citySiteInvalid': 'A city cannot be founded at that site.',
+      'cityCenterOccupied': 'The city center is occupied.',
+      'cityCenterClaimed': 'The city center is already claimed.',
+      'cityCenterTooClose': 'The city center is too close to another city.',
+      'cityControlledHexesInvalid':
+          'The selected initial territory is invalid.',
+      'cityNotFound': 'That city is no longer available.',
+      'cityNotControlled': 'That city is not controlled by this player.',
+      'workedHexUnavailable': 'That worked hex is unavailable.',
+      'workedHexLimitReached': 'The city has reached its worked-hex limit.',
+      'cityExpansionHexUnavailable': 'That expansion hex is unavailable.',
+      'stateRevisionOverflow': 'The game state cannot advance further.',
+      'other': 'The city request could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String workerText(String key) {
+    String _temp0 = intl.Intl.selectLogic(key, {
+      'title': 'Worker',
+      'loading': 'Loading worker options',
+      'empty': 'No worker action is currently available.',
+      'executing': 'Applying worker action',
+      'buildCharges': 'Build charges',
+      'progress': 'Progress',
+      'assigned': 'Assigned hex',
+      'selectImprovement': 'Select',
+      'confirmImprovement': 'Confirm improvement',
+      'cancelJob': 'Cancel construction',
+      'assign': 'Assign to hex',
+      'cancelAssignment': 'Cancel assignment',
+      'buildRoad': 'Build road',
+      'automate': 'Automate',
+      'automationEvidence': 'Planner evidence',
+      'other': 'Worker',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String workerFailure(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'requestFailed': 'The worker request could not be completed.',
+      'responseIncompatible':
+          'The worker response is incompatible with this client.',
+      'sessionUnavailable': 'The local game session is unavailable.',
+      'staleRevision':
+          'The game state changed. Review the worker and try again.',
+      'matchFinished': 'The match has already finished.',
+      'workerNotFound': 'The worker is no longer available.',
+      'workerNotControlled': 'The worker is not controlled by this player.',
+      'workerUnavailable': 'The worker is unavailable.',
+      'workerNoMovementPoints': 'The worker has no movement points.',
+      'workerQueuedPathActive': 'The worker has an active movement order.',
+      'workerImprovementNotSelected': 'Select an improvement first.',
+      'workerActionNotControlled':
+          'The pending worker action is not controlled.',
+      'workerImprovementUnavailable': 'That improvement is unavailable.',
+      'workerJobNotActive': 'The worker has no active construction.',
+      'workerAssignmentUnavailable': 'The worker cannot be assigned here.',
+      'workerAssignmentNotActive': 'The worker has no active assignment.',
+      'workerRoadUnavailable': 'Road construction is unavailable here.',
+      'roadConstructionExistingRoad': 'A road already exists here.',
+      'roadConstructionCity': 'A road cannot be built on a city center.',
+      'roadConstructionEnemyTerritory':
+          'A road cannot be built in enemy territory.',
+      'roadConstructionImpassableTerrain':
+          'A road cannot be built on this terrain.',
+      'workerAutomationNotActive': 'Worker automation is not active.',
+      'workerAutomationNoTarget': 'Worker automation found no target.',
+      'stateRevisionOverflow': 'The game state cannot advance further.',
+      'other': 'The worker request could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String productionText(String key) {
+    String _temp0 = intl.Intl.selectLogic(key, {
+      'title': 'Production and resources',
+      'loading': 'Loading production options',
+      'executing': 'Updating city production',
+      'current': 'Current production',
+      'invested': 'Invested',
+      'overflow': 'Overflow',
+      'resources': 'Strategic resources',
+      'buildings': 'Buildings',
+      'units': 'Units',
+      'projects': 'Projects',
+      'wonders': 'Wonders',
+      'specializations': 'Specializations',
+      'rush': 'Rush production',
+      'cost': 'cost',
+      'requires': 'requires',
+      'empty': 'No option is currently available.',
+      'other': 'Production',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String productionFailure(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'requestFailed': 'The production request could not be completed.',
+      'responseIncompatible': 'The production response is incompatible.',
+      'sessionUnavailable': 'The local game session is unavailable.',
+      'staleRevision': 'The city changed. Review production and try again.',
+      'matchFinished': 'The match has already finished.',
+      'cityNotFound': 'The city is no longer available.',
+      'cityNotControlled': 'The city is not controlled by this player.',
+      'buildingNotAvailable': 'This building is unavailable.',
+      'unitProductionInvalidResourceOption': 'That resource option is invalid.',
+      'unitProductionNotAvailable': 'This unit is unavailable.',
+      'unitProductionRequiresResource': 'Select a resource option.',
+      'unitProductionMissingStrategicResource':
+          'Required resources are missing.',
+      'unitProductionRequiresCoast': 'This unit requires a coastal city.',
+      'unitSupplyLimitReached': 'The unit supply limit is reached.',
+      'wonderNotAvailable': 'This wonder is unavailable.',
+      'citySpecializationLocked': 'This specialization is locked.',
+      'citySpecializationUnchanged': 'This specialization is already active.',
+      'citySpecializationMissingBuilding': 'A required building is missing.',
+      'productionQueueEmpty': 'The production queue is empty.',
+      'projectCannotBeRushed': 'A continuous project cannot be rushed.',
+      'rushProductionUnavailable': 'Rush production is unavailable.',
+      'stateRevisionOverflow': 'The game state cannot advance further.',
+      'other': 'The production request could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String artifactText(String key) {
+    String _temp0 = intl.Intl.selectLogic(key, {
+      'title': 'World artifacts',
+      'executing': 'Applying artifact action',
+      'startExcavation': 'Start excavation',
+      'storeInCity': 'Store in city',
+      'trade': 'Trade artifact',
+      'targetPlayer': 'Target player',
+      'offeredGold': 'Offered gold',
+      'onMap': 'On map at',
+      'carried': 'Carried by',
+      'stored': 'Stored in',
+      'excavation': 'Excavation at',
+      'turnsRemaining': 'turns remaining',
+      'other': 'Artifact',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String artifactName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'ancientImperialCrown': 'Ancient Imperial Crown',
+      'astronomersTablets': 'Astronomer’s Tablets',
+      'prophetMask': 'Prophet’s Mask',
+      'heroSword': 'Hero’s Sword',
+      'merchantsSeal': 'Merchant’s Seal',
+      'firstPeoplesChronicle': 'First People’s Chronicle',
+      'templeReliquary': 'Temple Reliquary',
+      'queensMirror': 'Queen’s Mirror',
+      'other': 'World artifact',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String artifactOnMap(int col, int row) {
+    return 'On map at $col, $row';
+  }
+
+  @override
+  String artifactCarriedBy(String unitName) {
+    return 'Carried by $unitName';
+  }
+
+  @override
+  String artifactStoredIn(String cityName) {
+    return 'Stored in $cityName';
+  }
+
+  @override
+  String artifactExcavationAt(int col, int row, int remainingTurns) {
+    return 'Excavation at $col, $row · $remainingTurns turns remaining';
+  }
+
+  @override
+  String artifactFailure(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'requestFailed': 'The artifact request could not be completed.',
+      'responseIncompatible': 'The artifact response is incompatible.',
+      'sessionUnavailable': 'The local game session is unavailable.',
+      'staleRevision':
+          'The game state changed. Review the artifact and try again.',
+      'matchFinished': 'The match has already finished.',
+      'unitNotFound': 'The unit is no longer available.',
+      'unitNotControlled': 'The unit is not controlled by this player.',
+      'unitUnavailable': 'The unit is unavailable.',
+      'unitAlreadyCarryingArtifact': 'The unit already carries an artifact.',
+      'artifactNotFound': 'The artifact is no longer available.',
+      'unitNotCarryingArtifact': 'The unit is not carrying an artifact.',
+      'cityNotFound': 'The city is no longer available.',
+      'cityNotControlled': 'The city is not controlled by this player.',
+      'unitNotInCity': 'The unit is not in that city.',
+      'cityArtifactSlotFull': 'The city artifact slot is full.',
+      'artifactTradeActorUnavailable': 'This player cannot trade artifacts.',
+      'artifactTradeTargetInvalid': 'The target player is invalid.',
+      'artifactTradeGoldInvalid': 'The gold offer is invalid.',
+      'artifactTradeBlockedByWar': 'Artifact trade is blocked by war.',
+      'artifactTradeGoldUnavailable': 'The offered gold is unavailable.',
+      'offeredArtifactUnavailable': 'The offered artifact is unavailable.',
+      'targetArtifactSlotUnavailable': 'The target has no artifact slot.',
+      'stateRevisionOverflow': 'The game state cannot advance further.',
+      'other': 'The artifact request could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String researchText(String key) {
+    String _temp0 = intl.Intl.selectLogic(key, {
+      'title': 'Research',
+      'open': 'Open research',
+      'close': 'Close research',
+      'loading': 'Loading research options',
+      'retry': 'Retry',
+      'selecting': 'Selecting technology',
+      'selectionRequired': 'Select a technology to continue',
+      'sciencePerTurn': 'Science per turn',
+      'overflow': 'Stored science',
+      'active': 'Active technology',
+      'none': 'None',
+      'cost': 'Cost',
+      'progress': 'Progress',
+      'boost': 'Boost discount',
+      'prerequisites': 'Prerequisites',
+      'blockedBy': 'Blocked by',
+      'unlocks': 'Unlocks',
+      'choose': 'Select',
+      'other': 'Research',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String researchAvailability(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'unlocked': 'Researched',
+      'active': 'Active',
+      'available': 'Available',
+      'lockedByPrerequisites': 'Prerequisites required',
+      'lockedByTechnology': 'Blocked by technology',
+      'other': 'Unavailable',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String researchUnlock(String kind, String target) {
+    return '$kind: $target';
+  }
+
+  @override
+  String researchFailure(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'requestFailed': 'The research request could not be completed.',
+      'responseIncompatible': 'The research response is incompatible.',
+      'sessionUnavailable': 'The local game session is unavailable.',
+      'staleRevision': 'Research changed. Review the options and try again.',
+      'technologyPlayerNotControlled': 'This player cannot select research.',
+      'technologyNotAvailable': 'This technology is not available.',
+      'stateRevisionOverflow': 'The game state cannot advance further.',
+      'other': 'The research request could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String diplomacyText(String key) {
+    String _temp0 = intl.Intl.selectLogic(key, {
+      'title': 'Diplomacy',
+      'open': 'Open diplomacy',
+      'close': 'Close diplomacy',
+      'noContacts': 'No contacts',
+      'compose': 'New action',
+      'target': 'Counterpart',
+      'action': 'Action',
+      'send': 'Send',
+      'invalid': 'Review the form terms.',
+      'pending': 'Sending diplomacy action',
+      'relations': 'Relations',
+      'proposals': 'Proposals',
+      'messages': 'Private messages',
+      'agreements': 'Resource agreements',
+      'accept': 'Accept',
+      'reject': 'Reject',
+      'amount': 'Amount',
+      'goldPerTurn': 'Gold per turn',
+      'duration': 'Turns',
+      'resource': 'Resource',
+      'offered': 'Offered resource',
+      'requested': 'Requested resource',
+      'topic': 'Topic',
+      'other': 'Diplomacy',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String diplomacyFailure(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'requestFailed': 'The diplomacy request could not be completed.',
+      'responseIncompatible': 'The diplomacy response is incompatible.',
+      'sessionUnavailable': 'The local game session is unavailable.',
+      'staleRevision':
+          'Diplomacy changed. Review the current state and try again.',
+      'matchFinished': 'The match has already finished.',
+      'diplomacyPlayerNotControlled':
+          'This player cannot issue diplomacy actions.',
+      'diplomacyTargetNotDiscovered': 'This counterpart is not available.',
+      'diplomacyProposalNotAllowed': 'This proposal is not allowed.',
+      'diplomacyDuplicateProposal': 'This proposal already exists.',
+      'diplomacyProposalNotFound': 'This proposal no longer exists.',
+      'diplomacyProposalPaymentUnavailable':
+          'The proposal payment is unavailable.',
+      'diplomacyMessageCooldown': 'A similar message was sent too recently.',
+      'diplomacyDuplicateMessage': 'This message already exists.',
+      'diplomacyMessageNotFound': 'This message no longer exists.',
+      'diplomacyMessageUnavailable': 'This message cannot be used now.',
+      'diplomacyTruceActive': 'A truce is active.',
+      'diplomacyWarAlreadyActive': 'War is already active.',
+      'diplomacyInvalidGoldAmount': 'The gold amount is invalid.',
+      'diplomacyGoldGiftBlockedByRelation': 'This relation blocks gold gifts.',
+      'diplomacyGoldUnavailable': 'The required gold is unavailable.',
+      'diplomacyGoldGiftUnavailable': 'This gold gift is unavailable.',
+      'invalidResourceTradeTarget': 'The resource trade target is invalid.',
+      'invalidResourceTradeResource': 'The selected resource is invalid.',
+      'invalidResourceTradeTerms': 'The resource trade terms are invalid.',
+      'resourceTradeBlockedByWar': 'War blocks this resource trade.',
+      'resourceTradeGoldUnavailable': 'Trade gold is unavailable.',
+      'resourceTradeAlreadyActive': 'This resource trade is already active.',
+      'invalidResourceTradeAgreementId': 'The agreement identity is invalid.',
+      'resourceTradeAgreementIdConflict': 'The agreement identity conflicts.',
+      'resourceTradeExportUnavailable': 'The resource export is unavailable.',
+      'resourceTradeOfferUnavailable': 'The offered resource is unavailable.',
+      'resourceTradeRequestUnavailable':
+          'The requested resource is unavailable.',
+      'stateRevisionOverflow': 'The game state cannot advance further.',
+      'other': 'The diplomacy request could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String presentationName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'farm': 'Farm',
+      'riverFarm': 'River farm',
+      'mine': 'Mine',
+      'lumberMill': 'Lumber mill',
+      'pasture': 'Pasture',
+      'camp': 'Camp',
+      'quarry': 'Quarry',
+      'fishingBoats': 'Fishing boats',
+      'orchard': 'Orchard',
+      'plantation': 'Plantation',
+      'vineyard': 'Vineyard',
+      'tradingPost': 'Trading post',
+      'prospectorCamp': 'Prospector camp',
+      'horseRanch': 'Horse ranch',
+      'pearlDivers': 'Pearl divers',
+      'coalShaft': 'Coal shaft',
+      'oilWell': 'Oil well',
+      'bauxiteMine': 'Bauxite mine',
+      'uraniumMine': 'Uranium mine',
+      'wheat': 'Wheat',
+      'fish': 'Fish',
+      'deer': 'Deer',
+      'sheep': 'Sheep',
+      'rice': 'Rice',
+      'cow': 'Cow',
+      'apple': 'Apple',
+      'banana': 'Banana',
+      'citrus': 'Citrus',
+      'gold': 'Gold',
+      'silver': 'Silver',
+      'gems': 'Gems',
+      'silk': 'Silk',
+      'spices': 'Spices',
+      'cotton': 'Cotton',
+      'grapes': 'Grapes',
+      'ivory': 'Ivory',
+      'pearls': 'Pearls',
+      'coffee': 'Coffee',
+      'cocoa': 'Cocoa',
+      'tobacco': 'Tobacco',
+      'sugar': 'Sugar',
+      'iron': 'Iron',
+      'coal': 'Coal',
+      'oil': 'Oil',
+      'aluminium': 'Aluminium',
+      'uranium': 'Uranium',
+      'horses': 'Horses',
+      'marble': 'Marble',
+      'commander': 'Commander',
+      'warrior': 'Warrior',
+      'archer': 'Archer',
+      'settler': 'Settler',
+      'worker': 'Worker',
+      'merchant': 'Merchant',
+      'scout': 'Scout',
+      'spearman': 'Spearman',
+      'cavalry': 'Cavalry',
+      'catapult': 'Catapult',
+      'heavyInfantry': 'Heavy infantry',
+      'fieldCannon': 'Field cannon',
+      'rifleman': 'Rifleman',
+      'tank': 'Tank',
+      'scoutShip': 'Scout ship',
+      'warship': 'Warship',
+      'reconPlane': 'Recon plane',
+      'building': 'Building',
+      'improvement': 'Improvement',
+      'resourceVisibility': 'Resource visibility',
+      'unit': 'Unit',
+      'wonder': 'Wonder',
+      'friendly': 'Friendly',
+      'neutral': 'Neutral',
+      'hostile': 'Hostile',
+      'truce': 'Truce',
+      'war': 'War',
+      'warning': 'Warning',
+      'complaint': 'Complaint',
+      'request': 'Request',
+      'praise': 'Praise',
+      'threat': 'Threat',
+      'cooperation': 'Cooperation',
+      'troopsNearCities': 'Troops near cities',
+      'citiesTooClose': 'Cities too close',
+      'blockedRoutes': 'Blocked routes',
+      'withdrawScouts': 'Withdraw scouts',
+      'avoidEscalation': 'Avoid escalation',
+      'commonEnemy': 'Common enemy',
+      'expansionProvocation': 'Expansion provocation',
+      'peacefulPraise': 'Peaceful praise',
+      'conciliatory': 'Conciliatory',
+      'evasive': 'Evasive',
+      'aggressive': 'Aggressive',
+      'declareWar': 'Declare war',
+      'goldGift': 'Gold gift',
+      'friendshipProposal': 'Friendship proposal',
+      'truceProposal': 'Truce proposal',
+      'message': 'Message',
+      'resourceTrade': 'Resource trade',
+      'resourceExchange': 'Resource exchange',
+      'granary': 'Granary',
+      'workshop': 'Workshop',
+      'industry': 'Industry',
+      'other': '$value',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String technologyName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'agriculture': 'Agriculture',
+      'woodworking': 'Woodworking',
+      'mining': 'Mining',
+      'animalHusbandry': 'Animal husbandry',
+      'hunting': 'Hunting',
+      'fishing': 'Fishing',
+      'craftsmanship': 'Craftsmanship',
+      'trade': 'Trade',
+      'storage': 'Storage',
+      'waterEngineering': 'Water engineering',
+      'stoneworking': 'Stoneworking',
+      'militaryOrganization': 'Military organization',
+      'advancedTrade': 'Advanced trade',
+      'construction': 'Construction',
+      'navigation': 'Navigation',
+      'irrigation': 'Irrigation',
+      'banking': 'Banking',
+      'engineering': 'Engineering',
+      'metallurgy': 'Metallurgy',
+      'horsebackRiding': 'Horseback riding',
+      'ironWorking': 'Iron working',
+      'coalMining': 'Coal mining',
+      'machinery': 'Machinery',
+      'administration': 'Administration',
+      'logistics': 'Logistics',
+      'shipbuilding': 'Shipbuilding',
+      'tactics': 'Tactics',
+      'economy': 'Economy',
+      'urbanization': 'Urbanization',
+      'fortifications': 'Fortifications',
+      'strategy': 'Strategy',
+      'specialization': 'Specialization',
+      'writing': 'Writing',
+      'mathematics': 'Mathematics',
+      'medicine': 'Medicine',
+      'civilService': 'Civil service',
+      'siegecraft': 'Siegecraft',
+      'cartography': 'Cartography',
+      'guilds': 'Guilds',
+      'law': 'Law',
+      'education': 'Education',
+      'urbanPlanning': 'Urban planning',
+      'navalDoctrine': 'Naval doctrine',
+      'steel': 'Steel',
+      'bureaucracy': 'Bureaucracy',
+      'nationalism': 'Nationalism',
+      'scientificMethod': 'Scientific method',
+      'steamPower': 'Steam power',
+      'electricity': 'Electricity',
+      'combustion': 'Combustion',
+      'flight': 'Flight',
+      'massProduction': 'Mass production',
+      'radio': 'Radio',
+      'nuclearPhysics': 'Nuclear physics',
+      'other': '$value',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String cityContentName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'growth': 'Growth',
+      'industry': 'Industry',
+      'commerce': 'Commerce',
+      'science': 'Science',
+      'military': 'Military',
+      'wealth': 'Wealth',
+      'research': 'Research',
+      'granary': 'Granary',
+      'waterMill': 'Water mill',
+      'workshop': 'Workshop',
+      'storehouse': 'Storehouse',
+      'housing': 'Housing',
+      'merchantHall': 'Merchant hall',
+      'stonemason': 'Stonemason',
+      'barracks': 'Barracks',
+      'marketplace': 'Marketplace',
+      'port': 'Port',
+      'aqueduct': 'Aqueduct',
+      'forge': 'Forge',
+      'stable': 'Stable',
+      'bank': 'Bank',
+      'buildersGuild': 'Builders’ guild',
+      'factory': 'Factory',
+      'lighthouse': 'Lighthouse',
+      'trainingGrounds': 'Training grounds',
+      'townHall': 'Town hall',
+      'monument': 'Monument',
+      'archive': 'Archive',
+      'academy': 'Academy',
+      'university': 'University',
+      'observatory': 'Observatory',
+      'laboratory': 'Laboratory',
+      'reactor': 'Reactor',
+      'courthouse': 'Courthouse',
+      'court': 'Court',
+      'governorsOffice': 'Governor’s office',
+      'surveyorsOffice': 'Surveyors’ office',
+      'planningOffice': 'Planning office',
+      'apothecary': 'Apothecary',
+      'publicBaths': 'Public baths',
+      'hospital': 'Hospital',
+      'ministries': 'Ministries',
+      'walls': 'Walls',
+      'armory': 'Armory',
+      'siegeWorkshop': 'Siege workshop',
+      'citadel': 'Citadel',
+      'warCollege': 'War college',
+      'conscriptionOffice': 'Conscription office',
+      'borderFort': 'Border fort',
+      'airfield': 'Airfield',
+      'artisansGuild': 'Artisans’ guild',
+      'masterWorkshop': 'Master workshop',
+      'steelworks': 'Steelworks',
+      'railDepot': 'Rail depot',
+      'powerPlant': 'Power plant',
+      'assemblyPlant': 'Assembly plant',
+      'refinery': 'Refinery',
+      'mapRoom': 'Map room',
+      'shipyard': 'Shipyard',
+      'dryDock': 'Dry dock',
+      'navalAcademy': 'Naval academy',
+      'harborCustoms': 'Harbor customs',
+      'museum': 'Museum',
+      'parliament': 'Parliament',
+      'broadcastTower': 'Broadcast tower',
+      'worldFairGrounds': 'World fair grounds',
+      'greatLibrary': 'Great Library',
+      'hangingGardens': 'Hanging Gardens',
+      'greatWall': 'Great Wall',
+      'petra': 'Petra',
+      'centralBank': 'Central Bank',
+      'imperialUniversity': 'Imperial University',
+      'grandCathedral': 'Grand Cathedral',
+      'motherFactory': 'Mother Factory',
+      'nationalObservatory': 'National Observatory',
+      'svalbardSeedVault': 'Svalbard Seed Vault',
+      'grandExposition': 'Grand Exposition',
+      'other': 'Unknown city content',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String diplomaticProposalName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'friendship': 'Friendship',
+      'truce': 'Truce',
+      'other': 'Unknown proposal',
+    });
+    return '$_temp0';
+  }
 }

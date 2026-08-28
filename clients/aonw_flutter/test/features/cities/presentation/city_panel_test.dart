@@ -65,4 +65,30 @@ void main() {
     expect(confirms, 1);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('renders feature copy through the Polish ARB catalog', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      LocalizedTestApp(
+        locale: const Locale('pl'),
+        home: Scaffold(
+          body: CityPanel(
+            state: CityState(
+              cityId: 'preview-city',
+              inspection: testCityInspectionView(),
+            ),
+            city: testCityView(),
+            onToggleFoundingHex: (_) {},
+            onConfirmFounding: () {},
+            onAction: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('Właściciel:'), findsOneWidget);
+    expect(find.textContaining('Żywność 2'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

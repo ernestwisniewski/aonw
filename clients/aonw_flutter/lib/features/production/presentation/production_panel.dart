@@ -104,7 +104,7 @@ final class _ResourceSummary extends StatelessWidget {
     final value = resources.output.isEmpty
         ? '—'
         : resources.output
-              .map((item) => '${copy.name(item.resource.name)} ${item.amount}')
+              .map((item) => '${copy.resource(item.resource)} ${item.amount}')
               .join(', ');
     return Semantics(
       label: copy.text(ProductionText.resources),
@@ -216,9 +216,9 @@ final class _ProductionActions extends StatelessWidget {
             specialization: option.specialization,
           ),
           label:
-              '${copy.name(option.specialization)} · '
+              '${copy.cityContent(option.specialization)} · '
               '${copy.text(ProductionText.requires)} '
-              '${copy.name(option.requiredBuilding)}',
+              '${copy.cityContent(option.requiredBuilding)}',
           blocker: option.blocker,
         ),
     ]);
@@ -291,5 +291,5 @@ String _optionLabel(ProductionCopy copy, ProductionOptionView option) =>
 
 String _stockpile(ProductionCopy copy, Map<MapResource, int> value) => value
     .entries
-    .map((entry) => '${copy.name(entry.key.name)} ${entry.value}')
+    .map((entry) => '${copy.resource(entry.key)} ${entry.value}')
     .join(' + ');

@@ -33,7 +33,7 @@ void main() {
 
       expect(find.textContaining('player-2'), findsWidgets);
       expect(find.textContaining('Avoid escalation'), findsOneWidget);
-      expect(find.textContaining('marble · trade-1'), findsOneWidget);
+      expect(find.textContaining('Marble · trade-1'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('submit-diplomacy-action')));
       expect(actions.single, isA<DeclareWarActionView>());
 

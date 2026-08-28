@@ -129,7 +129,7 @@ void main() {
 
     expect(find.text('Logistics'), findsOneWidget);
     expect(find.textContaining('Assign trade route · city-2'), findsOneWidget);
-    expect(find.textContaining('Detach troop · warrior'), findsOneWidget);
+    expect(find.textContaining('Detach troop · Warrior'), findsOneWidget);
     await tester.tap(find.textContaining('Auto explore · 8'));
     expect(dispatched, isA<AutoExploreActionView>());
     expect(tester.takeException(), isNull);

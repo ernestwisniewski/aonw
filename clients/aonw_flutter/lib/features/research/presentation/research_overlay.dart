@@ -261,7 +261,7 @@ final class _TechnologyOptionCard extends StatelessWidget {
                 onPressed: enabled && available
                     ? () => onSelect(option.technology)
                     : null,
-                child: Text(copy.text(ResearchText.select)),
+                child: Text(copy.text(ResearchText.choose)),
               ),
             ),
           ],

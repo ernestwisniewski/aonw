@@ -132,6 +132,32 @@ fi
 echo "Dependency checker rejected successor protocol fallback code."
 rm "${dependency_fixture}/clients/aonw_flutter/lib/features/map/application/protocol.dart"
 
+printf "final polish = Localizations.localeOf(context).languageCode == 'pl';\n" \
+  >"${dependency_fixture}/clients/aonw_flutter/lib/features/map/presentation/map.dart"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted a manual locale branch." >&2
+  exit 1
+fi
+echo "Dependency checker rejected a manual locale branch."
+
+printf "const _polishText = <String, String>{'title': 'Mapa'};\n" \
+  >"${dependency_fixture}/clients/aonw_flutter/lib/features/map/presentation/map.dart"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted an in-code language dictionary." >&2
+  exit 1
+fi
+echo "Dependency checker rejected an in-code language dictionary."
+
+printf "Widget build() => Text('Map');\n" \
+  >"${dependency_fixture}/clients/aonw_flutter/lib/features/map/presentation/map.dart"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted hardcoded user-facing copy." >&2
+  exit 1
+fi
+echo "Dependency checker rejected hardcoded user-facing copy."
+printf 'void main() {}\n' \
+  >"${dependency_fixture}/clients/aonw_flutter/lib/features/map/presentation/map.dart"
+
 mkdir -p "${dependency_fixture}/clients/aonw_flutter/lib/game/rendering"
 printf "import '../../features/map/infrastructure/rust_map_repository.dart';\n" \
   >"${dependency_fixture}/clients/aonw_flutter/lib/game/rendering/map_layer.dart"

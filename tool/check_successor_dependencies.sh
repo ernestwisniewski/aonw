@@ -104,6 +104,19 @@ while IFS= read -r -d '' source_file; do
         >>"${violations}" || true
       ;;
   esac
+  case "${source_file}" in
+    */l10n/generated/*) ;;
+    *)
+      grep -nHE \
+        "(Localizations\\.localeOf|languageCode[[:space:]]*==|==[[:space:]]*['\"](pl|en)['\"]|_(polish|english)|bool[[:space:]]+(polish|english))" \
+        "${source_file}" \
+        >>"${violations}" || true
+      grep -nHE \
+        "((^|[^[:alnum:]_])(Text|TextSpan)\\([[:space:]]*(const[[:space:]]+)?['\"][[:alpha:]]|(tooltip|semanticLabel|labelText|hintText|helperText|errorText):[[:space:]]*(const[[:space:]]+)?['\"][[:alpha:]])" \
+        "${source_file}" \
+        >>"${violations}" || true
+      ;;
+  esac
   grep -niHE \
     '(legacy[^[:alnum:]]*(dto|adapter|reader|writer)|upcaster|protocol[^[:alnum:]]*fallback|compatibility[^[:alnum:]]*(adapter|reader|fallback)|dart[^[:alnum:]]*fallback|fallback[^[:alnum:]]*to[^[:alnum:]]*dart)' \
     "${source_file}" \

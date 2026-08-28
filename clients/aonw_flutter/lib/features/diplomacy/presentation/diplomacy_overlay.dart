@@ -283,13 +283,24 @@ final class _DiplomacyComposerState extends State<_DiplomacyComposer> {
       ),
     ],
     _ComposerAction.resourceTrade => [
-      _resourceField(copy.resource, _resource, (value) => _resource = value),
+      _resourceField(
+        copy,
+        copy.resource,
+        _resource,
+        (value) => _resource = value,
+      ),
       _numberField(copy.goldPerTurn, _amount, 'diplomacy-amount'),
       _numberField(copy.duration, _duration, 'diplomacy-duration'),
     ],
     _ComposerAction.resourceExchange => [
-      _resourceField(copy.offered, _resource, (value) => _resource = value),
       _resourceField(
+        copy,
+        copy.offered,
+        _resource,
+        (value) => _resource = value,
+      ),
+      _resourceField(
+        copy,
         copy.requested,
         _requestedResource,
         (value) => _requestedResource = value,
@@ -310,6 +321,7 @@ final class _DiplomacyComposerState extends State<_DiplomacyComposer> {
   );
 
   Widget _resourceField(
+    DiplomacyCopy copy,
     String label,
     MapResource value,
     ValueChanged<MapResource> update,
@@ -318,7 +330,7 @@ final class _DiplomacyComposerState extends State<_DiplomacyComposer> {
     decoration: InputDecoration(labelText: label),
     items: [
       for (final resource in MapResource.values)
-        DropdownMenuItem(value: resource, child: Text(resource.name)),
+        DropdownMenuItem(value: resource, child: Text(copy.name(resource))),
     ],
     onChanged: widget.enabled ? (next) => setState(() => update(next!)) : null,
   );
@@ -540,15 +552,18 @@ final class _AgreementCard extends StatelessWidget {
   final ResourceTradeAgreementView agreement;
 
   @override
-  Widget build(BuildContext context) => Card.outlined(
-    key: ValueKey(('resource-trade-agreement', agreement.id)),
-    child: ListTile(
-      title: Text('${agreement.resource.name} · ${agreement.id}'),
-      subtitle: Text(
-        '${agreement.exporterPlayerId} → ${agreement.importerPlayerId} · '
-        '${agreement.amountPerTurn} · ${agreement.goldPerTurn} · '
-        '${agreement.remainingTurns}',
+  Widget build(BuildContext context) {
+    final copy = DiplomacyCopy.of(context);
+    return Card.outlined(
+      key: ValueKey(('resource-trade-agreement', agreement.id)),
+      child: ListTile(
+        title: Text('${copy.name(agreement.resource)} · ${agreement.id}'),
+        subtitle: Text(
+          '${agreement.exporterPlayerId} → ${agreement.importerPlayerId} · '
+          '${agreement.amountPerTurn} · ${agreement.goldPerTurn} · '
+          '${agreement.remainingTurns}',
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
