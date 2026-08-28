@@ -148,50 +148,67 @@ fn advance_worker_automation(
         })
         .map(|unit| unit.id().clone())
         .collect::<Vec<_>>();
+    if worker_ids.is_empty() {
+        return Ok(());
+    }
+    let mut temporary = state
+        .clone()
+        .into_after_worker(
+            state.revision(),
+            core::mem::take(&mut progress.units),
+            state.infrastructure().clone(),
+            core::mem::take(interaction),
+            core::mem::take(&mut progress.fog),
+            core::mem::take(&mut progress.diplomacy),
+        )
+        .map_err(|_| crate::CommandRejectionCode::InvalidUnit)?;
     for worker_id in worker_ids {
-        let current = progress
-            .units
-            .iter()
-            .find(|unit| unit.id() == &worker_id)
+        let current = temporary
+            .unit(&worker_id)
             .cloned()
             .ok_or(crate::CommandRejectionCode::WorkerNotFound)?;
-        let temporary = state
-            .clone()
-            .into_after_worker(
-                state.revision(),
-                progress.units.clone(),
-                state.infrastructure().clone(),
-                interaction.clone(),
-                progress.fog.clone(),
-                progress.diplomacy.clone(),
-            )
-            .map_err(|_| crate::CommandRejectionCode::InvalidUnit)?;
         let context = EngineContext::canonical(current.owner_player_id(), map, ruleset);
         let command = crate::AutomateWorkerCommand::new(state.revision().get(), &worker_id);
         let mutation = crate::worker::apply_automation(&temporary, context, command);
         let Ok(crate::worker::WorkerMutation::Update(update)) = mutation else {
             let replacement = current.after_worker_automation_finished();
-            if let Some(target) = progress
-                .units
-                .iter_mut()
-                .find(|unit| unit.id() == &worker_id)
-            {
-                *target = replacement;
-            }
-            *interaction = interaction.clone().without_unit(&worker_id);
+            let next_interaction = temporary.interaction().clone().without_unit(&worker_id);
+            temporary = temporary
+                .into_after_unit_action(state.revision(), replacement, next_interaction, None)
+                .map_err(|_| crate::CommandRejectionCode::InvalidUnit)?;
             continue;
         };
-        progress.units = update.units;
-        progress.fog = update.fog_of_war;
-        progress.diplomacy = update.diplomacy;
-        *interaction = update.interaction;
-        progress.events.extend(update.events);
-        if let Some(crate::ExecutionEvidence::WorkerAutomation(execution)) = update.evidence
+        let crate::worker::WorkerUpdate {
+            units,
+            infrastructure,
+            interaction: next_interaction,
+            fog_of_war,
+            diplomacy,
+            events,
+            evidence,
+            ..
+        } = *update;
+        progress.events.extend(events);
+        if let Some(crate::ExecutionEvidence::WorkerAutomation(execution)) = evidence
             && let Some(movement) = execution.movement().cloned()
         {
             progress.executions.push(movement);
         }
+        temporary = temporary
+            .into_after_worker(
+                state.revision(),
+                units,
+                infrastructure,
+                next_interaction,
+                fog_of_war,
+                diplomacy,
+            )
+            .map_err(|_| crate::CommandRejectionCode::InvalidUnit)?;
     }
+    progress.units = temporary.units().to_vec();
+    progress.fog = temporary.fog_of_war().clone();
+    progress.diplomacy = temporary.diplomacy().clone();
+    *interaction = temporary.interaction().clone();
     Ok(())
 }
 

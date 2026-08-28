@@ -15,7 +15,7 @@ pub use model::{
 
 pub(crate) use automation::apply_automation;
 pub(crate) use rules::{
-    WorkerMutation, WorkerRuleError, apply_assign, apply_build_road, apply_cancel_assignment,
-    apply_cancel_job, apply_confirm, apply_select, query_options,
+    WorkerMutation, WorkerRuleError, WorkerUpdate, apply_assign, apply_build_road,
+    apply_cancel_assignment, apply_cancel_job, apply_confirm, apply_select, query_options,
 };
 pub(crate) use turn::{WorkerTurnUpdate, advance_workers};
