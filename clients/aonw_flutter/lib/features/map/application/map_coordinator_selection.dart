@@ -3,7 +3,9 @@ part of 'map_coordinator.dart';
 extension MapCoordinatorSelection on MapCoordinator {
   Future<void> _select(MapHexCoordinate? coordinate) async {
     final current = _state;
-    if (current is! GameSessionReady || _interactionBusy(current.interaction)) {
+    if (current is! GameSessionReady ||
+        current.research.commandPending ||
+        _interactionBusy(current.interaction)) {
       return;
     }
     final next = _selectableCoordinate(current, coordinate);

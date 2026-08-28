@@ -126,6 +126,23 @@ extension MapCoordinatorActions on MapCoordinator {
     );
   }
 
+  void selectTechnology(TechnologyIdView technology) {
+    _research.select(
+      technology: technology,
+      readState: () => _state,
+      publish: _setState,
+      isDisposed: () => _disposed,
+    );
+  }
+
+  void refreshResearch() {
+    final state = _state;
+    if (state is! GameSessionReady || state.research.loading) return;
+    _setState(
+      state.withResearch(ResearchState.loading(state.recipient.stamp.revision)),
+    );
+  }
+
   void executeUnitAction(UnitActionKindView action) {
     _unitActions.execute(
       action: action,

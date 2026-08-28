@@ -15,6 +15,8 @@ import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/features/production/application/production_session_port.dart';
 import 'package:aonw_flutter/features/production/read_model/production_view.dart';
+import 'package:aonw_flutter/features/research/application/research_session_port.dart';
+import 'package:aonw_flutter/features/research/read_model/research_view.dart';
 import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
 import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/unit_action_session_port.dart';
@@ -28,6 +30,36 @@ typedef ProductionOverviewFixture = ({
   ProductionOptionsView options,
   StrategicResourceProjectionView resources,
 });
+
+ResearchOptionsView testResearchOptionsView({
+  int revision = 0,
+  TechnologyIdView? activeTechnology,
+}) => ResearchOptionsView(
+  stamp: testSessionStamp(revision: revision),
+  playerId: 'preview-player',
+  activeTechnology: activeTechnology,
+  scienceOverflow: 0,
+  scienceYield: ScienceYieldBreakdownView(
+    total: 0,
+    byCityId: const {},
+    sources: const [],
+  ),
+  options: [
+    for (final technology in TechnologyIdView.values)
+      ResearchOptionView(
+        technology: technology,
+        availability: technology == activeTechnology
+            ? TechnologyAvailabilityView.active
+            : TechnologyAvailabilityView.available,
+        effectiveCost: 1,
+        progress: 0,
+        boostDiscountBasisPoints: 0,
+        prerequisites: const [],
+        blockedBy: const [],
+        unlocks: const [],
+      ),
+  ],
+);
 
 MapScene testMapScene({
   int cols = 3,
@@ -259,6 +291,7 @@ final class FakeGameSession
         WorkerSessionPort,
         ProductionSessionPort,
         ArtifactSessionPort,
+        ResearchSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   FakeGameSession.success(
@@ -283,6 +316,9 @@ final class FakeGameSession
     this.productionFailure,
     this.artifactResult,
     this.artifactFailure,
+    this.researchOptionsResult,
+    this.researchResult,
+    this.researchFailure,
     this.combatPreviewResult,
     this.combatResult,
     this.combatFailure,
@@ -313,6 +349,9 @@ final class FakeGameSession
       productionFailure = null,
       artifactResult = null,
       artifactFailure = null,
+      researchOptionsResult = null,
+      researchResult = null,
+      researchFailure = null,
       combatPreviewResult = null,
       combatResult = null,
       combatFailure = null,
@@ -347,6 +386,9 @@ final class FakeGameSession
   final ProductionSessionException? productionFailure;
   final ArtifactCommandResultView? artifactResult;
   final ArtifactSessionException? artifactFailure;
+  final ResearchOptionsView? researchOptionsResult;
+  final ResearchCommandResultView? researchResult;
+  final ResearchSessionException? researchFailure;
   final CombatPreviewView? combatPreviewResult;
   final CombatCommandResultView? combatResult;
   final CombatSessionException? combatFailure;
@@ -375,6 +417,10 @@ final class FakeGameSession
   var artifactCommandCalls = 0;
   ArtifactActionView? lastArtifactAction;
   int? lastArtifactExpectedRevision;
+  var researchOptionCalls = 0;
+  var researchCommandCalls = 0;
+  int? lastResearchExpectedRevision;
+  TechnologyIdView? lastResearchTechnology;
   var combatPreviewCalls = 0;
   var combatAttackCalls = 0;
   MapHexCoordinate? lastCombatDefender;
@@ -633,6 +679,31 @@ final class FakeGameSession
     final error = artifactFailure;
     if (error != null) throw error;
     return artifactResult ?? (throw StateError('No artifact result fixture.'));
+  }
+
+  @override
+  Future<ResearchOptionsView> researchOptions({
+    required int expectedRevision,
+  }) async {
+    researchOptionCalls += 1;
+    lastResearchExpectedRevision = expectedRevision;
+    final error = researchFailure;
+    if (error != null) throw error;
+    return researchOptionsResult ??
+        testResearchOptionsView(revision: expectedRevision);
+  }
+
+  @override
+  Future<ResearchCommandResultView> selectTechnology({
+    required int expectedRevision,
+    required TechnologyIdView technology,
+  }) async {
+    researchCommandCalls += 1;
+    lastResearchExpectedRevision = expectedRevision;
+    lastResearchTechnology = technology;
+    final error = researchFailure;
+    if (error != null) throw error;
+    return researchResult ?? (throw StateError('No research result fixture.'));
   }
 
   @override

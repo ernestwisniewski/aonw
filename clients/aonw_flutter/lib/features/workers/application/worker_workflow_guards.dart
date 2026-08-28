@@ -23,6 +23,7 @@ GameSessionReady? _executableWorker(
   final current = _selectedWorker(state, action.unitId);
   final worker = current?.interaction.worker;
   if (current == null ||
+      current.research.commandPending ||
       worker == null ||
       worker.loading ||
       worker.commandPending ||

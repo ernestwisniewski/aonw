@@ -18,6 +18,8 @@ import 'package:aonw_flutter/features/map/read_model/movement_view.dart';
 import 'package:aonw_flutter/features/map/read_model/player_map_view.dart';
 import 'package:aonw_flutter/features/production/application/production_session_port.dart';
 import 'package:aonw_flutter/features/production/read_model/production_view.dart';
+import 'package:aonw_flutter/features/research/application/research_session_port.dart';
+import 'package:aonw_flutter/features/research/read_model/research_view.dart';
 import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
 import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
 import 'package:aonw_flutter/features/unit_actions/application/action_deck_state.dart';
@@ -437,6 +439,7 @@ final class _CompletingGameSession
         WorkerSessionPort,
         ProductionSessionPort,
         ArtifactSessionPort,
+        ResearchSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   final requests = <Completer<MapScene>>[];
@@ -522,6 +525,17 @@ final class _CompletingGameSession
   Future<ArtifactCommandResultView> executeArtifactAction({
     required int expectedRevision,
     required ArtifactActionView action,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<ResearchOptionsView> researchOptions({
+    required int expectedRevision,
+  }) async => testResearchOptionsView(revision: expectedRevision);
+
+  @override
+  Future<ResearchCommandResultView> selectTechnology({
+    required int expectedRevision,
+    required TechnologyIdView technology,
   }) => throw UnimplementedError();
 
   @override

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/aonw_tokens.dart';
 import '../../../../game/aonw_flame_game.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../research/application/research_state.dart';
+import '../../../research/presentation/research_overlay.dart';
 import '../../../settings/presentation/client_settings_scope.dart';
 import '../../../turns/application/turn_action_state.dart';
 import '../../../turns/application/turn_presentation_queue.dart';
@@ -13,6 +15,7 @@ import '../../../turns/presentation/turn_hud.dart';
 import '../../application/game_session_state.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_scene.dart';
+import '../../read_model/pending_action_view.dart';
 import '../input/map_input.dart';
 import '../input/map_viewport_intent.dart';
 import '../map_presentation_controller.dart';
@@ -152,12 +155,14 @@ final class _MapScreenState extends State<MapScreen>
         :final interaction,
         :final turnPresentations,
         :final turnAction,
+        :final research,
       ) =>
         _ReadyMap(
           scene: scene,
           interaction: interaction,
           turnPresentations: turnPresentations,
           turnAction: turnAction,
+          research: research,
           controller: widget.controller,
           onInput: _handleInput,
           onOpenSettings: widget.onOpenSettings,
@@ -274,6 +279,7 @@ final class _ReadyMap extends StatelessWidget {
     required this.interaction,
     required this.turnPresentations,
     required this.turnAction,
+    required this.research,
     required this.controller,
     required this.onInput,
     required this.onOpenSettings,
@@ -287,6 +293,7 @@ final class _ReadyMap extends StatelessWidget {
   final MapInteractionState interaction;
   final TurnPresentationQueue turnPresentations;
   final TurnActionState turnAction;
+  final ResearchState research;
   final MapPresentationController controller;
   final ValueChanged<MapInputCommand> onInput;
   final VoidCallback? onOpenSettings;
@@ -344,6 +351,15 @@ final class _ReadyMap extends StatelessWidget {
         scene: scene,
         interaction: interaction,
         controller: controller,
+      ),
+      Positioned.fill(
+        child: ResearchOverlay(
+          state: research,
+          selectionRequired:
+              scene.player.pendingAction is PendingResearchSelectionView,
+          onSelect: controller.selectTechnology,
+          onRetry: controller.refreshResearch,
+        ),
       ),
     ],
   );

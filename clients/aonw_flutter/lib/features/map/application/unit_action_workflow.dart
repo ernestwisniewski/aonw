@@ -79,6 +79,7 @@ GameSessionReady? _actionable(GameSessionState state) {
   final deck = interaction.actionDeck;
   final unitId = interaction.selectedUnitId;
   if (interaction.movementPending ||
+      state.research.commandPending ||
       (interaction.combat?.commandPending ?? false) ||
       (interaction.combat?.loading ?? false) ||
       (interaction.unitLogistics?.commandPending ?? false) ||

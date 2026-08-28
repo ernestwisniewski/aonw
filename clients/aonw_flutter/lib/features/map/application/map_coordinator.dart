@@ -19,6 +19,10 @@ import '../../production/application/production_session_port.dart';
 import '../../production/application/production_state.dart';
 import '../../production/application/production_workflow.dart';
 import '../../production/read_model/production_view.dart';
+import '../../research/application/research_session_port.dart';
+import '../../research/application/research_state.dart';
+import '../../research/application/research_workflow.dart';
+import '../../research/read_model/research_view.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../turns/application/turn_workflow.dart';
 import '../../unit_actions/application/action_deck_state.dart';
@@ -55,6 +59,7 @@ final class MapCoordinator {
     WorkerSessionPort? workers,
     ProductionSessionPort? production,
     ArtifactSessionPort? artifacts,
+    ResearchSessionPort? research,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     this.assets = MapAssetPaths.starter,
@@ -88,6 +93,10 @@ final class MapCoordinator {
          session: artifacts ?? _requireArtifactSession(movement),
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
+       _research = ResearchWorkflow(
+         session: research ?? _requireResearchSession(movement),
+         diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
        _unitActions = UnitActionWorkflow(
          runner: UnitActionCommandRunner(
            session: unitActions,
@@ -108,6 +117,7 @@ final class MapCoordinator {
   final WorkerWorkflow _workers;
   final ProductionWorkflow _production;
   final ArtifactWorkflow _artifacts;
+  final ResearchWorkflow _research;
   final UnitActionWorkflow _unitActions;
   final TurnWorkflow _turns;
   final MapDiagnosticReporter _diagnosticReporter;
@@ -169,7 +179,9 @@ final class MapCoordinator {
 
   Future<void> _confirmMove() async {
     final current = _state;
-    if (current is! GameSessionReady || _interactionBusy(current.interaction)) {
+    if (current is! GameSessionReady ||
+        current.research.commandPending ||
+        _interactionBusy(current.interaction)) {
       return;
     }
     final route = current.interaction.route;
@@ -220,9 +232,28 @@ final class MapCoordinator {
 
   void _setState(GameSessionState value) {
     if (_disposed) return;
+    final previous = _state;
     _state = value;
     _changes.add(value);
+    if (_shouldLoadResearch(previous, value)) {
+      scheduleMicrotask(() {
+        if (_disposed) return;
+        _research.load(
+          readState: () => _state,
+          publish: _setState,
+          isDisposed: () => _disposed,
+        );
+      });
+    }
   }
+}
+
+bool _shouldLoadResearch(GameSessionState previous, GameSessionState next) {
+  if (next is! GameSessionReady || !next.research.loading) return false;
+  final before = previous is GameSessionReady ? previous.research : null;
+  return before == null ||
+      !before.loading ||
+      before.requestedRevision != next.research.requestedRevision;
 }
 
 void _ignoreDiagnostic(String code, Object error, StackTrace stackTrace) {}
@@ -357,6 +388,15 @@ ArtifactSessionPort _requireArtifactSession(MovementSessionPort movement) {
     movement,
     'movement',
     'must also provide the artifact session port',
+  );
+}
+
+ResearchSessionPort _requireResearchSession(MovementSessionPort movement) {
+  if (movement case final ResearchSessionPort research) return research;
+  throw ArgumentError.value(
+    movement,
+    'movement',
+    'must also provide the research session port',
   );
 }
 

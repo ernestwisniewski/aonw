@@ -106,6 +106,7 @@ GameSessionReady? _executable(
   ArtifactActionView action,
 ) {
   if (state is! GameSessionReady ||
+      state.research.commandPending ||
       state.interaction.artifact == null ||
       state.interaction.artifact!.commandPending ||
       state.interaction.movementPending ||

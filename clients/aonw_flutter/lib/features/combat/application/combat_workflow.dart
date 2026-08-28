@@ -81,7 +81,11 @@ final class CombatWorkflow {
     required CombatDisposed isDisposed,
   }) async {
     final current = _selected(readState(), attackerUnitId);
-    if (current == null || !current.scene.map.contains(defender)) return;
+    if (current == null ||
+        current.research.commandPending ||
+        !current.scene.map.contains(defender)) {
+      return;
+    }
     final revision = current.recipient.stamp.revision;
     final correlationId = ++_correlationId;
     publish(_previewPending(current, attackerUnitId, defender, correlationId));
@@ -128,7 +132,12 @@ final class CombatWorkflow {
     if (current is! GameSessionReady) return;
     final combat = current.interaction.combat;
     final preview = combat?.preview;
-    if (combat == null || preview == null || combat.commandPending) return;
+    if (current.research.commandPending ||
+        combat == null ||
+        preview == null ||
+        combat.commandPending) {
+      return;
+    }
     final correlationId = ++_correlationId;
     final attack = CombatAttackView(
       preview: preview,

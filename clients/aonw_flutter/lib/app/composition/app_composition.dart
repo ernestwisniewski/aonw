@@ -11,6 +11,7 @@ import '../../features/map/infrastructure/rust_game_session_gateway.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
 import '../../features/production/application/production_session_port.dart';
+import '../../features/research/application/research_session_port.dart';
 import '../../features/settings/application/client_settings_store.dart';
 import '../../features/settings/infrastructure/shared_preferences_client_settings_store.dart';
 import '../../features/settings/presentation/client_settings_controller.dart';
@@ -31,6 +32,7 @@ final class AppComposition {
     WorkerSessionPort? workerSession,
     ProductionSessionPort? productionSession,
     ArtifactSessionPort? artifactSession,
+    ResearchSessionPort? researchSession,
     required UnitActionSessionPort unitActionSession,
     required TurnSessionPort turnSession,
     MapInputSource? mapInputSource,
@@ -49,6 +51,8 @@ final class AppComposition {
                productionSession ?? _requireProductionSession(movementSession),
            artifacts:
                artifactSession ?? _requireArtifactSession(movementSession),
+           research:
+               researchSession ?? _requireResearchSession(movementSession),
            unitActions: unitActionSession,
            turns: turnSession,
          ),
@@ -73,6 +77,7 @@ final class AppComposition {
       workerSession: gateway.workerSession,
       productionSession: gateway.productionSession,
       artifactSession: gateway.artifactSession,
+      researchSession: gateway,
       unitActionSession: gateway,
       turnSession: gateway,
       mapInputSource: GamepadMapInputSource(),
@@ -126,5 +131,14 @@ ArtifactSessionPort _requireArtifactSession(MovementSessionPort movement) {
     movement,
     'movementSession',
     'must also provide the artifact session port',
+  );
+}
+
+ResearchSessionPort _requireResearchSession(MovementSessionPort movement) {
+  if (movement case final ResearchSessionPort research) return research;
+  throw ArgumentError.value(
+    movement,
+    'movementSession',
+    'must also provide the research session port',
   );
 }

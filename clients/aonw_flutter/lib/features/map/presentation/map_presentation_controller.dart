@@ -12,6 +12,8 @@ import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../production/application/production_session_port.dart';
 import '../../production/read_model/production_view.dart';
+import '../../research/application/research_session_port.dart';
+import '../../research/read_model/research_view.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
@@ -33,6 +35,7 @@ final class MapPresentationController extends ChangeNotifier {
     WorkerSessionPort? workers,
     ProductionSessionPort? production,
     ArtifactSessionPort? artifacts,
+    ResearchSessionPort? research,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     MapAssetPaths assets = MapAssetPaths.starter,
@@ -47,6 +50,7 @@ final class MapPresentationController extends ChangeNotifier {
            workers: workers,
            production: production,
            artifacts: artifacts,
+           research: research,
            unitActions: unitActions,
            turns: turns,
            assets: assets,
@@ -86,6 +90,11 @@ final class MapPresentationController extends ChangeNotifier {
 
   void executeArtifactAction(ArtifactActionView action) =>
       _coordinator.executeArtifactAction(action);
+
+  void selectTechnology(TechnologyIdView technology) =>
+      _coordinator.selectTechnology(technology);
+
+  void refreshResearch() => _coordinator.refreshResearch();
 
   void confirmCombat() => _coordinator.confirmCombat();
 

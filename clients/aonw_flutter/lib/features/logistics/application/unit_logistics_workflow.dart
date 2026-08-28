@@ -230,6 +230,7 @@ GameSessionReady? _executable(
   final current = _selected(state, action.unitId);
   final logistics = current?.interaction.unitLogistics;
   if (current == null ||
+      current.research.commandPending ||
       logistics == null ||
       logistics.commandPending ||
       !_containsAction(logistics.options, action)) {

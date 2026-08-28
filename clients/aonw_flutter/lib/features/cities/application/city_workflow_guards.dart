@@ -32,6 +32,7 @@ GameSessionReady? _executable(GameSessionState state, CityActionView action) {
   if (state is! GameSessionReady) return null;
   final city = state.interaction.city;
   if (city == null ||
+      state.research.commandPending ||
       city.loading ||
       city.commandPending ||
       (state.interaction.production?.loading ?? false) ||

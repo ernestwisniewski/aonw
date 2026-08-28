@@ -23,6 +23,7 @@ GameSessionReady? _executableProduction(
   final current = _selectedProduction(state, action.cityId);
   final production = current?.interaction.production;
   if (current == null ||
+      current.research.commandPending ||
       production == null ||
       production.loading ||
       production.commandPending ||

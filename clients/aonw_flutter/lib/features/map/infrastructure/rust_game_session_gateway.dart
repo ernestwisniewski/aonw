@@ -16,6 +16,9 @@ import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../production/application/production_session_port.dart';
 import '../../production/infrastructure/rust_production_gateway.dart';
 import '../../production/read_model/production_view.dart';
+import '../../research/application/research_session_port.dart';
+import '../../research/infrastructure/rust_research_gateway.dart';
+import '../../research/read_model/research_view.dart';
 import '../../turns/application/turn_session_port.dart';
 import '../../turns/infrastructure/rust_turn_gateway.dart';
 import '../../turns/read_model/turn_command_view.dart';
@@ -50,6 +53,7 @@ final class RustGameSessionGateway
         MovementSessionPort,
         CombatSessionPort,
         UnitLogisticsSessionPort,
+        ResearchSessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   RustGameSessionGateway({
@@ -63,6 +67,7 @@ final class RustGameSessionGateway
     RustWorkerGateway workerGateway = const RustWorkerGateway(),
     RustProductionGateway productionGateway = const RustProductionGateway(),
     RustArtifactGateway artifactGateway = const RustArtifactGateway(),
+    RustResearchGateway researchGateway = const RustResearchGateway(),
     RustTurnGateway turnGateway = const RustTurnGateway(),
     RustUnitLogisticsGateway logisticsGateway =
         const RustUnitLogisticsGateway(),
@@ -80,6 +85,7 @@ final class RustGameSessionGateway
        _workerGateway = workerGateway,
        _productionGateway = productionGateway,
        _artifactGateway = artifactGateway,
+       _researchGateway = researchGateway,
        _turnGateway = turnGateway,
        _logisticsGateway = logisticsGateway,
        _unitActions = RustUnitActionGateway(
@@ -100,6 +106,7 @@ final class RustGameSessionGateway
   final RustWorkerGateway _workerGateway;
   final RustProductionGateway _productionGateway;
   final RustArtifactGateway _artifactGateway;
+  final RustResearchGateway _researchGateway;
   final RustTurnGateway _turnGateway;
   final RustUnitLogisticsGateway _logisticsGateway;
   final RustUnitActionGateway _unitActions;
@@ -195,6 +202,31 @@ final class RustGameSessionGateway
       expectedRevision: expectedRevision,
       unitId: unitId,
       target: target,
+      send: _send,
+      applyPatch: _applyCommandPatch,
+    ),
+  );
+
+  @override
+  Future<ResearchOptionsView> researchOptions({
+    required int expectedRevision,
+  }) => _serialize(
+    () => _researchGateway.options(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      send: _send,
+    ),
+  );
+
+  @override
+  Future<ResearchCommandResultView> selectTechnology({
+    required int expectedRevision,
+    required TechnologyIdView technology,
+  }) => _serialize(
+    () => _researchGateway.select(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      technology: technology,
       send: _send,
       applyPatch: _applyCommandPatch,
     ),
