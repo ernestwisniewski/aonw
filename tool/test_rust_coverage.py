@@ -182,6 +182,10 @@ def main() -> None:
         s["formatVersion"] = 1
         return s, r, l, b
 
+    def methodology_drift(s: dict[str, Any], r: dict[str, Any], l: str, b: dict[str, Any]):
+        s["methodology"]["branchCoverage"] = "silently-ignored"
+        return s, r, l, b
+
     def unknown_baseline_field(s: dict[str, Any], r: dict[str, Any], l: str, b: dict[str, Any]):
         first = next(iter(b["crates"].values()))
         first["waiver"] = "silent"
@@ -193,6 +197,7 @@ def main() -> None:
         "missing-file growth": missing_grows,
         "unclassified dependency": unclassified_source,
         "tool pin drift": stale_tool,
+        "methodology drift": methodology_drift,
         "unknown scope field": unknown_scope_field,
         "unknown baseline field": unknown_baseline_field,
     }

@@ -23,11 +23,21 @@ SCOPE_KEYS = {
     "groups",
     "instrumentedGroups",
     "permittedDependencyCoverageGroups",
+    "methodology",
     "sourceRoot",
     "exclusions",
 }
 TOOL_KEYS = {"name", "version", "source"}
 GROUP_NAMES = {"authoritative", "runtime", "adapters", "authoring", "testkit"}
+METHODOLOGY = {
+    "primaryMetric": "line",
+    "changedLines": "enforced-by-full-crate-ratchets",
+    "branchCoverage": "diagnostic-until-stable-source-mapping",
+    "renames": "explicit-reviewed-baseline-migration",
+    "macros": "llvm-source-attribution",
+    "generatedTestSupport": "excluded-only-by-reviewed-globs",
+    "smallCrates": "same-per-crate-ratchets",
+}
 EXCLUSION_KEYS = {"testAndSupport", "generated", "platform"}
 BASELINE_KEYS = {"provenance", "crates"}
 BASELINE_PROVENANCE_KEYS = {
@@ -133,6 +143,11 @@ def load_scope(path: Path) -> dict[str, Any]:
         raise CoverageFailure("instrumented coverage groups must be authoritative and runtime")
     if scope["permittedDependencyCoverageGroups"] != ["testkit"]:
         raise CoverageFailure("only testkit dependency coverage may be present outside the scope")
+    methodology = strict_object(
+        scope["methodology"], "coverage methodology", set(METHODOLOGY)
+    )
+    if methodology != METHODOLOGY:
+        raise CoverageFailure("coverage methodology differs from the reviewed policy")
     if scope["sourceRoot"] != "src":
         raise CoverageFailure("coverage source root must be src")
     exclusions = strict_object(scope["exclusions"], "coverage exclusions", EXCLUSION_KEYS)
@@ -378,6 +393,7 @@ def build_report(
             "llvmCoverageFormat": raw["version"],
             "scope": "authoritative-plus-local-runtime",
         },
+        "methodology": scope["methodology"],
         "ignoredDependencyFiles": ignored_dependency_files,
         "crates": crate_reports,
     }

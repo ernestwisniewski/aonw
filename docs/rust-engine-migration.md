@@ -163,7 +163,14 @@ checker supplies repository policy that the measurement tool does not know:
 the complete crate-role census, explicit exclusions, per-authoritative-crate
 and local-runtime ratios, uncovered-line ceilings, and a missing-file set that
 may only shrink. Adapter coverage is deliberately not folded into the Linux
-pure-engine denominator.
+pure-engine denominator. Line coverage is the primary gated metric. Instead of
+a fragile diff-only percentage, every changed line is constrained by full-crate
+ratio, uncovered-line, and executable missing-file ratchets. Branch coverage is
+diagnostic until LLVM source attribution is stable enough for a reviewed
+baseline. Renames require an explicit baseline migration, macro lines keep LLVM
+attribution, generated/test/support files may be excluded only by reviewed
+globs, and small crates follow the same per-crate ratchets. No arbitrary global
+percentage threshold or internal coverage format version is introduced.
 
 Structural performance measurement uses pinned `stats_alloc 0.1.10` around a
 single-threaded measured region after setup and warm-up. The gate ratchets exact

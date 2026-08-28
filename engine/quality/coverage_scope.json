@@ -37,6 +37,15 @@
   "permittedDependencyCoverageGroups": [
     "testkit"
   ],
+  "methodology": {
+    "primaryMetric": "line",
+    "changedLines": "enforced-by-full-crate-ratchets",
+    "branchCoverage": "diagnostic-until-stable-source-mapping",
+    "renames": "explicit-reviewed-baseline-migration",
+    "macros": "llvm-source-attribution",
+    "generatedTestSupport": "excluded-only-by-reviewed-globs",
+    "smallCrates": "same-per-crate-ratchets"
+  },
   "sourceRoot": "src",
   "exclusions": {
     "testAndSupport": [

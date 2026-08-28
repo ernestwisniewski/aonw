@@ -77,7 +77,14 @@ make godot-check
 `cargo-llvm-cov` produces LLVM coverage and `stats_alloc` measures allocations.
 Repository scripts add AoNW-specific census, provenance, ratchets, semantic work
 counters, result signatures, and payload budgets; they do not replace those
-external measurement tools. Wall-clock benchmark values are diagnostic only.
+external measurement tools. Line coverage is the release metric. Changed lines
+are governed by the stricter full-crate ratio, uncovered-line, and missing-file
+ratchets; branch coverage stays diagnostic until LLVM source mapping is stable
+enough to ratchet. Renames require an explicit reviewed baseline migration,
+macros retain LLVM source attribution, reviewed globs are the only exclusions,
+and small crates use the same per-crate rules. There is no arbitrary global
+percentage target and no internal coverage schema version. Wall-clock benchmark
+values are diagnostic only.
 
 ```sh
 make rust-coverage-check
