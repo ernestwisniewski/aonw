@@ -365,7 +365,11 @@ impl<'query> TechnologyUnlockQuery<'query> {
             .iter()
             .map(|technology| self.definition(*technology))
             .collect::<Result<Vec<_>, _>>()?;
-        definitions.sort_unstable_by_key(|definition| definition.label());
+        definitions.sort_unstable_by(|left, right| {
+            left.label()
+                .cmp(right.label())
+                .then_with(|| left.id().cmp(&right.id()))
+        });
         let mut modifiers = Vec::new();
         for definition in definitions {
             for effect in definition.effects() {
