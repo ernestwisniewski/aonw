@@ -20,6 +20,7 @@ final class AonwApp extends StatefulWidget {
     this.settingsController,
     this.telemetry = const NoOpClientTelemetry(),
     this.locale,
+    this.initialRoute = AonwRoute.menu,
     super.key,
   });
 
@@ -29,6 +30,7 @@ final class AonwApp extends StatefulWidget {
   final ClientSettingsController? settingsController;
   final ClientTelemetry telemetry;
   final Locale? locale;
+  final AonwRoute initialRoute;
 
   @override
   State<AonwApp> createState() => _AonwAppState();
@@ -100,6 +102,7 @@ final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
       flameGameFactory: widget.flameGameFactory,
       routeObserver: _routeObserver,
       settingsController: _settingsController,
+      autoLoadMap: widget.initialRoute == AonwRoute.map,
     );
     return ClientSettingsScope(
       controller: _settingsController,
@@ -115,7 +118,7 @@ final class _AonwAppState extends State<AonwApp> with WidgetsBindingObserver {
           locale: widget.locale,
           localizationsDelegates: AonwLocalizations.localizationsDelegates,
           supportedLocales: AonwLocalizations.supportedLocales,
-          initialRoute: AonwRoute.map.location,
+          initialRoute: widget.initialRoute.location,
           onGenerateRoute: router.onGenerateRoute,
           navigatorObservers: [_routeObserver],
           builder: (context, child) {

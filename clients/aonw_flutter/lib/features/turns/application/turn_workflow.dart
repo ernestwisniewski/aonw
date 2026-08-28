@@ -8,6 +8,7 @@ import 'turn_session_port.dart';
 typedef GameSessionStateReader = GameSessionState Function();
 typedef GameSessionReadyPublisher = void Function(GameSessionReady state);
 typedef TurnWorkflowDisposed = bool Function();
+typedef TurnAcceptedCallback = Future<void> Function(GameSessionReady state);
 
 final class TurnWorkflow {
   TurnWorkflow({
@@ -25,9 +26,15 @@ final class TurnWorkflow {
     required GameSessionStateReader readState,
     required GameSessionReadyPublisher publish,
     required TurnWorkflowDisposed isDisposed,
+    TurnAcceptedCallback? onAccepted,
   }) {
     unawaited(
-      _execute(readState: readState, publish: publish, isDisposed: isDisposed),
+      _execute(
+        readState: readState,
+        publish: publish,
+        isDisposed: isDisposed,
+        onAccepted: onAccepted,
+      ),
     );
   }
 
@@ -35,6 +42,7 @@ final class TurnWorkflow {
     required GameSessionStateReader readState,
     required GameSessionReadyPublisher publish,
     required TurnWorkflowDisposed isDisposed,
+    required TurnAcceptedCallback? onAccepted,
   }) async {
     final current = readState();
     if (current is! GameSessionReady ||
@@ -57,7 +65,13 @@ final class TurnWorkflow {
         ready.turnAction.correlationId != correlationId) {
       return;
     }
-    publish(_reduceCompletion(ready, completion));
+    final reduced = _reduceCompletion(ready, completion);
+    publish(reduced);
+    if (completion.failure == null &&
+        completion.result?.accepted == true &&
+        onAccepted != null) {
+      await onAccepted(reduced);
+    }
   }
 }
 

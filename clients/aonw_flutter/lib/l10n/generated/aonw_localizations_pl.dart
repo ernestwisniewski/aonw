@@ -12,6 +12,129 @@ class AonwLocalizationsPl extends AonwLocalizations {
   String get appTitle => 'Age of New Worlds';
 
   @override
+  String get mainMenuTitle => 'Menu główne';
+
+  @override
+  String get newGame => 'Nowa gra';
+
+  @override
+  String get newGameTitle => 'Utwórz grę lokalną';
+
+  @override
+  String get scenarioLabel => 'Scenariusz';
+
+  @override
+  String localScenarioName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'starterDuel': 'Pojedynek startowy',
+      'other': 'Scenariusz lokalny',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get humanCountryLabel => 'Twój kraj';
+
+  @override
+  String get aiCountryLabel => 'Kraj AI';
+
+  @override
+  String get aiDifficultyLabel => 'Poziom trudności AI';
+
+  @override
+  String get aiPersonaLabel => 'Osobowość AI';
+
+  @override
+  String get fogOfWarLabel => 'Mgła wojny';
+
+  @override
+  String get startGame => 'Rozpocznij grę';
+
+  @override
+  String get startingGame => 'Uruchamianie gry';
+
+  @override
+  String get localGameStartFailed => 'Nie udało się uruchomić gry lokalnej.';
+
+  @override
+  String get aiTurnRunning => 'Komputer wykonuje swoją turę.';
+
+  @override
+  String aiTurnFailure(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'requestFailed': 'Nie udało się ukończyć tury komputera.',
+      'responseIncompatible':
+          'Odpowiedź tury komputera jest niezgodna z tym klientem.',
+      'incomplete': 'Komputer nie ukończył tury w bezpiecznym limicie komend.',
+      'other': 'Nie udało się ukończyć tury komputera.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get defaultPlayerName => 'Gracz';
+
+  @override
+  String get defaultAiName => 'Komputer';
+
+  @override
+  String countryName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'poland': 'Polska',
+      'ukraine': 'Ukraina',
+      'germany': 'Niemcy',
+      'france': 'Francja',
+      'unitedKingdom': 'Wielka Brytania',
+      'italy': 'Włochy',
+      'spain': 'Hiszpania',
+      'netherlands': 'Holandia',
+      'sweden': 'Szwecja',
+      'russia': 'Rosja',
+      'unitedStates': 'Stany Zjednoczone',
+      'canada': 'Kanada',
+      'china': 'Chiny',
+      'korea': 'Korea',
+      'japan': 'Japonia',
+      'portugal': 'Portugalia',
+      'india': 'Indie',
+      'brazil': 'Brazylia',
+      'indonesia': 'Indonezja',
+      'mexico': 'Meksyk',
+      'turkey': 'Turcja',
+      'saudiArabia': 'Arabia Saudyjska',
+      'egypt': 'Egipt',
+      'greece': 'Grecja',
+      'other': 'Nieznany kraj',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiDifficultyName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'easy': 'Łatwy',
+      'normal': 'Normalny',
+      'hard': 'Trudny',
+      'veryHard': 'Bardzo trudny',
+      'other': 'Nieznany poziom',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiPersonaName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'balanced': 'Zrównoważona',
+      'aggressive': 'Agresywna',
+      'expansive': 'Ekspansywna',
+      'economic': 'Gospodarcza',
+      'scientific': 'Naukowa',
+      'other': 'Nieznana osobowość',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String get unknownRouteLabel => 'Nieznana trasa';
 
   @override

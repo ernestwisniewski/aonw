@@ -4,6 +4,7 @@ import '../../features/artifacts/application/artifact_session_port.dart';
 import '../../features/cities/application/city_session_port.dart';
 import '../../features/combat/application/combat_session_port.dart';
 import '../../features/diplomacy/application/diplomacy_session_port.dart';
+import '../../features/local_game/application/local_game_session_port.dart';
 import '../../features/logistics/application/unit_logistics_session_port.dart';
 import '../../features/map/application/map_session_port.dart';
 import '../../features/map/application/movement_session_port.dart';
@@ -21,6 +22,7 @@ import '../../features/unit_actions/application/unit_action_session_port.dart';
 import '../../features/workers/application/worker_session_port.dart';
 import '../../game/aonw_flame_game.dart';
 import '../navigation/aonw_app.dart';
+import '../navigation/aonw_router.dart';
 import '../telemetry/client_telemetry.dart';
 
 final class AppComposition {
@@ -37,10 +39,12 @@ final class AppComposition {
     DiplomacySessionPort? diplomacySession,
     required UnitActionSessionPort unitActionSession,
     required TurnSessionPort turnSession,
+    LocalGameSessionPort? localGameSession,
     MapInputSource? mapInputSource,
     ClientSettingsStore? settingsStore,
     AonwFlameGameFactory flameGameFactory = AonwFlameGame.new,
     ClientTelemetry telemetry = const NoOpClientTelemetry(),
+    AonwRoute initialRoute = AonwRoute.menu,
   }) : root = AonwApp(
          mapController: MapPresentationController(
            session: mapSession,
@@ -59,10 +63,12 @@ final class AppComposition {
                diplomacySession ?? _requireDiplomacySession(movementSession),
            unitActions: unitActionSession,
            turns: turnSession,
+           localGame: localGameSession,
          ),
          mapInputSource: mapInputSource,
          flameGameFactory: flameGameFactory,
          telemetry: telemetry,
+         initialRoute: initialRoute,
          settingsController: settingsStore == null
              ? ClientSettingsController.ephemeral()
              : ClientSettingsController(store: settingsStore),
@@ -85,6 +91,7 @@ final class AppComposition {
       diplomacySession: gateway,
       unitActionSession: gateway,
       turnSession: gateway,
+      localGameSession: gateway,
       mapInputSource: GamepadMapInputSource(),
       settingsStore: SharedPreferencesClientSettingsStore(),
       telemetry: telemetry,

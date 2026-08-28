@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../design_system/widgets/aonw_panel.dart';
+import '../../features/local_game/presentation/new_game_screen.dart';
+import '../../features/main_menu/presentation/main_menu_screen.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
@@ -10,7 +12,9 @@ import '../../game/aonw_flame_game.dart';
 import '../../l10n/l10n.dart';
 
 enum AonwRoute {
-  map('/'),
+  menu('/'),
+  newGame('/new-game'),
+  map('/map'),
   settings('/settings');
 
   const AonwRoute(this.location);
@@ -32,6 +36,7 @@ final class AonwRouter {
     required this.flameGameFactory,
     required this.routeObserver,
     this.mapInputSource,
+    this.autoLoadMap = false,
   });
 
   final MapPresentationController mapController;
@@ -39,12 +44,25 @@ final class AonwRouter {
   final AonwFlameGameFactory flameGameFactory;
   final RouteObserver<ModalRoute<void>> routeObserver;
   final MapInputSource? mapInputSource;
+  final bool autoLoadMap;
 
   Route<void> onGenerateRoute(RouteSettings settings) {
     final route = AonwRoute.fromLocation(settings.name);
     return MaterialPageRoute<void>(
       settings: settings,
       builder: switch (route) {
+        AonwRoute.menu => (context) => MainMenuScreen(
+          onNewGame: () =>
+              Navigator.of(context).pushNamed(AonwRoute.newGame.location),
+          onOpenSettings: () =>
+              Navigator.of(context).pushNamed(AonwRoute.settings.location),
+        ),
+        AonwRoute.newGame => (context) => NewGameScreen(
+          mapController: mapController,
+          onStarted: () => Navigator.of(
+            context,
+          ).pushReplacementNamed(AonwRoute.map.location),
+        ),
         AonwRoute.map => (context) => Scaffold(
           body: SafeArea(
             child: MapScreen(
@@ -52,6 +70,7 @@ final class AonwRouter {
               inputSource: mapInputSource,
               flameGameFactory: flameGameFactory,
               routeObserver: routeObserver,
+              autoLoad: autoLoadMap,
               onOpenSettings: () =>
                   Navigator.of(context).pushNamed(AonwRoute.settings.location),
             ),

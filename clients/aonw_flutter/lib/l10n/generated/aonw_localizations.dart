@@ -104,6 +104,126 @@ abstract class AonwLocalizations {
   /// **'Age of New Worlds'**
   String get appTitle;
 
+  /// No description provided for @mainMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Main menu'**
+  String get mainMenuTitle;
+
+  /// No description provided for @newGame.
+  ///
+  /// In en, this message translates to:
+  /// **'New game'**
+  String get newGame;
+
+  /// No description provided for @newGameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create local game'**
+  String get newGameTitle;
+
+  /// No description provided for @scenarioLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Scenario'**
+  String get scenarioLabel;
+
+  /// No description provided for @localScenarioName.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, starterDuel{Starter duel} other{Local scenario}}'**
+  String localScenarioName(String value);
+
+  /// No description provided for @humanCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your country'**
+  String get humanCountryLabel;
+
+  /// No description provided for @aiCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI country'**
+  String get aiCountryLabel;
+
+  /// No description provided for @aiDifficultyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI difficulty'**
+  String get aiDifficultyLabel;
+
+  /// No description provided for @aiPersonaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI personality'**
+  String get aiPersonaLabel;
+
+  /// No description provided for @fogOfWarLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fog of war'**
+  String get fogOfWarLabel;
+
+  /// No description provided for @startGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Start game'**
+  String get startGame;
+
+  /// No description provided for @startingGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting game'**
+  String get startingGame;
+
+  /// No description provided for @localGameStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The local game could not be started.'**
+  String get localGameStartFailed;
+
+  /// No description provided for @aiTurnRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'The computer is taking its turn.'**
+  String get aiTurnRunning;
+
+  /// No description provided for @aiTurnFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, requestFailed{The computer turn could not be completed.} responseIncompatible{The computer turn response is incompatible with this client.} incomplete{The computer did not complete its turn within the safe command budget.} other{The computer turn could not be completed.}}'**
+  String aiTurnFailure(String value);
+
+  /// No description provided for @defaultPlayerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Player'**
+  String get defaultPlayerName;
+
+  /// No description provided for @defaultAiName.
+  ///
+  /// In en, this message translates to:
+  /// **'Computer'**
+  String get defaultAiName;
+
+  /// No description provided for @countryName.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, poland{Poland} ukraine{Ukraine} germany{Germany} france{France} unitedKingdom{United Kingdom} italy{Italy} spain{Spain} netherlands{Netherlands} sweden{Sweden} russia{Russia} unitedStates{United States} canada{Canada} china{China} korea{Korea} japan{Japan} portugal{Portugal} india{India} brazil{Brazil} indonesia{Indonesia} mexico{Mexico} turkey{Turkey} saudiArabia{Saudi Arabia} egypt{Egypt} greece{Greece} other{Unknown country}}'**
+  String countryName(String value);
+
+  /// No description provided for @aiDifficultyName.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, easy{Easy} normal{Normal} hard{Hard} veryHard{Very hard} other{Unknown difficulty}}'**
+  String aiDifficultyName(String value);
+
+  /// No description provided for @aiPersonaName.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, balanced{Balanced} aggressive{Aggressive} expansive{Expansive} economic{Economic} scientific{Scientific} other{Unknown personality}}'**
+  String aiPersonaName(String value);
+
   /// No description provided for @unknownRouteLabel.
   ///
   /// In en, this message translates to:

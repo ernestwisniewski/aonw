@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw_flutter/app/composition/app_composition.dart';
+import 'package:aonw_flutter/app/navigation/aonw_router.dart';
 import 'package:aonw_flutter/app/telemetry/client_telemetry.dart';
 import 'package:aonw_flutter/features/artifacts/application/artifact_session_port.dart';
 import 'package:aonw_flutter/features/artifacts/read_model/artifact_view.dart';
@@ -55,6 +56,7 @@ void main() {
         logisticsSession: first,
         turnSession: first,
         mapInputSource: firstInput,
+        initialRoute: AonwRoute.map,
       ).root,
     );
     await tester.pump();
@@ -70,6 +72,7 @@ void main() {
         logisticsSession: second,
         turnSession: second,
         mapInputSource: secondInput,
+        initialRoute: AonwRoute.map,
       ).root,
     );
     await tester.pump();
@@ -107,6 +110,7 @@ void main() {
           return game;
         },
         telemetry: telemetry,
+        initialRoute: AonwRoute.map,
       ).root,
     );
     await tester.pump();
@@ -161,6 +165,7 @@ void main() {
         turnSession: firstSession,
         mapInputSource: firstInput,
         flameGameFactory: createGame,
+        initialRoute: AonwRoute.map,
       ).root,
     );
     await tester.pumpAndSettle();
@@ -192,6 +197,7 @@ void main() {
         turnSession: secondSession,
         mapInputSource: secondInput,
         flameGameFactory: createGame,
+        initialRoute: AonwRoute.map,
       ).root,
     );
     await tester.pumpAndSettle();

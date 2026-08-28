@@ -7,6 +7,7 @@ import '../../../../game/aonw_flame_game.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../diplomacy/application/diplomacy_state.dart';
 import '../../../diplomacy/presentation/diplomacy_overlay.dart';
+import '../../../local_game/application/local_ai_turn_state.dart';
 import '../../../objectives/presentation/objective_overlay.dart';
 import '../../../research/application/research_state.dart';
 import '../../../research/presentation/research_overlay.dart';
@@ -160,6 +161,7 @@ final class _MapScreenState extends State<MapScreen>
         :final turnAction,
         :final research,
         :final diplomacy,
+        :final localAiTurn,
       ) =>
         _ReadyMap(
           scene: scene,
@@ -168,6 +170,7 @@ final class _MapScreenState extends State<MapScreen>
           turnAction: turnAction,
           research: research,
           diplomacy: diplomacy,
+          localAiTurn: localAiTurn,
           controller: widget.controller,
           onInput: _handleInput,
           onOpenSettings: widget.onOpenSettings,
@@ -286,6 +289,7 @@ final class _ReadyMap extends StatelessWidget {
     required this.turnAction,
     required this.research,
     required this.diplomacy,
+    required this.localAiTurn,
     required this.controller,
     required this.onInput,
     required this.onOpenSettings,
@@ -301,6 +305,7 @@ final class _ReadyMap extends StatelessWidget {
   final TurnActionState turnAction;
   final ResearchState research;
   final DiplomacyState diplomacy;
+  final LocalAiTurnState localAiTurn;
   final MapPresentationController controller;
   final ValueChanged<MapInputCommand> onInput;
   final VoidCallback? onOpenSettings;
@@ -332,6 +337,7 @@ final class _ReadyMap extends StatelessWidget {
           turn: scene.player.turnView,
           action: turnAction,
           presentations: turnPresentations,
+          localAiTurn: localAiTurn,
           onEndTurn: controller.endTurn,
         ),
       ),

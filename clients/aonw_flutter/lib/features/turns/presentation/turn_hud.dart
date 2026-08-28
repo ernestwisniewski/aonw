@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../design_system/aonw_tokens.dart';
 import '../../../design_system/widgets/aonw_panel.dart';
 import '../../../l10n/l10n.dart';
+import '../../local_game/application/local_ai_turn_state.dart';
 import '../application/turn_action_state.dart';
 import '../application/turn_presentation_queue.dart';
 import '../read_model/recipient_turn_view.dart';
@@ -14,6 +15,7 @@ final class TurnPresentationOverlays extends StatelessWidget {
     required this.action,
     required this.presentations,
     required this.onEndTurn,
+    required this.localAiTurn,
     super.key,
   });
 
@@ -21,6 +23,7 @@ final class TurnPresentationOverlays extends StatelessWidget {
   final TurnActionState action;
   final TurnPresentationQueue presentations;
   final VoidCallback onEndTurn;
+  final LocalAiTurnState localAiTurn;
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -29,7 +32,12 @@ final class TurnPresentationOverlays extends StatelessWidget {
         top: AonwSpacing.md,
         left: 72,
         right: 72,
-        child: _TurnHud(turn: turn, action: action, onEndTurn: onEndTurn),
+        child: _TurnHud(
+          turn: turn,
+          action: action,
+          localAiTurn: localAiTurn,
+          onEndTurn: onEndTurn,
+        ),
       ),
       Positioned(
         right: AonwSpacing.md,
@@ -46,15 +54,20 @@ final class _TurnHud extends StatelessWidget {
     required this.turn,
     required this.action,
     required this.onEndTurn,
+    required this.localAiTurn,
   });
 
   final RecipientTurnView turn;
   final TurnActionState action;
   final VoidCallback onEndTurn;
+  final LocalAiTurnState localAiTurn;
 
   @override
   Widget build(BuildContext context) {
     final failure = _turnFailure(context.aonwL10n, action.failure);
+    final aiFailure = localAiTurn.failure == null
+        ? null
+        : context.aonwL10n.aiTurnFailure(localAiTurn.failure!.name);
     return SafeArea(
       child: Center(
         child: AonwPanel(
@@ -75,9 +88,16 @@ final class _TurnHud extends StatelessWidget {
                 _EndTurnAction(
                   turn: turn,
                   action: action,
+                  aiTurn: localAiTurn,
                   onPressed: onEndTurn,
                 ),
+                if (localAiTurn.inFlight)
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(context.aonwL10n.aiTurnRunning),
+                  ),
                 if (failure != null) _TurnFailure(message: failure),
+                if (aiFailure != null) _TurnFailure(message: aiFailure),
               ],
             ),
           ),
@@ -121,23 +141,27 @@ final class _EndTurnAction extends StatelessWidget {
     required this.turn,
     required this.action,
     required this.onPressed,
+    required this.aiTurn,
   });
 
   final RecipientTurnView turn;
   final TurnActionState action;
   final VoidCallback onPressed;
+  final LocalAiTurnState aiTurn;
 
   @override
   Widget build(BuildContext context) => FocusTraversalOrder(
     order: const NumericFocusOrder(3),
     child: FilledButton.icon(
       key: const ValueKey('end-turn'),
-      onPressed: turn.canEndTurn && !action.inFlight ? onPressed : null,
-      icon: action.inFlight
+      onPressed: turn.canEndTurn && !action.inFlight && !aiTurn.blocksGameplay
+          ? onPressed
+          : null,
+      icon: action.inFlight || aiTurn.inFlight
           ? const Icon(Icons.hourglass_top)
           : const Icon(Icons.skip_next),
       label: Text(
-        action.inFlight
+        action.inFlight || aiTurn.inFlight
             ? context.aonwL10n.turnText('actionEnding')
             : context.aonwL10n.turnText('actionEnd'),
       ),

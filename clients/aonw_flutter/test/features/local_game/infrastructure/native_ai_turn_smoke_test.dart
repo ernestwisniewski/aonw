@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
+import 'package:aonw_flutter/features/local_game/application/local_game_catalog.dart';
 import 'package:aonw_flutter/features/local_game/application/local_game_session_port.dart';
-import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/infrastructure/rust_game_session_gateway.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,7 +24,7 @@ void main() {
         gateway.advanceAiTurn(
           LocalAiTurnRequestView(
             aiPlayerId: 'player-2',
-            humanPlayerId: 'preview-player',
+            humanPlayerId: 'player-1',
             commandBudget: 1025,
           ),
         ),
@@ -39,7 +38,7 @@ void main() {
               .having(
                 (error) => error.resyncedPlayer?.actorPlayerId,
                 'restored actor',
-                'preview-player',
+                'player-1',
               ),
         ),
       );
@@ -49,7 +48,7 @@ void main() {
       final execution = await gateway.advanceAiTurn(
         LocalAiTurnRequestView(
           aiPlayerId: 'player-2',
-          humanPlayerId: 'preview-player',
+          humanPlayerId: 'player-1',
         ),
       );
 
@@ -57,7 +56,7 @@ void main() {
       expect(execution.aiPlayerId, 'player-2');
       expect(execution.completedTurn, isTrue);
       expect(execution.executedCommands, greaterThan(0));
-      expect(execution.player.actorPlayerId, 'preview-player');
+      expect(execution.player.actorPlayerId, 'player-1');
       expect(
         execution.player.stamp.revision,
         greaterThan(humanTurn.player!.stamp.revision),
@@ -67,10 +66,10 @@ void main() {
 }
 
 LocalMatchSetupView _setup() => LocalMatchSetupView(
-  assets: MapAssetPaths.starter,
+  assets: LocalGameCatalog.entries.first.assets,
   participants: [
     LocalParticipantSetupView(
-      id: 'preview-player',
+      id: 'player-1',
       name: 'Player',
       colorValue: 0xff3d5a80,
       country: LocalPlayerCountryView.poland,
@@ -91,26 +90,7 @@ LocalMatchSetupView _setup() => LocalMatchSetupView(
 final class _FileAssetBundle extends CachingAssetBundle {
   @override
   Future<ByteData> load(String key) async {
-    final bytes = key == MapAssetPaths.starter.scenarioDocument
-        ? _localAiScenario(await File(key).readAsString())
-        : await File(key).readAsBytes();
+    final bytes = await File(key).readAsBytes();
     return ByteData.sublistView(Uint8List.fromList(bytes));
   }
-}
-
-List<int> _localAiScenario(String source) {
-  final document = jsonDecode(source) as Map<String, Object?>;
-  final initialUnits = document['initialUnits'] as List<Object?>;
-  document['initialUnits'] = [
-    ...initialUnits,
-    const {
-      'id': 'ai-commander',
-      'ownerPlayerId': 'player-2',
-      'kind': 'commander',
-      'name': 'AI Commander',
-      'col': 6,
-      'row': 3,
-    },
-  ];
-  return utf8.encode(jsonEncode(document));
 }

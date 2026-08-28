@@ -10,6 +10,7 @@ import '../../combat/application/combat_session_port.dart';
 import '../../combat/read_model/combat_view.dart';
 import '../../diplomacy/application/diplomacy_session_port.dart';
 import '../../diplomacy/read_model/diplomacy_view.dart';
+import '../../local_game/application/local_game_session_port.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../production/application/production_session_port.dart';
@@ -41,6 +42,7 @@ final class MapPresentationController extends ChangeNotifier {
     DiplomacySessionPort? diplomacy,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
+    LocalGameSessionPort? localGame,
     MapAssetPaths assets = MapAssetPaths.starter,
     MapDiagnosticReporter diagnosticReporter = _reportMapDiagnostic,
   }) : this.fromCoordinator(
@@ -57,6 +59,7 @@ final class MapPresentationController extends ChangeNotifier {
            diplomacy: diplomacy,
            unitActions: unitActions,
            turns: turns,
+           localGame: localGame,
            assets: assets,
            diagnosticReporter: diagnosticReporter,
          ),
@@ -73,6 +76,9 @@ final class MapPresentationController extends ChangeNotifier {
   GameSessionState get state => _coordinator.state;
 
   Future<void> load() => _coordinator.load();
+
+  Future<bool> startLocalMatch(LocalMatchSetupView setup) =>
+      _coordinator.startLocalMatch(setup);
 
   void hover(MapHexCoordinate? coordinate) => _coordinator.hover(coordinate);
 

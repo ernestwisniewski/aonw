@@ -6,6 +6,7 @@ import 'package:aonw_flutter/features/combat/application/combat_session_port.dar
 import 'package:aonw_flutter/features/combat/read_model/combat_view.dart';
 import 'package:aonw_flutter/features/diplomacy/application/diplomacy_session_port.dart';
 import 'package:aonw_flutter/features/diplomacy/read_model/diplomacy_view.dart';
+import 'package:aonw_flutter/features/local_game/application/local_game_session_port.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
 import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
 import 'package:aonw_flutter/features/map/application/map_session_port.dart';
@@ -318,7 +319,8 @@ final class FakeGameSession
         ResearchSessionPort,
         DiplomacySessionPort,
         TurnSessionPort,
-        UnitActionSessionPort {
+        UnitActionSessionPort,
+        LocalGameSessionPort {
   FakeGameSession.success(
     this.scene, {
     this.reachableResult,
@@ -353,6 +355,8 @@ final class FakeGameSession
     this.cityInspection,
     this.cityResult,
     this.cityFailure,
+    this.aiTurnResults = const [],
+    this.aiTurnFailure,
   }) : failure = null;
   FakeGameSession.failure(this.failure)
     : scene = null,
@@ -387,7 +391,9 @@ final class FakeGameSession
       cityFoundingOptionsResult = null,
       cityInspection = null,
       cityResult = null,
-      cityFailure = null;
+      cityFailure = null,
+      aiTurnResults = const [],
+      aiTurnFailure = null;
 
   final MapScene? scene;
   final MapLoadException? failure;
@@ -427,6 +433,8 @@ final class FakeGameSession
   final CityInspectionView? cityInspection;
   final CityCommandResultView? cityResult;
   final CitySessionException? cityFailure;
+  final List<LocalAiTurnExecutionView> aiTurnResults;
+  final LocalGameSessionException? aiTurnFailure;
   var unitActionCalls = 0;
   UnitActionKindView? lastUnitAction;
   int? lastUnitActionExpectedRevision;
@@ -463,12 +471,47 @@ final class FakeGameSession
   var cityInspectionCalls = 0;
   var cityCommandCalls = 0;
   CityActionView? lastCityAction;
+  var localStartCalls = 0;
+  LocalMatchSetupView? lastLocalMatchSetup;
+  var aiTurnCalls = 0;
+  final aiTurnRequests = <LocalAiTurnRequestView>[];
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
     final error = failure;
     if (error != null) throw error;
     return scene!;
+  }
+
+  @override
+  Future<MapScene> startLocalMatch(LocalMatchSetupView setup) async {
+    localStartCalls += 1;
+    lastLocalMatchSetup = setup;
+    final error = failure;
+    if (error != null) {
+      throw LocalGameSessionException(
+        code: error.code,
+        message: error.message,
+        diagnosticCause: error.diagnosticCause,
+        diagnosticStackTrace: error.diagnosticStackTrace,
+      );
+    }
+    return scene!;
+  }
+
+  @override
+  Future<LocalAiTurnExecutionView> advanceAiTurn(
+    LocalAiTurnRequestView request,
+  ) async {
+    aiTurnCalls += 1;
+    aiTurnRequests.add(request);
+    final error = aiTurnFailure;
+    if (error != null) throw error;
+    if (aiTurnResults.isEmpty) throw StateError('No AI turn fixture.');
+    final index = aiTurnCalls <= aiTurnResults.length
+        ? aiTurnCalls - 1
+        : aiTurnResults.length - 1;
+    return aiTurnResults[index];
   }
 
   @override

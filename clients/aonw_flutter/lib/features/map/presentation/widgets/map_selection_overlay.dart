@@ -141,7 +141,8 @@ final class _MapSelectionPanel extends StatelessWidget {
               if (interaction.selectedUnitId case final unitId?) ...[
                 const SizedBox(height: AonwSpacing.xs),
                 Text(l10n.unitLabel(unitId)),
-                if (unit case final unit?) Text(unit.name),
+                if (unit case final unit?)
+                  Text(l10n.presentationName(unit.kind.name)),
                 if (interaction.combat == null)
                   _MovementControls(
                     interaction: interaction,

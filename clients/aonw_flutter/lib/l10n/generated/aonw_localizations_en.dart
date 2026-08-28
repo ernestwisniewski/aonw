@@ -12,6 +12,130 @@ class AonwLocalizationsEn extends AonwLocalizations {
   String get appTitle => 'Age of New Worlds';
 
   @override
+  String get mainMenuTitle => 'Main menu';
+
+  @override
+  String get newGame => 'New game';
+
+  @override
+  String get newGameTitle => 'Create local game';
+
+  @override
+  String get scenarioLabel => 'Scenario';
+
+  @override
+  String localScenarioName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'starterDuel': 'Starter duel',
+      'other': 'Local scenario',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get humanCountryLabel => 'Your country';
+
+  @override
+  String get aiCountryLabel => 'AI country';
+
+  @override
+  String get aiDifficultyLabel => 'AI difficulty';
+
+  @override
+  String get aiPersonaLabel => 'AI personality';
+
+  @override
+  String get fogOfWarLabel => 'Fog of war';
+
+  @override
+  String get startGame => 'Start game';
+
+  @override
+  String get startingGame => 'Starting game';
+
+  @override
+  String get localGameStartFailed => 'The local game could not be started.';
+
+  @override
+  String get aiTurnRunning => 'The computer is taking its turn.';
+
+  @override
+  String aiTurnFailure(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'requestFailed': 'The computer turn could not be completed.',
+      'responseIncompatible':
+          'The computer turn response is incompatible with this client.',
+      'incomplete':
+          'The computer did not complete its turn within the safe command budget.',
+      'other': 'The computer turn could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get defaultPlayerName => 'Player';
+
+  @override
+  String get defaultAiName => 'Computer';
+
+  @override
+  String countryName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'poland': 'Poland',
+      'ukraine': 'Ukraine',
+      'germany': 'Germany',
+      'france': 'France',
+      'unitedKingdom': 'United Kingdom',
+      'italy': 'Italy',
+      'spain': 'Spain',
+      'netherlands': 'Netherlands',
+      'sweden': 'Sweden',
+      'russia': 'Russia',
+      'unitedStates': 'United States',
+      'canada': 'Canada',
+      'china': 'China',
+      'korea': 'Korea',
+      'japan': 'Japan',
+      'portugal': 'Portugal',
+      'india': 'India',
+      'brazil': 'Brazil',
+      'indonesia': 'Indonesia',
+      'mexico': 'Mexico',
+      'turkey': 'Turkey',
+      'saudiArabia': 'Saudi Arabia',
+      'egypt': 'Egypt',
+      'greece': 'Greece',
+      'other': 'Unknown country',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiDifficultyName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'easy': 'Easy',
+      'normal': 'Normal',
+      'hard': 'Hard',
+      'veryHard': 'Very hard',
+      'other': 'Unknown difficulty',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String aiPersonaName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'balanced': 'Balanced',
+      'aggressive': 'Aggressive',
+      'expansive': 'Expansive',
+      'economic': 'Economic',
+      'scientific': 'Scientific',
+      'other': 'Unknown personality',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String get unknownRouteLabel => 'Unknown route';
 
   @override

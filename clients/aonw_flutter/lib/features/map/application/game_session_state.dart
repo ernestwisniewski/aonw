@@ -1,4 +1,5 @@
 import '../../diplomacy/application/diplomacy_state.dart';
+import '../../local_game/application/local_ai_turn_state.dart';
 import '../../research/application/research_state.dart';
 import '../../turns/application/turn_action_state.dart';
 import '../../turns/application/turn_presentation_queue.dart';
@@ -22,6 +23,7 @@ final class GameSessionReady extends GameSessionState {
     required this.turnAction,
     required this.research,
     required this.diplomacy,
+    required this.localAiTurn,
   });
 
   factory GameSessionReady.initial(MapScene scene) => GameSessionReady(
@@ -31,6 +33,7 @@ final class GameSessionReady extends GameSessionState {
     turnAction: const TurnActionState(),
     research: ResearchState.loading(scene.player.stamp.revision),
     diplomacy: const DiplomacyState(),
+    localAiTurn: const LocalAiTurnState.idle(),
   );
 
   final MapScene scene;
@@ -39,6 +42,7 @@ final class GameSessionReady extends GameSessionState {
   final TurnActionState turnAction;
   final ResearchState research;
   final DiplomacyState diplomacy;
+  final LocalAiTurnState localAiTurn;
 
   PlayerMapView get recipient => scene.player;
 
@@ -50,6 +54,7 @@ final class GameSessionReady extends GameSessionState {
         turnAction: turnAction,
         research: research,
         diplomacy: diplomacy,
+        localAiTurn: localAiTurn,
       );
 
   GameSessionReady withRecipient(PlayerMapView value) {
@@ -65,6 +70,7 @@ final class GameSessionReady extends GameSessionState {
           ? ResearchState.loading(value.stamp.revision)
           : research,
       diplomacy: identityChanged ? const DiplomacyState() : diplomacy,
+      localAiTurn: localAiTurn,
     );
   }
 
@@ -76,6 +82,7 @@ final class GameSessionReady extends GameSessionState {
         turnAction: turnAction,
         research: research,
         diplomacy: diplomacy,
+        localAiTurn: localAiTurn,
       );
 
   GameSessionReady withTurnAction(TurnActionState value) => GameSessionReady(
@@ -85,6 +92,7 @@ final class GameSessionReady extends GameSessionState {
     turnAction: value,
     research: research,
     diplomacy: diplomacy,
+    localAiTurn: localAiTurn,
   );
 
   GameSessionReady withResearch(ResearchState value) => GameSessionReady(
@@ -94,6 +102,7 @@ final class GameSessionReady extends GameSessionState {
     turnAction: turnAction,
     research: value,
     diplomacy: diplomacy,
+    localAiTurn: localAiTurn,
   );
 
   GameSessionReady withDiplomacy(DiplomacyState value) => GameSessionReady(
@@ -103,6 +112,17 @@ final class GameSessionReady extends GameSessionState {
     turnAction: turnAction,
     research: research,
     diplomacy: value,
+    localAiTurn: localAiTurn,
+  );
+
+  GameSessionReady withLocalAiTurn(LocalAiTurnState value) => GameSessionReady(
+    scene: scene,
+    interaction: interaction,
+    turnPresentations: turnPresentations,
+    turnAction: turnAction,
+    research: research,
+    diplomacy: diplomacy,
+    localAiTurn: value,
   );
 
   GameSessionReady completeTurnPresentation() =>

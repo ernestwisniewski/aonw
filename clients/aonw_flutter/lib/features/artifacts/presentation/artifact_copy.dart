@@ -40,7 +40,7 @@ final class ArtifactCopy {
           coordinate.row,
         ),
         CarriedArtifactLocationView(:final unitId) => _l10n.artifactCarriedBy(
-          player.controlledUnitById(unitId)?.name ?? unitId,
+          _unitName(player, unitId),
         ),
         StoredArtifactLocationView(:final cityId) => _l10n.artifactStoredIn(
           player.cityById(cityId)?.name ?? cityId,
@@ -55,6 +55,11 @@ final class ArtifactCopy {
             remainingTurns,
           ),
       };
+
+  String _unitName(PlayerMapView player, String unitId) {
+    final unit = player.controlledUnitById(unitId);
+    return unit == null ? unitId : _l10n.presentationName(unit.kind.name);
+  }
 
   String failure(ArtifactFailureView failure) {
     final key = failure.rejectionCode?.name ?? failure.code.name;
