@@ -48,11 +48,14 @@ void main() {
     final invalid = AonwPlayerViewSnapshot(
       stamp: snapshot.stamp,
       turn: 0,
+      outcome: snapshot.outcome,
       turnLifecycle: snapshot.turnLifecycle,
       pendingAction: snapshot.pendingAction,
       cityFoundingDraft: snapshot.cityFoundingDraft,
+      diplomacy: snapshot.diplomacy,
       units: snapshot.units,
       cities: snapshot.cities,
+      artifacts: snapshot.artifacts,
       fieldImprovements: snapshot.fieldImprovements,
       roads: snapshot.roads,
     );
@@ -163,6 +166,11 @@ AonwPlayerViewSnapshot _snapshot(
     rulesetHash: 'c' * 64,
   ),
   turn: 7,
+  outcome: AonwGameOutcome(
+    condition: AonwGameOutcomeCondition.ongoing,
+    winnerPlayerId: null,
+    scoreByPlayerId: const {},
+  ),
   turnLifecycle: const AonwPlayerTurnLifecycle(
     ownState: AonwPlayerTurnState.active,
     ownSubmitted: false,
@@ -171,8 +179,15 @@ AonwPlayerViewSnapshot _snapshot(
   ),
   pendingAction: pendingAction,
   cityFoundingDraft: null,
+  diplomacy: const AonwPlayerDiplomacyView(
+    relations: [],
+    proposals: [],
+    messages: [],
+    resourceTradeAgreements: [],
+  ),
   units: units,
   cities: const [],
+  artifacts: const [],
   fieldImprovements: const [],
   roads: const [],
 );

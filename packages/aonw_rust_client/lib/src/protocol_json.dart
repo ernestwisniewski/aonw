@@ -41,6 +41,14 @@ int readUnsigned(Object? value, String label) {
   return parsed;
 }
 
+Map<String, int> readStringIntMap(Object? value, String label) {
+  final source = readObject(value, label);
+  return Map<String, int>.unmodifiable({
+    for (final MapEntry(key: key, value: item) in source.entries)
+      key: readInt(item, '$label value'),
+  });
+}
+
 double readFinitePositiveDouble(Object? value, String label) {
   if (value is! num) throw FormatException('Invalid AoNW $label.');
   final parsed = value.toDouble();

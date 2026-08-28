@@ -5,6 +5,33 @@ import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('capability parser covers the complete current Rust feature set', () {
+    const featureWires = [
+      'artifacts',
+      'cities',
+      'combat',
+      'inspectMap',
+      'snapshot',
+      'reachable',
+      'routePlan',
+      'moveUnit',
+      'unitActions',
+      'turnKernel',
+      'saveGame',
+      'replayVerification',
+      'movementLogistics',
+      'workers',
+      'production',
+      'research',
+      'diplomacy',
+    ];
+    final capabilities = AonwClientResponse.parse(
+      _success({'type': 'capabilities', 'features': featureWires}),
+    ).require<AonwCapabilitiesResponse>();
+
+    expect(capabilities.features, AonwClientFeature.values);
+  });
+
   test('typed response parser rejects unknown nested fields', () {
     final source = _success({
       'type': 'snapshot',
@@ -282,15 +309,19 @@ Map<String, Object?> _commandResult(Map<String, Object?> outcome) => {
     'fromRevision': 7,
     'toRevision': 7,
     'turnLifecycle': null,
+    'outcome': null,
     'upsertedUnits': <Object?>[],
     'removedUnitIds': <Object?>[],
     'upsertedCities': <Object?>[],
     'removedCityIds': <Object?>[],
+    'upsertedArtifacts': <Object?>[],
+    'removedArtifactIds': <Object?>[],
     'upsertedFieldImprovements': <Object?>[],
     'removedFieldImprovementCoordinates': <Object?>[],
     'upsertedRoads': <Object?>[],
     'removedRoadCoordinates': <Object?>[],
     'pendingAction': null,
     'cityFoundingDraft': null,
+    'diplomacy': null,
   },
 };

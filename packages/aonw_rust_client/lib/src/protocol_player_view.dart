@@ -1,6 +1,9 @@
+import 'package:aonw_rust_client/src/protocol_artifact.dart';
 import 'package:aonw_rust_client/src/protocol_city_view.dart';
 import 'package:aonw_rust_client/src/protocol_coordinate.dart';
+import 'package:aonw_rust_client/src/protocol_diplomacy.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
+import 'package:aonw_rust_client/src/protocol_outcome.dart';
 import 'package:aonw_rust_client/src/protocol_pending_action.dart';
 import 'package:aonw_rust_client/src/protocol_values.dart';
 
@@ -239,11 +242,14 @@ final class AonwPlayerViewSnapshot {
   const AonwPlayerViewSnapshot({
     required this.stamp,
     required this.turn,
+    required this.outcome,
     required this.turnLifecycle,
     required this.pendingAction,
     required this.cityFoundingDraft,
+    required this.diplomacy,
     required this.units,
     required this.cities,
+    required this.artifacts,
     required this.fieldImprovements,
     required this.roads,
   });
@@ -253,17 +259,21 @@ final class AonwPlayerViewSnapshot {
     requireKeys(value, const {
       'stamp',
       'turn',
+      'outcome',
       'turnLifecycle',
       'pendingAction',
       'cityFoundingDraft',
+      'diplomacy',
       'units',
       'cities',
+      'artifacts',
       'fieldImprovements',
       'roads',
     }, 'player snapshot');
     return AonwPlayerViewSnapshot(
       stamp: AonwSessionStamp.fromJson(value['stamp']),
       turn: readUnsigned(value['turn'], 'snapshot turn'),
+      outcome: AonwGameOutcome.fromJson(value['outcome']),
       turnLifecycle: AonwPlayerTurnLifecycle.fromJson(value['turnLifecycle']),
       pendingAction: value['pendingAction'] == null
           ? null
@@ -271,6 +281,7 @@ final class AonwPlayerViewSnapshot {
       cityFoundingDraft: value['cityFoundingDraft'] == null
           ? null
           : AonwCityFoundingDraft.fromJson(value['cityFoundingDraft']),
+      diplomacy: AonwPlayerDiplomacyView.fromJson(value['diplomacy']),
       units: _views(
         value['units'],
         'snapshot units',
@@ -280,6 +291,11 @@ final class AonwPlayerViewSnapshot {
         value['cities'],
         'snapshot cities',
         AonwPlayerCityView.fromJson,
+      ),
+      artifacts: _views(
+        value['artifacts'],
+        'snapshot artifacts',
+        AonwPlayerArtifactView.fromJson,
       ),
       fieldImprovements: _views(
         value['fieldImprovements'],
@@ -292,11 +308,14 @@ final class AonwPlayerViewSnapshot {
 
   final AonwSessionStamp stamp;
   final int turn;
+  final AonwGameOutcome outcome;
   final AonwPlayerTurnLifecycle turnLifecycle;
   final AonwPendingActionView? pendingAction;
   final AonwCityFoundingDraft? cityFoundingDraft;
+  final AonwPlayerDiplomacyView diplomacy;
   final List<AonwPlayerUnitView> units;
   final List<AonwPlayerCityView> cities;
+  final List<AonwPlayerArtifactView> artifacts;
   final List<AonwFieldImprovementView> fieldImprovements;
   final List<AonwRoadView> roads;
 }
@@ -306,21 +325,27 @@ final class AonwPlayerViewPatch {
     required this.fromRevision,
     required this.toRevision,
     required this.turnLifecycle,
+    required this.outcome,
     required this.upsertedUnits,
     required this.removedUnitIds,
     required this.upsertedCities,
     required this.removedCityIds,
+    required this.upsertedArtifacts,
+    required this.removedArtifactIds,
     required this.upsertedFieldImprovements,
     required this.removedFieldImprovementCoordinates,
     required this.upsertedRoads,
     required this.removedRoadCoordinates,
     required this.pendingAction,
     required this.cityFoundingDraft,
+    required this.diplomacy,
   });
 
   factory AonwPlayerViewPatch.fromJson(Object? source) {
     final value = readObject(source, 'player view patch');
     _requirePlayerViewPatchKeys(value);
+    final entities = _playerEntityPatch(value);
+    final mapFeatures = _playerMapFeaturePatch(value);
     return AonwPlayerViewPatch(
       fromRevision: readUnsigned(value['fromRevision'], 'source revision'),
       toRevision: readUnsigned(value['toRevision'], 'patch target revision'),
@@ -328,36 +353,18 @@ final class AonwPlayerViewPatch {
         value['turnLifecycle'],
         AonwPlayerTurnLifecycle.fromJson,
       ),
-      upsertedUnits: _views(
-        value['upsertedUnits'],
-        'upserted units',
-        AonwPlayerUnitView.fromJson,
-      ),
-      removedUnitIds: _ids(value['removedUnitIds'], 'removed unit ids'),
-      upsertedCities: _views(
-        value['upsertedCities'],
-        'upserted cities',
-        AonwPlayerCityView.fromJson,
-      ),
-      removedCityIds: _ids(value['removedCityIds'], 'removed city ids'),
-      upsertedFieldImprovements: _views(
-        value['upsertedFieldImprovements'],
-        'upserted field improvements',
-        AonwFieldImprovementView.fromJson,
-      ),
-      removedFieldImprovementCoordinates: _coordinates(
-        value['removedFieldImprovementCoordinates'],
-        'removed field improvement coordinates',
-      ),
-      upsertedRoads: _views(
-        value['upsertedRoads'],
-        'upserted roads',
-        AonwRoadView.fromJson,
-      ),
-      removedRoadCoordinates: _coordinates(
-        value['removedRoadCoordinates'],
-        'removed road coordinates',
-      ),
+      outcome: _optional(value['outcome'], AonwGameOutcome.fromJson),
+      upsertedUnits: entities.units,
+      removedUnitIds: entities.removedUnitIds,
+      upsertedCities: entities.cities,
+      removedCityIds: entities.removedCityIds,
+      upsertedArtifacts: mapFeatures.artifacts,
+      removedArtifactIds: mapFeatures.removedArtifactIds,
+      upsertedFieldImprovements: mapFeatures.fieldImprovements,
+      removedFieldImprovementCoordinates:
+          mapFeatures.removedFieldImprovementCoordinates,
+      upsertedRoads: mapFeatures.roads,
+      removedRoadCoordinates: mapFeatures.removedRoadCoordinates,
       pendingAction: _optional(
         value['pendingAction'],
         AonwPendingActionView.fromJson,
@@ -366,39 +373,107 @@ final class AonwPlayerViewPatch {
         value['cityFoundingDraft'],
         AonwCityFoundingDraft.fromJson,
       ),
+      diplomacy: _optional(
+        value['diplomacy'],
+        AonwPlayerDiplomacyView.fromJson,
+      ),
     );
   }
 
   final int fromRevision;
   final int toRevision;
   final AonwPlayerTurnLifecycle? turnLifecycle;
+  final AonwGameOutcome? outcome;
   final List<AonwPlayerUnitView> upsertedUnits;
   final List<String> removedUnitIds;
   final List<AonwPlayerCityView> upsertedCities;
   final List<String> removedCityIds;
+  final List<AonwPlayerArtifactView> upsertedArtifacts;
+  final List<String> removedArtifactIds;
   final List<AonwFieldImprovementView> upsertedFieldImprovements;
   final List<AonwCoordinate> removedFieldImprovementCoordinates;
   final List<AonwRoadView> upsertedRoads;
   final List<AonwCoordinate> removedRoadCoordinates;
   final AonwPendingActionView? pendingAction;
   final AonwCityFoundingDraft? cityFoundingDraft;
+  final AonwPlayerDiplomacyView? diplomacy;
 }
+
+({
+  List<AonwPlayerUnitView> units,
+  List<String> removedUnitIds,
+  List<AonwPlayerCityView> cities,
+  List<String> removedCityIds,
+})
+_playerEntityPatch(Map<String, Object?> value) => (
+  units: _views(
+    value['upsertedUnits'],
+    'upserted units',
+    AonwPlayerUnitView.fromJson,
+  ),
+  removedUnitIds: _ids(value['removedUnitIds'], 'removed unit ids'),
+  cities: _views(
+    value['upsertedCities'],
+    'upserted cities',
+    AonwPlayerCityView.fromJson,
+  ),
+  removedCityIds: _ids(value['removedCityIds'], 'removed city ids'),
+);
+
+({
+  List<AonwPlayerArtifactView> artifacts,
+  List<String> removedArtifactIds,
+  List<AonwFieldImprovementView> fieldImprovements,
+  List<AonwCoordinate> removedFieldImprovementCoordinates,
+  List<AonwRoadView> roads,
+  List<AonwCoordinate> removedRoadCoordinates,
+})
+_playerMapFeaturePatch(Map<String, Object?> value) => (
+  artifacts: _views(
+    value['upsertedArtifacts'],
+    'upserted artifacts',
+    AonwPlayerArtifactView.fromJson,
+  ),
+  removedArtifactIds: _ids(value['removedArtifactIds'], 'removed artifact ids'),
+  fieldImprovements: _views(
+    value['upsertedFieldImprovements'],
+    'upserted field improvements',
+    AonwFieldImprovementView.fromJson,
+  ),
+  removedFieldImprovementCoordinates: _coordinates(
+    value['removedFieldImprovementCoordinates'],
+    'removed field improvement coordinates',
+  ),
+  roads: _views(
+    value['upsertedRoads'],
+    'upserted roads',
+    AonwRoadView.fromJson,
+  ),
+  removedRoadCoordinates: _coordinates(
+    value['removedRoadCoordinates'],
+    'removed road coordinates',
+  ),
+);
 
 void _requirePlayerViewPatchKeys(Map<String, Object?> value) {
   requireKeys(value, const {
     'fromRevision',
     'toRevision',
     'turnLifecycle',
+    'outcome',
     'upsertedUnits',
     'removedUnitIds',
     'upsertedCities',
     'removedCityIds',
+    'upsertedArtifacts',
+    'removedArtifactIds',
     'upsertedFieldImprovements',
     'removedFieldImprovementCoordinates',
     'upsertedRoads',
     'removedRoadCoordinates',
     'pendingAction',
     'cityFoundingDraft',
+    'diplomacy',
   }, 'player view patch');
 }
 

@@ -2,6 +2,7 @@ import 'package:aonw_rust_client/src/protocol_coordinate.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 
 enum AonwClientFeature {
+  artifacts,
   cities,
   combat,
   inspectMap,
@@ -14,13 +15,56 @@ enum AonwClientFeature {
   saveGame,
   replayVerification,
   movementLogistics,
-  workers;
+  workers,
+  production,
+  research,
+  diplomacy;
 
   factory AonwClientFeature.fromJson(Object? value) {
     final wire = readString(value, 'client feature');
     return values.firstWhere(
       (feature) => feature.name == wire,
       orElse: () => throw FormatException('Unknown AoNW client feature $wire.'),
+    );
+  }
+}
+
+enum AonwResourceType {
+  wheat,
+  fish,
+  deer,
+  sheep,
+  rice,
+  cow,
+  apple,
+  banana,
+  citrus,
+  gold,
+  silver,
+  gems,
+  silk,
+  spices,
+  cotton,
+  grapes,
+  ivory,
+  pearls,
+  coffee,
+  cocoa,
+  tobacco,
+  sugar,
+  iron,
+  coal,
+  oil,
+  aluminium,
+  uranium,
+  horses,
+  marble;
+
+  factory AonwResourceType.fromJson(Object? source) {
+    final wire = readString(source, 'resource type');
+    return values.firstWhere(
+      (resource) => resource.name == wire,
+      orElse: () => throw FormatException('Unknown AoNW resource type $wire.'),
     );
   }
 }

@@ -71,7 +71,7 @@ void main() {
     final capabilities = AonwClientResponse.parse(
       rawResponse,
     ).require<AonwCapabilitiesResponse>();
-    expect(capabilities.features, contains(AonwClientFeature.snapshot));
+    expect(capabilities.features, unorderedEquals(AonwClientFeature.values));
 
     final inspected = AonwClientResponse.parse(
       await session.requestJson(

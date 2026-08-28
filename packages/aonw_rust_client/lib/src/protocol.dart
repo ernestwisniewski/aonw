@@ -5,10 +5,13 @@ import 'package:aonw_rust_client/src/native_identity.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 import 'package:aonw_rust_client/src/protocol_response.dart';
 
+export 'protocol_artifact.dart';
 export 'protocol_city_view.dart';
 export 'protocol_coordinate.dart';
+export 'protocol_diplomacy.dart';
 export 'protocol_execution.dart';
 export 'protocol_map.dart';
+export 'protocol_outcome.dart';
 export 'protocol_pending_action.dart';
 export 'protocol_player_view.dart';
 export 'protocol_query.dart';
