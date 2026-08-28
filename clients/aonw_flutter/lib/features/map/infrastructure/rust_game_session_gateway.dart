@@ -10,6 +10,9 @@ import '../../cities/read_model/city_view.dart';
 import '../../combat/application/combat_session_port.dart';
 import '../../combat/infrastructure/rust_combat_gateway.dart';
 import '../../combat/read_model/combat_view.dart';
+import '../../diplomacy/application/diplomacy_session_port.dart';
+import '../../diplomacy/infrastructure/rust_diplomacy_gateway.dart';
+import '../../diplomacy/read_model/diplomacy_view.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/infrastructure/rust_unit_logistics_gateway.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
@@ -54,6 +57,7 @@ final class RustGameSessionGateway
         CombatSessionPort,
         UnitLogisticsSessionPort,
         ResearchSessionPort,
+        DiplomacySessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   RustGameSessionGateway({
@@ -68,6 +72,7 @@ final class RustGameSessionGateway
     RustProductionGateway productionGateway = const RustProductionGateway(),
     RustArtifactGateway artifactGateway = const RustArtifactGateway(),
     RustResearchGateway researchGateway = const RustResearchGateway(),
+    RustDiplomacyGateway diplomacyGateway = const RustDiplomacyGateway(),
     RustTurnGateway turnGateway = const RustTurnGateway(),
     RustUnitLogisticsGateway logisticsGateway =
         const RustUnitLogisticsGateway(),
@@ -86,6 +91,7 @@ final class RustGameSessionGateway
        _productionGateway = productionGateway,
        _artifactGateway = artifactGateway,
        _researchGateway = researchGateway,
+       _diplomacyGateway = diplomacyGateway,
        _turnGateway = turnGateway,
        _logisticsGateway = logisticsGateway,
        _unitActions = RustUnitActionGateway(
@@ -107,6 +113,7 @@ final class RustGameSessionGateway
   final RustProductionGateway _productionGateway;
   final RustArtifactGateway _artifactGateway;
   final RustResearchGateway _researchGateway;
+  final RustDiplomacyGateway _diplomacyGateway;
   final RustTurnGateway _turnGateway;
   final RustUnitLogisticsGateway _logisticsGateway;
   final RustUnitActionGateway _unitActions;
@@ -227,6 +234,20 @@ final class RustGameSessionGateway
       context: _context(),
       expectedRevision: expectedRevision,
       technology: technology,
+      send: _send,
+      applyPatch: _applyCommandPatch,
+    ),
+  );
+
+  @override
+  Future<DiplomacyCommandResultView> executeDiplomacyAction({
+    required int expectedRevision,
+    required DiplomacyActionView action,
+  }) => _serialize(
+    () => _diplomacyGateway.execute(
+      context: _context(),
+      expectedRevision: expectedRevision,
+      action: action,
       send: _send,
       applyPatch: _applyCommandPatch,
     ),

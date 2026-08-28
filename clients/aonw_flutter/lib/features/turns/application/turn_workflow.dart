@@ -39,6 +39,7 @@ final class TurnWorkflow {
     final current = readState();
     if (current is! GameSessionReady ||
         current.research.commandPending ||
+        current.diplomacy.commandPending ||
         current.turnAction.inFlight ||
         (current.interaction.combat?.commandPending ?? false) ||
         (current.interaction.combat?.loading ?? false) ||

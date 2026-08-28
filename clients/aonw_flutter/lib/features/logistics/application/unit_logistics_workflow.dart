@@ -231,6 +231,7 @@ GameSessionReady? _executable(
   final logistics = current?.interaction.unitLogistics;
   if (current == null ||
       current.research.commandPending ||
+      current.diplomacy.commandPending ||
       logistics == null ||
       logistics.commandPending ||
       !_containsAction(logistics.options, action)) {

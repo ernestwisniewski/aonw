@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:aonw_flutter/features/artifacts/application/artifact_session_port.dart';
 import 'package:aonw_flutter/features/artifacts/read_model/artifact_view.dart';
-
 import 'package:aonw_flutter/features/combat/application/combat_session_port.dart';
 import 'package:aonw_flutter/features/combat/read_model/combat_view.dart';
+import 'package:aonw_flutter/features/diplomacy/application/diplomacy_session_port.dart';
+import 'package:aonw_flutter/features/diplomacy/read_model/diplomacy_view.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
 import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
@@ -440,6 +441,7 @@ final class _CompletingGameSession
         ProductionSessionPort,
         ArtifactSessionPort,
         ResearchSessionPort,
+        DiplomacySessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   final requests = <Completer<MapScene>>[];
@@ -536,6 +538,12 @@ final class _CompletingGameSession
   Future<ResearchCommandResultView> selectTechnology({
     required int expectedRevision,
     required TechnologyIdView technology,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<DiplomacyCommandResultView> executeDiplomacyAction({
+    required int expectedRevision,
+    required DiplomacyActionView action,
   }) => throw UnimplementedError();
 
   @override

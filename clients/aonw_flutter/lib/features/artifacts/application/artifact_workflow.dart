@@ -107,6 +107,7 @@ GameSessionReady? _executable(
 ) {
   if (state is! GameSessionReady ||
       state.research.commandPending ||
+      state.diplomacy.commandPending ||
       state.interaction.artifact == null ||
       state.interaction.artifact!.commandPending ||
       state.interaction.movementPending ||

@@ -33,6 +33,7 @@ GameSessionReady? _executable(GameSessionState state, CityActionView action) {
   final city = state.interaction.city;
   if (city == null ||
       state.research.commandPending ||
+      state.diplomacy.commandPending ||
       city.loading ||
       city.commandPending ||
       (state.interaction.production?.loading ?? false) ||

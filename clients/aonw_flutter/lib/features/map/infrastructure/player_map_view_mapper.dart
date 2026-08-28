@@ -2,6 +2,7 @@ import 'package:aonw_rust_client/aonw_rust_client.dart';
 
 import '../../artifacts/read_model/artifact_view.dart';
 import '../../cities/read_model/city_view.dart';
+import '../../diplomacy/infrastructure/diplomacy_view_mapper.dart';
 import '../../turns/read_model/recipient_turn_view.dart';
 import '../../workers/infrastructure/worker_view_mapper.dart';
 import '../read_model/map_view.dart';
@@ -14,11 +15,14 @@ final class PlayerMapViewMapper {
     PendingActionViewMapper pendingActionMapper =
         const PendingActionViewMapper(),
     WorkerViewMapper workerMapper = const WorkerViewMapper(),
+    DiplomacyViewMapper diplomacyMapper = const DiplomacyViewMapper(),
   }) : _pendingActionMapper = pendingActionMapper,
-       _workerMapper = workerMapper;
+       _workerMapper = workerMapper,
+       _diplomacyMapper = diplomacyMapper;
 
   final PendingActionViewMapper _pendingActionMapper;
   final WorkerViewMapper _workerMapper;
+  final DiplomacyViewMapper _diplomacyMapper;
 
   PlayerMapView fromWire(
     AonwPlayerViewSnapshot wire, {
@@ -68,13 +72,13 @@ final class PlayerMapViewMapper {
           scoreByPlayerId: wire.outcome.scoreByPlayerId,
         ),
       ),
+      diplomacy: _diplomacyMapper.fromWire(
+        wire.diplomacy,
+        actorPlayerId: actorPlayerId,
+      ),
       units: units,
       cities: cities,
       artifacts: artifacts,
-      diplomaticCounterpartPlayerIds: _counterparts(
-        wire.diplomacy,
-        actorPlayerId,
-      ),
       fieldImprovements: [
         for (final improvement in wire.fieldImprovements)
           _workerMapper.fieldImprovement(improvement, map),
@@ -296,22 +300,6 @@ final class PlayerMapViewMapper {
         }
       }
     }
-  }
-
-  static List<String> _counterparts(
-    AonwPlayerDiplomacyView diplomacy,
-    String actorPlayerId,
-  ) {
-    final seen = <String>{};
-    final result = <String>[];
-    for (final relation in diplomacy.relations) {
-      final id = relation.counterpartPlayerId;
-      if (id.isEmpty || id == actorPlayerId || !seen.add(id)) {
-        throw const FormatException('Diplomatic counterpart is invalid.');
-      }
-      result.add(id);
-    }
-    return result;
   }
 
   static CityFoundingDraftView _mapCityFoundingDraft(

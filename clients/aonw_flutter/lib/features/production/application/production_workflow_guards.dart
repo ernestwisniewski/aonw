@@ -24,6 +24,7 @@ GameSessionReady? _executableProduction(
   final production = current?.interaction.production;
   if (current == null ||
       current.research.commandPending ||
+      current.diplomacy.commandPending ||
       production == null ||
       production.loading ||
       production.commandPending ||

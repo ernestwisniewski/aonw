@@ -80,6 +80,7 @@ GameSessionReady? _actionable(GameSessionState state) {
   final unitId = interaction.selectedUnitId;
   if (interaction.movementPending ||
       state.research.commandPending ||
+      state.diplomacy.commandPending ||
       (interaction.combat?.commandPending ?? false) ||
       (interaction.combat?.loading ?? false) ||
       (interaction.unitLogistics?.commandPending ?? false) ||

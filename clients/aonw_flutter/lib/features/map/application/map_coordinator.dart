@@ -11,6 +11,9 @@ import '../../cities/read_model/city_view.dart';
 import '../../combat/application/combat_session_port.dart';
 import '../../combat/application/combat_workflow.dart';
 import '../../combat/read_model/combat_view.dart';
+import '../../diplomacy/application/diplomacy_session_port.dart';
+import '../../diplomacy/application/diplomacy_workflow.dart';
+import '../../diplomacy/read_model/diplomacy_view.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/application/unit_logistics_state.dart';
 import '../../logistics/application/unit_logistics_workflow.dart';
@@ -60,6 +63,7 @@ final class MapCoordinator {
     ProductionSessionPort? production,
     ArtifactSessionPort? artifacts,
     ResearchSessionPort? research,
+    DiplomacySessionPort? diplomacy,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     this.assets = MapAssetPaths.starter,
@@ -97,6 +101,10 @@ final class MapCoordinator {
          session: research ?? _requireResearchSession(movement),
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
+       _diplomacy = DiplomacyWorkflow(
+         session: diplomacy ?? _requireDiplomacySession(movement),
+         diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
+       ),
        _unitActions = UnitActionWorkflow(
          runner: UnitActionCommandRunner(
            session: unitActions,
@@ -118,6 +126,7 @@ final class MapCoordinator {
   final ProductionWorkflow _production;
   final ArtifactWorkflow _artifacts;
   final ResearchWorkflow _research;
+  final DiplomacyWorkflow _diplomacy;
   final UnitActionWorkflow _unitActions;
   final TurnWorkflow _turns;
   final MapDiagnosticReporter _diagnosticReporter;
@@ -181,6 +190,7 @@ final class MapCoordinator {
     final current = _state;
     if (current is! GameSessionReady ||
         current.research.commandPending ||
+        current.diplomacy.commandPending ||
         _interactionBusy(current.interaction)) {
       return;
     }
@@ -397,6 +407,15 @@ ResearchSessionPort _requireResearchSession(MovementSessionPort movement) {
     movement,
     'movement',
     'must also provide the research session port',
+  );
+}
+
+DiplomacySessionPort _requireDiplomacySession(MovementSessionPort movement) {
+  if (movement case final DiplomacySessionPort diplomacy) return diplomacy;
+  throw ArgumentError.value(
+    movement,
+    'movement',
+    'must also provide the diplomacy session port',
   );
 }
 

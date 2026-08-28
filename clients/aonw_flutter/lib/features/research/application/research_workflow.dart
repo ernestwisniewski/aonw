@@ -185,6 +185,7 @@ GameSessionReady? _selectable(
   if (state is! GameSessionReady ||
       state.research.loading ||
       state.research.commandPending ||
+      state.diplomacy.commandPending ||
       state.turnAction.inFlight ||
       _interactionCommandPending(state)) {
     return null;

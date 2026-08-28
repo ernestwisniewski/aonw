@@ -83,6 +83,7 @@ final class CombatWorkflow {
     final current = _selected(readState(), attackerUnitId);
     if (current == null ||
         current.research.commandPending ||
+        current.diplomacy.commandPending ||
         !current.scene.map.contains(defender)) {
       return;
     }
@@ -133,6 +134,7 @@ final class CombatWorkflow {
     final combat = current.interaction.combat;
     final preview = combat?.preview;
     if (current.research.commandPending ||
+        current.diplomacy.commandPending ||
         combat == null ||
         preview == null ||
         combat.commandPending) {

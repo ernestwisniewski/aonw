@@ -1,5 +1,6 @@
 import '../../artifacts/read_model/artifact_view.dart';
 import '../../cities/read_model/city_view.dart';
+import '../../diplomacy/read_model/diplomacy_view.dart';
 import '../../turns/read_model/recipient_turn_view.dart';
 import '../../workers/read_model/worker_view.dart';
 import 'map_view.dart';
@@ -89,19 +90,16 @@ final class PlayerMapView {
     required this.actorPlayerId,
     required this.stamp,
     required this.turnView,
+    required this.diplomacy,
     required List<VisibleUnitView> units,
     List<CityView> cities = const [],
     List<WorldArtifactView> artifacts = const [],
-    List<String> diplomaticCounterpartPlayerIds = const [],
     List<FieldImprovementView> fieldImprovements = const [],
     List<RoadView> roads = const [],
     this.cityFoundingDraft,
   }) : units = List.unmodifiable(units),
        cities = List.unmodifiable(cities),
        artifacts = List.unmodifiable(artifacts),
-       diplomaticCounterpartPlayerIds = List.unmodifiable(
-         diplomaticCounterpartPlayerIds,
-       ),
        fieldImprovements = List.unmodifiable(fieldImprovements),
        roads = List.unmodifiable(roads) {
     final byCoordinate = <MapHexCoordinate, List<VisibleUnitView>>{};
@@ -160,9 +158,9 @@ final class PlayerMapView {
     required int turn,
     required PendingActionView? pendingAction,
     required List<VisibleUnitView> units,
+    DiplomacyView diplomacy = const DiplomacyView.empty(),
     List<CityView> cities = const [],
     List<WorldArtifactView> artifacts = const [],
-    List<String> diplomaticCounterpartPlayerIds = const [],
     List<FieldImprovementView> fieldImprovements = const [],
     List<RoadView> roads = const [],
     CityFoundingDraftView? cityFoundingDraft,
@@ -182,10 +180,10 @@ final class PlayerMapView {
         scoreByPlayerId: const {},
       ),
     ),
+    diplomacy: diplomacy,
     units: units,
     cities: cities,
     artifacts: artifacts,
-    diplomaticCounterpartPlayerIds: diplomaticCounterpartPlayerIds,
     fieldImprovements: fieldImprovements,
     roads: roads,
     cityFoundingDraft: cityFoundingDraft,
@@ -194,10 +192,10 @@ final class PlayerMapView {
   final String actorPlayerId;
   final SessionStampView stamp;
   final RecipientTurnView turnView;
+  final DiplomacyView diplomacy;
   final List<VisibleUnitView> units;
   final List<CityView> cities;
   final List<WorldArtifactView> artifacts;
-  final List<String> diplomaticCounterpartPlayerIds;
   final List<FieldImprovementView> fieldImprovements;
   final List<RoadView> roads;
   final CityFoundingDraftView? cityFoundingDraft;
@@ -216,6 +214,10 @@ final class PlayerMapView {
   int get turn => turnView.number;
 
   PendingActionView? get pendingAction => turnView.pendingAction;
+
+  List<String> get diplomaticCounterpartPlayerIds => List.unmodifiable(
+    diplomacy.relations.map((relation) => relation.counterpartPlayerId),
+  );
 
   Iterable<VisibleUnitView> unitsAt(MapHexCoordinate coordinate) =>
       _unitsByCoordinate[coordinate] ?? const <VisibleUnitView>[];

@@ -8,6 +8,8 @@ import '../../cities/application/city_session_port.dart';
 import '../../cities/read_model/city_view.dart';
 import '../../combat/application/combat_session_port.dart';
 import '../../combat/read_model/combat_view.dart';
+import '../../diplomacy/application/diplomacy_session_port.dart';
+import '../../diplomacy/read_model/diplomacy_view.dart';
 import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
 import '../../production/application/production_session_port.dart';
@@ -36,6 +38,7 @@ final class MapPresentationController extends ChangeNotifier {
     ProductionSessionPort? production,
     ArtifactSessionPort? artifacts,
     ResearchSessionPort? research,
+    DiplomacySessionPort? diplomacy,
     required UnitActionSessionPort unitActions,
     required TurnSessionPort turns,
     MapAssetPaths assets = MapAssetPaths.starter,
@@ -51,6 +54,7 @@ final class MapPresentationController extends ChangeNotifier {
            production: production,
            artifacts: artifacts,
            research: research,
+           diplomacy: diplomacy,
            unitActions: unitActions,
            turns: turns,
            assets: assets,
@@ -95,6 +99,9 @@ final class MapPresentationController extends ChangeNotifier {
       _coordinator.selectTechnology(technology);
 
   void refreshResearch() => _coordinator.refreshResearch();
+
+  void executeDiplomacyAction(DiplomacyActionView action) =>
+      _coordinator.executeDiplomacyAction(action);
 
   void confirmCombat() => _coordinator.confirmCombat();
 

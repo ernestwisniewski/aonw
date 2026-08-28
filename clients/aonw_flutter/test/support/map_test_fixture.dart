@@ -4,6 +4,8 @@ import 'package:aonw_flutter/features/cities/application/city_session_port.dart'
 import 'package:aonw_flutter/features/cities/read_model/city_view.dart';
 import 'package:aonw_flutter/features/combat/application/combat_session_port.dart';
 import 'package:aonw_flutter/features/combat/read_model/combat_view.dart';
+import 'package:aonw_flutter/features/diplomacy/application/diplomacy_session_port.dart';
+import 'package:aonw_flutter/features/diplomacy/read_model/diplomacy_view.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
 import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
 import 'package:aonw_flutter/features/map/application/map_session_port.dart';
@@ -71,6 +73,7 @@ MapScene testMapScene({
   List<CityView> cities = const [],
   List<WorldArtifactView> artifacts = const [],
   List<String> diplomaticCounterpartPlayerIds = const [],
+  DiplomacyView? diplomacy,
   List<FieldImprovementView> fieldImprovements = const [],
   List<RoadView> roads = const [],
   CityFoundingDraftView? cityFoundingDraft,
@@ -122,9 +125,26 @@ MapScene testMapScene({
       turn: 1,
       pendingAction: null,
       units: units,
+      diplomacy:
+          diplomacy ??
+          DiplomacyView(
+            relations: [
+              for (final id in diplomaticCounterpartPlayerIds)
+                DiplomaticRelationView(
+                  counterpartPlayerId: id,
+                  status: DiplomaticRelationStatusView.neutral,
+                  relationScore: 0,
+                  statusExpiresOnTurn: null,
+                  lastChangedTurn: null,
+                  lastChangeReason: null,
+                ),
+            ],
+            proposals: const [],
+            messages: const [],
+            resourceTradeAgreements: const [],
+          ),
       cities: cities,
       artifacts: artifacts,
-      diplomaticCounterpartPlayerIds: diplomaticCounterpartPlayerIds,
       fieldImprovements: fieldImprovements,
       roads: roads,
       cityFoundingDraft: cityFoundingDraft,
@@ -292,6 +312,7 @@ final class FakeGameSession
         ProductionSessionPort,
         ArtifactSessionPort,
         ResearchSessionPort,
+        DiplomacySessionPort,
         TurnSessionPort,
         UnitActionSessionPort {
   FakeGameSession.success(
@@ -319,6 +340,8 @@ final class FakeGameSession
     this.researchOptionsResult,
     this.researchResult,
     this.researchFailure,
+    this.diplomacyResult,
+    this.diplomacyFailure,
     this.combatPreviewResult,
     this.combatResult,
     this.combatFailure,
@@ -352,6 +375,8 @@ final class FakeGameSession
       researchOptionsResult = null,
       researchResult = null,
       researchFailure = null,
+      diplomacyResult = null,
+      diplomacyFailure = null,
       combatPreviewResult = null,
       combatResult = null,
       combatFailure = null,
@@ -389,6 +414,8 @@ final class FakeGameSession
   final ResearchOptionsView? researchOptionsResult;
   final ResearchCommandResultView? researchResult;
   final ResearchSessionException? researchFailure;
+  final DiplomacyCommandResultView? diplomacyResult;
+  final DiplomacySessionException? diplomacyFailure;
   final CombatPreviewView? combatPreviewResult;
   final CombatCommandResultView? combatResult;
   final CombatSessionException? combatFailure;
@@ -421,6 +448,9 @@ final class FakeGameSession
   var researchCommandCalls = 0;
   int? lastResearchExpectedRevision;
   TechnologyIdView? lastResearchTechnology;
+  var diplomacyCommandCalls = 0;
+  int? lastDiplomacyExpectedRevision;
+  DiplomacyActionView? lastDiplomacyAction;
   var combatPreviewCalls = 0;
   var combatAttackCalls = 0;
   MapHexCoordinate? lastCombatDefender;
@@ -704,6 +734,20 @@ final class FakeGameSession
     final error = researchFailure;
     if (error != null) throw error;
     return researchResult ?? (throw StateError('No research result fixture.'));
+  }
+
+  @override
+  Future<DiplomacyCommandResultView> executeDiplomacyAction({
+    required int expectedRevision,
+    required DiplomacyActionView action,
+  }) async {
+    diplomacyCommandCalls += 1;
+    lastDiplomacyExpectedRevision = expectedRevision;
+    lastDiplomacyAction = action;
+    final error = diplomacyFailure;
+    if (error != null) throw error;
+    return diplomacyResult ??
+        (throw StateError('No diplomacy result fixture.'));
   }
 
   @override

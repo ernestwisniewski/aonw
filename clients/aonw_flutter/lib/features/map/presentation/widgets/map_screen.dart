@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/aonw_tokens.dart';
 import '../../../../game/aonw_flame_game.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../diplomacy/application/diplomacy_state.dart';
+import '../../../diplomacy/presentation/diplomacy_overlay.dart';
 import '../../../research/application/research_state.dart';
 import '../../../research/presentation/research_overlay.dart';
 import '../../../settings/presentation/client_settings_scope.dart';
@@ -156,6 +158,7 @@ final class _MapScreenState extends State<MapScreen>
         :final turnPresentations,
         :final turnAction,
         :final research,
+        :final diplomacy,
       ) =>
         _ReadyMap(
           scene: scene,
@@ -163,6 +166,7 @@ final class _MapScreenState extends State<MapScreen>
           turnPresentations: turnPresentations,
           turnAction: turnAction,
           research: research,
+          diplomacy: diplomacy,
           controller: widget.controller,
           onInput: _handleInput,
           onOpenSettings: widget.onOpenSettings,
@@ -280,6 +284,7 @@ final class _ReadyMap extends StatelessWidget {
     required this.turnPresentations,
     required this.turnAction,
     required this.research,
+    required this.diplomacy,
     required this.controller,
     required this.onInput,
     required this.onOpenSettings,
@@ -294,6 +299,7 @@ final class _ReadyMap extends StatelessWidget {
   final TurnPresentationQueue turnPresentations;
   final TurnActionState turnAction;
   final ResearchState research;
+  final DiplomacyState diplomacy;
   final MapPresentationController controller;
   final ValueChanged<MapInputCommand> onInput;
   final VoidCallback? onOpenSettings;
@@ -359,6 +365,14 @@ final class _ReadyMap extends StatelessWidget {
               scene.player.pendingAction is PendingResearchSelectionView,
           onSelect: controller.selectTechnology,
           onRetry: controller.refreshResearch,
+        ),
+      ),
+      Positioned.fill(
+        child: DiplomacyOverlay(
+          actorPlayerId: scene.player.actorPlayerId,
+          view: scene.player.diplomacy,
+          state: diplomacy,
+          onAction: controller.executeDiplomacyAction,
         ),
       ),
     ],

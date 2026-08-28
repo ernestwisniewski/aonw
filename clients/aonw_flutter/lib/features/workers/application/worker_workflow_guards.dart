@@ -24,6 +24,7 @@ GameSessionReady? _executableWorker(
   final worker = current?.interaction.worker;
   if (current == null ||
       current.research.commandPending ||
+      current.diplomacy.commandPending ||
       worker == null ||
       worker.loading ||
       worker.commandPending ||

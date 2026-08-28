@@ -5,6 +5,7 @@ extension MapCoordinatorSelection on MapCoordinator {
     final current = _state;
     if (current is! GameSessionReady ||
         current.research.commandPending ||
+        current.diplomacy.commandPending ||
         _interactionBusy(current.interaction)) {
       return;
     }

@@ -143,6 +143,15 @@ extension MapCoordinatorActions on MapCoordinator {
     );
   }
 
+  void executeDiplomacyAction(DiplomacyActionView action) {
+    _diplomacy.execute(
+      action: action,
+      readState: () => _state,
+      publish: _setState,
+      isDisposed: () => _disposed,
+    );
+  }
+
   void executeUnitAction(UnitActionKindView action) {
     _unitActions.execute(
       action: action,

@@ -1,3 +1,4 @@
+import '../../diplomacy/application/diplomacy_state.dart';
 import '../../research/application/research_state.dart';
 import '../../turns/application/turn_action_state.dart';
 import '../../turns/application/turn_presentation_queue.dart';
@@ -20,6 +21,7 @@ final class GameSessionReady extends GameSessionState {
     required this.turnPresentations,
     required this.turnAction,
     required this.research,
+    required this.diplomacy,
   });
 
   factory GameSessionReady.initial(MapScene scene) => GameSessionReady(
@@ -28,6 +30,7 @@ final class GameSessionReady extends GameSessionState {
     turnPresentations: TurnPresentationQueue.start(scene.player.turn),
     turnAction: const TurnActionState(),
     research: ResearchState.loading(scene.player.stamp.revision),
+    diplomacy: const DiplomacyState(),
   );
 
   final MapScene scene;
@@ -35,6 +38,7 @@ final class GameSessionReady extends GameSessionState {
   final TurnPresentationQueue turnPresentations;
   final TurnActionState turnAction;
   final ResearchState research;
+  final DiplomacyState diplomacy;
 
   PlayerMapView get recipient => scene.player;
 
@@ -45,6 +49,7 @@ final class GameSessionReady extends GameSessionState {
         turnPresentations: turnPresentations,
         turnAction: turnAction,
         research: research,
+        diplomacy: diplomacy,
       );
 
   GameSessionReady withRecipient(PlayerMapView value) {
@@ -59,6 +64,7 @@ final class GameSessionReady extends GameSessionState {
       research: identityChanged
           ? ResearchState.loading(value.stamp.revision)
           : research,
+      diplomacy: identityChanged ? const DiplomacyState() : diplomacy,
     );
   }
 
@@ -69,6 +75,7 @@ final class GameSessionReady extends GameSessionState {
         turnPresentations: value,
         turnAction: turnAction,
         research: research,
+        diplomacy: diplomacy,
       );
 
   GameSessionReady withTurnAction(TurnActionState value) => GameSessionReady(
@@ -77,6 +84,7 @@ final class GameSessionReady extends GameSessionState {
     turnPresentations: turnPresentations,
     turnAction: value,
     research: research,
+    diplomacy: diplomacy,
   );
 
   GameSessionReady withResearch(ResearchState value) => GameSessionReady(
@@ -85,6 +93,16 @@ final class GameSessionReady extends GameSessionState {
     turnPresentations: turnPresentations,
     turnAction: turnAction,
     research: value,
+    diplomacy: diplomacy,
+  );
+
+  GameSessionReady withDiplomacy(DiplomacyState value) => GameSessionReady(
+    scene: scene,
+    interaction: interaction,
+    turnPresentations: turnPresentations,
+    turnAction: turnAction,
+    research: research,
+    diplomacy: value,
   );
 
   GameSessionReady completeTurnPresentation() =>
