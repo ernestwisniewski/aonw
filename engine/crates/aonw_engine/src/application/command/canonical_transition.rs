@@ -3,7 +3,6 @@ use aonw_domain::GameState;
 
 use super::CanonicalEngineError;
 use crate::application::{DomainEvent, DomainTransition, ExecutionEvidence};
-use crate::movement::{merge_discovered_contacts, recompute_after_move};
 
 pub(super) fn apply_artifact(
     state: GameState,
@@ -273,36 +272,24 @@ pub(super) fn apply_move(
         }
     };
     let updated_unit = movement.unit().clone();
-    let unit_id = updated_unit.id().clone();
     let next_revision = movement.revision();
     let mut fog = state.fog_of_war().clone();
     let mut diplomacy = state.diplomacy().clone();
     if movement.event().is_some() {
-        let updated_index = state
-            .units()
-            .iter()
-            .position(|unit| unit.id() == &unit_id)
-            .expect("canonical unit exists");
-        let units = state
-            .units()
-            .iter()
-            .enumerate()
-            .map(|(index, unit)| {
-                if index == updated_index {
-                    &updated_unit
-                } else {
-                    unit
-                }
-            })
-            .collect::<Vec<_>>();
-        fog = recompute_after_move(
+        fog = crate::movement::recompute_after_unit_move(
             &fog,
             map,
-            updated_unit.owner_player_id(),
-            &units,
+            &updated_unit,
+            state.units(),
             state.cities(),
         );
-        diplomacy = merge_discovered_contacts(&diplomacy, &fog, &units, state.cities());
+        diplomacy = crate::movement::merge_discovered_contacts_after_unit_move(
+            &diplomacy,
+            &fog,
+            &updated_unit,
+            state.units(),
+            state.cities(),
+        );
     }
     let next_state = state
         .into_after_movement(next_revision, updated_unit, fog, diplomacy)

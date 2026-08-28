@@ -42,7 +42,8 @@ pub use query_dispatch::{
     UnitLogisticsOptionsRequest, UnitLogisticsOptionsResult, WorkerOptionsRequest,
 };
 pub use session::{
-    ActorHandoffError, AiTurnDriver, AiTurnError, AiTurnExecution, LocalRuntime, OpenSession,
-    OpenSessionError, RuntimeCapabilities, RuntimeError, SessionStamp,
+    ActorHandoffError, AiTurnDriver, AiTurnError, AiTurnExecution, LocalRuntime,
+    MAX_AI_TURN_COMMAND_BUDGET, OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError,
+    SessionStamp,
 };
 pub use turn_dispatch::{FinalizeTimedOutTurnRequest, KickParticipantRequest, TurnCommandRequest};

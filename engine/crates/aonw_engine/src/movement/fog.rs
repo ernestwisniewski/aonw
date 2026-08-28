@@ -16,13 +16,37 @@ pub(crate) fn recompute_after_move(
     units: &[&Unit],
     cities: &[City],
 ) -> FogOfWar {
+    recompute_for_player(current, map, player_id, units.iter().copied(), cities)
+}
+
+pub(crate) fn recompute_after_unit_move(
+    current: &FogOfWar,
+    map: &MapDefinition,
+    updated_unit: &Unit,
+    canonical_units: &[Unit],
+    cities: &[City],
+) -> FogOfWar {
+    let player_id = updated_unit.owner_player_id();
+    let units = canonical_units
+        .iter()
+        .filter(|unit| unit.id() != updated_unit.id())
+        .chain(core::iter::once(updated_unit));
+    recompute_for_player(current, map, player_id, units, cities)
+}
+
+fn recompute_for_player<'unit>(
+    current: &FogOfWar,
+    map: &MapDefinition,
+    player_id: &PlayerId,
+    units: impl IntoIterator<Item = &'unit Unit>,
+    cities: &[City],
+) -> FogOfWar {
     if current.players().is_empty() {
         return current.clone();
     }
     let mut visible = Vec::new();
     for unit in units
-        .iter()
-        .copied()
+        .into_iter()
         .filter(|unit| unit.owner_player_id() == player_id)
     {
         let observer_height = map
@@ -60,6 +84,59 @@ pub(crate) fn recompute_after_move(
         None => PlayerFog::new(player_id.clone(), [], visible),
     };
     current.updating_player(player)
+}
+
+pub(crate) fn merge_discovered_contacts_after_unit_move(
+    diplomacy: &Diplomacy,
+    fog: &FogOfWar,
+    updated_unit: &Unit,
+    canonical_units: &[Unit],
+    cities: &[City],
+) -> Diplomacy {
+    // A single move can reveal the world to its owner and can reveal the moved unit
+    // to existing observers. Every other visibility relationship is unchanged.
+    let actor = updated_unit.owner_player_id();
+    let mut contacts = Vec::new();
+    for city in cities.iter().filter(|city| city.owner_player_id() != actor) {
+        if fog.visibility(actor, city.center()) != aonw_domain::FogVisibility::Hidden
+            && let Some(pair) = PlayerPair::new(actor.clone(), city.owner_player_id().clone())
+        {
+            contacts.push(pair);
+        }
+    }
+    for unit in canonical_units
+        .iter()
+        .filter(|unit| unit.owner_player_id() != actor)
+    {
+        if fog.visibility(actor, unit.position()) == aonw_domain::FogVisibility::Visible
+            && let Some(pair) = PlayerPair::new(actor.clone(), unit.owner_player_id().clone())
+        {
+            contacts.push(pair);
+        }
+    }
+
+    let mut other_players = fog
+        .players()
+        .iter()
+        .map(|player| player.player_id().clone())
+        .chain(
+            canonical_units
+                .iter()
+                .map(|unit| unit.owner_player_id().clone()),
+        )
+        .chain(cities.iter().map(|city| city.owner_player_id().clone()))
+        .filter(|player| player != actor)
+        .collect::<Vec<_>>();
+    other_players.sort_unstable();
+    other_players.dedup();
+    for player in other_players {
+        if fog.visibility(&player, updated_unit.position()) == aonw_domain::FogVisibility::Visible
+            && let Some(pair) = PlayerPair::new(player, actor.clone())
+        {
+            contacts.push(pair);
+        }
+    }
+    diplomacy.merging(contacts)
 }
 
 pub(crate) fn merge_discovered_contacts(

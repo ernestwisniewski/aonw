@@ -10,7 +10,7 @@ use aonw_contracts::client::{
     ClientRequestBodyDto, ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
 };
 
-use crate::{AiTurnDriver, LocalRuntime, RuntimeError};
+use crate::{AiTurnDriver, LocalRuntime, MAX_AI_TURN_COMMAND_BUDGET, RuntimeError};
 use sha2::{Digest, Sha256};
 
 use decode::DecodedCommand;
@@ -254,6 +254,12 @@ fn dispatch_ai_turn(
             "command budget must be positive",
         );
     };
+    if command_budget.get() > MAX_AI_TURN_COMMAND_BUDGET {
+        return failure(
+            "invalid_ai_command_budget",
+            format!("command budget must not exceed {MAX_AI_TURN_COMMAND_BUDGET}"),
+        );
+    }
     match aonw_domain::PlayerId::new(actor_player_id) {
         Ok(actor) => {
             let response_actor = actor.as_str().to_owned();

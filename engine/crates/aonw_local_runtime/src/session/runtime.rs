@@ -29,7 +29,7 @@ use super::{OpenSession, OpenSessionError, RuntimeError, Session, SessionStamp};
 mod actor_handoff;
 mod ai_turn;
 
-pub use ai_turn::{AiTurnDriver, AiTurnError, AiTurnExecution};
+pub use ai_turn::{AiTurnDriver, AiTurnError, AiTurnExecution, MAX_AI_TURN_COMMAND_BUDGET};
 
 /// Mutable owner of at most one local game session.
 #[derive(Clone, Debug, Default)]

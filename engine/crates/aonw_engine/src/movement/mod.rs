@@ -42,7 +42,10 @@ pub use workspace::MovementSearchWorkspace;
 
 pub(crate) use auto_explore::apply_auto_explore;
 pub(crate) use detachment::apply_detach_troop;
-pub(crate) use fog::{merge_discovered_contacts, recompute_after_move};
+pub(crate) use fog::{
+    merge_discovered_contacts, merge_discovered_contacts_after_unit_move, recompute_after_move,
+    recompute_after_unit_move,
+};
 pub(crate) use logistics::MovementLogisticsUpdate;
 pub(crate) use merchant::{apply_assign_route, apply_move_to_city};
 pub(crate) use options::query_logistics_options;

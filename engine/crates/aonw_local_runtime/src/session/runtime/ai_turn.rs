@@ -4,6 +4,9 @@ use aonw_domain::{AiPlayer, GameMode, PlayerId, PlayerKind};
 
 use crate::{ActorHandoffError, LocalRuntime, SessionStamp};
 
+/// Largest reviewed number of authoritative commands in one AI turn request.
+pub const MAX_AI_TURN_COMMAND_BUDGET: u32 = 1_024;
+
 /// Framework-neutral port used by the runtime client protocol to execute AI.
 ///
 /// The implementation lives in `aonw_ai`, keeping the dependency direction
@@ -36,6 +39,11 @@ pub struct AiTurnExecution {
 /// Failure while preparing or executing one AI-controlled turn.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AiTurnError {
+    /// The caller requested more work than one runtime call may perform.
+    CommandBudgetTooLarge {
+        /// Largest accepted command count.
+        maximum: u32,
+    },
     /// No local session is open.
     SessionNotOpen,
     /// A prior internal failure invalidated the session.
@@ -57,6 +65,9 @@ pub enum AiTurnError {
 impl core::fmt::Display for AiTurnError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
+            Self::CommandBudgetTooLarge { maximum } => {
+                write!(formatter, "AI command budget must not exceed {maximum}")
+            }
             Self::SessionNotOpen => formatter.write_str("session is not open"),
             Self::SessionPoisoned => {
                 formatter.write_str("session was invalidated by a prior internal failure")
@@ -91,6 +102,11 @@ impl LocalRuntime {
         command_budget: NonZeroU32,
         driver: &mut dyn AiTurnDriver,
     ) -> Result<AiTurnExecution, AiTurnError> {
+        if command_budget.get() > MAX_AI_TURN_COMMAND_BUDGET {
+            return Err(AiTurnError::CommandBudgetTooLarge {
+                maximum: MAX_AI_TURN_COMMAND_BUDGET,
+            });
+        }
         if self.poisoned {
             return Err(AiTurnError::SessionPoisoned);
         }

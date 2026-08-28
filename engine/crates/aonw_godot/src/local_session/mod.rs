@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::thread::{self, JoinHandle};
 
@@ -104,6 +106,7 @@ struct SessionWorker {
     pending: BTreeMap<u64, String>,
     outstanding: BTreeSet<u64>,
     next_job_id: u64,
+    cancelled: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
 }
 
@@ -112,10 +115,18 @@ impl SessionWorker {
         let (request_sender, request_receiver) =
             mpsc::sync_channel::<WorkerRequest>(MAX_OUTSTANDING_JOBS);
         let (response_sender, response_receiver) = mpsc::channel::<WorkerResponse>();
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let worker_cancelled = Arc::clone(&cancelled);
         let thread = thread::spawn(move || {
             let mut runtime = LocalRuntime::default();
             while let Ok(request) = request_receiver.recv() {
+                if worker_cancelled.load(Ordering::Acquire) {
+                    break;
+                }
                 let output = dispatch_json(&mut runtime, &request.input);
+                if worker_cancelled.load(Ordering::Acquire) {
+                    break;
+                }
                 if response_sender
                     .send(WorkerResponse {
                         job_id: request.job_id,
@@ -133,6 +144,7 @@ impl SessionWorker {
             pending: BTreeMap::new(),
             outstanding: BTreeSet::new(),
             next_job_id: 1,
+            cancelled,
             thread: Some(thread),
         }
     }
@@ -205,9 +217,14 @@ impl SessionWorker {
 
 impl Drop for SessionWorker {
     fn drop(&mut self) {
+        self.cancelled.store(true, Ordering::Release);
         self.requests.take();
         if let Some(thread) = self.thread.take() {
-            let _ = thread.join();
+            if thread.is_finished() {
+                let _ = thread.join();
+            }
+            // Dropping a running handle detaches it. The cancellation flag stops queued work,
+            // while the current bounded request may finish without blocking Godot's main thread.
         }
     }
 }
