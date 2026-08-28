@@ -11,7 +11,7 @@ use super::EconomyTurnError;
 
 mod calculation;
 
-use calculation::{stability_band, stability_net};
+use calculation::{StabilityFactors, stability_band, stability_net, territory_shares};
 
 /// Ownership retained before simultaneous combat mutates or removes entities.
 pub(crate) struct CombatEconomyOwnerIndex {
@@ -117,6 +117,7 @@ pub(crate) fn advance_turn_stability(
         .iter()
         .map(|participant| participant.id().clone())
         .collect::<BTreeSet<_>>();
+    let territory = territory_shares(state, map, &players)?;
     let mut stability = BTreeMap::new();
     let mut events = Vec::new();
     for player in &players {
@@ -126,8 +127,13 @@ pub(crate) fn advance_turn_stability(
             ruleset,
             player,
             war_weariness.get(player).copied().unwrap_or_default(),
-            players.len(),
-            values,
+            StabilityFactors::new(
+                players.len(),
+                values,
+                *territory
+                    .get(player)
+                    .expect("territory shares cover every participant"),
+            ),
         )?;
         stability.insert(player.clone(), net);
         let Some(previous) = economy.player_stability_net().get(player).copied() else {

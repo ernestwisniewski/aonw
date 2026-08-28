@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use aonw_content::{MapDefinition, RulesetDefinition, StabilityValues};
 use aonw_domain::{
@@ -9,15 +9,46 @@ use crate::{MovementCost, StabilityBand, terrain_entry_cost};
 
 use super::EconomyTurnError;
 
+#[derive(Clone, Copy)]
+pub(super) struct TerritoryShare {
+    controlled: i128,
+    valid: i128,
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct StabilityFactors {
+    player_count: usize,
+    values: StabilityValues,
+    territory: TerritoryShare,
+}
+
+impl StabilityFactors {
+    pub(super) const fn new(
+        player_count: usize,
+        values: StabilityValues,
+        territory: TerritoryShare,
+    ) -> Self {
+        Self {
+            player_count,
+            values,
+            territory,
+        }
+    }
+}
+
 pub(super) fn stability_net(
     state: &GameState,
     map: &MapDefinition,
     ruleset: &RulesetDefinition,
     player: &PlayerId,
     war_weariness: i64,
-    player_count: usize,
-    values: StabilityValues,
+    factors: StabilityFactors,
 ) -> Result<i64, EconomyTurnError> {
+    let StabilityFactors {
+        player_count,
+        values,
+        territory,
+    } = factors;
     let cities = state
         .cities()
         .iter()
@@ -68,14 +99,14 @@ pub(super) fn stability_net(
                 "conquered city stability cost overflow",
             )?,
             war_weariness,
-            hegemony_tax(state, map, player, player_count, values)?,
+            hegemony_tax(territory, player_count, values)?,
         ],
         "stability cost overflow",
     )?;
     let base_net = sources
         .checked_sub(costs)
         .ok_or_else(|| EconomyTurnError::new("stability net overflow"))?;
-    let standing = relative_standing_shift(state, map, player, player_count, values)?;
+    let standing = relative_standing_shift(territory, player_count, values)?;
     base_net
         .checked_sub(standing)
         .ok_or_else(|| EconomyTurnError::new("effective stability overflow"))
@@ -280,48 +311,66 @@ fn wonder_source(state: &GameState, ruleset: &RulesetDefinition, player: &Player
     Some(total)
 }
 
-fn territory_share(
+pub(super) fn territory_shares(
     state: &GameState,
     map: &MapDefinition,
-    player: &PlayerId,
-) -> Result<(i128, i128), EconomyTurnError> {
-    let valid = map
-        .tiles()
+    players: &BTreeSet<PlayerId>,
+) -> Result<BTreeMap<PlayerId, TerritoryShare>, EconomyTurnError> {
+    let mut passable = vec![false; map.bounds().tile_count()];
+    let mut valid_count = 0_usize;
+    for (index, tile) in map.tiles().iter().enumerate() {
+        if matches!(
+            terrain_entry_cost(tile, UnitMovementDomain::Land),
+            MovementCost::Passable(_)
+        ) {
+            passable[index] = true;
+            valid_count += 1;
+        }
+    }
+    let mut controlled = players
         .iter()
-        .filter(|tile| {
-            matches!(
-                terrain_entry_cost(tile, UnitMovementDomain::Land),
-                MovementCost::Passable(_)
-            )
-        })
-        .map(aonw_content::TileDefinition::coordinate)
-        .collect::<BTreeSet<_>>();
-    let controlled = state
-        .cities()
-        .iter()
-        .filter(|city| city.owner_player_id() == player)
-        .flat_map(|city| {
+        .cloned()
+        .map(|player| (player, BTreeSet::new()))
+        .collect::<BTreeMap<_, _>>();
+    for city in state.cities() {
+        let Some(coordinates) = controlled.get_mut(city.owner_player_id()) else {
+            continue;
+        };
+        for coordinate in
             std::iter::once(city.center()).chain(city.controlled_hexes().iter().copied())
+        {
+            if map
+                .tile_index(coordinate)
+                .is_some_and(|index| passable[index.get()])
+            {
+                coordinates.insert(coordinate);
+            }
+        }
+    }
+    let valid = i128::try_from(valid_count).map_err(EconomyTurnError::new)?;
+    controlled
+        .into_iter()
+        .map(|(player, coordinates)| {
+            Ok((
+                player,
+                TerritoryShare {
+                    controlled: i128::try_from(coordinates.len()).map_err(EconomyTurnError::new)?,
+                    valid,
+                },
+            ))
         })
-        .filter(|coordinate| valid.contains(coordinate))
-        .collect::<BTreeSet<_>>();
-    Ok((
-        i128::try_from(controlled.len()).map_err(EconomyTurnError::new)?,
-        i128::try_from(valid.len()).map_err(EconomyTurnError::new)?,
-    ))
+        .collect()
 }
 
 fn hegemony_tax(
-    state: &GameState,
-    map: &MapDefinition,
-    player: &PlayerId,
+    territory: TerritoryShare,
     player_count: usize,
     values: StabilityValues,
 ) -> Result<i64, EconomyTurnError> {
     if values.hegemony_tax_points_per_cost <= 0 {
         return Ok(0);
     }
-    let (controlled, valid) = territory_share(state, map, player)?;
+    let TerritoryShare { controlled, valid } = territory;
     if valid == 0 {
         return Ok(0);
     }
@@ -351,13 +400,11 @@ fn hegemony_tax(
 }
 
 fn relative_standing_shift(
-    state: &GameState,
-    map: &MapDefinition,
-    player: &PlayerId,
+    territory: TerritoryShare,
     player_count: usize,
     values: StabilityValues,
 ) -> Result<i64, EconomyTurnError> {
-    let (controlled, valid) = territory_share(state, map, player)?;
+    let TerritoryShare { controlled, valid } = territory;
     if valid == 0 {
         return Ok(0);
     }
