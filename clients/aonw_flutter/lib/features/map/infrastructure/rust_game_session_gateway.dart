@@ -37,6 +37,7 @@ import '../../unit_actions/read_model/unit_action_view.dart';
 import '../../workers/application/worker_session_port.dart';
 import '../../workers/infrastructure/rust_worker_gateway.dart';
 import '../../workers/read_model/worker_view.dart';
+import '../application/game_session_capabilities.dart';
 import '../application/map_session_port.dart';
 import '../application/movement_session_port.dart';
 import '../read_model/map_scene.dart';
@@ -50,8 +51,8 @@ import 'rust_game_session_context.dart';
 import 'rust_game_session_loader.dart';
 import 'rust_movement_gateway.dart';
 
-part 'rust_game_city_session.dart';
 part 'rust_game_artifact_session.dart';
+part 'rust_game_city_session.dart';
 part 'rust_game_production_session.dart';
 part 'rust_game_replay_session.dart';
 part 'rust_game_worker_session.dart';
@@ -134,6 +135,23 @@ final class RustGameSessionGateway
   late final ProductionSessionPort productionSession;
   late final ArtifactSessionPort artifactSession;
   late final ReplaySessionPort replaySession;
+
+  GameSessionCapabilities get capabilities => GameSessionCapabilities(
+    map: this,
+    movement: this,
+    combat: this,
+    cities: citySession,
+    logistics: this,
+    workers: workerSession,
+    production: productionSession,
+    artifacts: artifactSession,
+    research: this,
+    diplomacy: this,
+    unitActions: this,
+    turns: this,
+    localGame: this,
+    save: this,
+  );
   AonwRustSession? _session;
   MapScene? _scene;
   MapView? _map;

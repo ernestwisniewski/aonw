@@ -179,6 +179,26 @@ extension MapCoordinatorSelection on MapCoordinator {
         ),
       ),
     );
+    final reachable = _movement.reachable(
+      expectedRevision: current.recipient.stamp.revision,
+      unitId: unitId,
+    );
+    final completion = await reachable;
+    final ready = _currentInteraction(generation);
+    if (ready == null) return;
+    final failure = completion.failure;
+    _setState(
+      failure == null
+          ? ready.withInteraction(
+              ready.interaction.copyWith(
+                reachable: completion.result!,
+                movementPending: false,
+              ),
+            )
+          : _movementFailureState(ready, completion),
+    );
+
+    if (_currentInteraction(generation) == null) return;
     _logistics.load(
       unitId: unitId,
       readState: () => _state,
@@ -207,23 +227,6 @@ extension MapCoordinatorSelection on MapCoordinator {
         isDisposed: () => _disposed,
       );
     }
-    final completion = await _movement.reachable(
-      expectedRevision: current.recipient.stamp.revision,
-      unitId: unitId,
-    );
-    final ready = _currentInteraction(generation);
-    if (ready == null) return;
-    final failure = completion.failure;
-    _setState(
-      failure == null
-          ? ready.withInteraction(
-              ready.interaction.copyWith(
-                reachable: completion.result!,
-                movementPending: false,
-              ),
-            )
-          : _movementFailureState(ready, completion),
-    );
   }
 
   Future<void> _previewRoute(

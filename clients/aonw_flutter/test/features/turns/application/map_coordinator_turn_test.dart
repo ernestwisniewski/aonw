@@ -183,13 +183,8 @@ void main() {
   );
 }
 
-MapCoordinator _controller(FakeGameSession session) => MapCoordinator(
-  session: session,
-  movement: session,
-  unitActions: session,
-  logistics: session,
-  turns: session,
-);
+MapCoordinator _controller(FakeGameSession session) =>
+    MapCoordinator(capabilities: testGameSessionCapabilities(session));
 
 LocalMatchSetupView _localSetup() => LocalMatchSetupView(
   assets: const MapAssetPaths(

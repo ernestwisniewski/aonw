@@ -36,11 +36,7 @@ void main() {
       ),
     );
     final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      logistics: session,
-      unitActions: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
 

@@ -17,11 +17,7 @@ void main() {
     );
     final session = FakeGameSession.success(testMapScene());
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     final flameGame = AonwFlameGame();
     addTearDown(settings.dispose);

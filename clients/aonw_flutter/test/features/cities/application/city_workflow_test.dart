@@ -84,15 +84,8 @@ void main() {
   );
 }
 
-MapCoordinator _controller(FakeGameSession session) => MapCoordinator(
-  session: session,
-  movement: session,
-  combat: session,
-  cities: session,
-  logistics: session,
-  unitActions: session,
-  turns: session,
-);
+MapCoordinator _controller(FakeGameSession session) =>
+    MapCoordinator(capabilities: testGameSessionCapabilities(session));
 
 PlayerMapView _player({
   required int revision,

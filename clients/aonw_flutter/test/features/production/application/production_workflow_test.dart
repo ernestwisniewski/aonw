@@ -90,17 +90,8 @@ void main() {
   });
 }
 
-MapCoordinator _controller(FakeGameSession session) => MapCoordinator(
-  session: session,
-  movement: session,
-  combat: session,
-  cities: session,
-  logistics: session,
-  workers: session,
-  production: session,
-  unitActions: session,
-  turns: session,
-);
+MapCoordinator _controller(FakeGameSession session) =>
+    MapCoordinator(capabilities: testGameSessionCapabilities(session));
 
 ProductionOverviewFixture _overview({int revision = 0}) => (
   options: ProductionOptionsView(

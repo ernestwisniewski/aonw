@@ -9,6 +9,7 @@ import 'package:aonw_flutter/features/diplomacy/application/diplomacy_session_po
 import 'package:aonw_flutter/features/diplomacy/read_model/diplomacy_view.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
 import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
+import 'package:aonw_flutter/features/map/application/game_session_capabilities.dart';
 import 'package:aonw_flutter/features/map/application/game_session_state.dart';
 import 'package:aonw_flutter/features/map/application/map_coordinator.dart';
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
@@ -39,12 +40,10 @@ void main() {
   test('loads ready state and keeps interaction local', () async {
     final session = FakeGameSession.success(testMapScene());
     final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      cities: const UnsupportedCitySession(),
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(
+        session,
+        cities: const UnsupportedCitySession(),
+      ),
     );
     addTearDown(controller.dispose);
 
@@ -77,11 +76,7 @@ void main() {
       const MapLoadException(code: 'invalid_map', message: 'Bad map'),
     );
     final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
 
@@ -94,12 +89,20 @@ void main() {
   test('a slower old load cannot replace a newer result', () async {
     final session = _CompletingGameSession();
     final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      cities: const UnsupportedCitySession(),
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: GameSessionCapabilities(
+        map: session,
+        movement: session,
+        combat: session,
+        cities: const UnsupportedCitySession(),
+        logistics: session,
+        workers: session,
+        production: session,
+        artifacts: session,
+        research: session,
+        diplomacy: session,
+        unitActions: session,
+        turns: session,
+      ),
     );
     addTearDown(controller.dispose);
 
@@ -129,11 +132,7 @@ void main() {
         ),
       );
       final controller = MapCoordinator(
-        session: session,
-        movement: session,
-        unitActions: session,
-        logistics: session,
-        turns: session,
+        capabilities: testGameSessionCapabilities(session),
         diagnosticReporter: (code, error, stackTrace) =>
             diagnostics.add((code: code, error: error, stackTrace: stackTrace)),
       );
@@ -172,11 +171,7 @@ void main() {
         ),
       );
       final controller = MapCoordinator(
-        session: session,
-        movement: session,
-        unitActions: session,
-        logistics: session,
-        turns: session,
+        capabilities: testGameSessionCapabilities(session),
       );
       addTearDown(controller.dispose);
 
@@ -187,6 +182,7 @@ void main() {
       var ready = controller.state as GameSessionReady;
       expect(ready.interaction.selectedUnitId, unit.id);
       expect(ready.interaction.reachable?.tileAt((col: 1, row: 0)), isNotNull);
+      expect(session.selectionRequestOrder.take(2), ['reachable', 'logistics']);
 
       controller.select((col: 1, row: 0));
       await pumpEventQueue();
@@ -221,11 +217,7 @@ void main() {
         ),
       );
       final controller = MapCoordinator(
-        session: session,
-        movement: session,
-        unitActions: session,
-        logistics: session,
-        turns: session,
+        capabilities: testGameSessionCapabilities(session),
       );
       addTearDown(controller.dispose);
 
@@ -267,11 +259,7 @@ void main() {
       ),
     );
     final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
 
@@ -323,11 +311,7 @@ void main() {
         ),
       );
       final controller = MapCoordinator(
-        session: session,
-        movement: session,
-        unitActions: session,
-        logistics: session,
-        turns: session,
+        capabilities: testGameSessionCapabilities(session),
       );
       addTearDown(controller.dispose);
 
@@ -367,11 +351,7 @@ void main() {
       ),
     );
     final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
 
@@ -409,11 +389,7 @@ void main() {
       ),
     );
     final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
 
@@ -444,11 +420,7 @@ void main() {
       ),
     );
     final controller = MapCoordinator(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
     await controller.load();

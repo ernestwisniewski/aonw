@@ -25,11 +25,7 @@ void main() {
       testMapScene(cols: 7, rows: 7, defaultZoom: 1.2),
     );
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     final flameGame = AonwFlameGame();
     addTearDown(controller.dispose);
@@ -99,11 +95,7 @@ void main() {
   testWidgets('renders a 25 by 19 map without overflow', (tester) async {
     final session = FakeGameSession.success(testMapScene(cols: 25, rows: 19));
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
 
@@ -140,11 +132,7 @@ void main() {
       ),
     );
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
     await tester.binding.setSurfaceSize(const Size(900, 700));
@@ -203,11 +191,7 @@ void main() {
         testMapScene(cols: 7, rows: 7, defaultZoom: 1.2),
       );
       final controller = MapPresentationController(
-        session: session,
-        movement: session,
-        unitActions: session,
-        logistics: session,
-        turns: session,
+        capabilities: testGameSessionCapabilities(session),
       );
       final flameGame = AonwFlameGame();
       addTearDown(controller.dispose);
@@ -249,11 +233,7 @@ void main() {
   ) async {
     final session = FakeGameSession.success(testMapScene());
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     final firstGame = AonwFlameGame();
     final secondGame = AonwFlameGame();
@@ -291,11 +271,7 @@ void main() {
       const MapLoadException(code: 'rust_unavailable', message: 'No Rust'),
     );
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
 
@@ -319,11 +295,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     final session = FakeGameSession.success(testMapScene());
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     final flameGame = AonwFlameGame();
     addTearDown(controller.dispose);
@@ -356,11 +328,7 @@ void main() {
     final input = TestMapInputSource();
     final session = FakeGameSession.success(testMapScene(cols: 3, rows: 3));
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(input.close);
     addTearDown(controller.dispose);
@@ -408,11 +376,7 @@ void main() {
     final input = TestMapInputSource();
     final session = FakeGameSession.success(testMapScene(cols: 3, rows: 3));
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     final routeObserver = RouteObserver<ModalRoute<void>>();
     final games = <AonwFlameGame>[];

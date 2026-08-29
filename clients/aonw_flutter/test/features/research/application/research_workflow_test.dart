@@ -68,19 +68,8 @@ void main() {
   });
 }
 
-MapCoordinator _controller(FakeGameSession session) => MapCoordinator(
-  session: session,
-  movement: session,
-  combat: session,
-  cities: session,
-  logistics: session,
-  workers: session,
-  production: session,
-  artifacts: session,
-  research: session,
-  unitActions: session,
-  turns: session,
-);
+MapCoordinator _controller(FakeGameSession session) =>
+    MapCoordinator(capabilities: testGameSessionCapabilities(session));
 
 PlayerMapView _player({required int revision}) => PlayerMapView.preview(
   actorPlayerId: 'preview-player',

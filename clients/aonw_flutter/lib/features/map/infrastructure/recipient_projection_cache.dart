@@ -25,7 +25,7 @@ final class RecipientProjectionCache {
     final patch = command.viewPatch;
     _validateCommandIdentity(command, before);
     _validatePatchIdentity(patch, command: command, before: before);
-    if (command.accepted && patch.toRevision == patch.fromRevision) {
+    if (!command.accepted || patch.toRevision == patch.fromRevision) {
       return before;
     }
 
@@ -163,6 +163,8 @@ final class RecipientProjectionCache {
       patch.turnLifecycle != null ||
       patch.outcome != null ||
       patch.diplomacy != null ||
+      !_samePendingAction(patch.pendingAction, before.pendingAction) ||
+      !_sameFoundingDraft(patch.cityFoundingDraft, before.cityFoundingDraft) ||
       _changesCollections(patch);
 
   static bool _changesCollections(AonwPlayerViewPatch patch) => <bool>[
@@ -178,3 +180,91 @@ final class RecipientProjectionCache {
     patch.removedRoadCoordinates.isNotEmpty,
   ].contains(true);
 }
+
+bool _samePendingAction(
+  AonwPendingActionView? left,
+  AonwPendingActionView? right,
+) {
+  if (identical(left, right)) return true;
+  return switch ((left, right)) {
+    (null, null) => true,
+    (AonwPendingResearchSelection(), AonwPendingResearchSelection()) => true,
+    (
+      AonwPendingCityWorkedHexSelection(:final cityId),
+      AonwPendingCityWorkedHexSelection(cityId: final otherCityId),
+    ) =>
+      cityId == otherCityId,
+    (
+      AonwPendingCityExpansionSelection(:final cityId),
+      AonwPendingCityExpansionSelection(cityId: final otherCityId),
+    ) =>
+      cityId == otherCityId,
+    (
+      AonwPendingWorkerActionSelection(:final unitId, :final improvement),
+      AonwPendingWorkerActionSelection(
+        unitId: final otherUnitId,
+        improvement: final otherImprovement,
+      ),
+    ) =>
+      unitId == otherUnitId && improvement == otherImprovement,
+    (
+      AonwPendingMerchantTradeRouteSelection(:final unitId),
+      AonwPendingMerchantTradeRouteSelection(unitId: final otherUnitId),
+    ) =>
+      unitId == otherUnitId,
+    (
+      AonwPendingMerchantMoveToCitySelection(:final unitId),
+      AonwPendingMerchantMoveToCitySelection(unitId: final otherUnitId),
+    ) =>
+      unitId == otherUnitId,
+    (
+      AonwPendingUnitTurnSkip(:final unitId, :final restoreMovementUnits),
+      AonwPendingUnitTurnSkip(
+        unitId: final otherUnitId,
+        restoreMovementUnits: final otherRestoreMovementUnits,
+      ),
+    ) =>
+      unitId == otherUnitId &&
+          restoreMovementUnits == otherRestoreMovementUnits,
+    (
+      AonwPendingAttackTargeting(:final unitId, :final defender),
+      AonwPendingAttackTargeting(
+        unitId: final otherUnitId,
+        defender: final otherDefender,
+      ),
+    ) =>
+      unitId == otherUnitId && _sameCoordinate(defender, otherDefender),
+    (
+      AonwPendingCommanderMergeSelection(:final unitId),
+      AonwPendingCommanderMergeSelection(unitId: final otherUnitId),
+    ) =>
+      unitId == otherUnitId,
+    _ => false,
+  };
+}
+
+bool _sameFoundingDraft(
+  AonwCityFoundingDraft? left,
+  AonwCityFoundingDraft? right,
+) {
+  if (identical(left, right)) return true;
+  if (left == null || right == null) return false;
+  return left.founderUnitId == right.founderUnitId &&
+      _sameCoordinate(left.center, right.center) &&
+      _sameCoordinates(left.controlledHexes, right.controlledHexes);
+}
+
+bool _sameCoordinates(List<AonwCoordinate> left, List<AonwCoordinate> right) {
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index += 1) {
+    if (!_sameCoordinate(left[index], right[index])) return false;
+  }
+  return true;
+}
+
+bool _sameCoordinate(AonwCoordinate? left, AonwCoordinate? right) =>
+    identical(left, right) ||
+    (left != null &&
+        right != null &&
+        left.col == right.col &&
+        left.row == right.row);

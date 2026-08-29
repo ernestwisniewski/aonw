@@ -15,6 +15,7 @@ import 'package:aonw_flutter/features/diplomacy/application/diplomacy_session_po
 import 'package:aonw_flutter/features/diplomacy/read_model/diplomacy_view.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
 import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
+import 'package:aonw_flutter/features/map/application/game_session_capabilities.dart';
 import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/application/movement_session_port.dart';
 import 'package:aonw_flutter/features/map/presentation/input/map_input.dart';
@@ -50,11 +51,7 @@ void main() {
 
     await tester.pumpWidget(
       AppComposition(
-        mapSession: first,
-        movementSession: first,
-        unitActionSession: first,
-        logisticsSession: first,
-        turnSession: first,
+        capabilities: _capabilities(first),
         mapInputSource: firstInput,
         initialRoute: AonwRoute.map,
       ).root,
@@ -66,11 +63,7 @@ void main() {
 
     await tester.pumpWidget(
       AppComposition(
-        mapSession: second,
-        movementSession: second,
-        unitActionSession: second,
-        logisticsSession: second,
-        turnSession: second,
+        capabilities: _capabilities(second),
         mapInputSource: secondInput,
         initialRoute: AonwRoute.map,
       ).root,
@@ -98,11 +91,7 @@ void main() {
 
     await tester.pumpWidget(
       AppComposition(
-        mapSession: session,
-        movementSession: session,
-        unitActionSession: session,
-        logisticsSession: session,
-        turnSession: session,
+        capabilities: _capabilities(session),
         mapInputSource: input,
         flameGameFactory: () {
           final game = AonwFlameGame();
@@ -158,11 +147,7 @@ void main() {
 
     await tester.pumpWidget(
       AppComposition(
-        mapSession: firstSession,
-        movementSession: firstSession,
-        unitActionSession: firstSession,
-        logisticsSession: firstSession,
-        turnSession: firstSession,
+        capabilities: _capabilities(firstSession),
         mapInputSource: firstInput,
         flameGameFactory: createGame,
         initialRoute: AonwRoute.map,
@@ -190,11 +175,7 @@ void main() {
 
     await tester.pumpWidget(
       AppComposition(
-        mapSession: secondSession,
-        movementSession: secondSession,
-        unitActionSession: secondSession,
-        logisticsSession: secondSession,
-        turnSession: secondSession,
+        capabilities: _capabilities(secondSession),
         mapInputSource: secondInput,
         flameGameFactory: createGame,
         initialRoute: AonwRoute.map,
@@ -241,6 +222,22 @@ final class _RecordingClientTelemetry implements ClientTelemetry {
   @override
   void record(ClientTelemetryEvent event) => events.add(event);
 }
+
+GameSessionCapabilities _capabilities(_LifecycleGameSession session) =>
+    GameSessionCapabilities(
+      map: session,
+      movement: session,
+      combat: session,
+      cities: session,
+      logistics: session,
+      workers: session,
+      production: session,
+      artifacts: session,
+      research: session,
+      diplomacy: session,
+      unitActions: session,
+      turns: session,
+    );
 
 final class _LifecycleMapInputSource
     implements MapInputSource, LifecycleAwareMapInputSource {

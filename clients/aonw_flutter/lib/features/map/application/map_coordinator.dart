@@ -1,46 +1,35 @@
 import 'dart:async';
 
-import '../../artifacts/application/artifact_session_port.dart';
 import '../../artifacts/application/artifact_state.dart';
 import '../../artifacts/application/artifact_workflow.dart';
 import '../../artifacts/read_model/artifact_view.dart';
-import '../../cities/application/city_session_port.dart';
 import '../../cities/application/city_state.dart';
 import '../../cities/application/city_workflow.dart';
 import '../../cities/read_model/city_view.dart';
-import '../../combat/application/combat_session_port.dart';
 import '../../combat/application/combat_workflow.dart';
 import '../../combat/read_model/combat_view.dart';
-import '../../diplomacy/application/diplomacy_session_port.dart';
 import '../../diplomacy/application/diplomacy_workflow.dart';
 import '../../diplomacy/read_model/diplomacy_view.dart';
 import '../../local_game/application/local_ai_turn_state.dart';
 import '../../local_game/application/local_game_catalog.dart';
 import '../../local_game/application/local_game_session_port.dart';
-import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/application/unit_logistics_state.dart';
 import '../../logistics/application/unit_logistics_workflow.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
-import '../../production/application/production_session_port.dart';
 import '../../production/application/production_state.dart';
 import '../../production/application/production_workflow.dart';
 import '../../production/read_model/production_view.dart';
 import '../../replay/application/replay_capture.dart';
-import '../../research/application/research_session_port.dart';
 import '../../research/application/research_state.dart';
 import '../../research/application/research_workflow.dart';
 import '../../research/read_model/research_view.dart';
-import '../../save_game/application/game_save_session_port.dart';
 import '../../save_game/application/local_save_state.dart';
 import '../../save_game/application/local_save_store.dart';
 import '../../save_game/application/local_save_workflow.dart';
-import '../../turns/application/turn_session_port.dart';
 import '../../turns/application/turn_workflow.dart';
 import '../../unit_actions/application/action_deck_state.dart';
 import '../../unit_actions/application/unit_action_command_runner.dart';
-import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
-import '../../workers/application/worker_session_port.dart';
 import '../../workers/application/worker_state.dart';
 import '../../workers/application/worker_workflow.dart';
 import '../../workers/read_model/worker_view.dart';
@@ -48,11 +37,11 @@ import '../read_model/map_scene.dart';
 import '../read_model/map_view.dart';
 import '../read_model/movement_view.dart';
 import '../read_model/player_map_view.dart';
+import 'game_session_capabilities.dart';
 import 'game_session_state.dart';
 import 'map_interaction_state.dart';
 import 'map_session_port.dart';
 import 'movement_command_runner.dart';
-import 'movement_session_port.dart';
 import 'unit_action_workflow.dart';
 
 part 'map_coordinator_actions.dart';
@@ -63,74 +52,61 @@ typedef MapDiagnosticReporter =
 
 final class MapCoordinator {
   MapCoordinator({
-    required MapSessionPort session,
-    required MovementSessionPort movement,
-    CombatSessionPort? combat,
-    CitySessionPort? cities,
-    required UnitLogisticsSessionPort logistics,
-    WorkerSessionPort? workers,
-    ProductionSessionPort? production,
-    ArtifactSessionPort? artifacts,
-    ResearchSessionPort? research,
-    DiplomacySessionPort? diplomacy,
-    required UnitActionSessionPort unitActions,
-    required TurnSessionPort turns,
-    LocalGameSessionPort? localGame,
-    GameSaveSessionPort? saveSession,
+    required GameSessionCapabilities capabilities,
     LocalSaveStore? saveStore,
     ReplayCapture? replayCapture,
     this.assets = MapAssetPaths.starter,
     MapDiagnosticReporter? diagnosticReporter,
-  }) : _session = session,
+  }) : _session = capabilities.map,
        _movement = MovementCommandRunner(
-         session: movement,
+         session: capabilities.movement,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _combat = CombatWorkflow(
-         session: combat ?? _requireCombatSession(movement),
+         session: capabilities.combat,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _cities = CityWorkflow(
-         session: cities ?? _requireCitySession(movement),
+         session: capabilities.cities,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _logistics = UnitLogisticsWorkflow(
-         session: logistics,
+         session: capabilities.logistics,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _workers = WorkerWorkflow(
-         session: workers ?? _requireWorkerSession(movement),
+         session: capabilities.workers,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _production = ProductionWorkflow(
-         session: production ?? _requireProductionSession(movement),
+         session: capabilities.production,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _artifacts = ArtifactWorkflow(
-         session: artifacts ?? _requireArtifactSession(movement),
+         session: capabilities.artifacts,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _research = ResearchWorkflow(
-         session: research ?? _requireResearchSession(movement),
+         session: capabilities.research,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _diplomacy = DiplomacyWorkflow(
-         session: diplomacy ?? _requireDiplomacySession(movement),
+         session: capabilities.diplomacy,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
        _unitActions = UnitActionWorkflow(
          runner: UnitActionCommandRunner(
-           session: unitActions,
+           session: capabilities.unitActions,
            diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
          ),
        ),
        _turns = TurnWorkflow(
-         session: turns,
+         session: capabilities.turns,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
-       _localGame = localGame ?? _optionalLocalGame(session),
+       _localGame = capabilities.localGame,
        _saveWorkflow = LocalSaveWorkflow(
-         session: saveSession ?? _optionalSaveSession(session),
+         session: capabilities.save,
          store: saveStore,
          diagnosticReporter: diagnosticReporter ?? _ignoreDiagnostic,
        ),
@@ -578,79 +554,6 @@ bool _interactionBusy(MapInteractionState interaction) =>
     (interaction.production?.commandPending ?? false) ||
     (interaction.production?.loading ?? false) ||
     (interaction.artifact?.commandPending ?? false);
-
-CombatSessionPort _requireCombatSession(MovementSessionPort movement) {
-  if (movement case final CombatSessionPort combat) return combat;
-  throw ArgumentError.value(
-    movement,
-    'movement',
-    'must also provide the combat session port',
-  );
-}
-
-CitySessionPort _requireCitySession(MovementSessionPort movement) {
-  if (movement case final CitySessionPort cities) return cities;
-  throw ArgumentError.value(
-    movement,
-    'movement',
-    'must also provide the city session port',
-  );
-}
-
-WorkerSessionPort _requireWorkerSession(MovementSessionPort movement) {
-  if (movement case final WorkerSessionPort workers) return workers;
-  throw ArgumentError.value(
-    movement,
-    'movement',
-    'must also provide the worker session port',
-  );
-}
-
-ProductionSessionPort _requireProductionSession(MovementSessionPort movement) {
-  if (movement case final ProductionSessionPort production) return production;
-  throw ArgumentError.value(
-    movement,
-    'movement',
-    'must also provide the production session port',
-  );
-}
-
-ArtifactSessionPort _requireArtifactSession(MovementSessionPort movement) {
-  if (movement case final ArtifactSessionPort artifacts) return artifacts;
-  throw ArgumentError.value(
-    movement,
-    'movement',
-    'must also provide the artifact session port',
-  );
-}
-
-ResearchSessionPort _requireResearchSession(MovementSessionPort movement) {
-  if (movement case final ResearchSessionPort research) return research;
-  throw ArgumentError.value(
-    movement,
-    'movement',
-    'must also provide the research session port',
-  );
-}
-
-DiplomacySessionPort _requireDiplomacySession(MovementSessionPort movement) {
-  if (movement case final DiplomacySessionPort diplomacy) return diplomacy;
-  throw ArgumentError.value(
-    movement,
-    'movement',
-    'must also provide the diplomacy session port',
-  );
-}
-
-LocalGameSessionPort? _optionalLocalGame(MapSessionPort session) {
-  if (session case final LocalGameSessionPort localGame) return localGame;
-  return null;
-}
-
-GameSaveSessionPort? _optionalSaveSession(MapSessionPort session) {
-  if (session case final GameSaveSessionPort saveSession) return saveSession;
-  return null;
-}
 
 void _validateCatalogSetup(
   LocalGameCatalogEntryView entry,

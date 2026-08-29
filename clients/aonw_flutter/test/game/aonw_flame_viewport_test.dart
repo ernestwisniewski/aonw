@@ -16,11 +16,7 @@ void main() {
     final games = <AonwFlameGame>[];
     final session = FakeGameSession.success(testMapScene());
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
 
@@ -77,11 +73,7 @@ void main() {
     final games = <AonwFlameGame>[];
     final session = FakeGameSession.success(testMapScene());
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
 

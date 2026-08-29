@@ -93,12 +93,7 @@ MapCoordinator _coordinator(
   LocalSaveStore store, [
   ReplayCapture? replayCapture,
 ]) => MapCoordinator(
-  session: gameplay,
-  movement: gameplay,
-  unitActions: gameplay,
-  logistics: gameplay,
-  turns: gameplay,
-  saveSession: saveSession,
+  capabilities: testGameSessionCapabilities(gameplay, save: saveSession),
   saveStore: store,
   replayCapture: replayCapture,
 );

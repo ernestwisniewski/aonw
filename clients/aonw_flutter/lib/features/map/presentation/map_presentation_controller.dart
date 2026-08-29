@@ -2,73 +2,36 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../../artifacts/application/artifact_session_port.dart';
 import '../../artifacts/read_model/artifact_view.dart';
-import '../../cities/application/city_session_port.dart';
 import '../../cities/read_model/city_view.dart';
-import '../../combat/application/combat_session_port.dart';
 import '../../combat/read_model/combat_view.dart';
-import '../../diplomacy/application/diplomacy_session_port.dart';
 import '../../diplomacy/read_model/diplomacy_view.dart';
 import '../../local_game/application/local_game_catalog.dart';
 import '../../local_game/application/local_game_session_port.dart';
-import '../../logistics/application/unit_logistics_session_port.dart';
 import '../../logistics/read_model/unit_logistics_view.dart';
-import '../../production/application/production_session_port.dart';
 import '../../production/read_model/production_view.dart';
 import '../../replay/application/replay_capture.dart';
-import '../../research/application/research_session_port.dart';
 import '../../research/read_model/research_view.dart';
-import '../../save_game/application/game_save_session_port.dart';
 import '../../save_game/application/local_save_state.dart';
 import '../../save_game/application/local_save_store.dart';
-import '../../turns/application/turn_session_port.dart';
-import '../../unit_actions/application/unit_action_session_port.dart';
 import '../../unit_actions/read_model/unit_action_view.dart';
-import '../../workers/application/worker_session_port.dart';
 import '../../workers/read_model/worker_view.dart';
+import '../application/game_session_capabilities.dart';
 import '../application/game_session_state.dart';
 import '../application/map_coordinator.dart';
 import '../application/map_session_port.dart';
-import '../application/movement_session_port.dart';
 import '../read_model/map_view.dart';
 
 final class MapPresentationController extends ChangeNotifier {
   MapPresentationController({
-    required MapSessionPort session,
-    required MovementSessionPort movement,
-    CombatSessionPort? combat,
-    CitySessionPort? cities,
-    required UnitLogisticsSessionPort logistics,
-    WorkerSessionPort? workers,
-    ProductionSessionPort? production,
-    ArtifactSessionPort? artifacts,
-    ResearchSessionPort? research,
-    DiplomacySessionPort? diplomacy,
-    required UnitActionSessionPort unitActions,
-    required TurnSessionPort turns,
-    LocalGameSessionPort? localGame,
-    GameSaveSessionPort? saveSession,
+    required GameSessionCapabilities capabilities,
     LocalSaveStore? saveStore,
     ReplayCapture? replayCapture,
     MapAssetPaths assets = MapAssetPaths.starter,
     MapDiagnosticReporter diagnosticReporter = _reportMapDiagnostic,
   }) : this.fromCoordinator(
          MapCoordinator(
-           session: session,
-           movement: movement,
-           combat: combat,
-           cities: cities,
-           logistics: logistics,
-           workers: workers,
-           production: production,
-           artifacts: artifacts,
-           research: research,
-           diplomacy: diplomacy,
-           unitActions: unitActions,
-           turns: turns,
-           localGame: localGame,
-           saveSession: saveSession,
+           capabilities: capabilities,
            saveStore: saveStore,
            replayCapture: replayCapture,
            assets: assets,

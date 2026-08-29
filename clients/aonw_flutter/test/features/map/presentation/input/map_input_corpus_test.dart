@@ -34,11 +34,7 @@ void main() {
         testMapScene(cols: cols, rows: rows),
       );
       final controller = MapPresentationController(
-        session: session,
-        movement: session,
-        unitActions: session,
-        logistics: session,
-        turns: session,
+        capabilities: testGameSessionCapabilities(session),
       );
       final flameGame = AonwFlameGame();
       await tester.pumpWidget(

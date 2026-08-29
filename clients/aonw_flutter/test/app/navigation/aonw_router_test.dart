@@ -22,11 +22,7 @@ void main() {
   ) async {
     final session = FakeGameSession.success(testMapScene());
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
 
     await tester.pumpWidget(
@@ -56,11 +52,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     final session = FakeGameSession.success(testMapScene());
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
 
     await tester.pumpWidget(
@@ -95,12 +87,10 @@ void main() {
     final session = FakeGameSession.success(scene);
     final saves = _SingleSaveStore();
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
-      saveSession: _ResumeSession(scene),
+      capabilities: testGameSessionCapabilities(
+        session,
+        save: _ResumeSession(scene),
+      ),
       saveStore: saves,
     );
 
@@ -144,11 +134,7 @@ void main() {
   ) async {
     final session = FakeGameSession.success(testMapScene());
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
 
     await tester.pumpWidget(
@@ -199,12 +185,7 @@ void main() {
     final saves = _SingleSaveStore('rust-save');
     final persistence = _ResumeSession(scene);
     final controller = MapPresentationController(
-      session: gameplay,
-      movement: gameplay,
-      unitActions: gameplay,
-      logistics: gameplay,
-      turns: gameplay,
-      saveSession: persistence,
+      capabilities: testGameSessionCapabilities(gameplay, save: persistence),
       saveStore: saves,
     );
 
@@ -238,11 +219,7 @@ void main() {
       diagnosticReporter: (_, _, _) {},
     );
     final mapController = MapPresentationController(
-      session: gameplay,
-      movement: gameplay,
-      unitActions: gameplay,
-      logistics: gameplay,
-      turns: gameplay,
+      capabilities: testGameSessionCapabilities(gameplay),
     );
 
     await tester.pumpWidget(

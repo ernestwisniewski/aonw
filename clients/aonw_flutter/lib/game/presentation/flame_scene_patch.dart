@@ -25,6 +25,7 @@ final class FlameScenePatch {
     required List<MapHexCoordinate> removedRoadCoordinates,
     required List<FlameUnitMovementTransition> movements,
     required List<FlameCombatTransition> combats,
+    required this.cursorOnly,
   }) : unitUpserts = List.unmodifiable(unitUpserts),
        removedUnitIds = List.unmodifiable(removedUnitIds),
        cityUpserts = List.unmodifiable(cityUpserts),
@@ -46,6 +47,24 @@ final class FlameScenePatch {
   ) {
     if (previous == null || !_sameMap(previous, next)) {
       return _replacement(previous, next);
+    }
+    if (_onlyCursorChanged(previous, next)) {
+      return FlameScenePatch._(
+        snapshot: next,
+        unitUpserts: const [],
+        removedUnitIds: const [],
+        cityUpserts: const [],
+        removedCityIds: const [],
+        artifactUpserts: const [],
+        removedArtifactIds: const [],
+        fieldImprovementUpserts: const [],
+        removedFieldImprovementCoordinates: const [],
+        roadUpserts: const [],
+        removedRoadCoordinates: const [],
+        movements: const [],
+        combats: const [],
+        cursorOnly: true,
+      );
     }
 
     final previousUnits = _unitsById(previous);
@@ -97,6 +116,7 @@ final class FlameScenePatch {
       ],
       movements: _movementBetween(previous, next, previousUnits, nextUnits),
       combats: _combatBetween(previous, next),
+      cursorOnly: false,
     );
   }
 
@@ -113,6 +133,7 @@ final class FlameScenePatch {
   final List<MapHexCoordinate> removedRoadCoordinates;
   final List<FlameUnitMovementTransition> movements;
   final List<FlameCombatTransition> combats;
+  final bool cursorOnly;
 
   static FlameScenePatch _replacement(
     MapRenderSnapshot? previous,
@@ -141,7 +162,36 @@ final class FlameScenePatch {
         previous?.player.roads.map((value) => value.coordinate).toList() ??
         const [],
     combats: const [],
+    cursorOnly: false,
   );
+
+  static bool _onlyCursorChanged(
+    MapRenderSnapshot previous,
+    MapRenderSnapshot next,
+  ) {
+    if (!identical(previous.map, next.map) ||
+        !identical(previous.reference, next.reference) ||
+        !identical(previous.player, next.player)) {
+      return false;
+    }
+    final before = previous.interaction;
+    final after = next.interaction;
+    return before.selected == after.selected &&
+        before.selectedUnitId == after.selectedUnitId &&
+        identical(before.reachable, after.reachable) &&
+        identical(before.route, after.route) &&
+        before.movementPending == after.movementPending &&
+        identical(before.movementError, after.movementError) &&
+        identical(before.lastMovementExecution, after.lastMovementExecution) &&
+        identical(before.actionDeck, after.actionDeck) &&
+        identical(before.unitLogistics, after.unitLogistics) &&
+        identical(before.combat, after.combat) &&
+        identical(before.city, after.city) &&
+        identical(before.worker, after.worker) &&
+        identical(before.production, after.production) &&
+        identical(before.artifact, after.artifact) &&
+        before.referenceVisible == after.referenceVisible;
+  }
 
   static Map<String, VisibleUnitView> _unitsById(MapRenderSnapshot snapshot) =>
       {for (final unit in snapshot.player.units) unit.id: unit};

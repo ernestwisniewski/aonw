@@ -42,11 +42,7 @@ void main() {
       ),
     );
     final controller = MapPresentationController(
-      session: session,
-      movement: session,
-      unitActions: session,
-      logistics: session,
-      turns: session,
+      capabilities: testGameSessionCapabilities(session),
     );
     addTearDown(controller.dispose);
     await tester.binding.setSurfaceSize(const Size(420, 760));

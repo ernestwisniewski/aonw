@@ -9,6 +9,7 @@ import 'package:aonw_flutter/features/diplomacy/read_model/diplomacy_view.dart';
 import 'package:aonw_flutter/features/local_game/application/local_game_session_port.dart';
 import 'package:aonw_flutter/features/logistics/application/unit_logistics_session_port.dart';
 import 'package:aonw_flutter/features/logistics/read_model/unit_logistics_view.dart';
+import 'package:aonw_flutter/features/map/application/game_session_capabilities.dart';
 import 'package:aonw_flutter/features/map/application/map_session_port.dart';
 import 'package:aonw_flutter/features/map/application/movement_session_port.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
@@ -20,6 +21,7 @@ import 'package:aonw_flutter/features/production/application/production_session_
 import 'package:aonw_flutter/features/production/read_model/production_view.dart';
 import 'package:aonw_flutter/features/research/application/research_session_port.dart';
 import 'package:aonw_flutter/features/research/read_model/research_view.dart';
+import 'package:aonw_flutter/features/save_game/application/game_save_session_port.dart';
 import 'package:aonw_flutter/features/turns/application/turn_session_port.dart';
 import 'package:aonw_flutter/features/turns/read_model/recipient_turn_view.dart';
 import 'package:aonw_flutter/features/turns/read_model/turn_command_view.dart';
@@ -475,6 +477,7 @@ final class FakeGameSession
   LocalMatchSetupView? lastLocalMatchSetup;
   var aiTurnCalls = 0;
   final aiTurnRequests = <LocalAiTurnRequestView>[];
+  final selectionRequestOrder = <String>[];
 
   @override
   Future<MapScene> load(MapAssetPaths assets) async {
@@ -518,7 +521,10 @@ final class FakeGameSession
   Future<ReachableView> reachable({
     required int expectedRevision,
     required String unitId,
-  }) async => reachableResult ?? (throw StateError('No reachable fixture.'));
+  }) async {
+    selectionRequestOrder.add('reachable');
+    return reachableResult ?? (throw StateError('No reachable fixture.'));
+  }
 
   @override
   Future<RoutePlanView> routePlan({
@@ -628,6 +634,7 @@ final class FakeGameSession
     required int expectedRevision,
     required String unitId,
   }) async {
+    selectionRequestOrder.add('logistics');
     logisticsOptionCalls += 1;
     final error = logisticsFailure;
     if (error != null) throw error;
@@ -800,3 +807,24 @@ final class FakeGameSession
   @override
   Future<void> close() async {}
 }
+
+GameSessionCapabilities testGameSessionCapabilities(
+  FakeGameSession session, {
+  CitySessionPort? cities,
+  GameSaveSessionPort? save,
+}) => GameSessionCapabilities(
+  map: session,
+  movement: session,
+  combat: session,
+  cities: cities ?? session,
+  logistics: session,
+  workers: session,
+  production: session,
+  artifacts: session,
+  research: session,
+  diplomacy: session,
+  unitActions: session,
+  turns: session,
+  localGame: session,
+  save: save,
+);

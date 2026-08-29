@@ -55,22 +55,120 @@ void main() {
   });
 
   test('keeps conditional fields for an unchanged rejected command', () {
-    final initial = _snapshot();
+    final initial = _snapshot(
+      pendingAction: const AonwPendingWorkerActionSelection(
+        unitId: 'unit-1',
+        improvement: AonwFieldImprovementKind.farm,
+      ),
+      cityFoundingDraft: _draft(),
+    );
     final cache = _cache(initial);
 
     final after = cache.apply(
       _command(
         accepted: false,
         stamp: initial.stamp,
-        patch: _patch(fromRevision: 0, toRevision: 0, turn: 1),
+        patch: _patch(
+          fromRevision: 0,
+          toRevision: 0,
+          turn: 1,
+          pendingAction: const AonwPendingWorkerActionSelection(
+            unitId: 'unit-1',
+            improvement: AonwFieldImprovementKind.farm,
+          ),
+          cityFoundingDraft: _draft(),
+        ),
       ),
     );
 
+    expect(after, same(initial));
     expect(after.stamp.revision, 0);
     expect(after.turnLifecycle, same(initial.turnLifecycle));
     expect(after.outcome, same(initial.outcome));
     expect(after.diplomacy, same(initial.diplomacy));
     expect(after.units.single.coordinate.col, 0);
+  });
+
+  test('rejects every conditional-field mutation on a rejected command', () {
+    final cases =
+        <
+          ({
+            AonwPlayerViewSnapshot before,
+            AonwPendingActionView? pendingAction,
+            AonwCityFoundingDraft? cityFoundingDraft,
+          })
+        >[
+          (
+            before: _snapshot(
+              pendingAction: const AonwPendingResearchSelection(),
+            ),
+            pendingAction: null,
+            cityFoundingDraft: null,
+          ),
+          (
+            before: _snapshot(),
+            pendingAction: const AonwPendingResearchSelection(),
+            cityFoundingDraft: null,
+          ),
+          (
+            before: _snapshot(
+              pendingAction: const AonwPendingResearchSelection(),
+            ),
+            pendingAction: const AonwPendingCityWorkedHexSelection(
+              cityId: 'city-1',
+            ),
+            cityFoundingDraft: null,
+          ),
+          (
+            before: _snapshot(
+              pendingAction: const AonwPendingWorkerActionSelection(
+                unitId: 'unit-1',
+                improvement: AonwFieldImprovementKind.farm,
+              ),
+            ),
+            pendingAction: const AonwPendingWorkerActionSelection(
+              unitId: 'unit-1',
+              improvement: AonwFieldImprovementKind.mine,
+            ),
+            cityFoundingDraft: null,
+          ),
+          (
+            before: _snapshot(cityFoundingDraft: _draft()),
+            pendingAction: null,
+            cityFoundingDraft: null,
+          ),
+          (
+            before: _snapshot(),
+            pendingAction: null,
+            cityFoundingDraft: _draft(),
+          ),
+          (
+            before: _snapshot(cityFoundingDraft: _draft()),
+            pendingAction: null,
+            cityFoundingDraft: _draft(founderUnitId: 'unit-2'),
+          ),
+        ];
+
+    for (final value in cases) {
+      final cache = _cache(value.before);
+      expect(
+        () => cache.apply(
+          _command(
+            accepted: false,
+            stamp: value.before.stamp,
+            patch: _patch(
+              fromRevision: 0,
+              toRevision: 0,
+              turn: 1,
+              pendingAction: value.pendingAction,
+              cityFoundingDraft: value.cityFoundingDraft,
+            ),
+          ),
+        ),
+        throwsFormatException,
+      );
+      expect(cache.snapshot, same(value.before));
+    }
   });
 
   test('retains the cached snapshot for an accepted identity patch', () {
@@ -83,12 +181,36 @@ void main() {
     final after = cache.apply(
       _command(
         stamp: initial.stamp,
-        patch: _patch(fromRevision: 1, toRevision: 1, turn: 1),
+        patch: _patch(
+          fromRevision: 1,
+          toRevision: 1,
+          turn: 1,
+          pendingAction: const AonwPendingResearchSelection(),
+        ),
       ),
     );
 
     expect(after, same(initial));
     expect(after.pendingAction, same(initial.pendingAction));
+  });
+
+  test('rejects a mutating accepted identity patch', () {
+    final initial = _snapshot(
+      revision: 1,
+      pendingAction: const AonwPendingResearchSelection(),
+    );
+    final cache = _cache(initial);
+
+    expect(
+      () => cache.apply(
+        _command(
+          stamp: initial.stamp,
+          patch: _patch(fromRevision: 1, toRevision: 1, turn: 1),
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(cache.snapshot, same(initial));
   });
 
   test('rejects stale, unknown-removal and out-of-bounds patches', () {
@@ -246,6 +368,8 @@ AonwPlayerViewPatch _patch({
   AonwPlayerTurnLifecycle? turnLifecycle,
   AonwGameOutcome? outcome,
   AonwPlayerDiplomacyView? diplomacy,
+  AonwPendingActionView? pendingAction,
+  AonwCityFoundingDraft? cityFoundingDraft,
   List<AonwPlayerUnitView> upsertedUnits = const [],
   List<String> removedUnitIds = const [],
 }) => AonwPlayerViewPatch(
@@ -264,7 +388,14 @@ AonwPlayerViewPatch _patch({
   removedFieldImprovementCoordinates: const [],
   upsertedRoads: const [],
   removedRoadCoordinates: const [],
-  pendingAction: null,
-  cityFoundingDraft: null,
+  pendingAction: pendingAction,
+  cityFoundingDraft: cityFoundingDraft,
   diplomacy: diplomacy,
 );
+
+AonwCityFoundingDraft _draft({String founderUnitId = 'unit-1'}) =>
+    AonwCityFoundingDraft(
+      founderUnitId: founderUnitId,
+      center: const AonwCoordinate(col: 1, row: 1),
+      controlledHexes: const [AonwCoordinate(col: 1, row: 1)],
+    );
