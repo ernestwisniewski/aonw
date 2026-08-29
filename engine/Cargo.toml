@@ -16,6 +16,7 @@ members = [
   "crates/aonw_map_workbench",
   "crates/aonw_projection",
   "crates/aonw_server_runtime",
+  "crates/aonw_server_native",
   "crates/aonw_testkit",
 ]
 

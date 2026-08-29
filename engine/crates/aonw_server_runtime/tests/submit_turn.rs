@@ -3,6 +3,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
+use aonw_contract_mapping::encode_game_state;
+use aonw_contracts::server::{SERVER_HOST_API_VERSION, SubmitTurnServerRequestDto};
 use aonw_domain::{
     FogOfWar, GameMode, GameState, HexCoord, MatchIdentity, MatchLifecycle, MatchRules,
     MovementUnits, Participant, PlayerCountry, PlayerFog, PlayerId, PlayerKind, PlayerTurnState,
@@ -10,7 +12,8 @@ use aonw_domain::{
 };
 use aonw_engine::{CommandRejectionCode, DomainEvent, GameEngine};
 use aonw_server_runtime::{
-    PreparedServerWorld, ServerHostError, SubmitTurnRequest, apply_submit_turn,
+    PreparedServerWorld, ServerBoundaryError, ServerHostError, SubmitTurnRequest,
+    apply_submit_turn, apply_submit_turn_dto,
 };
 
 #[test]
@@ -133,6 +136,67 @@ fn immutable_content_mismatch_fails_closed() {
     assert_eq!(
         apply_submit_turn(request),
         Err(ServerHostError::OccupancyPolicyMismatch)
+    );
+}
+
+#[test]
+fn strict_current_dto_maps_transactional_and_recipient_safe_output() {
+    let fixture = fixture([]);
+    let map_hash = fixture.world.map_hash().to_string();
+    let ruleset_hash = fixture.world.ruleset_hash().to_string();
+    let result = apply_submit_turn_dto(
+        fixture.world.clone(),
+        SubmitTurnServerRequestDto {
+            api_version: SERVER_HOST_API_VERSION,
+            authenticated_actor_player_id: "player-1".to_owned(),
+            expected_revision: 7,
+            initial_event_offset: 80,
+            map_hash: map_hash.clone(),
+            ruleset_hash: ruleset_hash.clone(),
+            state: encode_game_state(&fixture.state),
+        },
+    )
+    .expect("strict DTO request");
+
+    assert_eq!(result.initial_event_offset, 80);
+    assert_eq!(result.stamp.map_hash, map_hash);
+    assert_eq!(result.stamp.ruleset_hash, ruleset_hash);
+    assert_eq!(result.recipients.len(), 2);
+    assert!(result.recipients.iter().all(|recipient| {
+        recipient
+            .snapshot
+            .units
+            .iter()
+            .filter(|unit| unit.owner_player_id != recipient.recipient_player_id)
+            .all(|unit| unit.owned_details.is_none())
+    }));
+}
+
+#[test]
+fn strict_current_dto_rejects_version_and_content_identity_before_execution() {
+    let fixture = fixture([]);
+    let request = SubmitTurnServerRequestDto {
+        api_version: SERVER_HOST_API_VERSION + 1,
+        authenticated_actor_player_id: "player-1".to_owned(),
+        expected_revision: 7,
+        initial_event_offset: 0,
+        map_hash: fixture.world.map_hash().to_string(),
+        ruleset_hash: fixture.world.ruleset_hash().to_string(),
+        state: encode_game_state(&fixture.state),
+    };
+    assert_eq!(
+        apply_submit_turn_dto(fixture.world.clone(), request.clone()),
+        Err(ServerBoundaryError::UnsupportedApiVersion {
+            actual: SERVER_HOST_API_VERSION + 1,
+        })
+    );
+
+    let mut request = request;
+    request.api_version = SERVER_HOST_API_VERSION;
+    request.map_hash = "wrong-map".to_owned();
+    assert_eq!(
+        apply_submit_turn_dto(fixture.world.clone(), request),
+        Err(ServerBoundaryError::ContentIdentityMismatch)
     );
 }
 

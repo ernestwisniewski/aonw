@@ -162,10 +162,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "aonw_server_native"
+version = "0.1.0"
+dependencies = [
+ "aonw_contracts",
+ "aonw_server_runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "aonw_server_runtime"
 version = "0.1.0"
 dependencies = [
  "aonw_content",
+ "aonw_contract_mapping",
+ "aonw_contracts",
  "aonw_domain",
  "aonw_engine",
  "aonw_projection",

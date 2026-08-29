@@ -4,7 +4,16 @@
 
 use std::sync::Arc;
 
-use aonw_content::{MapDefinition, RulesetDefinition};
+use aonw_content::{MapDefinition, MapDocument, RulesetDefinition};
+use aonw_contract_mapping::{
+    decode_game_state, encode_client_event, encode_client_evidence, encode_client_stamp,
+    encode_command_rejection, encode_game_state, encode_player_view_patch,
+    encode_player_view_snapshot,
+};
+use aonw_contracts::server::{
+    PrepareServerWorldRequestDto, SERVER_HOST_API_VERSION, ServerCommandResultDto,
+    ServerHostErrorCodeDto, ServerRecipientOutcomeDto, SubmitTurnServerRequestDto,
+};
 use aonw_domain::{GameState, PlayerId};
 use aonw_engine::{
     CanonicalEngineError, CommandRejectionCode, CompiledMovementMap, CompiledMovementMapError,
@@ -54,6 +63,168 @@ impl PreparedServerWorld {
 
     fn compiled(&self) -> &CompiledMovementMap {
         &self.compiled
+    }
+}
+
+/// Failure while validating or mapping the strict current server DTO boundary.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ServerBoundaryError {
+    /// The independently deployed caller uses another API version.
+    UnsupportedApiVersion {
+        /// Version supplied by the caller.
+        actual: u16,
+    },
+    /// The strict authored map document could not be decoded.
+    InvalidMapDocument(String),
+    /// The request selected an unreviewed immutable ruleset.
+    UnsupportedRuleset(String),
+    /// Match content hashes do not match the prepared immutable world.
+    ContentIdentityMismatch,
+    /// The canonical state DTO violated a domain invariant.
+    InvalidCanonicalState(String),
+    /// The authenticated actor identifier was invalid.
+    InvalidAuthenticatedActor(String),
+    /// Stateless authoritative execution failed before persistence.
+    Host(ServerHostError),
+}
+
+impl ServerBoundaryError {
+    /// Returns the stable current host error code for this failure.
+    #[must_use]
+    pub const fn code(&self) -> ServerHostErrorCodeDto {
+        match self {
+            Self::UnsupportedApiVersion { .. } => ServerHostErrorCodeDto::UnsupportedApiVersion,
+            Self::InvalidMapDocument(_) => ServerHostErrorCodeDto::InvalidMapDocument,
+            Self::UnsupportedRuleset(_) => ServerHostErrorCodeDto::UnsupportedRuleset,
+            Self::ContentIdentityMismatch => ServerHostErrorCodeDto::ContentIdentityMismatch,
+            Self::InvalidCanonicalState(_) => ServerHostErrorCodeDto::InvalidCanonicalState,
+            Self::InvalidAuthenticatedActor(_) => ServerHostErrorCodeDto::InvalidAuthenticatedActor,
+            Self::Host(error) => match error {
+                ServerHostError::EmptyParticipants => ServerHostErrorCodeDto::EmptyParticipants,
+                ServerHostError::UnknownAuthenticatedActor(_) => {
+                    ServerHostErrorCodeDto::UnknownAuthenticatedActor
+                }
+                ServerHostError::MapBoundsMismatch => ServerHostErrorCodeDto::MapBoundsMismatch,
+                ServerHostError::OccupancyPolicyMismatch => {
+                    ServerHostErrorCodeDto::OccupancyPolicyMismatch
+                }
+                ServerHostError::EventOffsetOverflow => ServerHostErrorCodeDto::EventOffsetOverflow,
+                ServerHostError::EventBudgetExceeded { .. } => {
+                    ServerHostErrorCodeDto::EventBudgetExceeded
+                }
+                ServerHostError::CompiledMovementMap(_) | ServerHostError::Engine(_) => {
+                    ServerHostErrorCodeDto::EngineFailure
+                }
+            },
+        }
+    }
+}
+
+impl core::fmt::Display for ServerBoundaryError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::UnsupportedApiVersion { actual } => write!(
+                formatter,
+                "unsupported server host API version {actual}; expected {SERVER_HOST_API_VERSION}"
+            ),
+            Self::InvalidMapDocument(message) => {
+                write!(formatter, "invalid map document: {message}")
+            }
+            Self::UnsupportedRuleset(id) => write!(formatter, "unsupported ruleset `{id}`"),
+            Self::ContentIdentityMismatch => {
+                formatter.write_str("match content identity does not match prepared world")
+            }
+            Self::InvalidCanonicalState(message) => {
+                write!(formatter, "invalid canonical state: {message}")
+            }
+            Self::InvalidAuthenticatedActor(message) => {
+                write!(formatter, "invalid authenticated actor: {message}")
+            }
+            Self::Host(source) => source.fmt(formatter),
+        }
+    }
+}
+
+impl std::error::Error for ServerBoundaryError {}
+
+/// Validates strict immutable content and prepares reusable server world data.
+///
+/// # Errors
+///
+/// Returns an error for another API version, invalid current map content, an
+/// unsupported ruleset, or immutable movement compilation failure.
+pub fn prepare_server_world(
+    request: PrepareServerWorldRequestDto,
+) -> Result<PreparedServerWorld, ServerBoundaryError> {
+    require_api_version(request.api_version)?;
+    let ruleset = RulesetDefinition::standard();
+    if request.ruleset_id != ruleset.ruleset_id() {
+        return Err(ServerBoundaryError::UnsupportedRuleset(request.ruleset_id));
+    }
+    let document = MapDocument::from_json(request.map_document.as_bytes())
+        .map_err(|error| ServerBoundaryError::InvalidMapDocument(error.to_string()))?;
+    PreparedServerWorld::try_new(document.map().clone(), ruleset.clone())
+        .map_err(|error| ServerBoundaryError::Host(ServerHostError::CompiledMovementMap(error)))
+}
+
+/// Applies one strict current DTO request and maps the all-or-nothing result.
+///
+/// # Errors
+///
+/// Returns an error before persistence for invalid identity, canonical state,
+/// authenticated ownership, offset capacity, or engine failure.
+pub fn apply_submit_turn_dto(
+    world: PreparedServerWorld,
+    request: SubmitTurnServerRequestDto,
+) -> Result<ServerCommandResultDto, ServerBoundaryError> {
+    require_api_version(request.api_version)?;
+    if request.map_hash != world.map_hash().to_string()
+        || request.ruleset_hash != world.ruleset_hash().to_string()
+    {
+        return Err(ServerBoundaryError::ContentIdentityMismatch);
+    }
+    let actor = PlayerId::new(request.authenticated_actor_player_id)
+        .map_err(|error| ServerBoundaryError::InvalidAuthenticatedActor(error.to_string()))?;
+    let state = decode_game_state(request.state)
+        .map_err(|error| ServerBoundaryError::InvalidCanonicalState(error.to_string()))?;
+    let outcome = apply_submit_turn(SubmitTurnRequest {
+        state,
+        world,
+        authenticated_actor: actor,
+        expected_revision: request.expected_revision,
+        initial_event_offset: request.initial_event_offset,
+    })
+    .map_err(ServerBoundaryError::Host)?;
+    Ok(encode_server_command_result(&outcome))
+}
+
+fn require_api_version(actual: u16) -> Result<(), ServerBoundaryError> {
+    if actual == SERVER_HOST_API_VERSION {
+        Ok(())
+    } else {
+        Err(ServerBoundaryError::UnsupportedApiVersion { actual })
+    }
+}
+
+fn encode_server_command_result(outcome: &ServerCommandOutcome) -> ServerCommandResultDto {
+    ServerCommandResultDto {
+        state: encode_game_state(&outcome.state),
+        rejection: outcome.rejection.map(encode_command_rejection),
+        events: outcome.events.iter().map(encode_client_event).collect(),
+        evidence: outcome.evidence.as_ref().map(encode_client_evidence),
+        stamp: encode_client_stamp(outcome.stamp),
+        initial_event_offset: outcome.initial_event_offset,
+        final_event_offset: outcome.final_event_offset,
+        recipients: outcome
+            .recipients
+            .iter()
+            .map(|recipient| ServerRecipientOutcomeDto {
+                recipient_player_id: recipient.recipient_player_id.as_str().to_owned(),
+                snapshot: encode_player_view_snapshot(&recipient.snapshot),
+                patch: encode_player_view_patch(&recipient.patch),
+                events: recipient.events.iter().map(encode_client_event).collect(),
+            })
+            .collect(),
     }
 }
 

@@ -12,6 +12,7 @@ pub mod client;
 mod combat;
 mod limits;
 mod persistence;
+pub mod server;
 
 pub use canonical::{
     AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
