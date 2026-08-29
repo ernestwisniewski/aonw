@@ -12,11 +12,15 @@ publish.workspace = true
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = []
+editor-tools = ["dep:aonw_map_workbench"]
+
 [dependencies]
 aonw_ai = { path = "../aonw_ai" }
 aonw_contracts = { path = "../aonw_contracts" }
 aonw_local_runtime = { path = "../aonw_local_runtime" }
-aonw_map_workbench = { path = "../aonw_map_workbench" }
+aonw_map_workbench = { path = "../aonw_map_workbench", optional = true }
 godot.workspace = true
 
 [dev-dependencies]

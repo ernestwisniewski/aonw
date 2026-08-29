@@ -244,6 +244,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .PHONY: rust-integrated-turn-check rust-ai-ledger-check rust-ai-strength-check rust-ai-check rust-persistence-check
 .PHONY: rust-security-policy-test rust-security-policy-check rust-security-tool-versions rust-mutation-check rust-fuzz-smoke rust-miri-check rust-ffi-sanitizer-check rust-engine-security-check rust-release-metadata-policy-test rust-release-metadata-policy-check rust-release-metadata-tool-versions rust-release-metadata-check rust-engine-completion-check
+.PHONY: rust-godot-editor-build
 
 help:
 	@echo "AONW deploy helpers"
@@ -834,7 +835,10 @@ rust-flutter-test: root-dependencies successor-flutter-dependencies
 	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/infrastructure/native_large_map_smoke_test.dart
 
 rust-godot-build:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked -p aonw_godot
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked -p aonw_godot --no-default-features
+
+rust-godot-editor-build:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked -p aonw_godot --no-default-features --features editor-tools
 
 godot-terrain-compile:
 	@tool/compile_godot_terrain.sh
@@ -851,11 +855,11 @@ godot-native-config: terrain3d-check
 
 godot-check: godot-test
 
-godot-editor-check: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
+godot-editor-check: godot-toolchain-check terrain3d-check rust-godot-editor-build godot-terrain-compile godot-native-config
 	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_EDITOR_LOG)" --editor --path "$(GODOT_PROJECT)" --quit
 	@tool/check_godot_log.sh "$(GODOT_EDITOR_LOG)"
 
-godot-editor: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
+godot-editor: godot-toolchain-check terrain3d-check rust-godot-editor-build godot-terrain-compile godot-native-config
 	@"$(GODOT_BIN)" --editor --path "$(GODOT_PROJECT)"
 
 godot-run: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
