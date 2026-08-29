@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize};
+use serde::de::Error as _;
+use serde::{Deserialize, Deserializer, Serialize};
 
 use aonw_content::{ResourceType, TerrainType};
 use aonw_domain::HexCoord;
@@ -181,6 +182,7 @@ enum WorkbenchRequestBody {
     ReconfigureTerrainHeight {
         map_document: String,
         terrain_authoring_document: String,
+        #[serde(deserialize_with = "deserialize_f64")]
         max_terrain_height_meters: f64,
     },
     InspectMapTile {
@@ -209,6 +211,14 @@ enum WorkbenchRequestBody {
         row: i32,
         height: u8,
     },
+}
+
+fn deserialize_f64<'de, D: Deserializer<'de>>(deserializer: D) -> Result<f64, D::Error> {
+    let number = serde_json::Number::deserialize(deserializer)?;
+    number
+        .as_f64()
+        .filter(|value| value.is_finite())
+        .ok_or_else(|| D::Error::custom("number must be representable as a finite f64"))
 }
 
 #[derive(Serialize)]

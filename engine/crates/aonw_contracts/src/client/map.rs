@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize};
+use serde::de::Error as _;
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{CoordinateDto, MapObjectiveTypeDto};
 
@@ -17,11 +18,20 @@ pub struct MapViewDto {
     /// Number of tile rows.
     pub rows: u16,
     /// Authored initial presentation zoom.
+    #[serde(deserialize_with = "deserialize_f64")]
     pub default_zoom: f64,
     /// Stable row-major presentation tiles.
     pub tiles: Vec<MapTileViewDto>,
     /// Stable identifier-ordered map objectives.
     pub objectives: Vec<MapObjectiveViewDto>,
+}
+
+fn deserialize_f64<'de, D: Deserializer<'de>>(deserializer: D) -> Result<f64, D::Error> {
+    let number = serde_json::Number::deserialize(deserializer)?;
+    number
+        .as_f64()
+        .filter(|value| value.is_finite())
+        .ok_or_else(|| D::Error::custom("number must be representable as a finite f64"))
 }
 
 /// Presentation-safe semantics of one logical map tile.
