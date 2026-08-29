@@ -5,22 +5,43 @@ const ClientResponseDecoder := preload(
 	"res://game/infrastructure/engine/client_response_decoder.gd"
 )
 const ClientProtocol := preload("res://game/application/session/client_protocol.gd")
+const BUILD_IDENTITY_PATH := "res://.godot/aonw_native_build_identity.txt"
 
 var _session: Object
 var _native_api_version := 0
+var _native_build_identity := ""
+var _expected_build_identity := ""
 var _response_decoder: RefCounted
 
-func _init() -> void:
-	if ClassDB.class_exists("AonwLocalSession"):
+func _init(session: Object = null, expected_build_identity: String = "") -> void:
+	if session != null:
+		_session = session
+	elif ClassDB.class_exists("AonwLocalSession"):
 		_session = ClassDB.instantiate("AonwLocalSession")
+	if _session != null:
 		_native_api_version = int(_session.client_api_version())
+		if _session.has_method("build_identity"):
+			_native_build_identity = str(_session.build_identity())
+	_expected_build_identity = (
+		expected_build_identity
+		if not expected_build_identity.is_empty()
+		else _load_expected_build_identity()
+	)
 	_response_decoder = ClientResponseDecoder.new(ClientProtocol.API_VERSION)
 
 func is_available() -> bool:
-	return _session != null and _native_api_version == ClientProtocol.API_VERSION
+	return (
+		_session != null
+		and _native_api_version == ClientProtocol.API_VERSION
+		and not _expected_build_identity.is_empty()
+		and _native_build_identity == _expected_build_identity
+	)
 
 func client_api_version() -> int:
 	return ClientProtocol.API_VERSION
+
+func build_identity() -> String:
+	return _native_build_identity
 
 func request(body: Dictionary) -> Dictionary:
 	var precondition := _request_precondition()
@@ -60,7 +81,21 @@ func _request_precondition() -> Dictionary:
 			"unsupported_client_api",
 			"The native engine uses an unsupported client API version",
 		)
+	if _expected_build_identity.is_empty():
+		return _failure(
+			"native_build_identity_missing",
+			"The native engine build manifest is missing",
+		)
+	if _native_build_identity != _expected_build_identity:
+		return _failure(
+			"unsupported_native_build",
+			"The native engine does not match the packaged build identity",
+		)
 	return {}
+
+func _load_expected_build_identity() -> String:
+	var file := FileAccess.open(BUILD_IDENTITY_PATH, FileAccess.READ)
+	return "" if file == null else file.get_as_text().strip_edges()
 
 func _request_document(body: Dictionary) -> String:
 	return JSON.stringify({

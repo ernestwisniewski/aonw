@@ -10,10 +10,9 @@ use super::{adapter_build_identity, dispatch_json};
 
 #[test]
 fn native_adapter_exposes_its_build_identity() {
-    assert_eq!(
-        adapter_build_identity(),
-        concat!("aonw_godot/", env!("CARGO_PKG_VERSION"))
-    );
+    let expected = option_env!("AONW_GODOT_BUILD_IDENTITY").unwrap_or("aonw_godot/development");
+    assert_eq!(adapter_build_identity(), expected);
+    assert!(!adapter_build_identity().trim().is_empty());
 }
 
 fn map_json(cols: u16, rows: u16, map_id: &str) -> String {

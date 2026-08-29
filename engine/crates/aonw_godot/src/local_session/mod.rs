@@ -11,7 +11,10 @@ use aonw_local_runtime::{ClientProtocol, LocalRuntime};
 use godot::classes::{IRefCounted, RefCounted};
 use godot::prelude::*;
 
-const BUILD_IDENTITY: &str = concat!("aonw_godot/", env!("CARGO_PKG_VERSION"));
+const BUILD_IDENTITY: &str = match option_env!("AONW_GODOT_BUILD_IDENTITY") {
+    Some(identity) => identity,
+    None => "aonw_godot/development",
+};
 const MAX_OUTSTANDING_JOBS: usize = 64;
 
 #[derive(GodotClass)]

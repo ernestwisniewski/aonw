@@ -108,11 +108,46 @@ class TrackingTransport:
 		request_types.append(str(body.get("type", "")))
 		return delegate.call("request", body)
 
+class BuildIdentitySessionDouble:
+	extends RefCounted
+
+	var identity: String
+	var requested := false
+
+	func _init(value: String) -> void:
+		identity = value
+
+	func client_api_version() -> int:
+		return 7
+
+	func build_identity() -> String:
+		return identity
+
+	func request_json(_document: String) -> String:
+		requested = true
+		return ""
+
 func run(failures: Array[String]) -> void:
 	_failures = failures
+	_test_native_build_identity_precondition()
 	_test_strict_document_boundary()
 	_test_native_engine_boundary()
 	_test_shared_client_contract()
+
+func _test_native_build_identity_precondition() -> void:
+	var matching_double := BuildIdentitySessionDouble.new("expected-build")
+	var matching := NativeLocalSession.new(matching_double, "expected-build")
+	_check(matching.is_available(), "Godot accepts the exact packaged native build identity")
+	var mismatched_double := BuildIdentitySessionDouble.new("foreign-build")
+	var mismatched := NativeLocalSession.new(mismatched_double, "expected-build")
+	var response: Dictionary = mismatched.request({"type": "capabilities"})
+	_check(
+		not mismatched.is_available()
+		and response.get("outcome", {}).get("error", {}).get("code", "")
+		== "unsupported_native_build"
+		and not mismatched_double.requested,
+		"Godot rejects a foreign native build before the first request",
+	)
 
 func run_editor_tools(failures: Array[String]) -> void:
 	_failures = failures

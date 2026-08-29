@@ -837,10 +837,10 @@ rust-flutter-test: root-dependencies successor-flutter-dependencies
 	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/infrastructure/native_large_map_smoke_test.dart
 
 rust-godot-build:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked -p aonw_godot --no-default-features
+	@RUST_CARGO="$(RUST_CARGO)" tool/build_godot_native.sh runtime debug
 
 rust-godot-editor-build:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked -p aonw_godot --no-default-features --features editor-tools
+	@RUST_CARGO="$(RUST_CARGO)" tool/build_godot_native.sh editor debug
 
 godot-terrain-compile:
 	@tool/compile_godot_terrain.sh
