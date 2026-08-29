@@ -1,8 +1,11 @@
 use aonw_contracts::client::ClientCommandRejectionCodeDto;
 use aonw_engine::CommandRejectionCode;
 
+/// Maps one authoritative rejection to its stable current client code.
 #[allow(clippy::too_many_lines)]
-pub(super) const fn rejection(value: CommandRejectionCode) -> ClientCommandRejectionCodeDto {
+pub const fn encode_command_rejection(
+    value: CommandRejectionCode,
+) -> ClientCommandRejectionCodeDto {
     match value {
         CommandRejectionCode::StaleRevision => ClientCommandRejectionCodeDto::StaleRevision,
         CommandRejectionCode::MatchFinished => ClientCommandRejectionCodeDto::MatchFinished,

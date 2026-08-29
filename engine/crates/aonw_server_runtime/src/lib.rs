@@ -16,15 +16,54 @@ use aonw_projection::{
     diff_view, unchanged_view,
 };
 
+/// Immutable map and rules compiled once and shared across server commands.
+///
+/// This value contains no match state. A Serverpod host may safely cache it by
+/// map/ruleset identity and clone the handle for concurrent transactions.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PreparedServerWorld {
+    compiled: Arc<CompiledMovementMap>,
+}
+
+impl PreparedServerWorld {
+    /// Validates immutable content and prepares all reusable movement data.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when immutable content identity cannot be computed.
+    pub fn try_new(
+        map: MapDefinition,
+        ruleset: RulesetDefinition,
+    ) -> Result<Self, CompiledMovementMapError> {
+        CompiledMovementMap::compile_owned(map, ruleset).map(|compiled| Self {
+            compiled: Arc::new(compiled),
+        })
+    }
+
+    /// Returns the exact immutable map identity.
+    #[must_use]
+    pub fn map_hash(&self) -> aonw_content::ContentHash {
+        self.compiled.map_hash()
+    }
+
+    /// Returns the exact immutable ruleset identity.
+    #[must_use]
+    pub fn ruleset_hash(&self) -> aonw_content::ContentHash {
+        self.compiled.ruleset_hash()
+    }
+
+    fn compiled(&self) -> &CompiledMovementMap {
+        &self.compiled
+    }
+}
+
 /// Complete trusted input for one authenticated simultaneous-turn submission.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SubmitTurnRequest {
     /// Canonical state locked by the server transaction.
     pub state: GameState,
-    /// Immutable map selected by the match.
-    pub map: MapDefinition,
-    /// Immutable rules selected by the match.
-    pub ruleset: RulesetDefinition,
+    /// Immutable map and rules prepared outside the match transaction.
+    pub world: PreparedServerWorld,
     /// Player identity derived from the authenticated server session.
     pub authenticated_actor: PlayerId,
     /// Revision supplied by the remote command.
@@ -135,50 +174,45 @@ pub fn apply_submit_turn(
     request: SubmitTurnRequest,
 ) -> Result<ServerCommandOutcome, ServerHostError> {
     validate_request(&request)?;
-    let command = PlayerCommand::SubmitTurn(TurnCommand::new(
-        request.expected_revision,
-        &request.authenticated_actor,
-    ));
-    let budget = command.event_budget(&request.state);
-    request
-        .initial_event_offset
+    let SubmitTurnRequest {
+        state,
+        world,
+        authenticated_actor,
+        expected_revision,
+        initial_event_offset,
+    } = request;
+    let command =
+        PlayerCommand::SubmitTurn(TurnCommand::new(expected_revision, &authenticated_actor));
+    let budget = command.event_budget(&state);
+    initial_event_offset
         .checked_add(budget.maximum())
         .ok_or(ServerHostError::EventOffsetOverflow)?;
 
-    let compiled = CompiledMovementMap::compile_owned(request.map, request.ruleset)
-        .map_err(ServerHostError::CompiledMovementMap)?;
-    let visibility = MovementVisibility::for_player(
-        &request.state,
-        compiled.map(),
-        &request.authenticated_actor,
-    );
-    let before_digest = GameEngine::state_digest(&request.state);
-    let before_revision = request.state.revision().get();
-    let before_views = request
-        .state
+    let compiled = world.compiled();
+    let visibility = MovementVisibility::for_player(&state, compiled.map(), &authenticated_actor);
+    let before_digest = GameEngine::state_digest(&state);
+    let before_revision = state.revision().get();
+    let before_views = state
         .match_lifecycle()
         .identity()
         .participants()
         .iter()
         .map(|participant| {
             let recipient = Arc::new(participant.id().clone());
-            let view = ProjectedView::for_recipient(&request.state, recipient);
+            let view = ProjectedView::for_recipient(&state, recipient);
             (participant.id().clone(), view)
         })
         .collect::<Vec<_>>();
 
-    let context = EngineContext::canonical(
-        &request.authenticated_actor,
-        compiled.map(),
-        compiled.ruleset(),
-    )
-    .with_compiled_movement_map(&compiled)
-    .with_movement_visibility(&visibility);
-    let parts = GameEngine::apply_player_owned(request.state, context, command)
+    let context =
+        EngineContext::canonical(&authenticated_actor, compiled.map(), compiled.ruleset())
+            .with_compiled_movement_map(&compiled)
+            .with_movement_visibility(&visibility);
+    let parts = GameEngine::apply_player_owned(state, context, command)
         .map_err(ServerHostError::Engine)?
         .into_parts();
     let final_event_offset =
-        checked_final_event_offset(request.initial_event_offset, budget, parts.events.len())?;
+        checked_final_event_offset(initial_event_offset, budget, parts.events.len())?;
     let rejection = parts.rejection.map(aonw_engine::DomainRejection::code);
     let accepted = rejection.is_none();
     let state_digest = parts.digest.unwrap_or(before_digest);
@@ -211,7 +245,7 @@ pub fn apply_submit_turn(
         events: parts.events,
         evidence: parts.evidence,
         stamp,
-        initial_event_offset: request.initial_event_offset,
+        initial_event_offset,
         final_event_offset,
         recipients,
     })
@@ -227,10 +261,10 @@ fn validate_request(request: &SubmitTurnRequest) -> Result<(), ServerHostError> 
             request.authenticated_actor.clone(),
         ));
     }
-    if request.state.bounds() != request.map.bounds() {
+    if request.state.bounds() != request.world.compiled().bounds() {
         return Err(ServerHostError::MapBoundsMismatch);
     }
-    if request.state.occupancy_policy() != request.ruleset.occupancy_policy() {
+    if request.state.occupancy_policy() != request.world.compiled().ruleset().occupancy_policy() {
         return Err(ServerHostError::OccupancyPolicyMismatch);
     }
     Ok(())

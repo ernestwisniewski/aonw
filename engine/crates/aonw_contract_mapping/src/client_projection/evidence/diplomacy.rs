@@ -1,4 +1,4 @@
-use aonw_contract_mapping::encode_proposal_kind;
+use crate::encode_proposal_kind;
 use aonw_contracts::client::ClientEventDto;
 use aonw_engine::{DiplomaticPromiseBrokenEvent, DiplomaticProposalExpiredEvent};
 

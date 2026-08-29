@@ -1,4 +1,4 @@
-use aonw_contract_mapping::{
+use crate::{
     encode_message_category, encode_message_response, encode_message_topic, encode_proposal_kind,
     encode_relation_reason, encode_relation_status, encode_resource,
 };
@@ -7,7 +7,7 @@ use aonw_contracts::client::{
     PlayerDiplomaticRelationViewDto, PlayerResourceTradeAgreementViewDto,
 };
 
-use crate::{
+use aonw_projection::{
     PlayerDiplomacyView, PlayerDiplomaticMessageView, PlayerDiplomaticProposalView,
     PlayerDiplomaticRelationView, PlayerResourceTradeAgreementView,
 };

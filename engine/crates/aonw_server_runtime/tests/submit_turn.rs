@@ -9,13 +9,15 @@ use aonw_domain::{
     StateRevision, TurnLifecycle, Unit, UnitId, UnitKind,
 };
 use aonw_engine::{CommandRejectionCode, DomainEvent, GameEngine};
-use aonw_server_runtime::{ServerHostError, SubmitTurnRequest, apply_submit_turn};
+use aonw_server_runtime::{
+    PreparedServerWorld, ServerHostError, SubmitTurnRequest, apply_submit_turn,
+};
 
 #[test]
 fn final_submit_returns_exact_offsets_and_every_recipient_projection() {
     let fixture = fixture([player("player-1")]);
-    let expected_map_hash = fixture.map.content_hash().expect("map hash");
-    let expected_ruleset_hash = fixture.ruleset.content_hash().expect("ruleset hash");
+    let expected_map_hash = fixture.world.map_hash();
+    let expected_ruleset_hash = fixture.world.ruleset_hash();
     let outcome = apply_submit_turn(fixture.request("player-2", 7, 40)).expect("submit turn");
 
     assert_eq!(outcome.rejection, None);
@@ -107,10 +109,11 @@ fn authenticated_actor_and_event_capacity_fail_before_transition() {
 
 #[test]
 fn immutable_content_mismatch_fails_closed() {
-    let mut world = fixture([]);
-    world.map = map(1);
+    let world = fixture([]);
+    let mismatched = PreparedServerWorld::try_new(map(1), RulesetDefinition::standard().clone())
+        .expect("mismatched world");
     assert_eq!(
-        apply_submit_turn(world.request("player-1", 7, 0)),
+        apply_submit_turn(world.request_with_world("player-1", 7, 0, mismatched)),
         Err(ServerHostError::MapBoundsMismatch)
     );
 
@@ -135,8 +138,7 @@ fn immutable_content_mismatch_fails_closed() {
 
 struct Fixture {
     state: GameState,
-    map: MapDefinition,
-    ruleset: RulesetDefinition,
+    world: PreparedServerWorld,
 }
 
 impl Fixture {
@@ -148,8 +150,23 @@ impl Fixture {
     ) -> SubmitTurnRequest {
         SubmitTurnRequest {
             state: self.state.clone(),
-            map: self.map.clone(),
-            ruleset: self.ruleset.clone(),
+            world: self.world.clone(),
+            authenticated_actor: player(actor),
+            expected_revision,
+            initial_event_offset,
+        }
+    }
+
+    fn request_with_world(
+        &self,
+        actor: &str,
+        expected_revision: u64,
+        initial_event_offset: u64,
+        world: PreparedServerWorld,
+    ) -> SubmitTurnRequest {
+        SubmitTurnRequest {
+            state: self.state.clone(),
+            world,
             authenticated_actor: player(actor),
             expected_revision,
             initial_event_offset,
@@ -215,11 +232,8 @@ fn fixture(submitted: impl IntoIterator<Item = PlayerId>) -> Fixture {
     .with_fog_of_war(fog)
     .try_build()
     .expect("state");
-    Fixture {
-        state,
-        map,
-        ruleset,
-    }
+    let world = PreparedServerWorld::try_new(map, ruleset).expect("prepared world");
+    Fixture { state, world }
 }
 
 fn participant(id: PlayerId, name: &str) -> Participant {

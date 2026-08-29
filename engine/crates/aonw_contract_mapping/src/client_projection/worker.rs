@@ -1,4 +1,4 @@
-use aonw_contract_mapping::encode_improvement;
+use crate::encode_improvement;
 use aonw_contracts::client::{
     WorkerAutomationActionDto, WorkerAutomationMetricsDto, WorkerAutomationOptionDto,
 };
@@ -6,7 +6,9 @@ use aonw_engine::{WorkerAutomationAction, WorkerAutomationOption};
 
 use super::coordinate;
 
-pub(super) fn automation_option(value: WorkerAutomationOption) -> WorkerAutomationOptionDto {
+/// Maps a worker automation option to its strict current client DTO.
+#[must_use]
+pub fn encode_worker_automation_option(value: WorkerAutomationOption) -> WorkerAutomationOptionDto {
     let metrics = value.metrics();
     WorkerAutomationOptionDto {
         target: coordinate(value.target()),

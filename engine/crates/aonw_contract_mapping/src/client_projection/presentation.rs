@@ -1,12 +1,14 @@
-use aonw_contract_mapping::encode_improvement;
+use crate::encode_improvement;
 use aonw_contracts::client::{PendingActionViewDto, PlayerTurnLifecycleViewDto};
 use aonw_domain::PlayerTurnState;
 
-use crate::{PendingActionView, PlayerTurnLifecycleView};
+use aonw_projection::{PendingActionView, PlayerTurnLifecycleView};
 
 use super::coordinate;
 
-pub(super) fn pending_action(value: &PendingActionView) -> PendingActionViewDto {
+/// Maps a recipient-safe pending action to the strict current client DTO.
+#[must_use]
+pub fn encode_pending_action(value: &PendingActionView) -> PendingActionViewDto {
     match value {
         PendingActionView::ResearchSelection => PendingActionViewDto::ResearchSelection,
         PendingActionView::CityWorkedHexSelection { city_id } => {
@@ -57,7 +59,9 @@ pub(super) fn pending_action(value: &PendingActionView) -> PendingActionViewDto 
     }
 }
 
-pub(super) fn turn_lifecycle(value: PlayerTurnLifecycleView) -> PlayerTurnLifecycleViewDto {
+/// Maps recipient-safe turn lifecycle state to the strict current client DTO.
+#[must_use]
+pub fn encode_turn_lifecycle(value: PlayerTurnLifecycleView) -> PlayerTurnLifecycleViewDto {
     PlayerTurnLifecycleViewDto {
         own_state: value.own_state().map(|state| match state {
             PlayerTurnState::Active => aonw_contracts::PlayerTurnStateDto::Active,

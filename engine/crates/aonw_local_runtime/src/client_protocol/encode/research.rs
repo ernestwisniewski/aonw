@@ -1,7 +1,7 @@
 use aonw_content::TechnologyUnlock;
 use aonw_contract_mapping::{
-    encode_city_building, encode_city_wonder, encode_improvement, encode_resource,
-    encode_technology, encode_unit_kind,
+    encode_city_building, encode_city_wonder, encode_client_stamp, encode_improvement,
+    encode_resource, encode_technology, encode_unit_kind,
 };
 use aonw_contracts::client::{
     ClientQueryResultDto, ResearchOptionDto, ScienceYieldBreakdownDto, ScienceYieldSourceDto,
@@ -11,14 +11,12 @@ use aonw_engine::{ResearchOptions, ScienceYieldSourceKind, TechnologyAvailabilit
 
 use crate::SessionStamp;
 
-use super::stamp;
-
 pub(super) fn research_options(
     value_stamp: SessionStamp,
     value: &ResearchOptions,
 ) -> ClientQueryResultDto {
     ClientQueryResultDto::ResearchOptions {
-        stamp: stamp(value_stamp),
+        stamp: encode_client_stamp(value_stamp),
         player_id: value.player_id().as_str().to_owned(),
         active_technology_id: value.active_technology().map(encode_technology),
         science_overflow: value.science_overflow(),

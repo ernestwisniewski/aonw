@@ -1,6 +1,7 @@
 use aonw_contract_mapping::{
     encode_city_building, encode_city_project, encode_city_specialization, encode_city_wonder,
-    encode_improvement, encode_resource, encode_troop, encode_unit_kind,
+    encode_client_stamp, encode_combat_preview, encode_command_rejection, encode_improvement,
+    encode_resource, encode_troop, encode_unit_kind, encode_worker_automation_option,
 };
 use aonw_contracts::client::{
     AutoExploreOptionDto, CityExpansionCandidateDto, CitySpecializationOptionDto,
@@ -19,11 +20,8 @@ use aonw_engine::{
 
 use crate::{RuntimeQueryResult, SessionStamp};
 
-use super::evidence::combat_preview;
 use super::map_view::coordinate;
 use super::research::research_options;
-use super::worker::automation_option;
-use super::{rejection, stamp};
 
 pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
     match value {
@@ -59,11 +57,11 @@ pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
             stamp: value_stamp,
             preview,
         } => ClientQueryResultDto::CombatPreview {
-            stamp: stamp(*value_stamp),
-            preview: combat_preview(preview),
+            stamp: encode_client_stamp(*value_stamp),
+            preview: encode_combat_preview(preview),
         },
         RuntimeQueryResult::Reachable(value) => ClientQueryResultDto::Reachable {
-            stamp: stamp(value.stamp),
+            stamp: encode_client_stamp(value.stamp),
             unit_id: value.unit_id.as_str().to_owned(),
             available_movement_units: value.available_movement.get(),
             tiles: value
@@ -77,7 +75,7 @@ pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
                 .collect(),
         },
         RuntimeQueryResult::RoutePlan(value) => ClientQueryResultDto::RoutePlan {
-            stamp: stamp(value.stamp),
+            stamp: encode_client_stamp(value.stamp),
             unit_id: value.unit_id.as_str().to_owned(),
             target: coordinate(value.target),
             destination: coordinate(value.destination),
@@ -104,7 +102,7 @@ pub(crate) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
 
 fn logistics_options(value: &crate::UnitLogisticsOptionsResult) -> ClientQueryResultDto {
     ClientQueryResultDto::UnitLogisticsOptions {
-        stamp: stamp(value.stamp),
+        stamp: encode_client_stamp(value.stamp),
         unit_id: value.unit_id.as_str().to_owned(),
         auto_explore: value.auto_explore.map(|option| AutoExploreOptionDto {
             target: coordinate(option.target),
@@ -137,7 +135,7 @@ fn production_options(
     value: &ProductionOptions,
 ) -> ClientQueryResultDto {
     ClientQueryResultDto::ProductionOptions {
-        stamp: stamp(value_stamp),
+        stamp: encode_client_stamp(value_stamp),
         city_id: value.city_id().as_str().to_owned(),
         current_target: value.current_target().map(production_target),
         invested_production: value.invested_production(),
@@ -178,7 +176,7 @@ fn production_options(
             .map(|value| CitySpecializationOptionDto {
                 specialization: encode_city_specialization(value.specialization()),
                 required_building: encode_city_building(value.required_building()),
-                rejection: value.rejection().map(rejection),
+                rejection: value.rejection().map(encode_command_rejection),
             })
             .collect(),
     }
@@ -188,7 +186,7 @@ fn production_option(value: ProductionOption) -> ProductionOptionDto {
     ProductionOptionDto {
         target: production_target(value.target()),
         cost: value.cost(),
-        rejection: value.rejection().map(rejection),
+        rejection: value.rejection().map(encode_command_rejection),
     }
 }
 
@@ -221,7 +219,7 @@ fn stockpile(value: &StrategicResourceStockpile) -> StrategicResourceStockpileDt
 
 fn city_yield(value_stamp: SessionStamp, value: &CityYieldBreakdown) -> ClientQueryResultDto {
     ClientQueryResultDto::CityYield {
-        stamp: stamp(value_stamp),
+        stamp: encode_client_stamp(value_stamp),
         city_id: value.city_id().as_str().to_owned(),
         contributions: value
             .contributions()
@@ -241,7 +239,7 @@ fn strategic_resource_projection(
     value: &StrategicResourceProjection,
 ) -> ClientQueryResultDto {
     ClientQueryResultDto::StrategicResourceProjection {
-        stamp: stamp(value_stamp),
+        stamp: encode_client_stamp(value_stamp),
         player_id: value.player_id().as_str().to_owned(),
         output: value
             .output()
@@ -291,7 +289,7 @@ fn worker_options(
     options: &aonw_engine::WorkerOptions,
 ) -> ClientQueryResultDto {
     ClientQueryResultDto::WorkerOptions {
-        stamp: stamp(value_stamp),
+        stamp: encode_client_stamp(value_stamp),
         unit_id: options.unit_id().as_str().to_owned(),
         coordinate: coordinate(options.coordinate()),
         improvements: options
@@ -304,7 +302,7 @@ fn worker_options(
             .collect(),
         can_assign: options.can_assign(),
         can_build_road: options.can_build_road(),
-        automation: options.automation().map(automation_option),
+        automation: options.automation().map(encode_worker_automation_option),
     }
 }
 
@@ -313,7 +311,7 @@ fn city_founding_options(
     options: &CityFoundingOptions,
 ) -> ClientQueryResultDto {
     ClientQueryResultDto::CityFoundingOptions {
-        stamp: stamp(value_stamp),
+        stamp: encode_client_stamp(value_stamp),
         founder_unit_id: options.founder_unit_id().as_str().to_owned(),
         center: coordinate(options.center()),
         selected_controlled_hexes: options
@@ -338,7 +336,7 @@ fn city_worked_hex_options(
     options: &CityWorkedHexOptions,
 ) -> ClientQueryResultDto {
     ClientQueryResultDto::CityWorkedHexOptions {
-        stamp: stamp(value_stamp),
+        stamp: encode_client_stamp(value_stamp),
         city_id: options.city_id().as_str().to_owned(),
         center: coordinate(options.center()),
         controlled_hexes: options
@@ -374,7 +372,7 @@ fn city_expansion_options(
     options: &CityExpansionOptions,
 ) -> ClientQueryResultDto {
     ClientQueryResultDto::CityExpansionOptions {
-        stamp: stamp(value_stamp),
+        stamp: encode_client_stamp(value_stamp),
         city_id: options.city_id().as_str().to_owned(),
         controlled_hexes: options
             .controlled_hexes()

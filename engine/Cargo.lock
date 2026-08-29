@@ -35,8 +35,12 @@ dependencies = [
 name = "aonw_contract_mapping"
 version = "0.1.0"
 dependencies = [
+ "aonw_content",
  "aonw_contracts",
  "aonw_domain",
+ "aonw_engine",
+ "aonw_projection",
+ "serde_json",
 ]
 
 [[package]]

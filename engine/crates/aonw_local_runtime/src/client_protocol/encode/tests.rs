@@ -2,6 +2,9 @@ use aonw_content::{
     GridLayout, MapDefinition, MapDocument, MapObjectiveType, ResourceType, RulesetDefinition,
     ScenarioDefinition, ScenarioUnitDefinition, TerrainType, TileDefinition,
 };
+use aonw_contract_mapping::{
+    encode_client_evidence, encode_command_rejection, encode_pending_action,
+};
 use aonw_contracts::client::{
     CLIENT_API_VERSION, ClientCommandDto, ClientOutcomeDto, ClientQueryDto, ClientRequestBodyDto,
     ClientRequestDto, ClientResponseBodyDto,
@@ -315,10 +318,10 @@ fn encoder_maps_every_closed_enum_and_logistics_evidence_variant() {
         let _ = objective_type(value);
     }
     for value in CommandRejectionCode::ALL {
-        let _ = rejection(value);
+        let _ = encode_command_rejection(value);
     }
     for value in pending_actions() {
-        let _ = pending_action(&value);
+        let _ = encode_pending_action(&value);
     }
 
     let unit_id = UnitId::new("unit-1").expect("unit id");
@@ -356,7 +359,7 @@ fn encoder_maps_every_closed_enum_and_logistics_evidence_variant() {
         },
     ];
     for execution in executions {
-        let _ = super::evidence::evidence(&ExecutionEvidence::Logistics(execution));
+        let _ = encode_client_evidence(&ExecutionEvidence::Logistics(execution));
     }
 }
 
@@ -365,10 +368,10 @@ fn encoder_maps_complete_combat_evidence_surface() {
     let mut execution = combat_execution(CombatTarget::Unit(
         UnitId::new("defender").expect("unit id"),
     ));
-    let _ = super::evidence::evidence(&ExecutionEvidence::Combat(execution.clone()));
+    let _ = encode_client_evidence(&ExecutionEvidence::Combat(execution.clone()));
 
     execution.preview.target = CombatTarget::City(CityId::new("defended-city").expect("city id"));
-    let _ = super::evidence::evidence(&ExecutionEvidence::Combat(execution));
+    let _ = encode_client_evidence(&ExecutionEvidence::Combat(execution));
 }
 
 #[test]

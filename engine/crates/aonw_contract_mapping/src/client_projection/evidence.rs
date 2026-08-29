@@ -3,7 +3,7 @@ mod economy;
 mod movement;
 mod objective;
 
-use aonw_contract_mapping::{
+use crate::{
     encode_city_building, encode_city_wonder, encode_message_category, encode_message_response,
     encode_message_topic, encode_proposal_kind, encode_relation_reason, encode_relation_status,
     encode_score_reason, encode_technology, encode_troop, encode_unit_kind,
@@ -25,10 +25,12 @@ use aonw_engine::{
 use aonw_projection::RecipientDisclosure;
 
 use super::coordinate;
-use super::worker::automation_option;
+use super::worker::encode_worker_automation_option;
 
 #[allow(clippy::too_many_lines)]
-pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
+/// Maps a canonical domain event to its strict current client DTO.
+#[must_use]
+pub fn encode_client_event(value: &DomainEvent) -> ClientEventDto {
     match value {
         DomainEvent::ArtifactExcavationStarted(value) => {
             ClientEventDto::ArtifactExcavationStarted {
@@ -89,7 +91,7 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
         DomainEvent::DominationThresholdReached(value) => objective::domination(value),
         DomainEvent::MatchEnded(value) => ClientEventDto::MatchEnded {
             turn: value.turn(),
-            outcome: aonw_contract_mapping::encode_game_outcome(value.outcome()),
+            outcome: crate::encode_game_outcome(value.outcome()),
         },
         DomainEvent::UnitAttacked(value) => combat_event(value, |attacker_unit_id, target, _| {
             ClientEventDto::UnitAttacked {
@@ -255,7 +257,7 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
             completion: match value.completion() {
                 aonw_engine::WorkerJobCompletion::FieldImprovement(improvement) => {
                     WorkerJobCompletionDto::FieldImprovement {
-                        improvement: aonw_contract_mapping::encode_improvement(improvement),
+                        improvement: crate::encode_improvement(improvement),
                     }
                 }
                 aonw_engine::WorkerJobCompletion::Road => WorkerJobCompletionDto::Road,
@@ -264,13 +266,16 @@ pub(super) fn event(value: &DomainEvent) -> ClientEventDto {
     }
 }
 
-#[cfg(test)]
-pub(super) fn evidence(value: &ExecutionEvidence) -> ClientEvidenceDto {
+/// Maps complete command execution evidence to its strict current client DTO.
+#[must_use]
+pub fn encode_client_evidence(value: &ExecutionEvidence) -> ClientEvidenceDto {
     encode_evidence(value, |_| true, |_| true, |_| true)
         .expect("unfiltered evidence is always visible")
 }
 
-pub(super) fn recipient_evidence(
+/// Maps command evidence only when the recipient disclosure permits it.
+#[must_use]
+pub fn encode_recipient_evidence(
     value: &ExecutionEvidence,
     disclosure: &RecipientDisclosure,
 ) -> Option<ClientEvidenceDto> {
@@ -348,7 +353,7 @@ fn encode_evidence(
         ExecutionEvidence::WorkerAutomation(value) => {
             allows_unit(value.unit_id()).then(|| ClientEvidenceDto::WorkerAutomation {
                 unit_id: value.unit_id().as_str().to_owned(),
-                option: automation_option(value.option()),
+                option: encode_worker_automation_option(value.option()),
                 movement: value.movement().map(movement_execution),
             })
         }
@@ -366,7 +371,9 @@ fn combat_event(
     )
 }
 
-pub(super) fn combat_preview(value: &CombatPreview) -> CombatPreviewDto {
+/// Maps a canonical combat preview to its strict current client DTO.
+#[must_use]
+pub fn encode_combat_preview(value: &CombatPreview) -> CombatPreviewDto {
     CombatPreviewDto {
         attacker_unit_id: value.attacker_unit_id.as_str().to_owned(),
         target: combat_target(&value.target),
@@ -388,7 +395,7 @@ fn combat_execution(value: &CombatExecution) -> CombatExecutionDto {
             .iter()
             .map(|roll| CombatRollDto { value: roll.value })
             .collect(),
-        preview: combat_preview(&value.preview),
+        preview: encode_combat_preview(&value.preview),
         outcome: CombatOutcomeDto {
             attacker_hit_points: value.outcome.attacker_hit_points,
             defender_hit_points: value.outcome.defender_hit_points,

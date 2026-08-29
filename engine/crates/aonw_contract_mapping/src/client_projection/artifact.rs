@@ -2,7 +2,7 @@ use aonw_contracts::WorldArtifactTypeDto;
 use aonw_contracts::client::{PlayerArtifactLocationViewDto, PlayerArtifactViewDto};
 use aonw_domain::WorldArtifactType;
 
-use crate::{PlayerArtifactLocationView, PlayerArtifactView};
+use aonw_projection::{PlayerArtifactLocationView, PlayerArtifactView};
 
 use super::coordinate;
 

@@ -1,13 +1,15 @@
 use aonw_contracts::client::{ClientSessionStampDto, PlayerViewSnapshotDto};
 
-use crate::{PlayerViewSnapshot, SessionStamp};
+use aonw_projection::{PlayerViewSnapshot, SessionStamp};
 
 use super::{
-    artifact, city, diplomacy, field_improvement, founding_draft, pending_action, road,
-    turn_lifecycle, unit,
+    artifact, city, diplomacy, encode_pending_action, encode_turn_lifecycle, field_improvement,
+    founding_draft, road, unit,
 };
 
-pub(in crate::client_protocol) fn stamp(value: SessionStamp) -> ClientSessionStampDto {
+/// Maps a recipient-safe session identity stamp to its strict current DTO.
+#[must_use]
+pub fn encode_client_stamp(value: SessionStamp) -> ClientSessionStampDto {
     ClientSessionStampDto {
         revision: value.revision.get(),
         state_digest: value.state_digest.to_string(),
@@ -16,13 +18,15 @@ pub(in crate::client_protocol) fn stamp(value: SessionStamp) -> ClientSessionSta
     }
 }
 
-pub(in crate::client_protocol) fn snapshot(value: &PlayerViewSnapshot) -> PlayerViewSnapshotDto {
+/// Maps a complete recipient-safe player projection to its strict current DTO.
+#[must_use]
+pub fn encode_player_view_snapshot(value: &PlayerViewSnapshot) -> PlayerViewSnapshotDto {
     PlayerViewSnapshotDto {
-        stamp: stamp(*value.stamp()),
+        stamp: encode_client_stamp(*value.stamp()),
         turn: value.turn(),
-        outcome: aonw_contract_mapping::encode_game_outcome(value.outcome()),
-        turn_lifecycle: turn_lifecycle(*value.turn_lifecycle()),
-        pending_action: value.pending_action().map(pending_action),
+        outcome: crate::encode_game_outcome(value.outcome()),
+        turn_lifecycle: encode_turn_lifecycle(*value.turn_lifecycle()),
+        pending_action: value.pending_action().map(encode_pending_action),
         city_founding_draft: value.city_founding_draft().map(founding_draft),
         diplomacy: diplomacy(value.diplomacy()),
         units: value.units().iter().map(unit).collect(),

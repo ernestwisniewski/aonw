@@ -6,7 +6,16 @@
 
 #![forbid(unsafe_code)]
 
+mod client_projection;
+mod client_rejection;
 mod game_state_mapping;
+
+pub use client_projection::{
+    encode_client_event, encode_client_evidence, encode_client_stamp, encode_combat_preview,
+    encode_pending_action, encode_player_view_patch, encode_player_view_snapshot,
+    encode_recipient_evidence, encode_turn_lifecycle, encode_worker_automation_option,
+};
+pub use client_rejection::encode_command_rejection;
 
 pub use game_state_mapping::{
     GameStateMappingError, canonicalize_game_state, decode_city_building, decode_city_project,
