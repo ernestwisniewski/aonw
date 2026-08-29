@@ -1,8 +1,6 @@
-use core::fmt;
-
 use aonw_content::{GridLayout, MapDefinition};
 use aonw_domain::HexCoord;
-use serde::de::{Error as _, Visitor};
+use serde::de::Error as _;
 use serde::{Deserialize, Deserializer};
 
 use crate::model::ProfileComponents;
@@ -164,42 +162,30 @@ fn i32_value(path: &str, value: i64) -> Result<i32, TerrainAuthoringLoadError> {
 }
 
 fn deserialize_i64<'de, D: Deserializer<'de>>(deserializer: D) -> Result<i64, D::Error> {
-    deserializer.deserialize_any(IntegerVisitor)
+    const MAX_EXACT_INTEGER: f64 = 9_007_199_254_740_991.0;
+    let number = serde_json::Number::deserialize(deserializer)?;
+    if let Some(value) = number.as_i64() {
+        return Ok(value);
+    }
+    if let Some(value) = number.as_u64() {
+        return i64::try_from(value).map_err(D::Error::custom);
+    }
+    let value = number
+        .as_f64()
+        .ok_or_else(|| D::Error::custom("number must be representable as f64"))?;
+    if !value.is_finite() || value.fract() != 0.0 || value.abs() > MAX_EXACT_INTEGER {
+        return Err(D::Error::custom(
+            "number must be a finite, exactly represented integer",
+        ));
+    }
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "the finite integral value is bounded to the exact f64 integer range"
+    )]
+    Ok(value as i64)
 }
 
 fn deserialize_u64<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u64, D::Error> {
     let value = deserialize_i64(deserializer)?;
     u64::try_from(value).map_err(D::Error::custom)
-}
-
-struct IntegerVisitor;
-
-impl Visitor<'_> for IntegerVisitor {
-    type Value = i64;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str("an integer-valued JSON number")
-    }
-
-    fn visit_i64<E: serde::de::Error>(self, value: i64) -> Result<Self::Value, E> {
-        Ok(value)
-    }
-
-    fn visit_u64<E: serde::de::Error>(self, value: u64) -> Result<Self::Value, E> {
-        i64::try_from(value).map_err(E::custom)
-    }
-
-    fn visit_f64<E: serde::de::Error>(self, value: f64) -> Result<Self::Value, E> {
-        const MAX_EXACT_INTEGER: f64 = 9_007_199_254_740_991.0;
-        if !value.is_finite() || value.fract() != 0.0 || value.abs() > MAX_EXACT_INTEGER {
-            return Err(E::custom(
-                "number must be a finite, exactly represented integer",
-            ));
-        }
-        #[expect(
-            clippy::cast_possible_truncation,
-            reason = "the finite integral value is bounded to the exact f64 integer range"
-        )]
-        Ok(value as i64)
-    }
 }

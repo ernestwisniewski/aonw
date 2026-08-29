@@ -15,6 +15,8 @@ GODOT_BIN ?= $(if $(wildcard $(GODOT_BOOTSTRAPPED_BIN)),$(GODOT_BOOTSTRAPPED_BIN
 GODOT_TEST_LOG ?= /tmp/aonw-godot-test.log
 GODOT_CHECK_ONLY_LOG ?= /tmp/aonw-godot-check-only.log
 GODOT_RUNTIME_LOG ?= /tmp/aonw-godot-runtime.log
+GODOT_RUNTIME_TEST_LOG ?= /tmp/aonw-godot-runtime-test.log
+GODOT_RUNTIME_CHECK_ONLY_LOG ?= /tmp/aonw-godot-runtime-check-only.log
 GODOT_EDITOR_LOG ?= /tmp/aonw-godot-editor.log
 GODOT_PROBE_LOG ?= /tmp/aonw-godot-map-render-probe.log
 GODOT_VISUAL_EVIDENCE_LOG ?= /tmp/aonw-godot-stage-1-visual-evidence.log
@@ -244,7 +246,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .PHONY: rust-integrated-turn-check rust-ai-ledger-check rust-ai-strength-check rust-ai-check rust-persistence-check
 .PHONY: rust-security-policy-test rust-security-policy-check rust-security-tool-versions rust-mutation-check rust-fuzz-smoke rust-miri-check rust-ffi-sanitizer-check rust-engine-security-check rust-release-metadata-policy-test rust-release-metadata-policy-check rust-release-metadata-tool-versions rust-release-metadata-check rust-engine-completion-check
-.PHONY: rust-godot-editor-build
+.PHONY: rust-godot-editor-build godot-runtime-check
 
 help:
 	@echo "AONW deploy helpers"
@@ -853,7 +855,13 @@ godot-native-config: terrain3d-check
 	@mkdir -p "$(GODOT_PROJECT)/.godot"
 	@printf '%s\n' 'res://aonw_engine.gdextension' 'res://addons/terrain_3d/terrain.gdextension' > "$(GODOT_PROJECT)/.godot/extension_list.cfg"
 
-godot-check: godot-test
+godot-check: godot-runtime-check godot-test
+
+godot-runtime-check: godot-toolchain-check terrain3d-check rust-godot-build godot-native-config
+	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_RUNTIME_CHECK_ONLY_LOG)" --path "$(GODOT_PROJECT)" --check-only --script res://tests/test_runtime.gd
+	@tool/check_godot_log.sh "$(GODOT_RUNTIME_CHECK_ONLY_LOG)"
+	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_RUNTIME_TEST_LOG)" --path "$(GODOT_PROJECT)" --script res://tests/test_runtime.gd
+	@tool/check_godot_log.sh "$(GODOT_RUNTIME_TEST_LOG)" "runtime pipeline: OK"
 
 godot-editor-check: godot-toolchain-check terrain3d-check rust-godot-editor-build godot-terrain-compile godot-native-config
 	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_EDITOR_LOG)" --editor --path "$(GODOT_PROJECT)" --quit

@@ -11,10 +11,13 @@ const ClientReadModels := preload("res://game/application/session/client_read_mo
 const ClientReadModelDecoder := preload(
 	"res://game/application/session/client_read_model_decoder.gd"
 )
+const ClientCommandSchema := preload(
+	"res://game/application/session/client_command_schema.gd"
+)
 const LocalMatchSessionController := preload(
 	"res://game/application/session/local_match_session_controller.gd"
 )
-const RustLogicalMapWorkbench := preload(
+const MAP_WORKBENCH_SCRIPT := (
 	"res://editor/map_authoring/infrastructure/rust_logical_map_workbench.gd"
 )
 
@@ -47,7 +50,7 @@ class UnsupportedClientTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 7
+		return 6
 
 	func request(_body: Dictionary) -> Dictionary:
 		requested = true
@@ -110,10 +113,17 @@ func run(failures: Array[String]) -> void:
 	_test_strict_document_boundary()
 	_test_native_engine_boundary()
 	_test_shared_client_contract()
+
+func run_editor_tools(failures: Array[String]) -> void:
+	_failures = failures
 	_test_logical_map_workbench_boundary()
 
 func _test_logical_map_workbench_boundary() -> void:
-	var workbench := RustLogicalMapWorkbench.new()
+	var workbench_script := load(MAP_WORKBENCH_SCRIPT) as GDScript
+	_check(workbench_script != null, "Godot workbench native adapter script loads")
+	if workbench_script == null:
+		return
+	var workbench: RefCounted = workbench_script.new()
 	var spec := JSON.stringify({
 		"generatorId": "blank",
 		"generatorVersion": 1,
@@ -125,13 +135,14 @@ func _test_logical_map_workbench_boundary() -> void:
 		"maxTerrainHeightMeters": 240.0,
 		"seed": "42",
 	})
-	var first := workbench.generate_map(spec)
-	var second := workbench.generate_map(spec)
+	var first: Dictionary = workbench.call("generate_map", spec)
+	var second: Dictionary = workbench.call("generate_map", spec)
 	_check(first["ok"], "Godot workbench generates logical map documents through Rust")
 	if not first["ok"]:
 		return
 	_check(first["package"] == second.get("package"), "Godot workbench generation is deterministic")
-	var direct := workbench.generate_blank_map(
+	var direct: Dictionary = workbench.call(
+		"generate_blank_map",
 		"godot_generated",
 		5,
 		5,
@@ -144,7 +155,8 @@ func _test_logical_map_workbench_boundary() -> void:
 		direct["ok"] and direct["package"] == first["package"],
 		"Godot New Map fields are encoded as the same strict Rust generation spec",
 	)
-	var procedural := workbench.generate_new_map(
+	var procedural: Dictionary = workbench.call(
+		"generate_new_map",
 		&"continental",
 		"godot_continent",
 		40,
@@ -187,7 +199,8 @@ func _test_logical_map_workbench_boundary() -> void:
 		and decorations.get("placements", [null]).is_empty(),
 		"Rust owns canonical map, terrain profile and generated-decoration documents",
 	)
-	var update := workbench.reconfigure_terrain_height(
+	var update: Dictionary = workbench.call(
+		"reconfigure_terrain_height",
 		first["package"]["mapDocument"],
 		first["package"]["terrainAuthoringDocument"],
 		180.0,
@@ -202,7 +215,8 @@ func _test_logical_map_workbench_boundary() -> void:
 			and updated_profile.get("hexRadiusMeters") == 100.0,
 			"Rust rebuilds height envelopes and preserves the map spatial scale",
 		)
-	var tile := workbench.inspect_map_tile(
+	var tile: Dictionary = workbench.call(
+		"inspect_map_tile",
 		first["package"]["mapDocument"],
 		Vector2i(2, 3),
 	)
@@ -213,7 +227,8 @@ func _test_logical_map_workbench_boundary() -> void:
 		and tile["snapshot"]["resourceOptions"].size() == 29,
 		"Godot inspects logical tile state and palettes through Rust",
 	)
-	var terrain_edit := workbench.set_tile_terrain(
+	var terrain_edit: Dictionary = workbench.call(
+		"set_tile_terrain",
 		first["package"]["mapDocument"],
 		first["package"]["terrainAuthoringDocument"],
 		Vector2i(2, 3),
@@ -226,11 +241,13 @@ func _test_logical_map_workbench_boundary() -> void:
 		"Godot sends SetTileTerrain to the Rust workbench",
 	)
 	if terrain_edit["ok"]:
-		var resources_edit := workbench.set_tile_resources(
+		var resource_ids: Array[StringName] = [&"iron", &"wheat"]
+		var resources_edit: Dictionary = workbench.call(
+			"set_tile_resources",
 			terrain_edit["update"]["mapDocument"],
 			terrain_edit["update"]["terrainAuthoringDocument"],
 			Vector2i(2, 3),
-			[&"iron", &"wheat"],
+			resource_ids,
 		)
 		_check(
 			resources_edit["ok"]
@@ -239,7 +256,8 @@ func _test_logical_map_workbench_boundary() -> void:
 			"Godot sends SetTileResources to the Rust workbench",
 		)
 		if resources_edit["ok"]:
-			var height_edit := workbench.set_tile_height(
+			var height_edit: Dictionary = workbench.call(
+				"set_tile_height",
 				resources_edit["update"]["mapDocument"],
 				resources_edit["update"]["terrainAuthoringDocument"],
 				Vector2i(2, 3),
@@ -253,7 +271,7 @@ func _test_logical_map_workbench_boundary() -> void:
 	var invalid: Dictionary = JSON.parse_string(spec)
 	invalid["cols"] = 4
 	_check(
-		not workbench.generate_map(JSON.stringify(invalid))["ok"],
+		not workbench.call("generate_map", JSON.stringify(invalid))["ok"],
 		"Rust rejects an invalid authored map specification",
 	)
 
@@ -570,8 +588,7 @@ func _test_shared_client_contract() -> void:
 	if rejection_codes_file != null:
 		var rejection_codes: Dictionary = JSON.parse_string(rejection_codes_file.get_as_text())
 		_check(
-			rejection_codes.get("codes")
-			== Array(ClientReadModelDecoder.COMMAND_REJECTION_CODES),
+			rejection_codes.get("codes") == Array(ClientCommandSchema.REJECTION_CODES),
 			"Godot command rejection codes match the shared contract fixture",
 		)
 

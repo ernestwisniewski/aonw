@@ -6,6 +6,9 @@ const NewMapCreationSuite := preload("res://tests/suites/new_map_creation_suite.
 const LogicalMapPaintingSuite := preload(
 	"res://tests/suites/logical_map_painting_suite.gd"
 )
+const MapWorkbenchNativeSuite := preload(
+	"res://tests/suites/map_workbench_native_suite.gd"
+)
 const Terrain3DSpikeSuite := preload("res://tests/suites/terrain3d_spike_suite.gd")
 const TerrainAuthoringSuite := preload("res://tests/suites/terrain_authoring_suite.gd")
 const SceneSerializationSafetySuite := preload(
@@ -22,6 +25,7 @@ func _run() -> void:
 		MapGeometrySuite.new(),
 		NewMapCreationSuite.new(),
 		LogicalMapPaintingSuite.new(),
+		MapWorkbenchNativeSuite.new(),
 		MapAuthoringSuite.new(),
 		Terrain3DSpikeSuite.new(),
 		SceneSerializationSafetySuite.new(),
