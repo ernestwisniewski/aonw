@@ -72,6 +72,7 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		and turn_status.text.begins_with("Turn 1 · active"),
 		"Godot opens the verified packaged map asynchronously at revision zero",
 	)
+	_test_transient_hover_reuses_render_resources(screen, interaction, session)
 
 	interaction.set("_selected", Vector2i(2, 1))
 	screen.call("_on_hex_selected", Vector2i(2, 1))
@@ -95,7 +96,8 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		route != null
 		and route.target == Vector2i(2, 2)
 		and confirm.visible
-		and route_layer.mesh != null,
+		and route_layer.visible
+		and route_layer.mesh.get_surface_count() == 1,
 		"Godot previews the Rust route and exposes explicit confirmation",
 	)
 	_check(
@@ -125,7 +127,7 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		"Godot applies the patch in place and updates its spatial unit index",
 	)
 	_check(
-		not confirm.visible and screen.get("_route") == null,
+		not confirm.visible and screen.get("_route") == null and not route_layer.visible,
 		"accepted movement clears the route confirmation workflow",
 	)
 	var resynchronized: bool = await screen.call("_resync_projection")
@@ -166,6 +168,30 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		"recipient invalidation clears owner-bound units, selection, routes, and turn state",
 	)
 	screen.free()
+
+func _test_transient_hover_reuses_render_resources(
+	screen: Node3D,
+	interaction: AonwMapInteractionController,
+	session: AonwLocalMatchWorkflow,
+) -> void:
+	var hover := screen.get_node("MapSurface/MapOverlay/Hover") as MeshInstance3D
+	var mesh := hover.mesh
+	var mesh_rid := mesh.get_rid()
+	var material := hover.material_override
+	var material_rid := material.get_rid()
+	for index in 1000:
+		interaction.call("_set_hovered", Vector2i(index % 2, (index + 1) % 2))
+	_check(
+		hover.mesh == mesh
+		and hover.mesh.get_rid() == mesh_rid
+		and hover.material_override == material
+		and hover.material_override.get_rid() == material_rid
+		and hover.visible
+		and interaction.hovered_hex() == Vector2i(1, 0)
+		and interaction.selected_hex() == AonwMapInteractionController.INVALID_HEX
+		and session.revision() == 0,
+		"1000 hover changes reuse Mesh, RID, and Material without mutating projection state",
+	)
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
