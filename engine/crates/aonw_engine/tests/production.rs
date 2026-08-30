@@ -1,4 +1,4 @@
-//! Greenfield production options and queue-command acceptance tests.
+//! Production options and queue-command acceptance tests.
 
 use std::collections::BTreeMap;
 

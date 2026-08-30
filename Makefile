@@ -812,7 +812,7 @@ rust-doc:
 	@cd "$(RUST_WORKSPACE)" && RUSTDOCFLAGS="-D warnings" $(RUST_CARGO) doc --locked --workspace --all-features --no-deps
 
 rust-release-compile-smoke:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked --release --all-features -p aonw_flutter -p aonw_godot
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked --release --all-features -p aonw_flutter -p aonw_godot -p aonw_server_native
 
 rust-benchmark:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_engine --bench movement

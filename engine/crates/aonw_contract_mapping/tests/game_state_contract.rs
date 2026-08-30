@@ -88,7 +88,7 @@ fn contract() -> GameStateDto {
             hit_points: Some(7),
             experience_points: 11,
             posture: UnitPostureDto::AutoWorking,
-            carried_artifact_id: Some("artifact-2".to_owned()),
+            carried_artifact_id: None,
         }],
         cities: vec![city()],
         artifacts: vec![
@@ -104,21 +104,14 @@ fn contract() -> GameStateDto {
             WorldArtifactDto {
                 id: "artifact-2".to_owned(),
                 artifact_type: WorldArtifactTypeDto::HeroSword,
-                location: WorldArtifactLocationDto::Carried {
-                    unit_id: "unit-1".to_owned(),
+                location: WorldArtifactLocationDto::Map {
+                    coordinate: CoordinateDto { col: 4, row: 2 },
                 },
             },
         ],
         field_improvements: field_improvements(),
         interaction: InteractionStateDto::default(),
-        fog_of_war: vec![PlayerFogDto {
-            player_id: "player-1".to_owned(),
-            discovered_hexes: vec![
-                CoordinateDto { col: 0, row: 0 },
-                CoordinateDto { col: 1, row: 1 },
-            ],
-            visible_hexes: vec![CoordinateDto { col: 1, row: 1 }],
-        }],
+        fog_of_war: fog_of_war(),
         diplomacy: diplomacy(),
         resource_trade_agreements: resource_trade_agreements(),
         domination_hold_turns_by_player_id: domination_holds(),
@@ -185,10 +178,10 @@ fn research() -> ResearchStateDto {
 }
 
 fn wonder_registry() -> WonderRegistryDto {
-    WonderRegistryDto(BTreeMap::from([(
-        WonderTypeDto::CentralBank,
-        "player-2".to_owned(),
-    )]))
+    WonderRegistryDto(BTreeMap::from([
+        (WonderTypeDto::CentralBank, "player-2".to_owned()),
+        (WonderTypeDto::GreatLibrary, "player-1".to_owned()),
+    ]))
 }
 
 fn intended_attacks() -> Vec<IntendedAttackDto> {
@@ -306,6 +299,24 @@ fn city() -> CityDto {
     }
 }
 
+fn fog_of_war() -> Vec<PlayerFogDto> {
+    vec![
+        PlayerFogDto {
+            player_id: "player-1".to_owned(),
+            discovered_hexes: vec![
+                CoordinateDto { col: 0, row: 0 },
+                CoordinateDto { col: 1, row: 1 },
+            ],
+            visible_hexes: vec![CoordinateDto { col: 1, row: 1 }],
+        },
+        PlayerFogDto {
+            player_id: "player-2".to_owned(),
+            discovered_hexes: vec![CoordinateDto { col: 4, row: 4 }],
+            visible_hexes: vec![CoordinateDto { col: 4, row: 4 }],
+        },
+    ]
+}
+
 fn economy() -> EconomyStateDto {
     EconomyStateDto {
         player_gold: BTreeMap::from([
@@ -414,14 +425,14 @@ fn turn_lifecycle() -> TurnLifecycleDto {
             ("player-1".to_owned(), PlayerTurnStateDto::Active),
             ("player-2".to_owned(), PlayerTurnStateDto::Finished),
         ]),
-        required_submission_player_ids: vec!["player-1".to_owned(), "player-2".to_owned()],
-        submitted_player_ids: vec!["player-2".to_owned()],
+        required_submission_player_ids: vec!["player-1".to_owned()],
+        submitted_player_ids: Vec::new(),
         timeout_streaks_by_player_id: BTreeMap::from([
             ("player-1".to_owned(), 0),
             ("player-2".to_owned(), 2),
         ]),
         afk_player_ids: vec!["player-2".to_owned()],
-        kicked_player_ids: vec!["player-1".to_owned()],
+        kicked_player_ids: vec!["player-2".to_owned()],
         turn_started_at: Some("2026-08-23T12:34:56.123456Z".to_owned()),
     }
 }

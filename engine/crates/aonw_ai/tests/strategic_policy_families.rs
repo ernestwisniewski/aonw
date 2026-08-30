@@ -88,8 +88,7 @@ fn policy_starts_visible_artifact_excavation() {
         WorldArtifactType::HeroSword,
         WorldArtifactLocation::Map(coordinate),
     );
-    let fog =
-        FogOfWar::try_new([PlayerFog::new(world.actor.clone(), [], [coordinate])]).expect("fog");
+    let fog = actor_fog(&world, [], [coordinate]);
     let state = world
         .state([unit], [])
         .with_artifacts([artifact])
@@ -219,8 +218,7 @@ fn policy_uses_engine_selected_scout_exploration() {
     let world = World::new("ai-policy-logistics", 5, 5);
     let origin = HexCoord::new(2, 2);
     let scout = unit("scout", &world.actor, UnitKind::Scout, origin);
-    let fog =
-        FogOfWar::try_new([PlayerFog::new(world.actor.clone(), [origin], [origin])]).expect("fog");
+    let fog = actor_fog(&world, [origin], [origin]);
     let state = world
         .state([scout], [])
         .with_fog_of_war(fog)
@@ -259,8 +257,7 @@ fn policy_falls_back_to_movement_when_logistics_has_no_action() {
         HexCoord::new(0, 0),
     );
     let visible = [HexCoord::new(0, 0), HexCoord::new(1, 0)];
-    let fog = FogOfWar::try_new([PlayerFog::new(scout_world.actor.clone(), visible, visible)])
-        .expect("fog");
+    let fog = actor_fog(&scout_world, visible, visible);
     let scout_state = scout_world
         .state([scout], [])
         .with_fog_of_war(fog)
@@ -294,6 +291,18 @@ fn assert_family_executes(world: World, state: GameState, family: PlannedCommand
     let verification =
         LocalRuntime::verify_replay_json(world.map, world.rules, &replay).expect("verify replay");
     assert_eq!(verification.entry_count, 1);
+}
+
+fn actor_fog(
+    world: &World,
+    discovered: impl IntoIterator<Item = HexCoord>,
+    visible: impl IntoIterator<Item = HexCoord>,
+) -> FogOfWar {
+    FogOfWar::try_new([
+        PlayerFog::new(world.actor.clone(), discovered, visible),
+        PlayerFog::new(world.foreign.clone(), [], []),
+    ])
+    .expect("fog")
 }
 
 struct World {

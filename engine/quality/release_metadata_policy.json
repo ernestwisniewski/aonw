@@ -1,5 +1,5 @@
 {
-  "reviewedDate": "2026-08-28",
+  "reviewedDate": "2026-08-30",
   "epochSource": "git-commit",
   "tools": {
     "cargoCyclonedx": {
@@ -61,6 +61,11 @@
       "package": "aonw_map_compiler_cli",
       "manifest": "engine/crates/aonw_map_compiler_cli/Cargo.toml",
       "outputStem": "aonw-map-compiler"
+    },
+    {
+      "package": "aonw_server_native",
+      "manifest": "engine/crates/aonw_server_native/Cargo.toml",
+      "outputStem": "aonw-server-native"
     }
   ]
 }

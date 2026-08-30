@@ -298,7 +298,7 @@ fn fixture() -> (
         &identity,
         BTreeMap::from([
             (actor.clone(), PlayerTurnState::Active),
-            (foreign.clone(), PlayerTurnState::Active),
+            (foreign.clone(), PlayerTurnState::Finished),
         ]),
         [actor.clone()],
         [],

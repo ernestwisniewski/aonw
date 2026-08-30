@@ -64,8 +64,9 @@ pub unsafe extern "C" fn aonw_server_native_prepare_world(
 ) -> *mut core::ffi::c_void {
     contain(|| {
         let input = unsafe { read_request(request, request_len) }?;
-        let request = PrepareServerWorldRequestDto::from_json(input).map_err(codec_error)?;
-        let world = prepare_server_world(request).map_err(boundary_error)?;
+        let request =
+            PrepareServerWorldRequestDto::from_json(input).map_err(|error| codec_error(&error))?;
+        let world = prepare_server_world(request).map_err(|error| boundary_error(&error))?;
         let response = success(ServerHostResponseBodyDto::WorldPrepared {
             map_hash: world.map_hash().to_string(),
             ruleset_hash: world.ruleset_hash().to_string(),
@@ -142,10 +143,12 @@ pub unsafe extern "C" fn aonw_server_native_submit_turn(
             ));
         }
         let input = unsafe { read_request(request, request_len) }?;
-        let request = SubmitTurnServerRequestDto::from_json(input).map_err(codec_error)?;
+        let request =
+            SubmitTurnServerRequestDto::from_json(input).map_err(|error| codec_error(&error))?;
         // SAFETY: The caller keeps the immutable world alive for this call.
         let world = unsafe { &*world.cast::<PreparedServerWorld>() }.clone();
-        let result = apply_submit_turn_dto(world, request).map_err(boundary_error)?;
+        let result =
+            apply_submit_turn_dto(world, request).map_err(|error| boundary_error(&error))?;
         let response = success(ServerHostResponseBodyDto::CommandApplied {
             result: Box::new(result),
         })?;
@@ -177,10 +180,12 @@ pub unsafe extern "C" fn aonw_server_native_project_state(
             ));
         }
         let input = unsafe { read_request(request, request_len) }?;
-        let request = ProjectServerStateRequestDto::from_json(input).map_err(codec_error)?;
+        let request =
+            ProjectServerStateRequestDto::from_json(input).map_err(|error| codec_error(&error))?;
         // SAFETY: The caller keeps the immutable world alive for this call.
-        let world = unsafe { &*world.cast::<PreparedServerWorld>() }.clone();
-        let result = project_server_state_dto(world, request).map_err(boundary_error)?;
+        let world = unsafe { &*world.cast::<PreparedServerWorld>() };
+        let result =
+            project_server_state_dto(world, request).map_err(|error| boundary_error(&error))?;
         let response = success(ServerHostResponseBodyDto::StateProjected {
             result: Box::new(result),
         })?;
@@ -212,10 +217,12 @@ pub unsafe extern "C" fn aonw_server_native_create_match(
             ));
         }
         let input = unsafe { read_request(request, request_len) }?;
-        let request = CreateServerMatchRequestDto::from_json(input).map_err(codec_error)?;
+        let request =
+            CreateServerMatchRequestDto::from_json(input).map_err(|error| codec_error(&error))?;
         // SAFETY: The caller keeps the immutable world alive for this call.
-        let world = unsafe { &*world.cast::<PreparedServerWorld>() }.clone();
-        let result = create_server_match_dto(world, request).map_err(boundary_error)?;
+        let world = unsafe { &*world.cast::<PreparedServerWorld>() };
+        let result =
+            create_server_match_dto(world, request).map_err(|error| boundary_error(&error))?;
         let response = success(ServerHostResponseBodyDto::MatchCreated {
             result: Box::new(result),
         })?;
@@ -282,11 +289,11 @@ fn contain(
     let native = match response {
         Ok(Ok(response)) => response,
         Ok(Err(error)) => NativeResponse {
-            bytes: serialize_failure(error),
+            bytes: serialize_failure(&error),
             world: None,
         },
         Err(_) => NativeResponse {
-            bytes: serialize_failure(failure(
+            bytes: serialize_failure(&failure(
                 ServerHostErrorCodeDto::NativePanic,
                 "native server host panicked; nothing may be persisted",
             )),
@@ -329,7 +336,7 @@ unsafe fn read_request<'a>(
     })
 }
 
-fn codec_error(error: ServerHostCodecError) -> ServerHostResponseDto {
+fn codec_error(error: &ServerHostCodecError) -> ServerHostResponseDto {
     let code = match error {
         ServerHostCodecError::TooLarge { .. } => ServerHostErrorCodeDto::PayloadTooLarge,
         ServerHostCodecError::Json(_) => ServerHostErrorCodeDto::InvalidRequest,
@@ -337,7 +344,7 @@ fn codec_error(error: ServerHostCodecError) -> ServerHostResponseDto {
     failure(code, error.to_string())
 }
 
-fn boundary_error(error: ServerBoundaryError) -> ServerHostResponseDto {
+fn boundary_error(error: &ServerBoundaryError) -> ServerHostResponseDto {
     failure(error.code(), error.to_string())
 }
 
@@ -364,7 +371,7 @@ fn failure(code: ServerHostErrorCodeDto, message: impl Into<String>) -> ServerHo
     }
 }
 
-fn serialize_failure(response: ServerHostResponseDto) -> Box<[u8]> {
+fn serialize_failure(response: &ServerHostResponseDto) -> Box<[u8]> {
     response
         .to_json()
         .unwrap_or_else(|_| {

@@ -1,4 +1,4 @@
-//! Greenfield D8 diplomacy proposal command evidence.
+//! Canonical diplomacy proposal command evidence.
 
 #[path = "diplomacy/messages.rs"]
 mod messages;

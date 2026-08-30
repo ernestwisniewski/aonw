@@ -160,7 +160,7 @@ fn fixture() -> (MapDefinition, RulesetDefinition, GameState, PlayerId) {
         &identity,
         BTreeMap::from([
             (actor.clone(), PlayerTurnState::Active),
-            (foreign.clone(), PlayerTurnState::Active),
+            (foreign.clone(), PlayerTurnState::Finished),
         ]),
         [actor.clone()],
         [],

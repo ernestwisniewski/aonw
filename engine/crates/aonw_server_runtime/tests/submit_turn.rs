@@ -244,7 +244,7 @@ fn rust_constructs_and_projects_multiplayer_matches() {
         fog_enabled: true,
     };
 
-    let result = create_server_match_dto(world, request).expect("created match");
+    let result = create_server_match_dto(&world, request).expect("created match");
 
     assert_eq!(
         result.state.match_identity.game_mode,
@@ -289,7 +289,7 @@ fn server_match_creation_rejects_non_multiplayer_identity() {
     };
 
     assert_eq!(
-        create_server_match_dto(world, request),
+        create_server_match_dto(&world, request),
         Err(ServerBoundaryError::UnsupportedGameMode)
     );
 }

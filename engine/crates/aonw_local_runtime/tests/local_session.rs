@@ -4,11 +4,9 @@ use aonw_content::{
     GridLayout, MapDefinition, RulesetDefinition, ScenarioDefinition, ScenarioUnitDefinition,
     TerrainType, TileDefinition,
 };
+use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{ReplayLogDto, SaveGameDto};
-use aonw_domain::{
-    GameState, HexCoord, HexGridBounds, PlayerId, StateRevision, UnitId, UnitKind,
-    UnitOccupancyPolicy,
-};
+use aonw_domain::{HexCoord, PlayerId, StateRevision, UnitId, UnitKind};
 use aonw_local_runtime::{
     LocalRuntime, MoveUnitRequest, OpenSession, OpenSessionError, PendingActionView,
     PersistenceError, ReachableRequest, ReplayVerification, RoutePlanRequest, RuntimeError,
@@ -167,14 +165,11 @@ fn unit_actions_update_canonical_state_and_are_replayable() {
 fn failed_reopen_preserves_session_and_close_is_idempotent() {
     let mut runtime = LocalRuntime::default();
     let original = runtime.open(request()).expect("open");
-    let invalid_state = GameState::try_new(
-        StateRevision::INITIAL,
-        0,
-        HexGridBounds::new(2, 2).expect("bounds"),
-        UnitOccupancyPolicy::FriendlyStacking,
-        [],
-    )
-    .expect("state");
+    let mut save =
+        SaveGameDto::from_json(&runtime.export_save_json().expect("save")).expect("save contract");
+    save.state.cols = 2;
+    save.state.rows = 2;
+    let invalid_state = decode_game_state(save.state).expect("valid mismatched state");
     let invalid = OpenSession::from_state(
         map("other-map", 3, 3),
         RulesetDefinition::standard().clone(),
@@ -241,29 +236,13 @@ fn zero_event_command_succeeds_at_exhausted_event_offset() {
 #[test]
 fn revision_overflow_is_rejected_without_advancing_runtime_counters() {
     let (map, ruleset) = content();
-    let scenario = ScenarioDefinition::try_new(
-        "overflow-scenario",
-        &map,
-        &ruleset,
-        [ScenarioUnitDefinition::new(
-            UnitId::new("unit-1").expect("unit id"),
-            PlayerId::new("player-1").expect("player id"),
-            UnitKind::Commander,
-            "Commander",
-            HexCoord::new(0, 0),
-        )],
-    )
-    .expect("scenario");
-    let initial = scenario.bootstrap(&map, &ruleset).expect("bootstrap");
-    let exhausted = GameState::try_new(
-        StateRevision::new(u64::MAX),
-        initial.turn(),
-        initial.bounds(),
-        initial.occupancy_policy(),
-        initial.units().iter().cloned(),
-    )
-    .expect("exhausted state");
     let mut runtime = LocalRuntime::default();
+    runtime.open(request()).expect("open initial state");
+    let mut save =
+        SaveGameDto::from_json(&runtime.export_save_json().expect("save")).expect("save contract");
+    save.state.revision = u64::MAX;
+    let exhausted = decode_game_state(save.state).expect("exhausted state");
+    runtime.close();
     runtime
         .open(
             OpenSession::from_state(
@@ -481,6 +460,6 @@ fn deterministic_replay_signature_is_stable() {
     assert!(!replay_json.contains("initialRngState"));
     assert_eq!(
         format!("{:x}", Sha256::digest(replay_json.as_bytes())),
-        "408d436b93059e2e7abb0a59d05319a1287b0c71b738ef8f21e449ca4053a7cb"
+        "51ad0ac1aaff5764e5f554a68d7ffcc35ae63e785d67ea42c47ed2e741fb4806"
     );
 }

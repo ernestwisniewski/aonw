@@ -178,7 +178,7 @@ impl<'query> TechnologyUnlockQuery<'query> {
 
     /// Computes the exact cost for a concrete boost discount and match pace.
     /// Zero cities use the same base multiplier as one city, matching the
-    /// canonical greenfield selection rule.
+    /// canonical selection rule.
     ///
     /// # Errors
     ///

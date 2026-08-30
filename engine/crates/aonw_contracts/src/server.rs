@@ -381,7 +381,7 @@ mod tests {
         );
         assert!(PrepareServerWorldRequestDto::from_json(&valid).is_ok());
         assert!(
-            PrepareServerWorldRequestDto::from_json(&valid.replace("}", ",\"extra\":true}"))
+            PrepareServerWorldRequestDto::from_json(&valid.replace('}', ",\"extra\":true}"))
                 .is_err()
         );
     }

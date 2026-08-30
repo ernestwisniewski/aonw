@@ -31,7 +31,12 @@ POLICY_KEYS = {
     "supportedTargets",
     "artifacts",
 }
-EXPECTED_PACKAGES = ["aonw_flutter", "aonw_godot", "aonw_map_compiler_cli"]
+EXPECTED_PACKAGES = [
+    "aonw_flutter",
+    "aonw_godot",
+    "aonw_map_compiler_cli",
+    "aonw_server_native",
+]
 
 
 class ReleaseMetadataFailure(RuntimeError):

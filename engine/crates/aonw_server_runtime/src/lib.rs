@@ -232,14 +232,14 @@ pub fn apply_submit_turn_dto(
 /// Returns an error for another API version, mismatched immutable identity, an
 /// invalid canonical state, or state/content invariant mismatch.
 pub fn project_server_state_dto(
-    world: PreparedServerWorld,
+    world: &PreparedServerWorld,
     request: ProjectServerStateRequestDto,
 ) -> Result<ServerProjectionResultDto, ServerBoundaryError> {
     require_api_version(request.api_version)?;
-    validate_content_identity(&world, &request.map_hash, &request.ruleset_hash)?;
+    validate_content_identity(world, &request.map_hash, &request.ruleset_hash)?;
     let state = decode_game_state(request.state)
         .map_err(|error| ServerBoundaryError::InvalidCanonicalState(error.to_string()))?;
-    project_server_state(&world, &state)
+    project_server_state(world, &state)
 }
 
 /// Constructs one new multiplayer match from authored content and immutable identity.
@@ -249,11 +249,11 @@ pub fn project_server_state_dto(
 /// Returns an error for invalid current content, another API version, a
 /// non-multiplayer identity, or a state that cannot satisfy engine invariants.
 pub fn create_server_match_dto(
-    world: PreparedServerWorld,
+    world: &PreparedServerWorld,
     request: CreateServerMatchRequestDto,
 ) -> Result<ServerCreatedMatchDto, ServerBoundaryError> {
     require_api_version(request.api_version)?;
-    validate_content_identity(&world, &request.map_hash, &request.ruleset_hash)?;
+    validate_content_identity(world, &request.map_hash, &request.ruleset_hash)?;
     let compiled = world.compiled();
     let scenario = ScenarioDefinition::from_json(
         request.scenario_document.as_bytes(),
@@ -271,7 +271,7 @@ pub fn create_server_match_dto(
         .map_err(|error| ServerBoundaryError::InvalidScenarioDocument(error.to_string()))?;
     let state = start_match(seed, compiled.map(), identity, request.fog_enabled)
         .map_err(|error| ServerBoundaryError::MatchStartFailed(error.to_string()))?;
-    let projection = project_server_state(&world, &state)?;
+    let projection = project_server_state(world, &state)?;
     Ok(ServerCreatedMatchDto {
         state: encode_game_state(&state),
         projection,

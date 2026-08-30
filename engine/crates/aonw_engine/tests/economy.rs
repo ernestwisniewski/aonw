@@ -1,4 +1,4 @@
-//! Greenfield economy account and city-yield acceptance tests.
+//! Economy account and city-yield acceptance tests.
 
 #[path = "economy/manifest.rs"]
 mod manifest;

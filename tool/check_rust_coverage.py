@@ -33,7 +33,7 @@ METHODOLOGY = {
     "primaryMetric": "line",
     "changedLines": "enforced-by-full-crate-ratchets",
     "branchCoverage": "diagnostic-until-stable-source-mapping",
-    "renames": "explicit-reviewed-baseline-migration",
+    "renames": "explicit-reviewed-baseline-update",
     "macros": "llvm-source-attribution",
     "generatedTestSupport": "excluded-only-by-reviewed-globs",
     "smallCrates": "same-per-crate-ratchets",
@@ -391,7 +391,7 @@ def build_report(
         "provenance": {
             **provenance,
             "llvmCoverageFormat": raw["version"],
-            "scope": "authoritative-plus-local-runtime",
+            "scope": "authoritative-plus-runtime",
         },
         "methodology": scope["methodology"],
         "ignoredDependencyFiles": ignored_dependency_files,
@@ -416,7 +416,7 @@ def snapshot_from(report: dict[str, Any]) -> dict[str, Any]:
     return {
         "provenance": {
             **report["provenance"],
-            "reviewedDate": "2026-08-27",
+            "reviewedDate": "2026-08-30",
         },
         "crates": crates,
     }
@@ -456,7 +456,7 @@ def check_baseline(report: dict[str, Any], baseline_path: Path, engine_root: Pat
         raise CoverageFailure("coverage baseline cargo-llvm-cov version differs")
     if provenance["source"] != report["provenance"]["source"]:
         raise CoverageFailure("coverage baseline tool source differs")
-    if provenance["scope"] != "authoritative-plus-local-runtime":
+    if provenance["scope"] != "authoritative-plus-runtime":
         raise CoverageFailure("coverage baseline scope differs")
     crates = raw["crates"]
     if not isinstance(crates, dict) or set(crates) != set(report["crates"]):

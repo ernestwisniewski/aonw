@@ -11,14 +11,17 @@
       "aonw_contract_mapping",
       "aonw_contracts",
       "aonw_domain",
-      "aonw_engine"
+      "aonw_engine",
+      "aonw_projection"
     ],
     "runtime": [
-      "aonw_local_runtime"
+      "aonw_local_runtime",
+      "aonw_server_runtime"
     ],
     "adapters": [
       "aonw_flutter",
-      "aonw_godot"
+      "aonw_godot",
+      "aonw_server_native"
     ],
     "authoring": [
       "aonw_map_authoring",
@@ -41,7 +44,7 @@
     "primaryMetric": "line",
     "changedLines": "enforced-by-full-crate-ratchets",
     "branchCoverage": "diagnostic-until-stable-source-mapping",
-    "renames": "explicit-reviewed-baseline-migration",
+    "renames": "explicit-reviewed-baseline-update",
     "macros": "llvm-source-attribution",
     "generatedTestSupport": "excluded-only-by-reviewed-globs",
     "smallCrates": "same-per-crate-ratchets"

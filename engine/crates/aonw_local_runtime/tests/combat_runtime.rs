@@ -128,8 +128,8 @@ fn client_turn_result_redacts_hidden_combat_but_replay_keeps_canonical_evidence(
         &identity,
         BTreeMap::from([
             (observer.clone(), PlayerTurnState::Active),
-            (attacker_owner.clone(), PlayerTurnState::Active),
-            (defender_owner.clone(), PlayerTurnState::Active),
+            (attacker_owner.clone(), PlayerTurnState::Finished),
+            (defender_owner.clone(), PlayerTurnState::Finished),
         ]),
         [
             observer.clone(),
@@ -144,11 +144,11 @@ fn client_turn_result_redacts_hidden_combat_but_replay_keeps_canonical_evidence(
     )
     .expect("lifecycle");
     let observer_position = HexCoord::new(7, 1);
-    let fog = FogOfWar::try_new([PlayerFog::new(
-        observer.clone(),
-        [observer_position],
-        [observer_position],
-    )])
+    let fog = FogOfWar::try_new([
+        PlayerFog::new(observer.clone(), [observer_position], [observer_position]),
+        PlayerFog::new(attacker_owner.clone(), [], []),
+        PlayerFog::new(defender_owner.clone(), [], []),
+    ])
     .expect("fog");
     let combat = CombatState::try_new([IntendedAttack::new(
         attacker_id.clone(),

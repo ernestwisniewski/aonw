@@ -131,9 +131,9 @@ are local evidence and are not committed.
 Release supply-chain files use pinned external generators: OWASP
 `cargo-cyclonedx 0.5.9` for CycloneDX 1.5 JSON and `cargo-about 0.9.2` with its
 explicit `cli` feature for third-party notices. The repository checker isolates
-workspace-wide generation from the source tree, selects the Flutter,
-Godot, and map-compiler artifacts, binds output to the exact target and commit
-epoch, and requires two byte-identical generations:
+workspace-wide generation from the source tree, selects the Flutter, Godot,
+map-compiler, and server-native artifacts, binds output to the exact target and
+commit epoch, and requires two byte-identical generations:
 
 ```sh
 make rust-release-metadata-tool-versions
