@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Age of New Worlds — HTML Design Workbench</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="workbench" id="workbench">
+    <header class="designer-bar" aria-label="Narzędzia workbencha">
+      <div class="designer-brand">
+        <span class="designer-mark">A◈</span>
+        <span><strong>AoNW</strong><small>HTML design workbench</small></span>
+      </div>
+      <label class="designer-field">
+        <span>Widok</span>
+        <select id="screen-select" aria-label="Wybierz widok"></select>
+      </label>
+      <label class="designer-field">
+        <span>Modal / stan</span>
+        <select id="modal-select" aria-label="Wybierz modal"></select>
+      </label>
+      <div class="designer-actions" role="group" aria-label="Rozmiar podglądu">
+        <button type="button" class="designer-button is-active" data-viewport="desktop" title="Desktop 16:9">Desktop</button>
+        <button type="button" class="designer-button" data-viewport="tablet" title="Tablet">Tablet</button>
+        <button type="button" class="designer-button" data-viewport="mobile" title="Telefon">Mobile</button>
+      </div>
+      <button type="button" class="designer-button" id="regenerate-world" title="Wygeneruj inne miasta, terytoria i jednostki">↻ Świat</button>
+      <button type="button" class="designer-button" id="toggle-grid" aria-pressed="false" title="Siatka designerska (G)"># Grid</button>
+      <button type="button" class="designer-button" id="hide-chrome" title="Ukryj narzędzia (H)">Ukryj UI</button>
+    </header>
+
+    <aside class="designer-rail" aria-label="Katalog widoków">
+      <div class="rail-heading">Ekrany</div>
+      <nav id="screen-rail"></nav>
+      <div class="rail-heading">Modale mapy</div>
+      <nav id="modal-rail"></nav>
+    </aside>
+
+    <main class="designer-stage">
+      <div class="viewport-shell" id="viewport-shell" data-viewport="desktop">
+        <div class="viewport-ruler viewport-ruler-x" aria-hidden="true"></div>
+        <div class="viewport-ruler viewport-ruler-y" aria-hidden="true"></div>
+        <div class="game-viewport" id="game-viewport">
+          <div id="game-root" aria-live="polite"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="designer-status">
+      <span id="status-screen">Widok: —</span>
+      <span id="status-world">Świat: —</span>
+      <span class="status-help">Kliknij jednostkę, następnie pole docelowe · G siatka · H narzędzia · Esc zamyka modal</span>
+    </footer>
+  </div>
+
+  <button type="button" class="restore-chrome" id="restore-chrome" hidden>Otwórz workbench (H)</button>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
