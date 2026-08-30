@@ -92,7 +92,7 @@ fn message_mapping_is_bijective_and_total() {
 }
 
 #[test]
-fn score_reason_mapping_covers_every_current_domain_value() {
+fn score_reason_mapping_covers_every_domain_value() {
     for value in [
         DiplomaticScoreChangeReason::Manual,
         DiplomaticScoreChangeReason::UnitAttack,

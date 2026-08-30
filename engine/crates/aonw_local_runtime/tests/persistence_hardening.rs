@@ -194,7 +194,7 @@ fn atomic_host_save_preserves_backup_and_repairs_a_corrupt_primary() {
     let mut runtime = LocalRuntime::default();
     let initial_stamp = runtime.open(request()).expect("open");
 
-    store.write_current_save(&runtime).expect("initial write");
+    store.write_save(&runtime).expect("initial write");
     let initial_document = fs::read_to_string(store.primary_path()).expect("initial document");
     let moved = runtime
         .dispatch(&MoveUnitRequest {
@@ -204,9 +204,7 @@ fn atomic_host_save_preserves_backup_and_repairs_a_corrupt_primary() {
         })
         .expect("move");
     assert!(moved.is_accepted());
-    store
-        .write_current_save(&runtime)
-        .expect("replacement write");
+    store.write_save(&runtime).expect("replacement write");
     assert_eq!(
         fs::read_to_string(store.backup_path()).expect("backup"),
         initial_document
@@ -215,7 +213,7 @@ fn atomic_host_save_preserves_backup_and_repairs_a_corrupt_primary() {
     let (map, ruleset) = content();
     let mut primary_restore = LocalRuntime::default();
     let (stamp, source) = store
-        .restore_current_save(&mut primary_restore, map, ruleset)
+        .restore_save(&mut primary_restore, map, ruleset)
         .expect("primary restore");
     assert_eq!(source, PersistenceRestoreSource::Primary);
     assert_eq!(stamp, moved.stamp);
@@ -225,7 +223,7 @@ fn atomic_host_save_preserves_backup_and_repairs_a_corrupt_primary() {
     let (map, ruleset) = content();
     let mut backup_restore = LocalRuntime::default();
     let (stamp, source) = store
-        .restore_current_save(&mut backup_restore, map, ruleset)
+        .restore_save(&mut backup_restore, map, ruleset)
         .expect("backup restore");
     assert_eq!(source, PersistenceRestoreSource::Backup);
     assert_eq!(stamp, initial_stamp);
@@ -238,7 +236,7 @@ fn atomic_host_save_preserves_backup_and_repairs_a_corrupt_primary() {
     let (map, ruleset) = content();
     let mut missing_primary_restore = LocalRuntime::default();
     let (stamp, source) = store
-        .restore_current_save(&mut missing_primary_restore, map, ruleset)
+        .restore_save(&mut missing_primary_restore, map, ruleset)
         .expect("missing primary falls back to backup");
     assert_eq!(source, PersistenceRestoreSource::Backup);
     assert_eq!(stamp, initial_stamp);
@@ -253,7 +251,7 @@ fn atomic_host_save_preserves_backup_and_repairs_a_corrupt_primary() {
     let (map, ruleset) = content();
     assert!(
         store
-            .restore_current_save(&mut backup_restore, map, ruleset)
+            .restore_save(&mut backup_restore, map, ruleset)
             .is_err()
     );
     assert_eq!(

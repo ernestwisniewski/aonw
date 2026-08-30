@@ -144,7 +144,7 @@ impl ClientProtocol {
         }
     }
 
-    /// Encodes one adapter-level failure with the current protocol envelope.
+    /// Encodes one adapter-level failure with the protocol envelope.
     #[must_use]
     pub fn failure_json(code: &str, message: &str) -> String {
         failure(code, message)

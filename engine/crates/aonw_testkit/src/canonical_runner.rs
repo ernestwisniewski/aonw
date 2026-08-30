@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{CanonicalFixture, CanonicalFixtureInput, CanonicalFixtureOutput, JsonDifference};
 
-/// Engine-specific executor for the current canonical fixture contract.
+/// Engine-specific executor for the canonical fixture contract.
 ///
 /// The committed expected result is intentionally not passed to the executor.
 pub trait CanonicalFixtureExecutor {
@@ -32,7 +32,7 @@ pub enum FixtureRunError<ExecutionError> {
         /// Engine-specific error.
         source: ExecutionError,
     },
-    /// The engine output differs from the committed oracle.
+    /// The engine output differs from the expected result.
     Mismatch {
         /// Fixture identifier.
         fixture_id: Box<str>,
@@ -50,7 +50,7 @@ impl<ExecutionError> FixtureRunError<ExecutionError> {
         }
     }
 
-    /// Returns structural differences for an oracle mismatch.
+    /// Returns structural differences for a result mismatch.
     #[must_use]
     pub fn differences(&self) -> Option<&[JsonDifference]> {
         match self {
@@ -74,7 +74,7 @@ impl<ExecutionError: fmt::Display> fmt::Display for FixtureRunError<ExecutionErr
                 differences,
             } => write!(
                 formatter,
-                "fixture {fixture_id} differs from the oracle at {} location(s)",
+                "fixture {fixture_id} differs from the expected result at {} location(s)",
                 differences.len()
             ),
         }
@@ -93,11 +93,11 @@ where
     }
 }
 
-/// Executes and verifies one current canonical fixture.
+/// Executes and verifies one canonical fixture.
 ///
 /// # Errors
 ///
-/// Returns an execution error or bounded structural oracle differences.
+/// Returns an execution error or bounded structural result differences.
 pub fn verify_canonical_fixture<Executor: CanonicalFixtureExecutor>(
     fixture: &CanonicalFixture,
     executor: &Executor,
@@ -122,7 +122,7 @@ pub fn verify_canonical_fixture<Executor: CanonicalFixtureExecutor>(
 ///
 /// # Errors
 ///
-/// Returns the first execution failure or oracle mismatch.
+/// Returns the first execution failure or result mismatch.
 pub fn verify_canonical_corpus<Executor: CanonicalFixtureExecutor>(
     fixtures: &[CanonicalFixture],
     executor: &Executor,

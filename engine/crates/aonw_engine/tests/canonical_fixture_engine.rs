@@ -1,4 +1,4 @@
-//! Executes current canonical fixtures without a historical reducer adapter.
+//! Executes canonical command fixtures directly through the Rust engine.
 
 use std::{fmt, fs};
 
@@ -450,7 +450,7 @@ fn display_error(error: impl fmt::Display) -> ExecutionError {
 }
 
 #[test]
-fn rust_executes_current_canonical_command_corpus() {
+fn rust_executes_the_canonical_command_corpus() {
     let fixture_dir = repository_root().join("engine/fixtures/canonical_commands");
     let fixtures = CanonicalFixtureLoader::default()
         .load_corpus(fixture_dir)
@@ -487,7 +487,7 @@ fn invalid_origin_is_rejected_at_the_canonical_state_boundary() {
     let path = repository_root()
         .join("engine/fixtures/canonical_state_rejections/unit-out-of-bounds.json");
     let source = fs::read(path).expect("canonical state rejection fixture");
-    let dto = serde_json::from_slice::<GameStateDto>(&source).expect("strict current state DTO");
+    let dto = serde_json::from_slice::<GameStateDto>(&source).expect("strict state DTO");
     let error = decode_game_state(dto).expect_err("out-of-bounds state must fail closed");
 
     assert_eq!(error.path(), "$");

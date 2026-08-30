@@ -25,7 +25,7 @@ use aonw_engine::{
 };
 
 #[test]
-fn preview_and_attack_share_exact_oracle_combat_input() {
+fn preview_and_attack_share_the_exact_combat_input() {
     let map = map();
     let actor = player("player_1");
     let defender_owner = player("player_2");

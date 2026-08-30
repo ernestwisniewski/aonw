@@ -1,4 +1,4 @@
-//! Independent current-contract fixture infrastructure for the Rust engine.
+//! Independent canonical fixture infrastructure for the Rust engine.
 //!
 //! Canonical fixtures own strict DTOs and validated map content without
 //! depending on a concrete engine implementation. JSON object order is
@@ -16,8 +16,7 @@ mod loader_error;
 mod unique_json;
 
 pub use canonical_fixture::{
-    CURRENT_CANONICAL_FIXTURE_VERSION, CanonicalFixture, CanonicalFixtureInput,
-    CanonicalFixtureOutput,
+    CANONICAL_FIXTURE_VERSION, CanonicalFixture, CanonicalFixtureInput, CanonicalFixtureOutput,
 };
 pub use canonical_loader::{CanonicalFixtureLoader, FixtureLimits};
 pub use canonical_runner::{

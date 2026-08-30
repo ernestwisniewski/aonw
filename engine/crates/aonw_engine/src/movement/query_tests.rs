@@ -110,7 +110,7 @@ fn route_is_deterministic_when_equal_cost_paths_exist() {
 }
 
 #[test]
-fn route_reports_rough_cost_and_current_turn_prefix() {
+fn route_reports_rough_cost_and_executable_turn_prefix() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(4, 1, &[HexCoord::new(1, 0)], &[]);
     let state = state(3, &map, [unit("unit-1", &actor, HexCoord::new(0, 0), 3)]);
@@ -186,7 +186,7 @@ fn stale_revision_fails_before_route_work() {
 }
 
 #[test]
-fn command_guards_keep_current_rejection_precedence() {
+fn command_guards_keep_rejection_precedence() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let other = PlayerId::new("player-2").expect("valid player");
     let map = map(2, 1, &[], &[]);

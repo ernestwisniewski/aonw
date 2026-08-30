@@ -18,7 +18,7 @@ pub enum PlayerTurnState {
 pub struct UtcTimestamp(Box<str>);
 
 impl UtcTimestamp {
-    /// Validates the canonical UTC ISO-8601 shape emitted by Dart.
+    /// Validates the canonical UTC ISO-8601 shape used by the protocol.
     ///
     /// # Errors
     ///

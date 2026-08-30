@@ -195,7 +195,7 @@ fn standard_research_pace_scaling_is_exact_and_uses_ceiling_arithmetic() {
 }
 
 #[test]
-fn standard_diplomacy_balance_matches_the_frozen_oracle() {
+fn standard_diplomacy_balance_matches_the_ruleset_values() {
     let balance = RulesetDefinition::standard().diplomacy();
     assert_eq!(balance.proposal_duration_turns(), 5);
     assert_eq!(balance.message_duration_turns(), 5);
@@ -377,7 +377,7 @@ fn standard_technology_catalog_is_complete_and_stable() {
 }
 
 #[test]
-fn standard_combat_content_exposes_every_current_rule_value() {
+fn standard_combat_content_exposes_every_rule_value() {
     let ruleset = RulesetDefinition::standard();
     for definition in STANDARD_UNITS {
         assert_eq!(ruleset.unit(definition.kind()), Some(definition));

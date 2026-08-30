@@ -27,7 +27,7 @@ pub(crate) struct ResearchProjectScience {
 }
 
 /// Calculates current continuous research-project output without mutating state.
-pub(crate) fn current_research_project_science(
+pub(crate) fn selected_research_project_science(
     state: &GameState,
     context: EngineContext<'_>,
     player: &PlayerId,

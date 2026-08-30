@@ -95,13 +95,18 @@
       "resourceTradeAgreements": [],
       "revision": 4,
       "rows": 3,
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
         "afkPlayerIds": [],
         "kickedPlayerIds": [],
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [],
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {},
         "turnStartedAt": null,
         "turnStatesByPlayerId": {
@@ -332,13 +337,18 @@
       "resourceTradeAgreements": [],
       "revision": 4,
       "rows": 3,
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
         "afkPlayerIds": [],
         "kickedPlayerIds": [],
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [],
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {},
         "turnStartedAt": null,
         "turnStatesByPlayerId": {

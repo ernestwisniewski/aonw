@@ -13,31 +13,231 @@
       "mapName": "canonical-fixture-plains",
       "objectives": [],
       "tiles": [
-        {"col": 0, "row": 0, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 1, "row": 0, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 2, "row": 0, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 3, "row": 0, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 4, "row": 0, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 0, "row": 1, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 1, "row": 1, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 2, "row": 1, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 3, "row": 1, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 4, "row": 1, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 0, "row": 2, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 1, "row": 2, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 2, "row": 2, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 3, "row": 2, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 4, "row": 2, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 0, "row": 3, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 1, "row": 3, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 2, "row": 3, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 3, "row": 3, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 4, "row": 3, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 0, "row": 4, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 1, "row": 4, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 2, "row": 4, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 3, "row": 4, "terrainTags": ["plains"], "resources": [], "height": 0},
-        {"col": 4, "row": 4, "terrainTags": ["plains"], "resources": [], "height": 0}
+        {
+          "col": 0,
+          "row": 0,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 1,
+          "row": 0,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 2,
+          "row": 0,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 3,
+          "row": 0,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 4,
+          "row": 0,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 0,
+          "row": 1,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 1,
+          "row": 1,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 2,
+          "row": 1,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 3,
+          "row": 1,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 4,
+          "row": 1,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 0,
+          "row": 2,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 1,
+          "row": 2,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 2,
+          "row": 2,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 3,
+          "row": 2,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 4,
+          "row": 2,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 0,
+          "row": 3,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 1,
+          "row": 3,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 2,
+          "row": 3,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 3,
+          "row": 3,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 4,
+          "row": 3,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 0,
+          "row": 4,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 1,
+          "row": 4,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 2,
+          "row": 4,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 3,
+          "row": 4,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 4,
+          "row": 4,
+          "terrainTags": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        }
       ]
     },
     "state": {
@@ -79,8 +279,11 @@
         "gameMode": "hotSeat"
       },
       "turnLifecycle": {
-        "turnStatesByPlayerId": {"player-1": "active"},
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [],
+        "turnStatesByPlayerId": {
+          "player-1": "active"
+        },
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {},
         "afkPlayerIds": [],
         "kickedPlayerIds": [],
@@ -91,9 +294,14 @@
         "playerWarWeariness": {},
         "playerStabilityNet": {},
         "strategicResources": {},
-        "initialResourceDistribution": {"seed": 0, "placements": []}
+        "initialResourceDistribution": {
+          "seed": 0,
+          "placements": []
+        }
       },
-      "research": {"players": {}},
+      "research": {
+        "players": {}
+      },
       "wonderRegistry": {},
       "intendedAttacks": [],
       "cols": 5,
@@ -127,7 +335,10 @@
       "cities": [],
       "artifacts": [],
       "fieldImprovements": [],
-      "interaction": {"cityFoundingDraft": null, "pending": null},
+      "interaction": {
+        "cityFoundingDraft": null,
+        "pending": null
+      },
       "fogOfWar": [],
       "diplomacy": {
         "contacts": [],
@@ -140,7 +351,11 @@
       "dominationHoldTurnsByPlayerId": {},
       "culturalVictoryHoldTurnsByPlayerId": {},
       "mapObjectiveHoldStates": [],
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": []
     },
     "command": {
@@ -191,8 +406,11 @@
         "gameMode": "hotSeat"
       },
       "turnLifecycle": {
-        "turnStatesByPlayerId": {"player-1": "active"},
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [],
+        "turnStatesByPlayerId": {
+          "player-1": "active"
+        },
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {},
         "afkPlayerIds": [],
         "kickedPlayerIds": [],
@@ -203,9 +421,14 @@
         "playerWarWeariness": {},
         "playerStabilityNet": {},
         "strategicResources": {},
-        "initialResourceDistribution": {"seed": 0, "placements": []}
+        "initialResourceDistribution": {
+          "seed": 0,
+          "placements": []
+        }
       },
-      "research": {"players": {}},
+      "research": {
+        "players": {}
+      },
       "wonderRegistry": {},
       "intendedAttacks": [],
       "cols": 5,
@@ -239,7 +462,10 @@
       "cities": [],
       "artifacts": [],
       "fieldImprovements": [],
-      "interaction": {"cityFoundingDraft": null, "pending": null},
+      "interaction": {
+        "cityFoundingDraft": null,
+        "pending": null
+      },
       "fogOfWar": [],
       "diplomacy": {
         "contacts": [],
@@ -252,7 +478,11 @@
       "dominationHoldTurnsByPlayerId": {},
       "culturalVictoryHoldTurnsByPlayerId": {},
       "mapObjectiveHoldStates": [],
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": []
     },
     "events": [],

@@ -63,6 +63,11 @@
           "row": 0
         }
       ]
+    },
+    {
+      "discoveredHexes": [],
+      "playerId": "player_2",
+      "visibleHexes": []
     }
   ],
   "intendedAttacks": [],
@@ -147,7 +152,11 @@
   ],
   "revision": 210,
   "rows": 1,
-  "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+  "outcome": {
+    "condition": "ongoing",
+    "winnerPlayerId": null,
+    "scoreByPlayerId": {}
+  },
   "transportNetwork": [],
   "turn": 7,
   "turnLifecycle": {
@@ -158,19 +167,16 @@
       "player_2"
     ],
     "requiredSubmissionPlayerIds": [
-      "player_1",
-      "player_2"
+      "player_1"
     ],
-    "submittedPlayerIds": [
-      "player_2"
-    ],
+    "submittedPlayerIds": [],
     "timeoutStreaksByPlayerId": {
       "player_2": 2
     },
     "turnStartedAt": "2026-07-01T12:00:00.000Z",
     "turnStatesByPlayerId": {
       "player_1": "active",
-      "player_2": "active"
+      "player_2": "finished"
     }
   },
   "units": [

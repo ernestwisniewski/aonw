@@ -7,8 +7,7 @@ use serde_json::{Map, Value};
 
 use crate::FixtureLoadError;
 use crate::canonical_fixture::{
-    CURRENT_CANONICAL_FIXTURE_VERSION, CanonicalFixture, CanonicalFixtureInput,
-    CanonicalFixtureOutput,
+    CANONICAL_FIXTURE_VERSION, CanonicalFixture, CanonicalFixtureInput, CanonicalFixtureOutput,
 };
 
 const ROOT_KEYS: &[&str] = &["capability", "expected", "fixtureVersion", "id", "input"];
@@ -22,11 +21,11 @@ pub(super) fn parse_canonical_fixture(
     let mut root = require_object(value, "$", path)?;
     require_exact_keys(&root, ROOT_KEYS, "$", path)?;
     let version = take_u64(&mut root, "fixtureVersion", "$.fixtureVersion", path)?;
-    if version != CURRENT_CANONICAL_FIXTURE_VERSION {
+    if version != CANONICAL_FIXTURE_VERSION {
         return Err(FixtureLoadError::UnsupportedVersion {
             path: path.map(Path::to_path_buf),
             found: version,
-            supported: CURRENT_CANONICAL_FIXTURE_VERSION,
+            supported: CANONICAL_FIXTURE_VERSION,
         });
     }
 
@@ -111,7 +110,7 @@ fn parse_input(
         return Err(invalid(
             path,
             "$.input.rulesetId",
-            "current canonical fixtures require the standard ruleset",
+            "canonical fixtures require the standard ruleset",
         ));
     }
     let map_value = take(&mut input, "map", "$.input.map", path)?;

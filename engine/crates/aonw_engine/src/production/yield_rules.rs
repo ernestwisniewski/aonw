@@ -103,7 +103,7 @@ mod tests {
     use super::with_target_specialization;
 
     #[test]
-    fn specialization_values_and_target_bonuses_cover_every_current_kind() {
+    fn specialization_values_and_target_bonuses_cover_every_kind() {
         for (specialization, target) in [
             (
                 CitySpecializationType::Growth,

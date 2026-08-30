@@ -49,52 +49,52 @@ impl core::fmt::Display for ClientCodecError {
 impl std::error::Error for ClientCodecError {}
 
 impl ClientRequestDto {
-    /// Parses a bounded, strict current client request.
+    /// Parses a bounded, strict client request.
     ///
     /// # Errors
     ///
     /// Returns an error for oversized, malformed, or foreign-version input.
     pub fn from_json(input: &str) -> Result<Self, ClientCodecError> {
         let request: Self = parse_bounded(input, MAX_CLIENT_REQUEST_JSON_BYTES)?;
-        require_current_version(request.api_version)?;
+        require_supported_version(request.api_version)?;
         Ok(request)
     }
 
-    /// Serializes a bounded current client request.
+    /// Serializes a bounded client request.
     ///
     /// # Errors
     ///
     /// Returns an error for a foreign version or oversized output.
     pub fn to_json(&self) -> Result<String, ClientCodecError> {
-        require_current_version(self.api_version)?;
+        require_supported_version(self.api_version)?;
         serialize_bounded(self, MAX_CLIENT_REQUEST_JSON_BYTES)
     }
 }
 
 impl ClientResponseDto {
-    /// Parses a bounded, strict current client response.
+    /// Parses a bounded, strict client response.
     ///
     /// # Errors
     ///
     /// Returns an error for oversized, malformed, or foreign-version input.
     pub fn from_json(input: &str) -> Result<Self, ClientCodecError> {
         let response: Self = parse_bounded(input, MAX_CLIENT_RESPONSE_JSON_BYTES)?;
-        require_current_version(response.api_version)?;
+        require_supported_version(response.api_version)?;
         Ok(response)
     }
 
-    /// Serializes a bounded current client response.
+    /// Serializes a bounded client response.
     ///
     /// # Errors
     ///
     /// Returns an error for a foreign version or oversized output.
     pub fn to_json(&self) -> Result<String, ClientCodecError> {
-        require_current_version(self.api_version)?;
+        require_supported_version(self.api_version)?;
         serialize_bounded(self, MAX_CLIENT_RESPONSE_JSON_BYTES)
     }
 }
 
-fn require_current_version(version: u16) -> Result<(), ClientCodecError> {
+fn require_supported_version(version: u16) -> Result<(), ClientCodecError> {
     if version == CLIENT_API_VERSION {
         Ok(())
     } else {

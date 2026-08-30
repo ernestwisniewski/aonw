@@ -36,7 +36,7 @@ pub struct TurnLifecycleDto {
     pub turn_started_at: Option<String>,
 }
 
-/// Immutable match rules mirrored from the current Dart rules contract.
+/// Immutable match rules shared across engine boundaries.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

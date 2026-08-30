@@ -66,87 +66,7 @@
         "strategicResources": {}
       },
       "fieldImprovements": [],
-      "fogOfWar": [
-        {
-          "discoveredHexes": [
-            {
-              "col": 0,
-              "row": 0
-            },
-            {
-              "col": 0,
-              "row": 1
-            },
-            {
-              "col": 0,
-              "row": 2
-            },
-            {
-              "col": 1,
-              "row": 0
-            },
-            {
-              "col": 1,
-              "row": 1
-            },
-            {
-              "col": 1,
-              "row": 2
-            },
-            {
-              "col": 2,
-              "row": 0
-            },
-            {
-              "col": 2,
-              "row": 1
-            },
-            {
-              "col": 2,
-              "row": 2
-            }
-          ],
-          "playerId": "player_1",
-          "visibleHexes": [
-            {
-              "col": 0,
-              "row": 0
-            },
-            {
-              "col": 0,
-              "row": 1
-            },
-            {
-              "col": 0,
-              "row": 2
-            },
-            {
-              "col": 1,
-              "row": 0
-            },
-            {
-              "col": 1,
-              "row": 1
-            },
-            {
-              "col": 1,
-              "row": 2
-            },
-            {
-              "col": 2,
-              "row": 0
-            },
-            {
-              "col": 2,
-              "row": 1
-            },
-            {
-              "col": 2,
-              "row": 2
-            }
-          ]
-        }
-      ],
+      "fogOfWar": [],
       "intendedAttacks": [],
       "interaction": {
         "cityFoundingDraft": null,
@@ -203,13 +123,18 @@
       "resourceTradeAgreements": [],
       "revision": 4,
       "rows": 3,
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
         "afkPlayerIds": [],
         "kickedPlayerIds": [],
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [],
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {},
         "turnStartedAt": null,
         "turnStatesByPlayerId": {
@@ -440,13 +365,18 @@
       "resourceTradeAgreements": [],
       "revision": 3,
       "rows": 3,
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
         "afkPlayerIds": [],
         "kickedPlayerIds": [],
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [],
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {},
         "turnStartedAt": null,
         "turnStatesByPlayerId": {

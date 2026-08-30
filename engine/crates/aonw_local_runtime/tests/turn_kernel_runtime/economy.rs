@@ -16,7 +16,7 @@ use aonw_local_runtime::{ClientProtocol, LocalRuntime, OpenSession};
 use super::participant;
 
 #[test]
-fn economy_events_are_current_recipient_safe_saved_and_exactly_replayed() {
+fn economy_events_are_recipient_safe_saved_and_exactly_replayed() {
     let (map, rules, state, actor) = fixture();
     let mut runtime = LocalRuntime::default();
     runtime

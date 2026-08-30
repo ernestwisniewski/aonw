@@ -1,11 +1,11 @@
-//! Contract tests for current canonical engine fixtures.
+//! Contract tests for canonical engine fixtures.
 
-use aonw_testkit::{CURRENT_CANONICAL_FIXTURE_VERSION, CanonicalFixtureLoader, FixtureLoadError};
+use aonw_testkit::{CANONICAL_FIXTURE_VERSION, CanonicalFixtureLoader, FixtureLoadError};
 use serde_json::{Value, json};
 
 fn fixture_json() -> Value {
     json!({
-        "fixtureVersion": CURRENT_CANONICAL_FIXTURE_VERSION,
+        "fixtureVersion": CANONICAL_FIXTURE_VERSION,
         "id": "fortify-unit-accepted",
         "capability": "unit-action",
         "input": {
@@ -161,7 +161,7 @@ fn encoded(value: &Value) -> Vec<u8> {
 }
 
 #[test]
-fn canonical_fixture_owns_typed_current_contracts() {
+fn canonical_fixture_owns_typed_contracts() {
     let fixture = CanonicalFixtureLoader::default()
         .parse(&encoded(&fixture_json()))
         .expect("valid canonical fixture");
@@ -175,7 +175,7 @@ fn canonical_fixture_owns_typed_current_contracts() {
 }
 
 #[test]
-fn canonical_fixture_rejects_historical_envelope_fields() {
+fn canonical_fixture_rejects_alternate_envelope_fields() {
     for field in ["now", "tick", "match", "save"] {
         let mut value = fixture_json();
         value["input"][field] = json!(null);

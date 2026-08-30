@@ -120,7 +120,7 @@ mod tests {
     use crate::EngineContext;
 
     #[test]
-    fn unit_names_cover_every_current_identity() {
+    fn unit_names_cover_every_identity() {
         let names = [
             (UnitKind::Commander, "commander"),
             (UnitKind::Warrior, "warrior"),

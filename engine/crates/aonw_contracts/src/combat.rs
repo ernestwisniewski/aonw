@@ -127,7 +127,7 @@ pub struct CombatOutcomeDto {
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CombatExecutionDto {
-    /// Initial oracle seed.
+    /// Initial deterministic seed.
     pub seed: u32,
     /// Rolls in consumption order.
     pub rolls: Vec<CombatRollDto>,

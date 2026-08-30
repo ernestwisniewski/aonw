@@ -7,7 +7,7 @@ use aonw_engine::{
 use super::encode_evidence;
 
 #[test]
-fn replay_encoder_maps_every_current_logistics_evidence_variant() {
+fn replay_encoder_maps_every_logistics_evidence_variant() {
     let unit_id = UnitId::new("unit-1").expect("unit id");
     let detached_id = UnitId::new("unit-2").expect("unit id");
     let origin_city_id = CityId::new("city-1").expect("city id");

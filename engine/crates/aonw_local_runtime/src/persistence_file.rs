@@ -75,7 +75,7 @@ impl PersistenceFileStore {
         sibling_path(&self.primary, ".backup")
     }
 
-    /// Atomically stores the open runtime's current canonical save.
+    /// Atomically stores the open runtime's canonical save.
     ///
     /// A valid prior primary becomes the backup. An invalid prior primary is
     /// discarded only after the replacement is installed, without displacing
@@ -85,29 +85,28 @@ impl PersistenceFileStore {
     ///
     /// Returns an error when export, validation, filesystem I/O, installation,
     /// or rollback fails.
-    pub fn write_current_save(&self, runtime: &LocalRuntime) -> Result<(), PersistenceFileError> {
+    pub fn write_save(&self, runtime: &LocalRuntime) -> Result<(), PersistenceFileError> {
         ensure_file_path(&self.primary)?;
         let payload = runtime
             .export_save_json()
             .map_err(|error| export_error(&error))?;
-        SaveGameDto::from_json(&payload).map_err(|error| {
-            PersistenceFileError::new(format!("export is not current: {error}"))
-        })?;
+        SaveGameDto::from_json(&payload)
+            .map_err(|error| PersistenceFileError::new(format!("export is invalid: {error}")))?;
         let temp = self.write_synced_temp(payload.as_bytes())?;
         let prior = self.prior_disposition(runtime);
         self.install_temp(&temp, prior)
     }
 
-    /// Restores the current save transactionally, falling back to the backup.
+    /// Restores the save transactionally, falling back to the backup.
     ///
     /// A valid backup is promoted to the primary path before this method
     /// returns. A rejected document never replaces the caller's open session.
     ///
     /// # Errors
     ///
-    /// Returns an error when neither current-format document can be read and
+    /// Returns an error when neither save document can be read and
     /// validated, or when backup promotion fails.
-    pub fn restore_current_save(
+    pub fn restore_save(
         &self,
         runtime: &mut LocalRuntime,
         map: MapDefinition,

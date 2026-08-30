@@ -28,7 +28,7 @@ use crate::{ClientProtocol, LocalRuntime, OpenSession, PendingActionView};
 use super::*;
 
 #[test]
-fn protocol_exercises_every_current_request_family() {
+fn protocol_exercises_every_request_family() {
     let map = authored_map();
     let ruleset = RulesetDefinition::standard().clone();
     let map_document = MapDocument::try_new(map.clone(), 1.0)

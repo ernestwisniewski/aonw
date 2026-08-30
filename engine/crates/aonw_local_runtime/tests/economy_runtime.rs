@@ -1,4 +1,4 @@
-//! Runtime and current client-protocol coverage for engine-owned city yields.
+//! Runtime and client-protocol coverage for engine-owned city yields.
 
 use std::collections::BTreeMap;
 

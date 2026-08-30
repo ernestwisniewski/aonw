@@ -18,7 +18,7 @@ pub(crate) fn query_options(
     }
     let research = player_research(state, actor);
     let project_science =
-        crate::production::current_research_project_science(state, context, actor)
+        crate::production::selected_research_project_science(state, context, actor)
             .map_err(|error| ResearchError::InvalidState(error.to_string().into()))?;
     let science_yield = super::turn::science_yield(state, context, actor, &project_science)?;
     let city_count = owned_city_count(state, actor)?;

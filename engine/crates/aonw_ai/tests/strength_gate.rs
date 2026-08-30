@@ -92,7 +92,7 @@ fn production_profiles_pass_the_pinned_deterministic_strength_league() {
             let baseline = baseline_score(case, &mut unhandled, &mut movement_usage);
             assert_eq!(
                 baseline, reference,
-                "baseline drifted from oracle in {}",
+                "baseline drifted from the reference scorer in {}",
                 case.id
             );
             let random = corpus

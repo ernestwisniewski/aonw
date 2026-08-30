@@ -154,7 +154,7 @@ fn rush_rejections_preserve_empty_project_complete_and_unaffordable_precedence()
 }
 
 #[test]
-fn completed_unit_uses_oracle_candidate_order_and_next_identity() {
+fn completed_unit_uses_stable_candidate_order_and_next_identity() {
     let map = map();
     let actor = player();
     let city_id = aonw_domain::CityId::new("capital").expect("city id");

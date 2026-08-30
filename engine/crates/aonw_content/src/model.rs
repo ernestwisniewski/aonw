@@ -506,7 +506,7 @@ impl MapDefinition {
         self.bounds().coordinate_at(index)
     }
 
-    /// Iterates in-bounds adjacent coordinates in canonical Dart odd-q order.
+    /// Iterates in-bounds adjacent coordinates in canonical odd-q order.
     pub fn neighbors(&self, coordinate: HexCoord) -> impl Iterator<Item = HexCoord> {
         self.bounds().neighbors(coordinate)
     }

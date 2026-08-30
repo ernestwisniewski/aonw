@@ -7,7 +7,7 @@ const INCREMENT: u32 = 1_013_904_223;
 
 /// Explicit deterministic LCG32 stream used only for AI planning.
 ///
-/// The seed derivation and draw transition match the current Dart oracle. The
+/// The seed derivation and draw transition define the deterministic AI contract. The
 /// type is immutable so every draw makes the next state and value explicit.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct AiRng {
@@ -127,7 +127,7 @@ mod tests {
     use aonw_domain::PlayerId;
 
     #[test]
-    fn direct_seed_matches_lcg32_oracle_draws() {
+    fn direct_seed_produces_expected_lcg32_draws() {
         let first = AiRng::new(42).next_index(NonZeroUsize::new(3).expect("positive"));
         assert_eq!(first.rng().state(), 1_083_814_273);
         assert_eq!(first.value(), 1);
@@ -140,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn turn_derivation_matches_utf16_oracle_vector() {
+    fn turn_derivation_matches_the_utf16_reference_vector() {
         let player = PlayerId::new("player_2").expect("player id");
         assert_eq!(AiRng::from_turn(7, &player, 99).state(), 2_385_559_860);
 

@@ -1,4 +1,4 @@
-/// Exact xorshift32 combat RNG compatible with the characterized Dart oracle.
+/// Exact xorshift32 combat RNG used by the engine contract.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CombatRng {
     seed: u32,
@@ -15,7 +15,7 @@ impl CombatRng {
         }
     }
 
-    /// Derives the oracle seed from turn and UTF-16 identifiers.
+    /// Derives the deterministic seed from turn and UTF-16 identifiers.
     #[must_use]
     pub fn from_turn(turn: u32, attacker_id: &str, defender_id: &str) -> Self {
         let hash = mix_int(0x811C_9DC5, turn);
@@ -73,14 +73,14 @@ mod tests {
     use super::CombatRng;
 
     #[test]
-    fn accepted_dart_fixture_seed_and_roll_are_exact() {
+    fn reference_seed_and_roll_are_exact() {
         let mut rng = CombatRng::from_turn(7, "attacker", "defender");
         assert_eq!(rng.seed(), 2_280_806_018);
         assert_eq!(rng.signed(2), 0);
     }
 
     #[test]
-    fn zero_seed_uses_non_absorbing_oracle_state() {
+    fn zero_seed_uses_a_non_absorbing_state() {
         let mut rng = CombatRng::new(0);
         assert_eq!(rng.seed(), 0);
         assert_eq!(rng.signed(0), 0);

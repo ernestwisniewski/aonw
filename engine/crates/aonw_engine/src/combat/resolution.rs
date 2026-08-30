@@ -116,10 +116,10 @@ fn roll_combat(
         attack_roll,
     );
     let mut rolls = vec![CombatRoll { value: attack_roll }];
-    let (attacker_current, defender_current) = current_hit_points(state, prepared);
+    let (attacker_before, defender_before) = combatant_hit_points(state, prepared);
     let defender_max = prepared.preview.defender.hit_points;
     let mut defender_after =
-        defender_current.saturating_sub(i32::try_from(outgoing_damage).unwrap_or(i32::MAX));
+        defender_before.saturating_sub(i32::try_from(outgoing_damage).unwrap_or(i32::MAX));
     let mut defender_killed = defender_after <= 0;
     let mut retreat = None;
     if let PreparedTarget::Unit(index) = prepared.target
@@ -167,7 +167,7 @@ fn roll_combat(
         );
     }
     let attacker_after =
-        attacker_current.saturating_sub(i32::try_from(retaliation_damage).unwrap_or(i32::MAX));
+        attacker_before.saturating_sub(i32::try_from(retaliation_damage).unwrap_or(i32::MAX));
     let attacker_killed = attacker_after <= 0;
     RolledCombat {
         seed,
@@ -184,18 +184,18 @@ fn roll_combat(
     }
 }
 
-fn current_hit_points(state: &GameState, prepared: &PreparedCombat) -> (i32, i32) {
+fn combatant_hit_points(state: &GameState, prepared: &PreparedCombat) -> (i32, i32) {
     let attacker_max = prepared.preview.attacker.hit_points;
     let defender_max = prepared.preview.defender.hit_points;
     let attacker = &state.units()[prepared.attacker_index];
-    let attacker_current = i32::try_from(
+    let attacker_hit_points = i32::try_from(
         attacker
             .hit_points()
             .unwrap_or(attacker_max)
             .min(attacker_max),
     )
     .unwrap_or(i32::MAX);
-    let defender_current = match prepared.target {
+    let defender_hit_points = match prepared.target {
         PreparedTarget::Unit(index) => i32::try_from(
             state.units()[index]
                 .hit_points()
@@ -214,7 +214,7 @@ fn current_hit_points(state: &GameState, prepared: &PreparedCombat) -> (i32, i32
             .unwrap_or(i32::MAX)
         }
     };
-    (attacker_current, defender_current)
+    (attacker_hit_points, defender_hit_points)
 }
 
 fn build_update(

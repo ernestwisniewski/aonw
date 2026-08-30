@@ -65,7 +65,7 @@ fn road_job_save_reopen_replay_projection_and_query_cache_are_exact() {
 }
 
 #[test]
-fn current_json_protocol_exercises_the_complete_worker_surface() {
+fn strict_json_protocol_exercises_the_complete_worker_surface() {
     let mut query_runtime = opened_runtime();
     let query = dispatch_client(
         &mut query_runtime,

@@ -139,7 +139,7 @@ mod tests {
     }
 
     #[test]
-    fn land_costs_match_the_current_rules() {
+    fn land_costs_match_the_standard_rules() {
         assert_eq!(
             terrain_entry_cost(
                 &tile(vec![TerrainType::Plains, TerrainType::Forest]),
@@ -190,7 +190,7 @@ mod tests {
     }
 
     #[test]
-    fn air_units_retain_current_land_terrain_semantics() {
+    fn air_units_use_land_terrain_semantics() {
         assert_eq!(
             terrain_entry_cost(
                 &tile(vec![TerrainType::Plains, TerrainType::Hills]),

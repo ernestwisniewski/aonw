@@ -90,7 +90,7 @@ fn sequential_turn_completes_building_and_wealth_project_in_phase_order() {
 }
 
 #[test]
-fn unit_completion_uses_stable_identity_and_current_occupancy() {
+fn unit_completion_uses_stable_identity_and_occupancy() {
     let ruleset = RulesetDefinition::standard();
     let p1 = player("player-1");
     let p2 = player("player-2");

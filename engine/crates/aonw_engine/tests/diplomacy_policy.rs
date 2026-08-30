@@ -49,7 +49,7 @@ struct PolicyCase {
 }
 
 #[test]
-fn oracle_policy_manifest_covers_accepted_rejected_and_hidden_outcomes() {
+fn policy_manifest_covers_accepted_rejected_and_hidden_outcomes() {
     let manifest: PolicyManifest = serde_json::from_slice(
         &std::fs::read(repository_root().join("engine/fixtures/diplomacy_policy/manifest.json"))
             .expect("policy manifest"),

@@ -3,7 +3,7 @@ use aonw_domain::{DiplomaticRelation, DiplomaticRelationStatus, MovementUnits, P
 use super::*;
 
 #[test]
-fn rejection_precedence_matches_the_oracle_and_hides_unknown_targets() {
+fn rejection_precedence_is_stable_and_hides_unknown_targets() {
     let actor = player("player_1");
     let defender = player("player_2");
     let attacker_id = unit_id("attacker");

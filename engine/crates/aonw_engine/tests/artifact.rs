@@ -16,7 +16,7 @@ mod turn;
 use support::*;
 
 #[test]
-fn excavation_start_is_atomic_and_emits_the_current_typed_event() {
+fn excavation_start_is_atomic_and_emits_the_typed_event() {
     let map = map();
     let p1 = player("player-1");
     let unit_id = unit_id("scout");

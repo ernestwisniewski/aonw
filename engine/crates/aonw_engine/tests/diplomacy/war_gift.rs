@@ -113,7 +113,7 @@ fn gold_gift_transfers_atomically_scores_and_enforces_cooldown() {
 }
 
 #[test]
-fn gold_gift_rejections_follow_current_oracle_order() {
+fn gold_gift_rejections_follow_the_defined_precedence() {
     let war = fixture(Some(DiplomaticRelationStatus::War), true, (20, 1), false);
     let negative = apply_gift(war.state.clone(), &war, 11, -1);
     assert_rejected(

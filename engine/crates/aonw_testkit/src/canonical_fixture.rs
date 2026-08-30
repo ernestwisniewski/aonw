@@ -4,10 +4,10 @@ use serde::Serialize;
 
 use crate::{JsonDifference, compare_json};
 
-/// Current fixture artifact version shared by canonical fixture producers and consumers.
-pub const CURRENT_CANONICAL_FIXTURE_VERSION: u64 = 3;
+/// Fixture artifact version shared by canonical fixture producers and consumers.
+pub const CANONICAL_FIXTURE_VERSION: u64 = 3;
 
-/// One independently reviewed current-contract engine fixture.
+/// One independently reviewed engine fixture.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CanonicalFixture {
     pub(crate) version: u64,
@@ -30,7 +30,7 @@ impl CanonicalFixture {
         &self.id
     }
 
-    /// Returns the current engine capability exercised by the fixture.
+    /// Returns the engine capability exercised by the fixture.
     #[must_use]
     pub fn capability(&self) -> &str {
         &self.capability
@@ -42,13 +42,13 @@ impl CanonicalFixture {
         &self.input
     }
 
-    /// Returns the committed canonical oracle output.
+    /// Returns the committed expected output.
     #[must_use]
     pub const fn expected(&self) -> &CanonicalFixtureOutput {
         &self.expected
     }
 
-    /// Compares a complete typed implementation output with the committed oracle.
+    /// Compares a complete typed implementation output with the expected output.
     ///
     /// # Panics
     ///
@@ -67,7 +67,7 @@ impl CanonicalFixture {
     }
 }
 
-/// Complete current-contract input with no historical state representation.
+/// Complete canonical engine input.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CanonicalFixtureInput {
     pub(crate) actor_player_id: Box<str>,
@@ -102,7 +102,7 @@ impl CanonicalFixtureInput {
         &self.state
     }
 
-    /// Returns the revision-bound current command DTO.
+    /// Returns the revision-bound command DTO.
     #[must_use]
     pub const fn command(&self) -> &ReplayCommandDto {
         &self.command

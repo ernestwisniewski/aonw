@@ -22,7 +22,7 @@ use aonw_engine::{calculate_empire_scores, resolve_game_outcome};
 mod terminal_conditions;
 
 #[test]
-fn empire_score_uses_every_current_weight_and_owned_reference() {
+fn empire_score_uses_every_weight_and_owned_reference() {
     let p1 = player("player-1");
     let p2 = player("player-2");
     let rules = score_rules(20);

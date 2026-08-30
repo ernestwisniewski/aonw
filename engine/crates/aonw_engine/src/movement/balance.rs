@@ -23,7 +23,7 @@ mod tests {
     use aonw_content::RulesetDefinition;
 
     #[test]
-    fn standard_allowances_match_dart_balance() {
+    fn standard_allowances_match_the_ruleset_balance() {
         assert_eq!(
             maximum_movement_units(RulesetDefinition::standard(), UnitKind::Commander, false),
             MovementUnits::new(10)

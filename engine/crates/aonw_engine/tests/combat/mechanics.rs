@@ -196,7 +196,7 @@ fn stored_city_artifacts_modify_defense_and_drop_only_on_destruction() {
 }
 
 #[test]
-fn surviving_city_keeps_ownership_and_records_current_health() {
+fn surviving_city_keeps_ownership_and_records_remaining_health() {
     let actor = player("player_1");
     let defender = player("player_2");
     let attacker_id = unit_id("warrior");

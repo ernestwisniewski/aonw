@@ -36,7 +36,7 @@ impl Default for FixtureLimits {
     }
 }
 
-/// Bounded loader for current canonical fixtures and corpora.
+/// Bounded loader for canonical fixtures and corpora.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct CanonicalFixtureLoader {
     limits: FixtureLimits,

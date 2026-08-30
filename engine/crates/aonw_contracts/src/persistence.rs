@@ -20,7 +20,7 @@ pub const MAX_REPLAY_LOG_JSON_BYTES: usize = 64 * 1024 * 1024;
 pub const MAX_REPLAY_ENTRY_COUNT: usize = 512;
 /// Maximum self-contained replay segments retained in one archive.
 pub const MAX_REPLAY_SEGMENT_COUNT: usize = 8;
-/// Current durable save and replay schema version.
+/// Durable save and replay schema version.
 pub const PERSISTENCE_FORMAT_VERSION: u16 = 2;
 
 /// Complete canonical save envelope.
@@ -192,7 +192,7 @@ pub struct ReplaySegmentDto {
     pub entries: Vec<ReplayEntryDto>,
 }
 
-/// Bounded current-format replay archive ordered from oldest to newest segment.
+/// Bounded replay archive ordered from oldest to newest segment.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReplayLogDto {

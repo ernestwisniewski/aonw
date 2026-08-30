@@ -153,7 +153,7 @@ pub struct CombatPreview {
 /// One exact deterministic random roll.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CombatRoll {
-    /// Signed oracle roll value.
+    /// Signed deterministic roll value.
     pub value: i32,
 }
 

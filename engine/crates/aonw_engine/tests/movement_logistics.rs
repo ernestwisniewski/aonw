@@ -261,7 +261,7 @@ fn detachment_preserves_army_count_and_chooses_next_free_identity() {
 }
 
 #[test]
-fn merchant_options_and_rejections_cover_current_rules() {
+fn merchant_options_and_rejections_cover_the_ruleset() {
     let map = map(6, 3);
     let actor = player("player-1");
     let foreign = player("player-2");
@@ -345,7 +345,7 @@ fn merchant_options_and_rejections_cover_current_rules() {
 }
 
 #[test]
-fn automation_and_detachment_fail_closed_on_current_state() {
+fn automation_and_detachment_fail_closed_on_invalid_state() {
     let map = map(3, 3);
     let actor = player("player-1");
     let scout_id = unit_id("scout-1");

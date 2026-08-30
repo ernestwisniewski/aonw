@@ -24,7 +24,7 @@ impl HexCoord {
         self.row
     }
 
-    /// Iterates adjacent coordinates in the canonical Dart odd-q order.
+    /// Iterates adjacent coordinates in canonical odd-q order.
     ///
     /// Coordinates that would overflow the `i32` representation are omitted.
     pub fn neighbors(self) -> impl Iterator<Item = Self> {
@@ -87,7 +87,7 @@ mod tests {
     }
 
     #[test]
-    fn even_column_neighbors_match_dart_order() {
+    fn even_column_neighbors_match_canonical_order() {
         let neighbors = HexCoord::new(0, 1).neighbors().collect::<Vec<_>>();
 
         assert_eq!(
@@ -104,7 +104,7 @@ mod tests {
     }
 
     #[test]
-    fn odd_column_neighbors_match_dart_order() {
+    fn odd_column_neighbors_match_canonical_order() {
         let neighbors = HexCoord::new(1, 1).neighbors().collect::<Vec<_>>();
 
         assert_eq!(

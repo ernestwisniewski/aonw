@@ -62,6 +62,11 @@
               "row": 0
             }
           ]
+        },
+        {
+          "discoveredHexes": [],
+          "playerId": "player_2",
+          "visibleHexes": []
         }
       ],
       "intendedAttacks": [],
@@ -146,7 +151,11 @@
       ],
       "revision": 227,
       "rows": 1,
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
@@ -156,16 +165,15 @@
         "kickedPlayerIds": [
           "player_2"
         ],
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [
-          "player_2"
-        ],
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {
           "player_2": 2
         },
         "turnStartedAt": "2026-07-01T12:00:00.000Z",
         "turnStatesByPlayerId": {
           "player_1": "active",
-          "player_2": "active"
+          "player_2": "finished"
         }
       },
       "units": [
@@ -320,6 +328,11 @@
               "row": 0
             }
           ]
+        },
+        {
+          "discoveredHexes": [],
+          "playerId": "player_2",
+          "visibleHexes": []
         }
       ],
       "intendedAttacks": [],
@@ -404,7 +417,11 @@
       ],
       "revision": 226,
       "rows": 1,
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
@@ -414,16 +431,15 @@
         "kickedPlayerIds": [
           "player_2"
         ],
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [
-          "player_2"
-        ],
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {
           "player_2": 2
         },
         "turnStartedAt": "2026-07-01T12:00:00.000Z",
         "turnStatesByPlayerId": {
           "player_1": "active",
-          "player_2": "active"
+          "player_2": "finished"
         }
       },
       "units": [

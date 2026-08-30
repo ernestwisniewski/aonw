@@ -68,7 +68,7 @@ const fn water_mill() -> BuildingProductionDefinition {
     }
 }
 
-// Keep the complete balance table compact and directly auditable against the oracle catalog.
+// Keep the complete balance table compact and directly auditable against the content catalog.
 #[rustfmt::skip]
 pub(super) const STANDARD_BUILDINGS: [BuildingProductionDefinition; 59] = [
     definition(Building::Granary, 6, NONE, EconomyYield::new(2, 0, 0, 0), 0, 0, 10_000),

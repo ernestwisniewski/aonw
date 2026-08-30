@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use aonw_domain::DiplomaticMessageResponse;
 
-/// Immutable proposal and truce balance characterized from the frozen oracle.
+/// Immutable proposal and truce balance for the standard ruleset.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DiplomacyBalance {

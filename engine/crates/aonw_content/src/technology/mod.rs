@@ -215,7 +215,7 @@ pub struct ScienceBalance {
 }
 
 impl ScienceBalance {
-    /// Standard science balance characterized from the frozen oracle.
+    /// Standard science balance defined by the content catalog.
     pub const STANDARD: Self = Self {
         base_science_per_city: 2,
         max_science_per_city: 0,
@@ -249,7 +249,7 @@ impl ScienceBalance {
 }
 
 impl TechnologyCostBalance {
-    /// Standard research balance characterized from the frozen oracle.
+    /// Standard research balance defined by the content catalog.
     pub const STANDARD: Self = Self {
         city_scaling: 1_800,
         default_boost_discount: 2_500,

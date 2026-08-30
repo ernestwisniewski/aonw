@@ -8,7 +8,7 @@ const MAX_RENDERED_VALUE_BYTES: usize = 256;
 pub enum DifferenceKind {
     /// Expected data is absent from the implementation output.
     Missing,
-    /// Implementation output contains data absent from the oracle.
+    /// Implementation output contains data absent from the expected result.
     Unexpected,
     /// Both sides have values at the path, but the values differ.
     ValueMismatch,

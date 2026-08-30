@@ -130,7 +130,11 @@
       ],
       "revision": 215,
       "rows": 1,
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
@@ -140,16 +144,15 @@
         "kickedPlayerIds": [
           "player_2"
         ],
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [
-          "player_2"
-        ],
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {
           "player_2": 2
         },
         "turnStartedAt": "2026-07-01T12:00:00.000Z",
         "turnStatesByPlayerId": {
           "player_1": "active",
-          "player_2": "active"
+          "player_2": "finished"
         }
       },
       "units": [
@@ -372,7 +375,11 @@
       ],
       "revision": 215,
       "rows": 1,
-      "outcome": {"condition": "ongoing", "winnerPlayerId": null, "scoreByPlayerId": {}},
+      "outcome": {
+        "condition": "ongoing",
+        "winnerPlayerId": null,
+        "scoreByPlayerId": {}
+      },
       "transportNetwork": [],
       "turn": 7,
       "turnLifecycle": {
@@ -382,16 +389,15 @@
         "kickedPlayerIds": [
           "player_2"
         ],
-        "requiredSubmissionPlayerIds":[],"submittedPlayerIds": [
-          "player_2"
-        ],
+        "requiredSubmissionPlayerIds": [],
+        "submittedPlayerIds": [],
         "timeoutStreaksByPlayerId": {
           "player_2": 2
         },
         "turnStartedAt": "2026-07-01T12:00:00.000Z",
         "turnStatesByPlayerId": {
           "player_1": "active",
-          "player_2": "active"
+          "player_2": "finished"
         }
       },
       "units": [

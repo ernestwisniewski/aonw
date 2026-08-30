@@ -82,7 +82,7 @@ fn city_attack_escalates_expires_penalizes_both_observer_orderings_and_ends_trad
 }
 
 #[test]
-fn attack_status_severity_is_total_for_the_current_status_surface() {
+fn attack_status_severity_covers_every_status() {
     assert_eq!(
         attack_status_severity(DiplomaticRelationStatus::Friendly),
         0

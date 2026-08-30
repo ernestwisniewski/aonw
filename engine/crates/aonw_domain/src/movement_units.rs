@@ -60,7 +60,7 @@ mod tests {
     use super::MovementUnits;
 
     #[test]
-    fn movement_points_use_the_dart_fixed_point_scale() {
+    fn movement_points_use_the_fixed_point_scale() {
         assert_eq!(
             MovementUnits::checked_from_whole_points(3),
             Some(MovementUnits::new(6))

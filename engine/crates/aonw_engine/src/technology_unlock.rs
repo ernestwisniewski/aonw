@@ -62,7 +62,7 @@ pub enum TechnologyCombatStat {
 /// One exact ordered technology modifier consumed by combat.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TechnologyCombatModifier {
-    /// Oracle-compatible stable label.
+    /// Stable content label.
     pub label: Box<str>,
     /// Affected combat statistic.
     pub target: TechnologyCombatStat,
@@ -143,7 +143,7 @@ impl<'query> TechnologyUnlockQuery<'query> {
         Ok(TechnologyAvailability::Available)
     }
 
-    /// Computes the oracle-characterized cost using deterministic fixed-point arithmetic.
+    /// Computes the content-defined cost using deterministic fixed-point arithmetic.
     ///
     /// A fulfilled boost applies the definition's first discount only when that
     /// technology actually declares a boost.

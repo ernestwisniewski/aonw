@@ -11,7 +11,7 @@ use aonw_local_runtime::{LocalRuntime, OpenSession};
 use super::{World, unit};
 
 #[test]
-fn aggressive_profile_declines_friendship_without_a_legacy_policy_path() {
+fn aggressive_profile_declines_friendship_by_policy() {
     let world = World::new("ai-policy-profile-diplomacy", 4, 4);
     let proposal = DiplomaticProposal::try_new(
         "proposal-1".to_owned(),

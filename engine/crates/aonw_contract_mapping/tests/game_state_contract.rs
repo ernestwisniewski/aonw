@@ -474,7 +474,7 @@ fn canonical_json_has_one_semantic_identity_and_explicit_sequence_order() {
 }
 
 #[test]
-fn identity_and_lifecycle_round_trip_preserves_typed_dart_values() {
+fn identity_and_lifecycle_round_trip_preserves_typed_values() {
     let source = contract();
     let state = decode_game_state(source.clone()).expect("decode complete identity");
     let lifecycle = state.match_lifecycle();
@@ -647,7 +647,7 @@ fn aggregate_rebuild_preserves_complete_objective_state() {
 }
 
 #[test]
-fn current_turn_skip_round_trip_preserves_restore_balance() {
+fn turn_skip_round_trip_preserves_restore_balance() {
     let mut source = contract();
     let unit = &mut source.units[0];
     unit.movement_units = 0;

@@ -63,7 +63,7 @@ struct EffectCase {
 }
 
 #[test]
-fn catalog_hash_prerequisites_costs_and_unlock_breakdowns_match_oracle() {
+fn catalog_hash_prerequisites_costs_and_unlock_breakdowns_are_exact() {
     let manifest = manifest();
     let ruleset = RulesetDefinition::standard();
     assert_eq!(
@@ -108,7 +108,7 @@ fn catalog_hash_prerequisites_costs_and_unlock_breakdowns_match_oracle() {
 }
 
 #[test]
-fn combat_modifiers_preserve_per_technology_labels_and_oracle_order() {
+fn combat_modifiers_preserve_per_technology_labels_and_catalog_order() {
     let research = PlayerResearchState::try_new(
         [
             TechnologyId::Tactics,

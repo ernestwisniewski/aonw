@@ -24,5 +24,5 @@ pub(crate) use commands::{
 pub(crate) use rules::query_options;
 pub(crate) use rush::apply_rush;
 pub(crate) use turn::{
-    ResearchProjectScience, advance_turn_production, current_research_project_science,
+    ResearchProjectScience, advance_turn_production, selected_research_project_science,
 };
