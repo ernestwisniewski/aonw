@@ -3,10 +3,15 @@ extends AonwMapViewReader
 
 const MapSource := preload("res://game/application/map/map_source.gd")
 const MapViewMapper := preload("res://game/infrastructure/map/map_view_mapper.gd")
+const ClientProtocol := preload("res://game/infrastructure/engine/client_protocol.gd")
+const ClientResponseDecoder := preload(
+	"res://game/infrastructure/engine/client_response_decoder.gd"
+)
 
 var _client: RefCounted
 var _documents: RefCounted
 var _mapper := MapViewMapper.new()
+var _response_decoder := ClientResponseDecoder.new(ClientProtocol.API_VERSION)
 
 func _init(client: RefCounted, documents: RefCounted) -> void:
 	assert(client != null, "Map inspection client is required")
@@ -22,19 +27,10 @@ func load_map(source: AonwMapSource) -> Dictionary:
 		"type": "inspectMap",
 		"mapDocument": loaded.get("document", ""),
 	})
-	var outcome: Variant = envelope.get("outcome")
-	if not outcome is Dictionary:
-		return _failure("Rust returned an invalid map inspection envelope")
-	if outcome.get("status", "") == "failure":
-		var error: Variant = outcome.get("error")
-		return _failure(
-			"Rust: %s" % (
-				error.get("message", "map inspection failed")
-				if error is Dictionary
-				else "map inspection failed"
-			)
-		)
-	var response: Variant = outcome.get("response")
+	var decoded := _response_decoder.decode_envelope(envelope, "mapInspected")
+	if not decoded["ok"]:
+		return _failure("Rust: %s" % decoded["message"])
+	var response: Variant = decoded["value"]
 	if (
 		not response is Dictionary
 		or response.size() != 2

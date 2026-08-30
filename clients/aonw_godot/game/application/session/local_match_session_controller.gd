@@ -2,11 +2,19 @@ class_name AonwLocalMatchSessionController
 extends RefCounted
 
 const ClientFailure := preload("res://game/application/session/client_failure.gd")
+const REQUIRED_ENGINE_FEATURES: Array[StringName] = [
+	&"matchStart",
+	&"snapshot",
+	&"reachable",
+	&"routePlan",
+	&"moveUnit",
+]
 
 enum Lifecycle { CLOSED, OPENING, OPEN, CLOSING }
 
 var _gateway: RefCounted
 var _stamp: AonwClientReadModels.Stamp
+var _engine_features: AonwClientReadModels.EngineFeatureSet
 var _lifecycle := Lifecycle.CLOSED
 var _generation := 0
 var _movement_query_correlation := 0
@@ -30,8 +38,10 @@ func generation() -> int:
 func is_open() -> bool:
 	return _lifecycle == Lifecycle.OPEN
 
-func capabilities() -> Dictionary:
-	return _gateway.call("capabilities")
+func engine_features() -> Dictionary:
+	if _engine_features != null:
+		return {"ok": true, "value": _engine_features}
+	return _gateway.call("engine_features")
 
 func open(map_document: String, scenario_document: String, actor_player_id: String) -> Dictionary:
 	return _open_with(&"open_session", [
@@ -87,6 +97,7 @@ func close() -> Dictionary:
 	var result: Dictionary = _gateway.call("close_session")
 	if result["ok"]:
 		_stamp = null
+		_engine_features = null
 		_lifecycle = Lifecycle.CLOSED
 	else:
 		_lifecycle = Lifecycle.OPEN
@@ -148,11 +159,28 @@ func _open_with(method: StringName, arguments: Array) -> Dictionary:
 	_generation += 1
 	_lifecycle = Lifecycle.OPENING
 	_stamp = null
+	_engine_features = null
+	var negotiated: Dictionary = _gateway.call("engine_features")
+	if not negotiated["ok"]:
+		_lifecycle = Lifecycle.CLOSED
+		return negotiated
+	var features: AonwClientReadModels.EngineFeatureSet = negotiated["value"]
+	var missing := features.missing(REQUIRED_ENGINE_FEATURES)
+	if not missing.is_empty():
+		_lifecycle = Lifecycle.CLOSED
+		return _failure(
+			"unsupported_engine_features",
+			"The native engine is missing required features: %s" % [
+				", ".join(missing),
+			],
+		)
 	var result: Dictionary = _gateway.callv(method, arguments)
 	if result["ok"]:
 		_stamp = result["value"]
+		_engine_features = features
 		_lifecycle = Lifecycle.OPEN
 	else:
+		_engine_features = null
 		_lifecycle = Lifecycle.CLOSED
 	return result
 

@@ -63,6 +63,40 @@ class UnsupportedClientTransport:
 		requested = true
 		return {}
 
+class MissingFeatureTransport:
+	extends RefCounted
+
+	var open_requested := false
+
+	func is_available() -> bool:
+		return true
+
+	func client_api_version() -> int:
+		return 7
+
+	func request(body: Dictionary) -> Dictionary:
+		if body.get("type", "") == "capabilities":
+			return _success({
+				"type": "capabilities",
+				"features": ["matchStart", "snapshot", "moveUnit"],
+			})
+		open_requested = true
+		return _success({"type": "sessionOpened", "stamp": _stamp(0)})
+
+	func _success(response: Dictionary) -> Dictionary:
+		return {
+			"apiVersion": 7,
+			"outcome": {"status": "success", "response": response},
+		}
+
+	func _stamp(revision: int) -> Dictionary:
+		return {
+			"revision": revision,
+			"stateDigest": "state",
+			"mapHash": "map",
+			"rulesetHash": "ruleset",
+		}
+
 class MalformedSnapshotTransport:
 	extends RefCounted
 
@@ -73,8 +107,16 @@ class MalformedSnapshotTransport:
 		return 7
 
 	func request(body: Dictionary) -> Dictionary:
-		if body.get("type", "") == "openSession":
-			return _success({"type": "sessionOpened", "stamp": _stamp(7)})
+		match body.get("type", ""):
+			"capabilities":
+				return _success({
+					"type": "capabilities",
+					"features": [
+						"matchStart", "snapshot", "reachable", "routePlan", "moveUnit",
+					],
+				})
+			"openSession":
+				return _success({"type": "sessionOpened", "stamp": _stamp(7)})
 		return _success({
 			"type": "snapshot",
 			"snapshot": {
@@ -119,7 +161,9 @@ class TypedGatewayTransport:
 			"capabilities":
 				return _success({
 					"type": "capabilities",
-					"features": ["snapshot", "moveUnit"],
+					"features": [
+						"matchStart", "snapshot", "reachable", "routePlan", "moveUnit",
+					],
 				})
 			"advanceAiTurn":
 				return _success({
@@ -156,6 +200,15 @@ class DeferredLifecycleGateway:
 
 	func is_available() -> bool:
 		return true
+
+	func engine_features() -> Dictionary:
+		var value := AonwClientReadModels.EngineFeatureSet.new()
+		var features: Array[StringName] = [
+			&"matchStart", &"snapshot", &"reachable", &"routePlan", &"moveUnit",
+		]
+		features.make_read_only()
+		value.features = features
+		return {"ok": true, "value": value}
 
 	func open_session(
 		_map_document: String,
@@ -314,6 +367,15 @@ class DeferredMovementGateway:
 
 	func is_available() -> bool:
 		return true
+
+	func engine_features() -> Dictionary:
+		var value := AonwClientReadModels.EngineFeatureSet.new()
+		var features: Array[StringName] = [
+			&"matchStart", &"snapshot", &"reachable", &"routePlan", &"moveUnit",
+		]
+		features.make_read_only()
+		value.features = features
+		return {"ok": true, "value": value}
 
 	func open_session(
 		_map_document: String,
@@ -740,6 +802,7 @@ func _test_native_engine_boundary() -> void:
 	_check(
 		session.get("_gateway").get("_transport") == transport
 		and transport.request_types == [
+			"capabilities",
 			"openSession",
 			"snapshot",
 			"query",
@@ -753,6 +816,7 @@ func _test_native_engine_boundary() -> void:
 			"exportReplay",
 			"verifyReplay",
 			"closeSession",
+			"capabilities",
 			"openSave",
 		],
 		"one Godot session keeps one Rust transport for its complete lifecycle",
@@ -1006,7 +1070,7 @@ func _test_shared_client_contract() -> void:
 
 	var foreign := LocalMatchSessionController.new(
 		LocalMatchGateway.new(ForeignVersionTransport.new()),
-	).capabilities()
+	).engine_features()
 	_check(
 		not foreign["ok"]
 		and foreign["code"] == "unsupported_client_api"
@@ -1017,12 +1081,23 @@ func _test_shared_client_contract() -> void:
 	var unsupported_transport := UnsupportedClientTransport.new()
 	var unsupported := LocalMatchSessionController.new(
 		LocalMatchGateway.new(unsupported_transport),
-	).capabilities()
+	).engine_features()
 	_check(
 		not unsupported["ok"]
 		and unsupported["code"] == "unsupported_client_api"
 		and not unsupported_transport.requested,
 		"Godot rejects an incompatible transport before dispatch",
+	)
+	var missing_feature_transport := MissingFeatureTransport.new()
+	var missing_features := LocalMatchSessionController.new(
+		LocalMatchGateway.new(missing_feature_transport),
+	).open("map", "scenario", "player")
+	_check(
+		not missing_features["ok"]
+		and missing_features["code"] == "unsupported_engine_features"
+		and _has_failure_kind(missing_features, ClientFailure.Kind.COMPATIBILITY)
+		and not missing_feature_transport.open_requested,
+		"Godot negotiates required engine features before opening a session",
 	)
 
 	var malformed_controller := LocalMatchSessionController.new(
@@ -1041,21 +1116,21 @@ func _test_shared_client_contract() -> void:
 		LocalMatchGateway.new(TypedGatewayTransport.new()),
 	)
 	var typed_opened := typed_controller.open("map", "scenario", "player")
-	var capabilities: Dictionary = typed_controller.capabilities()
+	var engine_features: Dictionary = typed_controller.engine_features()
 	var ai_turn: Dictionary = typed_controller.advance_ai_turn("ai-player", 4)
 	_check(
 		typed_opened["ok"]
-		and capabilities["ok"]
-		and capabilities["value"] is AonwClientReadModels.CapabilitySet
-		and capabilities["value"].supports(&"snapshot")
-		and not capabilities["value"].supports(&"workers")
+		and engine_features["ok"]
+		and engine_features["value"] is AonwClientReadModels.EngineFeatureSet
+		and engine_features["value"].supports(&"snapshot")
+		and not engine_features["value"].supports(&"workers")
 		and ai_turn["ok"]
 		and ai_turn["value"] is AonwClientReadModels.AiTurnResult
 		and ai_turn["value"].actor_player_id == "ai-player"
 		and ai_turn["value"].executed_commands == 3
 		and ai_turn["value"].completed_turn
 		and typed_controller.revision() == 9,
-		"Godot exposes capability and AI envelopes only as typed application results",
+		"Godot exposes negotiated features and AI envelopes as typed application results",
 	)
 	for invalid_integer: Variant in [3.5, "3"]:
 		var invalid_controller := LocalMatchSessionController.new(
@@ -1071,7 +1146,7 @@ func _test_shared_client_contract() -> void:
 
 	var extra_envelope := LocalMatchSessionController.new(
 		LocalMatchGateway.new(ExtraEnvelopeFieldTransport.new()),
-	).capabilities()
+	).engine_features()
 	_check(
 		not extra_envelope["ok"]
 		and extra_envelope["code"] == "invalid_client_response"

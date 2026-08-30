@@ -13,6 +13,7 @@ const KINDS_BY_CODE := {
 	&"invalid_native_response": Kind.PROTOCOL,
 	&"unsupported_client_api": Kind.COMPATIBILITY,
 	&"unsupported_native_build": Kind.COMPATIBILITY,
+	&"unsupported_engine_features": Kind.COMPATIBILITY,
 }
 
 var kind: int

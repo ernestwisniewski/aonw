@@ -4,6 +4,9 @@ extends RefCounted
 const ReadModelDecoder := preload(
 	"res://game/infrastructure/engine/client_read_model_decoder.gd"
 )
+const ClientResponseDecoder := preload(
+	"res://game/infrastructure/engine/client_response_decoder.gd"
+)
 const ReadModels := preload(
 	"res://game/application/session/client_read_models.gd"
 )
@@ -11,7 +14,7 @@ const ClientFailure := preload("res://game/application/session/client_failure.gd
 const ClientProtocol := preload(
 	"res://game/infrastructure/engine/client_protocol.gd"
 )
-const FEATURE_NAMES := [
+const ENGINE_FEATURE_NAMES := [
 	"inspectMap", "matchStart", "actorHandoff", "aiTurns", "snapshot",
 	"reachable", "routePlan", "moveUnit", "unitActions", "turnKernel",
 	"movementLogistics", "combat", "cities", "workers", "production",
@@ -21,15 +24,17 @@ const FEATURE_NAMES := [
 const MOVEMENT_QUERY_KEY := &"movement_query"
 
 var _transport: RefCounted
+var _response_decoder: AonwClientResponseDecoder
 
 func _init(transport: RefCounted) -> void:
 	assert(transport != null, "Client transport is required")
 	_transport = transport
+	_response_decoder = ClientResponseDecoder.new(ClientProtocol.API_VERSION)
 
 func is_available() -> bool:
 	return bool(_transport.call("is_available"))
 
-func capabilities() -> Dictionary:
+func engine_features() -> Dictionary:
 	var extracted := _extract(
 		_execute({"type": "capabilities"}, "capabilities"),
 		"features",
@@ -44,13 +49,14 @@ func capabilities() -> Dictionary:
 	for raw_feature in raw_features:
 		if (
 			not raw_feature is String
-			or raw_feature not in FEATURE_NAMES
+			or raw_feature not in ENGINE_FEATURE_NAMES
 			or seen.has(raw_feature)
 		):
 			return _failure("invalid_client_response", "Rust returned invalid capabilities")
 		seen[raw_feature] = true
 		features.append(StringName(raw_feature))
-	var result := ReadModels.CapabilitySet.new()
+	features.make_read_only()
+	var result := ReadModels.EngineFeatureSet.new()
 	result.features = features
 	return {"ok": true, "value": result}
 
@@ -297,7 +303,7 @@ func _execute(request: Dictionary, response_type: String) -> Dictionary:
 			"The client transport uses an unsupported API version",
 		)
 	var envelope: Variant = _transport.call("request", request)
-	return _decode_envelope(envelope, response_type)
+	return _response_decoder.decode_envelope(envelope, response_type)
 
 func _execute_async(
 	request: Dictionary,
@@ -315,45 +321,11 @@ func _execute_async(
 			request,
 			cancellation_key,
 		)
-		return _decode_envelope(coalesced_envelope, response_type)
+		return _response_decoder.decode_envelope(coalesced_envelope, response_type)
 	if not _transport.has_method("request_async"):
 		return _execute(request, response_type)
 	var envelope: Variant = await _transport.call("request_async", request)
-	return _decode_envelope(envelope, response_type)
-
-func _decode_envelope(envelope: Variant, response_type: String) -> Dictionary:
-	if not _has_exact_fields(envelope, ["apiVersion", "outcome"]):
-		return _failure("invalid_client_response", "Rust returned an invalid response envelope")
-	if envelope["apiVersion"] != ClientProtocol.API_VERSION:
-		return _failure(
-			"unsupported_client_api",
-			"Rust returned an unsupported client API version",
-		)
-	var outcome: Variant = envelope["outcome"]
-	if not outcome is Dictionary or not outcome.get("status") is String:
-		return _failure("invalid_client_response", "Rust returned an invalid response envelope")
-	match outcome["status"]:
-		"failure":
-			if not _has_exact_fields(outcome, ["status", "error"]):
-				return _failure("invalid_client_response", "Rust returned an invalid failure")
-			var error: Variant = outcome["error"]
-			if not _has_exact_fields(error, ["code", "message"]):
-				return _failure("invalid_client_response", "Rust returned an invalid failure")
-			if not error["code"] is String or not error["message"] is String:
-				return _failure("invalid_client_response", "Rust returned an invalid failure")
-			return _failure(error["code"], error["message"])
-		"success":
-			if not _has_exact_fields(outcome, ["status", "response"]):
-				return _failure("invalid_client_response", "Rust returned an invalid success")
-			var response: Variant = outcome["response"]
-			if not response is Dictionary or response.get("type", "") != response_type:
-				return _failure(
-					"invalid_client_response",
-					"Rust returned an unexpected response type",
-				)
-			return {"ok": true, "value": response}
-		_:
-			return _failure("invalid_client_response", "Rust returned an invalid outcome")
+	return _response_decoder.decode_envelope(envelope, response_type)
 
 func _decode_ai_turn(result: Dictionary) -> Dictionary:
 	if not result["ok"]:

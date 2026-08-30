@@ -8,12 +8,20 @@ class Stamp:
 	var map_hash: String
 	var ruleset_hash: String
 
-class CapabilitySet:
+class EngineFeatureSet:
 	extends RefCounted
 	var features: Array[StringName]
 
 	func supports(feature: StringName) -> bool:
 		return feature in features
+
+	func missing(required: Array[StringName]) -> Array[StringName]:
+		var result: Array[StringName] = []
+		for feature in required:
+			if not supports(feature):
+				result.append(feature)
+		result.make_read_only()
+		return result
 
 class AiTurnResult:
 	extends RefCounted
