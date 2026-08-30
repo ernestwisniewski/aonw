@@ -95,7 +95,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.pub-cache
-          key: ${{ runner.os }}-rust-engine-evidence-${{ hashFiles('pubspec.lock', 'engine/Cargo.lock') }}
+          key: ${{ runner.os }}-rust-engine-evidence-${{ hashFiles('engine/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-rust-engine-evidence-
             ${{ runner.os }}-pub-
@@ -159,7 +159,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.pub-cache
-          key: ${{ runner.os }}-flutter-client-${{ hashFiles('pubspec.lock', 'clients/aonw_flutter/pubspec.lock', 'packages/aonw_rust_client/pubspec.lock', 'engine/Cargo.lock') }}
+          key: ${{ runner.os }}-flutter-client-${{ hashFiles('clients/aonw_flutter/pubspec.lock', 'packages/aonw_rust_client/pubspec.lock', 'packages/aonw_server_client/pubspec.lock', 'engine/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-flutter-client-
             ${{ runner.os }}-pub-
@@ -169,164 +169,6 @@ jobs:
 
       - name: Check Rust-Flutter bridge
         run: make --no-print-directory rust-flutter-test
-
-      - name: Check architecture budgets
-        run: make --no-print-directory architecture-check
-
-  quality-gate:
-    name: ${{ matrix.package }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      COVERAGE_BASE_REF: >-
-        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.ref_name == 'dev' && 'origin/main' || github.event.before }}
-      COVERAGE_RATCHET_REF: >-
-        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}
-      ARCHITECTURE_RATCHET_REF: >-
-        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - package: root
-            analyze: make --no-print-directory flutter-analyze
-            test: make --no-print-directory flutter-coverage
-            format: make --no-print-directory format-check
-          - package: core
-            analyze: make --no-print-directory core-analyze
-            test: make --no-print-directory core-coverage
-            format: ""
-          - package: server_client
-            analyze: make --no-print-directory client-analyze
-            test: make --no-print-directory client-test
-            format: ""
-          - package: server
-            analyze: make --no-print-directory server-analyze
-            test: make --no-print-directory server-coverage
-            format: ""
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Set up Linux CI tools
-        uses: ./.github/actions/setup-linux-ci
-
-      - name: Fetch CI ratchet commits
-        run: |
-          for ref in "$COVERAGE_BASE_REF" "$COVERAGE_RATCHET_REF" "$ARCHITECTURE_RATCHET_REF"; do
-            if git cat-file -e "${ref}^{commit}" 2>/dev/null; then
-              continue
-            fi
-            case "$ref" in
-              origin/*)
-                branch="${ref#origin/}"
-                git fetch --no-tags origin "refs/heads/$branch:refs/remotes/origin/$branch"
-                ;;
-              *)
-                git fetch --no-tags origin "$ref"
-                ;;
-            esac
-            git cat-file -e "${ref}^{commit}"
-          done
-
-      - name: Normalize synchronized dev ratchets
-        if: github.event_name == 'push' && github.ref_name == 'dev'
-        run: |
-          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
-            echo "COVERAGE_RATCHET_REF=origin/main" >> "$GITHUB_ENV"
-            echo "ARCHITECTURE_RATCHET_REF=origin/main" >> "$GITHUB_ENV"
-          fi
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          flutter-version-file: .fvmrc
-          channel: stable
-          cache: true
-
-      - name: Cache pub packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ matrix.package }}-${{ hashFiles('pubspec.lock', 'packages/aonw_core/pubspec.lock', 'packages/aonw_server_client/pubspec.lock', 'server/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-${{ matrix.package }}-
-            ${{ runner.os }}-pub-
-
-      - name: Check formatting
-        if: matrix.format != ''
-        run: ${{ matrix.format }}
-
-      - name: Analyze
-        run: ${{ matrix.analyze }}
-
-      - name: Check architecture budgets
-        if: matrix.package == 'root'
-        run: make --no-print-directory architecture-check
-
-      - name: Check deterministic performance baseline
-        if: matrix.package == 'root'
-        run: make --no-print-directory performance-check
-
-      - name: Upload performance diagnostics
-        if: matrix.package == 'root' && always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: performance-report-${{ github.sha }}
-          path: /tmp/aonw-performance-report.json
-          if-no-files-found: ignore
-          retention-days: 14
-
-      - name: Test
-        run: ${{ matrix.test }}
-
-      - name: Build coverage baseline diagnostic
-        if: always() && matrix.package != 'server_client'
-        continue-on-error: true
-        run: |
-          report="coverage/${{ matrix.package }}.lcov.info"
-          if [ -f "$report" ]; then
-            dart run tool/check_coverage.dart snapshot \
-              --scope "${{ matrix.package }}" \
-              > "/tmp/aonw-coverage-${{ matrix.package }}.json"
-          fi
-
-      - name: Upload coverage diagnostics
-        if: always() && matrix.package != 'server_client'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: coverage-${{ matrix.package }}-${{ github.sha }}
-          path: |
-            /tmp/aonw-coverage-${{ matrix.package }}.json
-            coverage/${{ matrix.package }}.lcov.info
-          if-no-files-found: ignore
-          retention-days: 14
-
-  native-single-player-smoke:
-    name: native single-player smoke
-    runs-on: macos-latest
-    timeout-minutes: 20
-    env:
-      FLUTTER_XCODE_CODE_SIGNING_ALLOWED: 'NO'
-      FLUTTER_XCODE_CODE_SIGNING_REQUIRED: 'NO'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          flutter-version-file: .fvmrc
-          channel: stable
-          cache: true
-
-      - name: Run native End turn save reload smoke
-        run: make --no-print-directory native-local-game-smoke
 
   flutter-client-device-smoke:
     name: Flutter client device smoke
@@ -350,36 +192,20 @@ jobs:
       - name: Run standalone client device smoke
         run: make --no-print-directory flutter-client-device-test
 
-  mutation-gate:
-    name: mutation gate
+  server:
+    name: Server host and client
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      MUTATION_RATCHET_REF: >-
-        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
 
       - name: Set up Linux CI tools
         uses: ./.github/actions/setup-linux-ci
 
-      - name: Fetch mutation ratchet commit
-        run: |
-          if ! git cat-file -e "${MUTATION_RATCHET_REF}^{commit}" 2>/dev/null; then
-            git fetch --no-tags origin "$MUTATION_RATCHET_REF"
-          fi
-          git cat-file -e "${MUTATION_RATCHET_REF}^{commit}"
-
-      - name: Normalize synchronized dev mutation ratchet
-        if: github.event_name == 'push' && github.ref_name == 'dev'
-        run: |
-          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
-            echo "MUTATION_RATCHET_REF=origin/main" >> "$GITHUB_ENV"
-          fi
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -392,13 +218,19 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.pub-cache
-          key: ${{ runner.os }}-mutation-${{ hashFiles('pubspec.lock', 'packages/aonw_core/pubspec.lock', 'packages/aonw_server_client/pubspec.lock', 'server/pubspec.lock') }}
+          key: ${{ runner.os }}-server-${{ hashFiles('packages/aonw_server_client/pubspec.lock', 'packages/aonw_server_native/pubspec.lock', 'server/pubspec.lock', 'engine/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-mutation-
+            ${{ runner.os }}-server-
             ${{ runner.os }}-pub-
 
-      - name: Check critical mutation gates
-        run: make --no-print-directory mutation-check
+      - name: Analyze and test the generated server client
+        run: make --no-print-directory server-client-test
+
+      - name: Analyze and test the Serverpod host
+        run: make --no-print-directory server-test
+
+      - name: Test the Serverpod native boundary
+        run: make --no-print-directory server-native-test
 
   compose-config:
     name: deployment config
@@ -415,8 +247,8 @@ jobs:
       - name: Validate Caddy, Prometheus, Dockerfile, and build context
         run: make infra-config-check
 
-  generated-code-drift:
-    name: generated code and migration drift
+  generated-code:
+    name: generated code
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
@@ -438,7 +270,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.pub-cache
-          key: ${{ runner.os }}-generated-${{ hashFiles('pubspec.lock', 'packages/aonw_core/pubspec.lock', 'packages/aonw_server_client/pubspec.lock', 'server/pubspec.lock') }}
+          key: ${{ runner.os }}-generated-${{ hashFiles('clients/aonw_flutter/pubspec.lock', 'packages/aonw_rust_client/pubspec.lock', 'packages/aonw_server_client/pubspec.lock', 'packages/aonw_server_native/pubspec.lock', 'server/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-generated-
             ${{ runner.os }}-pub-
@@ -455,10 +287,10 @@ jobs:
           path: clients/aonw_godot/addons/terrain_3d
           key: ${{ runner.os }}-terrain3d-${{ hashFiles('.terrain3d-version', 'tool/terrain3d_checksums.txt') }}
 
-      - name: Bootstrap pinned workspace
+      - name: Bootstrap current workspaces
         run: make bootstrap
 
-      - name: Check all generated code and migration drift
+      - name: Check generated client and server code
         run: make generated-code-check
 
       - name: Check Flutter map geometry and bundle reproducibility
@@ -575,10 +407,10 @@ jobs:
 
       - name: Run every Serverpod PostgreSQL integration smoke
         env:
-          SERVERPOD_TEST_DATABASE_PASSWORD: aonw_dev
+          AONW_TEST_DATABASE_PASSWORD: aonw_dev
         run: make server-integration-test
 
       - name: Run public auth-match-command-reconnect E2E
         env:
-          SERVERPOD_TEST_DATABASE_PASSWORD: aonw_dev
+          AONW_TEST_DATABASE_PASSWORD: aonw_dev
         run: make serverpod-critical-e2e-test

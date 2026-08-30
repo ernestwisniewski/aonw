@@ -10,7 +10,12 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 "${repo_root}/tool/bootstrap_terrain3d.sh"
 "${repo_root}/tool/bootstrap_rust_quality.sh"
 
-for workspace in . clients/aonw_flutter packages/aonw_core packages/aonw_server_client server; do
+for workspace in \
+  clients/aonw_flutter \
+  packages/aonw_rust_client \
+  packages/aonw_server_client \
+  packages/aonw_server_native \
+  server; do
   for input in pubspec.yaml pubspec.lock; do
     if [[ ! -f "${repo_root}/${workspace}/${input}" ]]; then
       echo "Missing locked workspace input: ${workspace}/${input}" >&2
@@ -19,19 +24,17 @@ for workspace in . clients/aonw_flutter packages/aonw_core packages/aonw_server_
   done
 done
 
-echo "Resolving root Flutter dependencies..."
-(
-  cd "${repo_root}"
-  flutter pub get --enforce-lockfile
-)
-
 echo "Resolving Flutter client dependencies..."
 (
   cd "${repo_root}/clients/aonw_flutter"
   flutter pub get --enforce-lockfile
 )
 
-for package in packages/aonw_core packages/aonw_server_client server; do
+for package in \
+  packages/aonw_rust_client \
+  packages/aonw_server_client \
+  packages/aonw_server_native \
+  server; do
   echo "Resolving ${package} Dart dependencies..."
   (
     cd "${repo_root}/${package}"

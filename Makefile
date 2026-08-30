@@ -250,12 +250,12 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check p0-check dependency-boundaries client-boundary-test rust-determinism-check rust-canonical-fixture-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage stage-engine-docs build-engine-docs deploy-engine-docs deploy-engine-docs-files download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats health-engine-docs prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile godot-map-bundle-check map-stage-1-check stage-1-visual-evidence rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check rust-turn-kernel-check rust-diplomacy-policy-check rust-tech-gate-check rust-movement-logistics-check rust-combat-check rust-city-check rust-worker-check rust-engine-check rust-engine-evidence-check rust-engine-quality-check rust-engine-deep-check
+.PHONY: help bootstrap toolchain-check p0-check dependency-boundaries client-boundary-test rust-determinism-check rust-canonical-fixture-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies server-client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze server-client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test server-client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage stage-engine-docs build-engine-docs deploy-engine-docs deploy-engine-docs-files download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats health-engine-docs prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile godot-map-bundle-check map-stage-1-check stage-1-visual-evidence rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check rust-turn-kernel-check rust-diplomacy-policy-check rust-tech-gate-check rust-movement-logistics-check rust-combat-check rust-city-check rust-worker-check rust-engine-check rust-engine-evidence-check rust-engine-quality-check rust-engine-deep-check
 
 .PHONY: rust-integrated-turn-check rust-ai-strength-check rust-ai-check rust-persistence-check
 .PHONY: rust-security-policy-test rust-security-policy-check rust-security-tool-versions rust-mutation-check rust-fuzz-smoke rust-miri-check rust-ffi-sanitizer-check rust-engine-security-check rust-release-metadata-policy-test rust-release-metadata-policy-check rust-release-metadata-tool-versions rust-release-metadata-check rust-engine-completion-check
 .PHONY: rust-godot-editor-build godot-runtime-check
-.PHONY: flutter-client-map-contract-test flutter-client-dependencies flutter-client-format-check flutter-client-analyze flutter-client-test flutter-client-check flutter-client-coverage-report flutter-client-device-test flutter-client-performance-pilot flutter-client-performance-check flutter-client-run flutter-client-release-build flutter-client-release-check
+.PHONY: flutter-client-map-contract-test flutter-client-dependencies rust-client-dependencies server-native-dependencies server-native-test flutter-client-format-check flutter-client-analyze flutter-client-test flutter-client-check flutter-client-coverage-report flutter-client-device-test flutter-client-performance-pilot flutter-client-performance-check flutter-client-run flutter-client-release-build flutter-client-release-check
 
 help:
 	@echo "AONW deploy helpers"
@@ -404,9 +404,8 @@ help:
 	@echo "  PERFORMANCE_FRAME_DEVICE_ID=... Required pinned-device identifier for the frame gate"
 	@echo "  PUB_CACHE=/path/to/cache      Dart global package cache. Default: $(PUB_CACHE)"
 	@echo "  SERVERPOD_CLI=/path/to/serverpod Override the CLI binary. Default: $(SERVERPOD_CLI)"
-	@echo "  AONW_TEST_DATABASE_PASSWORD=... PostgreSQL test password; falls back to SERVERPOD_TEST_DATABASE_PASSWORD, then aonw_dev"
+	@echo "  AONW_TEST_DATABASE_PASSWORD=... PostgreSQL test password. Default: aonw_dev"
 	@echo "  AONW_TEST_DATABASE_PORT=... PostgreSQL test port. Default: 5432"
-	@echo "  SERVERPOD_TEST_DATABASE_PASSWORD=... Legacy PostgreSQL test password fallback"
 	@echo "  AONW_SERVERPOD_CRITICAL_E2E_PORT=... optional critical E2E API port; default allocates and locks a free triplet"
 	@echo "  SERVERPOD_SMOKE_HOST=http://... serverpod-runtime-smoke only. Default: $(SERVERPOD_SMOKE_HOST)"
 	@echo "  SERVERPOD_SEED_HOST=http://...  serverpod-seed-test-users only. Default: $(SERVERPOD_SEED_HOST)"
@@ -597,8 +596,8 @@ rust-evidence-tool-versions:
 	@cd "$(RUST_WORKSPACE)" && rustc --version
 	@cd "$(RUST_WORKSPACE)" && cargo llvm-cov --version
 
-rust-native-assets-contract-test: root-dependencies
-	@dart test packages/aonw_rust_client/test/build_hook_test.dart
+rust-native-assets-contract-test: rust-client-dependencies
+	@cd packages/aonw_rust_client && dart test test/build_hook_test.dart
 
 rust-foundation-check: rust-canonical-fixture-check rust-performance-check
 
@@ -818,8 +817,8 @@ rust-benchmark:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_engine --bench movement
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_local_runtime --bench runtime
 
-rust-flutter-test: root-dependencies flutter-client-dependencies
-	@dart test packages/aonw_rust_client/test
+rust-flutter-test: rust-client-dependencies flutter-client-dependencies
+	@cd packages/aonw_rust_client && dart test
 	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/infrastructure/native_large_map_smoke_test.dart
 
 rust-godot-build:
@@ -894,21 +893,30 @@ godot-map-sync:
 godot-map-bundle-check:
 	@dart run tool/assets/compile/starter_map_bundle.dart check
 
-dependencies: root-dependencies flutter-client-dependencies core-dependencies client-dependencies server-dependencies
+dependencies: flutter-client-dependencies rust-client-dependencies server-client-dependencies server-native-dependencies server-dependencies
 
 root-dependencies: toolchain-check
 	@flutter pub get --enforce-lockfile
 
+rust-client-dependencies: toolchain-check
+	@cd packages/aonw_rust_client && dart pub get --enforce-lockfile
+
 core-dependencies: toolchain-check
 	@cd packages/aonw_core && dart pub get --enforce-lockfile
 
-client-dependencies: toolchain-check
+server-client-dependencies: toolchain-check
 	@cd packages/aonw_server_client && dart pub get --enforce-lockfile
+
+server-native-dependencies: toolchain-check
+	@cd packages/aonw_server_native && dart pub get --enforce-lockfile
+
+server-native-test: server-native-dependencies
+	@cd packages/aonw_server_native && dart test
 
 server-dependencies: toolchain-check
 	@cd server && dart pub get --enforce-lockfile
 
-ci: rust-engine-quality-check generated-code-check format-check analyze architecture-check mutation-check performance-check coverage-check client-test
+ci: rust-engine-quality-check generated-code-check flutter-client-check rust-flutter-test godot-check server-client-test server-native-test server-test compose-check
 
 format-check: dependencies
 	@files=$$(git ls-files -- '*.dart' \
@@ -921,9 +929,9 @@ format-check: dependencies
 		test -n "$$files" || { echo "No tracked Dart files found."; exit 1; }; \
 		dart format --output=none --set-exit-if-changed $$files
 
-check: toolchain-check flutter-test core-test client-test server-test
+check: rust-test flutter-client-test godot-test server-client-test server-native-test server-test
 
-analyze: flutter-analyze core-analyze client-analyze server-analyze
+analyze: rust-clippy flutter-client-analyze server-client-analyze server-analyze
 
 flutter-analyze: root-dependencies
 	@flutter analyze --no-pub --fatal-infos --fatal-warnings
@@ -931,7 +939,7 @@ flutter-analyze: root-dependencies
 core-analyze: core-dependencies
 	@cd packages/aonw_core && dart analyze --fatal-infos --fatal-warnings
 
-client-analyze: client-dependencies
+server-client-analyze: server-client-dependencies
 	@cd packages/aonw_server_client && dart analyze --fatal-infos --fatal-warnings
 
 server-analyze: server-dependencies
@@ -995,7 +1003,7 @@ performance-frame-check: root-dependencies
 
 release-check:
 	@$(MAKE) --no-print-directory ci
-	@$(MAKE) --no-print-directory native-local-game-smoke
+	@$(MAKE) --no-print-directory flutter-client-device-test
 	@$(MAKE) --no-print-directory serverpod-config-check
 	@tool/run_postgres_smoke.sh
 
@@ -1005,7 +1013,7 @@ flutter-test: flutter-analyze
 core-test: core-analyze
 	@cd packages/aonw_core && dart test
 
-client-test: client-analyze
+server-client-test: server-client-analyze
 	@cd packages/aonw_server_client && dart test
 
 server-test: server-analyze
@@ -1045,7 +1053,7 @@ core-coverage: core-coverage-report
 server-coverage: server-coverage-report
 	@dart run tool/check_coverage.dart check --scope server --base-ref "$(COVERAGE_BASE_REF)" --ratchet-ref "$(COVERAGE_RATCHET_REF)"
 
-critical-e2e-test: local-game-e2e-test serverpod-critical-e2e-test
+critical-e2e-test: flutter-client-device-test serverpod-critical-e2e-test
 
 local-game-e2e-test: root-dependencies
 	@flutter test --no-pub test/game/local_game_persistence_flow_test.dart
@@ -1061,7 +1069,7 @@ native-local-game-smoke: root-dependencies
 		rm -f "$$log"; \
 		exit $$result
 
-serverpod-critical-e2e-test: root-dependencies client-dependencies server-dependencies flutter-client-dependencies
+serverpod-critical-e2e-test: server-client-dependencies server-dependencies flutter-client-dependencies
 	@AONW_SERVERPOD_CRITICAL_E2E_PORT="$(AONW_SERVERPOD_CRITICAL_E2E_PORT)" \
 		tool/run_serverpod_critical_e2e.sh
 
@@ -1069,7 +1077,7 @@ server-integration-test:
 	@cd server && \
 		tests=$$(find test/integration -type f -name '*_smoke.dart' | sort); \
 		test -n "$$tests" || { echo "No Serverpod integration smokes found."; exit 1; }; \
-		test_database_password="$${AONW_TEST_DATABASE_PASSWORD:-$${SERVERPOD_TEST_DATABASE_PASSWORD:-aonw_dev}}"; \
+		test_database_password="$${AONW_TEST_DATABASE_PASSWORD:-aonw_dev}"; \
 		test -n "$$test_database_password" || { echo "PostgreSQL test password must not be empty."; exit 1; }; \
 		test_database_port="$${AONW_TEST_DATABASE_PORT:-5432}"; \
 		case "$$test_database_port" in \
@@ -1091,7 +1099,7 @@ server-integration-test:
 			dart test $$tests -P integration --chain-stack-traces --concurrency=1
 
 serverpod-runtime-smoke:
-	@dart run tool/serverpod_critical_e2e.dart --host "$(SERVERPOD_SMOKE_HOST)"
+	@cd packages/aonw_server_client && dart run tool/critical_e2e.dart --host "$(SERVERPOD_SMOKE_HOST)"
 
 serverpod-seed-test-users:
 	@dart run tool/serverpod_seed_test_users.dart --host "$(SERVERPOD_SEED_HOST)" --password "$(SERVERPOD_SEED_PASSWORD)" --email-domain "$(SERVERPOD_SEED_EMAIL_DOMAIN)"
@@ -2501,7 +2509,6 @@ serverpod-cli-check:
 
 generated-code-check: toolchain-check serverpod-cli-check
 	@SERVERPOD_CLI="$(SERVERPOD_CLI)" tool/check_generated_code.sh
-	@dart run tool/assets/compile/main.dart verify-runtime
 
 assets-compile: root-dependencies
 	@dart run tool/assets/compile/main.dart compile

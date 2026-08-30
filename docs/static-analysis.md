@@ -27,7 +27,7 @@ Focused targets:
 ```sh
 make flutter-analyze
 make core-analyze
-make client-analyze
+make server-client-analyze
 make server-analyze
 ```
 

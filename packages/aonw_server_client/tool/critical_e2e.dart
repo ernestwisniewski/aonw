@@ -461,7 +461,7 @@ final class _CriticalE2eConfig {
 
   static const usage = '''
 Usage:
-  dart run tool/serverpod_critical_e2e.dart [options]
+  dart run tool/critical_e2e.dart [options]
 
 Options:
   --host URL   Serverpod API host. Default: http://127.0.0.1:18080/

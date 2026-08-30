@@ -8,7 +8,7 @@ base_port="${AONW_SERVERPOD_CRITICAL_E2E_PORT:-}"
 runtime_path="${PATH:?PATH is required}"
 runtime_home="${HOME:?HOME is required}"
 runtime_tmpdir="${TMPDIR:-/tmp}"
-database_password="${AONW_TEST_DATABASE_PASSWORD:-${SERVERPOD_TEST_DATABASE_PASSWORD:-aonw_dev}}"
+database_password="${AONW_TEST_DATABASE_PASSWORD:-aonw_dev}"
 database_port="${AONW_TEST_DATABASE_PORT:-5432}"
 port_lock_root="${runtime_tmpdir%/}/aonw-critical-e2e-port-locks"
 port_locks=()
@@ -192,12 +192,12 @@ if [[ "${ready}" != true ]]; then
   exit 1
 fi
 
-cd "${repo_root}"
+cd "${repo_root}/packages/aonw_server_client"
 env -i \
   PATH="${runtime_path}" \
   HOME="${runtime_home}" \
   TMPDIR="${runtime_tmpdir}" \
-  dart run tool/serverpod_critical_e2e.dart --host "${host}"
+  dart run tool/critical_e2e.dart --host "${host}"
 
 (
   cd "${repo_root}/clients/aonw_flutter"

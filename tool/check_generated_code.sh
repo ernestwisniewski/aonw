@@ -62,25 +62,15 @@ if ! snapshot_git diff --cached --quiet; then
   snapshot_git commit -qm "Current workspace snapshot"
 fi
 
-echo "Checking aonw_core generated code..."
+echo "Checking Flutter client localizations..."
 (
-  cd "${snapshot_root}/packages/aonw_core"
-  dart pub get --enforce-lockfile
-  find lib -type f \( -name '*.g.dart' -o -name '*.freezed.dart' \) -delete
-  dart run build_runner build
-)
-
-echo "Checking Flutter generated code and localizations..."
-(
-  cd "${snapshot_root}"
+  cd "${snapshot_root}/clients/aonw_flutter"
   flutter pub get --enforce-lockfile
-  find lib -type f \( -name '*.g.dart' -o -name '*.freezed.dart' \) -delete
   rm -rf lib/l10n/generated
   flutter gen-l10n
-  flutter pub run build_runner build
 )
 
-echo "Checking Serverpod protocol, client, test tools, and migrations..."
+echo "Checking Serverpod protocol, client, test tools, and initial schema..."
 (
   cd "${snapshot_root}/server"
   dart pub get --enforce-lockfile
@@ -106,4 +96,4 @@ if [[ -n "${status}" ]]; then
   exit 1
 fi
 
-echo "Generated code, localizations, protocol, and migrations are in sync."
+echo "Generated client code, localizations, protocol, and initial schema are in sync."

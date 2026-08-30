@@ -3,13 +3,14 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
-const _localTestPath = 'test/game/local_game_persistence_flow_test.dart';
+const _localTestPath =
+    'clients/aonw_flutter/integration_test/inspect_map_native_test.dart';
 const _runnerPath = 'tool/run_serverpod_critical_e2e.sh';
 const _postgresRunnerPath = 'tool/run_postgres_smoke.sh';
 const _portAllocatorPath = 'tool/allocate_loopback_port_triplet.dart';
 const _portAllocatorTestPath =
     'test/tool/allocate_loopback_port_triplet_test.dart';
-const _scenarioPath = 'tool/serverpod_critical_e2e.dart';
+const _scenarioPath = 'packages/aonw_server_client/tool/critical_e2e.dart';
 const _serverPath = 'server/test/support/critical_e2e_server.dart';
 const _serverConfigPath = 'server/test/support/critical_e2e_server_config.dart';
 const _loopbackOverridePath =
@@ -53,13 +54,12 @@ void main() {
     final makefile = File('Makefile').readAsStringSync();
 
     expect(
-      _makeTarget(makefile, 'local-game-e2e-test'),
+      _makeTarget(makefile, 'flutter-client-device-test'),
       const _MakeTarget(
-        prerequisites: ['root-dependencies'],
+        prerequisites: ['flutter-client-dependencies'],
         recipes: [
-          '@flutter test --no-pub '
-              'test/game/local_game_persistence_flow_test.dart',
-          '@\$(MAKE) --no-print-directory native-local-game-smoke',
+          '@cd clients/aonw_flutter && flutter test --no-pub '
+              'integration_test/inspect_map_native_test.dart',
         ],
       ),
     );
@@ -67,9 +67,9 @@ void main() {
       _makeTarget(makefile, 'serverpod-critical-e2e-test'),
       const _MakeTarget(
         prerequisites: [
-          'root-dependencies',
-          'client-dependencies',
+          'server-client-dependencies',
           'server-dependencies',
+          'flutter-client-dependencies',
         ],
         recipes: [
           '@AONW_SERVERPOD_CRITICAL_E2E_PORT='
@@ -81,16 +81,11 @@ void main() {
     expect(
       _makeTarget(makefile, 'critical-e2e-test'),
       const _MakeTarget(
-        prerequisites: ['local-game-e2e-test', 'serverpod-critical-e2e-test'],
+        prerequisites: [
+          'flutter-client-device-test',
+          'serverpod-critical-e2e-test',
+        ],
       ),
-    );
-    expect(
-      _makeTarget(makefile, '.PHONY').prerequisites.toSet(),
-      containsAll({
-        'critical-e2e-test',
-        'local-game-e2e-test',
-        'serverpod-critical-e2e-test',
-      }),
     );
     expect(
       _singleVariable(makefile, 'AONW_SERVERPOD_CRITICAL_E2E_PORT'),
@@ -133,13 +128,11 @@ void main() {
       integrationTarget.recipes.join('\n'),
       contains(r'SERVERPOD_DATABASE_PORT="$$test_database_port"'),
     );
-    expect(RegExp(r'\benv -i\b').allMatches(runner), hasLength(2));
+    expect(RegExp(r'\benv -i\b').allMatches(runner), hasLength(3));
     expect(runner, contains('/dev/urandom'));
     expect(
       runner,
-      contains(
-        r'database_password="${AONW_TEST_DATABASE_PASSWORD:-${SERVERPOD_TEST_DATABASE_PASSWORD:-aonw_dev}}"',
-      ),
+      contains(r'database_password="${AONW_TEST_DATABASE_PASSWORD:-aonw_dev}"'),
     );
     expect(runner, isNot(contains(r'${SERVERPOD_PASSWORD_database:-')));
     for (final expected in const [
@@ -261,11 +254,9 @@ void main() {
       'includeLoopback: false',
       'Socket.connect',
       'listener isolation:',
-      'config = CriticalE2eConfig.fromArgs(args);',
+      'config = _CriticalE2eConfig.fromArgs(args);',
       'await _CriticalE2e(config).run();',
-      '_closeCriticalE2eResources(',
-      'suppressErrors: true',
-      'Error.throwWithStackTrace',
+      '_expectPrivateSnapshot(',
     ]) {
       expect(scenario, contains(expected), reason: expected);
     }
@@ -301,10 +292,7 @@ void main() {
     final live = _step(steps, 'Run public auth-match-command-reconnect E2E');
     expect(integration['run'], 'make server-integration-test');
     expect(live.keys.toSet(), {'name', 'env', 'run'});
-    expect(
-      (live['env'] as YamlMap)['SERVERPOD_TEST_DATABASE_PASSWORD'],
-      'aonw_dev',
-    );
+    expect((live['env'] as YamlMap)['AONW_TEST_DATABASE_PASSWORD'], 'aonw_dev');
     expect(live['run'], 'make serverpod-critical-e2e-test');
     expect(steps.indexOf(live), greaterThan(steps.indexOf(integration)));
     expect(workflowSource, isNot(contains(_runnerPath)));
@@ -319,7 +307,7 @@ void main() {
         prerequisites: [],
         recipes: [
           '@\$(MAKE) --no-print-directory ci',
-          '@\$(MAKE) --no-print-directory native-local-game-smoke',
+          '@\$(MAKE) --no-print-directory flutter-client-device-test',
           '@\$(MAKE) --no-print-directory serverpod-config-check',
           '@tool/run_postgres_smoke.sh',
         ],
@@ -351,7 +339,7 @@ void main() {
   test('critical E2E contract is documented at contributor surfaces', () {
     final documentation = File('docs/critical-e2e.md').readAsStringSync();
     for (final expected in const [
-      'make local-game-e2e-test',
+      'make flutter-client-device-test',
       'make serverpod-critical-e2e-test',
       'make critical-e2e-test',
       _localTestPath,
@@ -361,7 +349,7 @@ void main() {
       _loopbackOverridePath,
       _serverConfigTestPath,
       _loopbackOverrideTestPath,
-      'public HTTP and WebSocket surfaces',
+      'public HTTP Serverpod surface',
       'fixed delays',
       'fresh per-run secrets',
       _portAllocatorPath,
