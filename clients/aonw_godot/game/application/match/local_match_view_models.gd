@@ -75,6 +75,16 @@ class UnitTransition:
 	var movement_unit_id: String
 	var movement_steps: Array[MovementStep]
 
+class ActivityIdentity:
+	extends RefCounted
+	var revision: int
+	var event_index: int
+
+class ActivityView:
+	extends RefCounted
+	var identity: ActivityIdentity
+	var kind: StringName
+
 class CommandResult:
 	extends RefCounted
 	var accepted: bool
@@ -82,3 +92,4 @@ class CommandResult:
 	var revision: int
 	var turn: TurnView
 	var unit_transition: UnitTransition
+	var activities: Array[ActivityView]

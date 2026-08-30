@@ -206,7 +206,23 @@ func _apply_command(result: Dictionary) -> Dictionary:
 	value.revision = stored["value"].stamp.revision
 	value.turn = _turn(stored["value"])
 	value.unit_transition = _unit_transition(raw)
+	value.activities = _activities(raw)
 	return {"ok": true, "value": value, "changed": stored["changed"]}
+
+func _activities(
+	command: AonwClientReadModels.CommandResult,
+) -> Array[AonwLocalMatchViewModels.ActivityView]:
+	var result: Array[AonwLocalMatchViewModels.ActivityView] = []
+	for index in range(command.events.size()):
+		var identity := ViewModels.ActivityIdentity.new()
+		identity.revision = command.stamp.revision
+		identity.event_index = index
+		var activity := ViewModels.ActivityView.new()
+		activity.identity = identity
+		activity.kind = command.events[index].kind
+		result.append(activity)
+	result.make_read_only()
+	return result
 
 func _projection(snapshot: AonwClientReadModels.SnapshotView) -> AonwLocalMatchViewModels.ProjectionView:
 	var units: Array[AonwLocalMatchViewModels.UnitView] = []

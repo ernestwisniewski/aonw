@@ -10,6 +10,9 @@ const RecipientProjectionStoreSuite := preload(
 const LocalMatchWorkflowSuite := preload(
 	"res://tests/suites/local_match_workflow_suite.gd"
 )
+const GameplaySemanticFixtureSuite := preload(
+	"res://tests/suites/gameplay_semantic_fixture_suite.gd"
+)
 
 var _failures: Array[String] = []
 
@@ -21,6 +24,7 @@ func _run() -> void:
 		NativeSessionSuite.new(),
 		RecipientProjectionStoreSuite.new(),
 		LocalMatchWorkflowSuite.new(),
+		GameplaySemanticFixtureSuite.new(),
 		MovementPresentationSuite.new(),
 	]:
 		await suite.run(_failures)

@@ -203,7 +203,29 @@ func _test_handoff_replaces_the_recipient_fail_closed() -> void:
 		and gateway.movement_cancellation_calls >= 1,
 		"handoff publishes only the freshly synchronized next-recipient projection",
 	)
+	_test_local_activity_identity(workflow)
 	workflow.close()
+
+func _test_local_activity_identity(workflow: AonwLocalMatchWorkflow) -> void:
+	var command := AonwClientReadModels.CommandResult.new()
+	command.stamp = AonwClientReadModels.Stamp.new()
+	command.stamp.revision = 12
+	var first := AonwClientReadModels.CommandEvent.new()
+	first.kind = &"turnEnded"
+	var second := AonwClientReadModels.CommandEvent.new()
+	second.kind = &"allPlayersSubmitted"
+	command.events = [first, second]
+	var activities: Array = workflow.call("_activities", command)
+	_check(
+		activities.size() == 2
+		and activities[0].identity.revision == 12
+		and activities[0].identity.event_index == 0
+		and activities[0].kind == &"turnEnded"
+		and activities[1].identity.revision == 12
+		and activities[1].identity.event_index == 1
+		and activities[1].kind == &"allPlayersSubmitted",
+		"local activity identity is the ordered result revision and event index",
+	)
 
 func _capture_resync(workflow: AonwLocalMatchWorkflow, result: Dictionary) -> void:
 	result["value"] = await workflow.resync()
