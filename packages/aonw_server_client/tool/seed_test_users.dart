@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:aonw/api/session/serverpod_auth_client.dart';
-import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;
@@ -39,14 +37,22 @@ class _SeedTestUsers {
       ..writeln('Serverpod test user seed')
       ..writeln('  host: $host');
 
-    for (final user in config.users) {
-      final auth = await _createOrLogin(publicClient, user);
-      final token = AuthToken(auth.token, expiresAt: auth.tokenExpiresAt);
-      final authenticatedClient = createServerpodClient(host, token: token);
-      final displayName = await authenticatedClient.emailIdp
-          .updateDisplayName(displayName: user.displayName)
-          .timeout(config.requestTimeout);
-      stdout.writeln('  ${user.email} / ${config.password} / $displayName');
+    try {
+      for (final user in config.users) {
+        final auth = await _createOrLogin(publicClient, user);
+        final authenticatedClient = sp.Client(host)
+          ..authKeyProvider = _BearerTokenProvider(auth.token);
+        try {
+          final displayName = await authenticatedClient.emailIdp
+              .updateDisplayName(displayName: user.displayName)
+              .timeout(config.requestTimeout);
+          stdout.writeln('  ${user.email} / ${config.password} / $displayName');
+        } finally {
+          authenticatedClient.close();
+        }
+      }
+    } finally {
+      publicClient.close();
     }
 
     stdout.writeln('Seeded ${config.users.length} test users.');
@@ -84,6 +90,16 @@ class _SeedTestUsers {
   }
 }
 
+final class _BearerTokenProvider implements sp.ClientAuthKeyProvider {
+  const _BearerTokenProvider(this.token);
+
+  final String token;
+
+  @override
+  Future<String?> get authHeaderValue async =>
+      sp.wrapAsBearerAuthHeaderValue(token);
+}
+
 class _SeedConfig {
   const _SeedConfig({
     required this.host,
@@ -99,7 +115,7 @@ class _SeedConfig {
 
   static const usage = '''
 Usage:
-  dart run tool/serverpod_seed_test_users.dart [options]
+  dart run tool/seed_test_users.dart [options]
 
 Options:
   --host URL            Serverpod API host. Default: env AONW_SERVERPOD_SEED_HOST or http://127.0.0.1:8080/

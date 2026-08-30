@@ -63,7 +63,7 @@ A presentation widget may calculate layout and animation. It must not decide whe
 | Godot client and native adapter gate | `make godot-check` |
 | Server gate | `make server-test` |
 | Start local API and seed accounts | `make local-start` |
-| Start API plus Flutter Web | `make local` |
+| Start API plus the Flutter client | `make local` |
 | Local multiplayer smoke | `make local-multiplayer-smoke` |
 | PostgreSQL-backed server smoke | `tool/run_postgres_smoke.sh` |
 | Complete release qualification | `make release-check` |

@@ -75,8 +75,7 @@ For the local multiplayer stack:
 cp .env.example .env
 # Replace every placeholder secret in .env.
 make local-start
-cd clients/aonw_flutter
-flutter run --dart-define=AONW_API_BASE_URL=http://localhost:8080
+make local
 ```
 
 The API runs at `http://localhost:8080`. Four local accounts are seeded as

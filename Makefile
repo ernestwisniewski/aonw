@@ -36,6 +36,7 @@ STAGE_1_EVIDENCE_DIR := $(CURDIR)/docs/acceptance/stage-1
 FLUTTER_CLIENT_API_BASE_URL ?= https://api.aonw.net
 FLUTTER_CLIENT_BUILD_NUMBER ?= $(shell sed -n 's/^version:.*+//p' clients/aonw_flutter/pubspec.yaml 2>/dev/null | head -n 1)
 FLUTTER_CLIENT_RELEASE_ZIP ?= $(CURDIR)/dist/flutter/aonw-macos-arm64.zip
+FLUTTER_CLIENT_DEVICE ?= macos
 
 LOCAL_FLUTTER_BIN := $(CURDIR)/.fvm/flutter_sdk/bin
 ifneq ($(wildcard $(LOCAL_FLUTTER_BIN)/flutter),)
@@ -91,9 +92,6 @@ LOCAL_API_PORT ?= 8080
 LOCAL_API_BASE_URL ?= http://$(LOCAL_API_HOST):$(LOCAL_API_PORT)
 LOCAL_INSIGHTS_PORT ?= 8081
 LOCAL_SERVER_WEB_PORT ?= 8082
-LOCAL_WEB_HOST ?= localhost
-LOCAL_WEB_PORT ?= 7357
-LOCAL_WEB_DEVICE ?= chrome
 LOCAL_HEALTH_URL ?= $(LOCAL_API_BASE_URL)/readyz
 CADDY_VALIDATE_IMAGE ?= caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
 PROMTOOL_IMAGE ?= prom/prometheus:latest@sha256:3c42b892cf723fa54d2f262c37a0e1f80aa8c8ddb1da7b9b0df9455a35a7f893
@@ -250,7 +248,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check p0-check dependency-boundaries client-boundary-test rust-determinism-check rust-canonical-fixture-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies server-client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze server-client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test server-client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage stage-engine-docs build-engine-docs deploy-engine-docs deploy-engine-docs-files download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats health-engine-docs prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile godot-map-bundle-check map-stage-1-check stage-1-visual-evidence rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check rust-turn-kernel-check rust-diplomacy-policy-check rust-tech-gate-check rust-movement-logistics-check rust-combat-check rust-city-check rust-worker-check rust-engine-check rust-engine-evidence-check rust-engine-quality-check rust-engine-deep-check
+.PHONY: help bootstrap toolchain-check p0-check dependency-boundaries client-boundary-test rust-determinism-check rust-canonical-fixture-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies server-client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze server-client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test server-client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage stage-engine-docs build-engine-docs deploy-engine-docs deploy-engine-docs-files download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats health-engine-docs prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile godot-map-bundle-check map-stage-1-check stage-1-visual-evidence rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check rust-turn-kernel-check rust-diplomacy-policy-check rust-tech-gate-check rust-movement-logistics-check rust-combat-check rust-city-check rust-worker-check rust-engine-check rust-engine-evidence-check rust-engine-quality-check rust-engine-deep-check
 
 .PHONY: rust-integrated-turn-check rust-ai-strength-check rust-ai-check rust-persistence-check
 .PHONY: rust-security-policy-test rust-security-policy-check rust-security-tool-versions rust-mutation-check rust-fuzz-smoke rust-miri-check rust-ffi-sanitizer-check rust-engine-security-check rust-release-metadata-policy-test rust-release-metadata-policy-check rust-release-metadata-tool-versions rust-release-metadata-check rust-engine-completion-check
@@ -312,7 +310,7 @@ help:
 	@echo "  make godot-map-sync LOCAL: compile the self-contained starter map bundle"
 	@echo "  make godot-map-bundle-check LOCAL: verify the committed starter bundle is reproducible"
 	@echo "  make dependencies LOCAL: install all five package graphs from committed lockfiles"
-	@echo "  make local        LOCAL: start Docker API, seed users, and run Flutter Web on OAuth origin localhost:7357"
+	@echo "  make local        LOCAL: start Docker API, seed users, and run the Flutter client"
 	@echo "  make local-start  LOCAL: start Docker API and seed four reusable multiplayer users"
 	@echo "  make local-multiplayer-smoke LOCAL: verify quickplay, streams, commands, reconnect, and event history"
 	@echo "  make local-down   LOCAL: stop the Docker development stack without deleting data"
@@ -386,7 +384,7 @@ help:
 	@echo ""
 	@echo "Options:"
 	@echo "  LOCAL_API_BASE_URL=http://... Local Flutter/Serverpod API. Default: $(LOCAL_API_BASE_URL)"
-	@echo "  LOCAL_WEB_PORT=7357            Stable Google OAuth web origin port. Default: $(LOCAL_WEB_PORT)"
+	@echo "  FLUTTER_CLIENT_DEVICE=macos    Device used by make local. Default: $(FLUTTER_CLIENT_DEVICE)"
 	@echo "  PROFILE=dev|tunnel|staging|prod Default: $(PROFILE)"
 	@echo "  BRANCH=main                    Optional branch checkout before pull"
 	@echo "  CHECK_MIGRATIONS=1             Run the complete generated-code drift gate after build"
@@ -1102,9 +1100,12 @@ serverpod-runtime-smoke:
 	@cd packages/aonw_server_client && dart run tool/critical_e2e.dart --host "$(SERVERPOD_SMOKE_HOST)"
 
 serverpod-seed-test-users:
-	@dart run tool/serverpod_seed_test_users.dart --host "$(SERVERPOD_SEED_HOST)" --password "$(SERVERPOD_SEED_PASSWORD)" --email-domain "$(SERVERPOD_SEED_EMAIL_DOMAIN)"
+	@cd packages/aonw_server_client && dart run tool/seed_test_users.dart --host "$(SERVERPOD_SEED_HOST)" --password "$(SERVERPOD_SEED_PASSWORD)" --email-domain "$(SERVERPOD_SEED_EMAIL_DOMAIN)"
 
-local: local-web
+local: local-start
+	@echo "Starting the Flutter client on $(FLUTTER_CLIENT_DEVICE) with API=$(LOCAL_API_BASE_URL)"
+	@cd clients/aonw_flutter && flutter run --no-pub -d "$(FLUTTER_CLIENT_DEVICE)" \
+		"--dart-define=AONW_API_BASE_URL=$(LOCAL_API_BASE_URL)"
 
 local-start: local-seed
 
@@ -1133,13 +1134,6 @@ local-seed: local-up
 
 local-multiplayer-smoke: local-up
 	@$(MAKE) --no-print-directory serverpod-runtime-smoke SERVERPOD_SMOKE_HOST="$(LOCAL_API_BASE_URL)/"
-
-local-web: local-start
-	@echo "Starting Flutter Web at http://$(LOCAL_WEB_HOST):$(LOCAL_WEB_PORT) with API=$(LOCAL_API_BASE_URL)"
-	@flutter run -d "$(LOCAL_WEB_DEVICE)" \
-		--web-hostname "$(LOCAL_WEB_HOST)" \
-		--web-port "$(LOCAL_WEB_PORT)" \
-		"--dart-define=AONW_API_BASE_URL=$(LOCAL_API_BASE_URL)"
 
 local-down:
 	@$(COMPOSE) $(COMPOSE_BASE_FILES) --profile dev down --remove-orphans

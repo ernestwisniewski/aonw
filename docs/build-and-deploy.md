@@ -81,7 +81,10 @@ make local
 Local endpoints:
 
 - API: `http://localhost:8080`
-- Flutter Web: `http://localhost:7357`
+
+`make local` runs the supported Flutter client on macOS by default. Override
+the target with `FLUTTER_CLIENT_DEVICE` when another supported device lane is
+available.
 
 Stop the stack with `make local-down`. Remove local database volumes only when a clean reset is intended:
 
