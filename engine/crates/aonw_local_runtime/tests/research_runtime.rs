@@ -17,7 +17,7 @@ use aonw_domain::{
 use aonw_local_runtime::{ClientProtocol, LocalRuntime, OpenSession};
 
 #[test]
-fn research_protocol_is_current_complete_and_replayable() {
+fn research_protocol_is_complete_and_replayable() {
     let (map, ruleset, state, actor) = fixture();
     let mut runtime = LocalRuntime::default();
     runtime

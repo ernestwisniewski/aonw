@@ -18,7 +18,7 @@
       "StrategicTurnReport"
     ],
     "fixtureIds": [
-      "ai-rng-oracle-parity",
+      "deterministic-ai-rng",
       "autonomous-full-turn",
       "bounded-mcts-memory",
       "bounded-utility-scoring",

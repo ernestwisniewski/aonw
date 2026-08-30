@@ -1,4 +1,4 @@
-//! Golden and strict-boundary tests for the shared current client protocol.
+//! Golden and strict-boundary tests for the shared client protocol.
 
 use std::collections::BTreeMap;
 
@@ -195,7 +195,7 @@ fn command_rejection_codes_match_the_shared_fixture() {
 }
 
 #[test]
-fn every_current_request_variant_round_trips() {
+fn every_request_variant_round_trips() {
     let mut requests = vec![
         ClientRequestBodyDto::Capabilities,
         ClientRequestBodyDto::InspectMap {
@@ -342,7 +342,7 @@ fn logistics_requests() -> [ClientRequestBodyDto; 4] {
 }
 
 #[test]
-fn every_current_response_variant_round_trips() {
+fn every_response_variant_round_trips() {
     let responses = core_response_variants()
         .into_iter()
         .chain(economy_contract::responses())
@@ -489,8 +489,8 @@ fn malformed_unknown_duplicate_and_future_documents_fail_closed() {
     let duplicate = r#"{"apiVersion":7,"apiVersion":7,"request":{"type":"snapshot"}}"#;
     let future = r#"{"apiVersion":8,"request":{"type":"snapshot"}}"#;
     let malformed_nested = r#"{"apiVersion":7,"request":{"type":"query","query":{"type":"reachable","expectedRevision":0,"unitId":"u","extra":true}}}"#;
-    let malformed_logistics = r#"{"apiVersion":7,"request":{"type":"dispatch","command":{"type":"autoExploreUnit","expectedRevision":0,"unitId":"u","legacyPath":[]}}}"#;
-    let malformed_worker = r#"{"apiVersion":7,"request":{"type":"dispatch","command":{"type":"buildRoad","expectedRevision":0,"unitId":"u","legacyFallback":true}}}"#;
+    let malformed_logistics = r#"{"apiVersion":7,"request":{"type":"dispatch","command":{"type":"autoExploreUnit","expectedRevision":0,"unitId":"u","unexpectedField":[]}}}"#;
+    let malformed_worker = r#"{"apiVersion":7,"request":{"type":"dispatch","command":{"type":"buildRoad","expectedRevision":0,"unitId":"u","unexpectedField":true}}}"#;
 
     for invalid in [
         unknown,

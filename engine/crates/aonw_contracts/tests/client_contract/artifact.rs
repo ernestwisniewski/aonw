@@ -27,7 +27,7 @@ pub(super) fn requests() -> [ClientRequestBodyDto; 3] {
 }
 
 #[test]
-fn artifact_commands_are_current_only_and_strict() {
-    let legacy = r#"{"apiVersion":7,"request":{"type":"dispatch","command":{"type":"tradeArtifact","expectedRevision":10,"actorPlayerId":"player-1","targetPlayerId":"player-2","offeredArtifactId":"artifact-1","offeredGold":0,"requestedGold":4}}}"#;
-    assert!(aonw_contracts::client::ClientRequestDto::from_json(legacy).is_err());
+fn artifact_commands_reject_actor_fields() {
+    let request_with_actor = r#"{"apiVersion":7,"request":{"type":"dispatch","command":{"type":"tradeArtifact","expectedRevision":10,"actorPlayerId":"player-1","targetPlayerId":"player-2","offeredArtifactId":"artifact-1","offeredGold":0,"requestedGold":4}}}"#;
+    assert!(aonw_contracts::client::ClientRequestDto::from_json(request_with_actor).is_err());
 }

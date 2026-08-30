@@ -21,7 +21,7 @@ use fixture::{
 };
 
 #[test]
-fn proposal_commands_are_current_private_and_replayable() {
+fn proposal_commands_are_recipient_safe_and_replayable() {
     let ruleset = RulesetDefinition::standard().clone();
     let map = map();
     let p1 = player("player-1");
@@ -94,7 +94,7 @@ fn proposal_commands_are_current_private_and_replayable() {
 }
 
 #[test]
-fn message_commands_are_current_private_and_replayable() {
+fn message_commands_are_recipient_safe_and_replayable() {
     let ruleset = RulesetDefinition::standard().clone();
     let map = map();
     let p1 = player("player-1");
@@ -163,7 +163,7 @@ fn message_commands_are_current_private_and_replayable() {
 }
 
 #[test]
-fn war_and_gold_gift_are_current_atomic_and_replayable() {
+fn war_and_gold_gift_are_atomic_and_replayable() {
     let ruleset = RulesetDefinition::standard().clone();
     let map = map();
     let p1 = player("player-1");
@@ -219,7 +219,7 @@ fn war_and_gold_gift_are_current_atomic_and_replayable() {
 }
 
 #[test]
-fn resource_trade_commands_are_current_persisted_and_replayable() {
+fn resource_trade_commands_are_persisted_and_replayable() {
     let ruleset = RulesetDefinition::standard().clone();
     let map = map();
     let p1 = player("player-1");

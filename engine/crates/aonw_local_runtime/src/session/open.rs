@@ -102,9 +102,9 @@ pub enum OpenSessionError {
     Scenario(ScenarioBootstrapError),
     /// Explicit match identity, lifecycle, or visibility could not be bound.
     MatchStart(MatchStartError),
-    /// A compatibility participant could not be constructed.
+    /// An inferred participant could not be constructed.
     InvalidParticipant(Box<str>),
-    /// Compatibility identity unexpectedly repeated a participant.
+    /// Inferred identity unexpectedly repeated a participant.
     DuplicateParticipant(PlayerId),
     /// A canonical state has no participant identity.
     EmptyParticipants,
@@ -166,8 +166,8 @@ fn inferred_hot_seat_identity(
             Participant::try_new(
                 player_id,
                 name,
-                compatibility_color(index),
-                compatibility_country(index),
+                default_participant_color(index),
+                default_participant_country(index),
                 PlayerKind::Human,
                 None,
             )
@@ -178,7 +178,7 @@ fn inferred_hot_seat_identity(
         .map_err(OpenSessionError::DuplicateParticipant)
 }
 
-const fn compatibility_color(index: usize) -> u32 {
+const fn default_participant_color(index: usize) -> u32 {
     const COLORS: [u32; 8] = [
         0xff_42_85_f4,
         0xff_ea_43_35,
@@ -192,7 +192,7 @@ const fn compatibility_color(index: usize) -> u32 {
     COLORS[index % COLORS.len()]
 }
 
-const fn compatibility_country(index: usize) -> PlayerCountry {
+const fn default_participant_country(index: usize) -> PlayerCountry {
     const COUNTRIES: [PlayerCountry; 8] = [
         PlayerCountry::Poland,
         PlayerCountry::Ukraine,

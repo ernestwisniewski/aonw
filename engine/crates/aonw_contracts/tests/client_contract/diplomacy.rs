@@ -79,7 +79,7 @@ pub(super) fn requests() -> [ClientRequestBodyDto; 8] {
 }
 
 #[test]
-fn diplomacy_events_round_trip_without_legacy_fields() {
+fn diplomacy_events_round_trip_strictly() {
     let events = [
         ClientEventDto::DiplomaticProposalSent {
             proposal_id: "proposal-1".to_owned(),
@@ -142,7 +142,7 @@ fn diplomacy_events_round_trip_without_legacy_fields() {
             serde_json::from_str::<ClientEventDto>(&encoded).expect("client event"),
             event
         );
-        let unknown = encoded.replacen('}', ",\"legacyVersion\":1}", 1);
+        let unknown = encoded.replacen('}', ",\"unexpectedField\":true}", 1);
         assert!(serde_json::from_str::<ClientEventDto>(&unknown).is_err());
     }
 }
@@ -200,6 +200,6 @@ fn recipient_diplomacy_view_round_trips_strictly_without_score_history() {
         view
     );
     assert!(!encoded.contains("scoreHistory"));
-    let unknown = encoded.replacen('{', "{\"legacyVersion\":1,", 1);
+    let unknown = encoded.replacen('{', "{\"unexpectedField\":true,", 1);
     assert!(serde_json::from_str::<PlayerDiplomacyViewDto>(&unknown).is_err());
 }

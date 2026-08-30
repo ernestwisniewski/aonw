@@ -2,7 +2,7 @@ use aonw_contracts::MapObjectiveTypeDto;
 use aonw_contracts::client::ClientEventDto;
 
 #[test]
-fn objective_events_round_trip_with_strict_current_shapes() {
+fn objective_events_round_trip_with_strict_shapes() {
     let events = [
         ClientEventDto::MapObjectiveSecured {
             player_id: "player-2".to_owned(),
@@ -26,10 +26,10 @@ fn objective_events_round_trip_with_strict_current_shapes() {
     for event in events {
         let json = serde_json::to_string(&event).expect("event JSON");
         assert_eq!(
-            serde_json::from_str::<ClientEventDto>(&json).expect("current event"),
+            serde_json::from_str::<ClientEventDto>(&json).expect("event"),
             event
         );
-        let unknown = json.replacen('{', r#"{"legacyVersion":1,"#, 1);
+        let unknown = json.replacen('{', r#"{"unexpectedField":true,"#, 1);
         assert!(serde_json::from_str::<ClientEventDto>(&unknown).is_err());
     }
 }

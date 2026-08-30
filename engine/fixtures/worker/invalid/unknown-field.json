@@ -5,8 +5,7 @@
   "turnProcessors": [],
   "automationTileBudget": 1200,
   "automationLegalityBudget": 24000,
-  "clientApiVersion": 6,
-  "legacyPaths": false,
+  "clientApiVersion": 7,
   "cases": [],
-  "legacyFallback": true
+  "unexpectedField": true
 }

@@ -42,7 +42,7 @@ fn strict_replay_codec_rejects_unknown_and_duplicate_fields() {
 }
 
 #[test]
-fn every_current_unit_action_command_has_a_strict_wire_shape() {
+fn every_unit_action_command_has_a_strict_wire_shape() {
     for kind in ["cancelUnitAction", "skipUnitTurn", "fortifyUnit"] {
         let json = format!(r#"{{"type":"{kind}","expectedRevision":7,"unitId":"unit-1"}}"#);
         assert!(serde_json::from_str::<ReplayCommandDto>(&json).is_ok());
@@ -52,7 +52,7 @@ fn every_current_unit_action_command_has_a_strict_wire_shape() {
 }
 
 #[test]
-fn every_current_logistics_command_has_a_strict_wire_shape() {
+fn every_logistics_command_has_a_strict_wire_shape() {
     let commands = [
         r#"{"type":"autoExploreUnit","expectedRevision":7,"unitId":"scout-1"}"#,
         r#"{"type":"assignMerchantTradeRoute","expectedRevision":7,"unitId":"merchant-1","destinationCityId":"city-2"}"#,
@@ -61,13 +61,13 @@ fn every_current_logistics_command_has_a_strict_wire_shape() {
     ];
     for json in commands {
         assert!(serde_json::from_str::<ReplayCommandDto>(json).is_ok());
-        let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
+        let unknown = json.replacen('}', ",\"unexpectedField\":true}", 1);
         assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
     }
 }
 
 #[test]
-fn every_current_production_command_has_a_strict_wire_shape() {
+fn every_production_command_has_a_strict_wire_shape() {
     let commands = [
         r#"{"type":"startBuilding","expectedRevision":7,"cityId":"city-1","building":"workshop"}"#,
         r#"{"type":"startUnitProduction","expectedRevision":7,"cityId":"city-1","unit":"warrior","resourceOptionIndex":null}"#,
@@ -78,13 +78,13 @@ fn every_current_production_command_has_a_strict_wire_shape() {
     ];
     for json in commands {
         assert!(serde_json::from_str::<ReplayCommandDto>(json).is_ok());
-        let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
+        let unknown = json.replacen('}', ",\"unexpectedField\":true}", 1);
         assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
     }
 }
 
 #[test]
-fn diplomacy_commands_have_current_strict_wire_shapes() {
+fn diplomacy_commands_have_strict_wire_shapes() {
     let commands = [
         r#"{"type":"declareWar","expectedRevision":7,"targetPlayerId":"player-2"}"#,
         r#"{"type":"sendGoldGift","expectedRevision":7,"targetPlayerId":"player-2","amount":10}"#,
@@ -95,13 +95,13 @@ fn diplomacy_commands_have_current_strict_wire_shapes() {
     ];
     for json in commands {
         assert!(serde_json::from_str::<ReplayCommandDto>(json).is_ok());
-        let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
+        let unknown = json.replacen('}', ",\"unexpectedField\":true}", 1);
         assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
     }
 }
 
 #[test]
-fn production_completion_events_have_current_strict_replay_shapes() {
+fn production_completion_events_have_strict_replay_shapes() {
     let events = [
         r#"{"type":"cityBuiltBuilding","cityId":"city-1","buildingType":"workshop"}"#,
         r#"{"type":"cityProducedUnit","cityId":"city-1","unitType":"warrior","producedUnitId":"city-1_warrior_1"}"#,
@@ -112,13 +112,13 @@ fn production_completion_events_have_current_strict_replay_shapes() {
     ];
     for json in events {
         assert!(serde_json::from_str::<ReplayEventDto>(json).is_ok());
-        let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
+        let unknown = json.replacen('}', ",\"unexpectedField\":true}", 1);
         assert!(serde_json::from_str::<ReplayEventDto>(&unknown).is_err());
     }
 }
 
 #[test]
-fn diplomacy_events_have_current_strict_replay_shapes() {
+fn diplomacy_events_have_strict_replay_shapes() {
     let events = [
         r#"{"type":"diplomaticProposalSent","proposalId":"proposal-1","fromPlayerId":"player-1","toPlayerId":"player-2","kind":"friendship","expiresOnTurn":12}"#,
         r#"{"type":"diplomaticProposalResponded","proposalId":"proposal-1","fromPlayerId":"player-1","toPlayerId":"player-2","kind":"friendship","accepted":true}"#,
@@ -130,7 +130,7 @@ fn diplomacy_events_have_current_strict_replay_shapes() {
     ];
     for json in events {
         assert!(serde_json::from_str::<ReplayEventDto>(json).is_ok());
-        let unknown = json.replacen('}', ",\"legacyVersion\":1}", 1);
+        let unknown = json.replacen('}', ",\"unexpectedField\":true}", 1);
         assert!(serde_json::from_str::<ReplayEventDto>(&unknown).is_err());
     }
 }

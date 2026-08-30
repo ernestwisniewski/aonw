@@ -10,12 +10,11 @@ struct WorkerManifest {
     automation_tile_budget: u32,
     automation_legality_budget: u32,
     client_api_version: u16,
-    legacy_paths: bool,
     cases: Vec<String>,
 }
 
 #[test]
-fn worker_manifest_is_current_strict_and_complete() {
+fn worker_manifest_is_strict_and_complete() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
         .nth(3)
@@ -56,7 +55,6 @@ fn worker_manifest_is_current_strict_and_complete() {
         manifest.client_api_version,
         aonw_contracts::client::CLIENT_API_VERSION
     );
-    assert!(!manifest.legacy_paths);
     assert!(manifest.cases.len() >= 14);
 
     let invalid = std::fs::read(root.join("engine/fixtures/worker/invalid/unknown-field.json"))

@@ -4,5 +4,5 @@
   "queries": [],
   "turnProcessors": [],
   "cases": [],
-  "legacyAdapter": true
+  "unexpectedField": true
 }

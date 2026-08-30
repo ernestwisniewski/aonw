@@ -8,12 +8,11 @@ struct EconomyManifest {
     queries: Vec<String>,
     turn_processors: Vec<String>,
     client_api_version: u16,
-    legacy_paths: bool,
     cases: Vec<String>,
 }
 
 #[test]
-fn economy_manifest_is_strict_current_only_and_complete() {
+fn economy_manifest_is_strict_and_complete() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
         .nth(3)
@@ -30,8 +29,10 @@ fn economy_manifest_is_strict_current_only_and_complete() {
         ["cityYield", "strategicResourceProjection"]
     );
     assert!(manifest.turn_processors.is_empty());
-    assert_eq!(manifest.client_api_version, 6);
-    assert!(!manifest.legacy_paths);
+    assert_eq!(
+        manifest.client_api_version,
+        aonw_contracts::client::CLIENT_API_VERSION
+    );
     assert!(manifest.cases.len() >= 12);
 
     let invalid = std::fs::read(root.join("engine/fixtures/economy/invalid/unknown-field.json"))

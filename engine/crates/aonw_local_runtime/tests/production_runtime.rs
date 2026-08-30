@@ -21,7 +21,7 @@ use aonw_domain::{
 use aonw_local_runtime::{ClientProtocol, LocalRuntime, OpenSession};
 
 #[test]
-fn production_protocol_query_commands_save_and_replay_are_current_and_exact() {
+fn production_protocol_query_commands_save_and_replay_are_exact() {
     let query = dispatch_client(
         &mut opened_runtime(),
         ClientRequestBodyDto::Query {

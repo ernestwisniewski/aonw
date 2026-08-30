@@ -1,4 +1,4 @@
-//! Crash-safe current-save storage for native hosts.
+//! Crash-safe save storage for native hosts.
 
 use std::ffi::OsString;
 use std::fs::{self, File, OpenOptions};
@@ -48,7 +48,7 @@ impl std::error::Error for PersistenceFileError {}
 ///
 /// Updates are written and synced in the destination directory before an
 /// atomic rename. The store contains only the current canonical save contract;
-/// backup is a recovery copy, not a legacy format.
+/// backup is a recovery copy that uses the same save format.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PersistenceFileStore {
     primary: PathBuf,

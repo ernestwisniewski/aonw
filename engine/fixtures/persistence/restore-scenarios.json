@@ -1,12 +1,6 @@
 {
-  "capability": "current-save-restore-complete",
-  "policy": "engine-first-current-only-no-legacy",
-  "compatibility": {
-    "apiVersionPreserved": true,
-    "currentOnly": true,
-    "legacyReaders": false,
-    "upcasters": false
-  },
+  "capability": "save-restore-complete",
+  "policy": "exact-schema",
   "commandFamilies": [
     {
       "family": "artifact",
@@ -34,7 +28,7 @@
       "workflow": "active resource trade and exchange agreements",
       "midWorkflow": true,
       "testFile": "engine/crates/aonw_local_runtime/tests/diplomacy_runtime.rs",
-      "testName": "resource_trade_commands_are_current_persisted_and_replayable"
+      "testName": "resource_trade_commands_are_persisted_and_replayable"
     },
     {
       "family": "logistics",
@@ -55,14 +49,14 @@
       "workflow": "active production queue after rush command",
       "midWorkflow": true,
       "testFile": "engine/crates/aonw_local_runtime/tests/production_runtime.rs",
-      "testName": "production_protocol_query_commands_save_and_replay_are_current_and_exact"
+      "testName": "production_protocol_query_commands_save_and_replay_are_exact"
     },
     {
       "family": "research",
       "workflow": "selected technology with accumulated progress",
       "midWorkflow": true,
       "testFile": "engine/crates/aonw_local_runtime/tests/research_runtime.rs",
-      "testName": "research_protocol_is_current_complete_and_replayable"
+      "testName": "research_protocol_is_complete_and_replayable"
     },
     {
       "family": "turn",

@@ -339,17 +339,13 @@ fn parse_corpus() -> Corpus {
         &[
             "capability",
             "cases",
-            "currentOnly",
             "evaluation",
-            "legacyPaths",
             "randomSeeds",
             "thresholds",
         ],
     );
     assert_eq!(root["capability"], "deterministic-ai-strength-gate");
     assert_eq!(root["evaluation"], "legal-move-progress-basis-points");
-    assert_eq!(root["currentOnly"], true);
-    assert_eq!(root["legacyPaths"], false);
     let cases = array(&root["cases"])
         .iter()
         .map(parse_case)
@@ -452,7 +448,7 @@ fn number(value: &Value) -> u64 {
 }
 
 #[test]
-fn strength_corpus_declares_only_current_policy_and_movement_family() {
+fn strength_corpus_declares_deterministic_policy_and_movement_family() {
     let corpus = parse_corpus();
     assert_eq!(corpus.cases.len(), 6);
     assert_eq!(corpus.random_seeds.len(), 8);

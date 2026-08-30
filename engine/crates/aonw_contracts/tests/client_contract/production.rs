@@ -54,7 +54,7 @@ pub(super) fn requests() -> Vec<ClientRequestBodyDto> {
 }
 
 #[test]
-fn production_completion_events_have_current_strict_wire_shapes() {
+fn production_completion_events_have_strict_wire_shapes() {
     let events = vec![
         ClientEventDto::CityBuiltBuilding {
             city_id: "city-1".to_owned(),
@@ -88,10 +88,10 @@ fn production_completion_events_have_current_strict_wire_shapes() {
 
     let encoded = serde_json::to_string(&events).expect("event JSON");
     assert_eq!(
-        serde_json::from_str::<Vec<ClientEventDto>>(&encoded).expect("current events"),
+        serde_json::from_str::<Vec<ClientEventDto>>(&encoded).expect("events"),
         events
     );
-    let unknown = encoded.replacen("\"cityId\":", "\"legacyVersion\":1,\"cityId\":", 1);
+    let unknown = encoded.replacen("\"cityId\":", "\"unexpectedField\":true,\"cityId\":", 1);
     assert!(serde_json::from_str::<Vec<ClientEventDto>>(&unknown).is_err());
 }
 

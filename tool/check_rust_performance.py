@@ -511,8 +511,8 @@ def validate_w5_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("W5 tile work budget differs")
     if manifest.get("automationLegalityBudget") != stage["maxWorkCounters"]["examinedEdges"]:
         raise PerformanceFailure("W5 legality work budget differs")
-    if manifest.get("clientApiVersion") != 5 or manifest.get("legacyPaths") is not False:
-        raise PerformanceFailure("W5 current-only protocol policy differs")
+    if manifest.get("clientApiVersion") != 7:
+        raise PerformanceFailure("W5 client API version differs")
     if stage["maxEventsPerCommand"] < 1_200:
         raise PerformanceFailure("W5 event budget cannot cover the maximum worker turn")
 
@@ -543,8 +543,8 @@ def validate_o9_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         raise PerformanceFailure("O9 rejection inventory differs")
     if manifest.get("turnProcessors") != ["outcome"]:
         raise PerformanceFailure("O9 turn processor inventory differs")
-    if manifest.get("clientApiVersion") != 5 or manifest.get("legacyPaths") is not False:
-        raise PerformanceFailure("O9 current-only protocol policy differs")
+    if manifest.get("clientApiVersion") != 7:
+        raise PerformanceFailure("O9 client API version differs")
     if stage["maxEventsPerCommand"] < 5:
         raise PerformanceFailure("O9 event budget cannot cover terminal turn resolution")
 
@@ -608,8 +608,6 @@ def validate_a10_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
     if (
         not isinstance(strength, dict)
         or strength.get("capability") != "deterministic-ai-strength-gate"
-        or strength.get("currentOnly") is not True
-        or strength.get("legacyPaths") is not False
     ):
         raise PerformanceFailure("A10 strength corpus policy differs")
     baseline = read_json(
@@ -622,10 +620,8 @@ def validate_a10_fixtures(stage: dict[str, Any], repo_root: Path) -> None:
         or baseline.get("unhandledDecisions") != 0
     ):
         raise PerformanceFailure("A10 strength baseline evidence differs")
-    if manifest.get("clientApiVersion") != 5:
+    if manifest.get("clientApiVersion") != 7:
         raise PerformanceFailure("A10 shared client API version differs")
-    if manifest.get("legacyPaths") is not False:
-        raise PerformanceFailure("A10 greenfield policy differs")
 
 
 def validate_stages(

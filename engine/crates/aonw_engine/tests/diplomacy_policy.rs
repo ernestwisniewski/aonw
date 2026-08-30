@@ -118,7 +118,7 @@ fn unknown_player_validation_is_actor_first_and_fail_closed() {
 }
 
 #[test]
-fn policy_manifest_rejects_unknown_compatibility_fields() {
+fn policy_manifest_rejects_unknown_fields() {
     let invalid = std::fs::read(
         repository_root().join("engine/fixtures/diplomacy_policy/invalid/unknown-field.json"),
     )

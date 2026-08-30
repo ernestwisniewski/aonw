@@ -680,8 +680,8 @@ rust-ai-check: rust-ai-ledger-check rust-engine-inventory-check rust-determinism
 rust-replacement-surface-check:
 	@tool/check_rust_replacement_surface.py
 
-rust-restore-matrix-check:
-	@tool/check_rust_restore_matrix.py
+rust-restore-scenarios-check:
+	@tool/check_rust_restore_scenarios.py
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime \
 		--test artifact_runtime \
 		--test city_runtime \
@@ -693,7 +693,7 @@ rust-restore-matrix-check:
 		--test turn_kernel_runtime \
 		--test worker_runtime
 
-rust-persistence-check: rust-replacement-surface-check rust-restore-matrix-check rust-engine-inventory-check rust-determinism-inventory-check rust-determinism-inventory-test rust-performance-check
+rust-persistence-check: rust-replacement-surface-check rust-restore-scenarios-check rust-engine-inventory-check rust-determinism-inventory-check rust-determinism-inventory-test rust-performance-check
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts persistence::tests
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --lib persistence_file::tests
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test persistence_hardening

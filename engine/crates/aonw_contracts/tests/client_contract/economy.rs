@@ -13,7 +13,7 @@ pub(super) fn responses() -> Vec<ClientResponseBodyDto> {
 }
 
 #[test]
-fn economy_events_round_trip_with_strict_current_shapes() {
+fn economy_events_round_trip_with_strict_shapes() {
     let client_events = [
         ClientEventDto::CityClaimedHex {
             city_id: "capital".to_owned(),
@@ -53,10 +53,10 @@ fn assert_strict_round_trip<T>(value: &T)
 where
     T: serde::Serialize + serde::de::DeserializeOwned + PartialEq + core::fmt::Debug,
 {
-    let json = serde_json::to_string(value).expect("current event JSON");
-    let decoded = serde_json::from_str::<T>(&json).expect("current event");
+    let json = serde_json::to_string(value).expect("event JSON");
+    let decoded = serde_json::from_str::<T>(&json).expect("event");
     assert_eq!(&decoded, value);
-    let unknown = json.replacen('{', r#"{"legacyVersion":1,"#, 1);
+    let unknown = json.replacen('{', r#"{"unexpectedField":true,"#, 1);
     assert!(serde_json::from_str::<T>(&unknown).is_err());
 }
 

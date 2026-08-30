@@ -1,7 +1,7 @@
 {
   "capability": "feature-complete-command-policy",
   "cases": [
-    "ai-rng-oracle-parity",
+    "deterministic-ai-rng",
     "autonomous-full-turn",
     "bounded-mcts-memory",
     "bounded-utility-scoring",
@@ -126,6 +126,5 @@
     "unitLogisticsOptions",
     "workerOptions"
   ],
-  "clientApiVersion": 6,
-  "legacyPaths": false
+  "clientApiVersion": 7
 }

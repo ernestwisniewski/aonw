@@ -1,10 +1,9 @@
 {
-  "capability": "current-persistence-hardened",
+  "capability": "save-and-replay-hardened",
   "formats": [
     "canonicalSave",
     "segmentedReplayArchive"
   ],
-  "compatibility": "current-only",
   "limits": {
     "replayEntriesPerSegment": 512,
     "replaySegments": 8,
@@ -27,9 +26,5 @@
     "segment-rollover",
     "truncated-document-rejected",
     "unknown-field-rejected"
-  ],
-  "futureVersionFixtures": false,
-  "internalVersionFields": false,
-  "legacyPaths": false,
-  "upcasters": false
+  ]
 }

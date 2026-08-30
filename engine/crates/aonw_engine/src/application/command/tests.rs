@@ -56,7 +56,7 @@ fn player_commands_publish_reviewed_event_budgets() {
 }
 
 #[test]
-fn canonical_engine_error_formats_every_current_source_family() {
+fn canonical_engine_error_formats_every_source_family() {
     let player = PlayerId::new("player").expect("player id");
     let unit = UnitId::new("unit").expect("unit id");
     for error in [
@@ -70,7 +70,7 @@ fn canonical_engine_error_formats_every_current_source_family() {
 }
 
 #[test]
-fn player_action_lifecycle_gate_is_central_and_keeps_bare_state_compatibility() {
+fn player_action_lifecycle_gate_accepts_states_without_match_identity() {
     let actor = PlayerId::new("player").expect("player id");
     let bare_state = empty_state();
     assert_eq!(

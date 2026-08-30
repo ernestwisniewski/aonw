@@ -17,7 +17,5 @@
     "maximumUnhandledDecisions": 0,
     "minimumMovementFamilyUsage": 78,
     "difficultyScoreMonotonic": true
-  },
-  "currentOnly": true,
-  "legacyPaths": false
+  }
 }

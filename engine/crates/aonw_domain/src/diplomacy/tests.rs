@@ -104,7 +104,7 @@ fn attack_status_severity_is_total_for_the_current_status_surface() {
 }
 
 #[test]
-fn proposal_transitions_are_ordered_duplicate_safe_and_current_only() {
+fn proposal_transitions_are_ordered_and_duplicate_safe() {
     let fixture = fixture();
     let second = proposal("proposal-z", &fixture.attacker, &fixture.defender);
     let first = proposal("proposal-a", &fixture.defender, &fixture.attacker);

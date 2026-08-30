@@ -1,4 +1,4 @@
-//! Current-only persistence corruption, rollover, and checkpoint-chain tests.
+//! Persistence corruption, rollover, and checkpoint-chain tests.
 
 use std::fs;
 use std::path::PathBuf;
@@ -21,15 +21,11 @@ use aonw_local_runtime::{
 static TEST_DIRECTORY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[test]
-fn persistence_manifest_is_current_only_and_bounded() {
+fn persistence_manifest_is_strict_and_bounded() {
     let manifest: serde_json::Value =
         serde_json::from_str(include_str!("../../../fixtures/persistence/manifest.json"))
             .expect("persistence manifest");
-    assert_eq!(manifest["capability"], "current-persistence-hardened");
-    assert_eq!(manifest["compatibility"], "current-only");
-    assert_eq!(manifest["legacyPaths"], false);
-    assert_eq!(manifest["upcasters"], false);
-    assert_eq!(manifest["internalVersionFields"], false);
+    assert_eq!(manifest["capability"], "save-and-replay-hardened");
     assert_eq!(manifest["limits"]["replayEntriesPerSegment"], 512);
     assert_eq!(manifest["limits"]["replaySegments"], 8);
     let cases = manifest["cases"].as_array().expect("case list");

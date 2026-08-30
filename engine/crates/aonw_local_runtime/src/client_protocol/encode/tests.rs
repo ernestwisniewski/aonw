@@ -529,7 +529,7 @@ fn pending_actions() -> [PendingActionView; 9] {
 }
 
 #[test]
-fn direct_open_helper_remains_current_only() {
+fn direct_open_helper_builds_a_strict_session() {
     let map = authored_map();
     let ruleset = RulesetDefinition::standard().clone();
     let scenario = ScenarioDefinition::try_new(

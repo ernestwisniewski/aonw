@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate current-save restore evidence for every strategic command family."""
+"""Validate save and restore evidence for every strategic command family."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MATRIX = ROOT / "engine/fixtures/persistence/restore-matrix.json"
+SCENARIOS = ROOT / "engine/fixtures/persistence/restore-scenarios.json"
 FAMILIES = {
     "artifact",
     "city",
@@ -27,7 +27,7 @@ FAMILIES = {
 
 
 def fail(message: str) -> None:
-    raise SystemExit(f"Rust restore matrix failed: {message}")
+    raise SystemExit(f"Rust restore scenarios failed: {message}")
 
 
 def strict_object(value: Any, label: str, keys: set[str]) -> dict[str, Any]:
@@ -56,32 +56,20 @@ def validate_evidence(entry: dict[str, Any], label: str) -> None:
 
 def main() -> None:
     try:
-        matrix = json.loads(MATRIX.read_text(encoding="utf-8"))
+        scenarios = json.loads(SCENARIOS.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        fail(f"cannot load matrix: {error}")
+        fail(f"cannot load scenarios: {error}")
     strict_object(
-        matrix,
-        "matrix",
-        {"capability", "policy", "compatibility", "commandFamilies", "recoveryDrills"},
+        scenarios,
+        "scenarios",
+        {"capability", "policy", "commandFamilies", "recoveryDrills"},
     )
-    if matrix["capability"] != "current-save-restore-complete":
+    if scenarios["capability"] != "save-restore-complete":
         fail("capability differs")
-    if matrix["policy"] != "engine-first-current-only-no-legacy":
+    if scenarios["policy"] != "exact-schema":
         fail("policy differs")
-    compatibility = strict_object(
-        matrix["compatibility"],
-        "compatibility",
-        {"apiVersionPreserved", "currentOnly", "legacyReaders", "upcasters"},
-    )
-    if compatibility != {
-        "apiVersionPreserved": True,
-        "currentOnly": True,
-        "legacyReaders": False,
-        "upcasters": False,
-    }:
-        fail("compatibility policy differs")
 
-    entries = matrix["commandFamilies"]
+    entries = scenarios["commandFamilies"]
     if not isinstance(entries, list) or len(entries) != len(FAMILIES):
         fail("command family count differs")
     found: set[str] = set()
@@ -107,7 +95,7 @@ def main() -> None:
     if mid_workflows < 4:
         fail("at least four mid-workflow restore drills are required")
 
-    drills = matrix["recoveryDrills"]
+    drills = scenarios["recoveryDrills"]
     if not isinstance(drills, list) or len(drills) != 2:
         fail("recovery drill count differs")
     names: set[str] = set()
@@ -124,7 +112,7 @@ def main() -> None:
     if names != {"atomic-backup-rollback", "turn-boundary-soak"}:
         fail("recovery drill set differs")
     print(
-        "Rust restore matrix passed: "
+        "Rust restore scenarios passed: "
         f"{len(found)} command families, {mid_workflows} mid-workflow drills, {len(names)} recovery drills."
     )
 

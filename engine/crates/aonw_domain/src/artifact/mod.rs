@@ -283,7 +283,7 @@ mod tests {
     use super::{ArtifactTransitionError, WorldArtifact, WorldArtifactLocation, WorldArtifactType};
 
     #[test]
-    fn artifact_location_machine_is_checked_and_current_only() {
+    fn artifact_location_machine_enforces_valid_transitions() {
         let unit = UnitId::new("unit").expect("unit id");
         let other_unit = UnitId::new("other-unit").expect("unit id");
         let source = CityId::new("source").expect("city id");
