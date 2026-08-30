@@ -64,6 +64,9 @@ codesign --verify --deep --strict "${application_path}"
   "Godot packaged session lifecycle: opened"
 "${repo_root}/tool/check_godot_log.sh" \
   "${smoke_log}" \
+  "Godot packaged local turn: completed"
+"${repo_root}/tool/check_godot_log.sh" \
+  "${smoke_log}" \
   "Godot packaged session lifecycle: closed"
 
 echo "Godot macOS arm64 export smoke: OK"

@@ -5,6 +5,7 @@ const MapSource := preload("res://game/application/map/map_source.gd")
 const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 const EXPORT_SMOKE_ARGUMENT := "--aonw-export-smoke"
 const EXPORT_SMOKE_OPENED := "Godot packaged session lifecycle: opened"
+const EXPORT_SMOKE_TURN_COMPLETED := "Godot packaged local turn: completed"
 const EXPORT_SMOKE_CLOSED := "Godot packaged session lifecycle: closed"
 
 @onready var _surface: AonwMapSurface = %MapSurface
@@ -159,6 +160,7 @@ func _setup_local_session(source: AonwMapSource) -> void:
 	_turn_hud.present(projection.turn)
 	if _is_export_smoke():
 		print(EXPORT_SMOKE_OPENED)
+		await _run_export_smoke_turn()
 
 func _is_export_smoke() -> bool:
 	return EXPORT_SMOKE_ARGUMENT in OS.get_cmdline_user_args()
@@ -166,6 +168,20 @@ func _is_export_smoke() -> bool:
 func _report_export_smoke_failure(message: String) -> void:
 	if _is_export_smoke():
 		push_error("Godot packaged session lifecycle failed: %s" % message)
+
+func _run_export_smoke_turn() -> void:
+	var previous_revision := _local_match.revision()
+	await _on_end_turn_pressed()
+	var turn := _turn_hud.current()
+	if (
+		turn != null
+		and _local_match.revision() == previous_revision + 1
+		and turn.number == 2
+	):
+		print(EXPORT_SMOKE_TURN_COMPLETED)
+	else:
+		_report_export_smoke_failure("local turn did not complete")
+	get_tree().quit()
 
 func _resync_projection() -> bool:
 	var synchronized: Dictionary = await _local_match.resync()
