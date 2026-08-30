@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../tool/assets/compile/map_asset_bundle_manifest.dart';
-import '../../tool/assets/compile/map_texture_geometry.dart';
-import '../../tool/assets/compile/starter_map_bundle.dart';
+import '../../../../tool/assets/compile/map_asset_bundle_manifest.dart';
+import '../../../../tool/assets/compile/map_texture_geometry.dart';
+import '../../../../tool/assets/compile/starter_map_bundle.dart';
 
 void main() {
   test('starter bundle is deterministic and self-contained', () async {
@@ -12,7 +12,7 @@ void main() {
       'starter-map-bundle-test-',
     );
     addTearDown(() => temporary.delete(recursive: true));
-    final workspace = Directory.current.absolute;
+    final workspace = Directory('../..').absolute;
     final first = Directory('${temporary.path}/first');
     final second = Directory('${temporary.path}/second');
 
@@ -47,7 +47,7 @@ void main() {
     );
     addTearDown(() => temporary.delete(recursive: true));
     final manifest = await compileStarterMapBundle(
-      workspace: Directory.current.absolute,
+      workspace: Directory('../..').absolute,
       output: temporary,
     );
 

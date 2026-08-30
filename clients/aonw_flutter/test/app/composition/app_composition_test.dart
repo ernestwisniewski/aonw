@@ -203,10 +203,7 @@ void main() {
 }
 
 Map<String, dynamic> _lifecycleOracle() {
-  for (final path in [
-    '../../aonw_tests/fixtures/input/flutter_viewport_oracle.json',
-    'aonw_tests/fixtures/input/flutter_viewport_oracle.json',
-  ]) {
+  for (final path in ['test/fixtures/input/viewport_oracle.json']) {
     final file = File(path);
     if (file.existsSync()) {
       final value = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;

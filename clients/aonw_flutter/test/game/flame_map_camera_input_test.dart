@@ -204,10 +204,7 @@ MapRenderSnapshot _snapshot(MapScene scene) => MapRenderSnapshot(
 );
 
 File _inputOracleFile() {
-  for (final path in [
-    '../../aonw_tests/fixtures/input/flutter_viewport_oracle.json',
-    'aonw_tests/fixtures/input/flutter_viewport_oracle.json',
-  ]) {
+  for (final path in ['test/fixtures/input/viewport_oracle.json']) {
     final file = File(path);
     if (file.existsSync()) return file;
   }

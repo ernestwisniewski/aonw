@@ -27,7 +27,7 @@ GODOT_TEMPLATE_VERSION := $(strip $(shell sed 's/\.official\..*//' .godot-versio
 GODOT_MACOS_TEMPLATE_SOURCE ?= $(HOME)/Library/Application Support/Godot/export_templates/$(GODOT_TEMPLATE_VERSION)/macos.zip
 GODOT_MACOS_ARM64_TEMPLATE := $(CURDIR)/$(GODOT_PROJECT)/.godot/export_templates/macos-arm64.zip
 MAP_RENDER_PROBE_DIR ?= /tmp/aonw-map-render-probes
-MAP_RENDER_PROBE_SCENARIO := $(CURDIR)/aonw_tests/fixtures/render/map_render_probe_scenarios.json
+MAP_RENDER_PROBE_SCENARIO := $(CURDIR)/content/maps/map_render_probe_scenarios.json
 FLUTTER_MAP_RENDER_PROBE := $(abspath $(MAP_RENDER_PROBE_DIR))/flutter.json
 FLUTTER_MAP_RENDER_DIAGNOSTICS := $(abspath $(MAP_RENDER_PROBE_DIR))/flutter-diagnostics.json
 GODOT_MAP_RENDER_PROBE := $(abspath $(MAP_RENDER_PROBE_DIR))/godot.json
@@ -713,10 +713,10 @@ rust-engine-deep-check: rust-engine-check rust-test-release rust-foundation-chec
 
 rust-engine-completion-check: rust-engine-quality-check rust-test-release rust-foundation-check rust-integrated-turn-check rust-ai-strength-check rust-persistence-check rust-engine-security-check rust-release-metadata-check
 
-flutter-client-map-contract-test: root-dependencies flutter-client-dependencies
+flutter-client-map-contract-test: flutter-client-dependencies
 	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/presentation/geometry/odd_q_flat_top_geometry_test.dart
-	@flutter test --no-pub test/tool/map_asset_bundle_compiler_test.dart
-	@dart run tool/assets/compile/starter_map_bundle.dart check
+	@cd clients/aonw_flutter && flutter test --no-pub test/tool/map_asset_bundle_compiler_test.dart
+	@cd clients/aonw_flutter && dart --packages=.dart_tool/package_config.json ../../tool/assets/compile/starter_map_bundle.dart check
 
 flutter-client-dependencies: toolchain-check
 	@cd clients/aonw_flutter && flutter pub get --enforce-lockfile
@@ -885,11 +885,11 @@ godot-test: godot-editor-check
 	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_RUNTIME_LOG)" --path "$(GODOT_PROJECT)" --quit-after 5
 	@tool/check_godot_log.sh "$(GODOT_RUNTIME_LOG)"
 
-godot-map-sync:
-	@dart run tool/assets/compile/starter_map_bundle.dart compile
+godot-map-sync: flutter-client-dependencies
+	@cd clients/aonw_flutter && dart --packages=.dart_tool/package_config.json ../../tool/assets/compile/starter_map_bundle.dart compile
 
-godot-map-bundle-check:
-	@dart run tool/assets/compile/starter_map_bundle.dart check
+godot-map-bundle-check: flutter-client-dependencies
+	@cd clients/aonw_flutter && dart --packages=.dart_tool/package_config.json ../../tool/assets/compile/starter_map_bundle.dart check
 
 dependencies: flutter-client-dependencies rust-client-dependencies server-client-dependencies server-native-dependencies server-dependencies
 

@@ -27,7 +27,7 @@ Commands:
 - `make assets-reproduce` performs the same explicit reproducibility audit for
   release or maintenance work.
 - `make godot-map-sync` compiles the small, self-contained starter bundle from
-  `aonw_tests/fixtures/maps/`; `make godot-map-bundle-check` reproduces it twice
+  `content/maps/aonw2_starter/`; `make godot-map-bundle-check` reproduces it twice
   and compares every byte with the committed Godot bundle.
 
 Each map output is a strict `MapAssetBundleManifest`. It binds the visual

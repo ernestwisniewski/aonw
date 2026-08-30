@@ -7,8 +7,7 @@ import 'map_asset_bundle_compiler.dart';
 import 'map_asset_bundle_manifest.dart';
 import 'map_atlas_builder.dart';
 
-const _fixturePath =
-    'aonw_tests/fixtures/maps/aonw2_starter/reference_tiles.json';
+const _fixturePath = 'content/maps/aonw2_starter/reference_tiles.json';
 const _mapPath = 'content/maps/aonw2_starter/map.json';
 const _committedOutputs = [
   'clients/aonw_flutter/assets/maps/aonw2_starter',
@@ -20,11 +19,12 @@ Future<void> main(List<String> arguments) async {
     final command = arguments.isEmpty ? 'check' : arguments.first;
     if (arguments.length > 1 || !const {'compile', 'check'}.contains(command)) {
       throw const FormatException(
-        'Usage: dart run tool/assets/compile/starter_map_bundle.dart '
+        'Usage: dart --packages=.dart_tool/package_config.json '
+        '../../tool/assets/compile/starter_map_bundle.dart '
         '<compile|check>',
       );
     }
-    final workspace = Directory.current.absolute;
+    final workspace = _repositoryRoot();
     if (command == 'compile') {
       for (final path in _committedOutputs) {
         await compileStarterMapBundle(
@@ -43,6 +43,9 @@ Future<void> main(List<String> arguments) async {
     exitCode = 1;
   }
 }
+
+Directory _repositoryRoot() =>
+    File.fromUri(Platform.script).parent.parent.parent.parent.absolute;
 
 Future<MapAssetBundleManifest> compileStarterMapBundle({
   required Directory workspace,
