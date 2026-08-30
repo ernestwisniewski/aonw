@@ -73,6 +73,17 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		not confirm.visible and screen.get("_route") == null,
 		"accepted movement clears the route confirmation workflow",
 	)
+	var resynchronized: bool = await screen.call("_resync_projection")
+	var resynchronized_marker := (
+		unit_layer.get_node_or_null("preview-commander") as MeshInstance3D
+	)
+	_check(
+		resynchronized
+		and resynchronized_marker == marker
+		and resynchronized_marker.mesh == initial_mesh
+		and resynchronized_marker.position.is_equal_approx(expected),
+		"snapshot resync reconciles stable unit IDs without rebuilding their nodes",
+	)
 	session.close()
 	screen.free()
 

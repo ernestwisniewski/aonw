@@ -15,15 +15,14 @@ func present(
 	units: Array[AonwLocalMatchViewModels.UnitView],
 ) -> void:
 	_projection = projection
-	_clear_instances()
+	var incoming_ids: Dictionary = {}
 	for unit in units:
-		var unit_id := unit.id
-		_units[unit_id] = unit
-		_unit_ids_by_coordinate[unit.coordinate] = unit_id
-		var instance := _create_marker(unit_id)
-		_instances[unit_id] = instance
-		add_child(instance)
-		instance.position = _unit_position(unit)
+		incoming_ids[unit.id] = true
+	for unit_id in _instances.keys():
+		if not incoming_ids.has(unit_id):
+			_remove_unit(unit_id)
+	for unit in units:
+		_upsert_unit(unit)
 
 func unit_at(coordinate: Vector2i) -> String:
 	return str(_unit_ids_by_coordinate.get(coordinate, ""))
@@ -32,27 +31,38 @@ func apply_transition(transition: AonwLocalMatchViewModels.UnitTransition) -> vo
 	for unit_id in transition.removed_unit_ids:
 		_remove_unit(unit_id)
 	for unit in transition.upserted_units:
-		var unit_id := unit.id
-		var exists := _instances.has(unit_id)
-		if _units.has(unit_id):
-			var previous: AonwLocalMatchViewModels.UnitView = _units[unit_id]
-			if _unit_ids_by_coordinate.get(previous.coordinate, "") == unit_id:
-				_unit_ids_by_coordinate.erase(previous.coordinate)
-		_units[unit_id] = unit
-		_unit_ids_by_coordinate[unit.coordinate] = unit_id
-		if not exists:
-			var instance := _create_marker(unit_id)
-			_instances[unit_id] = instance
-			add_child(instance)
-			instance.position = _unit_position(unit)
-		elif unit_id == transition.movement_unit_id and not transition.movement_steps.is_empty():
-			_animate_steps(unit_id, transition.movement_steps)
-		else:
-			(_instances[unit_id] as MeshInstance3D).position = _unit_position(unit)
+		var steps: Array[AonwLocalMatchViewModels.MovementStep] = []
+		if unit.id == transition.movement_unit_id:
+			steps = transition.movement_steps
+		_upsert_unit(unit, steps)
 
-func _animate_steps(unit_id: String, steps: Array) -> void:
-	if _movement_tweens.has(unit_id):
-		(_movement_tweens[unit_id] as Tween).kill()
+func _upsert_unit(
+	unit: AonwLocalMatchViewModels.UnitView,
+	movement_steps: Array[AonwLocalMatchViewModels.MovementStep] = [],
+) -> void:
+	var unit_id := unit.id
+	if _units.has(unit_id):
+		var previous: AonwLocalMatchViewModels.UnitView = _units[unit_id]
+		if _unit_ids_by_coordinate.get(previous.coordinate, "") == unit_id:
+			_unit_ids_by_coordinate.erase(previous.coordinate)
+	_units[unit_id] = unit
+	_unit_ids_by_coordinate[unit.coordinate] = unit_id
+	if not _instances.has(unit_id):
+		var instance := _create_marker(unit_id)
+		_instances[unit_id] = instance
+		add_child(instance)
+		instance.position = _unit_position(unit)
+	elif not movement_steps.is_empty():
+		_animate_steps(unit_id, movement_steps)
+	else:
+		_stop_movement(unit_id)
+		(_instances[unit_id] as MeshInstance3D).position = _unit_position(unit)
+
+func _animate_steps(
+	unit_id: String,
+	steps: Array[AonwLocalMatchViewModels.MovementStep],
+) -> void:
+	_stop_movement(unit_id)
 	var instance: MeshInstance3D = _instances[unit_id]
 	if not is_inside_tree():
 		instance.position = _unit_position(_units[unit_id])
@@ -96,20 +106,8 @@ func _marker_mesh_resource() -> CylinderMesh:
 	_marker_mesh.material = material
 	return _marker_mesh
 
-func _clear_instances() -> void:
-	for tween in _movement_tweens.values():
-		(tween as Tween).kill()
-	for instance in _instances.values():
-		(instance as Node).queue_free()
-	_units.clear()
-	_unit_ids_by_coordinate.clear()
-	_instances.clear()
-	_movement_tweens.clear()
-
 func _remove_unit(unit_id: String) -> void:
-	if _movement_tweens.has(unit_id):
-		(_movement_tweens[unit_id] as Tween).kill()
-		_movement_tweens.erase(unit_id)
+	_stop_movement(unit_id)
 	if _instances.has(unit_id):
 		(_instances[unit_id] as Node).queue_free()
 		_instances.erase(unit_id)
@@ -118,3 +116,9 @@ func _remove_unit(unit_id: String) -> void:
 		if _unit_ids_by_coordinate.get(unit.coordinate, "") == unit_id:
 			_unit_ids_by_coordinate.erase(unit.coordinate)
 	_units.erase(unit_id)
+
+func _stop_movement(unit_id: String) -> void:
+	if not _movement_tweens.has(unit_id):
+		return
+	(_movement_tweens[unit_id] as Tween).kill()
+	_movement_tweens.erase(unit_id)
