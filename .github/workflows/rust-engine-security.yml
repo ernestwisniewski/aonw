@@ -1,11 +1,11 @@
-name: Successor Engine Security Checks
+name: Rust Engine Security Checks
 
 on:
   push:
     branches:
       - dev
     paths:
-      - engine/quality/engine_completion_request.md
+      - engine/quality/release_qualification.md
   schedule:
     - cron: "41 2 * * 3"
   workflow_dispatch:

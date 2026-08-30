@@ -11,8 +11,8 @@
 - [ ] `make bootstrap` succeeds without changing committed lockfiles.
 - [ ] `make analyze` passes with the shared fatal policy for all four packages.
 - [ ] `make ci` passes (generated-code drift, format, analysis, architecture, mutation, coverage, and generated-client smoke test).
-- [ ] `make successor-engine-check` passes with the pinned Rust and `cargo-deny` versions; architecture, unsafe, source, license, and duplicate-policy changes are explained.
-- [ ] `make successor-engine-evidence-check` passes when the Rust engine, runtime, contracts, fixtures, or mapping changed; parity, LCOV/JSON, and structural performance artifacts were reviewed.
+- [ ] `make rust-engine-check` passes with the pinned Rust and `cargo-deny` versions; architecture, unsafe, source, license, and duplicate-policy changes are explained.
+- [ ] `make rust-engine-evidence-check` passes when the Rust engine, runtime, contracts, fixtures, or mapping changed; canonical fixtures, LCOV/JSON, and structural performance artifacts were reviewed.
 - [ ] The Native Assets fail-closed contract test passes; an unsupported or cross target cannot be reported as a Rust backend by substituting a stub.
 - [ ] `make coverage-check` passes; any baseline or policy change preserves the historical ratchet and is explained in the summary.
 - [ ] `make mutation` passes; no surviving mutant remains after the latest focused change.

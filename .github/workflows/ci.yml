@@ -15,8 +15,8 @@ permissions:
   contents: read
 
 jobs:
-  successor-boundaries:
-    name: successor boundaries
+  client-boundaries:
+    name: client boundaries
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -29,11 +29,11 @@ jobs:
       - name: Set up Linux CI tools
         uses: ./.github/actions/setup-linux-ci
 
-      - name: Check legacy freeze and successor dependencies
+      - name: Check client dependencies and architecture boundaries
         run: make --no-print-directory p0-check
 
-  successor-rust:
-    name: successor Rust
+  rust-engine:
+    name: Rust engine
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
@@ -52,8 +52,8 @@ jobs:
       - name: Install pinned dependency policy tool
         run: cargo +1.97.1 install --locked --force --version 0.20.2 cargo-deny
 
-      - name: Run fast successor engine gate
-        run: make --no-print-directory successor-engine-check
+      - name: Run fast Rust engine gate
+        run: make --no-print-directory rust-engine-check
 
       - name: Upload Rust dependency policy report
         if: always()
@@ -64,8 +64,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  successor-engine-evidence:
-    name: successor engine evidence
+  rust-engine-evidence:
+    name: Rust engine evidence
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -95,29 +95,28 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.pub-cache
-          key: ${{ runner.os }}-successor-evidence-${{ hashFiles('pubspec.lock', 'engine/Cargo.lock') }}
+          key: ${{ runner.os }}-rust-engine-evidence-${{ hashFiles('pubspec.lock', 'engine/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-successor-evidence-
+            ${{ runner.os }}-rust-engine-evidence-
             ${{ runner.os }}-pub-
 
-      - name: Generate successor engine evidence
-        run: make --no-print-directory successor-engine-evidence-check
+      - name: Generate Rust engine evidence
+        run: make --no-print-directory rust-engine-evidence-check
 
-      - name: Upload successor engine evidence
+      - name: Upload Rust engine evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: successor-engine-evidence-${{ github.sha }}
+          name: rust-engine-evidence-${{ github.sha }}
           path: |
-            engine/migration/reducer_fixture_dispositions
             /tmp/aonw-rust-coverage.json
             /tmp/aonw-rust-coverage.lcov
             /tmp/aonw-rust-performance.json
           if-no-files-found: warn
           retention-days: 14
 
-  successor-engine-native-contract:
-    name: successor engine native contract
+  rust-native-contract:
+    name: Rust native contract
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -171,7 +170,7 @@ jobs:
       - name: Check Rust-Flutter bridge
         run: make --no-print-directory rust-flutter-test
 
-      - name: Check successor architecture budgets
+      - name: Check architecture budgets
         run: make --no-print-directory architecture-check
 
   quality-gate:
@@ -462,8 +461,8 @@ jobs:
       - name: Check all generated code and migration drift
         run: make generated-code-check
 
-      - name: Check successor map geometry and bundle reproducibility
-        run: make --no-print-directory successor-map-contract-test
+      - name: Check Flutter map geometry and bundle reproducibility
+        run: make --no-print-directory flutter-client-map-contract-test
 
   godot-terrain:
     name: Godot Terrain3D
@@ -497,8 +496,8 @@ jobs:
       - name: Run Godot Terrain3D gate
         run: make --no-print-directory godot-check
 
-  successor-cross-client:
-    name: successor cross-client map parity
+  cross-client-map:
+    name: cross-client map agreement
     runs-on: ubuntu-latest
     timeout-minutes: 25
 

@@ -1,13 +1,8 @@
 # AoNW Rust Engine
 
-This directory contains the deterministic successor engine for Age of New
-Worlds. Rust owns canonical state, gameplay rules, recipient projections,
-current save/replay contracts, and the native boundaries used by Flutter and
-Godot.
-
-`packages/aonw_core/` remains the production authority until the later server
-cutover. It is not a runtime dependency of this engine and does not block the
-handoff to clean clients once the engine completion gate is green.
+This directory contains the deterministic engine for Age of New Worlds. Rust
+owns canonical state, gameplay rules, recipient projections, save/replay
+contracts, and the native boundaries used by Flutter, Godot, and Serverpod.
 
 ## Workspace
 
@@ -22,45 +17,41 @@ handoff to clean clients once the engine completion gate is green.
 | `aonw_flutter` | Panic-contained C ABI for Flutter Native Assets. |
 | `aonw_godot` | Thin GDExtension over the shared client protocol. |
 | `aonw_map_*` | Logical map authoring, deterministic generation, terrain compilation, and CLI adapters. |
-| `aonw_testkit` | Strict current fixtures, bounded corpus loading, and structural comparison. |
+| `aonw_testkit` | Strict canonical fixtures, bounded corpus loading, and structural comparison. |
 
 Pure engine crates do not depend on Flutter, Godot, Serverpod, filesystem,
 network, wall-clock time, or presentation code. Adapters translate the same
 versioned client boundary; they do not implement rules or fallback to Dart.
 
-## Current scope
+## Runtime scope
 
 Implemented runtime slices include movement, unit actions, logistics, combat,
 cities, workers, roads, economy, production, research, diplomacy, objectives,
-match outcome, recipient-safe projections, local sessions, current saves and
+match outcome, recipient-safe projections, local sessions, saves and
 bounded multi-segment exact replay. Strategic AI is deterministic, profile-aware,
 strength-gated, and exercises the complete local runtime. Native persistence
-uses atomic current-format writes plus a last-known-good backup. The production
-Serverpod host remains migration work.
+uses atomic writes plus a last-known-good backup. Serverpod hosts the same Rust
+runtime through its dedicated native boundary.
 
-The engine and successor clients are greenfield and update one current contract
-atomically. Internal DTOs do not carry speculative versions, legacy readers,
-upcasters, aliases, or compatibility fallbacks. Shared API and artifact versions
-remain because independently built components consume them.
+The engine and clients update one stable contract atomically. Internal DTOs do
+not carry speculative versions, alternate readers, upcasters, aliases, or
+compatibility fallbacks. Shared API and artifact versions remain because
+independently built components consume them.
 
-## Client handoff
+## Release qualification
 
-Client development starts after one reviewed engine commit satisfies all three
-conditions below:
+A release commit satisfies all three conditions below:
 
 1. E0-PS11 functionality is complete in Rust: commands, queries, integrated
-   turn, AI, recipient projection, current save/replay, and local sessions.
-2. The current client protocol and native ownership/panic contracts are frozen
-   as the only input for the new Flutter and Godot clients.
+   turn, AI, recipient projection, save/replay, and local sessions.
+2. The client protocol and native ownership/panic contracts are internally
+   consistent across Flutter, Godot, and Serverpod.
 3. `make rust-engine-completion-check` passes on that commit, or its fast,
    evidence, deep, and security components pass in pinned GitHub jobs for the
    same commit.
 
-This handoff does not wait for client platform coverage, Serverpod hosting,
-shadow/canary rollout, Dart retirement, or the final Web transport decision.
-Those belong to client qualification and production cutover after the clients
-exist. During normal engine work, run the focused gate for the changed area;
-reserve the full completion command for the final handoff and CI.
+During normal engine work, run the focused gate for the changed area; reserve
+the full completion command for release qualification and CI.
 
 ## Quick start
 
@@ -68,8 +59,8 @@ Run from the repository root:
 
 ```sh
 make rust-check
-make successor-engine-check
-make successor-engine-evidence-check
+make rust-engine-check
+make rust-engine-evidence-check
 ```
 
 Focused functional gates include:
@@ -100,7 +91,7 @@ counters, result signatures, and payload budgets; they do not replace those
 external measurement tools. Line coverage is the release metric. Changed lines
 are governed by the stricter full-crate ratio, uncovered-line, and missing-file
 ratchets; branch coverage stays diagnostic until LLVM source mapping is stable
-enough to ratchet. Renames require an explicit reviewed baseline migration,
+enough to ratchet. Renames require an explicit reviewed baseline update,
 macros retain LLVM source attribution, reviewed globs are the only exclusions,
 and small crates use the same per-crate rules. There is no arbitrary global
 percentage target and no internal coverage schema version. Wall-clock benchmark
@@ -140,7 +131,7 @@ are local evidence and are not committed.
 Release supply-chain files use pinned external generators: OWASP
 `cargo-cyclonedx 0.5.9` for CycloneDX 1.5 JSON and `cargo-about 0.9.2` with its
 explicit `cli` feature for third-party notices. The repository checker isolates
-workspace-wide generation from the source tree, selects the current Flutter,
+workspace-wide generation from the source tree, selects the Flutter,
 Godot, and map-compiler artifacts, binds output to the exact target and commit
 epoch, and requires two byte-identical generations:
 
@@ -157,8 +148,6 @@ and are not committed as source.
 
 - [Public Rust API documentation](https://engine.aonw.net/)
 - [Interactive engine architecture](https://engine.aonw.net/architecture)
-- [Migration and cutover model](../docs/rust-engine-migration.md)
-- [Current save and replay contract](../docs/rust-engine-persistence.md)
-- [Migration inventory](migration/README.md)
+- [Save and replay contract](../docs/rust-engine-persistence.md)
 - [Architecture decisions](../docs/adr/README.md)
-- [Successor clients](../clients/README.md)
+- [Clients](../clients/README.md)

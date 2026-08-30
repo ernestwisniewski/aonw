@@ -1,5 +1,6 @@
 mod diplomacy;
 mod economy;
+mod logistics;
 mod movement;
 mod objective;
 
@@ -8,24 +9,21 @@ use crate::{
     encode_message_topic, encode_proposal_kind, encode_relation_reason, encode_relation_status,
     encode_score_reason, encode_technology, encode_troop, encode_unit_kind,
 };
-use aonw_contracts::client::{
-    ClientEventDto, ClientEvidenceDto, ClientLogisticsEvidenceDto, UnitMovementExecutionDto,
-    WorkerJobCompletionDto,
-};
+use aonw_contracts::client::{ClientEventDto, ClientEvidenceDto, WorkerJobCompletionDto};
 use aonw_contracts::{
     CombatExecutionDto, CombatModifierDto, CombatModifierKindDto, CombatOutcomeDto,
     CombatPreviewDto, CombatRollDto, CombatStatTargetDto, CombatStatsDto, CombatTargetDto,
 };
 use aonw_engine::{
     CombatExecution, CombatModifierKind, CombatPreview, CombatStatTarget, CombatTarget,
-    DomainEvent, EffectiveCombatStats, ExecutionEvidence, LogisticsExecution,
-    UnitMovementExecution,
+    DomainEvent, EffectiveCombatStats, ExecutionEvidence,
 };
 
 use aonw_projection::RecipientDisclosure;
 
 use super::coordinate;
 use super::worker::encode_worker_automation_option;
+use logistics::{logistics_evidence, movement_execution};
 
 #[allow(clippy::too_many_lines)]
 /// Maps a canonical domain event to its strict current client DTO.
@@ -447,60 +445,5 @@ fn combat_stats(value: &EffectiveCombatStats) -> CombatStatsDto {
                 delta: modifier.delta,
             })
             .collect(),
-    }
-}
-
-fn logistics_evidence(value: &LogisticsExecution) -> ClientLogisticsEvidenceDto {
-    match value {
-        LogisticsExecution::AutoExplore {
-            unit_id,
-            target,
-            movement,
-        } => ClientLogisticsEvidenceDto::AutoExplore {
-            unit_id: unit_id.as_str().to_owned(),
-            target: coordinate(*target),
-            movement: movement.as_ref().map(movement_execution),
-        },
-        LogisticsExecution::MerchantRouteAssigned {
-            unit_id,
-            origin_city_id,
-            destination_city_id,
-            steps,
-            transport_network_fingerprint,
-        } => ClientLogisticsEvidenceDto::MerchantRouteAssigned {
-            unit_id: unit_id.as_str().to_owned(),
-            origin_city_id: origin_city_id.as_str().to_owned(),
-            destination_city_id: destination_city_id.as_str().to_owned(),
-            steps: steps.iter().map(movement::step).collect(),
-            transport_network_fingerprint: transport_network_fingerprint.to_string(),
-        },
-        LogisticsExecution::MerchantTravelQueued {
-            unit_id,
-            destination_city_id,
-            steps,
-        } => ClientLogisticsEvidenceDto::MerchantTravelQueued {
-            unit_id: unit_id.as_str().to_owned(),
-            destination_city_id: destination_city_id.as_str().to_owned(),
-            steps: steps.iter().map(movement::step).collect(),
-        },
-        LogisticsExecution::TroopDetached {
-            source_unit_id,
-            detached_unit_id,
-            troop_kind,
-            destination,
-        } => ClientLogisticsEvidenceDto::TroopDetached {
-            source_unit_id: source_unit_id.as_str().to_owned(),
-            detached_unit_id: detached_unit_id.as_str().to_owned(),
-            troop_kind: encode_troop(*troop_kind),
-            destination: coordinate(*destination),
-        },
-    }
-}
-
-fn movement_execution(value: &UnitMovementExecution) -> UnitMovementExecutionDto {
-    UnitMovementExecutionDto {
-        unit_id: value.unit_id().as_str().to_owned(),
-        from: coordinate(value.from()),
-        steps: value.steps().iter().map(movement::step).collect(),
     }
 }

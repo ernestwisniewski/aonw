@@ -1,6 +1,6 @@
 use aonw_content::{
     GridLayout, MapDefinition, MapDocument, MapObjectiveType, ResourceType, RulesetDefinition,
-    ScenarioDefinition, ScenarioUnitDefinition, TerrainType, TileDefinition,
+    TerrainType, TileDefinition,
 };
 use aonw_contract_mapping::{
     encode_client_evidence, encode_command_rejection, encode_pending_action,
@@ -14,8 +14,7 @@ use aonw_contracts::{
     DiplomaticProposalKindDto, TroopKindDto,
 };
 use aonw_domain::{
-    CityId, FieldImprovementKind, HexCoord, MovementStep, MovementUnits, PlayerId, TroopKind,
-    UnitId, UnitKind,
+    CityId, FieldImprovementKind, HexCoord, MovementStep, MovementUnits, TroopKind, UnitId,
 };
 use aonw_engine::{
     CombatExecution, CombatModifier, CombatModifierKind, CombatOutcome, CombatPreview, CombatRoll,
@@ -23,9 +22,11 @@ use aonw_engine::{
     LogisticsExecution,
 };
 
-use crate::{ClientProtocol, LocalRuntime, OpenSession, PendingActionView};
+use crate::{ClientProtocol, LocalRuntime, PendingActionView};
 
 use super::*;
+
+mod session;
 
 #[test]
 fn protocol_exercises_every_request_family() {
@@ -70,75 +71,6 @@ fn protocol_exercises_every_request_family() {
     dispatch_commands(&mut runtime);
     round_trip_persistence(&mut runtime, map_document);
     success(&mut runtime, ClientRequestBodyDto::CloseSession);
-}
-
-#[test]
-fn replay_playback_seeks_across_a_full_segment() {
-    let map = authored_map();
-    let ruleset = RulesetDefinition::standard().clone();
-    let map_document = MapDocument::try_new(map.clone(), 1.0)
-        .expect("map document")
-        .to_versioned_json()
-        .expect("map JSON");
-    let mut runtime = LocalRuntime::default();
-    success(
-        &mut runtime,
-        ClientRequestBodyDto::OpenSession {
-            map_document: map_document.clone(),
-            scenario_document: scenario_json(&map, &ruleset),
-            actor_player_id: "player-1".to_owned(),
-        },
-    );
-    let entry_count = aonw_contracts::MAX_REPLAY_ENTRY_COUNT + 1;
-    for _ in 0..entry_count {
-        success(
-            &mut runtime,
-            ClientRequestBodyDto::Dispatch {
-                command: ClientCommandDto::CancelUnitAction {
-                    expected_revision: 0,
-                    unit_id: "unit-1".to_owned(),
-                },
-            },
-        );
-    }
-    let ClientResponseBodyDto::ReplayExported { document } =
-        success(&mut runtime, ClientRequestBodyDto::ExportReplay)
-    else {
-        panic!("replay export")
-    };
-    let ClientResponseBodyDto::ReplayFrame {
-        entry_count: opened_count,
-        ..
-    } = success(
-        &mut runtime,
-        ClientRequestBodyDto::OpenReplay {
-            map_document,
-            replay_document: document,
-            recipient_player_id: "player-1".to_owned(),
-        },
-    )
-    else {
-        panic!("replay open")
-    };
-    assert_eq!(
-        opened_count,
-        u64::try_from(entry_count).expect("entry count")
-    );
-    let boundary =
-        u64::try_from(aonw_contracts::MAX_REPLAY_ENTRY_COUNT).expect("segment entry count");
-    success(
-        &mut runtime,
-        ClientRequestBodyDto::SeekReplay { position: boundary },
-    );
-    let ClientResponseBodyDto::ReplayFrame { position, .. } = success(
-        &mut runtime,
-        ClientRequestBodyDto::SeekReplay {
-            position: opened_count,
-        },
-    ) else {
-        panic!("final replay frame")
-    };
-    assert_eq!(position, opened_count);
 }
 
 fn dispatch_queries(runtime: &mut LocalRuntime) {
@@ -526,33 +458,4 @@ fn pending_actions() -> [PendingActionView; 9] {
         },
         PendingActionView::CommanderMergeSelection { unit_id: unit },
     ]
-}
-
-#[test]
-fn direct_open_helper_builds_a_strict_session() {
-    let map = authored_map();
-    let ruleset = RulesetDefinition::standard().clone();
-    let scenario = ScenarioDefinition::try_new(
-        "direct-client-protocol",
-        &map,
-        &ruleset,
-        [ScenarioUnitDefinition::new(
-            UnitId::new("unit-1").expect("unit id"),
-            PlayerId::new("player-1").expect("player id"),
-            UnitKind::Commander,
-            "Commander",
-            HexCoord::new(0, 0),
-        )],
-    )
-    .expect("scenario");
-    let request = OpenSession::from_scenario(
-        map,
-        ruleset,
-        &scenario,
-        PlayerId::new("player-1").expect("player id"),
-    )
-    .expect("open request");
-    let mut runtime = LocalRuntime::default();
-    runtime.open(request).expect("open");
-    let _ = snapshot(&runtime.snapshot().expect("snapshot"));
 }

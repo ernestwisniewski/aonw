@@ -16,34 +16,34 @@ while [[ "$#" -gt 0 ]]; do
   esac
 done
 
-successor_flutter="${repo_root}/clients/aonw_flutter"
-if [[ ! -d "${successor_flutter}" ]]; then
-  echo "Successor Flutter directory not found: ${successor_flutter}" >&2
+flutter_client="${repo_root}/clients/aonw_flutter"
+if [[ ! -d "${flutter_client}" ]]; then
+  echo "Flutter client directory not found: ${flutter_client}" >&2
   exit 1
 fi
 
-successor_godot="${repo_root}/clients/aonw_godot"
+godot_client="${repo_root}/clients/aonw_godot"
 
-violations="$(mktemp "${TMPDIR:-/tmp}/aonw-successor-dependencies.XXXXXX")"
+violations="$(mktemp "${TMPDIR:-/tmp}/aonw-client-dependencies.XXXXXX")"
 trap 'rm -f "${violations}"' EXIT
 
 while IFS= read -r -d '' source_file; do
   grep -nHE 'package:(aonw_core|aonw)/' "${source_file}" >>"${violations}" || true
 done < <(
-  find "${successor_flutter}" \
+  find "${flutter_client}" \
     \( -path '*/.dart_tool' -o -path '*/build' \) -prune -o \
     -type f -name '*.dart' -print0
 )
 
-if [[ -d "${successor_godot}/game" ]]; then
+if [[ -d "${godot_client}/game" ]]; then
   grep -RInE \
     'BaseTerrain|terrain_mesh_resource|map_surface_mesh_builder' \
     --include='*.gd' \
-    "${successor_godot}/game" \
+    "${godot_client}/game" \
     >>"${violations}" || true
 
   for layer in application presentation; do
-    layer_root="${successor_godot}/game/${layer}"
+    layer_root="${godot_client}/game/${layer}"
     if [[ -d "${layer_root}" ]]; then
       grep -RInE \
         'res://game/(infrastructure|composition)/' \
@@ -53,7 +53,7 @@ if [[ -d "${successor_godot}/game" ]]; then
     fi
   done
 
-  gameplay_presentation="${successor_godot}/game/presentation"
+  gameplay_presentation="${godot_client}/game/presentation"
   if [[ -d "${gameplay_presentation}" ]]; then
     grep -RInE \
       'FileAccess|DirAccess|JSON\.(parse|stringify)' \
@@ -62,7 +62,7 @@ if [[ -d "${successor_godot}/game" ]]; then
       >>"${violations}" || true
   fi
 
-  gameplay_scenes="${successor_godot}/scenes"
+  gameplay_scenes="${godot_client}/scenes"
   if [[ -d "${gameplay_scenes}" ]]; then
     grep -RInE \
       'res://game/infrastructure/' \
@@ -81,10 +81,10 @@ if [[ -d "${successor_godot}/game" ]]; then
         ;;
     esac
   done < <(
-    find "${successor_godot}/game" -type f -name '*.gd' -print0
+    find "${godot_client}/game" -type f -name '*.gd' -print0
   )
 
-  application_session="${successor_godot}/game/application/session"
+  application_session="${godot_client}/game/application/session"
   if [[ -d "${application_session}" ]]; then
     while IFS= read -r -d '' source_file; do
       grep -nHE \
@@ -101,7 +101,7 @@ if [[ -d "${successor_godot}/game" ]]; then
   fi
 fi
 
-godot_extension="${successor_godot}/aonw_engine.gdextension"
+godot_extension="${godot_client}/aonw_engine.gdextension"
 if [[ -f "${godot_extension}" ]]; then
   grep -nHE 'engine/target|res://\.\./' "${godot_extension}" \
     >>"${violations}" || true
@@ -128,7 +128,7 @@ if [[ -f "${godot_extension}" ]]; then
   )
 fi
 
-authoring_root="${successor_godot}/editor/map_authoring"
+authoring_root="${godot_client}/editor/map_authoring"
 if [[ -d "${authoring_root}" ]]; then
   if [[ -d "${authoring_root}/application" ]]; then
     grep -RInE 'res://.*/infrastructure/' \
@@ -158,7 +158,7 @@ fi
 while IFS= read -r -d '' pubspec_file; do
   grep -nHE '^[[:space:]]+(aonw_core|aonw):([[:space:]]|$)' "${pubspec_file}" >>"${violations}" || true
 done < <(
-  find "${successor_flutter}" \
+  find "${flutter_client}" \
     \( -path '*/.dart_tool' -o -path '*/build' \) -prune -o \
     -type f -name 'pubspec.yaml' -print0
 )
@@ -207,15 +207,15 @@ while IFS= read -r -d '' source_file; do
     "${source_file}" \
     >>"${violations}" || true
 done < <(
-  find "${successor_flutter}/lib" \
+  find "${flutter_client}/lib" \
     \( -path '*/.dart_tool' -o -path '*/build' \) -prune -o \
     -type f -name '*.dart' -print0
 )
 
 if [[ -s "${violations}" ]]; then
-  echo "Successor client dependency boundaries were violated:" >&2
+  echo "Client dependency boundaries were violated:" >&2
   sed "s#${repo_root}/##" "${violations}" >&2
   exit 1
 fi
 
-echo "Successor client dependency boundaries are intact."
+echo "Client dependency boundaries are intact."
