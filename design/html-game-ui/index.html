@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Age of New Worlds · HTML UI Design Sandbox</title>
+    <link rel="stylesheet" href="./design-tokens.css" />
+    <link rel="stylesheet" href="./styles/host.css" />
+    <link rel="stylesheet" href="./styles/primitives.css" />
+    <link rel="stylesheet" href="./styles/menu.css" />
+    <link rel="stylesheet" href="./styles/routes.css" />
+    <link rel="stylesheet" href="./styles/map.css" />
+    <link rel="stylesheet" href="./styles/system.css" />
+    <link rel="stylesheet" href="./styles/modals.css" />
+    <link rel="stylesheet" href="./styles/responsive.css" />
+  </head>
+  <body>
+    <div class="designer-shell" id="designer-shell">
+      <aside class="designer-nav" aria-label="Design sandbox navigation">
+        <div class="designer-nav__brand">
+          <span class="designer-nav__eyebrow">AONW</span>
+          <strong>HTML UI package</strong>
+          <small>Flutter presentation mirror</small>
+        </div>
+        <label class="designer-search">
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+          <input id="view-search" type="search" placeholder="Filter views…" autocomplete="off" />
+        </label>
+        <div class="designer-nav__scroll" id="view-navigation"></div>
+        <div class="designer-nav__footer">
+          <span id="coverage-count">0 views</span>
+          <a href="./view-manifest.json" target="_blank" rel="noreferrer">manifest</a>
+        </div>
+      </aside>
+
+      <main class="designer-workspace">
+        <header class="designer-toolbar">
+          <div class="designer-toolbar__group">
+            <label>
+              <span>Viewport</span>
+              <select id="viewport-select">
+                <option value="desktop">Desktop · 1440×900</option>
+                <option value="desktop-small">Desktop · 1280×720</option>
+                <option value="tablet">Tablet · 1024×768</option>
+                <option value="mobile">Mobile · 390×844</option>
+                <option value="mobile-landscape">Mobile landscape · 844×390</option>
+              </select>
+            </label>
+            <span class="designer-toolbar__size" id="viewport-size"></span>
+          </div>
+          <div class="designer-toolbar__title">
+            <span id="active-view-kind">Screen</span>
+            <strong id="active-view-title">Main menu</strong>
+          </div>
+          <div class="designer-toolbar__actions">
+            <button class="designer-button" id="copy-link" type="button">
+              <svg class="ui-icon" aria-hidden="true"><use href="#icon-link"></use></svg>
+              Copy link
+            </button>
+            <button class="designer-button" id="toggle-clean" type="button">
+              <svg class="ui-icon" aria-hidden="true"><use href="#icon-expand"></use></svg>
+              Clean preview
+            </button>
+          </div>
+        </header>
+
+        <section class="viewport-stage" id="viewport-stage" aria-label="Game viewport preview">
+          <div class="viewport-measure" id="viewport-measure">
+            <div class="game-viewport" id="game-viewport">
+              <div id="game-root" class="game-root"></div>
+              <div id="modal-root" class="modal-root" aria-live="polite"></div>
+              <div id="toast-root" class="toast-root" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <svg class="icon-sprite" aria-hidden="true" focusable="false">
+      <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></symbol>
+      <symbol id="icon-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l2.1-2.1a5 5 0 0 0-7.1-7.1L11 4.9"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.1 2.1a5 5 0 0 0 7.1 7.1L13 19.1"/></symbol>
+      <symbol id="icon-expand" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/><path d="m3 8 6-6M21 8l-6-6M3 16l6 6M21 16l-6 6"/></symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+      <symbol id="icon-back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+      <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="icon-down" viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></symbol>
+      <symbol id="icon-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></symbol>
+      <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M3 7.5h7l2-2h9v14H3z"/><path d="M3 9h18"/></symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7-.7-1.7.9-1.9-2.1-2.1-1.9.9-1.7-.7-.7-2H8.7l-.7 2-1.7.7-1.9-.9-2.1 2.1.9 1.9-.7 1.7-2 .7v3l2 .7.7 1.7-.9 1.9 2.1 2.1 1.9-.9 1.7.7.7 2h3l.7-2 1.7-.7 1.9.9 2.1-2.1-.9-1.9.7-1.7z"/></symbol>
+      <symbol id="icon-code" viewBox="0 0 24 24"><path d="m8 5-6 7 6 7M16 5l6 7-6 7M14 3l-4 18"/></symbol>
+      <symbol id="icon-exit" viewBox="0 0 24 24"><path d="M10 4H4v16h6M14 8l4 4-4 4M8 12h10"/></symbol>
+      <symbol id="icon-book" viewBox="0 0 24 24"><path d="M4 4h6a3 3 0 0 1 3 3v13a3 3 0 0 0-3-3H4zM20 4h-4a3 3 0 0 0-3 3v13a3 3 0 0 1 3-3h4z"/></symbol>
+      <symbol id="icon-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></symbol>
+      <symbol id="icon-chat" viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4z"/></symbol>
+      <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+      <symbol id="icon-coin" viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></symbol>
+      <symbol id="icon-science" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+      <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 3 20 6v6c0 5-3.4 8-8 10-4.6-2-8-5-8-10V6z"/></symbol>
+      <symbol id="icon-resource" viewBox="0 0 24 24"><path d="m12 2 8 5-8 5-8-5zM4 12l8 5 8-5M4 17l8 5 8-5"/></symbol>
+      <symbol id="icon-trophy" viewBox="0 0 24 24"><path d="M8 3h8v5a4 4 0 0 1-8 0zM8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 12v5M8 21h8M9 17h6"/></symbol>
+      <symbol id="icon-city" viewBox="0 0 24 24"><path d="M3 21V9l5-3v15M8 21V3l8 3v15M16 21v-9l5-2v11M6 12h1M6 16h1M11 8h2M11 12h2M11 16h2M18 15h1M18 18h1"/></symbol>
+      <symbol id="icon-army" viewBox="0 0 24 24"><path d="M7 4h10l2 5-7 4-7-4zM12 13v8M8 21h8"/><path d="M9 7h6"/></symbol>
+      <symbol id="icon-worker" viewBox="0 0 24 24"><path d="m4 20 7-7M8 4l12 12M5 3l4 1 1 4-2 2-4-1-1-4zM14 14l2-2 5 5-2 4z"/></symbol>
+      <symbol id="icon-diplomacy" viewBox="0 0 24 24"><path d="M3 7h5l3 3-4 4-4-2zM21 7h-5l-3 3 4 4 4-2zM9 12l3 3 3-3M8 18l4 3 4-3"/></symbol>
+      <symbol id="icon-tech" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M19.1 4.9l-2.8 2.8M7.7 16.3l-2.8 2.8"/></symbol>
+      <symbol id="icon-log" viewBox="0 0 24 24"><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4"/></symbol>
+      <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="icon-map" viewBox="0 0 24 24"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zM9 3v16M15 5v16"/></symbol>
+      <symbol id="icon-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+      <symbol id="icon-swords" viewBox="0 0 24 24"><path d="M5 3h4l9 9-4 4-9-9zM19 3h-4l-4 4M13 15l-7 7M3 19l2 2M21 19l-2 2M11 13l7 7"/></symbol>
+      <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+      <symbol id="icon-skip" viewBox="0 0 24 24"><path d="m5 5 8 7-8 7zM15 5v14"/></symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+      <symbol id="icon-warning" viewBox="0 0 24 24"><path d="M12 3 2 21h20zM12 9v5M12 18h.01"/></symbol>
+      <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10v7M12 7h.01"/></symbol>
+      <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+      <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M18.4 9A7 7 0 0 0 6 6.5L4 9M5.6 15A7 7 0 0 0 18 17.5l2-2.5"/></symbol>
+      <symbol id="icon-volume" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/></symbol>
+      <symbol id="icon-display" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+      <symbol id="icon-gamepad" viewBox="0 0 24 24"><path d="M7 8h10a5 5 0 0 1 4 7l-1 3a2 2 0 0 1-3 1l-3-2h-4l-3 2a2 2 0 0 1-3-1l-1-3a5 5 0 0 1 4-7z"/><path d="M7 11v4M5 13h4M16 12h.01M18 14h.01"/></symbol>
+      <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></symbol>
+      <symbol id="icon-save" viewBox="0 0 24 24"><path d="M4 3h14l2 2v16H4zM8 3v6h8V3M8 21v-8h8v8"/></symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></symbol>
+      <symbol id="icon-edit" viewBox="0 0 24 24"><path d="m4 20 4-1 11-11-3-3L5 16zM14 7l3 3"/></symbol>
+      <symbol id="icon-crown" viewBox="0 0 24 24"><path d="m3 7 5 5 4-7 4 7 5-5-2 12H5zM5 19h14"/></symbol>
+      <symbol id="icon-hand" viewBox="0 0 24 24"><path d="M6 12V7a2 2 0 0 1 4 0v4-7a2 2 0 0 1 4 0v7-5a2 2 0 0 1 4 0v7-3a2 2 0 0 1 4 0v5c0 4-3 7-7 7h-2c-3 0-5-2-7-4l-3-3a2 2 0 0 1 3-3z"/></symbol>
+    </svg>
+
+    <script src="./scripts/views-core.js"></script>
+    <script src="./scripts/views-screens.js"></script>
+    <script src="./scripts/views-modals-city-diplomacy.js"></script>
+    <script src="./scripts/views-modals-tech-selection.js"></script>
+    <script src="./scripts/views-modals-economy-system.js"></script>
+    <script src="./scripts/views-registry.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
