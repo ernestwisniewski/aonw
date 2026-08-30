@@ -14,6 +14,7 @@ var _native_api_version := 0
 var _native_build_identity := ""
 var _expected_build_identity := ""
 var _response_decoder: RefCounted
+var _coalesced_jobs: Dictionary = {}
 
 func _init(session: Object = null, expected_build_identity: String = "") -> void:
 	if session != null:
@@ -62,6 +63,31 @@ func request_async(
 	body: Dictionary,
 	timeout_msec: int = ASYNC_REQUEST_TIMEOUT_MSEC,
 ) -> Dictionary:
+	return await _request_async(body, timeout_msec, &"")
+
+## Keeps only the latest in-flight request for one interaction key.
+## A replaced request completes with `stale_session_response` without exposing its result.
+func request_coalesced_async(
+	body: Dictionary,
+	cancellation_key: StringName,
+	timeout_msec: int = ASYNC_REQUEST_TIMEOUT_MSEC,
+) -> Dictionary:
+	if cancellation_key == &"":
+		return _failure("invalid_client_request", "A cancellation key is required")
+	return await _request_async(body, timeout_msec, cancellation_key)
+
+func cancel_coalesced_request(cancellation_key: StringName) -> bool:
+	if not _coalesced_jobs.has(cancellation_key):
+		return false
+	var job_id := int(_coalesced_jobs[cancellation_key])
+	_coalesced_jobs.erase(cancellation_key)
+	return bool(_session.cancel_request(job_id))
+
+func _request_async(
+	body: Dictionary,
+	timeout_msec: int,
+	cancellation_key: StringName,
+) -> Dictionary:
 	var precondition := _request_precondition()
 	if not precondition.is_empty():
 		return precondition
@@ -70,16 +96,47 @@ func request_async(
 	var job_id := int(_session.request_json_async(_request_document(body)))
 	if job_id < 0:
 		return _failure("engine_worker_unavailable", "The native engine worker is unavailable")
+	if cancellation_key != &"":
+		if _coalesced_jobs.has(cancellation_key):
+			_session.cancel_request(int(_coalesced_jobs[cancellation_key]))
+		_coalesced_jobs[cancellation_key] = job_id
 	var started_at_msec := Time.get_ticks_msec()
 	while not bool(_session.is_response_ready(job_id)):
+		if _is_replaced(cancellation_key, job_id):
+			_session.cancel_request(job_id)
+			return _failure(
+				"stale_session_response",
+				"A newer engine request replaced this response",
+			)
 		if Time.get_ticks_msec() - started_at_msec >= timeout_msec:
 			_session.cancel_request(job_id)
+			_release_coalesced_job(cancellation_key, job_id)
 			return _failure("client_timeout", "The native engine request timed out")
 		await Engine.get_main_loop().process_frame
+	if _is_replaced(cancellation_key, job_id):
+		_session.cancel_request(job_id)
+		return _failure(
+			"stale_session_response",
+			"A newer engine request replaced this response",
+		)
 	var response_json := str(_session.poll_response_json(job_id))
+	_release_coalesced_job(cancellation_key, job_id)
 	if response_json.is_empty():
 		return _failure("engine_worker_unavailable", "The native engine response was lost")
 	return _response_decoder.call("decode", response_json)
+
+func _is_replaced(cancellation_key: StringName, job_id: int) -> bool:
+	return (
+		cancellation_key != &""
+		and int(_coalesced_jobs.get(cancellation_key, -1)) != job_id
+	)
+
+func _release_coalesced_job(cancellation_key: StringName, job_id: int) -> void:
+	if (
+		cancellation_key != &""
+		and int(_coalesced_jobs.get(cancellation_key, -1)) == job_id
+	):
+		_coalesced_jobs.erase(cancellation_key)
 
 func _request_precondition() -> Dictionary:
 	if _session == null:

@@ -269,6 +269,101 @@ class NeverReadySessionDouble:
 		cancelled_job_id = job_id
 		return true
 
+class CoalescingSessionDouble:
+	extends RefCounted
+
+	var next_job_id := 0
+	var cancelled_job_ids: Array[int] = []
+
+	func client_api_version() -> int:
+		return 7
+
+	func build_identity() -> String:
+		return "expected-build"
+
+	func request_json_async(_document: String) -> int:
+		next_job_id += 1
+		return next_job_id
+
+	func is_response_ready(job_id: int) -> bool:
+		return job_id == 2
+
+	func poll_response_json(job_id: int) -> String:
+		if job_id != 2:
+			return ""
+		return JSON.stringify({
+			"apiVersion": 7,
+			"outcome": {
+				"status": "success",
+				"response": {"type": "capabilities", "features": []},
+			},
+		})
+
+	func cancel_request(job_id: int) -> bool:
+		cancelled_job_ids.append(job_id)
+		return true
+
+class DeferredMovementGateway:
+	extends RefCounted
+
+	signal movement_responses_released
+
+	var reachable_calls := 0
+	var route_calls := 0
+	var cancellation_calls := 0
+
+	func is_available() -> bool:
+		return true
+
+	func open_session(
+		_map_document: String,
+		_scenario_document: String,
+		_actor_player_id: String,
+	) -> Dictionary:
+		return {"ok": true, "value": _stamp(1)}
+
+	func close_session() -> Dictionary:
+		return {"ok": true}
+
+	func reachable_async(_expected_revision: int, unit_id: String) -> Dictionary:
+		reachable_calls += 1
+		await movement_responses_released
+		var value := AonwClientReadModels.ReachableView.new()
+		value.stamp = _stamp(1)
+		value.unit_id = unit_id
+		value.available_movement_units = 12
+		value.tiles = []
+		return {"ok": true, "value": value}
+
+	func route_plan_async(
+		_expected_revision: int,
+		unit_id: String,
+		target: Vector2i,
+	) -> Dictionary:
+		route_calls += 1
+		await movement_responses_released
+		var value := AonwClientReadModels.RoutePlanView.new()
+		value.stamp = _stamp(1)
+		value.unit_id = unit_id
+		value.target = target
+		value.destination = target
+		value.steps = []
+		return {"ok": true, "value": value}
+
+	func cancel_movement_queries() -> void:
+		cancellation_calls += 1
+
+	func release_movement_responses() -> void:
+		movement_responses_released.emit()
+
+	func _stamp(revision: int) -> AonwClientReadModels.Stamp:
+		var stamp := AonwClientReadModels.Stamp.new()
+		stamp.revision = revision
+		stamp.state_digest = "state-%d" % revision
+		stamp.map_hash = "map"
+		stamp.ruleset_hash = "ruleset"
+		return stamp
+
 func run(failures: Array[String]) -> void:
 	_failures = failures
 	_test_native_build_identity_precondition()
@@ -1050,6 +1145,52 @@ func _test_shared_client_contract() -> void:
 		),
 		"Godot times out and physically cancels an abandoned native job",
 	)
+	var coalescing_double := CoalescingSessionDouble.new()
+	var coalescing_session := NativeLocalSession.new(
+		coalescing_double,
+		"expected-build",
+	)
+	var replaced_result := {}
+	_capture_coalesced_request(coalescing_session, replaced_result)
+	await Engine.get_main_loop().process_frame
+	var latest_envelope: Dictionary = await coalescing_session.request_coalesced_async(
+		{"type": "capabilities"},
+		&"movement_query",
+		1000,
+	)
+	await Engine.get_main_loop().process_frame
+	var replaced_envelope: Dictionary = replaced_result.get("value", {})
+	_check(
+		latest_envelope.get("outcome", {}).get("status", "") == "success"
+		and replaced_envelope.get("outcome", {}).get("error", {}).get("code", "")
+		== "stale_session_response"
+		and 1 in coalescing_double.cancelled_job_ids
+		and coalescing_session.get("_coalesced_jobs").is_empty(),
+		"Godot coalesces movement work and exposes only the latest native response",
+	)
+	var movement_gateway := DeferredMovementGateway.new()
+	var movement_controller := LocalMatchSessionController.new(movement_gateway)
+	movement_controller.open("map", "scenario", "player")
+	var newest_route_result := {}
+	_start_deferred_route(movement_controller, newest_route_result)
+	_release_deferred_movement_responses(movement_gateway)
+	var superseded_reachable: Dictionary = await movement_controller.reachable_async(
+		"unit-a",
+	)
+	await Engine.get_main_loop().process_frame
+	var newest_route: Dictionary = newest_route_result.get("value", {})
+	_check(
+		not superseded_reachable["ok"]
+		and superseded_reachable["code"] == "stale_session_response"
+		and _has_failure_kind(superseded_reachable, ClientFailure.Kind.STALE_RESPONSE)
+		and newest_route.get("ok", false)
+		and newest_route.get("value") is AonwClientReadModels.RoutePlanView
+		and movement_controller.revision() == 1
+		and movement_gateway.reachable_calls == 1
+		and movement_gateway.route_calls == 1,
+		"Godot correlation discards an older reachable reply and keeps the newest route",
+	)
+	movement_controller.close()
 	_check(
 		_has_failure_kind(
 			ClientFailure.result("unit_not_found", "authoritative rejection"),
@@ -1065,6 +1206,31 @@ func _close_and_release_deferred_response(
 	await Engine.get_main_loop().process_frame
 	controller.close()
 	gateway.release_ai_response()
+
+func _capture_coalesced_request(
+	session: AonwNativeLocalSession,
+	result: Dictionary,
+) -> void:
+	result["value"] = await session.request_coalesced_async(
+		{"type": "capabilities"},
+		&"movement_query",
+		1000,
+	)
+
+func _start_deferred_route(
+	controller: AonwLocalMatchSessionController,
+	result: Dictionary,
+) -> void:
+	await Engine.get_main_loop().process_frame
+	result["value"] = await controller.route_plan_async(
+		"unit-a",
+		Vector2i(2, 2),
+	)
+
+func _release_deferred_movement_responses(gateway: DeferredMovementGateway) -> void:
+	await Engine.get_main_loop().process_frame
+	await Engine.get_main_loop().process_frame
+	gateway.release_movement_responses()
 
 func _has_failure_kind(result: Dictionary, expected_kind: int) -> bool:
 	var failure: Variant = result.get("failure")

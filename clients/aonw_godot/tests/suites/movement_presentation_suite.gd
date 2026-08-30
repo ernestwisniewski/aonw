@@ -24,8 +24,20 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 
 	interaction.set("_selected", Vector2i(2, 1))
 	screen.call("_on_hex_selected", Vector2i(2, 1))
+	for _frame in range(120):
+		if screen.get("_reachable_hexes").has(Vector2i(2, 2)):
+			break
+		await Engine.get_main_loop().process_frame
+	_check(
+		screen.get("_reachable_hexes").has(Vector2i(2, 2)),
+		"Godot resolves reachable movement without blocking the presentation thread",
+	)
 	interaction.set("_selected", Vector2i(2, 2))
 	screen.call("_on_hex_selected", Vector2i(2, 2))
+	for _frame in range(120):
+		if screen.get("_route") != null:
+			break
+		await Engine.get_main_loop().process_frame
 	var route: AonwClientReadModels.RoutePlanView = screen.get("_route")
 	var route_layer := screen.get_node("MapSurface/MapOverlay/Route") as MeshInstance3D
 	_check(

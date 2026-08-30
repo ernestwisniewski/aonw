@@ -18,6 +18,7 @@ const FEATURE_NAMES := [
 	"research", "diplomacy", "artifacts", "saveGame", "replayVerification",
 	"replayPlayback",
 ]
+const MOVEMENT_QUERY_KEY := &"movement_query"
 
 var _transport: RefCounted
 
@@ -124,11 +125,44 @@ func snapshot() -> Dictionary:
 	return {"ok": true, "value": snapshot}
 
 func reachable(expected_revision: int, unit_id: String) -> Dictionary:
-	var result := _query({
+	return _decode_reachable(_query({
 		"type": "reachable",
 		"expectedRevision": expected_revision,
 		"unitId": unit_id,
-	}, "reachable")
+	}, "reachable"))
+
+func reachable_async(expected_revision: int, unit_id: String) -> Dictionary:
+	return _decode_reachable(await _query_async({
+		"type": "reachable",
+		"expectedRevision": expected_revision,
+		"unitId": unit_id,
+	}, "reachable", MOVEMENT_QUERY_KEY))
+
+func route_plan(expected_revision: int, unit_id: String, target: Vector2i) -> Dictionary:
+	return _decode_route_plan(_query({
+		"type": "routePlan",
+		"expectedRevision": expected_revision,
+		"unitId": unit_id,
+		"target": _coordinate(target),
+	}, "routePlan"))
+
+func route_plan_async(
+	expected_revision: int,
+	unit_id: String,
+	target: Vector2i,
+) -> Dictionary:
+	return _decode_route_plan(await _query_async({
+		"type": "routePlan",
+		"expectedRevision": expected_revision,
+		"unitId": unit_id,
+		"target": _coordinate(target),
+	}, "routePlan", MOVEMENT_QUERY_KEY))
+
+func cancel_movement_queries() -> void:
+	if _transport.has_method("cancel_coalesced_request"):
+		_transport.call("cancel_coalesced_request", MOVEMENT_QUERY_KEY)
+
+func _decode_reachable(result: Dictionary) -> Dictionary:
 	if not result["ok"]:
 		return result
 	var reachable_view := ReadModelDecoder.decode_reachable(result["value"])
@@ -136,19 +170,13 @@ func reachable(expected_revision: int, unit_id: String) -> Dictionary:
 		return _failure("invalid_client_response", "Rust returned invalid reachable tiles")
 	return {"ok": true, "value": reachable_view}
 
-func route_plan(expected_revision: int, unit_id: String, target: Vector2i) -> Dictionary:
-	var result := _query({
-		"type": "routePlan",
-		"expectedRevision": expected_revision,
-		"unitId": unit_id,
-		"target": _coordinate(target),
-	}, "routePlan")
+func _decode_route_plan(result: Dictionary) -> Dictionary:
 	if not result["ok"]:
 		return result
-	var route := ReadModelDecoder.decode_route_plan(result["value"])
-	if route == null:
+	var route_plan := ReadModelDecoder.decode_route_plan(result["value"])
+	if route_plan == null:
 		return _failure("invalid_client_response", "Rust returned an invalid route plan")
-	return {"ok": true, "value": route}
+	return {"ok": true, "value": route_plan}
 
 func move_unit(expected_revision: int, unit_id: String, target: Vector2i) -> Dictionary:
 	return _command({
@@ -223,6 +251,26 @@ func _query(query: Dictionary, result_type: String) -> Dictionary:
 		return _failure("invalid_client_response", "Rust returned an unexpected query result")
 	return {"ok": true, "value": value}
 
+func _query_async(
+	query: Dictionary,
+	result_type: String,
+	cancellation_key: StringName,
+) -> Dictionary:
+	var extracted := _extract(
+		await _execute_async(
+			{"type": "query", "query": query},
+			"query",
+			cancellation_key,
+		),
+		"result",
+	)
+	if not extracted["ok"]:
+		return extracted
+	var value: Variant = extracted["value"]
+	if not value is Dictionary or value.get("type", "") != result_type:
+		return _failure("invalid_client_response", "Rust returned an unexpected query result")
+	return {"ok": true, "value": value}
+
 func _command(command: Dictionary) -> Dictionary:
 	var extracted := _extract(
 		_execute({"type": "dispatch", "command": command}, "command"),
@@ -251,12 +299,25 @@ func _execute(request: Dictionary, response_type: String) -> Dictionary:
 	var envelope: Variant = _transport.call("request", request)
 	return _decode_envelope(envelope, response_type)
 
-func _execute_async(request: Dictionary, response_type: String) -> Dictionary:
+func _execute_async(
+	request: Dictionary,
+	response_type: String,
+	cancellation_key: StringName = &"",
+) -> Dictionary:
 	if int(_transport.call("client_api_version")) != ClientProtocol.API_VERSION:
 		return _failure(
 			"unsupported_client_api",
 			"The client transport uses an unsupported API version",
 		)
+	if cancellation_key != &"" and _transport.has_method("request_coalesced_async"):
+		var coalesced_envelope: Variant = await _transport.call(
+			"request_coalesced_async",
+			request,
+			cancellation_key,
+		)
+		return _decode_envelope(coalesced_envelope, response_type)
+	if not _transport.has_method("request_async"):
+		return _execute(request, response_type)
 	var envelope: Variant = await _transport.call("request_async", request)
 	return _decode_envelope(envelope, response_type)
 

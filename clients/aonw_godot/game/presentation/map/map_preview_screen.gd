@@ -202,12 +202,17 @@ func _present_empty_unit_layer() -> void:
 
 func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 	_clear_route_preview()
-	var reachable := _local_session.reachable(unit_id)
-	if not reachable["ok"]:
-		_status.text = "Rust: %s" % reachable["message"]
-		return
 	_selected_unit_id = unit_id
 	_reachable_hexes.clear()
+	_interaction.set_reachable_hexes([])
+	var reachable: Dictionary = await _local_session.reachable_async(unit_id)
+	if _selected_unit_id != unit_id or _interaction.selected_hex() != coordinate:
+		return
+	if not reachable["ok"]:
+		if reachable.get("code", "") == "stale_session_response":
+			return
+		_status.text = "Rust: %s" % reachable["message"]
+		return
 	var coordinates: Array[Vector2i] = []
 	var reachable_view: AonwClientReadModels.ReachableView = reachable["value"]
 	for tile in reachable_view.tiles:
@@ -222,14 +227,26 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 		push_error("movement selection is inconsistent with the picked hex")
 
 func _preview_selected_route(target: Vector2i) -> void:
-	var planned := _local_session.route_plan(_selected_unit_id, target)
+	_clear_route_preview()
+	var requested_unit_id := _selected_unit_id
+	var planned: Dictionary = await _local_session.route_plan_async(
+		requested_unit_id,
+		target,
+	)
+	if (
+		_selected_unit_id != requested_unit_id
+		or _interaction.selected_hex() != target
+	):
+		return
 	if not planned["ok"]:
+		if planned.get("code", "") == "stale_session_response":
+			return
 		_status.text = "Rust: %s" % planned["message"]
 		return
 	var route: AonwClientReadModels.RoutePlanView = planned["value"]
 	if (
 		route.stamp.map_hash != _current_map.content_hash()
-		or route.unit_id != _selected_unit_id
+		or route.unit_id != requested_unit_id
 		or route.target != target
 		or not _current_map.contains(route.destination)
 		or _unit_layer.unit_at(route.steps[0].coordinate) != _selected_unit_id
@@ -289,6 +306,7 @@ func _move_selected_unit(target: Vector2i) -> void:
 		]
 
 func _clear_movement_selection() -> void:
+	_local_session.cancel_movement_queries()
 	_clear_route_preview()
 	_selected_unit_id = ""
 	_reachable_hexes.clear()

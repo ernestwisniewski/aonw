@@ -9,6 +9,7 @@ var _gateway: RefCounted
 var _stamp: AonwClientReadModels.Stamp
 var _lifecycle := Lifecycle.CLOSED
 var _generation := 0
+var _movement_query_correlation := 0
 
 func _init(gateway: RefCounted) -> void:
 	assert(gateway != null, "Local match gateway port is required")
@@ -80,6 +81,7 @@ func advance_ai_turn_async(actor_player_id: String, command_budget: int) -> Dict
 func close() -> Dictionary:
 	if _lifecycle in [Lifecycle.CLOSED, Lifecycle.CLOSING]:
 		return {"ok": true}
+	cancel_movement_queries()
 	_generation += 1
 	_lifecycle = Lifecycle.CLOSING
 	var result: Dictionary = _gateway.call("close_session")
@@ -94,12 +96,26 @@ func snapshot() -> Dictionary:
 	return _call_value(&"snapshot")
 
 func reachable(unit_id: String) -> Dictionary:
+	cancel_movement_queries()
 	return _call_value(&"reachable", [revision(), unit_id])
 
+func reachable_async(unit_id: String) -> Dictionary:
+	return await _call_movement_value_async(&"reachable_async", [unit_id])
+
 func route_plan(unit_id: String, target: Vector2i) -> Dictionary:
+	cancel_movement_queries()
 	return _call_value(&"route_plan", [revision(), unit_id, target])
 
+func route_plan_async(unit_id: String, target: Vector2i) -> Dictionary:
+	return await _call_movement_value_async(&"route_plan_async", [unit_id, target])
+
+func cancel_movement_queries() -> void:
+	_movement_query_correlation += 1
+	if _gateway.has_method("cancel_movement_queries"):
+		_gateway.call("cancel_movement_queries")
+
 func move_unit(unit_id: String, target: Vector2i) -> Dictionary:
+	cancel_movement_queries()
 	return _call_value(&"move_unit", [revision(), unit_id, target])
 
 func cancel_unit_action(unit_id: String) -> Dictionary:
@@ -151,6 +167,29 @@ func _call_value(method: StringName, arguments: Array = []) -> Dictionary:
 	if not precondition.is_empty():
 		return precondition
 	return _track_value_stamp(_gateway.callv(method, arguments))
+
+func _call_movement_value_async(method: StringName, arguments: Array) -> Dictionary:
+	var precondition := _require_open()
+	if not precondition.is_empty():
+		return precondition
+	_movement_query_correlation += 1
+	var request_correlation := _movement_query_correlation
+	var request_generation := _generation
+	var request_revision := revision()
+	var gateway_arguments := [request_revision]
+	gateway_arguments.append_array(arguments)
+	var result: Dictionary = await _gateway.callv(method, gateway_arguments)
+	if (
+		request_generation != _generation
+		or _lifecycle != Lifecycle.OPEN
+		or request_correlation != _movement_query_correlation
+		or request_revision != revision()
+	):
+		return _failure(
+			"stale_session_response",
+			"The session changed before the engine response arrived",
+		)
+	return _track_value_stamp(result)
 
 func _call_plain(method: StringName, arguments: Array = []) -> Dictionary:
 	var precondition := _require_open()
