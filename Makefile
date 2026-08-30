@@ -33,6 +33,9 @@ FLUTTER_MAP_RENDER_DIAGNOSTICS := $(abspath $(MAP_RENDER_PROBE_DIR))/flutter-dia
 GODOT_MAP_RENDER_PROBE := $(abspath $(MAP_RENDER_PROBE_DIR))/godot.json
 GODOT_MAP_RENDER_DIAGNOSTICS := $(abspath $(MAP_RENDER_PROBE_DIR))/godot-diagnostics.json
 STAGE_1_EVIDENCE_DIR := $(CURDIR)/docs/acceptance/stage-1
+FLUTTER_CLIENT_API_BASE_URL ?= https://api.aonw.net
+FLUTTER_CLIENT_BUILD_NUMBER ?= $(shell sed -n 's/^version:.*+//p' clients/aonw_flutter/pubspec.yaml 2>/dev/null | head -n 1)
+FLUTTER_CLIENT_RELEASE_ZIP ?= $(CURDIR)/dist/flutter/aonw-macos-arm64.zip
 
 LOCAL_FLUTTER_BIN := $(CURDIR)/.fvm/flutter_sdk/bin
 ifneq ($(wildcard $(LOCAL_FLUTTER_BIN)/flutter),)
@@ -252,6 +255,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 .PHONY: rust-integrated-turn-check rust-ai-ledger-check rust-ai-strength-check rust-ai-check rust-persistence-check
 .PHONY: rust-security-policy-test rust-security-policy-check rust-security-tool-versions rust-mutation-check rust-fuzz-smoke rust-miri-check rust-ffi-sanitizer-check rust-engine-security-check rust-release-metadata-policy-test rust-release-metadata-policy-check rust-release-metadata-tool-versions rust-release-metadata-check rust-engine-completion-check
 .PHONY: rust-godot-editor-build godot-runtime-check
+.PHONY: flutter-client-map-contract-test flutter-client-dependencies flutter-client-format-check flutter-client-analyze flutter-client-test flutter-client-check flutter-client-coverage-report flutter-client-device-test flutter-client-performance-pilot flutter-client-performance-check flutter-client-run flutter-client-release-build flutter-client-release-check
 
 help:
 	@echo "AONW deploy helpers"
@@ -265,12 +269,13 @@ help:
 	@echo "  make bootstrap    LOCAL: install pinned toolchains and all locked dependencies"
 	@echo "  make toolchain-check LOCAL: verify .fvmrc Flutter and its bundled Dart are active"
 	@echo "  make p0-check      LOCAL: verify legacy freeze, successor boundaries and Rust migration inventory"
-	@echo "  make successor-map-contract-test LOCAL: verify shared geometry and deterministic starter bundle"
-	@echo "  make successor-flutter-check LOCAL: format, analyze, and test the Rust-backed successor client"
-	@echo "  make successor-flutter-coverage-report LOCAL: write successor client LCOV after the full test suite"
-	@echo "  make successor-flutter-device-test LOCAL: build and exercise the standalone client on macOS"
-	@echo "  make successor-flutter-fm5-baseline LOCAL: validate the production Flame cutover performance budget"
-	@echo "  make successor-flutter-run LOCAL: run the standalone Rust-backed client on macOS"
+	@echo "  make flutter-client-map-contract-test LOCAL: verify shared geometry and deterministic starter bundle"
+	@echo "  make flutter-client-check LOCAL: format, analyze, and test the Flutter client"
+	@echo "  make flutter-client-coverage-report LOCAL: write client LCOV after the full test suite"
+	@echo "  make flutter-client-device-test LOCAL: exercise the native client on macOS"
+	@echo "  make flutter-client-performance-check LOCAL: validate the Flame performance budget"
+	@echo "  make flutter-client-release-check LOCAL: qualify and package the macOS arm64 client"
+	@echo "  make flutter-client-run LOCAL: run the Rust-backed client on macOS"
 	@echo "  make map-stage-1-check LOCAL: compare Flutter and Godot semantic map probes"
 	@echo "  make stage-1-visual-evidence LOCAL: regenerate the reviewed map screenshots"
 	@echo "  make rust-check   LOCAL: format, lint, test, and document the Rust workspace"
@@ -741,29 +746,29 @@ successor-engine-deep-check: successor-engine-check rust-test-release rust-found
 
 rust-engine-completion-check: successor-engine-quality-check rust-test-release rust-foundation-check rust-integrated-turn-check rust-ai-strength-check rust-persistence-check rust-engine-security-check rust-release-metadata-check
 
-successor-map-contract-test: root-dependencies successor-flutter-dependencies
+flutter-client-map-contract-test: root-dependencies flutter-client-dependencies
 	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/presentation/geometry/odd_q_flat_top_geometry_test.dart
 	@flutter test --no-pub test/tool/map_asset_bundle_compiler_test.dart
 	@dart run tool/assets/compile/starter_map_bundle.dart check
 
-successor-flutter-dependencies: toolchain-check
+flutter-client-dependencies: toolchain-check
 	@cd clients/aonw_flutter && flutter pub get --enforce-lockfile
 
-successor-flutter-format-check:
-	@cd clients/aonw_flutter && dart format --output=none --set-exit-if-changed lib test integration_test
+flutter-client-format-check:
+	@cd clients/aonw_flutter && dart format --output=none --set-exit-if-changed lib test integration_test test_live tool
 
-successor-flutter-analyze: successor-flutter-dependencies
+flutter-client-analyze: flutter-client-dependencies
 	@cd clients/aonw_flutter && flutter analyze --no-pub --fatal-infos --fatal-warnings
 
-successor-flutter-test: successor-flutter-analyze
+flutter-client-test: flutter-client-analyze
 	@cd clients/aonw_flutter && flutter test --no-pub
 
-successor-flutter-check: successor-flutter-format-check successor-flutter-test successor-map-contract-test dependency-boundaries
+flutter-client-check: flutter-client-format-check flutter-client-test flutter-client-map-contract-test dependency-boundaries
 
-successor-flutter-coverage-report: successor-flutter-dependencies
+flutter-client-coverage-report: flutter-client-dependencies
 	@cd clients/aonw_flutter && flutter test --coverage --no-pub
 
-map-stage-1-check: successor-flutter-dependencies godot-editor-check
+map-stage-1-check: flutter-client-dependencies godot-editor-check
 	@mkdir -p "$(abspath $(MAP_RENDER_PROBE_DIR))"
 	@tool/test_compare_map_render_probes.sh
 	@cd clients/aonw_flutter && dart run test/tool/export_map_render_probe.dart \
@@ -784,7 +789,7 @@ map-stage-1-check: successor-flutter-dependencies godot-editor-check
 		"$(FLUTTER_MAP_RENDER_DIAGNOSTICS)" \
 		"$(GODOT_MAP_RENDER_DIAGNOSTICS)"
 
-stage-1-visual-evidence: successor-flutter-dependencies godot-editor-check
+stage-1-visual-evidence: flutter-client-dependencies godot-editor-check
 	@mkdir -p "$(STAGE_1_EVIDENCE_DIR)"
 	@cd clients/aonw_flutter && flutter test --no-pub \
 		--update-goldens \
@@ -799,17 +804,25 @@ stage-1-visual-evidence: successor-flutter-dependencies godot-editor-check
 		"$(GODOT_VISUAL_EVIDENCE_LOG)" \
 		"Godot stage 1 visual evidence: OK"
 
-successor-flutter-device-test: successor-flutter-dependencies
+flutter-client-device-test: flutter-client-dependencies
 	@cd clients/aonw_flutter && flutter test --no-pub integration_test/inspect_map_native_test.dart
 
-successor-flutter-fm4-pilot: successor-flutter-dependencies
+flutter-client-performance-pilot: flutter-client-dependencies
 	@cd clients/aonw_flutter && flutter test --no-dds --no-pub integration_test/fm4_flame_gameplay_pilot_test.dart
 
-successor-flutter-fm5-baseline: successor-flutter-dependencies
+flutter-client-performance-check: flutter-client-dependencies
 	@cd clients/aonw_flutter && flutter test --no-dds --no-pub integration_test/fm4_flame_gameplay_pilot_test.dart
 
-successor-flutter-run: successor-flutter-dependencies
+flutter-client-run: flutter-client-dependencies
 	@cd clients/aonw_flutter && flutter run --no-pub -d macos
+
+flutter-client-release-build: flutter-client-dependencies
+	@tool/build_flutter_client_macos_release.sh \
+		"$(FLUTTER_CLIENT_API_BASE_URL)" \
+		"$(FLUTTER_CLIENT_BUILD_NUMBER)" \
+		"$(FLUTTER_CLIENT_RELEASE_ZIP)"
+
+flutter-client-release-check: flutter-client-check flutter-client-device-test flutter-client-performance-check flutter-client-release-build
 
 rust-check: rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke
 
@@ -835,7 +848,7 @@ rust-benchmark:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_engine --bench movement
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_local_runtime --bench runtime
 
-rust-flutter-test: root-dependencies successor-flutter-dependencies
+rust-flutter-test: root-dependencies flutter-client-dependencies
 	@dart test packages/aonw_rust_client/test
 	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/infrastructure/native_large_map_smoke_test.dart
 
@@ -911,7 +924,7 @@ godot-map-sync:
 godot-map-bundle-check:
 	@dart run tool/assets/compile/starter_map_bundle.dart check
 
-dependencies: root-dependencies successor-flutter-dependencies core-dependencies client-dependencies server-dependencies
+dependencies: root-dependencies flutter-client-dependencies core-dependencies client-dependencies server-dependencies
 
 root-dependencies: toolchain-check
 	@flutter pub get --enforce-lockfile
@@ -1078,7 +1091,7 @@ native-local-game-smoke: root-dependencies
 		rm -f "$$log"; \
 		exit $$result
 
-serverpod-critical-e2e-test: root-dependencies client-dependencies server-dependencies successor-flutter-dependencies
+serverpod-critical-e2e-test: root-dependencies client-dependencies server-dependencies flutter-client-dependencies
 	@AONW_SERVERPOD_CRITICAL_E2E_PORT="$(AONW_SERVERPOD_CRITICAL_E2E_PORT)" \
 		tool/run_serverpod_critical_e2e.sh
 

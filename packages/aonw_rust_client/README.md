@@ -21,7 +21,7 @@ consumer that requires Rust declares the cache-aware setting below in its
         aonw_rust_client:
           rust_backend: true
 
-The successor client sets this unconditionally, so it has no Dart engine or
+The Flutter client sets this unconditionally, so it has no Dart engine or
 per-request fallback. While the hook only supports a host-native Cargo build,
 `rust_backend: true` for another OS or architecture fails the build explicitly;
 it never substitutes the unavailable C stub. A new target must first add and

@@ -19,7 +19,7 @@ selected Flame as that runtime.
 
 ## Decision
 
-The successor Flutter client uses Flame as the only target renderer for its 2D
+The Flutter client uses Flame as the only renderer for its 2D
 gameplay viewport:
 
 ```mermaid
@@ -84,7 +84,7 @@ Implementation follows FM0-FM5 in
 5. move units, routes, and presentation effects;
 6. cut over atomically and delete the old renderer.
 
-Each checkpoint runs `make successor-flutter-check`, relevant
+Each checkpoint runs `make flutter-client-check`, relevant
 `flame_test`/widget/device tests, dependency and freeze guards, and records the
 exact toolchain and rollback commit in the client progress log.
 

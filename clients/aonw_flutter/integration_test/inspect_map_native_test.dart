@@ -1,4 +1,5 @@
 import 'package:aonw_flutter/app/composition/app_composition.dart';
+import 'package:aonw_flutter/features/multiplayer/infrastructure/auth_token_store.dart';
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -28,16 +29,28 @@ void main() {
     expect(map.gridLayout, AonwMapGridLayout.oddQFlatTop);
   });
 
-  testWidgets('standalone app renders the Rust-backed starter bundle', (
+  testWidgets('standalone app starts at the production main menu', (
     tester,
   ) async {
     await tester.pumpWidget(AppComposition.production().root);
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(const ValueKey('flame-viewport-repaint-boundary')),
-      findsOneWidget,
-    );
-    expect(find.text('Map unavailable'), findsNothing);
+    expect(find.byKey(const ValueKey('new-game')), findsOneWidget);
+    expect(find.byKey(const ValueKey('multiplayer')), findsOneWidget);
+  });
+
+  testWidgets('secure token storage persists and removes one isolated value', (
+    tester,
+  ) async {
+    final key =
+        'aonw.test.refresh-token.'
+        '${DateTime.now().toUtc().microsecondsSinceEpoch}';
+    final store = SecureAuthTokenStore(refreshTokenKey: key);
+    addTearDown(store.clear);
+
+    await store.writeRefreshToken('integration-token');
+    expect(await store.readRefreshToken(), 'integration-token');
+    await store.clear();
+    expect(await store.readRefreshToken(), isNull);
   });
 }

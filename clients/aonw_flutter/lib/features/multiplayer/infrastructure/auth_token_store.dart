@@ -1,4 +1,4 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart';
 
 abstract interface class AuthTokenStore {
   Future<String?> readRefreshToken();
@@ -10,20 +10,31 @@ abstract interface class AuthTokenStore {
 
 final class SecureAuthTokenStore implements AuthTokenStore {
   const SecureAuthTokenStore({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
-  }) : _storage = storage;
+    MethodChannel channel = const MethodChannel('aonw/keychain'),
+    String refreshTokenKey = 'aonw.auth.refresh-token',
+  }) : _channel = channel,
+       _refreshTokenKey = refreshTokenKey,
+       assert(refreshTokenKey != '');
 
-  static const _refreshTokenKey = 'aonw.auth.refresh-token';
-
-  final FlutterSecureStorage _storage;
-
-  @override
-  Future<String?> readRefreshToken() => _storage.read(key: _refreshTokenKey);
-
-  @override
-  Future<void> writeRefreshToken(String value) =>
-      _storage.write(key: _refreshTokenKey, value: value);
+  final MethodChannel _channel;
+  final String _refreshTokenKey;
 
   @override
-  Future<void> clear() => _storage.delete(key: _refreshTokenKey);
+  Future<String?> readRefreshToken() =>
+      _channel.invokeMethod<String>('read', {'key': _refreshTokenKey});
+
+  @override
+  Future<void> writeRefreshToken(String value) {
+    if (value.isEmpty || value.length > 16 * 1024) {
+      throw ArgumentError.value(value.length, 'value.length');
+    }
+    return _channel.invokeMethod<void>('write', {
+      'key': _refreshTokenKey,
+      'value': value,
+    });
+  }
+
+  @override
+  Future<void> clear() =>
+      _channel.invokeMethod<void>('delete', {'key': _refreshTokenKey});
 }

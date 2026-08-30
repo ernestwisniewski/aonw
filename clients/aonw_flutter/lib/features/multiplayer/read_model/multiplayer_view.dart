@@ -1,10 +1,4 @@
-enum NetworkSessionPhase {
-  ready,
-  reconnecting,
-  resyncing,
-  failed,
-  closed,
-}
+enum NetworkSessionPhase { ready, reconnecting, resyncing, failed, closed }
 
 final class MultiplayerAccountView {
   const MultiplayerAccountView({required this.userId});

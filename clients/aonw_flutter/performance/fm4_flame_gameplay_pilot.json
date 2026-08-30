@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "capturedAt": "2026-08-24",
-  "sourceCommand": "make --no-print-directory successor-flutter-fm4-pilot",
+  "sourceCommand": "make --no-print-directory flutter-client-performance-pilot",
   "environment": {
     "device": "MacBook Pro MacBookPro18,2",
     "chip": "Apple M1 Max",

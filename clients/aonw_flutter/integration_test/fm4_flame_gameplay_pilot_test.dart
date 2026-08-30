@@ -48,7 +48,7 @@ void main() {
     expect(game.world.workerInfrastructureLayer.debugImprovementCount, 120);
     expect(game.world.workerInfrastructureLayer.debugRoadCount, 120);
     expect(game.world.workerInfrastructureLayer.debugSharedPaintCount, 4);
-    expect(game.world.children, hasLength(10));
+    expect(game.world.children, hasLength(12));
     expect(game.paused, isTrue, reason: 'the turn-based world starts idle');
     final idleUpdates = game.world.effectHost.debugActiveUpdateCount;
     for (var frame = 0; frame < 12; frame++) {

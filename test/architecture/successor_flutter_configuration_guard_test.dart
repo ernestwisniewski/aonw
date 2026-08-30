@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
 void main() {
-  test('successor Flutter keeps its standalone strict lint policy', () {
+  test('Flutter client keeps its standalone strict lint policy', () {
     final options = _map('clients/aonw_flutter/analysis_options.yaml');
     expect(options.keys.toSet(), {'include', 'analyzer', 'linter'});
     expect(options['include'], 'package:flutter_lints/flutter.yaml');
@@ -29,7 +29,7 @@ void main() {
     });
   });
 
-  test('successor Flutter lint dependency and Make gates cannot drift', () {
+  test('Flutter client lint dependency and Make gates cannot drift', () {
     final manifest = _map('clients/aonw_flutter/pubspec.yaml');
     final dependencies = manifest['dependencies'] as YamlMap;
     final devDependencies = manifest['dev_dependencies'] as YamlMap;
@@ -58,7 +58,7 @@ void main() {
 
     final makefile = File('Makefile').readAsStringSync();
     expect(
-      _target(makefile, 'successor-flutter-dependencies'),
+      _target(makefile, 'flutter-client-dependencies'),
       const _Target(
         prerequisites: ['toolchain-check'],
         recipes: [
@@ -67,9 +67,9 @@ void main() {
       ),
     );
     expect(
-      _target(makefile, 'successor-flutter-analyze'),
+      _target(makefile, 'flutter-client-analyze'),
       const _Target(
-        prerequisites: ['successor-flutter-dependencies'],
+        prerequisites: ['flutter-client-dependencies'],
         recipes: [
           '@cd clients/aonw_flutter && flutter analyze --no-pub '
               '--fatal-infos --fatal-warnings',
@@ -77,25 +77,25 @@ void main() {
       ),
     );
     expect(
-      _target(makefile, 'successor-flutter-test'),
+      _target(makefile, 'flutter-client-test'),
       const _Target(
-        prerequisites: ['successor-flutter-analyze'],
+        prerequisites: ['flutter-client-analyze'],
         recipes: ['@cd clients/aonw_flutter && flutter test --no-pub'],
       ),
     );
     expect(
-      _target(makefile, 'successor-flutter-coverage-report'),
+      _target(makefile, 'flutter-client-coverage-report'),
       const _Target(
-        prerequisites: ['successor-flutter-dependencies'],
+        prerequisites: ['flutter-client-dependencies'],
         recipes: [
           '@cd clients/aonw_flutter && flutter test --coverage --no-pub',
         ],
       ),
     );
     expect(
-      _target(makefile, 'successor-flutter-fm5-baseline'),
+      _target(makefile, 'flutter-client-performance-check'),
       const _Target(
-        prerequisites: ['successor-flutter-dependencies'],
+        prerequisites: ['flutter-client-dependencies'],
         recipes: [
           '@cd clients/aonw_flutter && flutter test --no-dds --no-pub '
               'integration_test/fm4_flame_gameplay_pilot_test.dart',
@@ -105,11 +105,11 @@ void main() {
     expect(
       _target(makefile, '.PHONY').prerequisites,
       containsAll({
-        'successor-flutter-dependencies',
-        'successor-flutter-analyze',
-        'successor-flutter-test',
-        'successor-flutter-coverage-report',
-        'successor-flutter-fm5-baseline',
+        'flutter-client-dependencies',
+        'flutter-client-analyze',
+        'flutter-client-test',
+        'flutter-client-coverage-report',
+        'flutter-client-performance-check',
       }),
     );
   });
@@ -186,7 +186,7 @@ void main() {
     expect(source, contains('final class MapRenderSnapshot'));
   });
 
-  test('macOS profiling network access stays debug-only', () {
+  test('macOS profiles have the required network access', () {
     final debug = File(
       'clients/aonw_flutter/macos/Runner/DebugProfile.entitlements',
     ).readAsStringSync();
@@ -195,7 +195,9 @@ void main() {
     ).readAsStringSync();
 
     expect(debug, contains('com.apple.security.network.client'));
-    expect(release, isNot(contains('com.apple.security.network.client')));
+    expect(release, contains('com.apple.security.network.client'));
+    expect(debug, isNot(contains('com.apple.security.app-sandbox')));
+    expect(release, isNot(contains('com.apple.security.app-sandbox')));
   });
 
   test('FM0 viewport baseline keeps raw device evidence', () {
@@ -253,7 +255,7 @@ void main() {
     expect(baseline['schemaVersion'], 1);
     expect(
       baseline['sourceCommand'],
-      contains('successor-flutter-fm5-baseline'),
+      contains('flutter-client-performance-check'),
     );
     expect(workload['dimensions'], {'cols': 40, 'rows': 30});
     expect(workload['visibleUnits'], 120);

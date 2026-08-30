@@ -25,7 +25,7 @@ echo "Resolving root Flutter dependencies..."
   flutter pub get --enforce-lockfile
 )
 
-echo "Resolving successor Flutter dependencies..."
+echo "Resolving Flutter client dependencies..."
 (
   cd "${repo_root}/clients/aonw_flutter"
   flutter pub get --enforce-lockfile

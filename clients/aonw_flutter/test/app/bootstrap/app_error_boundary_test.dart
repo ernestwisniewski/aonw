@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:aonw_flutter/app/bootstrap/app_error_boundary.dart';
 import 'package:aonw_flutter/app/telemetry/client_telemetry.dart';
 import 'package:flutter/foundation.dart';
@@ -56,6 +59,36 @@ void main() {
     boundary.dispose();
     expect(FlutterError.onError, same(previousFlutterHandler));
     expect(dispatcher.onError, same(previousPlatformHandler));
+  });
+
+  test('stores a bounded crash record without the raw error message', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'aonw-crash-reporter-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final reporter = LocalAppErrorReporter(
+      directory: () async => directory,
+      clock: () => DateTime.utc(2026, 8, 30, 2, 3, 4),
+    );
+
+    reporter.report(
+      AppErrorReport(
+        kind: AppErrorKind.asynchronous,
+        error: StateError('secret-token-value'),
+        stackTrace: StackTrace.fromString('frame-one\nframe-two'),
+      ),
+    );
+    await reporter.flush();
+
+    final document = await File(
+      '${directory.path}/${LocalAppErrorReporter.fileName}',
+    ).readAsString();
+    final record = jsonDecode(document.trim()) as Map<String, Object?>;
+    expect(record['timestamp'], '2026-08-30T02:03:04.000Z');
+    expect(record['kind'], 'unhandled_async_error');
+    expect(record['errorType'], 'StateError');
+    expect(record['stackTrace'], contains('frame-one'));
+    expect(document, isNot(contains('secret-token-value')));
   });
 }
 

@@ -1,6 +1,6 @@
 # Stage 1 map acceptance
 
-This package is review evidence for the successor clients' first map slice.
+This package is review evidence for the clients' shared map slice.
 It is deliberately separate from client-owned visual goldens and is not a
 pixel-parity contract between Flutter and Godot.
 
@@ -11,7 +11,7 @@ From the repository root:
 ```sh
 make map-stage-1-check
 make stage-1-visual-evidence
-make successor-flutter-check
+make flutter-client-check
 make godot-check
 ```
 

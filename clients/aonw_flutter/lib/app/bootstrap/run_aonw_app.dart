@@ -5,14 +5,14 @@ import '../telemetry/client_telemetry.dart';
 import 'app_error_boundary.dart';
 
 void runAonwApp({
-  AppErrorReporter errorReporter = const DebugAppErrorReporter(),
+  AppErrorReporter? errorReporter,
   ClientTelemetry telemetry = const DebugClientTelemetry(),
 }) {
   WidgetsFlutterBinding.ensureInitialized();
   AppErrorBoundary.install(
     reporter: AppErrorTelemetryReporter(
       telemetry: telemetry,
-      diagnostics: errorReporter,
+      diagnostics: errorReporter ?? LocalAppErrorReporter.production(),
     ),
   );
   runApp(AppComposition.production(telemetry: telemetry).root);

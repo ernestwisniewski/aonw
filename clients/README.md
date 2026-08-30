@@ -1,6 +1,6 @@
 # AoNW Clients
 
-`clients/` contains the greenfield presentation clients for the Rust engine.
+`clients/` contains the presentation clients for the Rust engine.
 Both clients consume the same strict, versioned multiplayer API and keep
 gameplay rules, authoritative state transitions, saves, and replays in Rust.
 
@@ -18,7 +18,7 @@ gameplay rules, authoritative state transitions, saves, and replays in Rust.
 - Rust owns gameplay validation and every authoritative state transition.
 - The shared multiplayer API remains explicitly versioned where peers must
   negotiate compatibility.
-- New clients have no legacy adapter, legacy protocol, alternative rules
+- Clients have no alternate game engine, earlier protocol reader, or alternative rules
   engine, or per-command fallback.
 - Unknown protocol values and incompatible native libraries fail closed.
 
@@ -27,7 +27,7 @@ gameplay rules, authoritative state transitions, saves, and replays in Rust.
 Run focused client checks from the repository root:
 
 ```sh
-make successor-flutter-check
+make flutter-client-check
 make godot-check
 make map-stage-1-check
 ```
@@ -35,7 +35,7 @@ make map-stage-1-check
 Run the clients with:
 
 ```sh
-make successor-flutter-run
+make flutter-client-run
 make godot-run
 ```
 

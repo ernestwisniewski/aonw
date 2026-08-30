@@ -135,8 +135,8 @@ jobs:
       - name: Reject unsupported Rust Native Assets substitutions
         run: make --no-print-directory rust-native-assets-contract-test
 
-  successor-flutter:
-    name: successor Flutter
+  flutter-client:
+    name: Flutter client
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
@@ -160,13 +160,13 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.pub-cache
-          key: ${{ runner.os }}-successor-flutter-${{ hashFiles('pubspec.lock', 'clients/aonw_flutter/pubspec.lock', 'packages/aonw_rust_client/pubspec.lock', 'engine/Cargo.lock') }}
+          key: ${{ runner.os }}-flutter-client-${{ hashFiles('pubspec.lock', 'clients/aonw_flutter/pubspec.lock', 'packages/aonw_rust_client/pubspec.lock', 'engine/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-successor-flutter-
+            ${{ runner.os }}-flutter-client-
             ${{ runner.os }}-pub-
 
       - name: Check standalone Rust-backed client
-        run: make --no-print-directory successor-flutter-check
+        run: make --no-print-directory flutter-client-check
 
       - name: Check Rust-Flutter bridge
         run: make --no-print-directory rust-flutter-test
@@ -329,8 +329,8 @@ jobs:
       - name: Run native End turn save reload smoke
         run: make --no-print-directory native-local-game-smoke
 
-  successor-flutter-device-smoke:
-    name: successor Flutter device smoke
+  flutter-client-device-smoke:
+    name: Flutter client device smoke
     runs-on: macos-latest
     timeout-minutes: 20
     env:
@@ -349,7 +349,7 @@ jobs:
           cache: true
 
       - name: Run standalone client device smoke
-        run: make --no-print-directory successor-flutter-device-test
+        run: make --no-print-directory flutter-client-device-test
 
   mutation-gate:
     name: mutation gate

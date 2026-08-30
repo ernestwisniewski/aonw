@@ -347,7 +347,7 @@ void main() {
       const _MakeTarget(
         prerequisites: [
           'root-dependencies',
-          'successor-flutter-dependencies',
+          'flutter-client-dependencies',
           'core-dependencies',
           'client-dependencies',
           'server-dependencies',
