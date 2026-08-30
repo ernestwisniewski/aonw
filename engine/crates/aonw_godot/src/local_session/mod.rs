@@ -104,11 +104,12 @@ fn dispatch_json(runtime: &mut LocalRuntime, input: &str) -> String {
 struct WorkerRequest {
     job_id: u64,
     input: String,
+    cancelled: Arc<AtomicBool>,
 }
 
 struct WorkerResponse {
     job_id: u64,
-    output: String,
+    output: Option<String>,
 }
 
 struct SessionWorker {
@@ -116,7 +117,7 @@ struct SessionWorker {
     responses: Receiver<WorkerResponse>,
     pending: BTreeMap<u64, String>,
     outstanding: BTreeSet<u64>,
-    cancelled_jobs: BTreeSet<u64>,
+    cancellation_tokens: BTreeMap<u64, Arc<AtomicBool>>,
     next_job_id: u64,
     shutdown: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
@@ -135,7 +136,12 @@ impl SessionWorker {
                 if worker_shutdown.load(Ordering::Acquire) {
                     break;
                 }
-                let output = dispatch_json(&mut runtime, &request.input);
+                let output = if request.cancelled.load(Ordering::Acquire) {
+                    None
+                } else {
+                    let output = dispatch_json(&mut runtime, &request.input);
+                    (!request.cancelled.load(Ordering::Acquire)).then_some(output)
+                };
                 if worker_shutdown.load(Ordering::Acquire) {
                     break;
                 }
@@ -155,7 +161,7 @@ impl SessionWorker {
             responses: response_receiver,
             pending: BTreeMap::new(),
             outstanding: BTreeSet::new(),
-            cancelled_jobs: BTreeSet::new(),
+            cancellation_tokens: BTreeMap::new(),
             next_job_id: 1,
             shutdown,
             thread: Some(thread),
@@ -169,11 +175,17 @@ impl SessionWorker {
         }
         let job_id = self.next_job_id;
         self.next_job_id = self.next_job_id.checked_add(1)?;
+        let cancelled = Arc::new(AtomicBool::new(false));
         self.requests
             .as_ref()?
-            .try_send(WorkerRequest { job_id, input })
+            .try_send(WorkerRequest {
+                job_id,
+                input,
+                cancelled: Arc::clone(&cancelled),
+            })
             .ok()?;
         self.outstanding.insert(job_id);
+        self.cancellation_tokens.insert(job_id, cancelled);
         Some(job_id)
     }
 
@@ -189,21 +201,15 @@ impl SessionWorker {
                 self.outstanding.remove(&job_id);
                 return output;
             }
-            match self.responses.recv() {
-                Ok(response) if response.job_id == job_id => {
-                    self.outstanding.remove(&job_id);
-                    return response.output;
-                }
-                Ok(response) => {
-                    self.store_response(response);
-                }
-                Err(_) => {
-                    self.outstanding.clear();
-                    return ClientProtocol::failure_json(
-                        "engine_worker_unavailable",
-                        "engine worker stopped before returning a response",
-                    );
-                }
+            if let Ok(response) = self.responses.recv() {
+                self.store_response(response);
+            } else {
+                self.outstanding.clear();
+                self.cancellation_tokens.clear();
+                return ClientProtocol::failure_json(
+                    "engine_worker_unavailable",
+                    "engine worker stopped before returning a response",
+                );
             }
         }
     }
@@ -231,8 +237,10 @@ impl SessionWorker {
         if !self.outstanding.contains(&job_id) {
             return false;
         }
-        self.cancelled_jobs.insert(job_id);
-        true
+        self.cancellation_tokens.get(&job_id).is_some_and(|token| {
+            token.store(true, Ordering::Release);
+            true
+        })
     }
 
     fn drain(&mut self) {
@@ -242,11 +250,19 @@ impl SessionWorker {
     }
 
     fn store_response(&mut self, response: WorkerResponse) {
-        if self.cancelled_jobs.remove(&response.job_id) {
+        let was_cancelled = self
+            .cancellation_tokens
+            .remove(&response.job_id)
+            .is_some_and(|token| token.load(Ordering::Acquire));
+        let Some(output) = response.output else {
+            self.outstanding.remove(&response.job_id);
+            return;
+        };
+        if was_cancelled {
             self.outstanding.remove(&response.job_id);
             return;
         }
-        self.pending.insert(response.job_id, response.output);
+        self.pending.insert(response.job_id, output);
     }
 }
 

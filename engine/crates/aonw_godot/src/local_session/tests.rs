@@ -197,5 +197,5 @@ fn native_worker_bounds_and_discards_cancelled_jobs() {
 
     assert!(worker.outstanding.is_empty());
     assert!(worker.pending.is_empty());
-    assert!(worker.cancelled_jobs.is_empty());
+    assert!(worker.cancellation_tokens.is_empty());
 }
