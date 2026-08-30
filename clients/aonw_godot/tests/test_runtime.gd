@@ -7,6 +7,9 @@ const MovementPresentationSuite := preload(
 const RecipientProjectionStoreSuite := preload(
 	"res://tests/suites/recipient_projection_store_suite.gd"
 )
+const LocalMatchWorkflowSuite := preload(
+	"res://tests/suites/local_match_workflow_suite.gd"
+)
 
 var _failures: Array[String] = []
 
@@ -17,6 +20,7 @@ func _run() -> void:
 	for suite in [
 		NativeSessionSuite.new(),
 		RecipientProjectionStoreSuite.new(),
+		LocalMatchWorkflowSuite.new(),
 		MovementPresentationSuite.new(),
 	]:
 		await suite.run(_failures)

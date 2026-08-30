@@ -41,6 +41,7 @@ func _ready() -> void:
 	_surface.map_presented.connect(_on_map_presented)
 	_interaction.hex_selected.connect(_on_hex_selected)
 	_open_dialog.file_selected.connect(_open)
+	_local_match.projection_invalidated.connect(_on_projection_invalidated)
 	_open_source(AonwMapSource.new(
 		"aonw2_starter",
 		DEFAULT_MAP,
@@ -198,6 +199,11 @@ func _resync_projection() -> bool:
 func _present_empty_unit_layer() -> void:
 	var units: Array[AonwLocalMatchViewModels.UnitView] = []
 	_unit_layer.present(_interaction.projection(), units)
+
+func _on_projection_invalidated() -> void:
+	_clear_movement_selection()
+	_present_empty_unit_layer()
+	_turn_hud.present(null)
 
 func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 	_clear_route_preview()

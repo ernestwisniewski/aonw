@@ -17,6 +17,7 @@ var _stamp: AonwClientReadModels.Stamp
 var _engine_features: AonwClientReadModels.EngineFeatureSet
 var _lifecycle := Lifecycle.CLOSED
 var _generation := 0
+var _recipient_generation := 0
 var _movement_query_correlation := 0
 
 func _init(gateway: RefCounted) -> void:
@@ -91,12 +92,9 @@ func start_match_async(
 		fog_enabled,
 	])
 
-func handoff_actor(actor_player_id: String) -> Dictionary:
-	cancel_movement_queries()
-	return _call_stamp(&"handoff_actor", [actor_player_id])
-
 func handoff_actor_async(actor_player_id: String) -> Dictionary:
 	cancel_movement_queries()
+	_recipient_generation += 1
 	var method := (
 		&"handoff_actor_async"
 		if _gateway.has_method("handoff_actor_async")
@@ -112,12 +110,17 @@ func advance_ai_turn_async(actor_player_id: String, command_budget: int) -> Dict
 	if not precondition.is_empty():
 		return precondition
 	var request_generation := _generation
+	var request_recipient_generation := _recipient_generation
 	var result: Dictionary = await _gateway.call(
 		"advance_ai_turn_async",
 		actor_player_id,
 		command_budget,
 	)
-	if request_generation != _generation or _lifecycle != Lifecycle.OPEN:
+	if (
+		request_generation != _generation
+		or request_recipient_generation != _recipient_generation
+		or _lifecycle != Lifecycle.OPEN
+	):
 		return _failure(
 			"stale_session_response",
 			"The session changed before the engine response arrived",
@@ -166,12 +169,17 @@ func snapshot_async() -> Dictionary:
 	if not precondition.is_empty():
 		return precondition
 	var request_generation := _generation
+	var request_recipient_generation := _recipient_generation
 	var result: Dictionary
 	if _gateway.has_method("snapshot_async"):
 		result = await _gateway.call("snapshot_async")
 	else:
 		result = _gateway.call("snapshot")
-	if request_generation != _generation or _lifecycle != Lifecycle.OPEN:
+	if (
+		request_generation != _generation
+		or request_recipient_generation != _recipient_generation
+		or _lifecycle != Lifecycle.OPEN
+	):
 		return _failure(
 			"stale_session_response",
 			"The session changed before the engine response arrived",
@@ -324,21 +332,17 @@ func _stale_response() -> Dictionary:
 		"The session changed before the engine response arrived",
 	)
 
-func _call_stamp(method: StringName, arguments: Array = []) -> Dictionary:
-	var precondition := _require_open()
-	if not precondition.is_empty():
-		return precondition
-	return _track_stamp(_gateway.callv(method, arguments))
-
 func _call_stamp_async(method: StringName, arguments: Array = []) -> Dictionary:
 	var precondition := _require_open()
 	if not precondition.is_empty():
 		return precondition
 	var request_generation := _generation
+	var request_recipient_generation := _recipient_generation
 	var request_revision := revision()
 	var result: Dictionary = await _gateway.callv(method, arguments)
 	if (
 		request_generation != _generation
+		or request_recipient_generation != _recipient_generation
 		or _lifecycle != Lifecycle.OPEN
 		or request_revision != revision()
 	):
@@ -358,12 +362,14 @@ func _call_movement_value_async(method: StringName, arguments: Array) -> Diction
 	_movement_query_correlation += 1
 	var request_correlation := _movement_query_correlation
 	var request_generation := _generation
+	var request_recipient_generation := _recipient_generation
 	var request_revision := revision()
 	var gateway_arguments := [request_revision]
 	gateway_arguments.append_array(arguments)
 	var result: Dictionary = await _gateway.callv(method, gateway_arguments)
 	if (
 		request_generation != _generation
+		or request_recipient_generation != _recipient_generation
 		or _lifecycle != Lifecycle.OPEN
 		or request_correlation != _movement_query_correlation
 		or request_revision != revision()
@@ -384,6 +390,7 @@ func _call_revision_value_async(
 		return precondition
 	cancel_movement_queries()
 	var request_generation := _generation
+	var request_recipient_generation := _recipient_generation
 	var request_revision := revision()
 	var gateway_arguments := [request_revision]
 	gateway_arguments.append_array(arguments)
@@ -394,6 +401,7 @@ func _call_revision_value_async(
 		result = _gateway.callv(fallback_method, gateway_arguments)
 	if (
 		request_generation != _generation
+		or request_recipient_generation != _recipient_generation
 		or _lifecycle != Lifecycle.OPEN
 		or request_revision != revision()
 	):

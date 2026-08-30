@@ -149,7 +149,18 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		and turn_status.text.begins_with("Turn 2 · active · 0/1 submitted"),
 		"Godot completes a real local turn without active-player or phase state",
 	)
+	interaction.set("_selected", Vector2i(2, 2))
+	screen.set("_selected_unit_id", "preview-commander")
+	screen.set("_reachable_hexes", {Vector2i(2, 1): true})
 	session.close()
+	_check(
+		screen.get("_selected_unit_id").is_empty()
+		and screen.get("_reachable_hexes").is_empty()
+		and interaction.selected_hex() == AonwMapInteractionController.INVALID_HEX
+		and unit_layer.unit_at(Vector2i(2, 2)).is_empty()
+		and turn_hud.current() == null,
+		"recipient invalidation clears owner-bound units, selection, routes, and turn state",
+	)
 	screen.free()
 
 func _check(condition: bool, message: String) -> void:

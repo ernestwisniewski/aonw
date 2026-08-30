@@ -1,6 +1,8 @@
 class_name AonwLocalMatchWorkflow
 extends RefCounted
 
+signal projection_invalidated
+
 const ClientFailure := preload("res://game/application/session/client_failure.gd")
 const ProjectionStore := preload(
 	"res://game/application/session/recipient_projection_store.gd"
@@ -49,6 +51,31 @@ func open(
 func resync() -> Dictionary:
 	return await _read_snapshot(true)
 
+func handoff_actor_async(actor_player_id: String) -> Dictionary:
+	var ready := _require_projection()
+	if not ready.is_empty():
+		return ready
+	var next_store: RefCounted = _store
+	_invalidate_projection()
+	var handed: Dictionary = await _controller.handoff_actor_async(actor_player_id)
+	if not handed["ok"]:
+		await _controller.close_async()
+		return handed
+	var snapshot: Dictionary = await _controller.snapshot_async()
+	if not snapshot["ok"]:
+		await _controller.close_async()
+		return snapshot
+	var stored: Dictionary = next_store.open(snapshot["value"])
+	if not stored["ok"]:
+		await _controller.close_async()
+		return stored
+	_store = next_store
+	return {
+		"ok": true,
+		"value": _projection(stored["value"]),
+		"changed": stored["changed"],
+	}
+
 func close() -> Dictionary:
 	_clear_projection()
 	return _controller.close()
@@ -64,6 +91,9 @@ func revision() -> int:
 	return _controller.revision()
 
 func reachable_async(unit_id: String) -> Dictionary:
+	var ready := _require_projection()
+	if not ready.is_empty():
+		return ready
 	var result: Dictionary = await _controller.reachable_async(unit_id)
 	if not result["ok"]:
 		return result
@@ -86,6 +116,9 @@ func reachable_async(unit_id: String) -> Dictionary:
 	return {"ok": true, "value": value}
 
 func route_plan_async(unit_id: String, target: Vector2i) -> Dictionary:
+	var ready := _require_projection()
+	if not ready.is_empty():
+		return ready
 	var result: Dictionary = await _controller.route_plan_async(unit_id, target)
 	if not result["ok"]:
 		return result
@@ -104,18 +137,33 @@ func route_plan_async(unit_id: String, target: Vector2i) -> Dictionary:
 	return {"ok": true, "value": value}
 
 func move_unit_async(unit_id: String, target: Vector2i) -> Dictionary:
+	var ready := _require_projection()
+	if not ready.is_empty():
+		return ready
 	return _apply_command(await _controller.move_unit_async(unit_id, target))
 
 func cancel_unit_action_async(unit_id: String) -> Dictionary:
+	var ready := _require_projection()
+	if not ready.is_empty():
+		return ready
 	return _apply_command(await _controller.cancel_unit_action_async(unit_id))
 
 func skip_unit_turn_async(unit_id: String) -> Dictionary:
+	var ready := _require_projection()
+	if not ready.is_empty():
+		return ready
 	return _apply_command(await _controller.skip_unit_turn_async(unit_id))
 
 func fortify_unit_async(unit_id: String) -> Dictionary:
+	var ready := _require_projection()
+	if not ready.is_empty():
+		return ready
 	return _apply_command(await _controller.fortify_unit_async(unit_id))
 
 func end_turn_async() -> Dictionary:
+	var ready := _require_projection()
+	if not ready.is_empty():
+		return ready
 	return _apply_command(await _controller.end_turn_async())
 
 func cancel_movement_queries() -> void:
@@ -124,13 +172,16 @@ func cancel_movement_queries() -> void:
 func _read_snapshot(resyncing: bool) -> Dictionary:
 	if _store == null:
 		return _resync_required("Recipient projection is not configured")
+	var requested_store: RefCounted = _store
 	var result: Dictionary = await _controller.snapshot_async()
 	if not result["ok"]:
 		return result
+	if requested_store != _store:
+		return _resync_required("Recipient projection changed while synchronizing")
 	var stored: Dictionary = (
-		_store.replace_after_resync(result["value"])
+		requested_store.replace_after_resync(result["value"])
 		if resyncing
-		else _store.open(result["value"])
+		else requested_store.open(result["value"])
 	)
 	if not stored["ok"]:
 		return stored
@@ -236,9 +287,18 @@ func _matches_projection(stamp: AonwClientReadModels.Stamp) -> bool:
 	)
 
 func _clear_projection() -> void:
+	_invalidate_projection()
+
+func _invalidate_projection() -> void:
 	if _store != null:
 		_store.clear()
+		projection_invalidated.emit()
 	_store = null
+
+func _require_projection() -> Dictionary:
+	if _store != null and _store.has_snapshot():
+		return {}
+	return _resync_required("Recipient projection is not available")
 
 func _resync_required(message: String) -> Dictionary:
 	return ClientFailure.result("recipient_resync_required", message)
