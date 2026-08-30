@@ -125,6 +125,23 @@ func _finish_close(result: Dictionary) -> Dictionary:
 func snapshot() -> Dictionary:
 	return _call_value(&"snapshot")
 
+func snapshot_async() -> Dictionary:
+	var precondition := _require_open()
+	if not precondition.is_empty():
+		return precondition
+	var request_generation := _generation
+	var result: Dictionary
+	if _gateway.has_method("snapshot_async"):
+		result = await _gateway.call("snapshot_async")
+	else:
+		result = _gateway.call("snapshot")
+	if request_generation != _generation or _lifecycle != Lifecycle.OPEN:
+		return _failure(
+			"stale_session_response",
+			"The session changed before the engine response arrived",
+		)
+	return _track_value_stamp(result)
+
 func reachable(unit_id: String) -> Dictionary:
 	cancel_movement_queries()
 	return _call_value(&"reachable", [revision(), unit_id])

@@ -8,6 +8,9 @@ const LocalMatchSessionController := preload(
 const OpenLocalMatch := preload(
 	"res://game/application/session/open_local_match.gd"
 )
+const LocalMatchWorkflow := preload(
+	"res://game/application/match/local_match_workflow.gd"
+)
 const NativeLocalSession := preload(
 	"res://game/infrastructure/engine/native_local_session.gd"
 )
@@ -38,6 +41,7 @@ func _ready() -> void:
 	)
 	var local_session := LocalMatchSessionController.new(LocalMatchGateway.new(transport))
 	var open_local_match := OpenLocalMatch.new(local_session, documents)
+	var local_match := LocalMatchWorkflow.new(local_session, open_local_match)
 	var screen := get_parent()
 	assert(screen.has_method("configure"), "Map preview screen must accept its ports")
-	screen.call("configure", open_map, local_session, open_local_match)
+	screen.call("configure", open_map, local_match)

@@ -136,10 +136,20 @@ func _decode_session_closed(result: Dictionary) -> Dictionary:
 	return {"ok": true}
 
 func snapshot() -> Dictionary:
-	var extracted := _extract(
+	return _decode_snapshot(_extract(
 		_execute({"type": "snapshot"}, "snapshot"),
 		"snapshot",
-	)
+	))
+
+func snapshot_async() -> Dictionary:
+	if not _transport.has_method("request_async"):
+		return snapshot()
+	return _decode_snapshot(_extract(
+		await _execute_async({"type": "snapshot"}, "snapshot"),
+		"snapshot",
+	))
+
+func _decode_snapshot(extracted: Dictionary) -> Dictionary:
 	if not extracted["ok"]:
 		return extracted
 	var snapshot := ReadModelDecoder.decode_snapshot(extracted["value"])

@@ -2,12 +2,6 @@ extends Node3D
 
 const OpenMap := preload("res://game/application/map/open_map.gd")
 const MapSource := preload("res://game/application/map/map_source.gd")
-const LocalMatchSessionController := preload(
-	"res://game/application/session/local_match_session_controller.gd"
-)
-const OpenLocalMatch := preload(
-	"res://game/application/session/open_local_match.gd"
-)
 const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 const EXPORT_SMOKE_ARGUMENT := "--aonw-export-smoke"
 const EXPORT_SMOKE_OPENED := "Godot packaged session lifecycle: opened"
@@ -23,31 +17,25 @@ const EXPORT_SMOKE_CLOSED := "Godot packaged session lifecycle: closed"
 @onready var _status: Label = %Status
 
 var _open_map: AonwOpenMap
-var _local_session: AonwLocalMatchSessionController
-var _open_local_match: AonwOpenLocalMatch
+var _local_match: AonwLocalMatchWorkflow
 var _current_map: AonwMapView
 var _selected_unit_id := ""
 var _reachable_hexes: Dictionary = {}
-var _route: AonwClientReadModels.RoutePlanView
-var _local_session_open := false
+var _route: AonwLocalMatchViewModels.RouteView
 
 func configure(
 	open_map: AonwOpenMap,
-	local_session: AonwLocalMatchSessionController,
-	open_local_match: AonwOpenLocalMatch,
+	local_match: AonwLocalMatchWorkflow,
 ) -> void:
 	assert(_open_map == null, "Map preview dependencies are already configured")
 	assert(open_map != null, "Open map use case is required")
-	assert(local_session != null, "Local match session is required")
-	assert(open_local_match != null, "Open local match use case is required")
+	assert(local_match != null, "Local match workflow is required")
 	_open_map = open_map
-	_local_session = local_session
-	_open_local_match = open_local_match
+	_local_match = local_match
 
 func _ready() -> void:
 	assert(_open_map != null, "Map preview composition is required")
-	assert(_local_session != null, "Map preview session is required")
-	assert(_open_local_match != null, "Map preview open-session use case is required")
+	assert(_local_match != null, "Map preview session workflow is required")
 	_surface.map_presented.connect(_on_map_presented)
 	_interaction.hex_selected.connect(_on_hex_selected)
 	_open_dialog.file_selected.connect(_open)
@@ -59,10 +47,9 @@ func _ready() -> void:
 	))
 
 func _exit_tree() -> void:
-	if not _local_session_open:
+	if not _local_match.is_open():
 		return
-	var closed: Dictionary = _local_session.close()
-	_local_session_open = false
+	var closed: Dictionary = _local_match.close()
 	if not _is_export_smoke():
 		return
 	if closed.get("ok", false):
@@ -150,12 +137,9 @@ func _setup_local_session(source: AonwMapSource) -> void:
 	_reachable_hexes.clear()
 	_route = null
 	_confirm_move.visible = false
-	await _local_session.close_async()
-	_local_session_open = false
-	var scenario_path := "res://assets/scenarios/%s.json" % _current_map.map_id()
-	var opened := _open_local_match.execute(
-		source.map_path,
-		scenario_path,
+	var opened: Dictionary = await _local_match.open(
+		source,
+		_current_map,
 		"preview-player",
 	)
 	if not opened["ok"]:
@@ -163,8 +147,9 @@ func _setup_local_session(source: AonwMapSource) -> void:
 		_report_export_smoke_failure(_status.text)
 		_present_empty_unit_layer()
 		return
-	_local_session_open = true
-	if _refresh_session_snapshot() and _is_export_smoke():
+	var projection: AonwLocalMatchViewModels.ProjectionView = opened["value"]
+	_unit_layer.present(_interaction.projection(), projection.units)
+	if _is_export_smoke():
 		print(EXPORT_SMOKE_OPENED)
 
 func _is_export_smoke() -> bool:
@@ -174,30 +159,19 @@ func _report_export_smoke_failure(message: String) -> void:
 	if _is_export_smoke():
 		push_error("Godot packaged session lifecycle failed: %s" % message)
 
-func _refresh_session_snapshot() -> bool:
-	var snapshot := _local_session.snapshot()
-	if not snapshot["ok"]:
-		_status.text += " · Rust: %s" % snapshot["message"]
+func _resync_projection() -> bool:
+	var synchronized: Dictionary = await _local_match.resync()
+	if not synchronized["ok"]:
+		_status.text += " · Rust: %s" % synchronized["message"]
 		_report_export_smoke_failure(_status.text)
 		_present_empty_unit_layer()
 		return false
-	var value: AonwClientReadModels.SnapshotView = snapshot["value"]
-	if value.stamp.map_hash != _current_map.content_hash():
-		_status.text += " · Rust snapshot belongs to another map"
-		_report_export_smoke_failure(_status.text)
-		_present_empty_unit_layer()
-		return false
-	for unit in value.units:
-		if not _current_map.contains(unit.coordinate):
-			_status.text += " · Rust snapshot contains an out-of-map unit"
-			_report_export_smoke_failure(_status.text)
-			_present_empty_unit_layer()
-			return false
+	var value: AonwLocalMatchViewModels.ProjectionView = synchronized["value"]
 	_unit_layer.present(_interaction.projection(), value.units)
 	return true
 
 func _present_empty_unit_layer() -> void:
-	var units: Array[AonwClientReadModels.UnitView] = []
+	var units: Array[AonwLocalMatchViewModels.UnitView] = []
 	_unit_layer.present(_interaction.projection(), units)
 
 func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
@@ -205,7 +179,7 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 	_selected_unit_id = unit_id
 	_reachable_hexes.clear()
 	_interaction.set_reachable_hexes([])
-	var reachable: Dictionary = await _local_session.reachable_async(unit_id)
+	var reachable: Dictionary = await _local_match.reachable_async(unit_id)
 	if _selected_unit_id != unit_id or _interaction.selected_hex() != coordinate:
 		return
 	if not reachable["ok"]:
@@ -214,7 +188,7 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 		_status.text = "Rust: %s" % reachable["message"]
 		return
 	var coordinates: Array[Vector2i] = []
-	var reachable_view: AonwClientReadModels.ReachableView = reachable["value"]
+	var reachable_view: AonwLocalMatchViewModels.ReachableView = reachable["value"]
 	for tile in reachable_view.tiles:
 		var target := tile.coordinate
 		_reachable_hexes[target] = true
@@ -229,7 +203,7 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 func _preview_selected_route(target: Vector2i) -> void:
 	_clear_route_preview()
 	var requested_unit_id := _selected_unit_id
-	var planned: Dictionary = await _local_session.route_plan_async(
+	var planned: Dictionary = await _local_match.route_plan_async(
 		requested_unit_id,
 		target,
 	)
@@ -243,10 +217,9 @@ func _preview_selected_route(target: Vector2i) -> void:
 			return
 		_status.text = "Rust: %s" % planned["message"]
 		return
-	var route: AonwClientReadModels.RoutePlanView = planned["value"]
+	var route: AonwLocalMatchViewModels.RouteView = planned["value"]
 	if (
-		route.stamp.map_hash != _current_map.content_hash()
-		or route.unit_id != requested_unit_id
+		route.unit_id != requested_unit_id
 		or route.target != target
 		or not _current_map.contains(route.destination)
 		or _unit_layer.unit_at(route.steps[0].coordinate) != _selected_unit_id
@@ -278,25 +251,23 @@ func _on_confirm_move_pressed() -> void:
 	_move_selected_unit(_route.target)
 
 func _move_selected_unit(target: Vector2i) -> void:
-	var previous_revision := _local_session.revision()
-	var moved := _local_session.move_unit(
+	var moved: Dictionary = _local_match.move_unit(
 		_selected_unit_id,
 		target,
 	)
 	if not moved["ok"]:
+		if moved.get("code", "") == "recipient_resync_required":
+			await _resync_projection()
 		_status.text = "Rust: %s" % moved["message"]
 		return
-	var value: AonwClientReadModels.CommandResult = moved["value"]
+	var value: AonwLocalMatchViewModels.CommandResult = moved["value"]
 	if not value.accepted:
 		_status.text = "Rust: %s" % value.rejection
 		return
-	if value.patch.from_revision != previous_revision:
-		_refresh_session_snapshot()
-	else:
-		_unit_layer.apply_transition(value.patch, value.evidence)
+	_unit_layer.apply_transition(value.unit_transition)
 	var selected := _selected_unit_id
 	_clear_movement_selection()
-	if value.evidence == null:
+	if value.unit_transition.movement_steps.is_empty():
 		_status.text = "%s · command accepted for %s" % [
 			_current_map.map_id(), selected,
 		]
@@ -306,7 +277,7 @@ func _move_selected_unit(target: Vector2i) -> void:
 		]
 
 func _clear_movement_selection() -> void:
-	_local_session.cancel_movement_queries()
+	_local_match.cancel_movement_queries()
 	_clear_route_preview()
 	_selected_unit_id = ""
 	_reachable_hexes.clear()

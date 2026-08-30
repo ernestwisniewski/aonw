@@ -16,7 +16,7 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 	var screen := packed.instantiate() as Node3D
 	Engine.get_main_loop().root.add_child(screen)
 	await Engine.get_main_loop().process_frame
-	var session: AonwLocalMatchSessionController = screen.get("_local_session")
+	var session: AonwLocalMatchWorkflow = screen.get("_local_match")
 	var interaction: AonwMapInteractionController = screen.get_node("%MapInteraction")
 	var unit_layer: AonwUnitLayer = screen.get_node("%UnitLayer")
 	var confirm: Button = screen.get_node("%ConfirmMove")
@@ -38,7 +38,7 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		if screen.get("_route") != null:
 			break
 		await Engine.get_main_loop().process_frame
-	var route: AonwClientReadModels.RoutePlanView = screen.get("_route")
+	var route: AonwLocalMatchViewModels.RouteView = screen.get("_route")
 	var route_layer := screen.get_node("MapSurface/MapOverlay/Route") as MeshInstance3D
 	_check(
 		route != null
@@ -52,6 +52,8 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		and unit_layer.unit_at(Vector2i(2, 1)) == "preview-commander",
 		"route preview does not mutate the canonical session",
 	)
+	var initial_marker := unit_layer.get_node_or_null("preview-commander") as MeshInstance3D
+	var initial_mesh := initial_marker.mesh if initial_marker != null else null
 
 	screen.call("_on_confirm_move_pressed")
 	_check(session.revision() == 1, "Godot confirms movement through one revision-bound command")
@@ -60,9 +62,12 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 	var expected := interaction.projection().hex_center(Vector2i(2, 2), AonwUnitLayer.UNIT_OFFSET)
 	_check(
 		marker != null
+		and marker == initial_marker
+		and marker.mesh == initial_mesh
 		and marker.position.is_equal_approx(expected)
+		and unit_layer.unit_at(Vector2i(2, 1)).is_empty()
 		and unit_layer.unit_at(Vector2i(2, 2)) == "preview-commander",
-		"Godot evidence animation ends at the recipient patch position",
+		"Godot applies the patch in place and updates its spatial unit index",
 	)
 	_check(
 		not confirm.visible and screen.get("_route") == null,
