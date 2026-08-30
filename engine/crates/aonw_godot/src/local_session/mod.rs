@@ -2,8 +2,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{self, Receiver, SyncSender};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError, SyncSender, TryRecvError};
 use std::thread::{self, JoinHandle};
+use std::time::Duration;
 
 use aonw_ai::StrategicPlanner;
 use aonw_contracts::client::CLIENT_API_VERSION;
@@ -16,6 +17,7 @@ const BUILD_IDENTITY: &str = match option_env!("AONW_GODOT_BUILD_IDENTITY") {
     None => "aonw_godot/development",
 };
 const MAX_OUTSTANDING_JOBS: usize = 8;
+const WORKER_IDLE_POLL_INTERVAL: Duration = Duration::from_millis(1);
 
 #[derive(GodotClass)]
 #[class(tool, base=RefCounted)]
@@ -58,6 +60,15 @@ impl AonwLocalSession {
     fn request_json_async(&mut self, request_json: GString) -> i64 {
         self.worker
             .enqueue(request_json.to_string())
+            .and_then(|job_id| i64::try_from(job_id).ok())
+            .unwrap_or(-1)
+    }
+
+    /// Queues latency-sensitive user interaction ahead of queued background work.
+    #[func]
+    fn request_json_async_interactive(&mut self, request_json: GString) -> i64 {
+        self.worker
+            .enqueue_interactive(request_json.to_string())
             .and_then(|job_id| i64::try_from(job_id).ok())
             .unwrap_or(-1)
     }
@@ -112,8 +123,15 @@ struct WorkerResponse {
     output: Option<String>,
 }
 
+#[derive(Clone, Copy)]
+enum WorkerPriority {
+    Background,
+    Interactive,
+}
+
 struct SessionWorker {
-    requests: Option<SyncSender<WorkerRequest>>,
+    background_requests: Option<SyncSender<WorkerRequest>>,
+    interactive_requests: Option<SyncSender<WorkerRequest>>,
     responses: Receiver<WorkerResponse>,
     pending: BTreeMap<u64, String>,
     outstanding: BTreeSet<u64>,
@@ -125,14 +143,20 @@ struct SessionWorker {
 
 impl SessionWorker {
     fn new() -> Self {
-        let (request_sender, request_receiver) =
+        let (background_sender, background_receiver) =
+            mpsc::sync_channel::<WorkerRequest>(MAX_OUTSTANDING_JOBS);
+        let (interactive_sender, interactive_receiver) =
             mpsc::sync_channel::<WorkerRequest>(MAX_OUTSTANDING_JOBS);
         let (response_sender, response_receiver) = mpsc::channel::<WorkerResponse>();
         let shutdown = Arc::new(AtomicBool::new(false));
         let worker_shutdown = Arc::clone(&shutdown);
         let thread = thread::spawn(move || {
             let mut runtime = LocalRuntime::default();
-            while let Ok(request) = request_receiver.recv() {
+            while let Some(request) = receive_next_request(
+                &interactive_receiver,
+                &background_receiver,
+                worker_shutdown.as_ref(),
+            ) {
                 if worker_shutdown.load(Ordering::Acquire) {
                     break;
                 }
@@ -157,7 +181,8 @@ impl SessionWorker {
             }
         });
         Self {
-            requests: Some(request_sender),
+            background_requests: Some(background_sender),
+            interactive_requests: Some(interactive_sender),
             responses: response_receiver,
             pending: BTreeMap::new(),
             outstanding: BTreeSet::new(),
@@ -169,6 +194,14 @@ impl SessionWorker {
     }
 
     fn enqueue(&mut self, input: String) -> Option<u64> {
+        self.enqueue_with_priority(input, WorkerPriority::Background)
+    }
+
+    fn enqueue_interactive(&mut self, input: String) -> Option<u64> {
+        self.enqueue_with_priority(input, WorkerPriority::Interactive)
+    }
+
+    fn enqueue_with_priority(&mut self, input: String, priority: WorkerPriority) -> Option<u64> {
         self.drain();
         if self.outstanding.len() >= MAX_OUTSTANDING_JOBS {
             return None;
@@ -176,8 +209,11 @@ impl SessionWorker {
         let job_id = self.next_job_id;
         self.next_job_id = self.next_job_id.checked_add(1)?;
         let cancelled = Arc::new(AtomicBool::new(false));
-        self.requests
-            .as_ref()?
+        let sender = match priority {
+            WorkerPriority::Background => self.background_requests.as_ref()?,
+            WorkerPriority::Interactive => self.interactive_requests.as_ref()?,
+        };
+        sender
             .try_send(WorkerRequest {
                 job_id,
                 input,
@@ -266,10 +302,48 @@ impl SessionWorker {
     }
 }
 
+fn receive_next_request(
+    interactive: &Receiver<WorkerRequest>,
+    background: &Receiver<WorkerRequest>,
+    shutdown: &AtomicBool,
+) -> Option<WorkerRequest> {
+    let mut interactive_connected = true;
+    let mut background_connected = true;
+    loop {
+        if shutdown.load(Ordering::Acquire) {
+            return None;
+        }
+        if interactive_connected {
+            match interactive.try_recv() {
+                Ok(request) => return Some(request),
+                Err(TryRecvError::Empty) => {}
+                Err(TryRecvError::Disconnected) => interactive_connected = false,
+            }
+        }
+        if background_connected {
+            match background.recv_timeout(WORKER_IDLE_POLL_INTERVAL) {
+                Ok(request) => return Some(request),
+                Err(RecvTimeoutError::Timeout) => continue,
+                Err(RecvTimeoutError::Disconnected) => background_connected = false,
+            }
+        } else if interactive_connected {
+            match interactive.recv_timeout(WORKER_IDLE_POLL_INTERVAL) {
+                Ok(request) => return Some(request),
+                Err(RecvTimeoutError::Timeout) => continue,
+                Err(RecvTimeoutError::Disconnected) => interactive_connected = false,
+            }
+        }
+        if !interactive_connected && !background_connected {
+            return None;
+        }
+    }
+}
+
 impl Drop for SessionWorker {
     fn drop(&mut self) {
         self.shutdown.store(true, Ordering::Release);
-        self.requests.take();
+        self.background_requests.take();
+        self.interactive_requests.take();
         // Dropping a running handle detaches it. The shutdown flag stops queued work,
         // while the current bounded request may finish without blocking Godot's main thread.
         if let Some(thread) = self.thread.take()

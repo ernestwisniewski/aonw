@@ -93,7 +93,15 @@ func _request_async(
 		return precondition
 	if timeout_msec < 0:
 		return _failure("invalid_client_request", "The request timeout must be non-negative")
-	var job_id := int(_session.request_json_async(_request_document(body)))
+	var request_document := _request_document(body)
+	var job_id := int(
+		_session.request_json_async_interactive(request_document)
+		if (
+			cancellation_key != &""
+			and _session.has_method("request_json_async_interactive")
+		)
+		else _session.request_json_async(request_document)
+	)
 	if job_id < 0:
 		return _failure("engine_worker_unavailable", "The native engine worker is unavailable")
 	if cancellation_key != &"":

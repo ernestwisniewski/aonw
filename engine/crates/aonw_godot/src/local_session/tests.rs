@@ -5,10 +5,16 @@ use aonw_contracts::client::{
 };
 use aonw_local_runtime::LocalRuntime;
 use serde_json::json;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
-use super::{MAX_OUTSTANDING_JOBS, SessionWorker, adapter_build_identity, dispatch_json};
+use super::{
+    MAX_OUTSTANDING_JOBS, SessionWorker, WorkerRequest, adapter_build_identity, dispatch_json,
+    receive_next_request,
+};
 
 #[test]
 fn native_adapter_exposes_its_build_identity() {
@@ -161,6 +167,35 @@ fn native_adapter_rejects_non_protocol_and_foreign_version_documents() {
         };
         assert_eq!(error.code, expected_code);
     }
+}
+
+#[test]
+fn native_worker_prioritizes_queued_interactive_requests() {
+    let (background_sender, background_receiver) = mpsc::sync_channel(2);
+    let (interactive_sender, interactive_receiver) = mpsc::sync_channel(2);
+    background_sender
+        .try_send(WorkerRequest {
+            job_id: 1,
+            input: "background".to_owned(),
+            cancelled: Arc::new(AtomicBool::new(false)),
+        })
+        .expect("queued background request");
+    interactive_sender
+        .try_send(WorkerRequest {
+            job_id: 2,
+            input: "interactive".to_owned(),
+            cancelled: Arc::new(AtomicBool::new(false)),
+        })
+        .expect("queued interactive request");
+    let shutdown = AtomicBool::new(false);
+
+    let first = receive_next_request(&interactive_receiver, &background_receiver, &shutdown)
+        .expect("interactive request");
+    let second = receive_next_request(&interactive_receiver, &background_receiver, &shutdown)
+        .expect("background request");
+
+    assert_eq!(first.job_id, 2);
+    assert_eq!(second.job_id, 1);
 }
 
 #[test]
