@@ -45,7 +45,7 @@ func engine_features_async() -> Dictionary:
 	if not _transport.has_method("request_async"):
 		return engine_features()
 	return _decode_engine_features(_extract(
-		await _execute_async({"type": "capabilities"}, "capabilities"),
+		await _execute_async({"type": "capabilities"}, "capabilities", &"", true),
 		"features",
 	))
 
@@ -95,7 +95,7 @@ func open_session_async(
 		"mapDocument": map_document,
 		"scenarioDocument": scenario_document,
 		"actorPlayerId": actor_player_id,
-	}, "sessionOpened"), "stamp")
+	}, "sessionOpened", &"", true), "stamp")
 
 func start_match(
 	map_document: String,
@@ -135,7 +135,7 @@ func start_match_async(
 		"actorPlayerId": actor_player_id,
 		"matchIdentity": match_identity,
 		"fogMode": "enabled" if fog_enabled else "disabled",
-	}, "sessionOpened"), "stamp")
+	}, "sessionOpened", &"", true), "stamp")
 
 func handoff_actor(actor_player_id: String) -> Dictionary:
 	return _extract_stamp(_execute({
@@ -149,7 +149,7 @@ func handoff_actor_async(actor_player_id: String) -> Dictionary:
 	return _extract_stamp(await _execute_async({
 		"type": "handoffActor",
 		"actorPlayerId": actor_player_id,
-	}, "actorHandedOff"), "stamp")
+	}, "actorHandedOff", &"", true), "stamp")
 
 func advance_ai_turn(actor_player_id: String, command_budget: int) -> Dictionary:
 	return _decode_ai_turn(_execute({
@@ -177,7 +177,7 @@ func close_session_async() -> Dictionary:
 	if not _transport.has_method("request_async"):
 		return close_session()
 	return _decode_session_closed(
-		await _execute_async({"type": "closeSession"}, "sessionClosed")
+		await _execute_async({"type": "closeSession"}, "sessionClosed", &"", true)
 	)
 
 func cancel_background_ai() -> void:
@@ -201,7 +201,7 @@ func snapshot_async() -> Dictionary:
 	if not _transport.has_method("request_async"):
 		return snapshot()
 	return _decode_snapshot(_extract(
-		await _execute_async({"type": "snapshot"}, "snapshot"),
+		await _execute_async({"type": "snapshot"}, "snapshot", &"", true),
 		"snapshot",
 	))
 
@@ -267,25 +267,29 @@ func _decode_route_plan(result: Dictionary) -> Dictionary:
 		return _failure("invalid_client_response", "Rust returned an invalid route plan")
 	return {"ok": true, "value": route_plan}
 
-func move_unit(expected_revision: int, unit_id: String, target: Vector2i) -> Dictionary:
-	return _command({
+func move_unit_async(
+	expected_revision: int,
+	unit_id: String,
+	target: Vector2i,
+) -> Dictionary:
+	return await _command_async({
 		"type": "moveUnit",
 		"expectedRevision": expected_revision,
 		"unitId": unit_id,
 		"target": _coordinate(target),
 	})
 
-func cancel_unit_action(expected_revision: int, unit_id: String) -> Dictionary:
-	return _unit_action("cancelUnitAction", expected_revision, unit_id)
+func cancel_unit_action_async(expected_revision: int, unit_id: String) -> Dictionary:
+	return await _unit_action_async("cancelUnitAction", expected_revision, unit_id)
 
-func skip_unit_turn(expected_revision: int, unit_id: String) -> Dictionary:
-	return _unit_action("skipUnitTurn", expected_revision, unit_id)
+func skip_unit_turn_async(expected_revision: int, unit_id: String) -> Dictionary:
+	return await _unit_action_async("skipUnitTurn", expected_revision, unit_id)
 
-func fortify_unit(expected_revision: int, unit_id: String) -> Dictionary:
-	return _unit_action("fortifyUnit", expected_revision, unit_id)
+func fortify_unit_async(expected_revision: int, unit_id: String) -> Dictionary:
+	return await _unit_action_async("fortifyUnit", expected_revision, unit_id)
 
-func end_turn(expected_revision: int) -> Dictionary:
-	return _command({
+func end_turn_async(expected_revision: int) -> Dictionary:
+	return await _command_async({
 		"type": "endTurn",
 		"expectedRevision": expected_revision,
 	})
@@ -361,11 +365,18 @@ func _query_async(
 		return _failure("invalid_client_response", "Rust returned an unexpected query result")
 	return {"ok": true, "value": value}
 
-func _command(command: Dictionary) -> Dictionary:
-	var extracted := _extract(
-		_execute({"type": "dispatch", "command": command}, "command"),
+func _command_async(command: Dictionary) -> Dictionary:
+	return _decode_command(_extract(
+		await _execute_async(
+			{"type": "dispatch", "command": command},
+			"command",
+			&"",
+			true,
+		),
 		"result",
-	)
+	))
+
+func _decode_command(extracted: Dictionary) -> Dictionary:
 	if not extracted["ok"]:
 		return extracted
 	var command_result := ReadModelDecoder.decode_command(extracted["value"])
@@ -373,8 +384,12 @@ func _command(command: Dictionary) -> Dictionary:
 		return _failure("invalid_client_response", "Rust returned an invalid command result")
 	return {"ok": true, "value": command_result}
 
-func _unit_action(action_type: String, expected_revision: int, unit_id: String) -> Dictionary:
-	return _command({
+func _unit_action_async(
+	action_type: String,
+	expected_revision: int,
+	unit_id: String,
+) -> Dictionary:
+	return await _command_async({
 		"type": action_type,
 		"expectedRevision": expected_revision,
 		"unitId": unit_id,
@@ -412,6 +427,12 @@ func _execute_async(
 			cancellation_key,
 		)
 		return _response_decoder.decode_envelope(coalesced_envelope, response_type)
+	if interactive and _transport.has_method("request_interactive_async"):
+		var interactive_envelope: Variant = await _transport.call(
+			"request_interactive_async",
+			request,
+		)
+		return _response_decoder.decode_envelope(interactive_envelope, response_type)
 	if not _transport.has_method("request_async"):
 		return _execute(request, response_type)
 	var envelope: Variant = await _transport.call("request_async", request)

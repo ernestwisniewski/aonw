@@ -65,6 +65,13 @@ func request_async(
 ) -> Dictionary:
 	return await _request_async(body, timeout_msec, &"", false)
 
+## Enqueues a non-coalescible user action ahead of queued background work.
+func request_interactive_async(
+	body: Dictionary,
+	timeout_msec: int = ASYNC_REQUEST_TIMEOUT_MSEC,
+) -> Dictionary:
+	return await _request_async(body, timeout_msec, &"", true)
+
 ## Keeps only the latest in-flight request for one interaction key.
 ## A replaced request completes with `stale_session_response` without exposing its result.
 func request_coalesced_async(

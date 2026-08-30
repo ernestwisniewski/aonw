@@ -197,21 +197,36 @@ func cancel_movement_queries() -> void:
 	if _gateway.has_method("cancel_movement_queries"):
 		_gateway.call("cancel_movement_queries")
 
-func move_unit(unit_id: String, target: Vector2i) -> Dictionary:
-	cancel_movement_queries()
-	return _call_value(&"move_unit", [revision(), unit_id, target])
+func move_unit_async(unit_id: String, target: Vector2i) -> Dictionary:
+	return await _call_revision_value_async(
+		&"move_unit_async",
+		&"move_unit",
+		[unit_id, target],
+	)
 
-func cancel_unit_action(unit_id: String) -> Dictionary:
-	return _call_value(&"cancel_unit_action", [revision(), unit_id])
+func cancel_unit_action_async(unit_id: String) -> Dictionary:
+	return await _call_revision_value_async(
+		&"cancel_unit_action_async",
+		&"cancel_unit_action",
+		[unit_id],
+	)
 
-func skip_unit_turn(unit_id: String) -> Dictionary:
-	return _call_value(&"skip_unit_turn", [revision(), unit_id])
+func skip_unit_turn_async(unit_id: String) -> Dictionary:
+	return await _call_revision_value_async(
+		&"skip_unit_turn_async",
+		&"skip_unit_turn",
+		[unit_id],
+	)
 
-func fortify_unit(unit_id: String) -> Dictionary:
-	return _call_value(&"fortify_unit", [revision(), unit_id])
+func fortify_unit_async(unit_id: String) -> Dictionary:
+	return await _call_revision_value_async(
+		&"fortify_unit_async",
+		&"fortify_unit",
+		[unit_id],
+	)
 
-func end_turn() -> Dictionary:
-	return _call_value(&"end_turn", [revision()])
+func end_turn_async() -> Dictionary:
+	return await _call_revision_value_async(&"end_turn_async", &"end_turn", [])
 
 func save_game() -> Dictionary:
 	return _call_plain(&"save_game")
@@ -357,6 +372,32 @@ func _call_movement_value_async(method: StringName, arguments: Array) -> Diction
 			"stale_session_response",
 			"The session changed before the engine response arrived",
 		)
+	return _track_value_stamp(result)
+
+func _call_revision_value_async(
+	async_method: StringName,
+	fallback_method: StringName,
+	arguments: Array,
+) -> Dictionary:
+	var precondition := _require_open()
+	if not precondition.is_empty():
+		return precondition
+	cancel_movement_queries()
+	var request_generation := _generation
+	var request_revision := revision()
+	var gateway_arguments := [request_revision]
+	gateway_arguments.append_array(arguments)
+	var result: Dictionary
+	if _gateway.has_method(async_method):
+		result = await _gateway.callv(async_method, gateway_arguments)
+	else:
+		result = _gateway.callv(fallback_method, gateway_arguments)
+	if (
+		request_generation != _generation
+		or _lifecycle != Lifecycle.OPEN
+		or request_revision != revision()
+	):
+		return _stale_response()
 	return _track_value_stamp(result)
 
 func _call_plain(method: StringName, arguments: Array = []) -> Dictionary:

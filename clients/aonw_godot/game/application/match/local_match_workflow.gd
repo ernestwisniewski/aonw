@@ -103,20 +103,20 @@ func route_plan_async(unit_id: String, target: Vector2i) -> Dictionary:
 	value.steps = _movement_steps(raw.steps)
 	return {"ok": true, "value": value}
 
-func move_unit(unit_id: String, target: Vector2i) -> Dictionary:
-	return _apply_command(_controller.move_unit(unit_id, target))
+func move_unit_async(unit_id: String, target: Vector2i) -> Dictionary:
+	return _apply_command(await _controller.move_unit_async(unit_id, target))
 
-func cancel_unit_action(unit_id: String) -> Dictionary:
-	return _apply_command(_controller.cancel_unit_action(unit_id))
+func cancel_unit_action_async(unit_id: String) -> Dictionary:
+	return _apply_command(await _controller.cancel_unit_action_async(unit_id))
 
-func skip_unit_turn(unit_id: String) -> Dictionary:
-	return _apply_command(_controller.skip_unit_turn(unit_id))
+func skip_unit_turn_async(unit_id: String) -> Dictionary:
+	return _apply_command(await _controller.skip_unit_turn_async(unit_id))
 
-func fortify_unit(unit_id: String) -> Dictionary:
-	return _apply_command(_controller.fortify_unit(unit_id))
+func fortify_unit_async(unit_id: String) -> Dictionary:
+	return _apply_command(await _controller.fortify_unit_async(unit_id))
 
-func end_turn() -> Dictionary:
-	return _apply_command(_controller.end_turn())
+func end_turn_async() -> Dictionary:
+	return _apply_command(await _controller.end_turn_async())
 
 func cancel_movement_queries() -> void:
 	_controller.cancel_movement_queries()

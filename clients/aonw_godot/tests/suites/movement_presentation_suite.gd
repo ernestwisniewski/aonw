@@ -68,6 +68,10 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 	var initial_mesh := initial_marker.mesh if initial_marker != null else null
 
 	screen.call("_on_confirm_move_pressed")
+	for _frame in range(120):
+		if session.revision() == 1:
+			break
+		await Engine.get_main_loop().process_frame
 	_check(session.revision() == 1, "Godot confirms movement through one revision-bound command")
 	await Engine.get_main_loop().create_timer(0.5).timeout
 	var marker := unit_layer.get_node_or_null("preview-commander") as MeshInstance3D

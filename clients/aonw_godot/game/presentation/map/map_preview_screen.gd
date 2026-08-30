@@ -236,6 +236,7 @@ func _preview_selected_route(target: Vector2i) -> void:
 		coordinates.append(step.coordinate)
 	_interaction.set_route_hexes(coordinates)
 	_confirm_move.visible = true
+	_confirm_move.disabled = false
 	_status.text = "%s · route %s → %d,%d · cost %d · remaining %d" % [
 		_current_map.map_id(),
 		_selected_unit_id,
@@ -246,22 +247,25 @@ func _preview_selected_route(target: Vector2i) -> void:
 	]
 
 func _on_confirm_move_pressed() -> void:
-	if _route == null or _selected_unit_id.is_empty():
+	if _route == null or _selected_unit_id.is_empty() or _confirm_move.disabled:
 		return
+	_confirm_move.disabled = true
 	_move_selected_unit(_route.target)
 
 func _move_selected_unit(target: Vector2i) -> void:
-	var moved: Dictionary = _local_match.move_unit(
+	var moved: Dictionary = await _local_match.move_unit_async(
 		_selected_unit_id,
 		target,
 	)
 	if not moved["ok"]:
+		_confirm_move.disabled = false
 		if moved.get("code", "") == "recipient_resync_required":
 			await _resync_projection()
 		_status.text = "Rust: %s" % moved["message"]
 		return
 	var value: AonwLocalMatchViewModels.CommandResult = moved["value"]
 	if not value.accepted:
+		_confirm_move.disabled = false
 		_status.text = "Rust: %s" % value.rejection
 		return
 	_unit_layer.apply_transition(value.unit_transition)
@@ -288,3 +292,4 @@ func _clear_route_preview() -> void:
 	_route = null
 	_interaction.set_route_hexes([])
 	_confirm_move.visible = false
+	_confirm_move.disabled = false

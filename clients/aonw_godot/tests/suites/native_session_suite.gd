@@ -316,6 +316,7 @@ class TrackingTransport:
 
 	var delegate: RefCounted
 	var request_types: Array[String] = []
+	var interactive_request_types: Array[String] = []
 
 	func _init(value: RefCounted) -> void:
 		delegate = value
@@ -333,6 +334,12 @@ class TrackingTransport:
 	func request_async(body: Dictionary) -> Dictionary:
 		request_types.append(str(body.get("type", "")))
 		return await delegate.call("request_async", body)
+
+	func request_interactive_async(body: Dictionary) -> Dictionary:
+		var request_type := str(body.get("type", ""))
+		request_types.append(request_type)
+		interactive_request_types.append(request_type)
+		return await delegate.call("request_interactive_async", body)
 
 class BuildIdentitySessionDouble:
 	extends RefCounted
@@ -780,7 +787,10 @@ func _test_native_engine_boundary() -> void:
 	)
 	var route: Dictionary = session.route_plan("preview-commander", Vector2i(2, 2))
 	_check(route["ok"] and route["value"].steps.size() > 1, "native route is planned")
-	var moved: Dictionary = session.move_unit("preview-commander", Vector2i(2, 2))
+	var moved: Dictionary = await session.move_unit_async(
+		"preview-commander",
+		Vector2i(2, 2),
+	)
 	_check(
 		moved["ok"]
 		and moved["value"].accepted
@@ -805,7 +815,7 @@ func _test_native_engine_boundary() -> void:
 		and stale_result.rejection == &"stale_revision",
 		"native Rust rejection maps to the shared Godot rejection code",
 	)
-	var skipped: Dictionary = session.skip_unit_turn("preview-commander")
+	var skipped: Dictionary = await session.skip_unit_turn_async("preview-commander")
 	_check(
 		skipped["ok"]
 		and skipped["value"].accepted
@@ -814,7 +824,7 @@ func _test_native_engine_boundary() -> void:
 		and skipped["value"].patch.pending_action.kind == &"unitTurnSkip",
 		"native session skips a unit turn",
 	)
-	var cancelled: Dictionary = session.cancel_unit_action("preview-commander")
+	var cancelled: Dictionary = await session.cancel_unit_action_async("preview-commander")
 	_check(
 		cancelled["ok"]
 		and cancelled["value"].accepted
@@ -822,13 +832,22 @@ func _test_native_engine_boundary() -> void:
 		and cancelled["value"].patch.pending_action == null,
 		"native session cancels a unit action",
 	)
-	var fortified: Dictionary = session.fortify_unit("preview-commander")
+	var fortified: Dictionary = await session.fortify_unit_async("preview-commander")
 	_check(
 		fortified["ok"]
 		and fortified["value"].accepted
 		and fortified["value"].stamp.revision == 4
 		and fortified["value"].patch.upserted_units[0].posture == "fortified",
 		"native session fortifies an idle unit",
+	)
+	var ended: Dictionary = await session.end_turn_async()
+	_check(
+		ended["ok"]
+		and ended["value"].accepted
+		and ended["value"].stamp.revision == 5
+		and ended["value"].patch.turn == 2
+		and ended["value"].patch.turn_lifecycle == null,
+		"native session advances the solo turn on the interactive async lane",
 	)
 	var saved: Dictionary = session.save_game()
 	_check(
@@ -842,23 +861,27 @@ func _test_native_engine_boundary() -> void:
 	)
 	var verified: Dictionary = session.verify_replay(map_json, replay["value"])
 	_check(
-		verified["ok"] and verified["value"].entry_count == 5,
+		verified["ok"] and verified["value"].entry_count == 6,
 		"native session verifies replay results in Rust",
 	)
 	await session.close_async()
 	var restored: Dictionary = session.open_save(map_json, saved["value"])
 	_check(
-		restored["ok"] and restored["value"].revision == 4,
+		restored["ok"] and restored["value"].revision == 5,
 		"native session restores a canonical save",
 	)
 	_check(
 		session.get("_gateway").get("_transport") == transport
+		and transport.interactive_request_types == [
+			"dispatch", "dispatch", "dispatch", "dispatch", "dispatch", "closeSession",
+		]
 		and transport.request_types == [
 			"capabilities",
 			"openSession",
 			"snapshot",
 			"query",
 			"query",
+			"dispatch",
 			"dispatch",
 			"dispatch",
 			"dispatch",
