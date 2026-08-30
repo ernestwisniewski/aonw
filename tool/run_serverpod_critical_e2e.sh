@@ -198,3 +198,14 @@ env -i \
   HOME="${runtime_home}" \
   TMPDIR="${runtime_tmpdir}" \
   dart run tool/serverpod_critical_e2e.dart --host "${host}"
+
+(
+  cd "${repo_root}/clients/aonw_flutter"
+  env -i \
+    PATH="${runtime_path}" \
+    HOME="${runtime_home}" \
+    TMPDIR="${runtime_tmpdir}" \
+    flutter test --no-pub \
+      --dart-define="AONW_MULTIPLAYER_TEST_HOST=${host}" \
+      test_live/multiplayer_server_test.dart
+)

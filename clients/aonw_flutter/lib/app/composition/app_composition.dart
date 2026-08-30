@@ -5,6 +5,12 @@ import '../../features/map/infrastructure/gamepad_map_input_source.dart';
 import '../../features/map/infrastructure/rust_game_session_gateway.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
+import '../../features/multiplayer/application/multiplayer_coordinator.dart';
+import '../../features/multiplayer/infrastructure/auth_token_store.dart';
+import '../../features/multiplayer/infrastructure/multiplayer_match_document_source.dart';
+import '../../features/multiplayer/infrastructure/server_connection_config.dart';
+import '../../features/multiplayer/infrastructure/serverpod_multiplayer_session.dart';
+import '../../features/multiplayer/presentation/multiplayer_controller.dart';
 import '../../features/replay/infrastructure/atomic_local_replay_store.dart';
 import '../../features/replay/presentation/replay_presentation_controller.dart';
 import '../../features/save_game/application/local_save_store.dart';
@@ -26,6 +32,7 @@ final class AppComposition {
     ClientSettingsStore? settingsStore,
     AonwFlameGameFactory flameGameFactory = AonwFlameGame.new,
     ClientTelemetry telemetry = const NoOpClientTelemetry(),
+    MultiplayerController? multiplayerController,
     AonwRoute initialRoute = AonwRoute.menu,
   }) : root = AonwApp(
          mapController: MapPresentationController(
@@ -36,6 +43,7 @@ final class AppComposition {
          mapInputSource: mapInputSource,
          flameGameFactory: flameGameFactory,
          telemetry: telemetry,
+         multiplayerController: multiplayerController,
          replayController: replayController,
          initialRoute: initialRoute,
          settingsController: settingsStore == null
@@ -51,12 +59,22 @@ final class AppComposition {
       session: gateway.replaySession,
       store: AtomicLocalReplayStore.production(),
     );
+    final multiplayerController = MultiplayerController(
+      MultiplayerCoordinator(
+        session: ServerpodMultiplayerSession(
+          config: ServerConnectionConfig.production(),
+          tokenStore: const SecureAuthTokenStore(),
+        ),
+        documents: AssetMultiplayerMatchDocumentSource(assets: rootBundle),
+      ),
+    );
     return AppComposition(
       capabilities: gateway.capabilities,
       saveStore: AtomicLocalSaveStore.production(),
       replayController: replayController,
       mapInputSource: GamepadMapInputSource(),
       settingsStore: SharedPreferencesClientSettingsStore(),
+      multiplayerController: multiplayerController,
       telemetry: telemetry,
     );
   }

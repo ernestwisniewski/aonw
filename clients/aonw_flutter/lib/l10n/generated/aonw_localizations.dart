@@ -128,6 +128,234 @@ abstract class AonwLocalizations {
   /// **'New game'**
   String get newGame;
 
+  /// No description provided for @multiplayerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiplayer'**
+  String get multiplayerTitle;
+
+  /// No description provided for @multiplayerUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiplayer is unavailable in this build.'**
+  String get multiplayerUnavailable;
+
+  /// No description provided for @loadingMultiplayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to multiplayer'**
+  String get loadingMultiplayer;
+
+  /// No description provided for @multiplayerAuthenticationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AoNW account'**
+  String get multiplayerAuthenticationTitle;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
+
+  /// No description provided for @displayNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get displayNameLabel;
+
+  /// No description provided for @invalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get invalidEmail;
+
+  /// No description provided for @invalidPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least 12 characters.'**
+  String get invalidPassword;
+
+  /// No description provided for @invalidDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a display name.'**
+  String get invalidDisplayName;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signIn;
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
+
+  /// No description provided for @createAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get createAccount;
+
+  /// No description provided for @createNewAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new account'**
+  String get createNewAccount;
+
+  /// No description provided for @useExistingAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Use an existing account'**
+  String get useExistingAccount;
+
+  /// No description provided for @multiplayerLobbyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Match lobby'**
+  String get multiplayerLobbyTitle;
+
+  /// No description provided for @signedInAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account: {userId}'**
+  String signedInAccount(String userId);
+
+  /// No description provided for @createMultiplayerMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Create match'**
+  String get createMultiplayerMatch;
+
+  /// No description provided for @joinMultiplayerMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Join match'**
+  String get joinMultiplayerMatch;
+
+  /// No description provided for @matchIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Match ID'**
+  String get matchIdLabel;
+
+  /// No description provided for @playerSeatLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Player seat'**
+  String get playerSeatLabel;
+
+  /// No description provided for @playerSeatOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Player one'**
+  String get playerSeatOne;
+
+  /// No description provided for @playerSeatTwo.
+  ///
+  /// In en, this message translates to:
+  /// **'Player two'**
+  String get playerSeatTwo;
+
+  /// No description provided for @refreshMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh matches'**
+  String get refreshMatches;
+
+  /// No description provided for @yourMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Your matches'**
+  String get yourMatches;
+
+  /// No description provided for @noMultiplayerMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No joined matches yet.'**
+  String get noMultiplayerMatches;
+
+  /// No description provided for @matchRevision.
+  ///
+  /// In en, this message translates to:
+  /// **'Revision {revision} · event offset {eventOffset}'**
+  String matchRevision(int revision, int eventOffset);
+
+  /// No description provided for @multiplayerMatchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Online match'**
+  String get multiplayerMatchTitle;
+
+  /// No description provided for @matchIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Match: {matchId}'**
+  String matchIdentifier(String matchId);
+
+  /// No description provided for @playerIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Player: {playerId}'**
+  String playerIdentifier(String playerId);
+
+  /// No description provided for @multiplayerTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn {turn}'**
+  String multiplayerTurn(int turn);
+
+  /// No description provided for @multiplayerSubmissionProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted {submitted} of {required}'**
+  String multiplayerSubmissionProgress(int submitted, int required);
+
+  /// No description provided for @visibleUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible units: {count}'**
+  String visibleUnits(int count);
+
+  /// No description provided for @networkPhase.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection: {phase, select, connecting{connecting} ready{online} reconnecting{reconnecting} resyncing{synchronizing} failed{offline} closed{closed} other{unavailable}}'**
+  String networkPhase(String phase);
+
+  /// No description provided for @submitTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit turn'**
+  String get submitTurn;
+
+  /// No description provided for @reconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get reconnect;
+
+  /// No description provided for @backToLobby.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to lobby'**
+  String get backToLobby;
+
+  /// No description provided for @multiplayerFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'{code, select, client_update_required{Update the client before connecting.} authentication_required{Sign in again to continue.} invalid_authentication_response{The authentication response was invalid.} authentication_identity_changed{The account identity changed during refresh.} connection_interrupted{The connection was interrupted. Reconnect to synchronize the match.} invalid_server_response{The server response failed validation.} invalid_command_sequence{The command sequence was not contiguous.} invalid_resync_sequence{The synchronized state moved backwards.} match_not_found{The match was not found.} player_seat_taken{That player seat is already occupied.} other{The multiplayer request could not be completed.}}'**
+  String multiplayerFailure(String code);
+
   /// No description provided for @helpTitle.
   ///
   /// In en, this message translates to:

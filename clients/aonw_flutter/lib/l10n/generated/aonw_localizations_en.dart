@@ -24,6 +24,164 @@ class AonwLocalizationsEn extends AonwLocalizations {
   String get newGame => 'New game';
 
   @override
+  String get multiplayerTitle => 'Multiplayer';
+
+  @override
+  String get multiplayerUnavailable =>
+      'Multiplayer is unavailable in this build.';
+
+  @override
+  String get loadingMultiplayer => 'Connecting to multiplayer';
+
+  @override
+  String get multiplayerAuthenticationTitle => 'AoNW account';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get displayNameLabel => 'Display name';
+
+  @override
+  String get invalidEmail => 'Enter a valid email address.';
+
+  @override
+  String get invalidPassword => 'Use at least 12 characters.';
+
+  @override
+  String get invalidDisplayName => 'Enter a display name.';
+
+  @override
+  String get signIn => 'Sign in';
+
+  @override
+  String get signOut => 'Sign out';
+
+  @override
+  String get createAccount => 'Create account';
+
+  @override
+  String get createNewAccount => 'Create a new account';
+
+  @override
+  String get useExistingAccount => 'Use an existing account';
+
+  @override
+  String get multiplayerLobbyTitle => 'Match lobby';
+
+  @override
+  String signedInAccount(String userId) {
+    return 'Account: $userId';
+  }
+
+  @override
+  String get createMultiplayerMatch => 'Create match';
+
+  @override
+  String get joinMultiplayerMatch => 'Join match';
+
+  @override
+  String get matchIdLabel => 'Match ID';
+
+  @override
+  String get playerSeatLabel => 'Player seat';
+
+  @override
+  String get playerSeatOne => 'Player one';
+
+  @override
+  String get playerSeatTwo => 'Player two';
+
+  @override
+  String get refreshMatches => 'Refresh matches';
+
+  @override
+  String get yourMatches => 'Your matches';
+
+  @override
+  String get noMultiplayerMatches => 'No joined matches yet.';
+
+  @override
+  String matchRevision(int revision, int eventOffset) {
+    return 'Revision $revision · event offset $eventOffset';
+  }
+
+  @override
+  String get multiplayerMatchTitle => 'Online match';
+
+  @override
+  String matchIdentifier(String matchId) {
+    return 'Match: $matchId';
+  }
+
+  @override
+  String playerIdentifier(String playerId) {
+    return 'Player: $playerId';
+  }
+
+  @override
+  String multiplayerTurn(int turn) {
+    return 'Turn $turn';
+  }
+
+  @override
+  String multiplayerSubmissionProgress(int submitted, int required) {
+    return 'Submitted $submitted of $required';
+  }
+
+  @override
+  String visibleUnits(int count) {
+    return 'Visible units: $count';
+  }
+
+  @override
+  String networkPhase(String phase) {
+    String _temp0 = intl.Intl.selectLogic(phase, {
+      'connecting': 'connecting',
+      'ready': 'online',
+      'reconnecting': 'reconnecting',
+      'resyncing': 'synchronizing',
+      'failed': 'offline',
+      'closed': 'closed',
+      'other': 'unavailable',
+    });
+    return 'Connection: $_temp0';
+  }
+
+  @override
+  String get submitTurn => 'Submit turn';
+
+  @override
+  String get reconnect => 'Reconnect';
+
+  @override
+  String get backToLobby => 'Back to lobby';
+
+  @override
+  String multiplayerFailure(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'client_update_required': 'Update the client before connecting.',
+      'authentication_required': 'Sign in again to continue.',
+      'invalid_authentication_response':
+          'The authentication response was invalid.',
+      'authentication_identity_changed':
+          'The account identity changed during refresh.',
+      'connection_interrupted':
+          'The connection was interrupted. Reconnect to synchronize the match.',
+      'invalid_server_response': 'The server response failed validation.',
+      'invalid_command_sequence': 'The command sequence was not contiguous.',
+      'invalid_resync_sequence': 'The synchronized state moved backwards.',
+      'match_not_found': 'The match was not found.',
+      'player_seat_taken': 'That player seat is already occupied.',
+      'other': 'The multiplayer request could not be completed.',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String get helpTitle => 'How to play';
 
   @override

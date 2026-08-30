@@ -1078,7 +1078,7 @@ native-local-game-smoke: root-dependencies
 		rm -f "$$log"; \
 		exit $$result
 
-serverpod-critical-e2e-test: root-dependencies client-dependencies server-dependencies
+serverpod-critical-e2e-test: root-dependencies client-dependencies server-dependencies successor-flutter-dependencies
 	@AONW_SERVERPOD_CRITICAL_E2E_PORT="$(AONW_SERVERPOD_CRITICAL_E2E_PORT)" \
 		tool/run_serverpod_critical_e2e.sh
 

@@ -7,6 +7,8 @@ import '../../features/main_menu/presentation/main_menu_screen.dart';
 import '../../features/map/presentation/input/map_input.dart';
 import '../../features/map/presentation/map_presentation_controller.dart';
 import '../../features/map/presentation/widgets/map_screen.dart';
+import '../../features/multiplayer/presentation/multiplayer_controller.dart';
+import '../../features/multiplayer/presentation/multiplayer_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/replay/application/replay_state.dart';
 import '../../features/replay/presentation/replay_presentation_controller.dart';
@@ -21,6 +23,7 @@ enum AonwRoute {
   help('/help'),
   onboarding('/onboarding'),
   newGame('/new-game'),
+  multiplayer('/multiplayer'),
   map('/map'),
   replay('/replay'),
   settings('/settings');
@@ -44,6 +47,7 @@ final class AonwRouter {
     required this.flameGameFactory,
     required this.routeObserver,
     this.replayController,
+    this.multiplayerController,
     this.mapInputSource,
     this.autoLoadMap = false,
   });
@@ -53,6 +57,7 @@ final class AonwRouter {
   final AonwFlameGameFactory flameGameFactory;
   final RouteObserver<ModalRoute<void>> routeObserver;
   final ReplayPresentationController? replayController;
+  final MultiplayerController? multiplayerController;
   final MapInputSource? mapInputSource;
   final bool autoLoadMap;
 
@@ -68,6 +73,11 @@ final class AonwRouter {
               Navigator.of(context).pushNamed(AonwRoute.settings.location),
           onOpenHelp: () =>
               Navigator.of(context).pushNamed(AonwRoute.help.location),
+          onOpenMultiplayer: multiplayerController == null
+              ? null
+              : () => Navigator.of(
+                  context,
+                ).pushNamed(AonwRoute.multiplayer.location),
           hasLocalSave: mapController.hasLocalSave,
           resumeLocalGame: mapController.resumeLatestLocalGame,
           onResumed: () => Navigator.of(
@@ -98,6 +108,10 @@ final class AonwRouter {
             context,
           ).pushReplacementNamed(AonwRoute.map.location),
         ),
+        AonwRoute.multiplayer =>
+          (_) => multiplayerController == null
+              ? const _UnavailableMultiplayer()
+              : MultiplayerScreen(controller: multiplayerController!),
         AonwRoute.map => (context) => Scaffold(
           body: SafeArea(
             child: MapScreen(
@@ -125,6 +139,23 @@ final class AonwRouter {
       },
     );
   }
+}
+
+final class _UnavailableMultiplayer extends StatelessWidget {
+  const _UnavailableMultiplayer();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: Center(
+        child: AonwMessagePanel(
+          semanticLabel: context.aonwL10n.multiplayerUnavailable,
+          title: context.aonwL10n.multiplayerTitle,
+          message: context.aonwL10n.multiplayerUnavailable,
+        ),
+      ),
+    ),
+  );
 }
 
 final class _UnavailableReplay extends StatelessWidget {

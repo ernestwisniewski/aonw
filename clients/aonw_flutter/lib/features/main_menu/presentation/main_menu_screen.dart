@@ -17,6 +17,7 @@ final class MainMenuScreen extends StatefulWidget {
     required this.onNewGame,
     required this.onOpenSettings,
     required this.onOpenHelp,
+    this.onOpenMultiplayer,
     required this.hasLocalSave,
     required this.resumeLocalGame,
     required this.onResumed,
@@ -29,6 +30,7 @@ final class MainMenuScreen extends StatefulWidget {
   final VoidCallback onNewGame;
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenHelp;
+  final VoidCallback? onOpenMultiplayer;
   final LocalSaveAvailabilityReader hasLocalSave;
   final LocalGameResume resumeLocalGame;
   final VoidCallback onResumed;
@@ -98,6 +100,15 @@ final class _MainMenuScreenState extends State<MainMenuScreen> {
                 icon: const Icon(Icons.add),
                 label: Text(context.aonwL10n.newGame),
               ),
+              if (widget.onOpenMultiplayer case final openMultiplayer?) ...[
+                const SizedBox(height: AonwSpacing.sm),
+                OutlinedButton.icon(
+                  key: const ValueKey('multiplayer'),
+                  onPressed: _busy ? null : openMultiplayer,
+                  icon: const Icon(Icons.public),
+                  label: Text(context.aonwL10n.multiplayerTitle),
+                ),
+              ],
               const SizedBox(height: AonwSpacing.sm),
               FutureBuilder<bool>(
                 future: _hasReplay,

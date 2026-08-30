@@ -24,6 +24,165 @@ class AonwLocalizationsPl extends AonwLocalizations {
   String get newGame => 'Nowa gra';
 
   @override
+  String get multiplayerTitle => 'Gra wieloosobowa';
+
+  @override
+  String get multiplayerUnavailable =>
+      'Gra wieloosobowa jest niedostępna w tej wersji.';
+
+  @override
+  String get loadingMultiplayer => 'Łączenie z grą wieloosobową';
+
+  @override
+  String get multiplayerAuthenticationTitle => 'Konto AoNW';
+
+  @override
+  String get emailLabel => 'E-mail';
+
+  @override
+  String get passwordLabel => 'Hasło';
+
+  @override
+  String get displayNameLabel => 'Nazwa gracza';
+
+  @override
+  String get invalidEmail => 'Podaj prawidłowy adres e-mail.';
+
+  @override
+  String get invalidPassword => 'Użyj co najmniej 12 znaków.';
+
+  @override
+  String get invalidDisplayName => 'Podaj nazwę gracza.';
+
+  @override
+  String get signIn => 'Zaloguj się';
+
+  @override
+  String get signOut => 'Wyloguj się';
+
+  @override
+  String get createAccount => 'Utwórz konto';
+
+  @override
+  String get createNewAccount => 'Utwórz nowe konto';
+
+  @override
+  String get useExistingAccount => 'Użyj istniejącego konta';
+
+  @override
+  String get multiplayerLobbyTitle => 'Poczekalnia';
+
+  @override
+  String signedInAccount(String userId) {
+    return 'Konto: $userId';
+  }
+
+  @override
+  String get createMultiplayerMatch => 'Utwórz rozgrywkę';
+
+  @override
+  String get joinMultiplayerMatch => 'Dołącz do rozgrywki';
+
+  @override
+  String get matchIdLabel => 'Identyfikator rozgrywki';
+
+  @override
+  String get playerSeatLabel => 'Miejsce gracza';
+
+  @override
+  String get playerSeatOne => 'Gracz pierwszy';
+
+  @override
+  String get playerSeatTwo => 'Gracz drugi';
+
+  @override
+  String get refreshMatches => 'Odśwież rozgrywki';
+
+  @override
+  String get yourMatches => 'Twoje rozgrywki';
+
+  @override
+  String get noMultiplayerMatches =>
+      'Nie dołączono jeszcze do żadnej rozgrywki.';
+
+  @override
+  String matchRevision(int revision, int eventOffset) {
+    return 'Rewizja $revision · pozycja zdarzeń $eventOffset';
+  }
+
+  @override
+  String get multiplayerMatchTitle => 'Rozgrywka online';
+
+  @override
+  String matchIdentifier(String matchId) {
+    return 'Rozgrywka: $matchId';
+  }
+
+  @override
+  String playerIdentifier(String playerId) {
+    return 'Gracz: $playerId';
+  }
+
+  @override
+  String multiplayerTurn(int turn) {
+    return 'Tura $turn';
+  }
+
+  @override
+  String multiplayerSubmissionProgress(int submitted, int required) {
+    return 'Zatwierdzono $submitted z $required';
+  }
+
+  @override
+  String visibleUnits(int count) {
+    return 'Widoczne jednostki: $count';
+  }
+
+  @override
+  String networkPhase(String phase) {
+    String _temp0 = intl.Intl.selectLogic(phase, {
+      'connecting': 'łączenie',
+      'ready': 'online',
+      'reconnecting': 'ponowne łączenie',
+      'resyncing': 'synchronizacja',
+      'failed': 'offline',
+      'closed': 'zamknięte',
+      'other': 'niedostępne',
+    });
+    return 'Połączenie: $_temp0';
+  }
+
+  @override
+  String get submitTurn => 'Zatwierdź turę';
+
+  @override
+  String get reconnect => 'Połącz ponownie';
+
+  @override
+  String get backToLobby => 'Wróć do poczekalni';
+
+  @override
+  String multiplayerFailure(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'client_update_required': 'Zaktualizuj klienta przed połączeniem.',
+      'authentication_required': 'Zaloguj się ponownie.',
+      'invalid_authentication_response':
+          'Odpowiedź uwierzytelniania była nieprawidłowa.',
+      'authentication_identity_changed':
+          'Podczas odświeżania zmieniła się tożsamość konta.',
+      'connection_interrupted':
+          'Połączenie zostało przerwane. Połącz się ponownie, aby zsynchronizować rozgrywkę.',
+      'invalid_server_response': 'Odpowiedź serwera nie przeszła walidacji.',
+      'invalid_command_sequence': 'Sekwencja polecenia nie była ciągła.',
+      'invalid_resync_sequence': 'Zsynchronizowany stan cofnął rozgrywkę.',
+      'match_not_found': 'Nie znaleziono rozgrywki.',
+      'player_seat_taken': 'To miejsce gracza jest już zajęte.',
+      'other': 'Nie udało się wykonać żądania gry wieloosobowej.',
+    });
+    return '$_temp0';
+  }
+
+  @override
   String get helpTitle => 'Jak grać';
 
   @override
