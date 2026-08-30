@@ -1,6 +1,8 @@
 class_name AonwLocalMatchSessionController
 extends RefCounted
 
+const ClientFailure := preload("res://game/application/session/client_failure.gd")
+
 enum Lifecycle { CLOSED, OPENING, OPEN, CLOSING }
 
 var _gateway: RefCounted
@@ -162,7 +164,7 @@ func _require_open() -> Dictionary:
 	return _failure("session_not_open", "Open a session before using session operations")
 
 func _failure(code: String, message: String) -> Dictionary:
-	return {"ok": false, "code": code, "message": message}
+	return ClientFailure.result(code, message)
 
 func _track_stamp(result: Dictionary) -> Dictionary:
 	if result["ok"]:

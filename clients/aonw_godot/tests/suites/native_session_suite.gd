@@ -11,6 +11,7 @@ const ClientResponseDecoder := preload(
 	"res://game/infrastructure/engine/client_response_decoder.gd"
 )
 const ClientReadModels := preload("res://game/application/session/client_read_models.gd")
+const ClientFailure := preload("res://game/application/session/client_failure.gd")
 const ClientReadModelDecoder := preload(
 	"res://game/infrastructure/engine/client_read_model_decoder.gd"
 )
@@ -168,11 +169,7 @@ class DeferredLifecycleGateway:
 		close_calls += 1
 		if close_succeeds:
 			return {"ok": true}
-		return {
-			"ok": false,
-			"code": "engine_worker_unavailable",
-			"message": "close failed",
-		}
+		return ClientFailure.result("engine_worker_unavailable", "close failed")
 
 	func advance_ai_turn_async(actor_player_id: String, _command_budget: int) -> Dictionary:
 		await ai_response_released
@@ -895,7 +892,9 @@ func _test_shared_client_contract() -> void:
 		LocalMatchGateway.new(ForeignVersionTransport.new()),
 	).capabilities()
 	_check(
-		not foreign["ok"] and foreign["code"] == "unsupported_client_api",
+		not foreign["ok"]
+		and foreign["code"] == "unsupported_client_api"
+		and _has_failure_kind(foreign, ClientFailure.Kind.COMPATIBILITY),
 		"Godot rejects foreign client API responses",
 	)
 
@@ -958,7 +957,9 @@ func _test_shared_client_contract() -> void:
 		LocalMatchGateway.new(ExtraEnvelopeFieldTransport.new()),
 	).capabilities()
 	_check(
-		not extra_envelope["ok"] and extra_envelope["code"] == "invalid_client_response",
+		not extra_envelope["ok"]
+		and extra_envelope["code"] == "invalid_client_response"
+		and _has_failure_kind(extra_envelope, ClientFailure.Kind.PROTOCOL),
 		"Godot rejects unknown client envelope fields at the infrastructure boundary",
 	)
 
@@ -979,11 +980,14 @@ func _test_shared_client_contract() -> void:
 		initial_close["ok"]
 		and not closed_snapshot["ok"]
 		and closed_snapshot["code"] == "session_not_open"
+		and _has_failure_kind(closed_snapshot, ClientFailure.Kind.LIFECYCLE)
 		and lifecycle_opened["ok"]
 		and not duplicate_open["ok"]
 		and duplicate_open["code"] == "session_already_open"
+		and _has_failure_kind(duplicate_open, ClientFailure.Kind.LIFECYCLE)
 		and not late_ai_turn["ok"]
 		and late_ai_turn["code"] == "stale_session_response"
+		and _has_failure_kind(late_ai_turn, ClientFailure.Kind.STALE_RESPONSE)
 		and repeated_close["ok"]
 		and reopened["ok"]
 		and lifecycle_controller.lifecycle()
@@ -1002,12 +1006,20 @@ func _test_shared_client_contract() -> void:
 	var failed_close: Dictionary = failed_close_controller.close()
 	_check(
 		not failed_close["ok"]
+		and _has_failure_kind(failed_close, ClientFailure.Kind.TRANSPORT)
 		and failed_close_controller.is_open()
 		and failed_close_controller.revision() == 1,
 		"Godot lifecycle remains open when the engine does not confirm close",
 	)
 	failed_close_gateway.close_succeeds = true
 	failed_close_controller.close()
+	_check(
+		_has_failure_kind(
+			ClientFailure.result("unit_not_found", "authoritative rejection"),
+			ClientFailure.Kind.ENGINE,
+		),
+		"Godot preserves authoritative engine failures outside closed client categories",
+	)
 
 func _close_and_release_deferred_response(
 	controller: AonwLocalMatchSessionController,
@@ -1016,6 +1028,14 @@ func _close_and_release_deferred_response(
 	await Engine.get_main_loop().process_frame
 	controller.close()
 	gateway.release_ai_response()
+
+func _has_failure_kind(result: Dictionary, expected_kind: int) -> bool:
+	var failure: Variant = result.get("failure")
+	return (
+		failure is RefCounted
+		and failure.get_script() == ClientFailure
+		and int(failure.get("kind")) == expected_kind
+	)
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:

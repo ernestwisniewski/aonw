@@ -7,6 +7,7 @@ const ReadModelDecoder := preload(
 const ReadModels := preload(
 	"res://game/application/session/client_read_models.gd"
 )
+const ClientFailure := preload("res://game/application/session/client_failure.gd")
 const ClientProtocol := preload(
 	"res://game/infrastructure/engine/client_protocol.gd"
 )
@@ -355,4 +356,4 @@ func _has_exact_fields(value: Variant, fields: Array) -> bool:
 	return true
 
 func _failure(code: String, message: String) -> Dictionary:
-	return {"ok": false, "code": code, "message": message}
+	return ClientFailure.result(code, message)
