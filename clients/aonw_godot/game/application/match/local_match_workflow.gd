@@ -30,7 +30,7 @@ func open(
 	var closed: Dictionary = await close_async()
 	if not closed["ok"]:
 		return closed
-	var opened: Dictionary = _open_match.execute(
+	var opened: Dictionary = await _open_match.execute_async(
 		source.map_path,
 		"res://assets/scenarios/%s.json" % map.map_id(),
 		actor_player_id,

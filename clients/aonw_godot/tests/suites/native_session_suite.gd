@@ -263,6 +263,35 @@ class DeferredAsyncCloseGateway:
 	func release_close_response() -> void:
 		close_response_released.emit()
 
+class DeferredAsyncOpenGateway:
+	extends DeferredLifecycleGateway
+
+	signal feature_response_released
+	signal open_response_released
+
+	var async_feature_calls := 0
+	var async_open_calls := 0
+
+	func engine_features_async() -> Dictionary:
+		async_feature_calls += 1
+		await feature_response_released
+		return super.engine_features()
+
+	func open_session_async(
+		map_document: String,
+		scenario_document: String,
+		actor_player_id: String,
+	) -> Dictionary:
+		async_open_calls += 1
+		await open_response_released
+		return super.open_session(map_document, scenario_document, actor_player_id)
+
+	func release_feature_response() -> void:
+		feature_response_released.emit()
+
+	func release_open_response() -> void:
+		open_response_released.emit()
+
 class ExtraEnvelopeFieldTransport:
 	extends RefCounted
 
@@ -1228,6 +1257,55 @@ func _test_shared_client_contract() -> void:
 	)
 	failed_close_gateway.close_succeeds = true
 	failed_close_controller.close()
+	var async_open_gateway := DeferredAsyncOpenGateway.new()
+	var async_open_controller := LocalMatchSessionController.new(async_open_gateway)
+	var async_open_result := {}
+	_capture_async_open(async_open_controller, async_open_result)
+	await Engine.get_main_loop().process_frame
+	_check(
+		async_open_result.is_empty()
+		and async_open_controller.lifecycle()
+		== AonwLocalMatchSessionController.Lifecycle.OPENING
+		and async_open_gateway.async_feature_calls == 1
+		and async_open_gateway.async_open_calls == 0,
+		"Godot negotiates engine features without blocking the opening frame",
+	)
+	var opening_duplicate := async_open_controller.open("map", "scenario", "player")
+	async_open_gateway.release_feature_response()
+	await Engine.get_main_loop().process_frame
+	_check(
+		not opening_duplicate["ok"]
+		and opening_duplicate["code"] == "session_already_open"
+		and async_open_result.is_empty()
+		and async_open_gateway.async_open_calls == 1,
+		"Godot keeps one opening generation while the native start is pending",
+	)
+	async_open_gateway.release_open_response()
+	await Engine.get_main_loop().process_frame
+	var completed_async_open: Dictionary = async_open_result.get("value", {})
+	_check(
+		completed_async_open.get("ok", false)
+		and async_open_controller.is_open()
+		and async_open_controller.revision() == 1,
+		"Godot publishes an async session only after the native start is validated",
+	)
+	async_open_controller.close()
+	var abandoned_open_gateway := DeferredAsyncOpenGateway.new()
+	var abandoned_open_controller := LocalMatchSessionController.new(abandoned_open_gateway)
+	var abandoned_open_result := {}
+	_capture_async_open(abandoned_open_controller, abandoned_open_result)
+	await Engine.get_main_loop().process_frame
+	abandoned_open_controller.close()
+	abandoned_open_gateway.release_feature_response()
+	await Engine.get_main_loop().process_frame
+	var stale_open: Dictionary = abandoned_open_result.get("value", {})
+	_check(
+		not stale_open.get("ok", true)
+		and stale_open.get("code", "") == "stale_session_response"
+		and abandoned_open_gateway.async_open_calls == 0
+		and not abandoned_open_controller.is_open(),
+		"Godot discards an async open whose lifecycle generation was closed",
+	)
 	var async_close_gateway := DeferredAsyncCloseGateway.new()
 	var async_close_controller := LocalMatchSessionController.new(async_close_gateway)
 	async_close_controller.open("map", "scenario", "player")
@@ -1345,6 +1423,12 @@ func _capture_async_close(
 	result: Dictionary,
 ) -> void:
 	result["value"] = await controller.close_async()
+
+func _capture_async_open(
+	controller: AonwLocalMatchSessionController,
+	result: Dictionary,
+) -> void:
+	result["value"] = await controller.open_async("map", "scenario", "player")
 
 func _start_deferred_route(
 	controller: AonwLocalMatchSessionController,

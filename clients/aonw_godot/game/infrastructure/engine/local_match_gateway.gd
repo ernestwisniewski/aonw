@@ -36,10 +36,20 @@ func is_available() -> bool:
 	return bool(_transport.call("is_available"))
 
 func engine_features() -> Dictionary:
-	var extracted := _extract(
+	return _decode_engine_features(_extract(
 		_execute({"type": "capabilities"}, "capabilities"),
 		"features",
-	)
+	))
+
+func engine_features_async() -> Dictionary:
+	if not _transport.has_method("request_async"):
+		return engine_features()
+	return _decode_engine_features(_extract(
+		await _execute_async({"type": "capabilities"}, "capabilities"),
+		"features",
+	))
+
+func _decode_engine_features(extracted: Dictionary) -> Dictionary:
 	if not extracted["ok"]:
 		return extracted
 	var raw_features: Variant = extracted["value"]
@@ -73,6 +83,20 @@ func open_session(
 		"actorPlayerId": actor_player_id,
 	}, "sessionOpened"), "stamp")
 
+func open_session_async(
+	map_document: String,
+	scenario_document: String,
+	actor_player_id: String,
+) -> Dictionary:
+	if not _transport.has_method("request_async"):
+		return open_session(map_document, scenario_document, actor_player_id)
+	return _extract_stamp(await _execute_async({
+		"type": "openSession",
+		"mapDocument": map_document,
+		"scenarioDocument": scenario_document,
+		"actorPlayerId": actor_player_id,
+	}, "sessionOpened"), "stamp")
+
 func start_match(
 	map_document: String,
 	scenario_document: String,
@@ -89,8 +113,40 @@ func start_match(
 		"fogMode": "enabled" if fog_enabled else "disabled",
 	}, "sessionOpened"), "stamp")
 
+func start_match_async(
+	map_document: String,
+	scenario_document: String,
+	actor_player_id: String,
+	match_identity: Dictionary,
+	fog_enabled: bool,
+) -> Dictionary:
+	if not _transport.has_method("request_async"):
+		return start_match(
+			map_document,
+			scenario_document,
+			actor_player_id,
+			match_identity,
+			fog_enabled,
+		)
+	return _extract_stamp(await _execute_async({
+		"type": "startMatch",
+		"mapDocument": map_document,
+		"scenarioDocument": scenario_document,
+		"actorPlayerId": actor_player_id,
+		"matchIdentity": match_identity,
+		"fogMode": "enabled" if fog_enabled else "disabled",
+	}, "sessionOpened"), "stamp")
+
 func handoff_actor(actor_player_id: String) -> Dictionary:
 	return _extract_stamp(_execute({
+		"type": "handoffActor",
+		"actorPlayerId": actor_player_id,
+	}, "actorHandedOff"), "stamp")
+
+func handoff_actor_async(actor_player_id: String) -> Dictionary:
+	if not _transport.has_method("request_async"):
+		return handoff_actor(actor_player_id)
+	return _extract_stamp(await _execute_async({
 		"type": "handoffActor",
 		"actorPlayerId": actor_player_id,
 	}, "actorHandedOff"), "stamp")

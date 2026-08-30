@@ -20,7 +20,19 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 	var interaction: AonwMapInteractionController = screen.get_node("%MapInteraction")
 	var unit_layer: AonwUnitLayer = screen.get_node("%UnitLayer")
 	var confirm: Button = screen.get_node("%ConfirmMove")
-	_check(session.revision() == 0, "Godot preview opens the starter session at revision zero")
+	for _frame in range(120):
+		if (
+			session.is_open()
+			and unit_layer.unit_at(Vector2i(2, 1)) == "preview-commander"
+		):
+			break
+		await Engine.get_main_loop().process_frame
+	_check(
+		session.is_open()
+		and session.revision() == 0
+		and unit_layer.unit_at(Vector2i(2, 1)) == "preview-commander",
+		"Godot preview opens the starter session asynchronously at revision zero",
+	)
 
 	interaction.set("_selected", Vector2i(2, 1))
 	screen.call("_on_hex_selected", Vector2i(2, 1))
