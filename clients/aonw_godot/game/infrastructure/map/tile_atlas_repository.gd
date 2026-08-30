@@ -22,8 +22,6 @@ func load_atlas(map: AonwMapView, source_directory: String) -> Dictionary:
 	return {
 		"ok": true,
 		"reference_texture": reference_texture,
-		"missing_tiles": reference["missing_pages"],
-		"invalid_tiles": reference["invalid_pages"],
 		"atlas_size": atlas_size,
 	}
 
@@ -71,8 +69,6 @@ func _load_reference_atlas(
 		"ok": true,
 		"image": atlas,
 		"atlas_size": atlas_size,
-		"missing_pages": [],
-		"invalid_pages": [],
 	}
 
 func _load_page(path: String, expected_hash: String, asset: String) -> Dictionary:

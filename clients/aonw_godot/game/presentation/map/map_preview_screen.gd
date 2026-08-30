@@ -1,8 +1,9 @@
 extends Node3D
 
 const OpenMap := preload("res://game/application/map/open_map.gd")
-const MapSource := preload("res://game/application/map/map_source.gd")
-const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
+const PackagedMapCatalog := preload(
+	"res://game/application/map/packaged_map_catalog.gd"
+)
 const EXPORT_SMOKE_ARGUMENT := "--aonw-export-smoke"
 const EXPORT_SMOKE_OPENED := "Godot packaged session lifecycle: opened"
 const EXPORT_SMOKE_TURN_COMPLETED := "Godot packaged local turn: completed"
@@ -12,7 +13,7 @@ const EXPORT_SMOKE_CLOSED := "Godot packaged session lifecycle: closed"
 @onready var _interaction: AonwMapInteractionController = %MapInteraction
 @onready var _unit_layer: Node3D = %UnitLayer
 @onready var _camera_rig: AonwOrbitCameraRig = %OrbitCameraRig
-@onready var _open_dialog: FileDialog = %OpenMapDialog
+@onready var _map_picker: OptionButton = %MapCatalog
 @onready var _grid_toggle: CheckButton = %GridToggle
 @onready var _confirm_move: Button = %ConfirmMove
 @onready var _turn_hud: AonwTurnHud = %TurnHud
@@ -20,34 +21,38 @@ const EXPORT_SMOKE_CLOSED := "Godot packaged session lifecycle: closed"
 
 var _open_map: AonwOpenMap
 var _local_match: AonwLocalMatchWorkflow
+var _map_catalog: PackagedMapCatalog
 var _current_map: AonwMapView
 var _selected_unit_id := ""
 var _reachable_hexes: Dictionary = {}
 var _route: AonwLocalMatchViewModels.RouteView
+var _map_load_generation := 0
 
 func configure(
 	open_map: AonwOpenMap,
 	local_match: AonwLocalMatchWorkflow,
+	map_catalog: PackagedMapCatalog,
 ) -> void:
 	assert(_open_map == null, "Map preview dependencies are already configured")
 	assert(open_map != null, "Open map use case is required")
 	assert(local_match != null, "Local match workflow is required")
+	assert(map_catalog != null, "Packaged map catalog is required")
 	_open_map = open_map
 	_local_match = local_match
+	_map_catalog = map_catalog
 
 func _ready() -> void:
 	assert(_open_map != null, "Map preview composition is required")
 	assert(_local_match != null, "Map preview session workflow is required")
+	assert(_map_catalog != null, "Packaged map catalog is required")
 	_surface.map_presented.connect(_on_map_presented)
 	_interaction.hex_selected.connect(_on_hex_selected)
-	_open_dialog.file_selected.connect(_open)
+	_map_picker.item_selected.connect(_on_map_selected)
 	_local_match.projection_invalidated.connect(_on_projection_invalidated)
-	_open_source(AonwMapSource.new(
-		"aonw2_starter",
-		DEFAULT_MAP,
-		DEFAULT_MAP.get_base_dir(),
-		"Godot",
-	))
+	for index in range(_map_catalog.count()):
+		_map_picker.add_item(_map_catalog.label_at(index))
+	_map_picker.select(0)
+	_open_source(_map_catalog.source_at(0))
 
 func _exit_tree() -> void:
 	if not _local_match.is_open():
@@ -83,27 +88,24 @@ func _unhandled_input(event: InputEvent) -> void:
 			_on_end_turn_pressed()
 			get_viewport().set_input_as_handled()
 
-func _on_open_pressed() -> void:
-	_open_dialog.current_dir = ProjectSettings.globalize_path(DEFAULT_MAP).get_base_dir()
-	_open_dialog.popup_centered_ratio(0.8)
-
 func _on_grid_toggled(enabled: bool) -> void:
 	_surface.set_grid_visible(enabled)
 
-func _open(source_path: String) -> void:
-	_open_source(AonwMapSource.new(
-		source_path.get_base_dir().get_file(),
-		source_path,
-		source_path.get_base_dir(),
-		"file",
-	))
+func _on_map_selected(index: int) -> void:
+	_open_source(_map_catalog.source_at(index))
 
 func _open_source(source: AonwMapSource) -> void:
+	_map_load_generation += 1
+	var generation := _map_load_generation
+	_map_picker.disabled = true
 	_status.text = "Loading map…"
-	var result := _open_map.execute(source)
+	var result := await _open_map.execute_async(source)
+	if generation != _map_load_generation:
+		return
 	if not result["ok"]:
 		_status.text = "Error: %s" % result["message"]
 		_report_export_smoke_failure(_status.text)
+		_map_picker.disabled = _map_catalog.count() == 1
 		return
 
 	_current_map = result["map"]
@@ -113,18 +115,14 @@ func _open_source(source: AonwMapSource) -> void:
 		result["reference_texture"],
 	)
 	_interaction.present(_surface.projection())
-	var missing: Array = result["missing_tiles"]
 	_status.text = "%s · %d×%d" % [
 		_current_map.map_id(),
 		_current_map.cols(),
 		_current_map.rows(),
 	]
-	if not missing.is_empty():
-		_status.text += " · procedural tiles: %d" % missing.size()
-	var invalid: Array = result["invalid_tiles"]
-	if not invalid.is_empty():
-		_status.text += " · invalid textures: %d" % invalid.size()
 	await _setup_local_session(source)
+	if generation == _map_load_generation:
+		_map_picker.disabled = _map_catalog.count() == 1
 
 func _on_map_presented(world_size: Vector2, maximum_height: float) -> void:
 	_camera_rig.frame_map(world_size, _current_map.default_zoom(), maximum_height)

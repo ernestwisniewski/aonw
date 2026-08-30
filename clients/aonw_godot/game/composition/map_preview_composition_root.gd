@@ -2,6 +2,10 @@ class_name AonwMapPreviewCompositionRoot
 extends Node
 
 const OpenMap := preload("res://game/application/map/open_map.gd")
+const MapSource := preload("res://game/application/map/map_source.gd")
+const PackagedMapCatalog := preload(
+	"res://game/application/map/packaged_map_catalog.gd"
+)
 const LocalMatchSessionController := preload(
 	"res://game/application/session/local_match_session_controller.gd"
 )
@@ -42,6 +46,15 @@ func _ready() -> void:
 	var local_session := LocalMatchSessionController.new(LocalMatchGateway.new(transport))
 	var open_local_match := OpenLocalMatch.new(local_session, documents)
 	var local_match := LocalMatchWorkflow.new(local_session, open_local_match)
+	var packaged_sources: Array[AonwMapSource] = [
+		MapSource.new(
+			"aonw2_starter",
+			"res://assets/maps/aonw2_starter/map.json",
+			"res://assets/maps/aonw2_starter",
+			"package",
+		),
+	]
+	var packaged_maps := PackagedMapCatalog.new(packaged_sources)
 	var screen := get_parent()
 	assert(screen.has_method("configure"), "Map preview screen must accept its ports")
-	screen.call("configure", open_map, local_match)
+	screen.call("configure", open_map, local_match, packaged_maps)

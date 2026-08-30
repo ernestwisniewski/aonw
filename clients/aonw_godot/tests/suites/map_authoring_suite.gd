@@ -56,8 +56,6 @@ func _test_canonical_map_with_runtime_texture() -> void:
 		map.tiles()[0].movement_terrains().is_read_only(),
 		"nested terrain collection is immutable",
 	)
-	_check(atlas_result["missing_tiles"].is_empty(), "all runtime texture pages exist")
-	_check(atlas_result["invalid_tiles"].is_empty(), "all runtime texture pages decode")
 	_check(
 		atlas_result["reference_texture"].get_width() > 0,
 		"reference atlas is created",

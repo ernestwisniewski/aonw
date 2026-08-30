@@ -99,9 +99,10 @@ theme_override_constants/margin_bottom = 7
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="OpenMap" type="Button" parent="Interface/Toolbar/Margin/Actions" unique_id=1311712925]
+[node name="MapCatalog" type="OptionButton" parent="Interface/Toolbar/Margin/Actions" unique_id=1311712925]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Open map…"
+tooltip_text = "Verified packaged maps"
 
 [node name="GridToggle" type="CheckButton" parent="Interface/Toolbar/Margin/Actions" unique_id=1521634044]
 unique_name_in_owner = true
@@ -156,17 +157,6 @@ grow_horizontal = 2
 grow_vertical = 0
 text = "LMB: select unit / preview route · Enter: confirm move · T: end turn · RMB: orbit · MMB: pan · wheel: zoom · arrows: pan"
 
-[node name="OpenMapDialog" type="FileDialog" parent="Interface" unique_id=1666186910]
-unique_name_in_owner = true
-title = "Open a File"
-initial_position = 2
-size = Vector2i(900, 620)
-file_mode = 0
-access = 2
-filters = PackedStringArray("*.json ; AoNW map JSON")
-use_native_dialog = true
-
-[connection signal="pressed" from="Interface/Toolbar/Margin/Actions/OpenMap" to="." method="_on_open_pressed"]
 [connection signal="toggled" from="Interface/Toolbar/Margin/Actions/GridToggle" to="." method="_on_grid_toggled"]
 [connection signal="pressed" from="Interface/Toolbar/Margin/Actions/ConfirmMove" to="." method="_on_confirm_move_pressed"]
 [connection signal="end_turn_requested" from="Interface/Toolbar/Margin/Actions/TurnHud" to="." method="_on_end_turn_pressed"]

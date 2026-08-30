@@ -53,6 +53,7 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 	var end_turn: Button = screen.get_node("%EndTurn")
 	var turn_status: Label = screen.get_node("%TurnStatus")
 	var turn_hud: AonwTurnHud = screen.get_node("%TurnHud")
+	var map_catalog: OptionButton = screen.get_node("%MapCatalog")
 	for _frame in range(120):
 		if (
 			session.is_open()
@@ -65,8 +66,11 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		and session.revision() == 0
 		and unit_layer.unit_at(Vector2i(2, 1)) == "preview-commander"
 		and not end_turn.disabled
+		and map_catalog.item_count == 1
+		and map_catalog.get_item_text(0) == "aonw2_starter"
+		and map_catalog.disabled
 		and turn_status.text.begins_with("Turn 1 · active"),
-		"Godot preview opens the starter session asynchronously at revision zero",
+		"Godot opens the verified packaged map asynchronously at revision zero",
 	)
 
 	interaction.set("_selected", Vector2i(2, 1))

@@ -20,13 +20,37 @@ func _init(client: RefCounted, documents: RefCounted) -> void:
 	_documents = documents
 
 func load_map(source: AonwMapSource) -> Dictionary:
+	var document := _load_document(source)
+	if not document["ok"]:
+		return document
+	var envelope: Dictionary = _client.call("request", {
+		"type": "inspectMap",
+		"mapDocument": document["value"],
+	})
+	return _map_result(source, envelope)
+
+func load_map_async(source: AonwMapSource) -> Dictionary:
+	var document := _load_document(source)
+	if not document["ok"]:
+		return document
+	var request := {
+		"type": "inspectMap",
+		"mapDocument": document["value"],
+	}
+	var envelope: Dictionary = (
+		await _client.call("request_async", request)
+		if _client.has_method("request_async")
+		else _client.call("request", request)
+	)
+	return _map_result(source, envelope)
+
+func _load_document(source: AonwMapSource) -> Dictionary:
 	var loaded: Dictionary = _documents.call("read", source.map_path)
 	if not loaded.get("ok", false):
 		return _failure(str(loaded.get("message", "cannot read map document")))
-	var envelope: Dictionary = _client.call("request", {
-		"type": "inspectMap",
-		"mapDocument": loaded.get("document", ""),
-	})
+	return {"ok": true, "value": str(loaded.get("document", ""))}
+
+func _map_result(source: AonwMapSource, envelope: Dictionary) -> Dictionary:
 	var decoded := _response_decoder.decode_envelope(envelope, "mapInspected")
 	if not decoded["ok"]:
 		return _failure("Rust: %s" % decoded["message"])
