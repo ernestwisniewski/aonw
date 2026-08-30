@@ -7,6 +7,12 @@ const HexGridGeometry := preload(
 const JsonMapRepository := preload(
 	"res://game/infrastructure/map/json_map_repository.gd"
 )
+const NativeLocalSession := preload(
+	"res://game/infrastructure/engine/native_local_session.gd"
+)
+const TextDocumentReader := preload(
+	"res://game/infrastructure/filesystem/text_document_reader.gd"
+)
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -23,7 +29,10 @@ func _run() -> void:
 	var scenario := _read_object(arguments[0])
 	if scenario.is_empty():
 		return
-	var repository := JsonMapRepository.new()
+	var repository := JsonMapRepository.new(
+		NativeLocalSession.new(),
+		TextDocumentReader.new(),
+	)
 	var probes: Array[Dictionary] = []
 	var diagnostics: Array[Dictionary] = []
 	for map_scenario in scenario["maps"]:

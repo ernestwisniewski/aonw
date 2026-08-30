@@ -53,14 +53,12 @@ func _load_reference_atlas(
 	for page in manifest["pages"]:
 		var asset := str(page["asset"])
 		var page_path := source_directory.path_join(str(page["file"]))
-		if not FileAccess.file_exists(page_path):
-			return _failure("missing map asset bundle page: %s" % asset)
-		if FileAccess.get_sha256(page_path) != str(page["sha256"]):
-			return _failure("map asset bundle page hash does not match: %s" % asset)
-		var image := Image.load_from_file(page_path)
+		var image_result := _load_page(page_path, str(page["sha256"]), asset)
+		if not image_result["ok"]:
+			return image_result
+		var image: Image = image_result["image"]
 		if (
-			image == null
-			or image.is_empty()
+			image.is_empty()
 			or image.get_width() != int(page["pixelWidth"])
 			or image.get_height() != int(page["pixelHeight"])
 		):
@@ -76,6 +74,24 @@ func _load_reference_atlas(
 		"missing_pages": [],
 		"invalid_pages": [],
 	}
+
+func _load_page(path: String, expected_hash: String, asset: String) -> Dictionary:
+	if OS.has_feature("editor"):
+		if not FileAccess.file_exists(path):
+			return _failure("missing map asset bundle page: %s" % asset)
+		if FileAccess.get_sha256(path) != expected_hash:
+			return _failure("map asset bundle page hash does not match: %s" % asset)
+		var source_image := Image.load_from_file(path)
+		if source_image == null:
+			return _failure("map asset bundle page cannot be decoded: %s" % asset)
+		return {"ok": true, "image": source_image}
+	var texture := ResourceLoader.load(path) as Texture2D
+	if texture == null:
+		return _failure("missing imported map asset bundle page: %s" % asset)
+	var imported_image := texture.get_image()
+	if imported_image == null:
+		return _failure("imported map asset bundle page cannot be decoded: %s" % asset)
+	return {"ok": true, "image": imported_image}
 
 func _manifest_error(
 	value: Variant,
@@ -327,6 +343,8 @@ static func _failure(message: String) -> Dictionary:
 	return {"ok": false, "message": message}
 
 static func _resolve_path(path: String) -> String:
-	if path.begins_with("res://") or path.begins_with("user://"):
+	if OS.has_feature("editor") and (
+		path.begins_with("res://") or path.begins_with("user://")
+	):
 		return ProjectSettings.globalize_path(path)
 	return path

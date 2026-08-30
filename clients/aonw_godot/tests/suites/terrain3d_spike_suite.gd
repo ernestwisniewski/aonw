@@ -4,6 +4,10 @@ const SPIKE_DIRECTORY := "res://.godot/terrain3d_spike"
 const MapSource := preload("res://game/application/map/map_source.gd")
 const HexGridGeometry := preload("res://game/presentation/map/geometry/hex_grid_geometry.gd")
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
+const NativeLocalSession := preload("res://game/infrastructure/engine/native_local_session.gd")
+const TextDocumentReader := preload(
+	"res://game/infrastructure/filesystem/text_document_reader.gd"
+)
 
 var _failures: Array[String]
 var _terrain: Terrain3D
@@ -134,7 +138,10 @@ func _test_region_height_editing_and_undo() -> void:
 	history.free()
 
 func _test_overlays_and_picking() -> void:
-	var map_result: Dictionary = JsonMapRepository.new().load_map(MapSource.new(
+	var map_result: Dictionary = JsonMapRepository.new(
+		NativeLocalSession.new(),
+		TextDocumentReader.new(),
+	).load_map(MapSource.new(
 		"aonw2_starter",
 		"res://assets/maps/aonw2_starter/map.json",
 		"res://assets/maps/aonw2_starter",

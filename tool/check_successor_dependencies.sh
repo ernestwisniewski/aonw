@@ -41,6 +41,48 @@ if [[ -d "${successor_godot}/game" ]]; then
     --include='*.gd' \
     "${successor_godot}/game" \
     >>"${violations}" || true
+
+  for layer in application presentation; do
+    layer_root="${successor_godot}/game/${layer}"
+    if [[ -d "${layer_root}" ]]; then
+      grep -RInE \
+        'res://game/(infrastructure|composition)/' \
+        --include='*.gd' \
+        "${layer_root}" \
+        >>"${violations}" || true
+    fi
+  done
+
+  gameplay_presentation="${successor_godot}/game/presentation"
+  if [[ -d "${gameplay_presentation}" ]]; then
+    grep -RInE \
+      'FileAccess|DirAccess|JSON\.(parse|stringify)' \
+      --include='*.gd' \
+      "${gameplay_presentation}" \
+      >>"${violations}" || true
+  fi
+
+  gameplay_scenes="${successor_godot}/scenes"
+  if [[ -d "${gameplay_scenes}" ]]; then
+    grep -RInE \
+      'res://game/infrastructure/' \
+      --include='*.tscn' \
+      --include='*.scn' \
+      "${gameplay_scenes}" \
+      >>"${violations}" || true
+  fi
+
+  while IFS= read -r -d '' source_file; do
+    case "${source_file}" in
+      */composition/*) ;;
+      *)
+        grep -nHE 'NativeLocalSession\.new[[:space:]]*\(' "${source_file}" \
+          >>"${violations}" || true
+        ;;
+    esac
+  done < <(
+    find "${successor_godot}/game" -type f -name '*.gd' -print0
+  )
 fi
 
 godot_extension="${successor_godot}/aonw_engine.gdextension"

@@ -189,6 +189,37 @@ fi
 echo "Dependency checker rejected a Godot mesh terrain fallback."
 rm "${dependency_fixture}/clients/aonw_godot/game/presentation/map/legacy_terrain.gd"
 
+printf 'const Store := preload("res://game/infrastructure/map/store.gd")\n' \
+  >"${dependency_fixture}/clients/aonw_godot/game/presentation/map/infrastructure_leak.gd"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted Godot gameplay presentation-to-infrastructure coupling." >&2
+  exit 1
+fi
+echo "Dependency checker rejected Godot gameplay presentation-to-infrastructure coupling."
+rm "${dependency_fixture}/clients/aonw_godot/game/presentation/map/infrastructure_leak.gd"
+
+mkdir -p "${dependency_fixture}/clients/aonw_godot/scenes"
+printf '%s\n' \
+  '[gd_scene load_steps=2 format=3]' \
+  '[ext_resource type="Script" path="res://game/infrastructure/map/store.gd" id="1"]' \
+  >"${dependency_fixture}/clients/aonw_godot/scenes/infrastructure_leak.tscn"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted concrete Godot gameplay infrastructure in a scene." >&2
+  exit 1
+fi
+echo "Dependency checker rejected concrete Godot gameplay infrastructure in a scene."
+rm "${dependency_fixture}/clients/aonw_godot/scenes/infrastructure_leak.tscn"
+
+mkdir -p "${dependency_fixture}/clients/aonw_godot/game/application/session"
+printf 'var transport := NativeLocalSession.new()\n' \
+  >"${dependency_fixture}/clients/aonw_godot/game/application/session/concrete_transport.gd"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted a concrete native session outside composition." >&2
+  exit 1
+fi
+echo "Dependency checker rejected a concrete native session outside composition."
+rm "${dependency_fixture}/clients/aonw_godot/game/application/session/concrete_transport.gd"
+
 printf '%s\n' \
   '[configuration]' \
   'entry_symbol = "gdext_rust_init"' \

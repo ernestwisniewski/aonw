@@ -11,6 +11,10 @@ const OverlayBuilder := preload(
 	"res://game/presentation/map/terrain_overlay_mesh_builder.gd"
 )
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
+const NativeLocalSession := preload("res://game/infrastructure/engine/native_local_session.gd")
+const TextDocumentReader := preload(
+	"res://game/infrastructure/filesystem/text_document_reader.gd"
+)
 const TileAtlasRepository := preload("res://game/infrastructure/map/tile_atlas_repository.gd")
 const TerrainArtifactRepository := preload(
 	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
@@ -361,7 +365,7 @@ func _test_bundle_content_identity(map: AonwMapView) -> void:
 
 func _open_map():
 	return OpenMap.new(
-		JsonMapRepository.new(),
+		JsonMapRepository.new(NativeLocalSession.new(), TextDocumentReader.new()),
 		TileAtlasRepository.new(),
 		TerrainArtifactRepository.new(),
 	)

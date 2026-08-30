@@ -3,24 +3,24 @@ extends AonwMapViewReader
 
 const MapSource := preload("res://game/application/map/map_source.gd")
 const MapViewMapper := preload("res://game/infrastructure/map/map_view_mapper.gd")
-const NativeLocalSession := preload("res://game/infrastructure/engine/native_local_session.gd")
 
 var _client: RefCounted
+var _documents: RefCounted
 var _mapper := MapViewMapper.new()
 
-func _init(client: RefCounted = null) -> void:
-	_client = client if client != null else NativeLocalSession.new()
+func _init(client: RefCounted, documents: RefCounted) -> void:
+	assert(client != null, "Map inspection client is required")
+	assert(documents != null, "Map document reader is required")
+	_client = client
+	_documents = documents
 
 func load_map(source: AonwMapSource) -> Dictionary:
-	var absolute_path := resolve_path(source.map_path)
-	var file := FileAccess.open(absolute_path, FileAccess.READ)
-	if file == null:
-		return _failure("cannot open %s" % absolute_path)
-
-	var source_json := file.get_as_text()
+	var loaded: Dictionary = _documents.call("read", source.map_path)
+	if not loaded.get("ok", false):
+		return _failure(str(loaded.get("message", "cannot read map document")))
 	var envelope: Dictionary = _client.call("request", {
 		"type": "inspectMap",
-		"mapDocument": source_json,
+		"mapDocument": loaded.get("document", ""),
 	})
 	var outcome: Variant = envelope.get("outcome")
 	if not outcome is Dictionary:
@@ -58,11 +58,6 @@ func load_map(source: AonwMapSource) -> Dictionary:
 		"map": map,
 		"visual_directory": source.visual_directory,
 	}
-
-static func resolve_path(source_path: String) -> String:
-	if source_path.begins_with("res://") or source_path.begins_with("user://"):
-		return ProjectSettings.globalize_path(source_path)
-	return source_path
 
 static func _failure(message: String) -> Dictionary:
 	return {"ok": false, "message": message}

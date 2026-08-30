@@ -3,6 +3,10 @@ extends RefCounted
 const MapSource := preload("res://game/application/map/map_source.gd")
 const OpenMap := preload("res://game/application/map/open_map.gd")
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
+const NativeLocalSession := preload("res://game/infrastructure/engine/native_local_session.gd")
+const TextDocumentReader := preload(
+	"res://game/infrastructure/filesystem/text_document_reader.gd"
+)
 const MapAssetCatalog := preload(
 	"res://editor/map_authoring/infrastructure/map_asset_catalog.gd"
 )
@@ -29,7 +33,10 @@ func _test_canonical_map_with_runtime_texture() -> void:
 		"res://../../assets/runtime/maps/myranth",
 		"content",
 	)
-	var map_result: Dictionary = JsonMapRepository.new().load_map(source)
+	var map_result: Dictionary = JsonMapRepository.new(
+		NativeLocalSession.new(),
+		TextDocumentReader.new(),
+	).load_map(source)
 	_check(
 		map_result["ok"],
 		"canonical content map opens through inspectMap: %s"
@@ -138,7 +145,10 @@ func _test_catalog() -> void:
 			)
 
 func _test_every_catalog_source_matches_available_artifacts() -> void:
-	var map_repository := JsonMapRepository.new()
+	var map_repository := JsonMapRepository.new(
+		NativeLocalSession.new(),
+		TextDocumentReader.new(),
+	)
 	var atlas_repository := TileAtlasRepository.new()
 	var terrain_repository := TerrainArtifactRepository.new()
 	for source in MapAssetCatalog.new().discover():
@@ -175,7 +185,7 @@ func _starter_source() -> AonwMapSource:
 
 func _open_map() -> AonwOpenMap:
 	return OpenMap.new(
-		JsonMapRepository.new(),
+		JsonMapRepository.new(NativeLocalSession.new(), TextDocumentReader.new()),
 		TileAtlasRepository.new(),
 		TerrainArtifactRepository.new(),
 	)

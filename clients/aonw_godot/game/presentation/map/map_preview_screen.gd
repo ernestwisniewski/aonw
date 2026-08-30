@@ -1,16 +1,17 @@
 extends Node3D
 
 const OpenMap := preload("res://game/application/map/open_map.gd")
-const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
-const TileAtlasRepository := preload("res://game/infrastructure/map/tile_atlas_repository.gd")
-const TerrainArtifactRepository := preload(
-	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
-)
 const MapSource := preload("res://game/application/map/map_source.gd")
 const LocalMatchSessionController := preload(
 	"res://game/application/session/local_match_session_controller.gd"
 )
+const OpenLocalMatch := preload(
+	"res://game/application/session/open_local_match.gd"
+)
 const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
+const EXPORT_SMOKE_ARGUMENT := "--aonw-export-smoke"
+const EXPORT_SMOKE_OPENED := "Godot packaged session lifecycle: opened"
+const EXPORT_SMOKE_CLOSED := "Godot packaged session lifecycle: closed"
 
 @onready var _surface: AonwMapSurface = %MapSurface
 @onready var _interaction: AonwMapInteractionController = %MapInteraction
@@ -21,18 +22,32 @@ const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 @onready var _confirm_move: Button = %ConfirmMove
 @onready var _status: Label = %Status
 
-var _open_map := OpenMap.new(
-	JsonMapRepository.new(),
-	TileAtlasRepository.new(),
-	TerrainArtifactRepository.new(),
-)
-var _local_session := LocalMatchSessionController.new()
+var _open_map: AonwOpenMap
+var _local_session: AonwLocalMatchSessionController
+var _open_local_match: AonwOpenLocalMatch
 var _current_map: AonwMapView
 var _selected_unit_id := ""
 var _reachable_hexes: Dictionary = {}
 var _route: AonwClientReadModels.RoutePlanView
+var _local_session_open := false
+
+func configure(
+	open_map: AonwOpenMap,
+	local_session: AonwLocalMatchSessionController,
+	open_local_match: AonwOpenLocalMatch,
+) -> void:
+	assert(_open_map == null, "Map preview dependencies are already configured")
+	assert(open_map != null, "Open map use case is required")
+	assert(local_session != null, "Local match session is required")
+	assert(open_local_match != null, "Open local match use case is required")
+	_open_map = open_map
+	_local_session = local_session
+	_open_local_match = open_local_match
 
 func _ready() -> void:
+	assert(_open_map != null, "Map preview composition is required")
+	assert(_local_session != null, "Map preview session is required")
+	assert(_open_local_match != null, "Map preview open-session use case is required")
 	_surface.map_presented.connect(_on_map_presented)
 	_interaction.hex_selected.connect(_on_hex_selected)
 	_open_dialog.file_selected.connect(_open)
@@ -42,6 +57,21 @@ func _ready() -> void:
 		DEFAULT_MAP.get_base_dir(),
 		"Godot",
 	))
+
+func _exit_tree() -> void:
+	if not _local_session_open:
+		return
+	var closed: Dictionary = _local_session.close()
+	_local_session_open = false
+	if not _is_export_smoke():
+		return
+	if closed.get("ok", false):
+		print(EXPORT_SMOKE_CLOSED)
+	else:
+		push_error("Godot packaged session lifecycle close failed: %s" % closed.get(
+			"message",
+			"unknown native session error",
+		))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if (
@@ -78,6 +108,7 @@ func _open_source(source: AonwMapSource) -> void:
 	var result := _open_map.execute(source)
 	if not result["ok"]:
 		_status.text = "Error: %s" % result["message"]
+		_report_export_smoke_failure(_status.text)
 		return
 
 	_current_map = result["map"]
@@ -120,45 +151,46 @@ func _setup_local_session(source: AonwMapSource) -> void:
 	_route = null
 	_confirm_move.visible = false
 	_local_session.close()
-	var map_file := FileAccess.open(
-		AonwJsonMapRepository.resolve_path(source.map_path),
-		FileAccess.READ,
-	)
-	if map_file == null:
-		_status.text += " · Rust map unavailable"
-		_present_empty_unit_layer()
-		return
+	_local_session_open = false
 	var scenario_path := "res://assets/scenarios/%s.json" % _current_map.map_id()
-	var scenario_file := FileAccess.open(scenario_path, FileAccess.READ)
-	if scenario_file == null:
-		_status.text += " · no local scenario"
-		_present_empty_unit_layer()
-		return
-	var opened := _local_session.open(
-		map_file.get_as_text(),
-		scenario_file.get_as_text(),
+	var opened := _open_local_match.execute(
+		source.map_path,
+		scenario_path,
 		"preview-player",
 	)
 	if not opened["ok"]:
 		_status.text += " · Rust: %s" % opened["message"]
+		_report_export_smoke_failure(_status.text)
 		_present_empty_unit_layer()
 		return
-	_refresh_session_snapshot()
+	_local_session_open = true
+	if _refresh_session_snapshot() and _is_export_smoke():
+		print(EXPORT_SMOKE_OPENED)
+
+func _is_export_smoke() -> bool:
+	return EXPORT_SMOKE_ARGUMENT in OS.get_cmdline_user_args()
+
+func _report_export_smoke_failure(message: String) -> void:
+	if _is_export_smoke():
+		push_error("Godot packaged session lifecycle failed: %s" % message)
 
 func _refresh_session_snapshot() -> bool:
 	var snapshot := _local_session.snapshot()
 	if not snapshot["ok"]:
 		_status.text += " · Rust: %s" % snapshot["message"]
+		_report_export_smoke_failure(_status.text)
 		_present_empty_unit_layer()
 		return false
 	var value: AonwClientReadModels.SnapshotView = snapshot["value"]
 	if value.stamp.map_hash != _current_map.content_hash():
 		_status.text += " · Rust snapshot belongs to another map"
+		_report_export_smoke_failure(_status.text)
 		_present_empty_unit_layer()
 		return false
 	for unit in value.units:
 		if not _current_map.contains(unit.coordinate):
 			_status.text += " · Rust snapshot contains an out-of-map unit"
+			_report_export_smoke_failure(_status.text)
 			_present_empty_unit_layer()
 			return false
 	_unit_layer.present(_interaction.projection(), value.units)

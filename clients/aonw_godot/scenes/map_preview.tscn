@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://h06ewv82d7yc" path="res://game/presentation/map/map_overlay_layer.gd" id="4_overlay"]
 [ext_resource type="Script" uid="uid://durtsv7lp0qmt" path="res://game/presentation/map/map_interaction_controller.gd" id="5_interaction"]
 [ext_resource type="Script" uid="uid://8pgfq46qt7d6" path="res://game/presentation/map/unit_layer.gd" id="6_units"]
+[ext_resource type="Script" path="res://game/composition/map_preview_composition_root.gd" id="7_composition"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1
@@ -29,6 +30,9 @@ corner_radius_bottom_left = 8
 
 [node name="MapPreview" type="Node3D" unique_id=689299749]
 script = ExtResource("1_screen")
+
+[node name="Composition" type="Node" parent="."]
+script = ExtResource("7_composition")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1240833735]
 environment = SubResource("Environment_preview")

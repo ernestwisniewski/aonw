@@ -53,7 +53,17 @@ if [[ "$(lipo -archs "${native_library}")" != "arm64" ]]; then
 fi
 
 codesign --verify --deep --strict "${application_path}"
-"${executable_path}" --headless --log-file "${smoke_log}" --quit-after 5
-"${repo_root}/tool/check_godot_log.sh" "${smoke_log}"
+"${executable_path}" \
+  --headless \
+  --log-file "${smoke_log}" \
+  --quit-after 5 \
+  -- \
+  --aonw-export-smoke
+"${repo_root}/tool/check_godot_log.sh" \
+  "${smoke_log}" \
+  "Godot packaged session lifecycle: opened"
+"${repo_root}/tool/check_godot_log.sh" \
+  "${smoke_log}" \
+  "Godot packaged session lifecycle: closed"
 
 echo "Godot macOS arm64 export smoke: OK"

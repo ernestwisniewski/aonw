@@ -6,6 +6,7 @@ const Artifact := preload(
 )
 const MANIFEST_NAME := "terrain_compile.json"
 const COMPILED_ROOT := "res://.godot/terrain_compiled"
+const IMPORTED_RUNTIME_ROOT := "res://assets/terrain_compiled/"
 
 var _compiled_root: String
 
@@ -132,17 +133,37 @@ func _load_layers(directory: String, raw: Variant, size: Vector2i) -> Dictionary
 		var expected_hash := str(layer["openExrSha256"])
 		if not _is_sha256(expected_hash):
 			return _failure("compiled terrain layer %s has an invalid file hash" % layer_name)
-		var absolute_path := ProjectSettings.globalize_path(path)
-		if FileAccess.get_sha256(absolute_path) != expected_hash:
-			return _failure("compiled terrain layer %s failed SHA-256 verification" % layer_name)
-		var image := Image.load_from_file(path)
-		if image == null or image.get_size() != size:
+		var image_result := _load_layer(path, expected_hash, layer_name)
+		if not image_result["ok"]:
+			return image_result
+		var image: Image = image_result["image"]
+		if image.get_size() != size:
 			return _failure("compiled terrain layer %s has invalid dimensions" % layer_name)
 		if image.get_format() not in [Image.FORMAT_RF, Image.FORMAT_RGBF, Image.FORMAT_RGBAF]:
 			return _failure("compiled terrain layer %s is not 32-bit float" % layer_name)
 		result[layer_name] = image
 		result["%s_hash" % layer_name] = str(layer["hash"])
 	return result
+
+func _load_layer(path: String, expected_hash: String, layer_name: String) -> Dictionary:
+	if OS.has_feature("editor"):
+		var absolute_path := ProjectSettings.globalize_path(path)
+		if FileAccess.get_sha256(absolute_path) != expected_hash:
+			return _failure(
+				"compiled terrain layer %s failed SHA-256 verification" % layer_name
+			)
+		if not path.begins_with(IMPORTED_RUNTIME_ROOT):
+			var source_image := Image.load_from_file(path)
+			if source_image == null:
+				return _failure("compiled terrain layer %s cannot be decoded" % layer_name)
+			return {"ok": true, "image": source_image}
+	var texture := ResourceLoader.load(path) as Texture2D
+	if texture == null:
+		return _failure("compiled terrain layer %s import is missing" % layer_name)
+	var imported_image := texture.get_image()
+	if imported_image == null:
+		return _failure("compiled terrain layer %s import cannot be decoded" % layer_name)
+	return {"ok": true, "image": imported_image}
 
 func _reference_transform(raw: Variant) -> Dictionary:
 	if not raw is Dictionary:

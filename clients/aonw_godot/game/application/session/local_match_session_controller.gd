@@ -1,7 +1,6 @@
 class_name AonwLocalMatchSessionController
 extends RefCounted
 
-const NativeLocalSession := preload("res://game/infrastructure/engine/native_local_session.gd")
 const ReadModelDecoder := preload(
 	"res://game/application/session/client_read_model_decoder.gd"
 )
@@ -10,8 +9,9 @@ const ClientProtocol := preload("res://game/application/session/client_protocol.
 var _transport: RefCounted
 var _stamp: RefCounted
 
-func _init(transport: RefCounted = null) -> void:
-	_transport = transport if transport != null else NativeLocalSession.new()
+func _init(transport: RefCounted) -> void:
+	assert(transport != null, "Client transport is required")
+	_transport = transport
 
 func is_available() -> bool:
 	return bool(_transport.call("is_available"))

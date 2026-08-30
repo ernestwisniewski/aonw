@@ -8,6 +8,12 @@ const MapAssetCatalog := preload(
 const JsonMapRepository := preload(
 	"res://game/infrastructure/map/json_map_repository.gd"
 )
+const NativeLocalSession := preload(
+	"res://game/infrastructure/engine/native_local_session.gd"
+)
+const TextDocumentReader := preload(
+	"res://game/infrastructure/filesystem/text_document_reader.gd"
+)
 const TileAtlasRepository := preload(
 	"res://game/infrastructure/map/tile_atlas_repository.gd"
 )
@@ -73,7 +79,10 @@ func _init(
 ) -> void:
 	_catalog = MapAssetCatalog.new()
 	_artifact_reader = ArtifactRepository.new(compiled_artifact_root)
-	_map_reader = JsonMapRepository.new()
+	_map_reader = JsonMapRepository.new(
+		NativeLocalSession.new(),
+		TextDocumentReader.new(),
+	)
 	_atlas_reader = TileAtlasRepository.new()
 	_scene_writer = SceneRepository.new(
 		SceneFactory.new(),

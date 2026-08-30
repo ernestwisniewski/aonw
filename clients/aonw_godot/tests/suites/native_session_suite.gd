@@ -4,6 +4,9 @@ const MapSource := preload("res://game/application/map/map_source.gd")
 const MapViewMapper := preload("res://game/infrastructure/map/map_view_mapper.gd")
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
 const NativeLocalSession := preload("res://game/infrastructure/engine/native_local_session.gd")
+const TextDocumentReader := preload(
+	"res://game/infrastructure/filesystem/text_document_reader.gd"
+)
 const ClientResponseDecoder := preload(
 	"res://game/infrastructure/engine/client_response_decoder.gd"
 )
@@ -348,7 +351,10 @@ func _test_strict_document_boundary() -> void:
 			"test",
 		)
 		_check(
-			not JsonMapRepository.new().load_map(mismatched_source)["ok"],
+			not JsonMapRepository.new(
+				NativeLocalSession.new(),
+				TextDocumentReader.new(),
+			).load_map(mismatched_source)["ok"],
 			"source directory id must match mapName",
 		)
 	var raw := {

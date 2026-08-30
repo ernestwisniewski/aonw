@@ -850,6 +850,7 @@ rust-godot-release-build:
 
 godot-terrain-compile:
 	@tool/compile_godot_terrain.sh
+	@tool/stage_godot_runtime_terrain.sh
 
 godot-toolchain-check:
 	@GODOT_BIN="$(GODOT_BIN)" tool/check_godot_toolchain.sh
@@ -884,7 +885,7 @@ godot-macos-arm64-template:
 		"$(GODOT_MACOS_TEMPLATE_SOURCE)" \
 		"$(GODOT_MACOS_ARM64_TEMPLATE)"
 
-godot-export-macos: godot-macos-arm64-template godot-toolchain-check terrain3d-check rust-godot-editor-build rust-godot-release-build godot-native-config
+godot-export-macos: godot-macos-arm64-template godot-toolchain-check terrain3d-check godot-map-bundle-check godot-terrain-compile rust-godot-editor-build rust-godot-release-build godot-native-config
 	@mkdir -p "$(dir $(GODOT_MACOS_EXPORT))"
 	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_EXPORT_LOG)" \
 		--path "$(GODOT_PROJECT)" \
