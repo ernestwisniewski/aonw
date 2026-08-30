@@ -187,6 +187,20 @@ if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>
   exit 1
 fi
 echo "Dependency checker rejected a Godot mesh terrain fallback."
+rm "${dependency_fixture}/clients/aonw_godot/game/presentation/map/legacy_terrain.gd"
+
+printf '%s\n' \
+  '[configuration]' \
+  'entry_symbol = "gdext_rust_init"' \
+  '[libraries]' \
+  'windows.release.x86_64 = "res://../../engine/target/release/aonw_godot.dll"' \
+  >"${dependency_fixture}/clients/aonw_godot/aonw_engine.gdextension"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted an unstaged or unsupported GDExtension library." >&2
+  exit 1
+fi
+echo "Dependency checker rejected an unstaged and unsupported GDExtension library."
+rm "${dependency_fixture}/clients/aonw_godot/aonw_engine.gdextension"
 
 authoring_fixture="${dependency_fixture}/clients/aonw_godot/editor/map_authoring"
 mkdir -p \

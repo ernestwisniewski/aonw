@@ -30,3 +30,4 @@ enabled=PackedStringArray("res://addons/terrain_3d/plugin.cfg", "res://addons/ao
 [rendering]
 
 environment/defaults/default_clear_color=Color(0.026, 0.034, 0.048, 1)
+textures/vram_compression/import_etc2_astc=true

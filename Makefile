@@ -18,8 +18,14 @@ GODOT_RUNTIME_LOG ?= /tmp/aonw-godot-runtime.log
 GODOT_RUNTIME_TEST_LOG ?= /tmp/aonw-godot-runtime-test.log
 GODOT_RUNTIME_CHECK_ONLY_LOG ?= /tmp/aonw-godot-runtime-check-only.log
 GODOT_EDITOR_LOG ?= /tmp/aonw-godot-editor.log
+GODOT_EXPORT_LOG ?= /tmp/aonw-godot-export.log
+GODOT_EXPORT_SMOKE_LOG ?= /tmp/aonw-godot-export-smoke.log
 GODOT_PROBE_LOG ?= /tmp/aonw-godot-map-render-probe.log
 GODOT_VISUAL_EVIDENCE_LOG ?= /tmp/aonw-godot-stage-1-visual-evidence.log
+GODOT_MACOS_EXPORT ?= $(CURDIR)/dist/godot/aonw-macos-arm64.app
+GODOT_TEMPLATE_VERSION := $(strip $(shell sed 's/\.official\..*//' .godot-version 2>/dev/null))
+GODOT_MACOS_TEMPLATE_SOURCE ?= $(HOME)/Library/Application Support/Godot/export_templates/$(GODOT_TEMPLATE_VERSION)/macos.zip
+GODOT_MACOS_ARM64_TEMPLATE := $(CURDIR)/$(GODOT_PROJECT)/.godot/export_templates/macos-arm64.zip
 MAP_RENDER_PROBE_DIR ?= /tmp/aonw-map-render-probes
 MAP_RENDER_PROBE_SCENARIO := $(CURDIR)/aonw_tests/fixtures/render/map_render_probe_scenarios.json
 FLUTTER_MAP_RENDER_PROBE := $(abspath $(MAP_RENDER_PROBE_DIR))/flutter.json
@@ -74,7 +80,6 @@ PUB_CACHE ?= $(HOME)/.pub-cache
 SERVERPOD_CLI ?= $(PUB_CACHE)/bin/serverpod
 AONW_SERVERPOD_CRITICAL_E2E_PORT ?=
 SERVERPOD_SMOKE_HOST ?= http://127.0.0.1:8080/
-SERVERPOD_SMOKE_MAP ?= myranth
 SERVERPOD_SEED_HOST ?= http://127.0.0.1:8080/
 SERVERPOD_SEED_PASSWORD ?= AonwTest123!
 SERVERPOD_SEED_EMAIL_DOMAIN ?= example.test
@@ -242,7 +247,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test rust-engine-inventory-ast-check rust-determinism-inventory-check rust-determinism-inventory-test rust-determinism-check rust-fixture-disposition-check rust-fixture-disposition-test rust-corpus-parity-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage stage-engine-docs build-engine-docs deploy-engine-docs deploy-engine-docs-files download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats health-engine-docs prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-coverage-report successor-flutter-device-test successor-flutter-fm4-pilot successor-flutter-fm5-baseline successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check rust-turn-kernel-check rust-diplomacy-policy-check rust-tech-gate-check rust-movement-logistics-check rust-combat-check rust-city-check rust-worker-check successor-engine-check successor-engine-evidence-check successor-engine-quality-check successor-engine-deep-check
+.PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test rust-engine-inventory-ast-check rust-determinism-inventory-check rust-determinism-inventory-test rust-determinism-check rust-fixture-disposition-check rust-fixture-disposition-test rust-corpus-parity-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage stage-engine-docs build-engine-docs deploy-engine-docs deploy-engine-docs-files download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats health-engine-docs prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-coverage-report successor-flutter-device-test successor-flutter-fm4-pilot successor-flutter-fm5-baseline successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check rust-turn-kernel-check rust-diplomacy-policy-check rust-tech-gate-check rust-movement-logistics-check rust-combat-check rust-city-check rust-worker-check successor-engine-check successor-engine-evidence-check successor-engine-quality-check successor-engine-deep-check
 
 .PHONY: rust-integrated-turn-check rust-ai-ledger-check rust-ai-strength-check rust-ai-check rust-persistence-check
 .PHONY: rust-security-policy-test rust-security-policy-check rust-security-tool-versions rust-mutation-check rust-fuzz-smoke rust-miri-check rust-ffi-sanitizer-check rust-engine-security-check rust-release-metadata-policy-test rust-release-metadata-policy-check rust-release-metadata-tool-versions rust-release-metadata-check rust-engine-completion-check
@@ -322,7 +327,6 @@ help:
 	@echo "  make analyze      LOCAL: run the fatal shared analysis policy in all four packages"
 	@echo "  make release-check LOCAL: run CI, configuration checks, and PostgreSQL-backed critical E2E"
 	@echo "  make check        LOCAL: analyze/test Flutter app, core package, client package, and server"
-	@echo "  make reducer-parity-test LOCAL: run local/server reducer fixtures against one oracle"
 	@echo "  make profile-check LOCAL: validate the selected Compose deployment profile"
 	@echo "  make deploy        Pull repo, rebuild Docker, restart staging, check health"
 	@echo "  make deploy-clean  Same, but build server without cache and prune build cache"
@@ -356,7 +360,7 @@ help:
 	@echo "  make critical-e2e-test LOCAL: run local persistence and live Serverpod critical journeys"
 	@echo "  make local-game-e2e-test LOCAL: run create, command, save, and fresh-runtime reload journey"
 	@echo "  make serverpod-critical-e2e-test LOCAL: run public auth, match, command, and reconnect journey"
-	@echo "  make serverpod-runtime-smoke LOCAL: run two-account stream/reconnect smoke against a running Serverpod host"
+	@echo "  make serverpod-runtime-smoke LOCAL: run the public auth/game/idempotency/resync journey against a running Serverpod host"
 	@echo "  make serverpod-seed-test-users LOCAL: create/update four local Serverpod test users"
 	@echo "  make compose-check LOCAL: validate Docker Compose files without starting services"
 	@echo "  make docker-context-check LOCAL: prove secrets stay out of the server build context"
@@ -400,7 +404,6 @@ help:
 	@echo "  SERVERPOD_TEST_DATABASE_PASSWORD=... Legacy PostgreSQL test password fallback"
 	@echo "  AONW_SERVERPOD_CRITICAL_E2E_PORT=... optional critical E2E API port; default allocates and locks a free triplet"
 	@echo "  SERVERPOD_SMOKE_HOST=http://... serverpod-runtime-smoke only. Default: $(SERVERPOD_SMOKE_HOST)"
-	@echo "  SERVERPOD_SMOKE_MAP=myranth      serverpod-runtime-smoke only. Default: $(SERVERPOD_SMOKE_MAP)"
 	@echo "  SERVERPOD_SEED_HOST=http://...  serverpod-seed-test-users only. Default: $(SERVERPOD_SEED_HOST)"
 	@echo "  SERVERPOD_SEED_PASSWORD=...     serverpod-seed-test-users only. Default: $(SERVERPOD_SEED_PASSWORD)"
 	@echo "  SERVERPOD_SEED_EMAIL_DOMAIN=... serverpod-seed-test-users only. Default: $(SERVERPOD_SEED_EMAIL_DOMAIN)"
@@ -842,6 +845,9 @@ rust-godot-build:
 rust-godot-editor-build:
 	@RUST_CARGO="$(RUST_CARGO)" tool/build_godot_native.sh editor debug
 
+rust-godot-release-build:
+	@RUST_CARGO="$(RUST_CARGO)" tool/build_godot_native.sh runtime release
+
 godot-terrain-compile:
 	@tool/compile_godot_terrain.sh
 
@@ -872,6 +878,23 @@ godot-editor: godot-toolchain-check terrain3d-check rust-godot-editor-build godo
 
 godot-run: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
 	@"$(GODOT_BIN)" --path "$(GODOT_PROJECT)"
+
+godot-macos-arm64-template:
+	@tool/prepare_godot_macos_arm64_template.sh \
+		"$(GODOT_MACOS_TEMPLATE_SOURCE)" \
+		"$(GODOT_MACOS_ARM64_TEMPLATE)"
+
+godot-export-macos: godot-macos-arm64-template godot-toolchain-check terrain3d-check rust-godot-editor-build rust-godot-release-build godot-native-config
+	@mkdir -p "$(dir $(GODOT_MACOS_EXPORT))"
+	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_EXPORT_LOG)" \
+		--path "$(GODOT_PROJECT)" \
+		--export-release "macOS arm64" "$(GODOT_MACOS_EXPORT)"
+	@tool/check_godot_log.sh "$(GODOT_EXPORT_LOG)"
+
+godot-export-macos-smoke: godot-export-macos
+	@tool/check_godot_macos_export.sh \
+		"$(GODOT_MACOS_EXPORT)" \
+		"$(GODOT_EXPORT_SMOKE_LOG)"
 
 godot-test: godot-editor-check
 	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_CHECK_ONLY_LOG)" --path "$(GODOT_PROJECT)" --check-only --script res://tests/test_map_pipeline.gd
@@ -1002,7 +1025,7 @@ client-test: client-analyze
 	@cd packages/aonw_server_client && dart test
 
 server-test: server-analyze
-	@cd server && dart test
+	@cd server && dart test --exclude-tags integration
 
 coverage: coverage-check
 
@@ -1037,10 +1060,6 @@ core-coverage: core-coverage-report
 
 server-coverage: server-coverage-report
 	@dart run tool/check_coverage.dart check --scope server --base-ref "$(COVERAGE_BASE_REF)" --ratchet-ref "$(COVERAGE_RATCHET_REF)"
-
-reducer-parity-test:
-	@flutter test test/game/domain/reducer/local_reducer_parity_fixture_test.dart
-	@cd server && dart test test/multiplayer/server_reducer_parity_fixture_test.dart
 
 critical-e2e-test: local-game-e2e-test serverpod-critical-e2e-test
 
@@ -1088,7 +1107,7 @@ server-integration-test:
 			dart test $$tests -P integration --chain-stack-traces --concurrency=1
 
 serverpod-runtime-smoke:
-	@dart run tool/serverpod_multiplayer_smoke.dart --host "$(SERVERPOD_SMOKE_HOST)" --map "$(SERVERPOD_SMOKE_MAP)"
+	@dart run tool/serverpod_critical_e2e.dart --host "$(SERVERPOD_SMOKE_HOST)"
 
 serverpod-seed-test-users:
 	@dart run tool/serverpod_seed_test_users.dart --host "$(SERVERPOD_SEED_HOST)" --password "$(SERVERPOD_SEED_PASSWORD)" --email-domain "$(SERVERPOD_SEED_EMAIL_DOMAIN)"

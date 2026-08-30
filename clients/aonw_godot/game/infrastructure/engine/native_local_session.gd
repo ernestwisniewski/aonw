@@ -5,7 +5,8 @@ const ClientResponseDecoder := preload(
 	"res://game/infrastructure/engine/client_response_decoder.gd"
 )
 const ClientProtocol := preload("res://game/application/session/client_protocol.gd")
-const BUILD_IDENTITY_PATH := "res://.godot/aonw_native_build_identity.txt"
+const BUILD_IDENTITY_FILE := "aonw_native_build_identity.txt"
+const NATIVE_ROOT := "res://native"
 
 var _session: Object
 var _native_api_version := 0
@@ -94,8 +95,24 @@ func _request_precondition() -> Dictionary:
 	return {}
 
 func _load_expected_build_identity() -> String:
-	var file := FileAccess.open(BUILD_IDENTITY_PATH, FileAccess.READ)
+	var platform_directory := _native_platform_directory()
+	if platform_directory.is_empty():
+		return ""
+	var profile := "debug" if OS.is_debug_build() else "release"
+	var identity_path := NATIVE_ROOT.path_join(platform_directory).path_join(
+		Engine.get_architecture_name()
+	).path_join(profile).path_join(BUILD_IDENTITY_FILE)
+	var file := FileAccess.open(identity_path, FileAccess.READ)
 	return "" if file == null else file.get_as_text().strip_edges()
+
+func _native_platform_directory() -> String:
+	match OS.get_name():
+		"Linux":
+			return "linux"
+		"macOS":
+			return "macos"
+		_:
+			return ""
 
 func _request_document(body: Dictionary) -> String:
 	return JSON.stringify({

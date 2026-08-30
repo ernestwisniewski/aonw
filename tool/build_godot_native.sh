@@ -53,6 +53,23 @@ target_triple="$({
   "${rustc_bin}" -vV | sed -n 's/^host: //p'
 })"
 
+case "${target_triple}" in
+  aarch64-apple-darwin)
+    staged_platform="macos"
+    staged_architecture="arm64"
+    library_name="libaonw_godot.dylib"
+    ;;
+  x86_64-unknown-linux-gnu)
+    staged_platform="linux"
+    staged_architecture="x86_64"
+    library_name="libaonw_godot.so"
+    ;;
+  *)
+    echo "Unsupported staged Godot native target: ${target_triple}" >&2
+    exit 1
+    ;;
+esac
+
 for required_value in \
   "${workspace_version}" \
   "${client_api_version}" \
@@ -85,13 +102,25 @@ fi
   AONW_GODOT_BUILD_IDENTITY="${identity}" "${rust_cargo}" "${cargo_args[@]}"
 )
 
-identity_directory="${repo_root}/clients/aonw_godot/.godot"
-identity_path="${GODOT_NATIVE_IDENTITY_FILE:-${identity_directory}/aonw_native_build_identity.txt}"
-mkdir -p "$(dirname "${identity_path}")"
+artifact_path="${repo_root}/engine/target/${build_profile}/${library_name}"
+if [[ ! -f "${artifact_path}" ]]; then
+  echo "Godot native build did not produce ${artifact_path}." >&2
+  exit 1
+fi
+
+stage_directory="${repo_root}/clients/aonw_godot/native/${staged_platform}/${staged_architecture}/${build_profile}"
+library_path="${stage_directory}/${library_name}"
+identity_path="${stage_directory}/aonw_native_build_identity.txt"
+mkdir -p "${stage_directory}"
+staged_library="$(mktemp "${library_path}.staging.XXXXXX")"
 staged_identity="$(mktemp "${identity_path}.staging.XXXXXX")"
-trap 'rm -f "${staged_identity}"' EXIT
+trap 'rm -f "${staged_library}" "${staged_identity}"' EXIT
+cp "${artifact_path}" "${staged_library}"
+chmod 755 "${staged_library}"
 printf '%s\n' "${identity}" >"${staged_identity}"
+mv "${staged_library}" "${library_path}"
 mv "${staged_identity}" "${identity_path}"
 trap - EXIT
 
+echo "Godot native ${build_kind} staged at ${library_path}"
 echo "Godot native ${build_kind} identity: ${identity}"

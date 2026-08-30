@@ -1,3 +1,4 @@
 # Platform archive SHA-256 for the release pinned in .godot-version.
 linux-x86_64 c7ff14fd28472c8d4f193043de30278dcf7e5241a1dcf7566b02e27addaa33ba
 macos-universal 897cb7f9799796c717ae75f31446aed883dc92b1d6c3b33d893cc7843fff2fa9
+macos-export-template f9de131f5ed0210924b9b156aea43b1e20fd720dd97690e151081a65c0937a3e

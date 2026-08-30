@@ -43,6 +43,33 @@ if [[ -d "${successor_godot}/game" ]]; then
     >>"${violations}" || true
 fi
 
+godot_extension="${successor_godot}/aonw_engine.gdextension"
+if [[ -f "${godot_extension}" ]]; then
+  grep -nHE 'engine/target|res://\.\./' "${godot_extension}" \
+    >>"${violations}" || true
+  while IFS= read -r library_key; do
+    case "${library_key}" in
+      linux.debug.x86_64|linux.release.x86_64|macos.debug.arm64|macos.release.arm64) ;;
+      *)
+        printf '%s: unsupported GDExtension library row: %s\n' \
+          "${godot_extension}" \
+          "${library_key}" \
+          >>"${violations}"
+        ;;
+    esac
+  done < <(
+    awk '
+      /^\[libraries\]$/ { in_libraries = 1; next }
+      /^\[/ { in_libraries = 0 }
+      in_libraries && /^[[:alnum:]_.-]+[[:space:]]*=/ {
+        key = $0
+        sub(/[[:space:]]*=.*$/, "", key)
+        print key
+      }
+    ' "${godot_extension}"
+  )
+fi
+
 authoring_root="${successor_godot}/editor/map_authoring"
 if [[ -d "${authoring_root}" ]]; then
   if [[ -d "${authoring_root}/application" ]]; then
