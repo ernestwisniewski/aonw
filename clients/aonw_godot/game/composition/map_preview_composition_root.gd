@@ -11,6 +11,9 @@ const OpenLocalMatch := preload(
 const NativeLocalSession := preload(
 	"res://game/infrastructure/engine/native_local_session.gd"
 )
+const LocalMatchGateway := preload(
+	"res://game/infrastructure/engine/local_match_gateway.gd"
+)
 const TextDocumentReader := preload(
 	"res://game/infrastructure/filesystem/text_document_reader.gd"
 )
@@ -33,7 +36,7 @@ func _ready() -> void:
 		TileAtlasRepository.new(),
 		TerrainArtifactRepository.new(RUNTIME_TERRAIN_ROOT),
 	)
-	var local_session := LocalMatchSessionController.new(transport)
+	var local_session := LocalMatchSessionController.new(LocalMatchGateway.new(transport))
 	var open_local_match := OpenLocalMatch.new(local_session, documents)
 	var screen := get_parent()
 	assert(screen.has_method("configure"), "Map preview screen must accept its ports")

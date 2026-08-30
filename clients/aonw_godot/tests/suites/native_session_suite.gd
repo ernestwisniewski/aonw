@@ -20,6 +20,9 @@ const ClientCommandSchema := preload(
 const LocalMatchSessionController := preload(
 	"res://game/application/session/local_match_session_controller.gd"
 )
+const LocalMatchGateway := preload(
+	"res://game/infrastructure/engine/local_match_gateway.gd"
+)
 const MAP_WORKBENCH_SCRIPT := (
 	"res://editor/map_authoring/infrastructure/rust_logical_map_workbench.gd"
 )
@@ -90,6 +93,65 @@ class MalformedSnapshotTransport:
 			"stateDigest": "state",
 			"mapHash": "map",
 			"rulesetHash": "ruleset",
+		}
+
+class TypedGatewayTransport:
+	extends RefCounted
+
+	func is_available() -> bool:
+		return true
+
+	func client_api_version() -> int:
+		return 7
+
+	func request(body: Dictionary) -> Dictionary:
+		match body.get("type", ""):
+			"capabilities":
+				return _success({
+					"type": "capabilities",
+					"features": ["snapshot", "moveUnit"],
+				})
+			"advanceAiTurn":
+				return _success({
+					"type": "aiTurnAdvanced",
+					"stamp": _stamp(9),
+					"actorPlayerId": body["actorPlayerId"],
+					"executedCommands": 3,
+					"completedTurn": true,
+				})
+		return {}
+
+	func _success(response: Dictionary) -> Dictionary:
+		return {
+			"apiVersion": 7,
+			"outcome": {"status": "success", "response": response},
+		}
+
+	func _stamp(revision: int) -> Dictionary:
+		return {
+			"revision": revision,
+			"stateDigest": "state",
+			"mapHash": "map",
+			"rulesetHash": "ruleset",
+		}
+
+class ExtraEnvelopeFieldTransport:
+	extends RefCounted
+
+	func is_available() -> bool:
+		return true
+
+	func client_api_version() -> int:
+		return 7
+
+	func request(_body: Dictionary) -> Dictionary:
+		return {
+			"apiVersion": 7,
+			"outcome": {
+				"status": "success",
+				"response": {"type": "capabilities", "features": []},
+			},
+			"futureField": true,
 		}
 
 class TrackingTransport:
@@ -398,7 +460,7 @@ func _test_native_engine_boundary() -> void:
 	)
 
 	var transport := TrackingTransport.new(NativeLocalSession.new())
-	var session := LocalMatchSessionController.new(transport)
+	var session := LocalMatchSessionController.new(LocalMatchGateway.new(transport))
 	_check(session.is_available(), "native local session is registered")
 	if not session.is_available():
 		return
@@ -494,17 +556,17 @@ func _test_native_engine_boundary() -> void:
 	)
 	var verified: Dictionary = session.verify_replay(map_json, replay["value"])
 	_check(
-		verified["ok"] and verified["value"]["entryCount"] == 5,
+		verified["ok"] and verified["value"].entry_count == 5,
 		"native session verifies replay results in Rust",
 	)
 	session.close()
 	var restored: Dictionary = session.open_save(map_json, saved["value"])
 	_check(
-		restored["ok"] and restored["value"]["revision"] == 4,
+		restored["ok"] and restored["value"].revision == 4,
 		"native session restores a canonical save",
 	)
 	_check(
-		session.get("_transport") == transport
+		session.get("_gateway").get("_transport") == transport
 		and transport.request_types == [
 			"openSession",
 			"snapshot",
@@ -770,14 +832,18 @@ func _test_shared_client_contract() -> void:
 		"Godot rejects an unstable snapshot unit order",
 	)
 
-	var foreign := LocalMatchSessionController.new(ForeignVersionTransport.new()).capabilities()
+	var foreign := LocalMatchSessionController.new(
+		LocalMatchGateway.new(ForeignVersionTransport.new()),
+	).capabilities()
 	_check(
 		not foreign["ok"] and foreign["code"] == "unsupported_client_api",
 		"Godot rejects foreign client API responses",
 	)
 
 	var unsupported_transport := UnsupportedClientTransport.new()
-	var unsupported := LocalMatchSessionController.new(unsupported_transport).capabilities()
+	var unsupported := LocalMatchSessionController.new(
+		LocalMatchGateway.new(unsupported_transport),
+	).capabilities()
 	_check(
 		not unsupported["ok"]
 		and unsupported["code"] == "unsupported_client_api"
@@ -785,7 +851,9 @@ func _test_shared_client_contract() -> void:
 		"Godot rejects an incompatible transport before dispatch",
 	)
 
-	var malformed_controller := LocalMatchSessionController.new(MalformedSnapshotTransport.new())
+	var malformed_controller := LocalMatchSessionController.new(
+		LocalMatchGateway.new(MalformedSnapshotTransport.new()),
+	)
 	var opened := malformed_controller.open("map", "scenario", "player")
 	var malformed := malformed_controller.snapshot()
 	_check(
@@ -793,6 +861,33 @@ func _test_shared_client_contract() -> void:
 		and not malformed["ok"]
 		and malformed_controller.revision() == 7,
 		"Godot updates revision only after complete typed response validation",
+	)
+
+	var typed_controller := LocalMatchSessionController.new(
+		LocalMatchGateway.new(TypedGatewayTransport.new()),
+	)
+	var capabilities: Dictionary = typed_controller.capabilities()
+	var ai_turn: Dictionary = typed_controller.advance_ai_turn("ai-player", 4)
+	_check(
+		capabilities["ok"]
+		and capabilities["value"] is AonwClientReadModels.CapabilitySet
+		and capabilities["value"].supports(&"snapshot")
+		and not capabilities["value"].supports(&"workers")
+		and ai_turn["ok"]
+		and ai_turn["value"] is AonwClientReadModels.AiTurnResult
+		and ai_turn["value"].actor_player_id == "ai-player"
+		and ai_turn["value"].executed_commands == 3
+		and ai_turn["value"].completed_turn
+		and typed_controller.revision() == 9,
+		"Godot exposes capability and AI envelopes only as typed application results",
+	)
+
+	var extra_envelope := LocalMatchSessionController.new(
+		LocalMatchGateway.new(ExtraEnvelopeFieldTransport.new()),
+	).capabilities()
+	_check(
+		not extra_envelope["ok"] and extra_envelope["code"] == "invalid_client_response",
+		"Godot rejects unknown client envelope fields at the infrastructure boundary",
 	)
 
 func _check(condition: bool, message: String) -> void:

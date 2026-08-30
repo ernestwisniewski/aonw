@@ -83,6 +83,14 @@ if [[ -d "${successor_godot}/game" ]]; then
   done < <(
     find "${successor_godot}/game" -type f -name '*.gd' -print0
   )
+
+  local_session_controller="${successor_godot}/game/application/session/local_match_session_controller.gd"
+  if [[ -f "${local_session_controller}" ]]; then
+    grep -nHE \
+      '"type"[[:space:]]*:|apiVersion|client_api_version|request_async|call\("request"' \
+      "${local_session_controller}" \
+      >>"${violations}" || true
+  fi
 fi
 
 godot_extension="${successor_godot}/aonw_engine.gdextension"

@@ -220,6 +220,15 @@ fi
 echo "Dependency checker rejected a concrete native session outside composition."
 rm "${dependency_fixture}/clients/aonw_godot/game/application/session/concrete_transport.gd"
 
+printf 'var response := transport.call("request", {"type": "snapshot"})\n' \
+  >"${dependency_fixture}/clients/aonw_godot/game/application/session/local_match_session_controller.gd"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted raw wire protocol in the Godot application controller." >&2
+  exit 1
+fi
+echo "Dependency checker rejected raw wire protocol in the Godot application controller."
+rm "${dependency_fixture}/clients/aonw_godot/game/application/session/local_match_session_controller.gd"
+
 printf '%s\n' \
   '[configuration]' \
   'entry_symbol = "gdext_rust_init"' \

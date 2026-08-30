@@ -8,6 +8,26 @@ class Stamp:
 	var map_hash: String
 	var ruleset_hash: String
 
+class CapabilitySet:
+	extends RefCounted
+	var features: Array[StringName]
+
+	func supports(feature: StringName) -> bool:
+		return feature in features
+
+class AiTurnResult:
+	extends RefCounted
+	var stamp: Stamp
+	var actor_player_id: String
+	var executed_commands: int
+	var completed_turn: bool
+
+class ReplayVerification:
+	extends RefCounted
+	var entry_count: int
+	var final_event_offset: int
+	var final_stamp: Stamp
+
 class UnitView:
 	extends RefCounted
 	var id: String

@@ -1,0 +1,351 @@
+class_name AonwLocalMatchGateway
+extends RefCounted
+
+const ReadModelDecoder := preload(
+	"res://game/application/session/client_read_model_decoder.gd"
+)
+const ReadModels := preload(
+	"res://game/application/session/client_read_models.gd"
+)
+const ClientProtocol := preload(
+	"res://game/application/session/client_protocol.gd"
+)
+const FEATURE_NAMES := [
+	"inspectMap", "matchStart", "actorHandoff", "aiTurns", "snapshot",
+	"reachable", "routePlan", "moveUnit", "unitActions", "turnKernel",
+	"movementLogistics", "combat", "cities", "workers", "production",
+	"research", "diplomacy", "artifacts", "saveGame", "replayVerification",
+	"replayPlayback",
+]
+
+var _transport: RefCounted
+
+func _init(transport: RefCounted) -> void:
+	assert(transport != null, "Client transport is required")
+	_transport = transport
+
+func is_available() -> bool:
+	return bool(_transport.call("is_available"))
+
+func capabilities() -> Dictionary:
+	var extracted := _extract(
+		_execute({"type": "capabilities"}, "capabilities"),
+		"features",
+	)
+	if not extracted["ok"]:
+		return extracted
+	var raw_features: Variant = extracted["value"]
+	if not raw_features is Array:
+		return _failure("invalid_client_response", "Rust returned invalid capabilities")
+	var features: Array[StringName] = []
+	var seen := {}
+	for raw_feature in raw_features:
+		if (
+			not raw_feature is String
+			or raw_feature not in FEATURE_NAMES
+			or seen.has(raw_feature)
+		):
+			return _failure("invalid_client_response", "Rust returned invalid capabilities")
+		seen[raw_feature] = true
+		features.append(StringName(raw_feature))
+	var result := ReadModels.CapabilitySet.new()
+	result.features = features
+	return {"ok": true, "value": result}
+
+func open_session(
+	map_document: String,
+	scenario_document: String,
+	actor_player_id: String,
+) -> Dictionary:
+	return _extract_stamp(_execute({
+		"type": "openSession",
+		"mapDocument": map_document,
+		"scenarioDocument": scenario_document,
+		"actorPlayerId": actor_player_id,
+	}, "sessionOpened"), "stamp")
+
+func start_match(
+	map_document: String,
+	scenario_document: String,
+	actor_player_id: String,
+	match_identity: Dictionary,
+	fog_enabled: bool,
+) -> Dictionary:
+	return _extract_stamp(_execute({
+		"type": "startMatch",
+		"mapDocument": map_document,
+		"scenarioDocument": scenario_document,
+		"actorPlayerId": actor_player_id,
+		"matchIdentity": match_identity,
+		"fogMode": "enabled" if fog_enabled else "disabled",
+	}, "sessionOpened"), "stamp")
+
+func handoff_actor(actor_player_id: String) -> Dictionary:
+	return _extract_stamp(_execute({
+		"type": "handoffActor",
+		"actorPlayerId": actor_player_id,
+	}, "actorHandedOff"), "stamp")
+
+func advance_ai_turn(actor_player_id: String, command_budget: int) -> Dictionary:
+	return _decode_ai_turn(_execute({
+		"type": "advanceAiTurn",
+		"actorPlayerId": actor_player_id,
+		"commandBudget": command_budget,
+	}, "aiTurnAdvanced"))
+
+func advance_ai_turn_async(actor_player_id: String, command_budget: int) -> Dictionary:
+	if not _transport.has_method("request_async"):
+		return advance_ai_turn(actor_player_id, command_budget)
+	return _decode_ai_turn(await _execute_async({
+		"type": "advanceAiTurn",
+		"actorPlayerId": actor_player_id,
+		"commandBudget": command_budget,
+	}, "aiTurnAdvanced"))
+
+func close_session() -> Dictionary:
+	var result := _execute({"type": "closeSession"}, "sessionClosed")
+	if not result["ok"]:
+		return result
+	if not _has_exact_fields(result["value"], ["type"]):
+		return _failure("invalid_client_response", "Rust returned invalid session close")
+	return {"ok": true}
+
+func snapshot() -> Dictionary:
+	var extracted := _extract(
+		_execute({"type": "snapshot"}, "snapshot"),
+		"snapshot",
+	)
+	if not extracted["ok"]:
+		return extracted
+	var snapshot := ReadModelDecoder.decode_snapshot(extracted["value"])
+	if snapshot == null:
+		return _failure("invalid_client_response", "Rust returned an invalid snapshot")
+	return {"ok": true, "value": snapshot}
+
+func reachable(expected_revision: int, unit_id: String) -> Dictionary:
+	var result := _query({
+		"type": "reachable",
+		"expectedRevision": expected_revision,
+		"unitId": unit_id,
+	}, "reachable")
+	if not result["ok"]:
+		return result
+	var reachable_view := ReadModelDecoder.decode_reachable(result["value"])
+	if reachable_view == null:
+		return _failure("invalid_client_response", "Rust returned invalid reachable tiles")
+	return {"ok": true, "value": reachable_view}
+
+func route_plan(expected_revision: int, unit_id: String, target: Vector2i) -> Dictionary:
+	var result := _query({
+		"type": "routePlan",
+		"expectedRevision": expected_revision,
+		"unitId": unit_id,
+		"target": _coordinate(target),
+	}, "routePlan")
+	if not result["ok"]:
+		return result
+	var route := ReadModelDecoder.decode_route_plan(result["value"])
+	if route == null:
+		return _failure("invalid_client_response", "Rust returned an invalid route plan")
+	return {"ok": true, "value": route}
+
+func move_unit(expected_revision: int, unit_id: String, target: Vector2i) -> Dictionary:
+	return _command({
+		"type": "moveUnit",
+		"expectedRevision": expected_revision,
+		"unitId": unit_id,
+		"target": _coordinate(target),
+	})
+
+func cancel_unit_action(expected_revision: int, unit_id: String) -> Dictionary:
+	return _unit_action("cancelUnitAction", expected_revision, unit_id)
+
+func skip_unit_turn(expected_revision: int, unit_id: String) -> Dictionary:
+	return _unit_action("skipUnitTurn", expected_revision, unit_id)
+
+func fortify_unit(expected_revision: int, unit_id: String) -> Dictionary:
+	return _unit_action("fortifyUnit", expected_revision, unit_id)
+
+func end_turn(expected_revision: int) -> Dictionary:
+	return _command({
+		"type": "endTurn",
+		"expectedRevision": expected_revision,
+	})
+
+func save_game() -> Dictionary:
+	return _extract(_execute({"type": "exportSave"}, "saveExported"), "document")
+
+func open_save(map_document: String, save_document: String) -> Dictionary:
+	return _extract_stamp(_execute({
+		"type": "openSave",
+		"mapDocument": map_document,
+		"saveDocument": save_document,
+	}, "saveOpened"), "stamp")
+
+func replay_log() -> Dictionary:
+	return _extract(_execute({"type": "exportReplay"}, "replayExported"), "document")
+
+func verify_replay(map_document: String, replay_document: String) -> Dictionary:
+	var extracted := _extract(_execute({
+		"type": "verifyReplay",
+		"mapDocument": map_document,
+		"replayDocument": replay_document,
+	}, "replayVerified"), "verification")
+	if not extracted["ok"]:
+		return extracted
+	var raw: Variant = extracted["value"]
+	if not _has_exact_fields(raw, ["entryCount", "finalEventOffset", "finalStamp"]):
+		return _failure("invalid_client_response", "Rust returned invalid replay verification")
+	if (
+		not raw["entryCount"] is int
+		or int(raw["entryCount"]) < 0
+		or not raw["finalEventOffset"] is int
+		or int(raw["finalEventOffset"]) < 0
+	):
+		return _failure("invalid_client_response", "Rust returned invalid replay verification")
+	var stamp := ReadModelDecoder.decode_stamp(raw["finalStamp"])
+	if stamp == null:
+		return _failure("invalid_client_response", "Rust returned invalid replay verification")
+	var verification := ReadModels.ReplayVerification.new()
+	verification.entry_count = int(raw["entryCount"])
+	verification.final_event_offset = int(raw["finalEventOffset"])
+	verification.final_stamp = stamp
+	return {"ok": true, "value": verification}
+
+func _query(query: Dictionary, result_type: String) -> Dictionary:
+	var extracted := _extract(
+		_execute({"type": "query", "query": query}, "query"),
+		"result",
+	)
+	if not extracted["ok"]:
+		return extracted
+	var value: Variant = extracted["value"]
+	if not value is Dictionary or value.get("type", "") != result_type:
+		return _failure("invalid_client_response", "Rust returned an unexpected query result")
+	return {"ok": true, "value": value}
+
+func _command(command: Dictionary) -> Dictionary:
+	var extracted := _extract(
+		_execute({"type": "dispatch", "command": command}, "command"),
+		"result",
+	)
+	if not extracted["ok"]:
+		return extracted
+	var command_result := ReadModelDecoder.decode_command(extracted["value"])
+	if command_result == null:
+		return _failure("invalid_client_response", "Rust returned an invalid command result")
+	return {"ok": true, "value": command_result}
+
+func _unit_action(action_type: String, expected_revision: int, unit_id: String) -> Dictionary:
+	return _command({
+		"type": action_type,
+		"expectedRevision": expected_revision,
+		"unitId": unit_id,
+	})
+
+func _execute(request: Dictionary, response_type: String) -> Dictionary:
+	if int(_transport.call("client_api_version")) != ClientProtocol.API_VERSION:
+		return _failure(
+			"unsupported_client_api",
+			"The client transport uses an unsupported API version",
+		)
+	var envelope: Variant = _transport.call("request", request)
+	return _decode_envelope(envelope, response_type)
+
+func _execute_async(request: Dictionary, response_type: String) -> Dictionary:
+	if int(_transport.call("client_api_version")) != ClientProtocol.API_VERSION:
+		return _failure(
+			"unsupported_client_api",
+			"The client transport uses an unsupported API version",
+		)
+	var envelope: Variant = await _transport.call("request_async", request)
+	return _decode_envelope(envelope, response_type)
+
+func _decode_envelope(envelope: Variant, response_type: String) -> Dictionary:
+	if not _has_exact_fields(envelope, ["apiVersion", "outcome"]):
+		return _failure("invalid_client_response", "Rust returned an invalid response envelope")
+	if envelope["apiVersion"] != ClientProtocol.API_VERSION:
+		return _failure(
+			"unsupported_client_api",
+			"Rust returned an unsupported client API version",
+		)
+	var outcome: Variant = envelope["outcome"]
+	if not outcome is Dictionary or not outcome.get("status") is String:
+		return _failure("invalid_client_response", "Rust returned an invalid response envelope")
+	match outcome["status"]:
+		"failure":
+			if not _has_exact_fields(outcome, ["status", "error"]):
+				return _failure("invalid_client_response", "Rust returned an invalid failure")
+			var error: Variant = outcome["error"]
+			if not _has_exact_fields(error, ["code", "message"]):
+				return _failure("invalid_client_response", "Rust returned an invalid failure")
+			if not error["code"] is String or not error["message"] is String:
+				return _failure("invalid_client_response", "Rust returned an invalid failure")
+			return _failure(error["code"], error["message"])
+		"success":
+			if not _has_exact_fields(outcome, ["status", "response"]):
+				return _failure("invalid_client_response", "Rust returned an invalid success")
+			var response: Variant = outcome["response"]
+			if not response is Dictionary or response.get("type", "") != response_type:
+				return _failure(
+					"invalid_client_response",
+					"Rust returned an unexpected response type",
+				)
+			return {"ok": true, "value": response}
+		_:
+			return _failure("invalid_client_response", "Rust returned an invalid outcome")
+
+func _decode_ai_turn(result: Dictionary) -> Dictionary:
+	if not result["ok"]:
+		return result
+	var body: Variant = result["value"]
+	if not _has_exact_fields(body, [
+		"type", "stamp", "actorPlayerId", "executedCommands", "completedTurn",
+	]):
+		return _failure("invalid_client_response", "Rust returned an invalid AI turn result")
+	var stamp := ReadModelDecoder.decode_stamp(body["stamp"])
+	if (
+		stamp == null
+		or not body["actorPlayerId"] is String
+		or not body["executedCommands"] is int
+		or int(body["executedCommands"]) < 0
+		or not body["completedTurn"] is bool
+	):
+		return _failure("invalid_client_response", "Rust returned an invalid AI turn result")
+	var value := ReadModels.AiTurnResult.new()
+	value.stamp = stamp
+	value.actor_player_id = body["actorPlayerId"]
+	value.executed_commands = body["executedCommands"]
+	value.completed_turn = body["completedTurn"]
+	return {"ok": true, "value": value}
+
+func _extract(result: Dictionary, field: String) -> Dictionary:
+	if not result["ok"]:
+		return result
+	var body: Variant = result["value"]
+	if not _has_exact_fields(body, ["type", field]):
+		return _failure("invalid_client_response", "Rust response is missing %s" % field)
+	return {"ok": true, "value": body[field]}
+
+func _extract_stamp(result: Dictionary, field: String) -> Dictionary:
+	var extracted := _extract(result, field)
+	if not extracted["ok"]:
+		return extracted
+	var stamp := ReadModelDecoder.decode_stamp(extracted["value"])
+	if stamp == null:
+		return _failure("invalid_client_response", "Rust returned an invalid session stamp")
+	return {"ok": true, "value": stamp}
+
+func _coordinate(value: Vector2i) -> Dictionary:
+	return {"col": value.x, "row": value.y}
+
+func _has_exact_fields(value: Variant, fields: Array) -> bool:
+	if not value is Dictionary or value.size() != fields.size():
+		return false
+	for field in fields:
+		if not value.has(field):
+			return false
+	return true
+
+func _failure(code: String, message: String) -> Dictionary:
+	return {"ok": false, "code": code, "message": message}
