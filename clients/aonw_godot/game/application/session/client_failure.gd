@@ -11,6 +11,7 @@ const KINDS_BY_CODE := {
 	&"client_timeout": Kind.TIMEOUT,
 	&"invalid_client_response": Kind.PROTOCOL,
 	&"invalid_native_response": Kind.PROTOCOL,
+	&"recipient_resync_required": Kind.PROTOCOL,
 	&"unsupported_client_api": Kind.COMPATIBILITY,
 	&"unsupported_native_build": Kind.COMPATIBILITY,
 	&"unsupported_engine_features": Kind.COMPATIBILITY,
