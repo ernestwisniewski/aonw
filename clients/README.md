@@ -18,8 +18,8 @@ gameplay rules, authoritative state transitions, saves, and replays in Rust.
 - Rust owns gameplay validation and every authoritative state transition.
 - The shared multiplayer API remains explicitly versioned where peers must
   negotiate compatibility.
-- Clients have no alternate game engine, earlier protocol reader, or alternative rules
-  engine, or per-command fallback.
+- Clients use one game engine and one current protocol; they do not implement
+  alternate rules or per-command fallback paths.
 - Unknown protocol values and incompatible native libraries fail closed.
 
 ## Quick start
@@ -45,6 +45,6 @@ the clients. Client-owned visual goldens remain separate.
 ## Documentation
 
 Read the client-specific [Flutter](aonw_flutter/README.md) and
-[Godot](aonw_godot/README.md) guides. The migration gates and ownership rules
-are defined in [the Rust engine migration plan](../docs/rust-engine-migration.md),
-with architecture decisions indexed under [`docs/adr/`](../docs/adr/README.md).
+[Godot](aonw_godot/README.md) guides. Engine ownership and quality gates are
+defined in the [Rust engine guide](../engine/README.md), with architecture
+decisions indexed under [`docs/adr/`](../docs/adr/README.md).

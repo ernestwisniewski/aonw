@@ -30,8 +30,8 @@ immutable read models rather than wire DTOs.
 - Each multiplayer flow uses one Serverpod session and recipient-only state.
 - Accepted commands are followed by an authoritative snapshot or patch; Dart
   never reduces gameplay state locally.
-- The client has no dependency on the root application or `aonw_core` and has no
-  alternate game engine or per-command fallback.
+- The client depends only on its current Rust and Serverpod boundaries and has
+  no alternate game engine or per-command fallback.
 - Incompatible API versions and unknown closed-enum values fail closed.
 
 ## Quick start
@@ -62,5 +62,6 @@ Flutter visual goldens.
 
 Release qualification and privacy behavior are defined in
 [`docs/release.md`](docs/release.md) and [`docs/privacy.md`](docs/privacy.md).
-Client and engine ownership is formalized in
-[ADR 0010](../../docs/adr/0010-rust-successor-engine-and-client-boundary.md).
+Client and engine ownership is defined in the
+[Rust engine guide](../../engine/README.md) and the
+[multiplayer protocol](../../docs/multiplayer-protocol.md).

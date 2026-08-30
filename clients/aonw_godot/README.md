@@ -1,8 +1,8 @@
 # AoNW Godot Client
 
-This directory contains the greenfield Godot 4.7 presentation client and the
-AoNW Map Workbench. Terrain3D is the required terrain backend; the Rust engine
-owns gameplay rules and authoritative state.
+This directory contains the Godot 4.7 presentation client and the AoNW Map
+Workbench. Terrain3D is the required terrain backend; the Rust engine owns
+gameplay rules and authoritative state.
 
 ## Project map
 
@@ -29,8 +29,8 @@ models before it reaches presentation.
   `build_identity()` before the first session request; mismatches fail closed.
 - The runtime requires canonical map bundles and compiled Terrain3D artifacts;
   it has no mesh-terrain or procedural-texture fallback.
-- The client has no legacy adapter, legacy protocol, alternate engine, or
-  per-command fallback.
+- The client uses one current protocol and one engine, with no per-command
+  fallback path.
 - Incompatible API versions, unknown closed-enum values, and stale artifacts
   fail closed.
 
@@ -64,7 +64,6 @@ presentation artifacts, never another source of gameplay rules.
 
 ## Documentation
 
-Read [the Rust engine migration plan](../../docs/rust-engine-migration.md) for
-the cutover gates, [ADR 0010](../../docs/adr/0010-rust-successor-engine-and-client-boundary.md)
-for the runtime boundary, and [ADR 0011](../../docs/adr/0011-logical-map-workbench-and-generation.md)
-for logical map authoring.
+Read the [Rust engine guide](../../engine/README.md) for the runtime boundary
+and [ADR 0011](../../docs/adr/0011-logical-map-workbench-and-generation.md) for
+logical map authoring.

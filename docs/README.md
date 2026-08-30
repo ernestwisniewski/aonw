@@ -10,54 +10,46 @@ This directory documents contracts that are easy to misuse or expensive to redis
 | Understand the repository | This page |
 | Change gameplay rules | [`adr/README.md`](adr/README.md) and [`game-design/README.md`](game-design/README.md) |
 | Change multiplayer | [`multiplayer-protocol.md`](multiplayer-protocol.md) |
-| Work on Rust or Godot | [`rust-engine-migration.md`](rust-engine-migration.md) and [`rust-engine-persistence.md`](rust-engine-persistence.md) |
+| Work on the engine or a client | [`../engine/README.md`](../engine/README.md), [`../clients/README.md`](../clients/README.md), and [`rust-engine-persistence.md`](rust-engine-persistence.md) |
 | Change tests or quality gates | [`static-analysis.md`](static-analysis.md), [`test-coverage.md`](test-coverage.md), [`architecture-budgets.md`](architecture-budgets.md), [`mutation-testing.md`](mutation-testing.md), [`critical-e2e.md`](critical-e2e.md), [`multiplayer-protocol.md`](multiplayer-protocol.md) |
 | Release or operate the backend | [`build-and-deploy.md`](build-and-deploy.md) |
 
 ## Current architecture
 
-The shipping Dart engine and the Rust successor coexist during the strangler migration:
+Rust owns all gameplay rules and authoritative state. Local clients and the
+Serverpod host consume the same current contracts through dedicated native
+boundaries:
 
 ```mermaid
 flowchart LR
-  subgraph Today["Production today"]
-    Flutter["Flutter / Flame"] --> ClientAdapters["Application and transport adapters"]
-    ClientAdapters --> DartCore["packages/aonw_core"]
-    Serverpod["Serverpod"] --> DartCore
-    Serverpod --> PostgreSQL[(PostgreSQL)]
-  end
-
-  subgraph Successor["Successor path"]
-    FlutterFuture["Flutter local client"] --> RustRuntime["engine/ Rust runtime"]
-    Godot["Godot AoNW2"] --> RustRuntime
-    ServerpodFuture["Serverpod online host"] --> RustRuntime
-    ServerpodFuture --> PostgreSQLFuture[(PostgreSQL)]
-  end
-
-  DartCore -. parity-tested migration .-> RustRuntime
+  Flutter["Flutter / Flame"] --> LocalBoundary["Dart native binding"]
+  Godot["Godot"] --> GodotBoundary["GDExtension"]
+  LocalBoundary --> Rust["Rust engine and local runtime"]
+  GodotBoundary --> Rust
+  Flutter --> Serverpod["Serverpod auth and game host"]
+  Serverpod --> ServerBoundary["Server native binding"]
+  ServerBoundary --> Rust
+  Serverpod --> PostgreSQL[(PostgreSQL)]
 ```
 
-Until the cutover gates pass:
-
-- `packages/aonw_core/` is the production source of gameplay truth;
-- `engine/` is the compatibility port and future owner;
-- `clients/aonw_godot/` is presentation code and must not implement game rules;
-- an active save or match uses one primary engine, never a mix of command families.
+Flutter and Godot own presentation, input, accessibility, camera, and local
+animation. Serverpod owns authentication, authorization, transactions,
+persistence, delivery, reconnect, and operational concerns. None of those
+layers may reimplement game rules or canonical state transitions.
 
 ## Where code belongs
 
 | Path | Responsibility |
 | --- | --- |
-| `packages/aonw_core/lib/game/` | Authoritative Dart state, rules, commands, events, AI, and simulation. |
-| `packages/aonw_core/lib/protocol/` | Shared multiplayer wire models and compatibility constants. |
-| `lib/game/application/` | Use cases, ports, and client orchestration. |
-| `lib/game/infrastructure/` | Persistence, native, and transport adapters. |
-| `lib/game/presentation/` | Flutter, Riverpod, Flame rendering, HUD, and interaction state. |
-| `lib/api/` | Authentication, Serverpod sessions, live streams, and network command transport. |
-| `server/lib/src/` | Serverpod authentication, game transactions, persistence, and maintenance. |
-| `engine/crates/` | Rust domain, content, contracts, engine, runtime, and thin native adapters. |
+| `engine/crates/` | Rust domain, content, contracts, engine, local/server runtimes, projections, AI, and native adapters. |
+| `clients/aonw_flutter/lib/` | Flutter application, infrastructure, presentation, Flame viewport, auth, and multiplayer flow. |
+| `clients/aonw_godot/game/` | Godot application, infrastructure, and presentation. |
+| `clients/aonw_godot/editor/` | Map Workbench application and editor integration. |
+| `packages/aonw_rust_client/` | Dart API for the local Rust runtime. |
+| `packages/aonw_server_native/` | Dart API for the Serverpod Rust host boundary. |
+| `packages/aonw_server_client/` | Generated current auth and game protocol client. |
+| `server/lib/src/` | Authentication, game transactions, recipient persistence and delivery, maintenance, and observability. |
 | `content/` | Versioned logical maps and scenarios. |
-| `clients/aonw_godot/` | Godot application, infrastructure, presentation, and editor tooling. |
 
 A presentation widget may calculate layout and animation. It must not decide whether a command is legal, recalculate authoritative movement, or invent a different economy value.
 
@@ -66,24 +58,28 @@ A presentation widget may calculate layout and animation. It must not decide whe
 | Purpose | Command |
 | --- | --- |
 | Install the pinned workspace | `make bootstrap` |
-| Full Dart/Flutter quality gate | `make ci` |
+| Rust engine quality gate | `make rust-engine-quality-check` |
+| Flutter client gate | `make flutter-client-check` |
+| Godot client and native adapter gate | `make godot-check` |
+| Server gate | `make server-test` |
 | Start local API and seed accounts | `make local-start` |
 | Start API plus Flutter Web | `make local` |
 | Local multiplayer smoke | `make local-multiplayer-smoke` |
 | PostgreSQL-backed server smoke | `tool/run_postgres_smoke.sh` |
-| Rust workspace gate | `make rust-check` |
-| Godot and native adapter gate | `make godot-check` |
+| Complete release qualification | `make release-check` |
 
 ## Architecture decisions
 
-ADRs record constraints that should survive refactors. Read the index before changing state ownership, command boundaries, multiplayer compatibility, deployment identity, roads, strategic resources, or Rust migration.
+ADRs record constraints that should survive refactors. Read the index before
+changing state ownership, command boundaries, multiplayer protocol,
+deployment identity, roads, strategic resources, or a native trust boundary.
 
 - [`adr/0003-command-boundaries.md`](adr/0003-command-boundaries.md): UI intent, player commands, trusted system commands, and events are different types.
 - [`adr/0004-versioned-multiplayer-protocol.md`](adr/0004-versioned-multiplayer-protocol.md): functional compatibility, transient wire schemas, and durable schemas are versioned separately.
 - [`adr/0005-immutable-deployment.md`](adr/0005-immutable-deployment.md): immutable deployment promotion and promotion workflow transition controls.
 - [`adr/0006-transport-infrastructure.md`](adr/0006-transport-infrastructure.md): transport and traversal ownership for the online stack.
 - [`adr/0007-strategic-resource-stockpiles.md`](adr/0007-strategic-resource-stockpiles.md): strategic resources are production-gated and tracked for compatibility.
-- [`adr/0008-rust-engine-ownership-and-strangler-migration.md`](adr/0008-rust-engine-ownership-and-strangler-migration.md): Rust becomes the engine through an incremental, parity-tested migration.
+- [`../engine/README.md`](../engine/README.md): current engine ownership, workspace boundaries, and release qualification.
 
 ## Runbooks and policies
 
