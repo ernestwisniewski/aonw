@@ -22,6 +22,7 @@ const ENGINE_FEATURE_NAMES := [
 	"replayPlayback",
 ]
 const MOVEMENT_QUERY_KEY := &"movement_query"
+const BACKGROUND_AI_KEY := &"background_ai"
 
 var _transport: RefCounted
 var _response_decoder: AonwClientResponseDecoder
@@ -102,16 +103,32 @@ func advance_ai_turn(actor_player_id: String, command_budget: int) -> Dictionary
 	}, "aiTurnAdvanced"))
 
 func advance_ai_turn_async(actor_player_id: String, command_budget: int) -> Dictionary:
-	if not _transport.has_method("request_async"):
+	if (
+		not _transport.has_method("request_async")
+		and not _transport.has_method("request_coalesced_background_async")
+	):
 		return advance_ai_turn(actor_player_id, command_budget)
 	return _decode_ai_turn(await _execute_async({
 		"type": "advanceAiTurn",
 		"actorPlayerId": actor_player_id,
 		"commandBudget": command_budget,
-	}, "aiTurnAdvanced"))
+	}, "aiTurnAdvanced", BACKGROUND_AI_KEY, false))
 
 func close_session() -> Dictionary:
-	var result := _execute({"type": "closeSession"}, "sessionClosed")
+	return _decode_session_closed(_execute({"type": "closeSession"}, "sessionClosed"))
+
+func close_session_async() -> Dictionary:
+	if not _transport.has_method("request_async"):
+		return close_session()
+	return _decode_session_closed(
+		await _execute_async({"type": "closeSession"}, "sessionClosed")
+	)
+
+func cancel_background_ai() -> void:
+	if _transport.has_method("cancel_coalesced_request"):
+		_transport.call("cancel_coalesced_request", BACKGROUND_AI_KEY)
+
+func _decode_session_closed(result: Dictionary) -> Dictionary:
 	if not result["ok"]:
 		return result
 	if not _has_exact_fields(result["value"], ["type"]):
@@ -267,6 +284,7 @@ func _query_async(
 			{"type": "query", "query": query},
 			"query",
 			cancellation_key,
+			true,
 		),
 		"result",
 	)
@@ -309,15 +327,21 @@ func _execute_async(
 	request: Dictionary,
 	response_type: String,
 	cancellation_key: StringName = &"",
+	interactive: bool = false,
 ) -> Dictionary:
 	if int(_transport.call("client_api_version")) != ClientProtocol.API_VERSION:
 		return _failure(
 			"unsupported_client_api",
 			"The client transport uses an unsupported API version",
 		)
-	if cancellation_key != &"" and _transport.has_method("request_coalesced_async"):
+	var coalesced_method := (
+		&"request_coalesced_async"
+		if interactive
+		else &"request_coalesced_background_async"
+	)
+	if cancellation_key != &"" and _transport.has_method(coalesced_method):
 		var coalesced_envelope: Variant = await _transport.call(
-			"request_coalesced_async",
+			coalesced_method,
 			request,
 			cancellation_key,
 		)

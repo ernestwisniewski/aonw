@@ -89,12 +89,31 @@ func advance_ai_turn_async(actor_player_id: String, command_budget: int) -> Dict
 	return _track_value_stamp(result)
 
 func close() -> Dictionary:
-	if _lifecycle in [Lifecycle.CLOSED, Lifecycle.CLOSING]:
+	if not _begin_close():
 		return {"ok": true}
+	return _finish_close(_gateway.call("close_session"))
+
+func close_async() -> Dictionary:
+	if not _begin_close():
+		return {"ok": true}
+	var result: Dictionary
+	if _gateway.has_method("close_session_async"):
+		result = await _gateway.call("close_session_async")
+	else:
+		result = _gateway.call("close_session")
+	return _finish_close(result)
+
+func _begin_close() -> bool:
+	if _lifecycle in [Lifecycle.CLOSED, Lifecycle.CLOSING]:
+		return false
 	cancel_movement_queries()
+	if _gateway.has_method("cancel_background_ai"):
+		_gateway.call("cancel_background_ai")
 	_generation += 1
 	_lifecycle = Lifecycle.CLOSING
-	var result: Dictionary = _gateway.call("close_session")
+	return true
+
+func _finish_close(result: Dictionary) -> Dictionary:
 	if result["ok"]:
 		_stamp = null
 		_engine_features = null

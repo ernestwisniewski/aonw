@@ -244,6 +244,25 @@ class DeferredLifecycleGateway:
 		stamp.ruleset_hash = "ruleset"
 		return stamp
 
+class DeferredAsyncCloseGateway:
+	extends DeferredLifecycleGateway
+
+	signal close_response_released
+
+	var async_close_calls := 0
+	var background_cancellation_calls := 0
+
+	func close_session_async() -> Dictionary:
+		async_close_calls += 1
+		await close_response_released
+		return {"ok": true}
+
+	func cancel_background_ai() -> void:
+		background_cancellation_calls += 1
+
+	func release_close_response() -> void:
+		close_response_released.emit()
+
 class ExtraEnvelopeFieldTransport:
 	extends RefCounted
 
@@ -281,6 +300,10 @@ class TrackingTransport:
 	func request(body: Dictionary) -> Dictionary:
 		request_types.append(str(body.get("type", "")))
 		return delegate.call("request", body)
+
+	func request_async(body: Dictionary) -> Dictionary:
+		request_types.append(str(body.get("type", "")))
+		return await delegate.call("request_async", body)
 
 class BuildIdentitySessionDouble:
 	extends RefCounted
@@ -430,7 +453,7 @@ func run(failures: Array[String]) -> void:
 	_failures = failures
 	_test_native_build_identity_precondition()
 	_test_strict_document_boundary()
-	_test_native_engine_boundary()
+	await _test_native_engine_boundary()
 	await _test_shared_client_contract()
 
 func _test_native_build_identity_precondition() -> void:
@@ -793,7 +816,7 @@ func _test_native_engine_boundary() -> void:
 		verified["ok"] and verified["value"].entry_count == 5,
 		"native session verifies replay results in Rust",
 	)
-	session.close()
+	await session.close_async()
 	var restored: Dictionary = session.open_save(map_json, saved["value"])
 	_check(
 		restored["ok"] and restored["value"].revision == 4,
@@ -821,6 +844,7 @@ func _test_native_engine_boundary() -> void:
 		],
 		"one Godot session keeps one Rust transport for its complete lifecycle",
 	)
+	await session.close_async()
 
 func _test_shared_client_contract() -> void:
 	var inspect_request_file := FileAccess.open(
@@ -1204,6 +1228,30 @@ func _test_shared_client_contract() -> void:
 	)
 	failed_close_gateway.close_succeeds = true
 	failed_close_controller.close()
+	var async_close_gateway := DeferredAsyncCloseGateway.new()
+	var async_close_controller := LocalMatchSessionController.new(async_close_gateway)
+	async_close_controller.open("map", "scenario", "player")
+	var async_close_result := {}
+	_capture_async_close(async_close_controller, async_close_result)
+	await Engine.get_main_loop().process_frame
+	_check(
+		async_close_result.is_empty()
+		and async_close_controller.lifecycle()
+		== AonwLocalMatchSessionController.Lifecycle.CLOSING
+		and async_close_gateway.async_close_calls == 1
+		and async_close_gateway.background_cancellation_calls == 1,
+		"Godot begins close by cancelling background work without blocking a frame",
+	)
+	async_close_gateway.release_close_response()
+	await Engine.get_main_loop().process_frame
+	var completed_async_close: Dictionary = async_close_result.get("value", {})
+	_check(
+		completed_async_close.get("ok", false)
+		and async_close_controller.lifecycle()
+		== AonwLocalMatchSessionController.Lifecycle.CLOSED
+		and async_close_controller.revision() == 0,
+		"Godot completes async close only after the engine acknowledges it",
+	)
 	var never_ready := NeverReadySessionDouble.new()
 	var timeout_session := NativeLocalSession.new(never_ready, "expected-build")
 	var timeout_envelope: Dictionary = await timeout_session.request_async(
@@ -1291,6 +1339,12 @@ func _capture_coalesced_request(
 		&"movement_query",
 		1000,
 	)
+
+func _capture_async_close(
+	controller: AonwLocalMatchSessionController,
+	result: Dictionary,
+) -> void:
+	result["value"] = await controller.close_async()
 
 func _start_deferred_route(
 	controller: AonwLocalMatchSessionController,

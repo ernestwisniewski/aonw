@@ -129,7 +129,7 @@ func _open_source(source: AonwMapSource) -> void:
 	var invalid: Array = result["invalid_tiles"]
 	if not invalid.is_empty():
 		_status.text += " · invalid textures: %d" % invalid.size()
-	_setup_local_session(source)
+	await _setup_local_session(source)
 
 func _on_map_presented(world_size: Vector2, maximum_height: float) -> void:
 	_camera_rig.frame_map(world_size, _current_map.default_zoom(), maximum_height)
@@ -150,7 +150,7 @@ func _setup_local_session(source: AonwMapSource) -> void:
 	_reachable_hexes.clear()
 	_route = null
 	_confirm_move.visible = false
-	_local_session.close()
+	await _local_session.close_async()
 	_local_session_open = false
 	var scenario_path := "res://assets/scenarios/%s.json" % _current_map.map_id()
 	var opened := _open_local_match.execute(

@@ -63,7 +63,7 @@ func request_async(
 	body: Dictionary,
 	timeout_msec: int = ASYNC_REQUEST_TIMEOUT_MSEC,
 ) -> Dictionary:
-	return await _request_async(body, timeout_msec, &"")
+	return await _request_async(body, timeout_msec, &"", false)
 
 ## Keeps only the latest in-flight request for one interaction key.
 ## A replaced request completes with `stale_session_response` without exposing its result.
@@ -74,7 +74,17 @@ func request_coalesced_async(
 ) -> Dictionary:
 	if cancellation_key == &"":
 		return _failure("invalid_client_request", "A cancellation key is required")
-	return await _request_async(body, timeout_msec, cancellation_key)
+	return await _request_async(body, timeout_msec, cancellation_key, true)
+
+## Coalesces background work without promoting it ahead of user interaction.
+func request_coalesced_background_async(
+	body: Dictionary,
+	cancellation_key: StringName,
+	timeout_msec: int = ASYNC_REQUEST_TIMEOUT_MSEC,
+) -> Dictionary:
+	if cancellation_key == &"":
+		return _failure("invalid_client_request", "A cancellation key is required")
+	return await _request_async(body, timeout_msec, cancellation_key, false)
 
 func cancel_coalesced_request(cancellation_key: StringName) -> bool:
 	if not _coalesced_jobs.has(cancellation_key):
@@ -87,6 +97,7 @@ func _request_async(
 	body: Dictionary,
 	timeout_msec: int,
 	cancellation_key: StringName,
+	interactive: bool,
 ) -> Dictionary:
 	var precondition := _request_precondition()
 	if not precondition.is_empty():
@@ -97,7 +108,7 @@ func _request_async(
 	var job_id := int(
 		_session.request_json_async_interactive(request_document)
 		if (
-			cancellation_key != &""
+			interactive
 			and _session.has_method("request_json_async_interactive")
 		)
 		else _session.request_json_async(request_document)
