@@ -1,0 +1,10 @@
+{
+  "name": "@aonw/html-game-ui",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Dependency-free HTML mirror of the Age of New Worlds Flutter presentation layer.",
+  "scripts": {
+    "audit": "node audit.mjs",
+    "serve": "python3 server.py"
+  }
+}

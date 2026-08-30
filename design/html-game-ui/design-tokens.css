@@ -1,0 +1,88 @@
+@font-face {
+  font-family: "Cinzel";
+  src: url("../../assets/fonts/Cinzel-VariableFont_wght.ttf") format("truetype");
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lato";
+  src: url("../../assets/fonts/Lato-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lato";
+  src: url("../../assets/fonts/Lato-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lato";
+  src: url("../../assets/fonts/Lato-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Mirrored from lib/shared/theme/hud_palette.dart. */
+  --bg: #0a0a0e;
+  --surface: #101620;
+  --surface-deep: #1a2030;
+  --chip: #1e2738;
+  --chip-dim: #27384c;
+  --card: #131b26;
+  --card-accent: #1e2738;
+  --gold: #d2a856;
+  --gold-light: #f0dcae;
+  --gold-dark: #8c6926;
+  --copper: #b47a4e;
+  --copper-deep: #7a4a28;
+  --success: #6cc07a;
+  --warning: #f0c36a;
+  --danger: #c0392b;
+  --info: #6fa8d6;
+  --science: #9fc7b5;
+  --resources: #d6a56b;
+  --text-primary: #f0ede6;
+  --text-secondary: #a0a5b2;
+  --text-tertiary: #747787;
+  --text-bright: #f8f2e4;
+  --text-muted: #ebd9b0;
+
+  --black-08: rgba(0, 0, 0, 0.08);
+  --black-18: rgba(0, 0, 0, 0.18);
+  --black-35: rgba(0, 0, 0, 0.35);
+  --black-55: rgba(0, 0, 0, 0.55);
+  --black-70: rgba(0, 0, 0, 0.70);
+  --black-82: rgba(0, 0, 0, 0.82);
+  --gold-08: rgba(210, 168, 86, 0.08);
+  --gold-14: rgba(210, 168, 86, 0.14);
+  --gold-22: rgba(210, 168, 86, 0.22);
+  --gold-35: rgba(210, 168, 86, 0.35);
+  --gold-55: rgba(210, 168, 86, 0.55);
+  --gold-72: rgba(210, 168, 86, 0.72);
+  --copper-20: rgba(180, 122, 78, 0.20);
+  --copper-36: rgba(180, 122, 78, 0.36);
+
+  --font-display: "Cinzel", Georgia, serif;
+  --font-body: "Lato", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-button: 10px;
+  --radius-card: 14px;
+  --radius-round: 999px;
+
+  --shadow-flat: 0 8px 20px rgba(0, 0, 0, 0.32);
+  --shadow-raised: 0 16px 32px rgba(0, 0, 0, 0.71), 0 0 40px rgba(180, 122, 78, 0.12);
+  --shadow-gold: 0 0 16px rgba(210, 168, 86, 0.27);
+
+  --motion-snap: 140ms;
+  --motion-enter: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-slow: 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
