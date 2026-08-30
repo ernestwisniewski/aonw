@@ -4,7 +4,7 @@ extends RefCounted
 const ClientResponseDecoder := preload(
 	"res://game/infrastructure/engine/client_response_decoder.gd"
 )
-const ClientProtocol := preload("res://game/application/session/client_protocol.gd")
+const ClientProtocol := preload("res://game/infrastructure/engine/client_protocol.gd")
 const BUILD_IDENTITY_FILE := "aonw_native_build_identity.txt"
 const NATIVE_ROOT := "res://native"
 

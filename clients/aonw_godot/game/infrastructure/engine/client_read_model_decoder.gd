@@ -1,9 +1,8 @@
-class_name AonwClientReadModelDecoder
 extends RefCounted
 
 const ReadModels := preload("res://game/application/session/client_read_models.gd")
-const ClientEventSchema := preload("res://game/application/session/client_event_schema.gd")
-const ClientCommandSchema := preload("res://game/application/session/client_command_schema.gd")
+const ClientEventSchema := preload("res://game/infrastructure/engine/client_event_schema.gd")
+const ClientCommandSchema := preload("res://game/infrastructure/engine/client_command_schema.gd")
 const UNIT_KINDS := [
 	"commander", "warrior", "archer", "settler", "worker", "merchant", "scout",
 	"spearman", "cavalry", "catapult", "heavyInfantry", "fieldCannon", "rifleman",

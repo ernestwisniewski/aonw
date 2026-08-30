@@ -2,13 +2,13 @@ class_name AonwLocalMatchGateway
 extends RefCounted
 
 const ReadModelDecoder := preload(
-	"res://game/application/session/client_read_model_decoder.gd"
+	"res://game/infrastructure/engine/client_read_model_decoder.gd"
 )
 const ReadModels := preload(
 	"res://game/application/session/client_read_models.gd"
 )
 const ClientProtocol := preload(
-	"res://game/application/session/client_protocol.gd"
+	"res://game/infrastructure/engine/client_protocol.gd"
 )
 const FEATURE_NAMES := [
 	"inspectMap", "matchStart", "actorHandoff", "aiTurns", "snapshot",

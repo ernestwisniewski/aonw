@@ -229,6 +229,15 @@ fi
 echo "Dependency checker rejected raw wire protocol in the Godot application controller."
 rm "${dependency_fixture}/clients/aonw_godot/game/application/session/local_match_session_controller.gd"
 
+printf 'extends RefCounted\n' \
+  >"${dependency_fixture}/clients/aonw_godot/game/application/session/client_wire_decoder.gd"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted a wire decoder in the Godot application layer." >&2
+  exit 1
+fi
+echo "Dependency checker rejected a wire decoder in the Godot application layer."
+rm "${dependency_fixture}/clients/aonw_godot/game/application/session/client_wire_decoder.gd"
+
 printf '%s\n' \
   '[configuration]' \
   'entry_symbol = "gdext_rust_init"' \

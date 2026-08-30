@@ -84,12 +84,20 @@ if [[ -d "${successor_godot}/game" ]]; then
     find "${successor_godot}/game" -type f -name '*.gd' -print0
   )
 
-  local_session_controller="${successor_godot}/game/application/session/local_match_session_controller.gd"
-  if [[ -f "${local_session_controller}" ]]; then
-    grep -nHE \
-      '"type"[[:space:]]*:|apiVersion|client_api_version|request_async|call\("request"' \
-      "${local_session_controller}" \
-      >>"${violations}" || true
+  application_session="${successor_godot}/game/application/session"
+  if [[ -d "${application_session}" ]]; then
+    while IFS= read -r -d '' source_file; do
+      grep -nHE \
+        '"type"[[:space:]]*:|apiVersion|expectedRevision|mapDocument|scenarioDocument|client_api_version|request_async|call\("request"' \
+        "${source_file}" \
+        >>"${violations}" || true
+    done < <(
+      find "${application_session}" -type f -name '*.gd' -print0
+    )
+    find "${application_session}" -type f \
+      \( -name 'client_*decoder.gd' -o -name 'client_*schema.gd' -o -name 'client_protocol.gd' \) \
+      -print \
+      >>"${violations}"
   fi
 fi
 

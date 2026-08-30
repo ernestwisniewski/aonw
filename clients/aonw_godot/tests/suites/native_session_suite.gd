@@ -12,10 +12,10 @@ const ClientResponseDecoder := preload(
 )
 const ClientReadModels := preload("res://game/application/session/client_read_models.gd")
 const ClientReadModelDecoder := preload(
-	"res://game/application/session/client_read_model_decoder.gd"
+	"res://game/infrastructure/engine/client_read_model_decoder.gd"
 )
 const ClientCommandSchema := preload(
-	"res://game/application/session/client_command_schema.gd"
+	"res://game/infrastructure/engine/client_command_schema.gd"
 )
 const LocalMatchSessionController := preload(
 	"res://game/application/session/local_match_session_controller.gd"
