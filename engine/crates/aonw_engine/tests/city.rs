@@ -1,4 +1,4 @@
-//! Greenfield city and territory acceptance tests.
+//! City and territory acceptance tests.
 
 use aonw_content::RulesetDefinition;
 use aonw_domain::{
@@ -152,12 +152,15 @@ fn founding_rejection_precedence_is_revision_then_control_then_founder_kind() {
     let founder_id = unit_id("warrior-1");
     let foreign_state = state(
         &map,
-        vec![unit(
-            "warrior-1",
-            &foreign,
-            UnitKind::Warrior,
-            HexCoord::new(2, 2),
-        )],
+        vec![
+            unit(
+                "warrior-1",
+                &foreign,
+                UnitKind::Warrior,
+                HexCoord::new(2, 2),
+            ),
+            unit("actor-1", &actor, UnitKind::Warrior, HexCoord::new(0, 0)),
+        ],
         Vec::new(),
         InteractionState::default(),
     );

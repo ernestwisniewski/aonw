@@ -282,7 +282,7 @@ fn route_search_handles_the_maximum_supported_map() {
 }
 
 #[test]
-fn imported_high_movement_balance_does_not_change_query_precedence() {
+fn oversized_movement_balance_is_bounded_before_route_search() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(2, 1, &[], &[]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
@@ -297,9 +297,10 @@ fn imported_high_movement_balance_does_not_change_query_precedence() {
         EngineContext::new(&actor, &map, MovementPlanningView::fog_disabled()),
         TerrainMovementQuery::new(12, &unit_id, HexCoord::new(1, 0)),
     )
-    .expect("imported high balance remains usable until normalization");
+    .expect("oversized balance is bounded before search");
 
     assert_eq!(plan.destination(), HexCoord::new(1, 0));
+    assert_eq!(plan.available_movement(), MovementUnits::new(6));
 }
 
 #[test]

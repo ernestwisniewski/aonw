@@ -154,7 +154,14 @@ fn digest_changes_with_unit_progression() {
     });
     assert_unit_digest_change(&source, baseline, "carried artifact", |candidate| {
         candidate.units[0].carried_artifact_id = Some("artifact-4".to_owned());
+        candidate.units[0].activity.excavating_artifact_id = None;
+        candidate.artifacts[0].location = WorldArtifactLocationDto::Map {
+            coordinate: coordinate(1, 1),
+        };
         candidate.artifacts[1].id = "artifact-4".to_owned();
+        candidate.artifacts[1].location = WorldArtifactLocationDto::Carried {
+            unit_id: "unit-1".to_owned(),
+        };
     });
 }
 

@@ -384,10 +384,10 @@ fn digest_changes_with_match_identity_and_turn_lifecycle() {
         candidate.turn_lifecycle.afk_player_ids.clear();
     });
     assert_digest_change(&source, "kicked players", |candidate| {
-        candidate
-            .turn_lifecycle
-            .kicked_player_ids
-            .push("player-1".to_owned());
+        let turn = &mut candidate.turn_lifecycle;
+        turn.kicked_player_ids.push("player-2".to_owned());
+        turn.required_submission_player_ids = vec!["player-1".to_owned()];
+        turn.submitted_player_ids.clear();
     });
     assert_digest_change(&source, "turn start", |candidate| {
         candidate.turn_lifecycle.turn_started_at = Some("2026-08-23T12:34:57.123456Z".to_owned());

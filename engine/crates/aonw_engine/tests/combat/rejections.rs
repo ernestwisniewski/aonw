@@ -118,12 +118,7 @@ fn attack_capability_and_visibility_precede_target_identity() {
             None,
         )],
         Vec::new(),
-        FogOfWar::try_new([PlayerFog::new(
-            actor.clone(),
-            [HexCoord::new(0, 0)],
-            [HexCoord::new(0, 0)],
-        )])
-        .expect("fog"),
+        actor_fog(&actor, [HexCoord::new(0, 0)], [HexCoord::new(0, 0)]),
         Diplomacy::default(),
     );
     assert_eq!(

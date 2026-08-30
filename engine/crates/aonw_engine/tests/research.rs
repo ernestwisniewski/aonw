@@ -1,4 +1,4 @@
-//! Greenfield research options and selection-command tests.
+//! Research options and selection-command tests.
 
 use std::collections::BTreeMap;
 
@@ -121,7 +121,7 @@ fn selection_applies_capped_overflow_clears_owned_pending_and_is_revision_bound(
 }
 
 #[test]
-fn stale_revision_precedes_actor_and_locked_technology_rejections() {
+fn stale_revision_precedes_unavailable_technology_rejections() {
     let (map, state, actor) = fixture();
     let outsider = PlayerId::new("outsider").expect("outsider");
     let outsider_context = EngineContext::canonical(&outsider, &map, RulesetDefinition::standard());
@@ -135,15 +135,18 @@ fn stale_revision_precedes_actor_and_locked_technology_rejections() {
         stale_transition.rejection().expect("rejection").code(),
         CommandRejectionCode::StaleRevision
     );
-    let wrong_actor = GameEngine::apply_player_owned(
+    let unavailable_for_new_participant = GameEngine::apply_player_owned(
         state.clone(),
         outsider_context,
         PlayerCommand::SelectTechnology(SelectTechnologyCommand::new(9, TechnologyId::Education)),
     )
-    .expect("actor rejection");
+    .expect("unavailable technology rejection");
     assert_eq!(
-        wrong_actor.rejection().expect("rejection").code(),
-        CommandRejectionCode::TechnologyPlayerNotControlled
+        unavailable_for_new_participant
+            .rejection()
+            .expect("rejection")
+            .code(),
+        CommandRejectionCode::TechnologyNotAvailable
     );
 
     let context = EngineContext::canonical(&actor, &map, RulesetDefinition::standard());
@@ -185,6 +188,7 @@ fn option(
 fn fixture() -> (MapDefinition, GameState, PlayerId) {
     let map = map();
     let actor = PlayerId::new("player-1").expect("actor");
+    let outsider = PlayerId::new("outsider").expect("outsider");
     let city_id = CityId::new("capital").expect("city");
     let farm_a = HexCoord::new(2, 1);
     let farm_b = HexCoord::new(1, 2);
@@ -208,37 +212,7 @@ fn fixture() -> (MapDefinition, GameState, PlayerId) {
         TransportNetwork::default(),
     )
     .expect("infrastructure");
-    let participant = Participant::try_new(
-        actor.clone(),
-        "Player",
-        0xff00_0000,
-        PlayerCountry::Poland,
-        PlayerKind::Human,
-        None,
-    )
-    .expect("participant");
-    let game_length = GameLengthConfig::try_new(
-        GameLengthKind::TargetMinutes,
-        Some(60),
-        None,
-        PaceProfile::Standard60,
-        false,
-    )
-    .expect("game length");
-    let rules = MatchRules::new(game_length, VictoryRules::default(), BTreeMap::new());
-    let identity =
-        MatchIdentity::try_new(rules, [participant], GameMode::Multiplayer).expect("identity");
-    let lifecycle = TurnLifecycle::try_new(
-        &identity,
-        BTreeMap::from([(actor.clone(), PlayerTurnState::Active)]),
-        [actor.clone()],
-        [],
-        BTreeMap::new(),
-        [],
-        [],
-        None,
-    )
-    .expect("lifecycle");
+    let match_lifecycle = active_match(&actor, &outsider);
     let research = ResearchState::try_new([(
         actor.clone(),
         PlayerResearchState::try_new(
@@ -276,10 +250,59 @@ fn fixture() -> (MapDefinition, GameState, PlayerId) {
             .expect("wonder registry"),
     ))
     .with_interaction(interaction)
-    .with_match_lifecycle(MatchLifecycle::new(identity, lifecycle))
+    .with_match_lifecycle(match_lifecycle)
     .try_build()
     .expect("state");
     (map, state, actor)
+}
+
+fn active_match(actor: &PlayerId, outsider: &PlayerId) -> MatchLifecycle {
+    let participants = [
+        Participant::try_new(
+            actor.clone(),
+            "Player",
+            0xff00_0000,
+            PlayerCountry::Poland,
+            PlayerKind::Human,
+            None,
+        )
+        .expect("participant"),
+        Participant::try_new(
+            outsider.clone(),
+            "Outsider",
+            0xff00_0001,
+            PlayerCountry::France,
+            PlayerKind::Human,
+            None,
+        )
+        .expect("participant"),
+    ];
+    let game_length = GameLengthConfig::try_new(
+        GameLengthKind::TargetMinutes,
+        Some(60),
+        None,
+        PaceProfile::Standard60,
+        false,
+    )
+    .expect("game length");
+    let rules = MatchRules::new(game_length, VictoryRules::default(), BTreeMap::new());
+    let identity =
+        MatchIdentity::try_new(rules, participants, GameMode::Multiplayer).expect("identity");
+    let lifecycle = TurnLifecycle::try_new(
+        &identity,
+        BTreeMap::from([
+            (actor.clone(), PlayerTurnState::Active),
+            (outsider.clone(), PlayerTurnState::Active),
+        ]),
+        [actor.clone(), outsider.clone()],
+        [],
+        BTreeMap::new(),
+        [],
+        [],
+        None,
+    )
+    .expect("lifecycle");
+    MatchLifecycle::new(identity, lifecycle)
 }
 
 fn map() -> MapDefinition {

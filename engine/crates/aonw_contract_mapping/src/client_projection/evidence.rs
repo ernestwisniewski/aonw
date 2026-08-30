@@ -27,6 +27,10 @@ use logistics::{logistics_evidence, movement_execution};
 
 #[allow(clippy::too_many_lines)]
 /// Maps a canonical domain event to its strict current client DTO.
+///
+/// # Panics
+///
+/// Panics if an engine-produced unit combat event omits its required subject unit.
 #[must_use]
 pub fn encode_client_event(value: &DomainEvent) -> ClientEventDto {
     match value {
@@ -265,6 +269,10 @@ pub fn encode_client_event(value: &DomainEvent) -> ClientEventDto {
 }
 
 /// Maps complete command execution evidence to its strict current client DTO.
+///
+/// # Panics
+///
+/// Panics if complete evidence is unexpectedly rejected by the unfiltered encoder.
 #[must_use]
 pub fn encode_client_evidence(value: &ExecutionEvidence) -> ClientEvidenceDto {
     encode_evidence(value, |_| true, |_| true, |_| true)

@@ -295,7 +295,7 @@ impl PartialOrd for SightNode {
 #[cfg(test)]
 mod tests {
     use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
-    use aonw_domain::{FogOfWar, HexCoord, PlayerId};
+    use aonw_domain::{FogOfWar, HexCoord, PlayerFog, PlayerId};
 
     use super::visible_from_source;
 
@@ -338,7 +338,13 @@ mod tests {
         )
         .build()
         .expect("unit");
-        let fog = super::recompute_after_move(&FogOfWar::default(), &map, &player, &[&unit], &[]);
+        let current = FogOfWar::try_new([PlayerFog::new(
+            PlayerId::new("player-2").expect("other player"),
+            [],
+            [],
+        )])
+        .expect("fog");
+        let fog = super::recompute_after_move(&current, &map, &player, &[&unit], &[]);
         assert!(fog.tracks(&player));
         assert!(
             !fog.player(&player)

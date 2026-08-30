@@ -1,4 +1,4 @@
-//! Greenfield movement-logistics acceptance tests.
+//! Movement-logistics acceptance tests.
 
 use std::collections::BTreeMap;
 
@@ -176,7 +176,7 @@ fn merchant_rejection_precedence_is_revision_then_control_then_kind() {
             UnitKind::Warrior,
             HexCoord::new(0, 0),
         )],
-        Vec::new(),
+        vec![city("actor-city", &actor, HexCoord::new(2, 1))],
         FogOfWar::default(),
     );
     let apply = |revision| {

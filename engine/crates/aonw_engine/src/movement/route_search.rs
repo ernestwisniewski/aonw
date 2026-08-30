@@ -235,7 +235,7 @@ fn prepare_route_search(
             unit.carried_artifact_id().is_some(),
         )
     });
-
+    let available_movement = core::cmp::min(available_movement, maximum_movement);
     let start_state = RouteState {
         tile_index: start_index,
         remaining: available_movement.get(),
@@ -252,7 +252,7 @@ fn prepare_route_search(
         parent: None,
         enter_cost: MovementUnits::ZERO,
     }];
-    let remaining_slots = usize::try_from(maximum_movement.get().max(available_movement.get()))
+    let remaining_slots = usize::try_from(maximum_movement.get())
         .ok()?
         .checked_add(1)?;
     let state_slot_count = map

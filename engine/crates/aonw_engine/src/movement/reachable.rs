@@ -183,10 +183,12 @@ pub(super) fn movement_available_for_query(
     unit: &Unit,
     ruleset: &aonw_content::RulesetDefinition,
 ) -> MovementUnits {
+    let maximum =
+        maximum_movement_units(ruleset, unit.kind(), unit.carried_artifact_id().is_some());
     if unit.posture() == UnitPosture::Fortified {
-        maximum_movement_units(ruleset, unit.kind(), unit.carried_artifact_id().is_some())
+        maximum
     } else {
-        unit.movement_units()
+        core::cmp::min(unit.movement_units(), maximum)
     }
 }
 

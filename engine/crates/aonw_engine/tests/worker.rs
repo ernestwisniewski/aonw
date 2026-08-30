@@ -1,4 +1,4 @@
-//! Greenfield worker, automation, and infrastructure acceptance tests.
+//! Canonical worker, automation, and infrastructure acceptance tests.
 
 use aonw_content::RulesetDefinition;
 use aonw_domain::{
@@ -32,7 +32,7 @@ fn query_select_confirm_and_cancel_share_one_technology_gated_rule_path() {
     let base = state(
         &map,
         vec![worker("worker-1", &actor, target, 2)],
-        vec![owned_city],
+        vec![owned_city.clone()],
         infrastructure([]),
         InteractionState::default(),
         &[TechnologyId::Agriculture],
@@ -84,15 +84,16 @@ fn query_select_confirm_and_cancel_share_one_technology_gated_rule_path() {
             improvement: Some(FieldImprovementKind::Farm),
         }),
     );
+    let foreign = player("player-2");
+    let foreign_city = city("city-2", &foreign, HexCoord::new(5, 3), []);
     let confirm_state = state(
         &map,
         vec![worker("worker-1", &actor, target, 1)],
-        vec![city("city-1", &actor, HexCoord::new(0, 1), [target])],
+        vec![owned_city, foreign_city],
         infrastructure([]),
         pending,
         &[TechnologyId::Agriculture],
     );
-    let foreign = player("player-2");
     let foreign_context = EngineContext::canonical(&foreign, &map, RulesetDefinition::standard());
     let rejected = GameEngine::apply_player_owned(
         confirm_state.clone(),

@@ -39,10 +39,11 @@ pub(super) fn complete_state_contract() -> GameStateDto {
                 },
             )]),
         },
-        wonder_registry: WonderRegistryDto(BTreeMap::from([(
-            WonderTypeDto::CentralBank,
-            "player-2".to_owned(),
-        )])),
+        wonder_registry: WonderRegistryDto(BTreeMap::from([
+            (WonderTypeDto::CentralBank, "player-2".to_owned()),
+            (WonderTypeDto::GreatLibrary, "player-1".to_owned()),
+            (WonderTypeDto::GreatWall, "player-1".to_owned()),
+        ])),
         intended_attacks: vec![IntendedAttackDto {
             attacker_unit_id: "unit-1".to_owned(),
             defender_col: 2,
@@ -69,8 +70,8 @@ pub(super) fn complete_state_contract() -> GameStateDto {
             WorldArtifactDto {
                 id: "artifact-2".to_owned(),
                 artifact_type: WorldArtifactTypeDto::HeroSword,
-                location: WorldArtifactLocationDto::Carried {
-                    unit_id: "unit-1".to_owned(),
+                location: WorldArtifactLocationDto::Map {
+                    coordinate: coordinate(4, 2),
                 },
             },
         ],
@@ -92,11 +93,7 @@ pub(super) fn complete_state_contract() -> GameStateDto {
                 improvement: Some(FieldImprovementKindDto::Mine),
             }),
         },
-        fog_of_war: vec![PlayerFogDto {
-            player_id: "player-1".to_owned(),
-            discovered_hexes: vec![coordinate(0, 0), coordinate(1, 1)],
-            visible_hexes: vec![coordinate(1, 1)],
-        }],
+        fog_of_war: complete_fog(),
         diplomacy: complete_diplomacy(),
         resource_trade_agreements: complete_resource_trades(),
         domination_hold_turns_by_player_id: BTreeMap::from([("player-1".to_owned(), 2)]),
@@ -119,6 +116,21 @@ pub(super) fn complete_state_contract() -> GameStateDto {
             built_by_city_id: Some("city-1".to_owned()),
         }],
     }
+}
+
+fn complete_fog() -> Vec<PlayerFogDto> {
+    vec![
+        PlayerFogDto {
+            player_id: "player-1".to_owned(),
+            discovered_hexes: vec![coordinate(0, 0), coordinate(1, 1)],
+            visible_hexes: vec![coordinate(1, 1)],
+        },
+        PlayerFogDto {
+            player_id: "player-2".to_owned(),
+            discovered_hexes: vec![coordinate(4, 4)],
+            visible_hexes: vec![coordinate(4, 4)],
+        },
+    ]
 }
 
 fn complete_diplomacy() -> DiplomacyStateDto {
@@ -367,7 +379,7 @@ fn complete_unit() -> UnitDto {
         hit_points: Some(7),
         experience_points: 11,
         posture: UnitPostureDto::AutoWorking,
-        carried_artifact_id: Some("artifact-2".to_owned()),
+        carried_artifact_id: None,
     }
 }
 

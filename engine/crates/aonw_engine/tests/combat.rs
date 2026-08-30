@@ -1,4 +1,4 @@
-//! Greenfield C3 combat command and preview acceptance tests.
+//! Canonical combat command and preview acceptance tests.
 
 #[path = "combat/integrated_turn.rs"]
 mod integrated_turn;
@@ -8,6 +8,8 @@ mod manifest;
 mod mechanics;
 #[path = "combat/rejections.rs"]
 mod rejections;
+#[path = "combat/support.rs"]
+mod support;
 
 use std::collections::BTreeMap;
 
@@ -15,14 +17,15 @@ use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, Ti
 use aonw_domain::{
     City, CityConquestAction, CityId, CombatState, Diplomacy, DiplomaticRelationStatus, FogOfWar,
     GameMode, GameState, HexCoord, IntendedAttack, MatchIdentity, MatchLifecycle, MatchRules,
-    MovementUnits, Participant, PlayerCountry, PlayerFog, PlayerId, PlayerKind, PlayerPair,
-    PlayerTurnState, StateRevision, TurnLifecycle, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
+    MovementUnits, Participant, PlayerCountry, PlayerId, PlayerKind, PlayerPair, PlayerTurnState,
+    StateRevision, TurnLifecycle, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
 };
 use aonw_engine::{
     AttackHexCommand, CombatPreviewQuery, CombatTarget, CommandRejectionCode, DomainEvent,
     EngineContext, ExecutionEvidence, GameEngine, GameQuery, PlayerCommand, QueryResult,
     TurnCommand,
 };
+use support::actor_fog;
 
 #[test]
 fn preview_and_attack_share_the_exact_combat_input() {
@@ -137,12 +140,7 @@ fn hidden_target_rejection_does_not_disclose_target_or_mutate_state() {
             ),
         ],
         Vec::new(),
-        FogOfWar::try_new([PlayerFog::new(
-            actor.clone(),
-            [HexCoord::new(0, 0)],
-            [HexCoord::new(0, 0)],
-        )])
-        .expect("fog"),
+        actor_fog(&actor, [HexCoord::new(0, 0)], [HexCoord::new(0, 0)]),
         Diplomacy::default(),
     );
     let original_digest = GameEngine::state_digest(&state);
