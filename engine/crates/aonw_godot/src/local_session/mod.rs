@@ -15,7 +15,7 @@ const BUILD_IDENTITY: &str = match option_env!("AONW_GODOT_BUILD_IDENTITY") {
     Some(identity) => identity,
     None => "aonw_godot/development",
 };
-const MAX_OUTSTANDING_JOBS: usize = 64;
+const MAX_OUTSTANDING_JOBS: usize = 8;
 
 #[derive(GodotClass)]
 #[class(tool, base=RefCounted)]
@@ -79,6 +79,14 @@ impl AonwLocalSession {
             .unwrap_or_default();
         GString::from(response.as_str())
     }
+
+    /// Cancels collection of one queued response without blocking the main thread.
+    #[func]
+    fn cancel_request(&mut self, job_id: i64) -> bool {
+        u64::try_from(job_id)
+            .ok()
+            .is_some_and(|job_id| self.worker.cancel(job_id))
+    }
 }
 
 fn dispatch_json(runtime: &mut LocalRuntime, input: &str) -> String {
@@ -108,8 +116,9 @@ struct SessionWorker {
     responses: Receiver<WorkerResponse>,
     pending: BTreeMap<u64, String>,
     outstanding: BTreeSet<u64>,
+    cancelled_jobs: BTreeSet<u64>,
     next_job_id: u64,
-    cancelled: Arc<AtomicBool>,
+    shutdown: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
 }
 
@@ -118,16 +127,16 @@ impl SessionWorker {
         let (request_sender, request_receiver) =
             mpsc::sync_channel::<WorkerRequest>(MAX_OUTSTANDING_JOBS);
         let (response_sender, response_receiver) = mpsc::channel::<WorkerResponse>();
-        let cancelled = Arc::new(AtomicBool::new(false));
-        let worker_cancelled = Arc::clone(&cancelled);
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let worker_shutdown = Arc::clone(&shutdown);
         let thread = thread::spawn(move || {
             let mut runtime = LocalRuntime::default();
             while let Ok(request) = request_receiver.recv() {
-                if worker_cancelled.load(Ordering::Acquire) {
+                if worker_shutdown.load(Ordering::Acquire) {
                     break;
                 }
                 let output = dispatch_json(&mut runtime, &request.input);
-                if worker_cancelled.load(Ordering::Acquire) {
+                if worker_shutdown.load(Ordering::Acquire) {
                     break;
                 }
                 if response_sender
@@ -146,13 +155,15 @@ impl SessionWorker {
             responses: response_receiver,
             pending: BTreeMap::new(),
             outstanding: BTreeSet::new(),
+            cancelled_jobs: BTreeSet::new(),
             next_job_id: 1,
-            cancelled,
+            shutdown,
             thread: Some(thread),
         }
     }
 
     fn enqueue(&mut self, input: String) -> Option<u64> {
+        self.drain();
         if self.outstanding.len() >= MAX_OUTSTANDING_JOBS {
             return None;
         }
@@ -184,7 +195,7 @@ impl SessionWorker {
                     return response.output;
                 }
                 Ok(response) => {
-                    self.pending.insert(response.job_id, response.output);
+                    self.store_response(response);
                 }
                 Err(_) => {
                     self.outstanding.clear();
@@ -211,18 +222,39 @@ impl SessionWorker {
         response
     }
 
+    fn cancel(&mut self, job_id: u64) -> bool {
+        self.drain();
+        if self.pending.remove(&job_id).is_some() {
+            self.outstanding.remove(&job_id);
+            return true;
+        }
+        if !self.outstanding.contains(&job_id) {
+            return false;
+        }
+        self.cancelled_jobs.insert(job_id);
+        true
+    }
+
     fn drain(&mut self) {
         while let Ok(response) = self.responses.try_recv() {
-            self.pending.insert(response.job_id, response.output);
+            self.store_response(response);
         }
+    }
+
+    fn store_response(&mut self, response: WorkerResponse) {
+        if self.cancelled_jobs.remove(&response.job_id) {
+            self.outstanding.remove(&response.job_id);
+            return;
+        }
+        self.pending.insert(response.job_id, response.output);
     }
 }
 
 impl Drop for SessionWorker {
     fn drop(&mut self) {
-        self.cancelled.store(true, Ordering::Release);
+        self.shutdown.store(true, Ordering::Release);
         self.requests.take();
-        // Dropping a running handle detaches it. The cancellation flag stops queued work,
+        // Dropping a running handle detaches it. The shutdown flag stops queued work,
         // while the current bounded request may finish without blocking Godot's main thread.
         if let Some(thread) = self.thread.take()
             && thread.is_finished()

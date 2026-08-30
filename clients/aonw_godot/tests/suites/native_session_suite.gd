@@ -248,6 +248,27 @@ class BuildIdentitySessionDouble:
 		requested = true
 		return ""
 
+class NeverReadySessionDouble:
+	extends RefCounted
+
+	var cancelled_job_id := -1
+
+	func client_api_version() -> int:
+		return 7
+
+	func build_identity() -> String:
+		return "expected-build"
+
+	func request_json_async(_document: String) -> int:
+		return 41
+
+	func is_response_ready(_job_id: int) -> bool:
+		return false
+
+	func cancel_request(job_id: int) -> bool:
+		cancelled_job_id = job_id
+		return true
+
 func run(failures: Array[String]) -> void:
 	_failures = failures
 	_test_native_build_identity_precondition()
@@ -1013,6 +1034,22 @@ func _test_shared_client_contract() -> void:
 	)
 	failed_close_gateway.close_succeeds = true
 	failed_close_controller.close()
+	var never_ready := NeverReadySessionDouble.new()
+	var timeout_session := NativeLocalSession.new(never_ready, "expected-build")
+	var timeout_envelope: Dictionary = await timeout_session.request_async(
+		{"type": "capabilities"},
+		0,
+	)
+	_check(
+		timeout_envelope.get("outcome", {}).get("error", {}).get("code", "")
+		== "client_timeout"
+		and never_ready.cancelled_job_id == 41
+		and _has_failure_kind(
+			ClientFailure.result("client_timeout", "request timed out"),
+			ClientFailure.Kind.TIMEOUT,
+		),
+		"Godot times out and physically cancels an abandoned native job",
+	)
 	_check(
 		_has_failure_kind(
 			ClientFailure.result("unit_not_found", "authoritative rejection"),

@@ -1,6 +1,6 @@
 extends RefCounted
 
-enum Kind { LIFECYCLE, STALE_RESPONSE, TRANSPORT, PROTOCOL, COMPATIBILITY, ENGINE }
+enum Kind { LIFECYCLE, STALE_RESPONSE, TRANSPORT, TIMEOUT, PROTOCOL, COMPATIBILITY, ENGINE }
 
 const KINDS_BY_CODE := {
 	&"session_not_open": Kind.LIFECYCLE,
@@ -8,6 +8,7 @@ const KINDS_BY_CODE := {
 	&"stale_session_response": Kind.STALE_RESPONSE,
 	&"native_engine_unavailable": Kind.TRANSPORT,
 	&"engine_worker_unavailable": Kind.TRANSPORT,
+	&"client_timeout": Kind.TIMEOUT,
 	&"invalid_client_response": Kind.PROTOCOL,
 	&"invalid_native_response": Kind.PROTOCOL,
 	&"unsupported_client_api": Kind.COMPATIBILITY,

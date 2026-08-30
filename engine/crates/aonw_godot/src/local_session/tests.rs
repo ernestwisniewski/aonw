@@ -5,8 +5,10 @@ use aonw_contracts::client::{
 };
 use aonw_local_runtime::LocalRuntime;
 use serde_json::json;
+use std::thread;
+use std::time::Duration;
 
-use super::{adapter_build_identity, dispatch_json};
+use super::{MAX_OUTSTANDING_JOBS, SessionWorker, adapter_build_identity, dispatch_json};
 
 #[test]
 fn native_adapter_exposes_its_build_identity() {
@@ -159,4 +161,41 @@ fn native_adapter_rejects_non_protocol_and_foreign_version_documents() {
         };
         assert_eq!(error.code, expected_code);
     }
+}
+
+#[test]
+fn native_worker_bounds_and_discards_cancelled_jobs() {
+    let mut worker = SessionWorker::new();
+    let input = request(ClientRequestBodyDto::Capabilities);
+    let job_ids = (0..MAX_OUTSTANDING_JOBS)
+        .map(|_| worker.enqueue(input.clone()).expect("bounded worker job"))
+        .collect::<Vec<_>>();
+    assert!(worker.enqueue(input.clone()).is_none());
+
+    for job_id in job_ids {
+        assert!(worker.cancel(job_id));
+    }
+
+    let replacement_job = (0..250)
+        .find_map(|_| {
+            let job_id = worker.enqueue(input.clone());
+            if job_id.is_none() {
+                thread::sleep(Duration::from_millis(1));
+            }
+            job_id
+        })
+        .expect("cancelled jobs release bounded worker capacity");
+    assert!(worker.cancel(replacement_job));
+
+    for _ in 0..250 {
+        worker.drain();
+        if worker.outstanding.is_empty() {
+            break;
+        }
+        thread::sleep(Duration::from_millis(1));
+    }
+
+    assert!(worker.outstanding.is_empty());
+    assert!(worker.pending.is_empty());
+    assert!(worker.cancelled_jobs.is_empty());
 }

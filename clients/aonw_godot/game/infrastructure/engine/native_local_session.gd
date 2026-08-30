@@ -7,6 +7,7 @@ const ClientResponseDecoder := preload(
 const ClientProtocol := preload("res://game/infrastructure/engine/client_protocol.gd")
 const BUILD_IDENTITY_FILE := "aonw_native_build_identity.txt"
 const NATIVE_ROOT := "res://native"
+const ASYNC_REQUEST_TIMEOUT_MSEC := 30_000
 
 var _session: Object
 var _native_api_version := 0
@@ -57,14 +58,23 @@ func request(body: Dictionary) -> Dictionary:
 
 ## Executes engine work on its serial native worker without blocking Godot's main thread.
 ## Callers must use `await session.request_async(body)`.
-func request_async(body: Dictionary) -> Dictionary:
+func request_async(
+	body: Dictionary,
+	timeout_msec: int = ASYNC_REQUEST_TIMEOUT_MSEC,
+) -> Dictionary:
 	var precondition := _request_precondition()
 	if not precondition.is_empty():
 		return precondition
+	if timeout_msec < 0:
+		return _failure("invalid_client_request", "The request timeout must be non-negative")
 	var job_id := int(_session.request_json_async(_request_document(body)))
 	if job_id < 0:
 		return _failure("engine_worker_unavailable", "The native engine worker is unavailable")
+	var started_at_msec := Time.get_ticks_msec()
 	while not bool(_session.is_response_ready(job_id)):
+		if Time.get_ticks_msec() - started_at_msec >= timeout_msec:
+			_session.cancel_request(job_id)
+			return _failure("client_timeout", "The native engine request timed out")
 		await Engine.get_main_loop().process_frame
 	var response_json := str(_session.poll_response_json(job_id))
 	if response_json.is_empty():
