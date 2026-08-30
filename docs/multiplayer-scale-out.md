@@ -1,83 +1,58 @@
 # Multiplayer scale-out
 
-The current safe operating mode is one active API/maintenance instance for live multiplayer.
-
-PostgreSQL stores authoritative state, but the application subscriber registry is process-local. Redis supports Serverpod infrastructure; the game does not yet publish committed match events through a shared application event bus. Two unrestricted active instances can therefore persist correct state while missing each other's live broadcasts.
+Game requests are stateless at the API process boundary. PostgreSQL stores the
+canonical Rust state and every durable game record; each Serverpod instance
+loads the locked match row, invokes the same Rust runtime, and commits the
+result in one transaction.
 
 ```mermaid
 flowchart TB
-  subgraph Current["Current safe topology"]
-    LB["Reverse proxy"] --> Active["One active API + maintenance instance"]
-    Active --> DB[(PostgreSQL)]
-    Active --> Redis[(Redis)]
-    Active --> Registry["Process-local subscriber registry"]
-  end
-
-  subgraph Target["Required before active-active"]
-    LB2["Reverse proxy"] --> A["API instance A"]
-    LB2 --> B["API instance B"]
-    A --> DB2[(PostgreSQL)]
-    B --> DB2
-    DB2 --> Bus["Committed-offset event bus"]
-    Bus --> A
-    Bus --> B
-    A --> PA["Recipient-projected broadcast"]
-    B --> PB["Recipient-projected broadcast"]
-  end
+  LB["Reverse proxy"] --> A["Serverpod instance A"]
+  LB --> B["Serverpod instance B"]
+  A --> DB[(PostgreSQL)]
+  B --> DB
+  A --> RA["Rust runtime"]
+  B --> RB["Rust runtime"]
 ```
 
-## Current contract
+## Runtime contract
 
-- Run one active multiplayer mutation and maintenance instance.
-- Keep the API private behind the reverse proxy.
-- Preserve WebSocket upgrade headers.
 - Route traffic only to instances whose `/readyz` returns `200`.
 - Use `/livez` for process health and `/startupz` for startup completion.
-- Rely on recipient-projected snapshot recovery after reconnect, not on canonical event replay in the client.
+- Deploy the exact same Dart, Rust, protocol, map, and ruleset artifacts to
+  every active instance.
+- Run schema application as a dedicated deployment step before admitting
+  traffic to the new artifact.
+- Keep the API private behind the reverse proxy and replace untrusted client-IP
+  headers before authentication rate limiting.
+- Recover an interrupted request with `resync`; no process-local subscription
+  registry or canonical client replay is required.
 
-Load-balancer affinity alone is not enough. A durable maintenance job can execute on a different process and commit a lifecycle change that the owning process cannot broadcast.
+Row locking and the command ledger serialize concurrent mutations for one match.
+Different matches can execute concurrently on different instances. Retrying an
+accepted request with the same command id and payload returns its stored outcome;
+reusing the id for another payload is rejected.
 
-## Presence during restart
-
-Lobby presence is backed by PostgreSQL leases, not only by the in-process stream count. Losing a process does not prove that every member left. Reconnecting clients can renew their lease within the normal recovery window; maintenance handles leases that really expire.
-
-## Deployment drain
-
-Graceful drain is a target automation contract, not a fully proven property of the current Compose recreate path.
+## Rolling deployment
 
 ```mermaid
 sequenceDiagram
   participant R as Reverse proxy
-  participant Old as Old instance
-  participant New as Replacement
-  participant C as Clients
+  participant O as Draining instance
+  participant N as Replacement instance
+  participant C as Client
 
-  New->>New: Start and pass readiness outside traffic
-  R->>Old: Mark unready and stop new mutations
-  Old->>Old: Settle accepted calls and close streams
-  R->>New: Establish the single mutation target
-  C->>New: Reconnect and install latest projected snapshot
-  Old->>Old: Terminate after cutover
+  N->>N: Start and pass startup/readiness checks
+  R->>N: Admit traffic
+  R->>O: Stop new requests
+  O->>O: Settle accepted transactions
+  O->>O: Terminate
+  C->>N: Retry or resync if a request was interrupted
 ```
 
-A correct drain should:
+A rolling deployment must not mix artifacts with different protocol or content
+identity. If that cannot be guaranteed, drain every old instance before the new
+artifact receives game traffic.
 
-1. start and verify the replacement outside live mutation traffic;
-2. mark the old instance unready and stop accepting new mutations;
-3. settle accepted calls, close streams, and establish one new mutation target;
-4. let clients reconnect and install the latest projected snapshot;
-5. terminate the old instance only after cutover.
-
-Do not run both old and new instances as active command targets during the handoff.
-
-## Exit criteria for active-active
-
-Before lifting the single-instance restriction, implement and test a shared committed event bus:
-
-1. persist the command event and snapshot in PostgreSQL;
-2. publish the committed offset after the transaction succeeds;
-3. have each instance load the event from PostgreSQL by offset;
-4. broadcast only recipient-projected data;
-5. prove reconnect, maintenance, duplicate delivery, process loss, and drain behavior end to end.
-
-The related deployment target is recorded in [ADR 0005](adr/0005-immutable-deployment.md).
+The deployment-image and readiness contract is recorded in
+[ADR 0005](adr/0005-immutable-deployment.md).

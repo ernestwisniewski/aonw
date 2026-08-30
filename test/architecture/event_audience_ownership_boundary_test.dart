@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/map_boundary_source_guard.dart';
@@ -13,14 +12,11 @@ const _descriptorPath =
 const _indexPath =
     'packages/aonw_core/lib/game/domain/event/'
     'game_event_ownership_index.dart';
-const _audiencePath =
-    'server/lib/src/multiplayer/player_match_event_audience.dart';
-const _servicePath = 'server/lib/src/multiplayer/match_command_service.dart';
-const _ownershipBoundaryPaths = [_descriptorPath, _indexPath, _audiencePath];
+const _ownershipBoundaryPaths = [_descriptorPath, _indexPath];
 
 void main() {
   group('event audience ownership boundary', () {
-    test('descriptor and server audience stay persistent-state neutral', () {
+    test('ownership descriptors stay persistent-state neutral', () {
       final persistentStateTypes = typeNamesBackedBy(
         productionDartSources(),
         const {'PersistentGameState'},
@@ -79,33 +75,6 @@ void main() {
       }
     });
 
-    test(
-      'server annotation accepts only reviewed canonical audience inputs',
-      () {
-        const path = _audiencePath;
-        final source = File(path).readAsStringSync();
-
-        expect(
-          _namedParameterTypes(
-            source,
-            path: path,
-            className: 'PlayerMatchEventAudience',
-            methodName: 'annotateForStorage',
-          ),
-          const {
-            'events': 'Iterable<GameEvent>',
-            'participantPlayerIds': 'Iterable<String>',
-            'previous': 'GameEventOwnershipIndex',
-            'next': 'GameEventOwnershipIndex',
-            'combatAnimations': 'Iterable<CombatAnimationFact>',
-            'previousFog': 'FogOfWarState',
-            'nextFog': 'FogOfWarState',
-            'exactMovementAudienceByUnit': 'Map<String, Set<String>>',
-          },
-        );
-      },
-    );
-
     test('exact-parameter guard rejects optional and positional indexes', () {
       for (final source in const [
         '''
@@ -138,61 +107,7 @@ final class Boundary {
         );
       }
     });
-
-    test('server skips ownership indexing when a reduction has no events', () {
-      final unit = parseString(
-        content: File(_servicePath).readAsStringSync(),
-        path: _servicePath,
-      ).unit;
-      final helpers = unit.declarations
-          .whereType<FunctionDeclaration>()
-          .where(
-            (declaration) =>
-                declaration.name.lexeme == '_eventAudienceForStorage',
-          )
-          .toList();
-      expect(helpers, hasLength(1));
-
-      final body = helpers.single.functionExpression.body;
-      expect(body, isA<BlockFunctionBody>());
-      final statements = (body as BlockFunctionBody).block.statements;
-      expect(statements, isNotEmpty);
-      final first = statements.first;
-      expect(first, isA<IfStatement>());
-      final guard = first as IfStatement;
-      expect(guard.expression.toSource(), 'events.isEmpty');
-      expect(guard.thenStatement, isA<ReturnStatement>());
-      final returned = (guard.thenStatement as ReturnStatement).expression;
-      expect(returned, isA<ListLiteral>());
-      final emptyList = returned! as ListLiteral;
-      expect(emptyList.constKeyword, isNotNull);
-      expect(emptyList.elements, isEmpty);
-
-      final factories = _OwnershipFactoryVisitor()..collect(body);
-      expect(factories.invocations, hasLength(2));
-      expect(
-        factories.invocations.every(
-          (invocation) => invocation.offset > guard.end,
-        ),
-        isTrue,
-      );
-    });
   });
-}
-
-final class _OwnershipFactoryVisitor extends RecursiveAstVisitor<void> {
-  final invocations = <MethodInvocation>[];
-
-  void collect(AstNode node) => node.accept(this);
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    if (node.target?.toSource() == 'GameEventOwnershipIndex' &&
-        node.methodName.name == 'from') {
-      invocations.add(node);
-    }
-    super.visitMethodInvocation(node);
-  }
 }
 
 Map<String, String?> _requiredNamedParameterTypes(

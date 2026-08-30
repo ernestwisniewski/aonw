@@ -5,7 +5,6 @@ import 'support/movement_adapter_boundary_guard.dart';
 import 'support/movement_command_boundary_guard.dart';
 import 'support/movement_instance_reference_guard.dart';
 import 'support/movement_kernel_import_graph_guard.dart';
-import 'support/movement_server_part_guard.dart';
 
 void main() {
   test('production movement API and construction sites remain exact', () {
@@ -301,30 +300,4 @@ final class HiddenTileSource {
       );
     },
   );
-
-  test('server part rejects every extra top-level declaration', () {
-    final violations = movementServerPartViolations({
-      movementServerReducerPath: '''
-part 'server_command_reducer_movement.dart';
-class ServerCommandReducer {}
-''',
-      movementServerCallSite: '''
-part of 'server_command_reducer.dart';
-extension _ServerCommandReducerMovement on ServerCommandReducer {
-  _CommandApplication _applyMoveUnit({
-    required MapTraversalView mapView,
-  }) => throw UnimplementedError();
-}
-extension _LegacyMovement on ServerCommandReducer {}
-''',
-    });
-
-    expect(
-      violations,
-      contains(
-        'movement server part must contain only its part-of directive and '
-        'reviewed reducer extension',
-      ),
-    );
-  });
 }

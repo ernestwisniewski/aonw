@@ -1,4 +1,3 @@
-import 'package:aonw_core/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
 class AppStatusEndpoint extends Endpoint {
@@ -7,13 +6,11 @@ class AppStatusEndpoint extends Endpoint {
     Session session, {
     required String platform,
     required int buildNumber,
-    int? multiplayerVersion,
   }) async {
     final latestBuildNumber = _buildNumberFor(_serverAppVersion);
     return appVersionStatus(
       buildNumber: buildNumber,
       latestBuildNumber: latestBuildNumber,
-      multiplayerVersion: multiplayerVersion,
     );
   }
 }
@@ -21,9 +18,7 @@ class AppStatusEndpoint extends Endpoint {
 String appVersionStatus({
   required int buildNumber,
   required int latestBuildNumber,
-  required int? multiplayerVersion,
 }) {
-  if (!isCompatibleMultiplayerVersion(multiplayerVersion)) return 'soon';
   if (buildNumber < latestBuildNumber) return 'soon';
   return 'current';
 }

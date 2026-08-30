@@ -24,17 +24,9 @@ jwtRefresh:
 steamAuth:
   - start:
   - poll:
-multiplayer:
-  - listMatches:
+game:
   - createMatch:
-  - quickplay:
   - joinMatch:
-  - joinPrivateMatch:
-  - loadMatch:
-  - loadSnapshot:
-  - listEvents:
-  - startMatch:
-  - markMapLoaded:
-  - resignMatch:
-  - leaveMatch:
-  - connect:
+  - listMatches:
+  - submitTurn:
+  - resync:

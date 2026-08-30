@@ -11,13 +11,6 @@ const _resolverPath =
     'packages/aonw_core/lib/game/domain/outcome/game_outcome_resolver.dart';
 const _detectorPath =
     'packages/aonw_core/lib/game/domain/outcome/game_outcome_detector.dart';
-const _serverReducerPath =
-    'server/lib/src/multiplayer/server_command_reducer.dart';
-const _serverApplicationPath =
-    'server/lib/src/multiplayer/server_command_application.dart';
-const _serverOutcomePath =
-    'server/lib/src/multiplayer/server_command_outcome_projector.dart';
-
 const _forbiddenResolverStateTypes = {
   'PersistentGameState',
   'GameRuntimeState',
@@ -25,15 +18,6 @@ const _forbiddenResolverStateTypes = {
   'DomainState',
   'MatchSessionState',
   'CanonicalGameSnapshot',
-};
-const _forbiddenReducerBoundaryTypes = {
-  'PersistentGameState',
-  'GameRuntimeState',
-  'GameSave',
-  'WireSnapshot',
-  'DecodedMatchSnapshot',
-  'DecodedRunningMatchSnapshot',
-  'LegacyGameSnapshotAdapter',
 };
 const _resolveRequiredParameters = {
   'playerIds': 'Iterable<String>',
@@ -56,7 +40,7 @@ const _alivePlayerRequiredParameters = {
 };
 
 void main() {
-  group('game outcome and canonical reducer boundary', () {
+  group('game outcome boundary', () {
     test('outcome resolver remains a persistence-neutral kernel', () {
       final resolver = _unitAt(_resolverPath);
       final namedTypes = _NamedTypeCollector()..collect(resolver);
@@ -94,157 +78,7 @@ void main() {
         ),
       );
     });
-
-    test('server reducer owns one canonical input and output only', () {
-      final sources = _serverReducerSources();
-      expect(_canonicalReducerBoundaryViolations(sources), isEmpty);
-
-      final reducer = sources[_serverReducerPath]!;
-      expect(
-        _methodContract(reducer, 'ServerCommandReducer', 'reduce'),
-        const _MethodContract(
-          requiredNamed: {
-            'match': 'WireMatch',
-            'snapshot': 'CanonicalGameSnapshot',
-            'wireCommand': 'WireCommand',
-            'actorPlayerId': 'String',
-            'now': 'DateTime',
-          },
-          optionalNamed: {},
-        ),
-      );
-      expect(
-        _methodContract(reducer, 'ServerCommandReducer', 'reduceTimedOutTurn'),
-        const _MethodContract(
-          requiredNamed: {
-            'match': 'WireMatch',
-            'snapshot': 'CanonicalGameSnapshot',
-            'actorPlayerId': 'String',
-            'now': 'DateTime',
-          },
-          optionalNamed: {},
-        ),
-      );
-    });
-
-    test('accepted reduction evaluates outcome from its canonical result', () {
-      final outcome = _unitAt(_serverOutcomePath);
-      final method = _singleMethod(outcome, 'accepted')!;
-      final body = method.body.toSource();
-      expect(_namedParameterTypes(method), {
-        'match': 'WireMatch',
-        'application': 'ServerCommandApplication',
-        'mapView': 'MapReadView',
-      });
-      expect(body, contains('final nextSnapshot = application.snapshot;'));
-      expect(body, contains('nextSnapshot: nextSnapshot'));
-      expect(
-        body,
-        contains('state: _reconcileParticipants(match, nextSnapshot.domain)'),
-      );
-      expect(body, isNot(contains('session:')));
-      expect(body, isNot(contains('encode(')));
-      expect(body, isNot(contains('toCanonical')));
-      expect(body, isNot(contains('toLegacy')));
-    });
-
-    test('guard fails closed around aliases, fields, and conversions', () {
-      const fixturePath =
-          'server/lib/src/multiplayer/server_command_reducer_bad.dart';
-      final sources = <String, CompilationUnit>{
-        fixturePath: parseString(
-          path: fixturePath,
-          content: '''
-typedef HiddenState = PersistentGameState;
-final WireSnapshot snapshot = throw UnimplementedError();
-void convert(LegacyGameSnapshotAdapter adapter) {
-  final conversion = adapter.toLegacy;
-}
-''',
-        ).unit,
-      };
-
-      expect(
-        _canonicalReducerBoundaryViolations(sources),
-        containsAll([
-          '$fixturePath references forbidden type PersistentGameState',
-          '$fixturePath references forbidden type WireSnapshot',
-          '$fixturePath references forbidden type LegacyGameSnapshotAdapter',
-          '$fixturePath must not reference toLegacy',
-        ]),
-      );
-    });
   });
-}
-
-List<String> _canonicalReducerBoundaryViolations(
-  Map<String, CompilationUnit> sources,
-) {
-  final backedTypes = typeNamesBackedBy(
-    productionDartSources(),
-    _forbiddenReducerBoundaryTypes,
-  );
-  final violations = <String>[];
-  for (final entry in sources.entries) {
-    final types = _NamedTypeCollector()..collect(entry.value);
-    for (final type in types.names.intersection(backedTypes)) {
-      violations.add('${entry.key} references forbidden type $type');
-    }
-    final references = _IdentifierCollector()..collect(entry.value);
-    for (final name in const ['toCanonical', 'toLegacy']) {
-      if (references.names.contains(name)) {
-        violations.add('${entry.key} must not reference $name');
-      }
-    }
-    if (references.names.contains('DecodedMatchSnapshot')) {
-      violations.add(
-        '${entry.key} must not declare or reference its old alias',
-      );
-    }
-  }
-
-  final outcome = sources[_serverOutcomePath];
-  if (outcome == null) {
-    violations.add('server reducer outcome source must exist');
-    return violations;
-  }
-  final reduction = _singleClass(outcome, 'ServerCommandReduction');
-  if (reduction == null || reduction.finalKeyword == null) {
-    violations.add('ServerCommandReduction must be one final class');
-    return violations;
-  }
-  final fields = _fieldTypes(reduction);
-  const expectedFields = {
-    'accepted': 'bool',
-    'nextSnapshot': 'CanonicalGameSnapshot?',
-    'events': 'List<GameEvent>',
-    'movementExecutions': 'List<MovementCommandExecution>',
-    'combatAnimations': 'List<CombatAnimationFact>',
-    'outcome': 'GameOutcome?',
-    'reason': 'String?',
-  };
-  if (!_sameMap(fields, expectedFields)) {
-    violations.add('ServerCommandReduction fields must be canonical and exact');
-  }
-
-  final applicationSource = sources[_serverApplicationPath];
-  final application = applicationSource == null
-      ? null
-      : _singleClass(applicationSource, 'ServerCommandApplication');
-  if (application == null ||
-      _fieldTypes(application)['snapshot'] != 'CanonicalGameSnapshot') {
-    violations.add('ServerCommandApplication must own one canonical snapshot');
-  }
-  return violations;
-}
-
-Map<String, CompilationUnit> _serverReducerSources() {
-  return {
-    for (final entry in productionDartSources().entries)
-      if (entry.key == _serverReducerPath ||
-          entry.key.startsWith('server/lib/src/multiplayer/server_command_'))
-        entry.key: parseString(content: entry.value, path: entry.key).unit,
-  };
 }
 
 _MethodContract? _methodContract(
@@ -268,26 +102,6 @@ _MethodContract? _methodContract(
     target[normalized.name!.lexeme] = normalized.type?.toSource() ?? '';
   }
   return _MethodContract(requiredNamed: required, optionalNamed: optional);
-}
-
-Map<String, String> _namedParameterTypes(MethodDeclaration method) {
-  return {
-    for (final parameter
-        in method.parameters?.parameters ?? const <FormalParameter>[])
-      if (parameter case DefaultFormalParameter(
-        isNamed: true,
-        parameter: final SimpleFormalParameter normalized,
-      ))
-        normalized.name!.lexeme: normalized.type!.toSource(),
-  };
-}
-
-Map<String, String> _fieldTypes(ClassDeclaration declaration) {
-  return {
-    for (final field in declaration.body.members.whereType<FieldDeclaration>())
-      for (final variable in field.fields.variables)
-        variable.name.lexeme: field.fields.type?.toSource() ?? '',
-  };
 }
 
 ClassDeclaration? _singleClass(CompilationUnit unit, String name) {
@@ -342,18 +156,6 @@ final class _NamedTypeCollector extends RecursiveAstVisitor<void> {
   void visitNamedType(NamedType node) {
     names.add(node.name.lexeme);
     super.visitNamedType(node);
-  }
-}
-
-final class _IdentifierCollector extends RecursiveAstVisitor<void> {
-  final Set<String> names = {};
-
-  void collect(AstNode node) => node.accept(this);
-
-  @override
-  void visitSimpleIdentifier(SimpleIdentifier node) {
-    names.add(node.name);
-    super.visitSimpleIdentifier(node);
   }
 }
 

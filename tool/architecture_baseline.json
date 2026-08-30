@@ -396,6 +396,33 @@
       "cyclomaticComplexity": {},
       "cognitiveComplexity": {}
     },
+    "flutter_client_integration_test": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "flutter_client_lib": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "flutter_client_test": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "root_lib": {
       "files": {
         "lib/api/session/network_session_refresh_coordinator.dart": 661,
@@ -871,14 +898,11 @@
       }
     },
     "root_tool": {
-      "files": {
-        "tool/serverpod_multiplayer_smoke.dart": 1054
-      },
+      "files": {},
       "legacyFiles": {},
       "declarations": {
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport": 411,
-        "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite": 372,
-        "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke": 897
+        "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite": 372
       },
       "callableLines": {
         "tool/analyze_human_trace.dart::function:_markdownReport": 120,
@@ -896,8 +920,7 @@
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport/method:toMarkdown": 334,
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite/method:_runDiplomacyTargetingGuard": 186,
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite/method:_runFortifiedWakeUpGuard": 165,
-        "tool/serverpod_critical_e2e.dart::class:_CriticalE2e/method:run": 219,
-        "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke/method:run": 581
+        "tool/serverpod_critical_e2e.dart::class:_CriticalE2e/method:run": 173
       },
       "nesting": {
         "tool/allocate_loopback_port_triplet.dart::function:allocateLoopbackPortTriplet": 5,
@@ -924,9 +947,7 @@
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart::class:_MultiTurnReplayReport/getter:findings": 28,
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport/method:toMarkdown": 36,
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite/method:_runDiplomacyTargetingGuard": 16,
-        "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite/method:_runFortifiedWakeUpGuard": 17,
-        "tool/serverpod_critical_e2e.dart::class:_CriticalE2e/method:run": 18,
-        "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke/method:run": 36
+        "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite/method:_runFortifiedWakeUpGuard": 17
       },
       "cognitiveComplexity": {
         "tool/allocate_loopback_port_triplet.dart::function:allocateLoopbackPortTriplet": 23,
@@ -943,8 +964,7 @@
         "tool/run_save_ai_benchmark/execution_models.dart::class:_CommandStats/constructor:fromCommands": 68,
         "tool/run_save_ai_benchmark/multi_turn_replay.dart::class:_MultiTurnReplayRunner/method:_executeReplayTurn": 22,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart::class:_MultiTurnReplayReport/getter:findings": 33,
-        "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport/method:toMarkdown": 81,
-        "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke/method:run": 36
+        "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport/method:toMarkdown": 81
       }
     },
     "rust_client_hook": {
@@ -989,62 +1009,51 @@
       "declarations": {},
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 116,
-        "server/lib/src/multiplayer/initial_multiplayer_snapshot_factory.dart::class:InitialMultiplayerSnapshotFactory/method:create": 62,
-        "server/lib/src/multiplayer/match_command_service_handling.dart::extension:MatchCommandServiceHandling/method:_handleCommand": 125,
-        "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
-        "server/lib/src/public_stats/public_multiplayer_stats_service.dart::class:PublicMultiplayerStatsService/method:_load": 70,
-        "server/lib/src/public_stats/public_multiplayer_stats_store.dart::class:ServerpodPublicMultiplayerStatsStore/method:loadSnapshot": 217,
         "server/lib/src/scheduling/reconciled_future_call_scheduler.dart::class:ReconciledFutureCallScheduler/method:scheduleNoLaterThan/closure:transaction#1": 65
       },
       "nesting": {},
       "cyclomaticComplexity": {
         "server/lib/src/auth/auth_input_validator.dart::class:AuthInputValidator/method:_normalizeEmail": 15,
-        "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 19,
-        "server/lib/src/multiplayer/client_message_guard.dart::class:ClientMessageGuard/method:_validate": 13,
-        "server/lib/src/multiplayer/client_message_guard.dart::class:_PayloadBudget/method:visit": 12,
-        "server/lib/src/multiplayer/match_request_validator.dart::class:MatchRequestValidator/method:validate": 12
+        "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 19
       },
       "cognitiveComplexity": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 17
       }
     },
+    "server_native_hook": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "server_native_lib": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "server_native_test": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "server_test": {
-      "files": {
-        "server/test/integration/multiplayer_endpoint_smoke.dart": 1149
-      },
+      "files": {},
       "legacyFiles": {},
       "declarations": {},
       "callableLines": {
-        "server/test/architecture/server_operability_config_test.dart::function:main/closure:group[Server_operability_configuration]#1/closure:test[Compose_profiles_select_immutable_Serverpod_run_modes]#1": 140,
-        "server/test/integration/multiplayer_endpoint_smoke.dart::function:main/closure:withServerpod[MultiplayerEndpoint]#1/closure:test[creates__joins__starts__and_loads_a_persisted_match]#1": 144
+        "server/test/architecture/server_operability_config_test.dart::function:main/closure:group[Server_operability_configuration]#1/closure:test[Compose_profiles_select_immutable_Serverpod_run_modes]#1": 140
       },
-      "nesting": {},
-      "cyclomaticComplexity": {},
-      "cognitiveComplexity": {}
-    },
-    "successor_flutter_integration_test": {
-      "files": {},
-      "legacyFiles": {},
-      "declarations": {},
-      "callableLines": {},
-      "nesting": {},
-      "cyclomaticComplexity": {},
-      "cognitiveComplexity": {}
-    },
-    "successor_flutter_lib": {
-      "files": {},
-      "legacyFiles": {},
-      "declarations": {},
-      "callableLines": {},
-      "nesting": {},
-      "cyclomaticComplexity": {},
-      "cognitiveComplexity": {}
-    },
-    "successor_flutter_test": {
-      "files": {},
-      "legacyFiles": {},
-      "declarations": {},
-      "callableLines": {},
       "nesting": {},
       "cyclomaticComplexity": {},
       "cognitiveComplexity": {}

@@ -70,6 +70,27 @@
       "cyclomaticComplexity": {},
       "cognitiveComplexity": {}
     },
+    "flutter_client_integration_test": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "flutter_client_lib": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "flutter_client_test": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "root_lib": {
       "sourceLines": {
         "lib/developer/assets_editor_screen.dart": 1842,
@@ -192,34 +213,28 @@
       "cyclomaticComplexity": {},
       "cognitiveComplexity": {}
     },
+    "server_native_hook": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "server_native_lib": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "server_native_test": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "server_test": {
-      "sourceLines": {
-        "server/test/multiplayer/realtime_match_hub_test.dart": 6039
-      },
-      "callableCount": {
-        "server/test/multiplayer/realtime_match_hub_test.dart": 356
-      },
-      "callableLines": {
-        "server/test/multiplayer/realtime_match_hub_test.dart": 5633
-      },
-      "cyclomaticComplexity": {},
-      "cognitiveComplexity": {}
-    },
-    "successor_flutter_integration_test": {
-      "sourceLines": {},
-      "callableCount": {},
-      "callableLines": {},
-      "cyclomaticComplexity": {},
-      "cognitiveComplexity": {}
-    },
-    "successor_flutter_lib": {
-      "sourceLines": {},
-      "callableCount": {},
-      "callableLines": {},
-      "cyclomaticComplexity": {},
-      "cognitiveComplexity": {}
-    },
-    "successor_flutter_test": {
       "sourceLines": {},
       "callableCount": {},
       "callableLines": {},

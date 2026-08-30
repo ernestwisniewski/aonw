@@ -255,18 +255,18 @@
             "found": 2
           },
           "lines": {
-            "hit": 10,
-            "found": 10
+            "hit": 9,
+            "found": 9
           }
         },
-        "multiplayer": {
+        "game": {
           "files": {
-            "hit": 68,
-            "found": 68
+            "hit": 0,
+            "found": 7
           },
           "lines": {
-            "hit": 3198,
-            "found": 3400
+            "hit": 0,
+            "found": 0
           }
         },
         "observability": {
@@ -275,18 +275,8 @@
             "found": 1
           },
           "lines": {
-            "hit": 42,
-            "found": 44
-          }
-        },
-        "public_stats": {
-          "files": {
-            "hit": 3,
-            "found": 4
-          },
-          "lines": {
-            "hit": 101,
-            "found": 163
+            "hit": 6,
+            "found": 11
           }
         },
         "scheduling": {
@@ -295,8 +285,18 @@
             "found": 2
           },
           "lines": {
-            "hit": 50,
+            "hit": 49,
             "found": 96
+          }
+        },
+        "stats": {
+          "files": {
+            "hit": 3,
+            "found": 4
+          },
+          "lines": {
+            "hit": 105,
+            "found": 172
           }
         }
       },
@@ -316,7 +316,14 @@
         "server/lib/src/auth/jwt_refresh_endpoint.dart",
         "server/lib/src/auth/steam_auth_endpoint.dart",
         "server/lib/src/auth/steam_auth_route.dart",
-        "server/lib/src/public_stats/public_multiplayer_stats_route.dart"
+        "server/lib/src/game/game_endpoint.dart",
+        "server/lib/src/game/native/game_native_runtime.dart",
+        "server/lib/src/game/service/game_match_service.dart",
+        "server/lib/src/game/service/game_match_service_commands.dart",
+        "server/lib/src/game/service/game_match_service_creation.dart",
+        "server/lib/src/game/service/game_match_service_membership.dart",
+        "server/lib/src/game/service/game_match_service_support.dart",
+        "server/lib/src/stats/public_game_stats_route.dart"
       ]
     }
   }

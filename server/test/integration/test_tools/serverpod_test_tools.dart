@@ -24,14 +24,16 @@ import 'package:aonw_server/src/generated/auth/models/steam_auth_start.dart'
     as _i7;
 import 'package:aonw_server/src/generated/auth/models/steam_auth_poll_result.dart'
     as _i8;
-import 'package:aonw_core/protocol/wire_match.dart' as _i9;
-import 'package:aonw_server/src/generated/multiplayer/models/create_match_request.dart'
+import 'package:aonw_server/src/generated/game/models/game_match_view.dart'
+    as _i9;
+import 'package:aonw_server/src/generated/game/models/game_create_match_request.dart'
     as _i10;
-import 'package:aonw_core/protocol/wire_snapshot.dart' as _i11;
-import 'package:aonw_core/protocol/wire_event.dart' as _i12;
-import 'package:aonw_server/src/generated/multiplayer/models/multiplayer_server_message.dart'
+import 'package:aonw_server/src/generated/game/models/game_resync.dart' as _i11;
+import 'package:aonw_server/src/generated/game/models/game_join_match_request.dart'
+    as _i12;
+import 'package:aonw_server/src/generated/game/models/game_command_outcome.dart'
     as _i13;
-import 'package:aonw_server/src/generated/multiplayer/models/multiplayer_client_message.dart'
+import 'package:aonw_server/src/generated/game/models/game_submit_turn_request.dart'
     as _i14;
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/generated/endpoints.dart';
@@ -165,7 +167,7 @@ class TestEndpoints {
 
   late final _SteamAuthEndpoint steamAuth;
 
-  late final _MultiplayerEndpoint multiplayer;
+  late final _GameEndpoint game;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -211,7 +213,7 @@ class _InternalTestEndpoints extends TestEndpoints
       endpoints,
       serializationManager,
     );
-    multiplayer = _MultiplayerEndpoint(
+    game = _GameEndpoint(
       endpoints,
       serializationManager,
     );
@@ -232,7 +234,6 @@ class _AppStatusEndpoint {
     _i1.TestSessionBuilder sessionBuilder, {
     required String platform,
     required int buildNumber,
-    int? multiplayerVersion,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -248,7 +249,6 @@ class _AppStatusEndpoint {
           parameters: _i1.testObjectToJson({
             'platform': platform,
             'buildNumber': buildNumber,
-            'multiplayerVersion': multiplayerVersion,
           }),
           serializationManager: _serializationManager,
         );
@@ -860,8 +860,8 @@ class _SteamAuthEndpoint {
   }
 }
 
-class _MultiplayerEndpoint {
-  _MultiplayerEndpoint(
+class _GameEndpoint {
+  _GameEndpoint(
     this._endpointDispatch,
     this._serializationManager,
   );
@@ -870,59 +870,22 @@ class _MultiplayerEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i9.WireMatch>> listMatches(
-    _i1.TestSessionBuilder sessionBuilder, {
-    required int? multiplayerVersion,
-  }) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'listMatches',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'listMatches',
-          parameters: _i1.testObjectToJson({
-            'multiplayerVersion': multiplayerVersion,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<List<_i9.WireMatch>>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<_i9.WireMatch> createMatch(
+  _i3.Future<_i9.GameMatchView> createMatch(
     _i1.TestSessionBuilder sessionBuilder,
-    _i10.CreateMatchRequest request, {
-    required int? multiplayerVersion,
-  }) async {
+    _i10.GameCreateMatchRequest request,
+  ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
+            endpoint: 'game',
             method: 'createMatch',
           );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
+          endpointPath: 'game',
           methodName: 'createMatch',
-          parameters: _i1.testObjectToJson({
-            'request': request,
-            'multiplayerVersion': multiplayerVersion,
-          }),
+          parameters: _i1.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
         var _localReturnValue =
@@ -930,7 +893,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i9.WireMatch>);
+                as _i3.Future<_i9.GameMatchView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -938,63 +901,22 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i9.WireMatch> quickplay(
+  _i3.Future<_i11.GameResync> joinMatch(
     _i1.TestSessionBuilder sessionBuilder,
-    _i10.CreateMatchRequest request, {
-    required int? multiplayerVersion,
-  }) async {
+    _i12.GameJoinMatchRequest request,
+  ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'quickplay',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'quickplay',
-          parameters: _i1.testObjectToJson({
-            'request': request,
-            'multiplayerVersion': multiplayerVersion,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i9.WireMatch>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<_i9.WireMatch> joinMatch(
-    _i1.TestSessionBuilder sessionBuilder,
-    String matchId, {
-    String? countryId,
-    required int? multiplayerVersion,
-  }) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
+            endpoint: 'game',
             method: 'joinMatch',
           );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
+          endpointPath: 'game',
           methodName: 'joinMatch',
-          parameters: _i1.testObjectToJson({
-            'matchId': matchId,
-            'countryId': countryId,
-            'multiplayerVersion': multiplayerVersion,
-          }),
+          parameters: _i1.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
         var _localReturnValue =
@@ -1002,7 +924,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i9.WireMatch>);
+                as _i3.Future<_i11.GameResync>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1010,28 +932,21 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i9.WireMatch> joinPrivateMatch(
+  _i3.Future<List<_i9.GameMatchView>> listMatches(
     _i1.TestSessionBuilder sessionBuilder,
-    String inviteCode, {
-    String? countryId,
-    required int? multiplayerVersion,
-  }) async {
+  ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'joinPrivateMatch',
+            endpoint: 'game',
+            method: 'listMatches',
           );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'joinPrivateMatch',
-          parameters: _i1.testObjectToJson({
-            'inviteCode': inviteCode,
-            'countryId': countryId,
-            'multiplayerVersion': multiplayerVersion,
-          }),
+          endpointPath: 'game',
+          methodName: 'listMatches',
+          parameters: _i1.testObjectToJson({}),
           serializationManager: _serializationManager,
         );
         var _localReturnValue =
@@ -1039,7 +954,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i9.WireMatch>);
+                as _i3.Future<List<_i9.GameMatchView>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1047,26 +962,22 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i9.WireMatch> loadMatch(
+  _i3.Future<_i13.GameCommandOutcome> submitTurn(
     _i1.TestSessionBuilder sessionBuilder,
-    String matchId, {
-    required int? multiplayerVersion,
-  }) async {
+    _i14.GameSubmitTurnRequest request,
+  ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'loadMatch',
+            endpoint: 'game',
+            method: 'submitTurn',
           );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'loadMatch',
-          parameters: _i1.testObjectToJson({
-            'matchId': matchId,
-            'multiplayerVersion': multiplayerVersion,
-          }),
+          endpointPath: 'game',
+          methodName: 'submitTurn',
+          parameters: _i1.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
         var _localReturnValue =
@@ -1074,7 +985,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i9.WireMatch>);
+                as _i3.Future<_i13.GameCommandOutcome>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1082,63 +993,22 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i11.WireSnapshot> loadSnapshot(
-    _i1.TestSessionBuilder sessionBuilder,
-    String matchId, {
-    required int? multiplayerVersion,
-  }) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'loadSnapshot',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'loadSnapshot',
-          parameters: _i1.testObjectToJson({
-            'matchId': matchId,
-            'multiplayerVersion': multiplayerVersion,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i11.WireSnapshot>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<List<_i12.WireEvent>> listEvents(
+  _i3.Future<_i11.GameResync> resync(
     _i1.TestSessionBuilder sessionBuilder,
     String matchId,
-    int afterOffset, {
-    required int? multiplayerVersion,
-  }) async {
+  ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'listEvents',
+            endpoint: 'game',
+            method: 'resync',
           );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'listEvents',
-          parameters: _i1.testObjectToJson({
-            'matchId': matchId,
-            'afterOffset': afterOffset,
-            'multiplayerVersion': multiplayerVersion,
-          }),
+          endpointPath: 'game',
+          methodName: 'resync',
+          parameters: _i1.testObjectToJson({'matchId': matchId}),
           serializationManager: _serializationManager,
         );
         var _localReturnValue =
@@ -1146,191 +1016,11 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i12.WireEvent>>);
+                as _i3.Future<_i11.GameResync>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
       }
     });
-  }
-
-  _i3.Future<_i9.WireMatch> startMatch(
-    _i1.TestSessionBuilder sessionBuilder,
-    String matchId, {
-    required int? multiplayerVersion,
-  }) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'startMatch',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'startMatch',
-          parameters: _i1.testObjectToJson({
-            'matchId': matchId,
-            'multiplayerVersion': multiplayerVersion,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i9.WireMatch>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<_i9.WireMatch> markMapLoaded(
-    _i1.TestSessionBuilder sessionBuilder,
-    String matchId, {
-    required int? multiplayerVersion,
-  }) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'markMapLoaded',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'markMapLoaded',
-          parameters: _i1.testObjectToJson({
-            'matchId': matchId,
-            'multiplayerVersion': multiplayerVersion,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i9.WireMatch>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<_i9.WireMatch> resignMatch(
-    _i1.TestSessionBuilder sessionBuilder,
-    String matchId, {
-    required int? multiplayerVersion,
-  }) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'resignMatch',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'resignMatch',
-          parameters: _i1.testObjectToJson({
-            'matchId': matchId,
-            'multiplayerVersion': multiplayerVersion,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i9.WireMatch>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<void> leaveMatch(
-    _i1.TestSessionBuilder sessionBuilder,
-    String matchId, {
-    required int? multiplayerVersion,
-  }) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'leaveMatch',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'multiplayer',
-          methodName: 'leaveMatch',
-          parameters: _i1.testObjectToJson({
-            'matchId': matchId,
-            'multiplayerVersion': multiplayerVersion,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<void>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Stream<_i13.MultiplayerServerMessage> connect(
-    _i1.TestSessionBuilder sessionBuilder,
-    String matchId,
-    int afterOffset,
-    _i3.Stream<_i14.MultiplayerClientMessage> input, {
-    required int? multiplayerVersion,
-  }) {
-    var _localTestStreamManager =
-        _i1.TestStreamManager<_i13.MultiplayerServerMessage>();
-    _i1.callStreamFunctionAndHandleExceptions(
-      () async {
-        var _localUniqueSession =
-            (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-              endpoint: 'multiplayer',
-              method: 'connect',
-            );
-        var _localCallContext = await _endpointDispatch
-            .getMethodStreamCallContext(
-              createSessionCallback: (_) => _localUniqueSession,
-              endpointPath: 'multiplayer',
-              methodName: 'connect',
-              arguments: {
-                'matchId': matchId,
-                'afterOffset': afterOffset,
-                'multiplayerVersion': multiplayerVersion,
-              },
-              requestedInputStreams: ['input'],
-              serializationManager: _serializationManager,
-            );
-        await _localTestStreamManager.callStreamMethod(
-          _localCallContext,
-          _localUniqueSession,
-          {'input': input},
-        );
-      },
-      _localTestStreamManager.outputStreamController,
-    );
-    return _localTestStreamManager.outputStreamController.stream;
   }
 }

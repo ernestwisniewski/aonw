@@ -19,7 +19,7 @@ Canonical entry points:
 | Journey | Real boundary | Test |
 | --- | --- | --- |
 | Local save and reload | use cases, command transport, event log, snapshot store, fresh runtime | `test/game/local_game_persistence_flow_test.dart` |
-| Public multiplayer | auth, JWT refresh, PostgreSQL, generated client, WebSocket stream, idempotent command, reconnect | `tool/serverpod_critical_e2e.dart` |
+| Public multiplayer | auth, JWT refresh, PostgreSQL, generated client, two accounts, idempotent Rust command, restart and private resync | `tool/serverpod_critical_e2e.dart` |
 
 ```mermaid
 flowchart LR
@@ -28,7 +28,7 @@ flowchart LR
   end
 
   subgraph Online["Public multiplayer"]
-    O1["Authenticate"] --> O2["Open HTTP + WebSocket session"] --> O3["Send idempotent command"] --> O4["Persist in PostgreSQL"] --> O5["Reconnect + recover"] --> O6["Assert snapshot and offset"]
+    O1["Authenticate two accounts"] --> O2["Create and join match"] --> O3["Submit idempotent Rust command"] --> O4["Persist in PostgreSQL"] --> O5["Restart server + resync"] --> O6["Assert private snapshots and offsets"]
   end
 ```
 
@@ -44,7 +44,7 @@ make critical-e2e-test
 
 This is the default sequence for critical journeys:
 
-- The public HTTP and WebSocket surfaces are covered by `tool/run_serverpod_critical_e2e.sh` and verified by `serverpod-critical-e2e-test`.
+- The public HTTP Serverpod surface is covered by `tool/run_serverpod_critical_e2e.sh` and verified by `serverpod-critical-e2e-test`.
 - The harness uses fresh per-run secrets and a cryptographic per-run nonce during database and token initialization.
 - The run is bounded, proxy-free, and fails closed when one of the required listeners or processes cannot be launched.
 - The database URL must stay local and isolated: `aonw@localhost:$AONW_TEST_DATABASE_PORT/aonw_test`.
@@ -73,7 +73,7 @@ Operationally this includes:
 - failure before local runtime replacement: creation, dispatch, or persistence;
 - failure after replacement: bootstrap or replay;
 - auth/HTTP failure: session boundary;
-- ACK/history mismatch: idempotency or storage;
-- reconnect mismatch: snapshot projection, catch-up, or token rotation.
+- command-outcome/history mismatch: idempotency or storage;
+- restart/resync mismatch: recipient projection, catch-up, or token rotation.
 
 Add focused tests for narrower behavior, but keep these journeys at the real persistence and transport boundaries.

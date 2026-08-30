@@ -109,16 +109,7 @@ void main() {
     );
 
     expect(submitTurn.localHandlers, isEmpty);
-    expect(submitTurn.serverHandlers, [
-      'server/lib/src/multiplayer/server_command_dispatcher.dart',
-      'server/lib/src/multiplayer/server_command_reducer.dart',
-    ]);
-    expect(
-      submitTurn.serverHandlers,
-      isNot(
-        contains('server/lib/src/multiplayer/match_command_service_event.dart'),
-      ),
-    );
+    expect(submitTurn.serverHandlers, isEmpty);
     expect(
       moveUnit.aiConsumers,
       contains('packages/aonw_core/lib/ai/mcts/mcts_simulated_state.dart'),
@@ -212,7 +203,7 @@ final class _GameCommandInventory {
             serverHandlers: _semanticCommandPaths(
               sources,
               _commandHierarchyNames(className, declarations),
-              pathPrefix: 'server/lib/src/multiplayer/',
+              pathPrefix: 'server/lib/src/game/',
             ),
             aiConsumers: _semanticCommandPaths(
               sources,

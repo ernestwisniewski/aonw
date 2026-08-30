@@ -7,7 +7,6 @@ import 'support/map_boundary_source_guard.dart';
 import 'support/movement_command_boundary_guard.dart';
 import 'support/movement_instance_reference_guard.dart';
 import 'support/movement_kernel_import_graph_guard.dart';
-import 'support/movement_server_part_guard.dart';
 import 'support/movement_visibility_boundary_guard.dart';
 import 'support/static_member_reference_guard.dart';
 
@@ -257,7 +256,7 @@ MapTileSource widen(MapTileSource source) => source;
       movementVisibilityPath: '''
 abstract final class UnitMovementVisibilityRules {}
 ''',
-      movementLegacyVisibilityPath: '''
+      movementApplicationVisibilityPath: '''
 abstract final class UnitMovementVisibilityRules {}
 ''',
       'lib/game/domain/movement.dart': '''
@@ -269,34 +268,8 @@ export 'movement/unit_movement_visibility_rules.dart';
       violations.join('\n'),
       allOf(
         contains('declared exactly once in core'),
-        contains('legacy root visibility rules file must be removed'),
+        contains('application visibility rules file must not exist'),
         contains('all visibility-rule directives must resolve to the core'),
-      ),
-    );
-  });
-
-  test('server part guard rejects aliased and widened map contracts', () {
-    expect(movementServerPartViolations(_serverFixture()), isEmpty);
-
-    final aliased = movementServerPartViolations(
-      _serverFixture(mapType: 'TraversalAlias', includeAlias: true),
-    );
-    expect(
-      aliased,
-      contains(
-        '_applyMoveUnit must require exactly one bounded '
-        'MapTraversalView mapView',
-      ),
-    );
-
-    final widened = movementServerPartViolations(
-      _serverFixture(extraMap: ', required MapReadView broadMap'),
-    );
-    expect(
-      widened,
-      contains(
-        '_applyMoveUnit must require exactly one bounded '
-        'MapTraversalView mapView',
       ),
     );
   });
@@ -325,28 +298,6 @@ void convert(dynamic state) {
     );
   });
 }
-
-Map<String, String> _serverFixture({
-  String mapType = 'MapTraversalView',
-  String extraMap = '',
-  bool includeAlias = false,
-}) => {
-  movementServerReducerPath: '''
-part 'server_command_reducer_movement.dart';
-class ServerCommandReducer {}
-''',
-  movementServerCallSite:
-      '''
-part of 'server_command_reducer.dart';
-extension _ServerCommandReducerMovement on ServerCommandReducer {
-  _CommandApplication _applyMoveUnit({
-    required $mapType mapView$extraMap,
-  }) => throw UnimplementedError();
-}
-''',
-  if (includeAlias)
-    'aliases.dart': 'typedef TraversalAlias = MapTraversalView;',
-};
 
 int _memberReferenceCount(String source, String memberName) {
   final visitor = _NamedMemberReferenceCollector(memberName);

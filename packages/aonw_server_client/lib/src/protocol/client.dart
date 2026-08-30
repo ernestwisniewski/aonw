@@ -24,14 +24,17 @@ import 'package:aonw_server_client/src/protocol/auth/models/steam_auth_start.dar
     as _i7;
 import 'package:aonw_server_client/src/protocol/auth/models/steam_auth_poll_result.dart'
     as _i8;
-import 'package:aonw_core/protocol/wire_match.dart' as _i9;
-import 'package:aonw_server_client/src/protocol/multiplayer/models/create_match_request.dart'
+import 'package:aonw_server_client/src/protocol/game/models/game_match_view.dart'
+    as _i9;
+import 'package:aonw_server_client/src/protocol/game/models/game_create_match_request.dart'
     as _i10;
-import 'package:aonw_core/protocol/wire_snapshot.dart' as _i11;
-import 'package:aonw_core/protocol/wire_event.dart' as _i12;
-import 'package:aonw_server_client/src/protocol/multiplayer/models/multiplayer_server_message.dart'
+import 'package:aonw_server_client/src/protocol/game/models/game_resync.dart'
+    as _i11;
+import 'package:aonw_server_client/src/protocol/game/models/game_join_match_request.dart'
+    as _i12;
+import 'package:aonw_server_client/src/protocol/game/models/game_command_outcome.dart'
     as _i13;
-import 'package:aonw_server_client/src/protocol/multiplayer/models/multiplayer_client_message.dart'
+import 'package:aonw_server_client/src/protocol/game/models/game_submit_turn_request.dart'
     as _i14;
 import 'protocol.dart' as _i15;
 
@@ -45,14 +48,12 @@ class EndpointAppStatus extends _i1.EndpointRef {
   _i2.Future<String> versionStatus({
     required String platform,
     required int buildNumber,
-    int? multiplayerVersion,
   }) => caller.callServerEndpoint<String>(
     'appStatus',
     'versionStatus',
     {
       'platform': platform,
       'buildNumber': buildNumber,
-      'multiplayerVersion': multiplayerVersion,
     },
     authenticated: false,
   );
@@ -298,177 +299,49 @@ class EndpointSteamAuth extends _i1.EndpointRef {
       );
 }
 
+/// Authenticated endpoint for Rust-authoritative multiplayer.
 /// {@category Endpoint}
-class EndpointMultiplayer extends _i1.EndpointRef {
-  EndpointMultiplayer(_i1.EndpointCaller caller) : super(caller);
+class EndpointGame extends _i1.EndpointRef {
+  EndpointGame(_i1.EndpointCaller caller) : super(caller);
 
   @override
-  String get name => 'multiplayer';
+  String get name => 'game';
 
-  _i2.Future<List<_i9.WireMatch>> listMatches({
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<List<_i9.WireMatch>>(
-    'multiplayer',
-    'listMatches',
-    {'multiplayerVersion': multiplayerVersion},
-  );
-
-  _i2.Future<_i9.WireMatch> createMatch(
-    _i10.CreateMatchRequest request, {
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<_i9.WireMatch>(
-    'multiplayer',
+  _i2.Future<_i9.GameMatchView> createMatch(
+    _i10.GameCreateMatchRequest request,
+  ) => caller.callServerEndpoint<_i9.GameMatchView>(
+    'game',
     'createMatch',
-    {
-      'request': request,
-      'multiplayerVersion': multiplayerVersion,
-    },
+    {'request': request},
   );
 
-  _i2.Future<_i9.WireMatch> quickplay(
-    _i10.CreateMatchRequest request, {
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<_i9.WireMatch>(
-    'multiplayer',
-    'quickplay',
-    {
-      'request': request,
-      'multiplayerVersion': multiplayerVersion,
-    },
+  _i2.Future<_i11.GameResync> joinMatch(_i12.GameJoinMatchRequest request) =>
+      caller.callServerEndpoint<_i11.GameResync>(
+        'game',
+        'joinMatch',
+        {'request': request},
+      );
+
+  _i2.Future<List<_i9.GameMatchView>> listMatches() =>
+      caller.callServerEndpoint<List<_i9.GameMatchView>>(
+        'game',
+        'listMatches',
+        {},
+      );
+
+  _i2.Future<_i13.GameCommandOutcome> submitTurn(
+    _i14.GameSubmitTurnRequest request,
+  ) => caller.callServerEndpoint<_i13.GameCommandOutcome>(
+    'game',
+    'submitTurn',
+    {'request': request},
   );
 
-  _i2.Future<_i9.WireMatch> joinMatch(
-    String matchId, {
-    String? countryId,
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<_i9.WireMatch>(
-    'multiplayer',
-    'joinMatch',
-    {
-      'matchId': matchId,
-      'countryId': countryId,
-      'multiplayerVersion': multiplayerVersion,
-    },
-  );
-
-  _i2.Future<_i9.WireMatch> joinPrivateMatch(
-    String inviteCode, {
-    String? countryId,
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<_i9.WireMatch>(
-    'multiplayer',
-    'joinPrivateMatch',
-    {
-      'inviteCode': inviteCode,
-      'countryId': countryId,
-      'multiplayerVersion': multiplayerVersion,
-    },
-  );
-
-  _i2.Future<_i9.WireMatch> loadMatch(
-    String matchId, {
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<_i9.WireMatch>(
-    'multiplayer',
-    'loadMatch',
-    {
-      'matchId': matchId,
-      'multiplayerVersion': multiplayerVersion,
-    },
-  );
-
-  _i2.Future<_i11.WireSnapshot> loadSnapshot(
-    String matchId, {
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<_i11.WireSnapshot>(
-    'multiplayer',
-    'loadSnapshot',
-    {
-      'matchId': matchId,
-      'multiplayerVersion': multiplayerVersion,
-    },
-  );
-
-  _i2.Future<List<_i12.WireEvent>> listEvents(
-    String matchId,
-    int afterOffset, {
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<List<_i12.WireEvent>>(
-    'multiplayer',
-    'listEvents',
-    {
-      'matchId': matchId,
-      'afterOffset': afterOffset,
-      'multiplayerVersion': multiplayerVersion,
-    },
-  );
-
-  _i2.Future<_i9.WireMatch> startMatch(
-    String matchId, {
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<_i9.WireMatch>(
-    'multiplayer',
-    'startMatch',
-    {
-      'matchId': matchId,
-      'multiplayerVersion': multiplayerVersion,
-    },
-  );
-
-  _i2.Future<_i9.WireMatch> markMapLoaded(
-    String matchId, {
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<_i9.WireMatch>(
-    'multiplayer',
-    'markMapLoaded',
-    {
-      'matchId': matchId,
-      'multiplayerVersion': multiplayerVersion,
-    },
-  );
-
-  _i2.Future<_i9.WireMatch> resignMatch(
-    String matchId, {
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<_i9.WireMatch>(
-    'multiplayer',
-    'resignMatch',
-    {
-      'matchId': matchId,
-      'multiplayerVersion': multiplayerVersion,
-    },
-  );
-
-  _i2.Future<void> leaveMatch(
-    String matchId, {
-    required int? multiplayerVersion,
-  }) => caller.callServerEndpoint<void>(
-    'multiplayer',
-    'leaveMatch',
-    {
-      'matchId': matchId,
-      'multiplayerVersion': multiplayerVersion,
-    },
-  );
-
-  _i2.Stream<_i13.MultiplayerServerMessage> connect(
-    String matchId,
-    int afterOffset,
-    _i2.Stream<_i14.MultiplayerClientMessage> input, {
-    required int? multiplayerVersion,
-  }) =>
-      caller.callStreamingServerEndpoint<
-        _i2.Stream<_i13.MultiplayerServerMessage>,
-        _i13.MultiplayerServerMessage
-      >(
-        'multiplayer',
-        'connect',
-        {
-          'matchId': matchId,
-          'afterOffset': afterOffset,
-          'multiplayerVersion': multiplayerVersion,
-        },
-        {'input': input},
+  _i2.Future<_i11.GameResync> resync(String matchId) =>
+      caller.callServerEndpoint<_i11.GameResync>(
+        'game',
+        'resync',
+        {'matchId': matchId},
       );
 }
 
@@ -521,7 +394,7 @@ class Client extends _i1.ServerpodClientShared {
     googleIdp = EndpointGoogleIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     steamAuth = EndpointSteamAuth(this);
-    multiplayer = EndpointMultiplayer(this);
+    game = EndpointGame(this);
     modules = Modules(this);
   }
 
@@ -543,7 +416,7 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointSteamAuth steamAuth;
 
-  late final EndpointMultiplayer multiplayer;
+  late final EndpointGame game;
 
   late final Modules modules;
 
@@ -558,7 +431,7 @@ class Client extends _i1.ServerpodClientShared {
     'googleIdp': googleIdp,
     'jwtRefresh': jwtRefresh,
     'steamAuth': steamAuth,
-    'multiplayer': multiplayer,
+    'game': game,
   };
 
   @override

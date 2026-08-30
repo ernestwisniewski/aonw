@@ -22,12 +22,8 @@ const movementDomainAdapterPath =
     '${movementLibraryPath}domain_move_unit_resolver.dart';
 const movementWorkerAutomationAdapterPath =
     '${movementLibraryPath}domain_worker_automation_command_resolver.dart';
-const movementLegacyVisibilityPath =
+const movementApplicationVisibilityPath =
     'lib/game/domain/movement/unit_movement_visibility_rules.dart';
-const movementServerReducerPath =
-    'server/lib/src/multiplayer/server_command_reducer.dart';
-const movementServerCallSite =
-    'server/lib/src/multiplayer/server_command_reducer_movement.dart';
 const movementMctsProjectionConsumerPath =
     'packages/aonw_core/lib/ai/mcts/'
     'mcts_simulated_movement_command_applier.dart';

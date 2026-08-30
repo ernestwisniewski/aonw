@@ -19,7 +19,7 @@
 - [ ] `make architecture` passes; any architecture baseline change only reduces existing above-target debt and is explained in the summary.
 - [ ] `make critical-e2e-test` passes when local persistence or multiplayer auth/match/command/reconnect behavior changed.
 - [ ] Generator input changes were regenerated deliberately and the resulting build-runner, localization, Serverpod, and migration diffs were reviewed (`make generated-code-check`).
-- [ ] Multiplayer behavior is unchanged, or `kCurrentMultiplayerVersion` was incremented and every retained entry in `kCompatibleMultiplayerVersions` was verified against ADR 0004.
+- [ ] Game protocol or content changes update the exact Rust contract, generated Serverpod models, initial schema, and cross-account recovery fixtures together.
 - [ ] Docs updated when behavior, persistence, APIs, game rules, or build/deploy flows changed.
 - [ ] Architecture boundaries and accepted ADRs respected (see `test/architecture/layer_boundaries_test.dart` and `docs/adr/README.md`).
 

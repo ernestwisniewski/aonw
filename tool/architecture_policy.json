@@ -140,6 +140,24 @@
       "defaultRole": "tool",
       "roleAssignments": {}
     },
+    "flutter_client_integration_test": {
+      "sourceRoot": "clients/aonw_flutter/integration_test",
+      "generatedPrefixes": [],
+      "defaultRole": "test",
+      "roleAssignments": {}
+    },
+    "flutter_client_lib": {
+      "sourceRoot": "clients/aonw_flutter/lib",
+      "generatedPrefixes": [],
+      "defaultRole": "production",
+      "roleAssignments": {}
+    },
+    "flutter_client_test": {
+      "sourceRoot": "clients/aonw_flutter/test",
+      "generatedPrefixes": [],
+      "defaultRole": "test",
+      "roleAssignments": {}
+    },
     "root_lib": {
       "sourceRoot": "lib",
       "generatedPrefixes": [
@@ -200,29 +218,29 @@
       "defaultRole": "production",
       "roleAssignments": {}
     },
+    "server_native_hook": {
+      "sourceRoot": "packages/aonw_server_native/hook",
+      "generatedPrefixes": [],
+      "defaultRole": "tool",
+      "roleAssignments": {}
+    },
+    "server_native_lib": {
+      "sourceRoot": "packages/aonw_server_native/lib",
+      "generatedPrefixes": [],
+      "defaultRole": "production",
+      "roleAssignments": {}
+    },
+    "server_native_test": {
+      "sourceRoot": "packages/aonw_server_native/test",
+      "generatedPrefixes": [],
+      "defaultRole": "test",
+      "roleAssignments": {}
+    },
     "server_test": {
       "sourceRoot": "server/test",
       "generatedPrefixes": [
         "server/test/integration/test_tools/"
       ],
-      "defaultRole": "test",
-      "roleAssignments": {}
-    },
-    "successor_flutter_integration_test": {
-      "sourceRoot": "clients/aonw_flutter/integration_test",
-      "generatedPrefixes": [],
-      "defaultRole": "test",
-      "roleAssignments": {}
-    },
-    "successor_flutter_lib": {
-      "sourceRoot": "clients/aonw_flutter/lib",
-      "generatedPrefixes": [],
-      "defaultRole": "production",
-      "roleAssignments": {}
-    },
-    "successor_flutter_test": {
-      "sourceRoot": "clients/aonw_flutter/test",
-      "generatedPrefixes": [],
       "defaultRole": "test",
       "roleAssignments": {}
     },

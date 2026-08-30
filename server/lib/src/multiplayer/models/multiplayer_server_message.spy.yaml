@@ -1,9 +1,0 @@
-class: MultiplayerServerMessage
-fields:
-  serverMessageId: String
-  matchId: String
-  offset: int
-  match: WireMatch?
-  snapshot: WireSnapshot?
-  event: WireEvent?
-  ack: WireCommandAck?

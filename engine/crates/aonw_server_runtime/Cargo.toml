@@ -17,5 +17,8 @@ aonw_domain = { path = "../aonw_domain" }
 aonw_engine = { path = "../aonw_engine" }
 aonw_projection = { path = "../aonw_projection" }
 
+[dev-dependencies]
+serde_json.workspace = true
+
 [lints]
 workspace = true

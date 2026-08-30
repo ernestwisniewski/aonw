@@ -21,21 +21,25 @@ server/config/**
 !server/migrations/**
 !server/docker-entrypoint.sh
 
-# Shared Dart-only domain package.
+# Dart-to-Rust server host.
 !packages/
 packages/**
-!packages/aonw_core/
-packages/aonw_core/**
-!packages/aonw_core/pubspec.yaml
-!packages/aonw_core/pubspec.lock
-!packages/aonw_core/lib/
-!packages/aonw_core/lib/**
+!packages/aonw_server_native/
+packages/aonw_server_native/**
+!packages/aonw_server_native/pubspec.yaml
+!packages/aonw_server_native/hook/
+!packages/aonw_server_native/hook/**
+!packages/aonw_server_native/lib/
+!packages/aonw_server_native/lib/**
 
-# Runtime map data.
-!content/
-content/**
-!content/maps/
-!content/maps/**
+# Rust workspace required by the Native Assets build hook.
+!engine/
+engine/**
+!engine/Cargo.toml
+!engine/Cargo.lock
+!engine/rust-toolchain.toml
+!engine/crates/
+!engine/crates/**
 
 # Serverpod migrations are the only plain SQL inputs allowed in the image.
 **/*.sql

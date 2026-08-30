@@ -3,11 +3,11 @@ import 'package:aonw_server/src/auth/external_auth_route.dart';
 import 'package:aonw_server/src/auth/external_auth_service.dart';
 import 'package:aonw_server/src/auth/steam_auth_route.dart';
 import 'package:aonw_server/src/auth/steam_auth_service.dart';
+import 'package:aonw_server/src/game/native/game_native_runtime.dart'
+    show initializeAonwGameNativeHost, shutdownAonwGameNativeHost;
 import 'package:aonw_server/src/generated/endpoints.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
-import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
-import 'package:aonw_server/src/multiplayer/multiplayer_turn_timeout_future_call.dart';
-import 'package:aonw_server/src/public_stats/public_multiplayer_stats_route.dart';
+import 'package:aonw_server/src/stats/public_game_stats_route.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
@@ -15,8 +15,12 @@ import 'package:serverpod_auth_idp_server/providers/apple.dart' as apple;
 import 'package:serverpod_auth_idp_server/providers/google.dart' as google;
 
 Future<void> run(List<String> args) async {
+  initializeAonwGameNativeHost();
   final pod = Serverpod(args, Protocol(), Endpoints());
-  final turnTimeoutSweepRegistered = _registerTurnTimeoutSweep(pod);
+  pod.experimental.shutdownTasks.addTask(
+    'aonwGameNativeHost',
+    shutdownAonwGameNativeHost,
+  );
   final authMaintenanceRegistered = _registerAuthMaintenance(pod);
   final appleConfigured = _appleIdpConfigured(pod);
   final googleConfigured = _hasPassword(pod, 'googleClientSecret');
@@ -51,17 +55,8 @@ Future<void> run(List<String> args) async {
     SteamAuthCallbackRoute(),
     SteamAuthService.callbackPath,
   );
-  pod.webServer.addRoute(PublicMultiplayerStatsRoute(), '/api/stats');
-
+  pod.webServer.addRoute(PublicGameStatsRoute(), '/api/stats');
   await pod.start();
-  if (turnTimeoutSweepRegistered) {
-    final turnTimeoutReconciler = MultiplayerTurnTimeoutScheduleReconciler(pod);
-    await turnTimeoutReconciler.start();
-    pod.experimental.shutdownTasks.addTask(
-      multiplayerTurnTimeoutReconcilerShutdownTaskId,
-      turnTimeoutReconciler.close,
-    );
-  }
   if (authMaintenanceRegistered) {
     final authMaintenanceReconciler = AuthMaintenanceScheduleReconciler(pod);
     await authMaintenanceReconciler.start();
@@ -84,20 +79,6 @@ bool _appleIdpConfigured(Serverpod pod) {
 bool _hasPassword(Serverpod pod, String key) {
   final value = pod.getPassword(key);
   return value != null && value.trim().isNotEmpty;
-}
-
-bool _registerTurnTimeoutSweep(Serverpod pod) {
-  try {
-    pod.registerFutureCall(
-      MultiplayerTurnTimeoutSweepCall(hub: multiplayerHub),
-      multiplayerTurnTimeoutSweepCallName,
-    );
-    return true;
-  } on StateError {
-    // Future calls can be disabled for maintenance/test roles; turn timeout
-    // enforcement still runs on direct command handling in those modes.
-    return false;
-  }
 }
 
 bool _registerAuthMaintenance(Serverpod pod) {

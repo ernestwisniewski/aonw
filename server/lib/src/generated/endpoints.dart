@@ -20,15 +20,17 @@ import '../auth/external_auth_endpoint.dart' as _i7;
 import '../auth/google_idp_endpoint.dart' as _i8;
 import '../auth/jwt_refresh_endpoint.dart' as _i9;
 import '../auth/steam_auth_endpoint.dart' as _i10;
-import '../multiplayer/multiplayer_endpoint.dart' as _i11;
-import 'package:aonw_server/src/generated/multiplayer/models/create_match_request.dart'
+import '../game/game_endpoint.dart' as _i11;
+import 'package:aonw_server/src/generated/game/models/game_create_match_request.dart'
     as _i12;
-import 'package:aonw_server/src/generated/multiplayer/models/multiplayer_client_message.dart'
+import 'package:aonw_server/src/generated/game/models/game_join_match_request.dart'
     as _i13;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+import 'package:aonw_server/src/generated/game/models/game_submit_turn_request.dart'
     as _i14;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i15;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i16;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -88,10 +90,10 @@ class Endpoints extends _i1.EndpointDispatch {
           'steamAuth',
           null,
         ),
-      'multiplayer': _i11.MultiplayerEndpoint()
+      'game': _i11.GameEndpoint()
         ..initialize(
           server,
-          'multiplayer',
+          'game',
           null,
         ),
     };
@@ -112,11 +114,6 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
           },
           call:
               (
@@ -127,7 +124,6 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     platform: params['platform'],
                     buildNumber: params['buildNumber'],
-                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
       },
@@ -478,369 +474,97 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    connectors['multiplayer'] = _i1.EndpointConnector(
-      name: 'multiplayer',
-      endpoint: endpoints['multiplayer']!,
+    connectors['game'] = _i1.EndpointConnector(
+      name: 'game',
+      endpoint: endpoints['game']!,
       methodConnectors: {
-        'listMatches': _i1.MethodConnector(
-          name: 'listMatches',
-          params: {
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .listMatches(
-                    session,
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
-        ),
         'createMatch': _i1.MethodConnector(
           name: 'createMatch',
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i12.CreateMatchRequest>(),
+              type: _i1.getType<_i12.GameCreateMatchRequest>(),
               nullable: false,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
             ),
           },
           call:
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .createMatch(
-                    session,
-                    params['request'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
-        ),
-        'quickplay': _i1.MethodConnector(
-          name: 'quickplay',
-          params: {
-            'request': _i1.ParameterDescription(
-              name: 'request',
-              type: _i1.getType<_i12.CreateMatchRequest>(),
-              nullable: false,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .quickplay(
-                    session,
-                    params['request'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
+              ) async => (endpoints['game'] as _i11.GameEndpoint).createMatch(
+                session,
+                params['request'],
+              ),
         ),
         'joinMatch': _i1.MethodConnector(
           name: 'joinMatch',
           params: {
-            'matchId': _i1.ParameterDescription(
-              name: 'matchId',
-              type: _i1.getType<String>(),
+            'request': _i1.ParameterDescription(
+              name: 'request',
+              type: _i1.getType<_i13.GameJoinMatchRequest>(),
               nullable: false,
-            ),
-            'countryId': _i1.ParameterDescription(
-              name: 'countryId',
-              type: _i1.getType<String?>(),
-              nullable: true,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
             ),
           },
           call:
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .joinMatch(
-                    session,
-                    params['matchId'],
-                    countryId: params['countryId'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
+              ) async => (endpoints['game'] as _i11.GameEndpoint).joinMatch(
+                session,
+                params['request'],
+              ),
         ),
-        'joinPrivateMatch': _i1.MethodConnector(
-          name: 'joinPrivateMatch',
+        'listMatches': _i1.MethodConnector(
+          name: 'listMatches',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['game'] as _i11.GameEndpoint).listMatches(session),
+        ),
+        'submitTurn': _i1.MethodConnector(
+          name: 'submitTurn',
           params: {
-            'inviteCode': _i1.ParameterDescription(
-              name: 'inviteCode',
-              type: _i1.getType<String>(),
+            'request': _i1.ParameterDescription(
+              name: 'request',
+              type: _i1.getType<_i14.GameSubmitTurnRequest>(),
               nullable: false,
-            ),
-            'countryId': _i1.ParameterDescription(
-              name: 'countryId',
-              type: _i1.getType<String?>(),
-              nullable: true,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
             ),
           },
           call:
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .joinPrivateMatch(
-                    session,
-                    params['inviteCode'],
-                    countryId: params['countryId'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
+              ) async => (endpoints['game'] as _i11.GameEndpoint).submitTurn(
+                session,
+                params['request'],
+              ),
         ),
-        'loadMatch': _i1.MethodConnector(
-          name: 'loadMatch',
+        'resync': _i1.MethodConnector(
+          name: 'resync',
           params: {
             'matchId': _i1.ParameterDescription(
               name: 'matchId',
               type: _i1.getType<String>(),
               nullable: false,
             ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
           },
           call:
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .loadMatch(
-                    session,
-                    params['matchId'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
-        ),
-        'loadSnapshot': _i1.MethodConnector(
-          name: 'loadSnapshot',
-          params: {
-            'matchId': _i1.ParameterDescription(
-              name: 'matchId',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .loadSnapshot(
-                    session,
-                    params['matchId'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
-        ),
-        'listEvents': _i1.MethodConnector(
-          name: 'listEvents',
-          params: {
-            'matchId': _i1.ParameterDescription(
-              name: 'matchId',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'afterOffset': _i1.ParameterDescription(
-              name: 'afterOffset',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .listEvents(
-                    session,
-                    params['matchId'],
-                    params['afterOffset'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
-        ),
-        'startMatch': _i1.MethodConnector(
-          name: 'startMatch',
-          params: {
-            'matchId': _i1.ParameterDescription(
-              name: 'matchId',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .startMatch(
-                    session,
-                    params['matchId'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
-        ),
-        'markMapLoaded': _i1.MethodConnector(
-          name: 'markMapLoaded',
-          params: {
-            'matchId': _i1.ParameterDescription(
-              name: 'matchId',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .markMapLoaded(
-                    session,
-                    params['matchId'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
-        ),
-        'resignMatch': _i1.MethodConnector(
-          name: 'resignMatch',
-          params: {
-            'matchId': _i1.ParameterDescription(
-              name: 'matchId',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .resignMatch(
-                    session,
-                    params['matchId'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
-        ),
-        'leaveMatch': _i1.MethodConnector(
-          name: 'leaveMatch',
-          params: {
-            'matchId': _i1.ParameterDescription(
-              name: 'matchId',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .leaveMatch(
-                    session,
-                    params['matchId'],
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
-        ),
-        'connect': _i1.MethodStreamConnector(
-          name: 'connect',
-          params: {
-            'matchId': _i1.ParameterDescription(
-              name: 'matchId',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'afterOffset': _i1.ParameterDescription(
-              name: 'afterOffset',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-            'multiplayerVersion': _i1.ParameterDescription(
-              name: 'multiplayerVersion',
-              type: _i1.getType<int?>(),
-              nullable: true,
-            ),
-          },
-          streamParams: {
-            'input':
-                _i1.StreamParameterDescription<_i13.MultiplayerClientMessage>(
-                  name: 'input',
-                  nullable: false,
-                ),
-          },
-          returnType: _i1.MethodStreamReturnType.streamType,
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-                Map<String, Stream> streamParams,
-              ) => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .connect(
-                    session,
-                    params['matchId'],
-                    params['afterOffset'],
-                    streamParams['input']!
-                        .cast<_i13.MultiplayerClientMessage>(),
-                    multiplayerVersion: params['multiplayerVersion'],
-                  ),
+              ) async => (endpoints['game'] as _i11.GameEndpoint).resync(
+                session,
+                params['matchId'],
+              ),
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i14.Endpoints()
+    modules['serverpod_auth_core'] = _i15.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i15.Endpoints()
+    modules['serverpod_auth_idp'] = _i16.Endpoints()
       ..initializeEndpoints(server);
   }
 }

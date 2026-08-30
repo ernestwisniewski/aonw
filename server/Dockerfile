@@ -1,17 +1,30 @@
 # syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 
+FROM rust:1.97.1-bookworm@sha256:0e2bcaef56d041a486784e54104a81aebe0da44bd03019bd70bc0401e42e4a97 AS rust_toolchain
+
 FROM dart:stable@sha256:5ac89dbcae4327278b257920e2786df0f22c87adc630017266b67cfcceef8348 AS builder
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=rust_toolchain /usr/local/cargo /usr/local/cargo
+COPY --from=rust_toolchain /usr/local/rustup /usr/local/rustup
+ENV CARGO_HOME=/usr/local/cargo \
+    RUSTUP_HOME=/usr/local/rustup \
+    PATH=/usr/local/cargo/bin:${PATH}
 
 WORKDIR /workspace
 
-COPY packages/aonw_core/pubspec.yaml packages/aonw_core/pubspec.lock ./packages/aonw_core/
+COPY packages/aonw_server_native/pubspec.yaml ./packages/aonw_server_native/
 COPY server/pubspec.yaml server/pubspec.lock ./server/
 
 WORKDIR /workspace/server
 RUN --mount=type=cache,target=/root/.pub-cache dart pub get --offline || dart pub get
 
 WORKDIR /workspace
-COPY packages/aonw_core ./packages/aonw_core
+COPY engine ./engine
+COPY packages/aonw_server_native ./packages/aonw_server_native
 COPY server ./server
 
 WORKDIR /workspace/server
@@ -20,11 +33,13 @@ ARG AONW_RELEASE_CHANNEL=ALPHA
 RUN --mount=type=cache,target=/root/.pub-cache \
     dart pub get \
  && APP_VERSION="${AONW_APP_VERSION:-0.0.0}" \
- && dart compile exe \
+ && dart \
       -DAONW_APP_VERSION="$APP_VERSION" \
       -DAONW_RELEASE_CHANNEL="$AONW_RELEASE_CHANNEL" \
-      bin/main.dart \
-      -o /workspace/server_bin
+      build cli \
+      --output=/workspace/server_dist \
+      --target=bin/main.dart \
+      --verbosity=warning
 
 FROM debian:bookworm-slim@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639d36e7456b0b229241 AS runtime
 
@@ -36,7 +51,7 @@ RUN apt-get update \
  && useradd --uid 10001 --user-group --home-dir /app --create-home --shell /usr/sbin/nologin aonw
 
 WORKDIR /app
-COPY --from=builder --chown=aonw:aonw /workspace/server_bin /app/server
+COPY --from=builder --chown=aonw:aonw /workspace/server_dist/bundle/ /app/
 # Copy only the non-secret run-mode config files. Secrets are never baked into
 # the image; they are supplied through the environment at runtime.
 COPY --from=builder --chown=aonw:aonw \
@@ -48,8 +63,6 @@ COPY --from=builder --chown=aonw:aonw \
 COPY --from=builder --chown=aonw:aonw /workspace/server/migrations /app/migrations
 COPY --from=builder --chown=aonw:aonw /workspace/server/lib/src/generated/protocol.yaml /app/lib/src/generated/protocol.yaml
 COPY --chown=aonw:aonw server/docker-entrypoint.sh /app/docker-entrypoint.sh
-COPY --chown=aonw:aonw content/maps /app/content/maps
-
 USER aonw
 
 EXPOSE 8080

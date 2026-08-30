@@ -180,6 +180,7 @@ dependencies = [
  "aonw_domain",
  "aonw_engine",
  "aonw_projection",
+ "serde_json",
 ]
 
 [[package]]

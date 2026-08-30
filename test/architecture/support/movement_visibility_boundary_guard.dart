@@ -10,8 +10,8 @@ List<String> movementVisibilityBoundaryViolations(Map<String, String> sources) {
   return [
     if (declarations.length != 1 || declarations[movementVisibilityPath] != 1)
       'UnitMovementVisibilityRules must be declared exactly once in core',
-    if (sources.containsKey(movementLegacyVisibilityPath))
-      'the legacy root visibility rules file must be removed',
+    if (sources.containsKey(movementApplicationVisibilityPath))
+      'the application visibility rules file must not exist',
     if (directiveTargets.isNotEmpty)
       'all visibility-rule directives must resolve to the core rule: '
           '${directiveTargets.join(', ')}',

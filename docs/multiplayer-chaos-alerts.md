@@ -1,6 +1,7 @@
 # Multiplayer release smoke and failure drills
 
-Use these checks for changes to multiplayer networking, persistence, lobby lifecycle, or command dispatch.
+Use these checks for changes to game networking, persistence, authentication,
+or Rust command execution.
 
 ## Automated gate
 
@@ -8,44 +9,47 @@ Use these checks for changes to multiplayer networking, persistence, lobby lifec
 tool/run_postgres_smoke.sh
 ```
 
-The script creates an isolated PostgreSQL project, applies migrations, runs server integration tests, and executes the public HTTP/WebSocket journey from [critical-e2e.md](critical-e2e.md). It removes its containers and volume on exit.
+The script creates an isolated PostgreSQL project, applies the initial schema,
+runs server integration tests, and executes the public HTTP journey from
+[critical-e2e.md](critical-e2e.md). It removes its containers and volume on
+exit.
 
-## Manual lobby checks
+## Manual two-account checks
 
-Use at least two accounts.
-
-Hosted lobby:
-
-- start is available only when every human roster member is `connected`;
-- disconnecting the last guest stream enters reconnecting state and blocks start;
-- reconnect within the grace period keeps the same seat;
-- guest expiry frees the seat;
-- host expiry abandons the lobby, removes it from discovery, rejects joins, and returns guests to the previous screen;
-- creating or joining without ever opening the stream reaches the same result after the initial-connect lease.
-
-Quickplay:
-
-- one connected player may wait indefinitely while heartbeats renew the lease;
-- the countdown starts only when the complete human roster is connected;
-- disconnect cancels the countdown;
-- reconnect starts a fresh countdown;
-- an expired member is removed and ownership is transferred safely;
-- an empty queue becomes abandoned without requiring another matchmaking request.
+- create a match with one account and join it with the other;
+- verify that `listMatches` exposes only matches in which the account
+  participates;
+- submit a command and verify that each account receives its own Rust-produced
+  projection;
+- retry the same command id and payload and verify that the stored outcome is
+  returned without a second event;
+- reuse the command id with a different payload and verify that it is rejected;
+- request `resync` from both accounts and verify monotonic offsets with no
+  private opponent state leakage.
 
 ## Restart drill
 
-1. Keep one open lobby and one running match active.
-2. Stop the active server process without graceful stream callbacks.
-3. Confirm open-lobby clients reconnect and renew durable presence within the lease window.
-4. Confirm running clients load the latest projected snapshot and converge on the same offset.
-5. Confirm accepted commands are not duplicated and terminal lobby mutations occur once.
+1. Create a match, join it, and persist at least one accepted command.
+2. Stop the API process after the command response is committed.
+3. Start the same server artifact against the existing database.
+4. Refresh authentication if necessary and request `resync` from both accounts.
+5. Verify exact state revisions, event offsets, recipient isolation, and command
+   idempotency after restart.
 
-## Maintenance backlog drill
+## Contention drill
 
-Create more expired leases than one maintenance page can hold, restart after a partial sweep, and verify that bounded follow-ups continue. A concurrent heartbeat must make a stale candidate a no-op after the generation/deadline recheck. One candidate failure must not stop the rest of the page.
+Send concurrent submissions for the same match revision from two authenticated
+participants. Exactly one database transaction may advance the canonical state;
+the other must observe a stale revision or the stored idempotent result. A
+native-runtime error or transaction failure must leave canonical state, events,
+command ledger, and recipient snapshots unchanged.
 
 ## Alerts
 
-Starter Prometheus rules live in `deploy/prometheus/aonw-alerts.yml` and cover API liveness and readiness probes.
+Starter Prometheus rules live in `deploy/prometheus/aonw-alerts.yml` and cover
+API liveness and readiness probes.
 
-The file is not a deployed monitoring system. Alerts are operational only after Prometheus, a blackbox probe, Alertmanager, and a tested notification route are configured. Record a successful synthetic alert before treating this as a production control.
+The file is not a deployed monitoring system. Alerts are operational only after
+Prometheus, a blackbox probe, Alertmanager, and a tested notification route are
+configured. Record a successful synthetic alert before treating this as a
+production control.

@@ -3,19 +3,18 @@ import 'dart:io';
 import 'package:test/test.dart';
 
 void main() {
-  test('latest database definition preserves auth maintenance indexes', () {
+  test('initial database definition contains auth maintenance indexes', () {
     final registry = File('migrations/migration_registry.txt');
-    final latestVersion = registry
+    final versions = registry
         .readAsLinesSync()
         .map((line) => line.trim())
         .where((line) => line.isNotEmpty && !line.startsWith('#'))
-        .last;
-    final migrationDirectory = Directory('migrations/$latestVersion');
+        .toList();
+    expect(versions, hasLength(1));
+    expect(versions.single, endsWith('-initial-schema'));
+    final migrationDirectory = Directory('migrations/${versions.single}');
     final definition = File(
       '${migrationDirectory.path}/definition.sql',
-    ).readAsStringSync();
-    final migration = File(
-      'migrations/20260710111535872-auth-maintenance-indexes/migration.sql',
     ).readAsStringSync();
 
     expect(definition, contains('"aonw_steam_auth_request_expires_at_idx"'));
@@ -27,18 +26,15 @@ void main() {
       definition,
       contains('"serverpod_auth_idp_rate_limited_request_attempt_composite"'),
     );
-    expect(
-      migration,
-      contains(
-        'Apply this small\n-- auth-table migration in a maintenance window',
-      ),
-    );
-    expect(
-      RegExp(
-        r'^CREATE INDEX CONCURRENTLY',
-        multiLine: true,
-      ).hasMatch(migration),
-      isFalse,
-    );
+    expect(definition, contains('CREATE TABLE "aonw_game_match"'));
+    for (final removedTable in [
+      'aonw_match',
+      'aonw_player',
+      'aonw_snapshot',
+      'aonw_event',
+      'aonw_match_presence_lease',
+    ]) {
+      expect(definition, isNot(contains('CREATE TABLE "$removedTable"')));
+    }
   });
 }

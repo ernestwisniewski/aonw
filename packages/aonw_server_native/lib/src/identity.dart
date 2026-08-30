@@ -8,7 +8,7 @@ const aonwServerHostApiVersion = 1;
 const aonwExpectedServerNativeBuildIdentity = 'aonw_server_native/0.1.0';
 
 enum AonwServerNativeIdentityStatus {
-  compatible,
+  exactMatch,
   unavailable,
   contractMismatch,
   buildMismatch,
@@ -36,16 +36,14 @@ final class AonwServerNativeIdentity {
       }
       final available = bindings.aonwServerNativeIsAvailable() == 1;
       final apiVersion = bindings.aonwServerNativeApiVersion();
-      final identity = length == 0
-          ? ''
-          : utf8.decode(data.asTypedList(length));
+      final identity = length == 0 ? '' : utf8.decode(data.asTypedList(length));
       final status = !available
           ? AonwServerNativeIdentityStatus.unavailable
           : apiVersion != aonwServerHostApiVersion
           ? AonwServerNativeIdentityStatus.contractMismatch
           : identity != aonwExpectedServerNativeBuildIdentity
           ? AonwServerNativeIdentityStatus.buildMismatch
-          : AonwServerNativeIdentityStatus.compatible;
+          : AonwServerNativeIdentityStatus.exactMatch;
       return AonwServerNativeIdentity(
         status: status,
         apiVersion: apiVersion,
@@ -60,13 +58,12 @@ final class AonwServerNativeIdentity {
   final int apiVersion;
   final String buildIdentity;
 
-  bool get isCompatible =>
-      status == AonwServerNativeIdentityStatus.compatible;
+  bool get isExactMatch => status == AonwServerNativeIdentityStatus.exactMatch;
 
-  void requireCompatible() {
-    if (isCompatible) return;
+  void requireExactMatch() {
+    if (isExactMatch) return;
     throw StateError(
-      'Incompatible AoNW server native artifact: ${status.name}; '
+      'Unexpected AoNW server native artifact: ${status.name}; '
       'apiVersion=$apiVersion, buildIdentity=$buildIdentity.',
     );
   }

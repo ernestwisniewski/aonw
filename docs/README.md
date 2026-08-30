@@ -54,7 +54,7 @@ Until the cutover gates pass:
 | `lib/game/infrastructure/` | Persistence, native, and transport adapters. |
 | `lib/game/presentation/` | Flutter, Riverpod, Flame rendering, HUD, and interaction state. |
 | `lib/api/` | Authentication, Serverpod sessions, live streams, and network command transport. |
-| `server/lib/src/` | Serverpod endpoints, multiplayer lifecycle, persistence, and maintenance. |
+| `server/lib/src/` | Serverpod authentication, game transactions, persistence, and maintenance. |
 | `engine/crates/` | Rust domain, content, contracts, engine, runtime, and thin native adapters. |
 | `content/` | Versioned logical maps and scenarios. |
 | `clients/aonw_godot/` | Godot application, infrastructure, presentation, and editor tooling. |

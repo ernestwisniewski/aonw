@@ -72,7 +72,7 @@ final class AonwPreparedServerWorld {
 
 final class AonwServerNativeHost {
   AonwServerNativeHost() {
-    identity.requireCompatible();
+    identity.requireExactMatch();
   }
 
   final AonwServerNativeIdentity identity = AonwServerNativeIdentity.read();
@@ -88,8 +88,7 @@ final class AonwServerNativeHost {
     });
     final native = _invoke(
       request,
-      (input, length) =>
-          bindings.aonwServerNativePrepareWorld(input, length),
+      (input, length) => bindings.aonwServerNativePrepareWorld(input, length),
     );
     try {
       final response = native.response.requireSuccess('worldPrepared');
@@ -119,14 +118,51 @@ final class AonwServerNativeHost {
     }
     final native = _invoke(
       request,
-      (input, length) => bindings.aonwServerNativeSubmitTurn(
-        world._handle,
-        input,
-        length,
-      ),
+      (input, length) =>
+          bindings.aonwServerNativeSubmitTurn(world._handle, input, length),
     );
     try {
       native.response.requireSuccess('commandApplied');
+      return native.response;
+    } finally {
+      native.close();
+    }
+  }
+
+  AonwServerHostResponse projectStateJson(
+    AonwPreparedServerWorld world,
+    String request,
+  ) {
+    if (world.isClosed) {
+      throw StateError('Prepared server world is closed.');
+    }
+    final native = _invoke(
+      request,
+      (input, length) =>
+          bindings.aonwServerNativeProjectState(world._handle, input, length),
+    );
+    try {
+      native.response.requireSuccess('stateProjected');
+      return native.response;
+    } finally {
+      native.close();
+    }
+  }
+
+  AonwServerHostResponse createMatchJson(
+    AonwPreparedServerWorld world,
+    String request,
+  ) {
+    if (world.isClosed) {
+      throw StateError('Prepared server world is closed.');
+    }
+    final native = _invoke(
+      request,
+      (input, length) =>
+          bindings.aonwServerNativeCreateMatch(world._handle, input, length),
+    );
+    try {
+      native.response.requireSuccess('matchCreated');
       return native.response;
     } finally {
       native.close();

@@ -4,12 +4,4 @@
 ### manually. If a collision is detected in this file when doing a code merge, resolve
 ### the conflict by removing and recreating the conflicting migration.
 
-20260611224644318-clean-serverpod-auth
-20260618130446061
-20260618143215539
-20260710111535872-auth-maintenance-indexes
-20260710114609962-multiplayer-query-indexes
-20260711112611502-quickplay-map-index
-20260711223706381-public-multiplayer-stats
-20260802115854448-external-desktop-auth
-20260808170451143-lobby-presence-leases
+20260829235223419-initial-schema

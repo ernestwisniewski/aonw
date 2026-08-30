@@ -6,8 +6,8 @@ environment:
   sdk: ^3.11.4
 
 dependencies:
-  aonw_core:
-    path: ../packages/aonw_core
+  aonw_server_native:
+    path: ../packages/aonw_server_native
   crypto: ^3.0.7
   http: ^1.6.0
   serverpod: 3.4.11

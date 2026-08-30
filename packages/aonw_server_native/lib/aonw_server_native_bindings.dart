@@ -55,6 +55,32 @@ external void aonwServerNativeWorldFree(ffi.Pointer<ffi.Void> world);
     ffi.Pointer<ffi.Uint8>,
     ffi.UintPtr,
   )
+>(symbol: 'aonw_server_native_project_state', assetId: _assetId)
+external ffi.Pointer<ffi.Void> aonwServerNativeProjectState(
+  ffi.Pointer<ffi.Void> world,
+  ffi.Pointer<ffi.Uint8> request,
+  int requestLength,
+);
+
+@ffi.Native<
+  ffi.Pointer<ffi.Void> Function(
+    ffi.Pointer<ffi.Void>,
+    ffi.Pointer<ffi.Uint8>,
+    ffi.UintPtr,
+  )
+>(symbol: 'aonw_server_native_create_match', assetId: _assetId)
+external ffi.Pointer<ffi.Void> aonwServerNativeCreateMatch(
+  ffi.Pointer<ffi.Void> world,
+  ffi.Pointer<ffi.Uint8> request,
+  int requestLength,
+);
+
+@ffi.Native<
+  ffi.Pointer<ffi.Void> Function(
+    ffi.Pointer<ffi.Void>,
+    ffi.Pointer<ffi.Uint8>,
+    ffi.UintPtr,
+  )
 >(symbol: 'aonw_server_native_submit_turn', assetId: _assetId)
 external ffi.Pointer<ffi.Void> aonwServerNativeSubmitTurn(
   ffi.Pointer<ffi.Void> world,

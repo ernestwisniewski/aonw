@@ -5,12 +5,14 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use aonw_contracts::server::{
-    MAX_SERVER_HOST_REQUEST_JSON_BYTES, PrepareServerWorldRequestDto, SERVER_HOST_API_VERSION,
-    ServerHostCodecError, ServerHostErrorCodeDto, ServerHostErrorDto, ServerHostOutcomeDto,
-    ServerHostResponseBodyDto, ServerHostResponseDto, SubmitTurnServerRequestDto,
+    CreateServerMatchRequestDto, MAX_SERVER_HOST_REQUEST_JSON_BYTES, PrepareServerWorldRequestDto,
+    ProjectServerStateRequestDto, SERVER_HOST_API_VERSION, ServerHostCodecError,
+    ServerHostErrorCodeDto, ServerHostErrorDto, ServerHostOutcomeDto, ServerHostResponseBodyDto,
+    ServerHostResponseDto, SubmitTurnServerRequestDto,
 };
 use aonw_server_runtime::{
-    PreparedServerWorld, ServerBoundaryError, apply_submit_turn_dto, prepare_server_world,
+    PreparedServerWorld, ServerBoundaryError, apply_submit_turn_dto, create_server_match_dto,
+    prepare_server_world, project_server_state_dto,
 };
 
 static BUILD_IDENTITY: &[u8] = concat!("aonw_server_native/", env!("CARGO_PKG_VERSION")).as_bytes();
@@ -145,6 +147,76 @@ pub unsafe extern "C" fn aonw_server_native_submit_turn(
         let world = unsafe { &*world.cast::<PreparedServerWorld>() }.clone();
         let result = apply_submit_turn_dto(world, request).map_err(boundary_error)?;
         let response = success(ServerHostResponseBodyDto::CommandApplied {
+            result: Box::new(result),
+        })?;
+        Ok(NativeResponse {
+            bytes: response.into_bytes().into_boxed_slice(),
+            world: None,
+        })
+    })
+}
+
+/// Validates and projects one canonical state against a prepared world.
+///
+/// # Safety
+///
+/// `world` must be a live prepared handle for the duration of the call.
+/// `request` follows the same rules as [`aonw_server_native_prepare_world`].
+#[allow(unsafe_code)]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn aonw_server_native_project_state(
+    world: *const core::ffi::c_void,
+    request: *const u8,
+    request_len: usize,
+) -> *mut core::ffi::c_void {
+    contain(|| {
+        if world.is_null() {
+            return Err(failure(
+                ServerHostErrorCodeDto::InvalidFfiArgument,
+                "prepared world pointer is null",
+            ));
+        }
+        let input = unsafe { read_request(request, request_len) }?;
+        let request = ProjectServerStateRequestDto::from_json(input).map_err(codec_error)?;
+        // SAFETY: The caller keeps the immutable world alive for this call.
+        let world = unsafe { &*world.cast::<PreparedServerWorld>() }.clone();
+        let result = project_server_state_dto(world, request).map_err(boundary_error)?;
+        let response = success(ServerHostResponseBodyDto::StateProjected {
+            result: Box::new(result),
+        })?;
+        Ok(NativeResponse {
+            bytes: response.into_bytes().into_boxed_slice(),
+            world: None,
+        })
+    })
+}
+
+/// Constructs one authoritative multiplayer match against a prepared world.
+///
+/// # Safety
+///
+/// `world` must be a live prepared handle for the duration of the call.
+/// `request` follows the same rules as [`aonw_server_native_prepare_world`].
+#[allow(unsafe_code)]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn aonw_server_native_create_match(
+    world: *const core::ffi::c_void,
+    request: *const u8,
+    request_len: usize,
+) -> *mut core::ffi::c_void {
+    contain(|| {
+        if world.is_null() {
+            return Err(failure(
+                ServerHostErrorCodeDto::InvalidFfiArgument,
+                "prepared world pointer is null",
+            ));
+        }
+        let input = unsafe { read_request(request, request_len) }?;
+        let request = CreateServerMatchRequestDto::from_json(input).map_err(codec_error)?;
+        // SAFETY: The caller keeps the immutable world alive for this call.
+        let world = unsafe { &*world.cast::<PreparedServerWorld>() }.clone();
+        let result = create_server_match_dto(world, request).map_err(boundary_error)?;
+        let response = success(ServerHostResponseBodyDto::MatchCreated {
             result: Box::new(result),
         })?;
         Ok(NativeResponse {

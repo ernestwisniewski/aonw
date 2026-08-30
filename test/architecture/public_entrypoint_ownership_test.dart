@@ -27,10 +27,9 @@ void main() {
 
   test('server implementation facades do not re-export capabilities', () {
     for (final path in const {
-      'server/lib/src/multiplayer/matchmaking_service.dart',
-      'server/lib/src/multiplayer/multiplayer_match_store.dart',
-      'server/lib/src/multiplayer/running_match_snapshot_codec.dart',
-      'server/lib/src/multiplayer/server_command_reducer.dart',
+      'server/lib/src/game/game_endpoint.dart',
+      'server/lib/src/game/native/game_native_runtime.dart',
+      'server/lib/src/game/service/game_match_service.dart',
     }) {
       expect(
         _exportsFrom(File(path)),

@@ -179,14 +179,17 @@ void main() {
         isEmpty,
         reason: 'Authoritative combat must not return to the UI reducer.',
       );
-      expect(
-        sources.containsKey(
-          'server/lib/src/multiplayer/server_command_reducer_combat.dart',
-        ),
-        isFalse,
-        reason: 'Server combat must stay in the shared engine composition.',
+      final dartServerCombatSources = sources.keys.where(
+        (path) =>
+            path.startsWith('server/lib/src/game/') &&
+            path.contains('combat_reducer'),
       );
-      final legacyServerBridge = [
+      expect(
+        dartServerCombatSources,
+        isEmpty,
+        reason: 'Server combat must stay in the Rust runtime.',
+      );
+      final serverBridge = [
         for (final entry in sources.entries)
           ...sourceSymbolReferenceViolations(
             entry.value,
@@ -194,7 +197,7 @@ void main() {
             symbol: '_applyCombatCommand',
           ),
       ];
-      expect(legacyServerBridge, isEmpty);
+      expect(serverBridge, isEmpty);
     });
   });
 
@@ -365,7 +368,7 @@ HiddenMap? leakedMap;
 ''',
         combatCommandResultPath: '''
 import 'package:aonw_server/src/generated/protocol.dart';
-import '../../../../../../../server/lib/src/multiplayer/reducer.dart';
+import '../../../../../../../server/lib/src/game/reducer.dart';
 DomainState? leakedState;
 ''',
       };
@@ -378,7 +381,7 @@ DomainState? leakedState;
         'DomainState',
         'package:aonw/',
         'package:aonw_server/',
-        'server/lib/src/multiplayer/reducer.dart',
+        'server/lib/src/game/reducer.dart',
       }) {
         expect(report, contains(expected));
       }

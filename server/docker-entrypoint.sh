@@ -68,4 +68,4 @@ if [ "${SERVERPOD_APPLY_MIGRATIONS:-false}" = "true" ]; then
   set -- --apply-migrations "$@"
 fi
 
-exec /app/server "$@"
+exec /app/bin/main "$@"

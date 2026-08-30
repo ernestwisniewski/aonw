@@ -1,24 +1,26 @@
-//! Stateless authoritative host operations for the current multiplayer protocol.
+//! Stateless authoritative host operations for the multiplayer protocol.
 
 #![forbid(unsafe_code)]
 
 use std::sync::Arc;
 
-use aonw_content::{MapDefinition, MapDocument, RulesetDefinition};
+use aonw_content::{MapDefinition, MapDocument, RulesetDefinition, ScenarioDefinition};
 use aonw_contract_mapping::{
-    decode_game_state, encode_client_event, encode_client_evidence, encode_client_stamp,
-    encode_command_rejection, encode_game_state, encode_player_view_patch,
-    encode_player_view_snapshot,
+    decode_game_state, decode_match_identity, encode_client_event, encode_client_evidence,
+    encode_client_stamp, encode_command_rejection, encode_game_state, encode_player_view_patch,
+    encode_player_view_snapshot, encode_recipient_evidence,
 };
 use aonw_contracts::server::{
-    PrepareServerWorldRequestDto, SERVER_HOST_API_VERSION, ServerCommandResultDto,
-    ServerHostErrorCodeDto, ServerRecipientOutcomeDto, SubmitTurnServerRequestDto,
+    CreateServerMatchRequestDto, PrepareServerWorldRequestDto, ProjectServerStateRequestDto,
+    SERVER_HOST_API_VERSION, ServerCommandResultDto, ServerCreatedMatchDto, ServerHostErrorCodeDto,
+    ServerProjectionResultDto, ServerRecipientOutcomeDto, ServerRecipientSnapshotDto,
+    SubmitTurnServerRequestDto,
 };
-use aonw_domain::{GameState, PlayerId};
+use aonw_domain::{GameMode, GameState, PlayerId};
 use aonw_engine::{
     CanonicalEngineError, CommandRejectionCode, CompiledMovementMap, CompiledMovementMapError,
     DomainEvent, EngineContext, ExecutionEvidence, GameEngine, MovementVisibility, PlayerCommand,
-    TurnCommand,
+    TurnCommand, start_match,
 };
 use aonw_projection::{
     PlayerViewPatch, PlayerViewSnapshot, ProjectedView, RecipientDisclosure, SessionStamp,
@@ -76,6 +78,14 @@ pub enum ServerBoundaryError {
     },
     /// The strict authored map document could not be decoded.
     InvalidMapDocument(String),
+    /// The strict authored scenario document could not be decoded.
+    InvalidScenarioDocument(String),
+    /// Immutable match identity violated a current domain invariant.
+    InvalidMatchIdentity(String),
+    /// A server-created match selected a non-multiplayer mode.
+    UnsupportedGameMode,
+    /// Scenario state and immutable identity could not form a valid match.
+    MatchStartFailed(String),
     /// The request selected an unreviewed immutable ruleset.
     UnsupportedRuleset(String),
     /// Match content hashes do not match the prepared immutable world.
@@ -95,6 +105,10 @@ impl ServerBoundaryError {
         match self {
             Self::UnsupportedApiVersion { .. } => ServerHostErrorCodeDto::UnsupportedApiVersion,
             Self::InvalidMapDocument(_) => ServerHostErrorCodeDto::InvalidMapDocument,
+            Self::InvalidScenarioDocument(_) => ServerHostErrorCodeDto::InvalidScenarioDocument,
+            Self::InvalidMatchIdentity(_) => ServerHostErrorCodeDto::InvalidMatchIdentity,
+            Self::UnsupportedGameMode => ServerHostErrorCodeDto::UnsupportedGameMode,
+            Self::MatchStartFailed(_) => ServerHostErrorCodeDto::MatchStartFailed,
             Self::UnsupportedRuleset(_) => ServerHostErrorCodeDto::UnsupportedRuleset,
             Self::ContentIdentityMismatch => ServerHostErrorCodeDto::ContentIdentityMismatch,
             Self::InvalidCanonicalState(_) => ServerHostErrorCodeDto::InvalidCanonicalState,
@@ -129,6 +143,18 @@ impl core::fmt::Display for ServerBoundaryError {
             ),
             Self::InvalidMapDocument(message) => {
                 write!(formatter, "invalid map document: {message}")
+            }
+            Self::InvalidScenarioDocument(message) => {
+                write!(formatter, "invalid scenario document: {message}")
+            }
+            Self::InvalidMatchIdentity(message) => {
+                write!(formatter, "invalid match identity: {message}")
+            }
+            Self::UnsupportedGameMode => {
+                formatter.write_str("server match identity must use multiplayer mode")
+            }
+            Self::MatchStartFailed(message) => {
+                write!(formatter, "match start failed: {message}")
             }
             Self::UnsupportedRuleset(id) => write!(formatter, "unsupported ruleset `{id}`"),
             Self::ContentIdentityMismatch => {
@@ -178,11 +204,7 @@ pub fn apply_submit_turn_dto(
     request: SubmitTurnServerRequestDto,
 ) -> Result<ServerCommandResultDto, ServerBoundaryError> {
     require_api_version(request.api_version)?;
-    if request.map_hash != world.map_hash().to_string()
-        || request.ruleset_hash != world.ruleset_hash().to_string()
-    {
-        return Err(ServerBoundaryError::ContentIdentityMismatch);
-    }
+    validate_content_identity(&world, &request.map_hash, &request.ruleset_hash)?;
     let actor = PlayerId::new(request.authenticated_actor_player_id)
         .map_err(|error| ServerBoundaryError::InvalidAuthenticatedActor(error.to_string()))?;
     let state = decode_game_state(request.state)
@@ -198,11 +220,112 @@ pub fn apply_submit_turn_dto(
     Ok(encode_server_command_result(&outcome))
 }
 
+/// Validates and projects a strict current canonical state for every participant.
+///
+/// This is used when a match is created so the database can store only
+/// recipient-safe initial snapshots for reconnect and resynchronization.
+///
+/// # Errors
+///
+/// Returns an error for another API version, mismatched immutable identity, an
+/// invalid canonical state, or state/content invariant mismatch.
+pub fn project_server_state_dto(
+    world: PreparedServerWorld,
+    request: ProjectServerStateRequestDto,
+) -> Result<ServerProjectionResultDto, ServerBoundaryError> {
+    require_api_version(request.api_version)?;
+    validate_content_identity(&world, &request.map_hash, &request.ruleset_hash)?;
+    let state = decode_game_state(request.state)
+        .map_err(|error| ServerBoundaryError::InvalidCanonicalState(error.to_string()))?;
+    project_server_state(&world, &state)
+}
+
+/// Constructs one new multiplayer match from authored content and immutable identity.
+///
+/// # Errors
+///
+/// Returns an error for invalid current content, another API version, a
+/// non-multiplayer identity, or a state that cannot satisfy engine invariants.
+pub fn create_server_match_dto(
+    world: PreparedServerWorld,
+    request: CreateServerMatchRequestDto,
+) -> Result<ServerCreatedMatchDto, ServerBoundaryError> {
+    require_api_version(request.api_version)?;
+    validate_content_identity(&world, &request.map_hash, &request.ruleset_hash)?;
+    let compiled = world.compiled();
+    let scenario = ScenarioDefinition::from_json(
+        request.scenario_document.as_bytes(),
+        compiled.map(),
+        compiled.ruleset(),
+    )
+    .map_err(|error| ServerBoundaryError::InvalidScenarioDocument(error.to_string()))?;
+    let identity = decode_match_identity(request.match_identity)
+        .map_err(|error| ServerBoundaryError::InvalidMatchIdentity(error.to_string()))?;
+    if identity.game_mode() != GameMode::Multiplayer {
+        return Err(ServerBoundaryError::UnsupportedGameMode);
+    }
+    let seed = scenario
+        .bootstrap(compiled.map(), compiled.ruleset())
+        .map_err(|error| ServerBoundaryError::InvalidScenarioDocument(error.to_string()))?;
+    let state = start_match(seed, compiled.map(), identity, request.fog_enabled)
+        .map_err(|error| ServerBoundaryError::MatchStartFailed(error.to_string()))?;
+    let projection = project_server_state(&world, &state)?;
+    Ok(ServerCreatedMatchDto {
+        state: encode_game_state(&state),
+        projection,
+    })
+}
+
+fn project_server_state(
+    world: &PreparedServerWorld,
+    state: &GameState,
+) -> Result<ServerProjectionResultDto, ServerBoundaryError> {
+    validate_state(state, world).map_err(ServerBoundaryError::Host)?;
+    let stamp = SessionStamp {
+        revision: state.revision(),
+        state_digest: GameEngine::state_digest(state),
+        map_hash: world.map_hash(),
+        ruleset_hash: world.ruleset_hash(),
+    };
+    let recipients = state
+        .match_lifecycle()
+        .identity()
+        .participants()
+        .iter()
+        .map(|participant| {
+            let recipient = participant.id().clone();
+            let snapshot =
+                ProjectedView::for_recipient(state, Arc::new(recipient.clone())).snapshot(stamp);
+            ServerRecipientSnapshotDto {
+                recipient_player_id: recipient.as_str().to_owned(),
+                snapshot: encode_player_view_snapshot(&snapshot),
+            }
+        })
+        .collect();
+    Ok(ServerProjectionResultDto {
+        stamp: encode_client_stamp(stamp),
+        recipients,
+    })
+}
+
 fn require_api_version(actual: u16) -> Result<(), ServerBoundaryError> {
     if actual == SERVER_HOST_API_VERSION {
         Ok(())
     } else {
         Err(ServerBoundaryError::UnsupportedApiVersion { actual })
+    }
+}
+
+fn validate_content_identity(
+    world: &PreparedServerWorld,
+    map_hash: &str,
+    ruleset_hash: &str,
+) -> Result<(), ServerBoundaryError> {
+    if map_hash == world.map_hash().to_string() && ruleset_hash == world.ruleset_hash().to_string()
+    {
+        Ok(())
+    } else {
+        Err(ServerBoundaryError::ContentIdentityMismatch)
     }
 }
 
@@ -223,6 +346,9 @@ fn encode_server_command_result(outcome: &ServerCommandOutcome) -> ServerCommand
                 snapshot: encode_player_view_snapshot(&recipient.snapshot),
                 patch: encode_player_view_patch(&recipient.patch),
                 events: recipient.events.iter().map(encode_client_event).collect(),
+                evidence: outcome.evidence.as_ref().and_then(|evidence| {
+                    encode_recipient_evidence(evidence, &recipient.disclosure)
+                }),
             })
             .collect(),
     }
@@ -254,6 +380,7 @@ pub struct RecipientOutcome {
     pub patch: PlayerViewPatch,
     /// Ordered events safe to disclose to this recipient.
     pub events: Box<[DomainEvent]>,
+    disclosure: RecipientDisclosure,
 }
 
 /// All-or-nothing result returned to the transactional Serverpod boundary.
@@ -423,19 +550,24 @@ pub fn apply_submit_turn(
 }
 
 fn validate_request(request: &SubmitTurnRequest) -> Result<(), ServerHostError> {
+    validate_state(&request.state, &request.world)?;
     let identity = request.state.match_lifecycle().identity();
-    if identity.participants().is_empty() {
-        return Err(ServerHostError::EmptyParticipants);
-    }
     if !identity.contains(&request.authenticated_actor) {
         return Err(ServerHostError::UnknownAuthenticatedActor(
             request.authenticated_actor.clone(),
         ));
     }
-    if request.state.bounds() != request.world.compiled().bounds() {
+    Ok(())
+}
+
+fn validate_state(state: &GameState, world: &PreparedServerWorld) -> Result<(), ServerHostError> {
+    if state.match_lifecycle().identity().participants().is_empty() {
+        return Err(ServerHostError::EmptyParticipants);
+    }
+    if state.bounds() != world.compiled().bounds() {
         return Err(ServerHostError::MapBoundsMismatch);
     }
-    if request.state.occupancy_policy() != request.world.compiled().ruleset().occupancy_policy() {
+    if state.occupancy_policy() != world.compiled().ruleset().occupancy_policy() {
         return Err(ServerHostError::OccupancyPolicyMismatch);
     }
     Ok(())
@@ -493,5 +625,6 @@ fn recipient_outcome(
         snapshot,
         patch,
         events,
+        disclosure,
     }
 }

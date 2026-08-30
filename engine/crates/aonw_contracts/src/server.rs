@@ -1,12 +1,12 @@
-//! Current-only DTOs for the stateless multiplayer host boundary.
+//! Strict DTOs for the stateless multiplayer host boundary.
 
 use serde::{Deserialize, Serialize};
 
-use crate::GameStateDto;
 use crate::client::{
     ClientCommandRejectionCodeDto, ClientEventDto, ClientEvidenceDto, ClientSessionStampDto,
     PlayerViewPatchDto, PlayerViewSnapshotDto,
 };
+use crate::{GameStateDto, MatchIdentityDto};
 
 /// The only stateless server-host protocol version accepted by this build.
 pub const SERVER_HOST_API_VERSION: u16 = 1;
@@ -25,6 +25,38 @@ pub struct PrepareServerWorldRequestDto {
     pub map_document: String,
     /// Current immutable ruleset identifier.
     pub ruleset_id: String,
+}
+
+/// Strict request for projecting one canonical state for every participant.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ProjectServerStateRequestDto {
+    /// Independently deployed server-host protocol version.
+    pub api_version: u16,
+    /// Exact map identity stored with the match row.
+    pub map_hash: String,
+    /// Exact ruleset identity stored with the match row.
+    pub ruleset_hash: String,
+    /// Canonical state validated by the prepared immutable world.
+    pub state: GameStateDto,
+}
+
+/// Strict request for constructing a new authoritative multiplayer match.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CreateServerMatchRequestDto {
+    /// Independently deployed server-host protocol version.
+    pub api_version: u16,
+    /// Exact map identity returned while preparing immutable content.
+    pub map_hash: String,
+    /// Exact ruleset identity returned while preparing immutable content.
+    pub ruleset_hash: String,
+    /// Strict current scenario document used only by Rust.
+    pub scenario_document: String,
+    /// Immutable participants, rules, and multiplayer mode.
+    pub match_identity: MatchIdentityDto,
+    /// Explicit global fog selection.
+    pub fog_enabled: bool,
 }
 
 /// Strict request for one authenticated simultaneous-turn submission.
@@ -61,6 +93,14 @@ pub enum ServerHostErrorCodeDto {
     UnsupportedApiVersion,
     /// The authored map document was invalid.
     InvalidMapDocument,
+    /// The authored scenario document was invalid.
+    InvalidScenarioDocument,
+    /// Immutable match identity violated a current domain invariant.
+    InvalidMatchIdentity,
+    /// A server match must use the multiplayer game mode.
+    UnsupportedGameMode,
+    /// A validated scenario could not be bound to the match identity.
+    MatchStartFailed,
     /// Only the current reviewed immutable ruleset is accepted.
     UnsupportedRuleset,
     /// Match content identity does not match the prepared immutable world.
@@ -111,6 +151,38 @@ pub struct ServerRecipientOutcomeDto {
     pub patch: PlayerViewPatchDto,
     /// Ordered events safe for this recipient.
     pub events: Vec<ClientEventDto>,
+    /// Exact execution evidence filtered for this recipient.
+    pub evidence: Option<ClientEvidenceDto>,
+}
+
+/// One complete recipient-safe projection used for initial delivery and resync.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ServerRecipientSnapshotDto {
+    /// Participant receiving this projection.
+    pub recipient_player_id: String,
+    /// Complete value safe for only this recipient.
+    pub snapshot: PlayerViewSnapshotDto,
+}
+
+/// Validated initial projections for one canonical state.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ServerProjectionResultDto {
+    /// Canonical identity and immutable content hashes.
+    pub stamp: ClientSessionStampDto,
+    /// Recipient-safe snapshots for every canonical participant.
+    pub recipients: Vec<ServerRecipientSnapshotDto>,
+}
+
+/// Canonical state and recipient-safe projections created atomically by Rust.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ServerCreatedMatchDto {
+    /// Initial canonical state persisted only by the server.
+    pub state: GameStateDto,
+    /// Initial recipient-safe snapshots persisted per participant.
+    pub projection: ServerProjectionResultDto,
 }
 
 /// All-or-nothing current command result for transactional persistence.
@@ -150,6 +222,16 @@ pub enum ServerHostResponseBodyDto {
         map_hash: String,
         /// Exact immutable rules identity.
         ruleset_hash: String,
+    },
+    /// One canonical state was validated and projected for its participants.
+    StateProjected {
+        /// Initial recipient-safe projections.
+        result: Box<ServerProjectionResultDto>,
+    },
+    /// A new multiplayer match was constructed and projected by Rust.
+    MatchCreated {
+        /// Persistable initial state and recipient-safe projections.
+        result: Box<ServerCreatedMatchDto>,
     },
     /// One command completed with a persistable outcome.
     CommandApplied {
@@ -201,6 +283,28 @@ impl PrepareServerWorldRequestDto {
 }
 
 impl SubmitTurnServerRequestDto {
+    /// Parses one bounded strict request.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for oversized or structurally invalid JSON.
+    pub fn from_json(input: &str) -> Result<Self, ServerHostCodecError> {
+        parse_bounded(input)
+    }
+}
+
+impl ProjectServerStateRequestDto {
+    /// Parses one bounded strict request.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for oversized or structurally invalid JSON.
+    pub fn from_json(input: &str) -> Result<Self, ServerHostCodecError> {
+        parse_bounded(input)
+    }
+}
+
+impl CreateServerMatchRequestDto {
     /// Parses one bounded strict request.
     ///
     /// # Errors
@@ -271,7 +375,7 @@ mod tests {
     use super::{PrepareServerWorldRequestDto, SERVER_HOST_API_VERSION};
 
     #[test]
-    fn prepare_request_is_current_only_and_strict() {
+    fn prepare_request_requires_exact_identity_and_shape() {
         let valid = format!(
             r#"{{"apiVersion":{SERVER_HOST_API_VERSION},"mapDocument":"{{}}","rulesetId":"standard"}}"#
         );

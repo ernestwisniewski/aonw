@@ -22,7 +22,7 @@ final class AuthMaintenanceFutureCall extends FutureCall<SerializableModel> {
   @override
   Future<void> invoke(Session session, SerializableModel? object) async {
     final now = DateTime.now().toUtc();
-    final successorScheduled = await _trySchedule(
+    final followUpScheduled = await _trySchedule(
       session,
       now: now,
       delay: authMaintenanceInterval,
@@ -70,7 +70,7 @@ final class AuthMaintenanceFutureCall extends FutureCall<SerializableModel> {
       );
     }
 
-    if (!successorScheduled || followUpDelay < authMaintenanceInterval) {
+    if (!followUpScheduled || followUpDelay < authMaintenanceInterval) {
       await _trySchedule(session, now: now, delay: followUpDelay);
     }
   }

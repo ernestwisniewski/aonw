@@ -68,10 +68,14 @@ allowed_paths=(
   server/migrations/migration_registry.txt
   server/migrations/001/definition.sql
   server/migrations/001/migration.sql
-  packages/aonw_core/pubspec.yaml
-  packages/aonw_core/pubspec.lock
-  packages/aonw_core/lib/domain.dart
-  content/maps/example/map.json
+  packages/aonw_server_native/pubspec.yaml
+  packages/aonw_server_native/hook/build.dart
+  packages/aonw_server_native/lib/aonw_server_native.dart
+  engine/Cargo.toml
+  engine/Cargo.lock
+  engine/rust-toolchain.toml
+  engine/crates/aonw_server_native/Cargo.toml
+  engine/crates/aonw_server_native/src/lib.rs
 )
 
 for path in "${allowed_paths[@]}"; do
@@ -158,9 +162,13 @@ forbidden_paths=(
   server/migrations/backups/migration.sql
   server/migrations/.ssh/definition.sql
   server/migrations/certs/migration.sql
-  packages/aonw_core/analysis_options.yaml
-  packages/aonw_core/tool/balance.dart
+  packages/aonw_core/pubspec.yaml
+  packages/aonw_core/pubspec.lock
+  packages/aonw_core/lib/domain.dart
+  packages/aonw_server_native/analysis_options.yaml
+  packages/aonw_server_native/test/identity_test.dart
   packages/aonw_server_client/lib/client.dart
+  content/maps/example/map.json
   content/maps/.DS_Store
   assets/sounds/theme.wav
 )

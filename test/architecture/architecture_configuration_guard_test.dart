@@ -24,10 +24,13 @@ const _expectedRoots = {
   'rust_client_test': 'packages/aonw_rust_client/test',
   'server_bin': 'server/bin',
   'server_lib': 'server/lib',
+  'server_native_hook': 'packages/aonw_server_native/hook',
+  'server_native_lib': 'packages/aonw_server_native/lib',
+  'server_native_test': 'packages/aonw_server_native/test',
   'server_test': 'server/test',
-  'successor_flutter_integration_test': 'clients/aonw_flutter/integration_test',
-  'successor_flutter_lib': 'clients/aonw_flutter/lib',
-  'successor_flutter_test': 'clients/aonw_flutter/test',
+  'flutter_client_integration_test': 'clients/aonw_flutter/integration_test',
+  'flutter_client_lib': 'clients/aonw_flutter/lib',
+  'flutter_client_test': 'clients/aonw_flutter/test',
   'vendor_sign_in_with_apple': 'third_party/sign_in_with_apple/lib',
 };
 const _expectedDefaultRoles = {
@@ -44,10 +47,13 @@ const _expectedDefaultRoles = {
   'rust_client_test': 'test',
   'server_bin': 'production',
   'server_lib': 'production',
+  'server_native_hook': 'tool',
+  'server_native_lib': 'production',
+  'server_native_test': 'test',
   'server_test': 'test',
-  'successor_flutter_integration_test': 'test',
-  'successor_flutter_lib': 'production',
-  'successor_flutter_test': 'test',
+  'flutter_client_integration_test': 'test',
+  'flutter_client_lib': 'production',
+  'flutter_client_test': 'test',
   'vendor_sign_in_with_apple': 'production',
 };
 

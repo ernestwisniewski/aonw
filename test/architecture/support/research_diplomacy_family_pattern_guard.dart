@@ -217,10 +217,6 @@ const reviewedResearchDiplomacyFamilyPatternSignatures =
         occurrences: 1,
         digest: -5087755823673334499,
       ),
-      'tool/serverpod_multiplayer_smoke.dart': (
-        occurrences: 1,
-        digest: 2135421126071895620,
-      ),
     };
 
 Map<String, String> researchDiplomacyRuntimeSources(

@@ -13,6 +13,16 @@ void *aonw_server_native_prepare_world(const uint8_t *request, size_t request_le
 void *aonw_server_native_response_take_world(void *response);
 void aonw_server_native_world_free(void *world);
 
+void *aonw_server_native_project_state(
+    const void *world,
+    const uint8_t *request,
+    size_t request_len);
+
+void *aonw_server_native_create_match(
+    const void *world,
+    const uint8_t *request,
+    size_t request_len);
+
 void *aonw_server_native_submit_turn(
     const void *world,
     const uint8_t *request,

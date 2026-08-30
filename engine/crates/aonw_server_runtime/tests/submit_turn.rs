@@ -4,7 +4,12 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::encode_game_state;
-use aonw_contracts::server::{SERVER_HOST_API_VERSION, SubmitTurnServerRequestDto};
+use aonw_contracts::server::{
+    CreateServerMatchRequestDto, SERVER_HOST_API_VERSION, SubmitTurnServerRequestDto,
+};
+use aonw_contracts::{
+    GameModeDto, MatchIdentityDto, MatchRulesDto, ParticipantDto, PlayerCountryDto, PlayerKindDto,
+};
 use aonw_domain::{
     FogOfWar, GameMode, GameState, HexCoord, MatchIdentity, MatchLifecycle, MatchRules,
     MovementUnits, Participant, PlayerCountry, PlayerFog, PlayerId, PlayerKind, PlayerTurnState,
@@ -13,7 +18,7 @@ use aonw_domain::{
 use aonw_engine::{CommandRejectionCode, DomainEvent, GameEngine};
 use aonw_server_runtime::{
     PreparedServerWorld, ServerBoundaryError, ServerHostError, SubmitTurnRequest,
-    apply_submit_turn, apply_submit_turn_dto,
+    apply_submit_turn, apply_submit_turn_dto, create_server_match_dto,
 };
 
 #[test]
@@ -140,7 +145,7 @@ fn immutable_content_mismatch_fails_closed() {
 }
 
 #[test]
-fn strict_current_dto_maps_transactional_and_recipient_safe_output() {
+fn strict_dto_maps_transactional_and_recipient_safe_output() {
     let fixture = fixture([]);
     let map_hash = fixture.world.map_hash().to_string();
     let ruleset_hash = fixture.world.ruleset_hash().to_string();
@@ -173,7 +178,7 @@ fn strict_current_dto_maps_transactional_and_recipient_safe_output() {
 }
 
 #[test]
-fn strict_current_dto_rejects_version_and_content_identity_before_execution() {
+fn strict_dto_rejects_version_and_content_identity_before_execution() {
     let fixture = fixture([]);
     let request = SubmitTurnServerRequestDto {
         api_version: SERVER_HOST_API_VERSION + 1,
@@ -197,6 +202,95 @@ fn strict_current_dto_rejects_version_and_content_identity_before_execution() {
     assert_eq!(
         apply_submit_turn_dto(fixture.world.clone(), request),
         Err(ServerBoundaryError::ContentIdentityMismatch)
+    );
+}
+
+#[test]
+fn rust_constructs_and_projects_multiplayer_matches() {
+    let map = map(2);
+    let ruleset = RulesetDefinition::standard().clone();
+    let scenario_document = serde_json::json!({
+        "schemaVersion": 1,
+        "scenarioId": "server-created-match",
+        "mapId": map.map_id(),
+        "rulesetId": ruleset.ruleset_id(),
+        "initialUnits": [
+            {
+                "id": "unit-1",
+                "ownerPlayerId": "player-1",
+                "kind": "commander",
+                "name": "One",
+                "col": 0,
+                "row": 0
+            },
+            {
+                "id": "unit-2",
+                "ownerPlayerId": "player-2",
+                "kind": "commander",
+                "name": "Two",
+                "col": 1,
+                "row": 0
+            }
+        ]
+    })
+    .to_string();
+    let world = PreparedServerWorld::try_new(map, ruleset).expect("world");
+    let request = CreateServerMatchRequestDto {
+        api_version: SERVER_HOST_API_VERSION,
+        map_hash: world.map_hash().to_string(),
+        ruleset_hash: world.ruleset_hash().to_string(),
+        scenario_document,
+        match_identity: match_identity(GameModeDto::Multiplayer),
+        fog_enabled: true,
+    };
+
+    let result = create_server_match_dto(world, request).expect("created match");
+
+    assert_eq!(
+        result.state.match_identity.game_mode,
+        GameModeDto::Multiplayer
+    );
+    assert_eq!(result.projection.recipients.len(), 2);
+    assert_eq!(result.projection.stamp.revision, result.state.revision);
+    for recipient in result.projection.recipients {
+        assert!(recipient.snapshot.units.iter().all(|unit| {
+            unit.owner_player_id == recipient.recipient_player_id || unit.owned_details.is_none()
+        }));
+    }
+}
+
+#[test]
+fn server_match_creation_rejects_non_multiplayer_identity() {
+    let map = map(2);
+    let ruleset = RulesetDefinition::standard().clone();
+    let scenario_document = serde_json::json!({
+        "schemaVersion": 1,
+        "scenarioId": "server-hot-seat-rejected",
+        "mapId": map.map_id(),
+        "rulesetId": ruleset.ruleset_id(),
+        "initialUnits": [{
+            "id": "unit-1",
+            "ownerPlayerId": "player-1",
+            "kind": "commander",
+            "name": "One",
+            "col": 0,
+            "row": 0
+        }]
+    })
+    .to_string();
+    let world = PreparedServerWorld::try_new(map, ruleset).expect("world");
+    let request = CreateServerMatchRequestDto {
+        api_version: SERVER_HOST_API_VERSION,
+        map_hash: world.map_hash().to_string(),
+        ruleset_hash: world.ruleset_hash().to_string(),
+        scenario_document,
+        match_identity: match_identity(GameModeDto::HotSeat),
+        fog_enabled: false,
+    };
+
+    assert_eq!(
+        create_server_match_dto(world, request),
+        Err(ServerBoundaryError::UnsupportedGameMode)
     );
 }
 
@@ -349,4 +443,25 @@ fn map(cols: u16) -> MapDefinition {
 
 fn player(id: &str) -> PlayerId {
     PlayerId::new(id).expect("player id")
+}
+
+fn match_identity(game_mode: GameModeDto) -> MatchIdentityDto {
+    MatchIdentityDto {
+        match_rules: MatchRulesDto::default(),
+        participants: [
+            ("player-1", "One", PlayerCountryDto::Poland),
+            ("player-2", "Two", PlayerCountryDto::Germany),
+        ]
+        .into_iter()
+        .map(|(id, name, country)| ParticipantDto {
+            id: id.to_owned(),
+            name: name.to_owned(),
+            color_value: 0xff00_0000,
+            country,
+            kind: PlayerKindDto::Human,
+            ai: None,
+        })
+        .collect(),
+        game_mode,
+    }
 }

@@ -21,7 +21,7 @@ SteamAuthRequest _pendingRequest({
   expiresAt: expiresAt ?? DateTime.now().toUtc().add(_second),
 );
 
-void _queueCallbackRequest(FakeMultiplayerDatabase database) {
+void _queueCallbackRequest(FakeDatabase database) {
   database.queueFindFirst<SteamAuthRequest>(_pendingRequest());
 }
 

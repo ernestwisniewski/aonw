@@ -7,7 +7,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 import 'package:test/test.dart';
 
-import '../multiplayer/support/fake_multiplayer_database.dart';
+import '../support/fake_database.dart';
 
 part 'steam_auth_service_test_support.dart';
 
@@ -25,12 +25,12 @@ void main() {
   });
   tearDownAll(() => pod.shutdown(exitProcess: false));
 
-  late FakeMultiplayerDatabase database;
+  late FakeDatabase database;
   late FakeSession session;
   late SteamAuthService service;
 
   setUp(() {
-    database = FakeMultiplayerDatabase();
+    database = FakeDatabase();
     session = FakeSession(database);
     service = SteamAuthService(
       openIdVerifier: const _AcceptingVerifier(),

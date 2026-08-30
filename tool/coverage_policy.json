@@ -123,11 +123,11 @@
         "auth": [
           "server/lib/src/auth/"
         ],
-        "multiplayer": [
-          "server/lib/src/multiplayer/"
+        "game": [
+          "server/lib/src/game/"
         ],
-        "public_stats": [
-          "server/lib/src/public_stats/"
+        "stats": [
+          "server/lib/src/stats/"
         ],
         "scheduling": [
           "server/lib/src/scheduling/"

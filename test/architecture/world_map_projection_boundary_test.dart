@@ -29,28 +29,6 @@ void main() {
       );
     });
 
-    test('server catalog loads WorldMap directly', () {
-      const path = 'server/lib/src/multiplayer/multiplayer_map_catalog.dart';
-      final unit = _unit(path);
-      final catalog = unit.declarations
-          .whereType<ClassDeclaration>()
-          .singleWhere(
-            (declaration) =>
-                declaration.namePart.typeName.lexeme == 'MultiplayerMapCatalog',
-          );
-      final load = catalog.body.members
-          .whereType<MethodDeclaration>()
-          .singleWhere((method) => method.name.lexeme == 'loadAssetMap');
-
-      expect(load.returnType?.toSource(), 'Future<WorldMap>');
-      expect(
-        File(
-          'server/lib/src/multiplayer/server_map_cache.dart',
-        ).readAsStringSync(),
-        isNot(contains('indexedReadView')),
-      );
-    });
-
     test('map codec constructs and serializes only WorldMap', () {
       const path = 'packages/aonw_core/lib/map/persistence/map_data_codec.dart';
       final source = File(path).readAsStringSync();
