@@ -53,7 +53,7 @@ void main() {
       expect(artifact.location.runtimeType, expectedType);
     }
     expect(
-      () => AonwPlayerArtifactLocation.fromJson(const {'kind': 'legacy'}),
+      () => AonwPlayerArtifactLocation.fromJson(const {'kind': 'unknown'}),
       throwsFormatException,
     );
   });

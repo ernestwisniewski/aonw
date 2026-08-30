@@ -5,7 +5,7 @@ import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('end-turn request stays revision-bound and current-only', () {
+  test('end-turn request stays revision-bound', () {
     expect(
       jsonDecode(AonwClientRequest.endTurn(expectedRevision: 7).toJson()),
       {
@@ -18,7 +18,7 @@ void main() {
     );
   });
 
-  test('replay playback requests stay recipient-bound and current-only', () {
+  test('replay playback requests stay recipient-bound', () {
     expect(
       jsonDecode(
         AonwClientRequest.openReplay(

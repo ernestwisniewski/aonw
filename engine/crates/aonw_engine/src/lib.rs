@@ -1,6 +1,6 @@
 //! Pure entry point for deterministic game rules and queries.
 //!
-//! Authoritative transitions are added only with reviewed parity fixtures so
+//! Authoritative transitions are added only with reviewed canonical fixtures so
 //! an incomplete rule cannot become authoritative by accident.
 
 #![forbid(unsafe_code)]

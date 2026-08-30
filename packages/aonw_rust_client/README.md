@@ -1,6 +1,6 @@
 # AoNW Rust client
 
-This `package_ffi` package exposes the same current-only JSON client protocol
+This `package_ffi` package exposes the supported JSON client protocol
 used by the Godot GDExtension. Native calls run on a dedicated helper isolate.
 `AonwClientRequest`, `AonwClientResponse`, and the `AonwRustSession.send`
 extension provide the typed Dart boundary. Snapshots, queries, command results,
@@ -28,11 +28,9 @@ it never substitutes the unavailable C stub. A new target must first add and
 test its real Rust toolchain and packaging path. Consumers that omit the
 setting still receive the intentional adapter-unavailable stub.
 
-The package does not yet implement the app's authoritative `LocalEnginePort`.
-The current recipient patch intentionally cannot reconstruct every field of the
-full Dart `DomainState`; treating it as a handled transport result would lose
-canonical state. The native package remains opt-in until the complete-state
-cutover mapper and persistence parity gate are implemented.
+The package is the typed Native Assets boundary used by the Flutter client.
+It exposes recipient projections rather than canonical engine state and keeps
+raw JSON and native pointers outside application and presentation code.
 
 Run `make rust-flutter-test` from the repository root to verify both lanes. The
 native session accepts only `aonw_contracts::client` JSON and does not expose

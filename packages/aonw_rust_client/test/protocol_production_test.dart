@@ -174,7 +174,7 @@ void main() {
     );
     expect(
       () => AonwStrategicResourceAmount.fromJson({
-        'resource': 'legacyResource',
+        'resource': 'unknownResource',
         'amount': 1,
       }),
       throwsFormatException,

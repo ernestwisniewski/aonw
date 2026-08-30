@@ -2,7 +2,7 @@ use std::fmt;
 use std::io;
 use std::path::{Path, PathBuf};
 
-/// Failure raised while loading or validating a parity fixture.
+/// Failure raised while loading or validating a canonical fixture.
 #[allow(missing_docs)]
 #[derive(Debug)]
 pub enum FixtureLoadError {

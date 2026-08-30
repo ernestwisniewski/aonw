@@ -1,4 +1,4 @@
-//! Current-only recipient-safe client protocol shared by native adapters.
+//! Recipient-safe client protocol shared by native adapters.
 
 mod codec;
 mod map;

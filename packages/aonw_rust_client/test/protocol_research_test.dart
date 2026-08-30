@@ -74,10 +74,10 @@ void main() {
     expect(result.options.single.unlocks, hasLength(5));
   });
 
-  test('research parser rejects legacy values and unknown fields', () {
+  test('research parser rejects unknown values and fields', () {
     expect(
       () => AonwResearchOption.fromJson({
-        'technologyId': 'legacyTech',
+        'technologyId': 'unknownTechnology',
         'availability': 'available',
         'effectiveCost': 12,
         'progress': 0,
@@ -92,7 +92,7 @@ void main() {
       () => AonwTechnologyUnlock.fromJson({
         'kind': 'building',
         'buildingType': 'granary',
-        'legacyName': 'Granary',
+        'unexpectedName': 'Granary',
       }),
       throwsFormatException,
     );
