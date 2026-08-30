@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:test/test.dart';
 
 void main() {
-  test('initial database definition contains auth maintenance indexes', () {
+  test('repository contains one complete initial database schema', () {
     final registry = File('migrations/migration_registry.txt');
     final versions = registry
         .readAsLinesSync()
@@ -26,15 +26,18 @@ void main() {
       definition,
       contains('"serverpod_auth_idp_rate_limited_request_attempt_composite"'),
     );
-    expect(definition, contains('CREATE TABLE "aonw_game_match"'));
-    for (final removedTable in [
-      'aonw_match',
-      'aonw_player',
-      'aonw_snapshot',
-      'aonw_event',
-      'aonw_match_presence_lease',
+    for (final table in [
+      'aonw_account',
+      'aonw_external_auth_request',
+      'aonw_game_command_ledger',
+      'aonw_game_event',
+      'aonw_game_match',
+      'aonw_game_participant',
+      'aonw_game_recipient_snapshot',
+      'aonw_steam_account',
+      'aonw_steam_auth_request',
     ]) {
-      expect(definition, isNot(contains('CREATE TABLE "$removedTable"')));
+      expect(definition, contains('CREATE TABLE "$table"'));
     }
   });
 }
