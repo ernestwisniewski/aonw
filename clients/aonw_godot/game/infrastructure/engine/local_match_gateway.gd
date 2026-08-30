@@ -197,10 +197,8 @@ func verify_replay(map_document: String, replay_document: String) -> Dictionary:
 	if not _has_exact_fields(raw, ["entryCount", "finalEventOffset", "finalStamp"]):
 		return _failure("invalid_client_response", "Rust returned invalid replay verification")
 	if (
-		not raw["entryCount"] is int
-		or int(raw["entryCount"]) < 0
-		or not raw["finalEventOffset"] is int
-		or int(raw["finalEventOffset"]) < 0
+		not _is_non_negative_integer(raw["entryCount"])
+		or not _is_non_negative_integer(raw["finalEventOffset"])
 	):
 		return _failure("invalid_client_response", "Rust returned invalid replay verification")
 	var stamp := ReadModelDecoder.decode_stamp(raw["finalStamp"])
@@ -307,8 +305,7 @@ func _decode_ai_turn(result: Dictionary) -> Dictionary:
 	if (
 		stamp == null
 		or not body["actorPlayerId"] is String
-		or not body["executedCommands"] is int
-		or int(body["executedCommands"]) < 0
+		or not _is_non_negative_integer(body["executedCommands"])
 		or not body["completedTurn"] is bool
 	):
 		return _failure("invalid_client_response", "Rust returned an invalid AI turn result")
@@ -338,6 +335,16 @@ func _extract_stamp(result: Dictionary, field: String) -> Dictionary:
 
 func _coordinate(value: Vector2i) -> Dictionary:
 	return {"col": value.x, "row": value.y}
+
+func _is_non_negative_integer(value: Variant) -> bool:
+	if not value is int and not value is float:
+		return false
+	var numeric_value := float(value)
+	return (
+		is_finite(numeric_value)
+		and numeric_value >= 0.0
+		and numeric_value == floorf(numeric_value)
+	)
 
 func _has_exact_fields(value: Variant, fields: Array) -> bool:
 	if not value is Dictionary or value.size() != fields.size():

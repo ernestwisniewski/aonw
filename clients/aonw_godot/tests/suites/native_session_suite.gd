@@ -98,6 +98,11 @@ class MalformedSnapshotTransport:
 class TypedGatewayTransport:
 	extends RefCounted
 
+	var executed_commands: Variant
+
+	func _init(value: Variant = 3.0) -> void:
+		executed_commands = value
+
 	func is_available() -> bool:
 		return true
 
@@ -116,7 +121,7 @@ class TypedGatewayTransport:
 					"type": "aiTurnAdvanced",
 					"stamp": _stamp(9),
 					"actorPlayerId": body["actorPlayerId"],
-					"executedCommands": 3,
+					"executedCommands": executed_commands,
 					"completedTurn": true,
 				})
 		return {}
@@ -881,6 +886,15 @@ func _test_shared_client_contract() -> void:
 		and typed_controller.revision() == 9,
 		"Godot exposes capability and AI envelopes only as typed application results",
 	)
+	for invalid_integer: Variant in [3.5, "3"]:
+		var invalid_ai_turn := LocalMatchSessionController.new(
+			LocalMatchGateway.new(TypedGatewayTransport.new(invalid_integer)),
+		).advance_ai_turn("ai-player", 4)
+		_check(
+			not invalid_ai_turn["ok"]
+			and invalid_ai_turn["code"] == "invalid_client_response",
+			"Godot rejects non-integral or coercible AI counters at the gateway",
+		)
 
 	var extra_envelope := LocalMatchSessionController.new(
 		LocalMatchGateway.new(ExtraEnvelopeFieldTransport.new()),
