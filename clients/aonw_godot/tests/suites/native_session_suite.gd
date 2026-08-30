@@ -111,6 +111,10 @@ class TypedGatewayTransport:
 
 	func request(body: Dictionary) -> Dictionary:
 		match body.get("type", ""):
+			"openSession":
+				return _success({"type": "sessionOpened", "stamp": _stamp(0)})
+			"closeSession":
+				return _success({"type": "sessionClosed"})
 			"capabilities":
 				return _success({
 					"type": "capabilities",
@@ -139,6 +143,56 @@ class TypedGatewayTransport:
 			"mapHash": "map",
 			"rulesetHash": "ruleset",
 		}
+
+class DeferredLifecycleGateway:
+	extends RefCounted
+
+	signal ai_response_released
+
+	var open_calls := 0
+	var close_calls := 0
+	var close_succeeds := true
+
+	func is_available() -> bool:
+		return true
+
+	func open_session(
+		_map_document: String,
+		_scenario_document: String,
+		_actor_player_id: String,
+	) -> Dictionary:
+		open_calls += 1
+		return {"ok": true, "value": _stamp(1)}
+
+	func close_session() -> Dictionary:
+		close_calls += 1
+		if close_succeeds:
+			return {"ok": true}
+		return {
+			"ok": false,
+			"code": "engine_worker_unavailable",
+			"message": "close failed",
+		}
+
+	func advance_ai_turn_async(actor_player_id: String, _command_budget: int) -> Dictionary:
+		await ai_response_released
+		var result := AonwClientReadModels.AiTurnResult.new()
+		result.stamp = _stamp(2)
+		result.actor_player_id = actor_player_id
+		result.executed_commands = 1
+		result.completed_turn = true
+		return {"ok": true, "value": result}
+
+	func release_ai_response() -> void:
+		ai_response_released.emit()
+
+	func _stamp(revision: int) -> AonwClientReadModels.Stamp:
+		var stamp := AonwClientReadModels.Stamp.new()
+		stamp.revision = revision
+		stamp.state_digest = "state-%d" % revision
+		stamp.map_hash = "map"
+		stamp.ruleset_hash = "ruleset"
+		return stamp
 
 class ExtraEnvelopeFieldTransport:
 	extends RefCounted
@@ -202,7 +256,7 @@ func run(failures: Array[String]) -> void:
 	_test_native_build_identity_precondition()
 	_test_strict_document_boundary()
 	_test_native_engine_boundary()
-	_test_shared_client_contract()
+	await _test_shared_client_contract()
 
 func _test_native_build_identity_precondition() -> void:
 	var matching_double := BuildIdentitySessionDouble.new("expected-build")
@@ -871,10 +925,12 @@ func _test_shared_client_contract() -> void:
 	var typed_controller := LocalMatchSessionController.new(
 		LocalMatchGateway.new(TypedGatewayTransport.new()),
 	)
+	var typed_opened := typed_controller.open("map", "scenario", "player")
 	var capabilities: Dictionary = typed_controller.capabilities()
 	var ai_turn: Dictionary = typed_controller.advance_ai_turn("ai-player", 4)
 	_check(
-		capabilities["ok"]
+		typed_opened["ok"]
+		and capabilities["ok"]
 		and capabilities["value"] is AonwClientReadModels.CapabilitySet
 		and capabilities["value"].supports(&"snapshot")
 		and not capabilities["value"].supports(&"workers")
@@ -887,9 +943,11 @@ func _test_shared_client_contract() -> void:
 		"Godot exposes capability and AI envelopes only as typed application results",
 	)
 	for invalid_integer: Variant in [3.5, "3"]:
-		var invalid_ai_turn := LocalMatchSessionController.new(
+		var invalid_controller := LocalMatchSessionController.new(
 			LocalMatchGateway.new(TypedGatewayTransport.new(invalid_integer)),
-		).advance_ai_turn("ai-player", 4)
+		)
+		invalid_controller.open("map", "scenario", "player")
+		var invalid_ai_turn := invalid_controller.advance_ai_turn("ai-player", 4)
 		_check(
 			not invalid_ai_turn["ok"]
 			and invalid_ai_turn["code"] == "invalid_client_response",
@@ -903,6 +961,61 @@ func _test_shared_client_contract() -> void:
 		not extra_envelope["ok"] and extra_envelope["code"] == "invalid_client_response",
 		"Godot rejects unknown client envelope fields at the infrastructure boundary",
 	)
+
+	var deferred_gateway := DeferredLifecycleGateway.new()
+	var lifecycle_controller := LocalMatchSessionController.new(deferred_gateway)
+	var initial_close: Dictionary = lifecycle_controller.close()
+	var closed_snapshot: Dictionary = lifecycle_controller.snapshot()
+	var lifecycle_opened := lifecycle_controller.open("map", "scenario", "player")
+	var duplicate_open := lifecycle_controller.open("map", "scenario", "player")
+	_close_and_release_deferred_response(lifecycle_controller, deferred_gateway)
+	var late_ai_turn: Dictionary = await lifecycle_controller.advance_ai_turn_async(
+		"ai-player",
+		4,
+	)
+	var repeated_close: Dictionary = lifecycle_controller.close()
+	var reopened := lifecycle_controller.open("map", "scenario", "player")
+	_check(
+		initial_close["ok"]
+		and not closed_snapshot["ok"]
+		and closed_snapshot["code"] == "session_not_open"
+		and lifecycle_opened["ok"]
+		and not duplicate_open["ok"]
+		and duplicate_open["code"] == "session_already_open"
+		and not late_ai_turn["ok"]
+		and late_ai_turn["code"] == "stale_session_response"
+		and repeated_close["ok"]
+		and reopened["ok"]
+		and lifecycle_controller.lifecycle()
+		== AonwLocalMatchSessionController.Lifecycle.OPEN
+		and lifecycle_controller.generation() == 3
+		and lifecycle_controller.revision() == 1
+		and deferred_gateway.open_calls == 2
+		and deferred_gateway.close_calls == 1,
+		"Godot lifecycle rejects duplicate open, ignores late replies, and reopens cleanly",
+	)
+	lifecycle_controller.close()
+	var failed_close_gateway := DeferredLifecycleGateway.new()
+	var failed_close_controller := LocalMatchSessionController.new(failed_close_gateway)
+	failed_close_controller.open("map", "scenario", "player")
+	failed_close_gateway.close_succeeds = false
+	var failed_close: Dictionary = failed_close_controller.close()
+	_check(
+		not failed_close["ok"]
+		and failed_close_controller.is_open()
+		and failed_close_controller.revision() == 1,
+		"Godot lifecycle remains open when the engine does not confirm close",
+	)
+	failed_close_gateway.close_succeeds = true
+	failed_close_controller.close()
+
+func _close_and_release_deferred_response(
+	controller: AonwLocalMatchSessionController,
+	gateway: DeferredLifecycleGateway,
+) -> void:
+	await Engine.get_main_loop().process_frame
+	controller.close()
+	gateway.release_ai_response()
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
