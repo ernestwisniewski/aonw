@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://durtsv7lp0qmt" path="res://game/presentation/map/map_interaction_controller.gd" id="5_interaction"]
 [ext_resource type="Script" uid="uid://8pgfq46qt7d6" path="res://game/presentation/map/unit_layer.gd" id="6_units"]
 [ext_resource type="Script" path="res://game/composition/map_preview_composition_root.gd" id="7_composition"]
+[ext_resource type="Script" path="res://game/presentation/turn/turn_hud.gd" id="8_turn_hud"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1
@@ -83,7 +84,7 @@ script = ExtResource("5_interaction")
 [node name="Toolbar" type="PanelContainer" parent="Interface" unique_id=52331720]
 offset_left = 16.0
 offset_top = 16.0
-offset_right = 780.0
+offset_right = 1080.0
 offset_bottom = 64.0
 theme_override_styles/panel = SubResource("Style_toolbar")
 
@@ -114,6 +115,24 @@ visible = false
 layout_mode = 2
 text = "Confirm move (Enter)"
 
+[node name="TurnHud" type="HBoxContainer" parent="Interface/Toolbar/Margin/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+script = ExtResource("8_turn_hud")
+
+[node name="EndTurn" type="Button" parent="Interface/Toolbar/Margin/Actions/TurnHud"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "End turn (T)"
+
+[node name="TurnStatus" type="Label" parent="Interface/Toolbar/Margin/Actions/TurnHud"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Turn —"
+vertical_alignment = 1
+
 [node name="Separator" type="VSeparator" parent="Interface/Toolbar/Margin/Actions" unique_id=1140775945]
 layout_mode = 2
 
@@ -135,7 +154,7 @@ offset_right = -16.0
 offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
-text = "LMB: select unit / preview route · Enter: confirm move · RMB: orbit · MMB: pan · wheel: zoom · arrows: pan"
+text = "LMB: select unit / preview route · Enter: confirm move · T: end turn · RMB: orbit · MMB: pan · wheel: zoom · arrows: pan"
 
 [node name="OpenMapDialog" type="FileDialog" parent="Interface" unique_id=1666186910]
 unique_name_in_owner = true
@@ -150,3 +169,5 @@ use_native_dialog = true
 [connection signal="pressed" from="Interface/Toolbar/Margin/Actions/OpenMap" to="." method="_on_open_pressed"]
 [connection signal="toggled" from="Interface/Toolbar/Margin/Actions/GridToggle" to="." method="_on_grid_toggled"]
 [connection signal="pressed" from="Interface/Toolbar/Margin/Actions/ConfirmMove" to="." method="_on_confirm_move_pressed"]
+[connection signal="end_turn_requested" from="Interface/Toolbar/Margin/Actions/TurnHud" to="." method="_on_end_turn_pressed"]
+[connection signal="pressed" from="Interface/Toolbar/Margin/Actions/TurnHud/EndTurn" to="Interface/Toolbar/Margin/Actions/TurnHud" method="_on_end_turn_pressed"]

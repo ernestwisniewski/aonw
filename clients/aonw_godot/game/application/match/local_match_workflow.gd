@@ -179,6 +179,7 @@ func _turn(snapshot: AonwClientReadModels.SnapshotView) -> AonwLocalMatchViewMod
 	result.pending_action = (
 		&"" if snapshot.pending_action == null else snapshot.pending_action.kind
 	)
+	result.outcome_condition = snapshot.outcome.condition
 	return result
 
 func _unit(raw: AonwClientReadModels.UnitView) -> AonwLocalMatchViewModels.UnitView:

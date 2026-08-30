@@ -18,6 +18,19 @@ class TurnView:
 	var required_submission_count: int
 	var submitted_count: int
 	var pending_action: StringName
+	var outcome_condition: StringName
+
+	func is_terminal() -> bool:
+		return outcome_condition != &"ongoing"
+
+	func can_end_turn() -> bool:
+		return (
+			not is_terminal()
+			and pending_action == &""
+			and has_own_state
+			and own_state == &"active"
+			and not own_submitted
+		)
 
 class ProjectionView:
 	extends RefCounted

@@ -6,7 +6,37 @@ var _failures: Array[String]
 
 func run(failures: Array[String]) -> void:
 	_failures = failures
+	_test_turn_action_guard()
 	await _test_route_confirmation_and_evidence_animation()
+
+func _test_turn_action_guard() -> void:
+	var active := _turn(&"active", false, &"", &"ongoing")
+	var pending := _turn(&"active", false, &"workerActionSelection", &"ongoing")
+	var submitted := _turn(&"active", true, &"", &"ongoing")
+	var finished := _turn(&"finished", false, &"", &"ongoing")
+	var terminal := _turn(&"active", false, &"", &"conquest")
+	_check(
+		active.can_end_turn()
+		and not pending.can_end_turn()
+		and not submitted.can_end_turn()
+		and not finished.can_end_turn()
+		and not terminal.can_end_turn(),
+		"Godot derives end-turn availability from recipient state, pending action, and outcome",
+	)
+
+func _turn(
+	state: StringName,
+	submitted: bool,
+	pending_action: StringName,
+	outcome: StringName,
+) -> AonwLocalMatchViewModels.TurnView:
+	var result := AonwLocalMatchViewModels.TurnView.new()
+	result.has_own_state = true
+	result.own_state = state
+	result.own_submitted = submitted
+	result.pending_action = pending_action
+	result.outcome_condition = outcome
+	return result
 
 func _test_route_confirmation_and_evidence_animation() -> void:
 	var packed := load(PREVIEW_SCENE) as PackedScene
@@ -20,6 +50,9 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 	var interaction: AonwMapInteractionController = screen.get_node("%MapInteraction")
 	var unit_layer: AonwUnitLayer = screen.get_node("%UnitLayer")
 	var confirm: Button = screen.get_node("%ConfirmMove")
+	var end_turn: Button = screen.get_node("%EndTurn")
+	var turn_status: Label = screen.get_node("%TurnStatus")
+	var turn_hud: AonwTurnHud = screen.get_node("%TurnHud")
 	for _frame in range(120):
 		if (
 			session.is_open()
@@ -30,7 +63,9 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 	_check(
 		session.is_open()
 		and session.revision() == 0
-		and unit_layer.unit_at(Vector2i(2, 1)) == "preview-commander",
+		and unit_layer.unit_at(Vector2i(2, 1)) == "preview-commander"
+		and not end_turn.disabled
+		and turn_status.text.begins_with("Turn 1 · active"),
 		"Godot preview opens the starter session asynchronously at revision zero",
 	)
 
@@ -99,6 +134,20 @@ func _test_route_confirmation_and_evidence_animation() -> void:
 		and resynchronized_marker.mesh == initial_mesh
 		and resynchronized_marker.position.is_equal_approx(expected),
 		"snapshot resync reconciles stable unit IDs without rebuilding their nodes",
+	)
+	screen.call("_on_end_turn_pressed")
+	for _frame in range(120):
+		if session.revision() == 2:
+			break
+		await Engine.get_main_loop().process_frame
+	var next_turn: AonwLocalMatchViewModels.TurnView = turn_hud.current()
+	_check(
+		session.revision() == 2
+		and next_turn.number == 2
+		and next_turn.can_end_turn()
+		and not end_turn.disabled
+		and turn_status.text.begins_with("Turn 2 · active · 0/1 submitted"),
+		"Godot completes a real local turn without active-player or phase state",
 	)
 	session.close()
 	screen.free()

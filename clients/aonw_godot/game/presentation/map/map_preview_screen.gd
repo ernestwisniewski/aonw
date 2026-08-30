@@ -14,6 +14,7 @@ const EXPORT_SMOKE_CLOSED := "Godot packaged session lifecycle: closed"
 @onready var _open_dialog: FileDialog = %OpenMapDialog
 @onready var _grid_toggle: CheckButton = %GridToggle
 @onready var _confirm_move: Button = %ConfirmMove
+@onready var _turn_hud: AonwTurnHud = %TurnHud
 @onready var _status: Label = %Status
 
 var _open_map: AonwOpenMap
@@ -74,6 +75,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_G:
 		_grid_toggle.button_pressed = not _grid_toggle.button_pressed
 		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_T:
+		if _turn_hud.can_request_end_turn():
+			_on_end_turn_pressed()
+			get_viewport().set_input_as_handled()
 
 func _on_open_pressed() -> void:
 	_open_dialog.current_dir = ProjectSettings.globalize_path(DEFAULT_MAP).get_base_dir()
@@ -137,6 +143,7 @@ func _setup_local_session(source: AonwMapSource) -> void:
 	_reachable_hexes.clear()
 	_route = null
 	_confirm_move.visible = false
+	_turn_hud.present(null)
 	var opened: Dictionary = await _local_match.open(
 		source,
 		_current_map,
@@ -149,6 +156,7 @@ func _setup_local_session(source: AonwMapSource) -> void:
 		return
 	var projection: AonwLocalMatchViewModels.ProjectionView = opened["value"]
 	_unit_layer.present(_interaction.projection(), projection.units)
+	_turn_hud.present(projection.turn)
 	if _is_export_smoke():
 		print(EXPORT_SMOKE_OPENED)
 
@@ -168,6 +176,7 @@ func _resync_projection() -> bool:
 		return false
 	var value: AonwLocalMatchViewModels.ProjectionView = synchronized["value"]
 	_unit_layer.present(_interaction.projection(), value.units)
+	_turn_hud.present(value.turn)
 	return true
 
 func _present_empty_unit_layer() -> void:
@@ -269,6 +278,7 @@ func _move_selected_unit(target: Vector2i) -> void:
 		_status.text = "Rust: %s" % value.rejection
 		return
 	_unit_layer.apply_transition(value.unit_transition)
+	_turn_hud.present(value.turn)
 	var selected := _selected_unit_id
 	_clear_movement_selection()
 	if value.unit_transition.movement_steps.is_empty():
@@ -279,6 +289,29 @@ func _move_selected_unit(target: Vector2i) -> void:
 		_status.text = "%s · moved %s → %d,%d" % [
 			_current_map.map_id(), selected, target.x, target.y,
 		]
+
+func _on_end_turn_pressed() -> void:
+	if not _turn_hud.begin_command():
+		return
+	_clear_movement_selection()
+	var completed: Dictionary = await _local_match.end_turn_async()
+	if not completed["ok"]:
+		if completed.get("code", "") == "recipient_resync_required":
+			await _resync_projection()
+		else:
+			_turn_hud.cancel_command()
+		_status.text = "Rust: %s" % completed["message"]
+		return
+	var value: AonwLocalMatchViewModels.CommandResult = completed["value"]
+	if not value.accepted:
+		_turn_hud.present(value.turn)
+		_status.text = "Rust: %s" % value.rejection
+		return
+	_unit_layer.apply_transition(value.unit_transition)
+	_turn_hud.present(value.turn)
+	_status.text = "%s · turn advanced to %d" % [
+		_current_map.map_id(), value.turn.number,
+	]
 
 func _clear_movement_selection() -> void:
 	_local_match.cancel_movement_queries()
