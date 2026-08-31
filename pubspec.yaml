@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flame: ^1.38.0
+  flame: ^1.38.2
   flame_texturepacker: 5.1.2
 
   share_plus: ^13.3.0
