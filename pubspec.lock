@@ -581,34 +581,34 @@ packages:
     dependency: "direct main"
     description:
       name: gamepads
-      sha256: "534e21d00cb3ac796537a7152d004f1ef3bd04c2d03f21a0a2ea4fb03f0e3513"
+      sha256: "8134c967c29496cbc20e73c88b31c6d11765e846b8e465c52b436fe6e88339ce"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.10+4"
+    version: "0.1.11"
   gamepads_android:
     dependency: transitive
     description:
       name: gamepads_android
-      sha256: "95be47ba12bbe6236a6960910fbcb1ba681ead006036dcb5d496cf67d853fe8f"
+      sha256: f3a600e1212374771bdd47206088940a36fb75791b3c4223eccfa487dfd1ed0f
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.8+1"
+    version: "0.1.9"
   gamepads_darwin:
     dependency: transitive
     description:
       name: gamepads_darwin
-      sha256: a7668dc17f2e4b95c29c54e961c3ef6e34e3997718383e96dd0bdf5a5c3b03c8
+      sha256: "113d50ad327aa5f1b5df6807310a4f23865c01330f7a62d5c53c9df8933f948a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.2+4"
+    version: "0.1.3"
   gamepads_ios:
     dependency: transitive
     description:
       name: gamepads_ios
-      sha256: "514a37d4b1b17bf47fe911ee1b750eca6be2b8abbdb71f200b9ad3186014d413"
+      sha256: "9a65f16797c7479d2bc6d7967d45e8b2448c6302b128fcf3231460f839021a37"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.3+3"
+    version: "0.1.4"
   gamepads_linux:
     dependency: "direct overridden"
     description:
@@ -628,18 +628,18 @@ packages:
     dependency: transitive
     description:
       name: gamepads_web
-      sha256: "860eb4f11fdb6dfcf18f793a491282747007909075d161373df7f067dfddb9a4"
+      sha256: "4f044a6003b34a8d5c5854924fbbfd64b6653bcb49169cf2aca26938f812672e"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1+1"
+    version: "0.1.2"
   gamepads_windows:
     dependency: transitive
     description:
       name: gamepads_windows
-      sha256: "650b68a4bc5d729abf12f0d2d3a53c05e4070a288c7e5575edfd485774550d8c"
+      sha256: ecd1dc845a0ad6260a3016cd74f3e365c4006a458ae2c5c5eed7a72d33dd5738
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.0+1"
+    version: "0.3.1"
   glob:
     dependency: transitive
     description:
@@ -836,10 +836,10 @@ packages:
     dependency: "direct main"
     description:
       name: intl
-      sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
+      sha256: "1ca20c894b1717686a2319b8548763d812bc0aabdac580420a44c5178c57a867"
       url: "https://pub.dev"
     source: hosted
-    version: "0.20.2"
+    version: "0.20.3"
   io:
     dependency: transitive
     description:
@@ -924,10 +924,10 @@ packages:
     dependency: transitive
     description:
       name: matcher
-      sha256: dc0b7dc7651697ea4ff3e69ef44b0407ea32c487a39fff6a4004fa585e901861
+      sha256: "31bd099b47c10cd1aeb55146a2d46ce0277630ecef3f7dae54ad7873f36696cd"
       url: "https://pub.dev"
     source: hosted
-    version: "0.12.19"
+    version: "0.12.20"
   material_color_utilities:
     dependency: transitive
     description:
@@ -940,10 +940,10 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: "1741988757a65eb6b36abe716829688cf01910bbf91c34354ff7ec1c3de2b349"
+      sha256: "307249ce4ff29d58a18e97f6345f539382eb9c9c29ecda628900f31de0443dd9"
       url: "https://pub.dev"
     source: hosted
-    version: "1.18.0"
+    version: "1.19.0"
   mime:
     dependency: transitive
     description:
@@ -1536,26 +1536,26 @@ packages:
     dependency: transitive
     description:
       name: test
-      sha256: "8d9ceddbab833f180fbefed08afa76d7c03513dfdba87ffcec2718b02bbcbf20"
+      sha256: ca578dc12bb8b2f40b67b7d3bd2fac4f31c01a6ff7130a14e2597b919934507f
       url: "https://pub.dev"
     source: hosted
-    version: "1.31.0"
+    version: "1.31.1"
   test_api:
     dependency: transitive
     description:
       name: test_api
-      sha256: "949a932224383300f01be9221c39180316445ecb8e7547f70a41a35bf421fb9e"
+      sha256: "2a122cbe059f8b610d3a5415f42e255b6c17b1f21eee1d960f31080237fb4f11"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.11"
+    version: "0.7.12"
   test_core:
     dependency: transitive
     description:
       name: test_core
-      sha256: "1991d4cfe85d5043241acac92962c3977c8d2f2add1ee73130c7b286417d1d34"
+      sha256: d2e98ec12998368dc59ddd47ab709f2cd55acd6b66dc7db764455a44082f4bc5
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.17"
+    version: "0.6.18"
   typed_data:
     dependency: transitive
     description:
@@ -1664,10 +1664,10 @@ packages:
     dependency: transitive
     description:
       name: vector_math
-      sha256: d530bd74fea330e6e364cda7a85019c434070188383e1cd8d9777ee586914c5b
+      sha256: f36f9f3be64c6198714492bb455c11056e33e2f85d9a0b676a48301e44fdcf47
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.0"
+    version: "2.4.2"
   vm_service:
     dependency: transitive
     description:
