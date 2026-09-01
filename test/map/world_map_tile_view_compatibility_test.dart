@@ -3,19 +3,18 @@ import 'dart:io';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/current_content_legacy_fixture.dart';
 import '../support/reducer_parity_fixture.dart';
 
 void main() {
   group('WorldMap tile-view compatibility', () {
-    test('freezes every bundled map and its objectives', () {
+    test('freezes every bundled map and its objectives', () async {
       const expectedMapNames = {'dravonia', 'myranth', 'terenos', 'verdantia'};
       final discoveredMapNames = _bundledMapNames();
       expect(discoveredMapNames, expectedMapNames);
 
       for (final mapName in discoveredMapNames) {
-        final source = File(
-          'content/maps/$mapName/map.json',
-        ).readAsStringSync();
+        final source = await loadCurrentMapAsLegacyFixture(mapName);
         final mapData = WorldMapCodec.fromJson(source);
         final world = _worldMapFromData(mapData);
 

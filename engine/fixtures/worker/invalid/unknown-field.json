@@ -1,0 +1,12 @@
+{
+  "capability": "worker-infrastructure-ready",
+  "commands": [],
+  "queries": [],
+  "turnProcessors": [],
+  "automationTileBudget": 1200,
+  "automationLegalityBudget": 24000,
+  "clientApiVersion": 6,
+  "legacyPaths": false,
+  "cases": [],
+  "legacyFallback": true
+}

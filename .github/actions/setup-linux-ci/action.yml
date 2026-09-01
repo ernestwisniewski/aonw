@@ -1,0 +1,14 @@
+name: Set up Linux CI tools
+description: Install repository-required tools that are not guaranteed by the runner image.
+
+runs:
+  using: composite
+  steps:
+    - name: Install ripgrep
+      shell: bash
+      run: |
+        if command -v rg >/dev/null 2>&1; then
+          exit 0
+        fi
+        sudo apt-get update
+        sudo apt-get install --yes --no-install-recommends ripgrep

@@ -14,6 +14,18 @@ external int aonwFlutterIsAvailable();
 )
 external int aonwFlutterClientApiVersion();
 
+@ffi.Native<ffi.UintPtr Function()>(
+  symbol: 'aonw_flutter_build_identity_len',
+  assetId: _assetId,
+)
+external int aonwFlutterBuildIdentityLen();
+
+@ffi.Native<ffi.Pointer<ffi.Uint8> Function()>(
+  symbol: 'aonw_flutter_build_identity_data',
+  assetId: _assetId,
+)
+external ffi.Pointer<ffi.Uint8> aonwFlutterBuildIdentityData();
+
 @ffi.Native<ffi.Pointer<ffi.Void> Function()>(
   symbol: 'aonw_flutter_session_new',
   assetId: _assetId,

@@ -18,7 +18,8 @@ fn map(cols: u16, rows: u16, rough: &[HexCoord]) -> MapDefinition {
                 vec![TerrainType::Plains]
             };
             tiles.push(
-                TileDefinition::try_new(coordinate, terrains, Vec::new(), 0).expect("valid tile"),
+                TileDefinition::try_new_for_simulation(coordinate, terrains, Vec::new(), 0)
+                    .expect("valid tile"),
             );
         }
     }
@@ -166,7 +167,7 @@ fn hidden_blocker_produces_an_accepted_no_op_without_disclosure() {
 }
 
 #[test]
-fn rejection_does_not_change_the_borrowed_state() {
+fn rejection_preserves_state() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(2, 1, &[]);
     let blocked = Unit::builder(

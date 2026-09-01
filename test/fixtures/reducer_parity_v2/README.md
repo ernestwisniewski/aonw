@@ -1,20 +1,13 @@
-# Current Rust command parity oracle
+# Archived reducer parity evidence
 
-This directory contains only fixture contract version 2. The 44 committed
-fixtures cover 38 movement cases and six cancel/skip/fortify cases generated
-from the independently reviewed Dart corpus. Cancellation also verifies that
-an interrupted artifact excavation returns the artifact to its map coordinate.
+This version 2 corpus is frozen, read-only migration evidence. No Rust engine,
+client, test runner, generator, or release gate reads it.
 
-Regenerate candidates with:
+The reviewed disposition of every historical case is recorded in
+`engine/fixtures/canonical_fixture_migration.md`. Active Rust behavior coverage
+lives only in `engine/fixtures/canonical_commands/` and uses the strict current
+canonical fixture contract.
 
-```sh
-make rust-engine-oracle
-```
-
-Generation does not bless changes. Review the JSON diff before committing it.
-Rust loads the complete directory, executes every case through canonical
-`GameEngine::apply`, and compares the complete Dart state envelope, rejection,
-ordered events, and exact movement evidence. The test adapter only maps the
-Dart fixture representation; fog, diplomacy, roads, cities, route planning,
-capacity, hidden-obstacle decisions, and unit actions are made by the Rust
-engine.
+Do not add compatibility readers, adapters, projections, generators, or new
+cases here. New engine and client behavior must be expressed directly through
+current contracts.

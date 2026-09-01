@@ -1,233 +1,164 @@
 # AoNW Rust Engine
 
-This directory is the Cargo workspace for the future authoritative Age of New
-Worlds rules engine. The production domain, content, contracts, mapping, and
-engine graph is independent of Flutter, Godot, Serverpod, filesystem, network,
-wall-clock time, and presentation code. `aonw_testkit` is outer test tooling
-and owns bounded filesystem access to committed fixtures.
+This directory contains the deterministic successor engine for Age of New
+Worlds. Rust owns canonical state, gameplay rules, recipient projections,
+current save/replay contracts, and the native boundaries used by Flutter and
+Godot.
 
-The current code is a foundation, not a production backend. Dart
-`packages/aonw_core` remains authoritative until the parity, compatibility,
-platform, shadow, canary, and rollback gates in the
-[migration plan](../docs/rust-engine-migration.md) pass.
+`packages/aonw_core/` remains the production authority until the later server
+cutover. It is not a runtime dependency of this engine and does not block the
+handoff to clean clients once the engine completion gate is green.
 
-## Current crates
+## Workspace
 
-| Crate | Responsibility |
+| Area | Purpose |
 | --- | --- |
-| `aonw_domain` | `GameState`, complete unit entities, validated identifiers, odd-q topology, and fixed-point values. |
-| `aonw_content` | Strict maps, immutable rulesets and scenarios, catalogs, validation, and separate deterministic content hashes. |
-| `aonw_contracts` | Current-only shared client API plus strict bounded canonical state, save, and replay codecs. |
-| `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
-| `aonw_engine` | Authoritative movement queries/transitions and revision-bound cancel, skip, and fortify unit actions. |
-| `aonw_local_runtime` | Transactional local-session lifecycle, player snapshots, query/command dispatch, and recipient-safe patches. |
-| `aonw_godot` | Thin GDExtension translating Godot calls into the framework-neutral local runtime. |
-| `aonw_flutter` | Panic-contained C ABI exposing the same client protocol to Flutter Native Assets. |
-| `aonw_testkit` | Bounded fixture/corpus loader, duplicate-key rejection, structural state/event/execution diff, and engine-neutral runner for the shared reducer-parity corpus. |
+| `aonw_domain` | Canonical game state, entities, identifiers, topology, and fixed-point values. |
+| `aonw_content` | Strict maps, scenarios, immutable rulesets, catalogs, and content hashes. |
+| `aonw_contracts` | Current client API plus canonical state, save, and replay DTOs. |
+| `aonw_contract_mapping` | Validated conversion between contracts and domain types. |
+| `aonw_engine` | Commands, queries, deterministic transitions, evidence, and turn processing. |
+| `aonw_local_runtime` | Transactional sessions, replay recording, caches, snapshots, and patches. |
+| `aonw_flutter` | Panic-contained C ABI for Flutter Native Assets. |
+| `aonw_godot` | Thin GDExtension over the shared client protocol. |
+| `aonw_map_*` | Logical map authoring, deterministic generation, terrain compilation, and CLI adapters. |
+| `aonw_testkit` | Strict current fixtures, bounded corpus loading, and structural comparison. |
 
-The split enforces an inward dependency direction: contracts and domain do not
-depend on one another, content depends only on domain coordinates, mapping
-depends on contracts and domain, and the engine depends on domain plus validated
-content. The testkit remains independent of every concrete engine backend.
-Recipient state has no conversion into canonical domain state.
+Pure engine crates do not depend on Flutter, Godot, Serverpod, filesystem,
+network, wall-clock time, or presentation code. Adapters translate the same
+versioned client boundary; they do not implement rules or fallback to Dart.
 
-Large responsibilities are organized as modules instead of monolithic crate
-roots: scenarios separate model, codec, bootstrap, canonicalization, and tests;
-state mapping separates aggregate, unit, world, value, and error conversion;
-local runtime sessions separate lifecycle, state, capabilities, and execution;
-the engine separates application commands, queries, transitions, context, and
-state-digest writing; the Godot adapter separates request parsing, response
-mapping, and bindings. Reducer-parity support separates input decoding, JSON
-helpers, and output projection from fixture execution.
+## Current scope
 
-## Quality gates
+Implemented runtime slices include movement, unit actions, logistics, combat,
+cities, workers, roads, economy, production, research, diplomacy, objectives,
+match outcome, recipient-safe projections, local sessions, current saves and
+bounded multi-segment exact replay. Strategic AI is deterministic, profile-aware,
+strength-gated, and exercises the complete local runtime. Native persistence
+uses atomic current-format writes plus a last-known-good backup. The production
+Serverpod host remains migration work.
 
-Run the complete standalone Rust gate from the repository root:
+The engine and successor clients are greenfield and update one current contract
+atomically. Internal DTOs do not carry speculative versions, legacy readers,
+upcasters, aliases, or compatibility fallbacks. Shared API and artifact versions
+remain because independently built components consume them.
+
+## Client handoff
+
+Client development starts after one reviewed engine commit satisfies all three
+conditions below:
+
+1. E0-PS11 functionality is complete in Rust: commands, queries, integrated
+   turn, AI, recipient projection, current save/replay, and local sessions.
+2. The current client protocol and native ownership/panic contracts are frozen
+   as the only input for the new Flutter and Godot clients.
+3. `make rust-engine-completion-check` passes on that commit, or its fast,
+   evidence, deep, and security components pass in pinned GitHub jobs for the
+   same commit.
+
+This handoff does not wait for client platform coverage, Serverpod hosting,
+shadow/canary rollout, Dart retirement, or the final Web transport decision.
+Those belong to client qualification and production cutover after the clients
+exist. During normal engine work, run the focused gate for the changed area;
+reserve the full completion command for the final handoff and CI.
+
+## Quick start
+
+Run from the repository root:
 
 ```sh
 make rust-check
+make successor-engine-check
+make successor-engine-evidence-check
 ```
 
-The component targets are `rust-format-check`, `rust-clippy`, `rust-test`, and
-`rust-doc`. They are intentionally independent of the existing Dart/Flutter
-`make ci` target during this migration phase.
-
-Run the diagnostic release baseline separately:
+Focused functional gates include:
 
 ```sh
-make rust-benchmark
+make rust-turn-kernel-check
+make rust-movement-logistics-check
+make rust-combat-check
+make rust-city-check
+make rust-worker-check
+make rust-ai-check
+make rust-persistence-check
 ```
 
-It reports map open/hash plus raw and prepared reachable/route, occupied-target
-approach, owned apply, direct local-runtime dispatch, and shared client JSON
-workloads. Movement cases cover 1, 10, 64, and 512 units, including accepted,
-rejected, and hidden no-op commands. Wall-clock values are diagnostic; stable
-result signatures and search-work counters are test gates.
+Build or test the native adapters with:
 
-The 2026-08-14 reference run on the development Mac kept the 40×30, 512-unit
-accepted runtime dispatch at about 1.46 ms p95, including state digest, replay
-entry, recipient view patch, and JSON response at about 1.47 ms p95. Prepared
-content hashes are reused by every command, and recipient views use a linear
-merge over canonical ID order instead of temporary tree maps.
+```sh
+make rust-flutter-test
+make rust-godot-build
+make godot-check
+```
 
-The toolchain is pinned in `rust-toolchain.toml`. Production rules and all
-non-FFI crates forbid `unsafe`; the single required `unsafe impl` is confined to
-the godot-rust extension entry point. Canonical entities preserve contract
-order in contiguous storage and use private sorted secondary indices for
-deterministic lookup. Boundary mappings validate all external input before
-domain construction. Release builds retain integer overflow checks.
+## Quality evidence
 
-Reducer fixture version 2 requires ordered authoritative `movementExecutions`.
-The current static corpus contains 44 fixtures: 38 movement cases and six
-cancel/skip/fortify cases. Every fixture executes through canonical
-`GameEngine::apply` and compares the complete Dart state envelope, rejection,
-ordered events, and exact movement evidence. `aonw_testkit` accepts only the
-current fixture contract. Rust and Godot boundaries use strict, current-only
-codecs.
+`cargo-llvm-cov` produces LLVM coverage and `stats_alloc` measures allocations.
+Repository scripts add AoNW-specific census, provenance, ratchets, semantic work
+counters, result signatures, and payload budgets; they do not replace those
+external measurement tools. Line coverage is the release metric. Changed lines
+are governed by the stricter full-crate ratio, uncovered-line, and missing-file
+ratchets; branch coverage stays diagnostic until LLVM source mapping is stable
+enough to ratchet. Renames require an explicit reviewed baseline migration,
+macros retain LLVM source attribution, reviewed globs are the only exclusions,
+and small crates use the same per-crate rules. There is no arbitrary global
+percentage target and no internal coverage schema version. Wall-clock benchmark
+values are diagnostic only.
 
-The characterization covers terrain bases and features, roads, partial and
-queued movement, occupancy and hidden information, cities, fog, diplomatic
-contact, posture, artifact capacity, rejection precedence, and exact movement
-evidence. Both Dart reducers and Rust execute the same reviewed outcomes. Run
-`make rust-engine-oracle` only to regenerate review candidates; generation
-never blesses a changed oracle.
+```sh
+make rust-coverage-check
+make rust-performance-check
+make rust-architecture-check
+make rust-dependency-check
+make rust-determinism-check
+make rust-security-policy-check
+make rust-release-metadata-policy-check
+```
 
-## Map content contract
+Focused mutation testing uses pinned `cargo-mutants`; three bounded fuzz targets
+use pinned `cargo-fuzz`/LibFuzzer with AddressSanitizer; Miri checks the pure
+contract/domain boundary on one pinned nightly; and a real C consumer harness
+checks the Flutter ABI with Clang AddressSanitizer and UndefinedBehaviorSanitizer.
+The harness proves valid ownership/null lifecycle and requires both response and
+session double-free misuse to be diagnosed. It does not make invalid stale
+handles legal. The policy is part of fast CI, while the expensive executions are
+scheduled or run manually:
 
-`MapDocument` represents the editable versioned document and carries the
-presentation-only `defaultZoom` hint. `MapDefinition` is the validated logical
-map. Its compact `canonical_bytes()` output is exactly what `content_hash()`
-hashes; presentation hints are excluded. Resource order uses an explicit stable
-wire rank, so enum source order cannot change canonical bytes.
+```sh
+make rust-mutation-check
+make rust-fuzz-smoke
+make rust-miri-check
+make rust-ffi-sanitizer-check
+make rust-engine-security-check
+```
 
-Versioned documents fail closed on missing, unknown, duplicated, or invalid
-fields and apply no compatibility defaults. Authored `MapDocument` values
-retain the schema's 5×5 minimum, while logical `MapDefinition` values accept
-smaller positive grids constructed inside deterministic engine test adapters,
-such as the existing 3×3 movement oracle. Map bounds expose canonical odd-q
-neighbors and row-major indices without allocation.
+The fuzz workspace has its own committed lockfile because it is intentionally
+separate from the production workspace. Generated corpora and crash artifacts
+are local evidence and are not committed.
 
-The actor is command/query context, not persisted state. `GameStateDto` version
-3 is the strict current contract for all implemented authoritative state. It
-persists artifacts and rule-relevant interaction state, including reversible
-current-turn unit skips, without moving those rules into UI.
-`EngineContext` supplies actor, permission, validated map, and immutable
-ruleset; canonical fog and occupancy are derived from `GameState`.
+Release supply-chain files use pinned external generators: OWASP
+`cargo-cyclonedx 0.5.9` for CycloneDX 1.5 JSON and `cargo-about 0.9.2` with its
+explicit `cli` feature for third-party notices. The repository checker isolates
+workspace-wide generation from the source tree, selects the current Flutter,
+Godot, and map-compiler artifacts, binds output to the exact target and commit
+epoch, and requires two byte-identical generations:
 
-## Movement foundation
+```sh
+make rust-release-metadata-tool-versions
+make rust-release-metadata-check
+```
 
-`GameState` is the canonical aggregate root for the implemented simulation
-slice. It uses the nominal `StateRevision`, preserves entity contract order in
-contiguous storage, and maintains private sorted ID indices. Construction
-validates map bounds, duplicate IDs, unit occupancy, artifact locations and
-ownership, and rule-relevant interaction references.
+Generated SBOMs, notices, and their SHA-256 manifest are release artifacts under
+`/tmp/aonw-rust-release-metadata`; they are uploaded by the scheduled deep gate
+and are not committed as source.
 
-The complete `Unit` entity preserves identity, display name, HP, XP, army,
-queued and merchant routes, worker charges, posture, artifacts, and concrete
-worker/founding/assignment/excavation activity. These independently persisted
-activity slots may coexist in current game state. Manual movement availability
-is derived from them; it is not a client-supplied canonical boolean.
+## Documentation
 
-`RulesetDefinition` owns all 17 unit movement allowances, movement domains,
-capabilities, artifact allowance, and occupancy policy. `ScenarioDefinition`
-links exact map and ruleset hashes to validated starting placements and can
-bootstrap a revision-zero `GameState`. Map, ruleset, and scenario identities
-are separate SHA-256 hashes with golden vectors.
-
-Movement planning borrows `GameState` and canonical `Unit` entities directly.
-There is no partial movement state contract or copied unit projection. The
-canonical state codec validates queued coordinates and cumulative costs.
-
-`GameEngine::query` and `apply` are the canonical full-state boundary.
-Route/reachable planning uses row-major map
-indices, bounded heap searches, actor-visible occupancy, exact odd-q order, and
-fixed-point terrain costs. Occupied targets use deterministic approach planning.
-Hidden occupancy is resolved only during apply, which returns an accepted no-op
-rather than disclosing the blocker. Accepted movement returns a new revision,
-recomputed fog and diplomatic contacts, an ordered `UnitMovedEvent`, exact
-authoritative execution evidence, state digest, map hash, and ruleset hash.
-
-`CancelUnitAction`, `SkipUnitTurn`, and `FortifyUnit` use the same full-state
-boundary and rejection semantics. Skip records its restorable movement inside
-canonical `InteractionState`; cancel clears unit-owned interaction,
-queued/activity/merchant orders, restores an interrupted excavation artifact to
-its map coordinate, and wakes the unit. Fortify accepts only an idle controlled
-unit. These actions emit no synthetic movement events or evidence.
-
-`aonw_local_runtime::LocalRuntime` owns one validated local session. Opening is
-transactional, closing is idempotent, and every snapshot, query, and dispatch
-response carries behavior version, revision, state digest, map hash, and ruleset
-hash. It exposes full recipient-safe snapshots, reachable and route queries,
-revision-bound commands, ordered events, exact execution evidence, and view
-patches including unit posture.
-Recipient unit views are sorted by stable unit identifier before snapshots and
-linear patch generation, independently from canonical contract order. Event
-offset capacity is checked before an owned-state dispatch can begin.
-
-`aonw_contracts::client` owns the single client protocol shared by Godot and
-Flutter native adapters. `ClientRequestDto` contains tagged lifecycle,
-command, and query operations. `ClientResponseDto` contains only recipient-safe
-snapshots, patches, events, evidence, persistence documents, and stable errors;
-canonical `GameStateDto` never crosses this boundary. The protocol accepts only
-`CLIENT_API_VERSION` and has no historical readers or upcasters. Rust in-process
-runtime types deliberately have no version suffix.
-Command results use a tagged accepted/rejected outcome, so an incoherent
-acceptance flag and rejection code cannot be represented on the wire.
-
-The shared golden documents in `test/fixtures/client_protocol` are consumed by
-Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; each
-client owns the same supported constant and rejects an incompatible adapter or
-response before inspecting its payload. Map authoring output comes from `MapDocument::to_versioned_json`
-so the Godot bridge does not maintain a second map serializer.
-
-The runtime prepares `CompiledMovementMap` once per map/ruleset, keeps
-tile-indexed visibility, builds occupancy as a compact bitset, reuses reachable
-search buffers, and caches the last query by revision, unit, state/visibility
-digest, map hash, ruleset hash, and target. Occupied-target approach uses one
-multi-target search. Batch queries reuse the same cache and buffers.
-
-The hot dispatch path consumes owned `GameState`, reuses its entity allocation,
-and consumes `DomainTransition::into_parts`; it does not clone the complete
-state for a normal local apply. Borrowed `GameEngine::apply` remains available
-for compatibility and tests. Prepared and raw paths have deterministic parity
-tests. Rayon, ECS, SIMD, GPU pathfinding, custom allocators, and `unsafe` are not
-used because the measured 1200-tile workload does not justify them.
-
-`aonw_godot::AonwLocalSession` exposes one `request_json` transport operation.
-It decodes and encodes `aonw_contracts::client` documents and delegates every
-lifecycle, query, command, save, and replay operation to `ClientProtocol` in
-`aonw_local_runtime`. Godot obtains units from the recipient snapshot and never
-constructs a synthetic canonical unit. Build it with `make rust-godot-build`.
-
-`aonw_flutter` exposes the same dispatcher through a panic-contained C ABI.
-`packages/aonw_rust_client` bundles it with Flutter build hooks and keeps native
-calls on a helper isolate. Its strict Dart read models cover snapshots, queries,
-commands, events, evidence, patches, and persistence results. Normal builds use
-an unavailable C stub, so the Dart local engine remains buildable and active.
-`make rust-flutter-test` verifies both lanes. A concrete Flutter
-`LocalEnginePort` remains gated on lossless complete-state mapping.
-
-## Save and replay
-
-`aonw_contracts` owns separate current-only save and replay schemas. A save
-contains the complete `GameStateDto`, behavior version, exact map and ruleset
-identities, actor, deterministic RNG position, event offset, and canonical
-state digest. Restore is transactional and rejects mismatched content, behavior,
-state invariants, or digest before replacing an open session.
-
-The bounded replay segment stores its complete initial state and context, then
-each revision-bound command with pre-command context and the exact rejection,
-events, execution evidence, RNG position, event offset, revision, and resulting
-digest. Verification executes every command again through `GameEngine` and
-fails on the first context or result drift. The recorder rolls to a new
-checkpoint after 512 commands; adapters own filesystem paths and I/O.
-
-Godot sends save/open and replay export/verification through the same tagged
-client protocol as every other operation. Persistence rules remain in Rust.
-
-## Deliberately deferred
-
-- historical client/save/replay upcasters and long-term compatibility manifests;
-- production Flutter session cutover and cross-target Rust packaging;
-- AI and remote replica crates;
-- any integration that could change the active Flutter or Serverpod runtime.
+- [Public Rust API documentation](https://engine.aonw.net/)
+- [Interactive engine architecture](https://engine.aonw.net/architecture)
+- [Migration and cutover model](../docs/rust-engine-migration.md)
+- [Current save and replay contract](../docs/rust-engine-persistence.md)
+- [Migration inventory](migration/README.md)
+- [Architecture decisions](../docs/adr/README.md)
+- [Successor clients](../clients/README.md)

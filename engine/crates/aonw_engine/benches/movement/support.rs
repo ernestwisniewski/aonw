@@ -3,43 +3,95 @@ use std::time::Instant;
 
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
-    Diplomacy, FogOfWar, GameState, HexCoord, HexGridBounds, InteractionState, MovementUnits,
-    PlayerFog, PlayerId, StateRevision, TransportNetwork, Unit, UnitId, UnitKind,
-    UnitOccupancyPolicy,
+    FogOfWar, GameState, HexCoord, HexGridBounds, MovementUnits, PlayerFog, PlayerId,
+    StateRevision, Unit, UnitId, UnitKind, UnitOccupancyPolicy,
 };
-use aonw_engine::MovementSearchMetrics;
+use aonw_engine::{MovementSearchMetrics, WorkerAutomationMetrics};
+use stats_alloc::{Region, Stats};
+
+use crate::GLOBAL;
 
 const ITERATIONS: usize = 20;
+
+#[derive(Clone, Copy, Default)]
+pub(crate) struct WorkCounters {
+    frontier_pops: u64,
+    expanded_tiles: u64,
+    examined_edges: u64,
+    heap_pushes: u64,
+    route_records: u64,
+}
+
+impl WorkCounters {
+    pub(crate) const fn worker(metrics: WorkerAutomationMetrics) -> Self {
+        Self {
+            frontier_pops: 0,
+            expanded_tiles: metrics.tiles_examined() as u64,
+            examined_edges: metrics.legality_evaluations() as u64,
+            heap_pushes: 0,
+            route_records: metrics.routes_planned() as u64,
+        }
+    }
+}
+
+impl From<MovementSearchMetrics> for WorkCounters {
+    fn from(metrics: MovementSearchMetrics) -> Self {
+        Self {
+            frontier_pops: metrics.frontier_pops(),
+            expanded_tiles: metrics.expanded_tiles(),
+            examined_edges: metrics.examined_edges(),
+            heap_pushes: metrics.heap_pushes(),
+            route_records: metrics.route_records(),
+        }
+    }
+}
 
 pub(crate) fn report(
     workload: &str,
     cols: u16,
     rows: u16,
     units: usize,
-    metrics: MovementSearchMetrics,
+    metrics: impl Into<WorkCounters>,
+    payload_bytes: usize,
     mut operation: impl FnMut() -> u64,
 ) {
+    let metrics = metrics.into();
     for _ in 0..3 {
         black_box(operation());
     }
     let mut samples = Vec::with_capacity(ITERATIONS);
     let mut signature = 0;
+    let mut allocation_stats: Option<Stats> = None;
     for _ in 0..ITERATIONS {
+        let region = Region::new(GLOBAL);
         let started = Instant::now();
         signature = black_box(operation());
         samples.push(started.elapsed().as_nanos());
+        let observed = region.change();
+        if let Some(expected) = allocation_stats {
+            assert_eq!(
+                observed, expected,
+                "allocation sample drifted for {workload}"
+            );
+        } else {
+            allocation_stats = Some(observed);
+        }
     }
+    let allocations = allocation_stats.expect("at least one allocation sample");
     samples.sort_unstable();
     let median = samples[samples.len() / 2];
     let p95 = samples[(samples.len() * 95 / 100).min(samples.len() - 1)];
     println!(
-        "{workload},{},{units},{ITERATIONS},{median},{p95},{},{},{},{},{},{signature:016x}",
+        "{workload},{},{units},{ITERATIONS},{},{},{},{payload_bytes},{},{},{},{},{},{signature:016x},{median},{p95}",
         usize::from(cols) * usize::from(rows),
-        metrics.frontier_pops(),
-        metrics.expanded_tiles(),
-        metrics.examined_edges(),
-        metrics.heap_pushes(),
-        metrics.route_records(),
+        allocations.allocations,
+        allocations.reallocations,
+        allocations.bytes_allocated,
+        metrics.frontier_pops,
+        metrics.expanded_tiles,
+        metrics.examined_edges,
+        metrics.heap_pushes,
+        metrics.route_records,
     );
 }
 
@@ -47,7 +99,7 @@ pub(crate) fn map(cols: u16, rows: u16) -> MapDefinition {
     let tiles = (0..rows)
         .flat_map(|row| {
             (0..cols).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(i32::from(col), i32::from(row)),
                     vec![TerrainType::Grassland],
                     Vec::new(),
@@ -142,19 +194,15 @@ pub(crate) fn hidden_blocker_state(cols: u16, rows: u16, actor: &PlayerId) -> Ga
         ),
     ];
     let fog = FogOfWar::try_new([PlayerFog::new(actor.clone(), [], [])]).expect("benchmark fog");
-    GameState::try_new_with_world(
+    GameState::builder(
         StateRevision::new(1),
         1,
         HexGridBounds::new(cols, rows).expect("benchmark bounds"),
         UnitOccupancyPolicy::Exclusive,
         units,
-        [],
-        [],
-        InteractionState::default(),
-        fog,
-        Diplomacy::default(),
-        TransportNetwork::default(),
     )
+    .with_fog_of_war(fog)
+    .try_build()
     .expect("hidden blocker state")
 }
 

@@ -1,21 +1,48 @@
 import 'dart:convert';
 
 import 'package:aonw_rust_client/src/api.dart';
+import 'package:aonw_rust_client/src/native_identity.dart';
+import 'package:aonw_rust_client/src/protocol_city_view.dart';
+import 'package:aonw_rust_client/src/protocol_coordinate.dart';
+import 'package:aonw_rust_client/src/protocol_diplomacy.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
+import 'package:aonw_rust_client/src/protocol_match.dart';
+import 'package:aonw_rust_client/src/protocol_pending_action.dart';
+import 'package:aonw_rust_client/src/protocol_query.dart';
 import 'package:aonw_rust_client/src/protocol_response.dart';
+import 'package:aonw_rust_client/src/protocol_values.dart';
 
+export 'protocol_artifact.dart';
+export 'protocol_city_view.dart';
+export 'protocol_coordinate.dart';
+export 'protocol_diplomacy.dart';
+export 'protocol_event.dart';
+export 'protocol_evidence.dart';
 export 'protocol_execution.dart';
+export 'protocol_map.dart';
+export 'protocol_match.dart';
+export 'protocol_outcome.dart';
+export 'protocol_pending_action.dart';
+export 'protocol_player_view.dart';
 export 'protocol_query.dart';
 export 'protocol_response.dart';
 export 'protocol_values.dart';
 
-const aonwClientApiVersion = 2;
+part 'protocol_city_request.dart';
+part 'protocol_artifact_request.dart';
+part 'protocol_diplomacy_request.dart';
+part 'protocol_production_request.dart';
+part 'protocol_research_request.dart';
+part 'protocol_worker_request.dart';
 
 final class AonwClientRequest {
   AonwClientRequest._(this.request);
 
   factory AonwClientRequest.capabilities() =>
       AonwClientRequest._(const {'type': 'capabilities'});
+
+  factory AonwClientRequest.inspectMap({required String mapDocument}) =>
+      AonwClientRequest._({'type': 'inspectMap', 'mapDocument': mapDocument});
 
   factory AonwClientRequest.openSession({
     required String mapDocument,
@@ -26,6 +53,36 @@ final class AonwClientRequest {
     'mapDocument': mapDocument,
     'scenarioDocument': scenarioDocument,
     'actorPlayerId': actorPlayerId,
+  });
+
+  factory AonwClientRequest.startMatch({
+    required String mapDocument,
+    required String scenarioDocument,
+    required String actorPlayerId,
+    required AonwMatchIdentity matchIdentity,
+    required bool fogEnabled,
+  }) => AonwClientRequest._({
+    'type': 'startMatch',
+    'mapDocument': mapDocument,
+    'scenarioDocument': scenarioDocument,
+    'actorPlayerId': actorPlayerId,
+    'matchIdentity': matchIdentity.toJson(),
+    'fogMode': fogEnabled ? 'enabled' : 'disabled',
+  });
+
+  factory AonwClientRequest.handoffActor({required String actorPlayerId}) =>
+      AonwClientRequest._({
+        'type': 'handoffActor',
+        'actorPlayerId': actorPlayerId,
+      });
+
+  factory AonwClientRequest.advanceAiTurn({
+    required String actorPlayerId,
+    required int commandBudget,
+  }) => AonwClientRequest._({
+    'type': 'advanceAiTurn',
+    'actorPlayerId': actorPlayerId,
+    'commandBudget': commandBudget,
   });
 
   factory AonwClientRequest.closeSession() =>
@@ -61,6 +118,33 @@ final class AonwClientRequest {
     },
   });
 
+  factory AonwClientRequest.unitLogisticsOptions({
+    required int expectedRevision,
+    required String unitId,
+  }) => AonwClientRequest._({
+    'type': 'query',
+    'query': {
+      'type': 'unitLogisticsOptions',
+      'expectedRevision': expectedRevision,
+      'unitId': unitId,
+    },
+  });
+
+  factory AonwClientRequest.combatPreview({
+    required int expectedRevision,
+    required String attackerUnitId,
+    required int defenderCol,
+    required int defenderRow,
+  }) => AonwClientRequest._({
+    'type': 'query',
+    'query': {
+      'type': 'combatPreview',
+      'expectedRevision': expectedRevision,
+      'attackerUnitId': attackerUnitId,
+      'defender': {'col': defenderCol, 'row': defenderRow},
+    },
+  });
+
   factory AonwClientRequest.moveUnit({
     required int expectedRevision,
     required String unitId,
@@ -73,6 +157,70 @@ final class AonwClientRequest {
       'expectedRevision': expectedRevision,
       'unitId': unitId,
       'target': {'col': targetCol, 'row': targetRow},
+    },
+  });
+
+  factory AonwClientRequest.autoExploreUnit({
+    required int expectedRevision,
+    required String unitId,
+  }) => AonwClientRequest._(
+    _unitCommand('autoExploreUnit', expectedRevision, unitId),
+  );
+
+  factory AonwClientRequest.assignMerchantTradeRoute({
+    required int expectedRevision,
+    required String unitId,
+    required String destinationCityId,
+  }) => AonwClientRequest._(
+    _merchantCommand(
+      'assignMerchantTradeRoute',
+      expectedRevision,
+      unitId,
+      destinationCityId,
+    ),
+  );
+
+  factory AonwClientRequest.moveMerchantToCity({
+    required int expectedRevision,
+    required String unitId,
+    required String destinationCityId,
+  }) => AonwClientRequest._(
+    _merchantCommand(
+      'moveMerchantToCity',
+      expectedRevision,
+      unitId,
+      destinationCityId,
+    ),
+  );
+
+  factory AonwClientRequest.detachTroop({
+    required int expectedRevision,
+    required String unitId,
+    required String troopKind,
+  }) => AonwClientRequest._({
+    'type': 'dispatch',
+    'command': {
+      'type': 'detachTroop',
+      'expectedRevision': expectedRevision,
+      'unitId': unitId,
+      'troopKind': troopKind,
+    },
+  });
+
+  factory AonwClientRequest.attackHex({
+    required int expectedRevision,
+    required String attackerUnitId,
+    required int defenderCol,
+    required int defenderRow,
+    required AonwCityConquestAction cityConquestAction,
+  }) => AonwClientRequest._({
+    'type': 'dispatch',
+    'command': {
+      'type': 'attackHex',
+      'expectedRevision': expectedRevision,
+      'attackerUnitId': attackerUnitId,
+      'defender': {'col': defenderCol, 'row': defenderRow},
+      'cityConquestAction': cityConquestAction.name,
     },
   });
 
@@ -96,6 +244,12 @@ final class AonwClientRequest {
   }) => AonwClientRequest._(
     _unitCommand('fortifyUnit', expectedRevision, unitId),
   );
+
+  factory AonwClientRequest.endTurn({required int expectedRevision}) =>
+      AonwClientRequest._({
+        'type': 'dispatch',
+        'command': {'type': 'endTurn', 'expectedRevision': expectedRevision},
+      });
 
   factory AonwClientRequest.exportSave() =>
       AonwClientRequest._(const {'type': 'exportSave'});
@@ -121,6 +275,20 @@ final class AonwClientRequest {
     'replayDocument': replayDocument,
   });
 
+  factory AonwClientRequest.openReplay({
+    required String mapDocument,
+    required String replayDocument,
+    required String recipientPlayerId,
+  }) => AonwClientRequest._({
+    'type': 'openReplay',
+    'mapDocument': mapDocument,
+    'replayDocument': replayDocument,
+    'recipientPlayerId': recipientPlayerId,
+  });
+
+  factory AonwClientRequest.seekReplay({required int position}) =>
+      AonwClientRequest._({'type': 'seekReplay', 'position': position});
+
   final Map<String, Object?> request;
 
   String toJson() =>
@@ -136,6 +304,21 @@ final class AonwClientRequest {
       'type': type,
       'expectedRevision': expectedRevision,
       'unitId': unitId,
+    },
+  };
+
+  static Map<String, Object?> _merchantCommand(
+    String type,
+    int expectedRevision,
+    String unitId,
+    String destinationCityId,
+  ) => {
+    'type': 'dispatch',
+    'command': {
+      'type': type,
+      'expectedRevision': expectedRevision,
+      'unitId': unitId,
+      'destinationCityId': destinationCityId,
     },
   };
 }
