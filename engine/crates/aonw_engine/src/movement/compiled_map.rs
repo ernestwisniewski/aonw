@@ -16,6 +16,7 @@ pub struct CompiledMovementMap {
     neighbors: Box<[[usize; MAX_NEIGHBORS]]>,
     neighbor_counts: Box<[u8]>,
     entry_costs: Box<[[MovementCost; 3]]>,
+    passable_tile_counts: [usize; 3],
 }
 
 /// Failure while preparing immutable movement data.
@@ -31,18 +32,6 @@ impl core::fmt::Display for CompiledMovementMapError {
 impl std::error::Error for CompiledMovementMapError {}
 
 impl CompiledMovementMap {
-    /// Precomputes row-major neighbors and terrain costs.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when either immutable content identity cannot be serialized.
-    pub fn compile(
-        map: &MapDefinition,
-        ruleset: &RulesetDefinition,
-    ) -> Result<Self, CompiledMovementMapError> {
-        Self::compile_owned(map.clone(), ruleset.clone())
-    }
-
     /// Precomputes movement data while taking ownership of validated content.
     ///
     /// # Errors
@@ -55,6 +44,7 @@ impl CompiledMovementMap {
         let mut neighbors = Vec::with_capacity(map.bounds().tile_count());
         let mut neighbor_counts = Vec::with_capacity(map.bounds().tile_count());
         let mut entry_costs = Vec::with_capacity(map.bounds().tile_count());
+        let mut passable_tile_counts = [0; 3];
         for tile in map.tiles() {
             let coordinate = tile.coordinate();
             let mut indices = [usize::MAX; MAX_NEIGHBORS];
@@ -68,11 +58,17 @@ impl CompiledMovementMap {
             }
             neighbors.push(indices);
             neighbor_counts.push(u8::try_from(count).unwrap_or(MAX_NEIGHBORS_U8));
-            entry_costs.push([
+            let costs = [
                 terrain_entry_cost(tile, UnitMovementDomain::Land),
                 terrain_entry_cost(tile, UnitMovementDomain::Naval),
                 terrain_entry_cost(tile, UnitMovementDomain::Air),
-            ]);
+            ];
+            for (index, cost) in costs.iter().enumerate() {
+                if matches!(cost, MovementCost::Passable(_)) {
+                    passable_tile_counts[index] += 1;
+                }
+            }
+            entry_costs.push(costs);
         }
         Ok(Self {
             map_hash: map
@@ -86,6 +82,7 @@ impl CompiledMovementMap {
             neighbors: neighbors.into_boxed_slice(),
             neighbor_counts: neighbor_counts.into_boxed_slice(),
             entry_costs: entry_costs.into_boxed_slice(),
+            passable_tile_counts,
         })
     }
 
@@ -126,6 +123,10 @@ impl CompiledMovementMap {
 
     pub(crate) fn entry_cost(&self, index: usize, domain: UnitMovementDomain) -> MovementCost {
         self.entry_costs[index][domain_index(domain)]
+    }
+
+    pub(crate) const fn passable_tile_count(&self, domain: UnitMovementDomain) -> usize {
+        self.passable_tile_counts[domain_index(domain)]
     }
 }
 
@@ -176,7 +177,7 @@ mod tests {
         let tiles = (0..3)
             .flat_map(|row| {
                 (0..3).map(move |col| {
-                    TileDefinition::try_new(
+                    TileDefinition::try_new_for_simulation(
                         HexCoord::new(col, row),
                         vec![TerrainType::Grassland],
                         Vec::new(),
@@ -196,7 +197,8 @@ mod tests {
         )
         .expect("map");
         let ruleset = RulesetDefinition::standard();
-        let compiled = CompiledMovementMap::compile(&map, ruleset).expect("compiled map");
+        let compiled =
+            CompiledMovementMap::compile_owned(map.clone(), ruleset.clone()).expect("compiled map");
 
         assert_eq!(compiled.neighbors(4).len(), 6);
         assert_eq!(compiled.map_hash(), map.content_hash().expect("map hash"));

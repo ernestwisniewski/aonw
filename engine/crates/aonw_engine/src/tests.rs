@@ -6,7 +6,7 @@ use crate::{CompiledMovementMap, EngineContext, movement::MovementPlanningView};
 #[test]
 fn engine_context_carries_actor_and_map_explicitly() {
     let actor = PlayerId::new("player-1").expect("valid player id");
-    let tile = TileDefinition::try_new(
+    let tile = TileDefinition::try_new_for_simulation(
         HexCoord::new(0, 0),
         vec![TerrainType::Plains],
         Vec::new(),
@@ -35,7 +35,8 @@ fn compiled_context_uses_the_content_it_was_compiled_from() {
     let map = single_tile_map("source");
     let other_map = single_tile_map("other");
     let compiled =
-        CompiledMovementMap::compile(&map, RulesetDefinition::standard()).expect("compiled");
+        CompiledMovementMap::compile_owned(map.clone(), RulesetDefinition::standard().clone())
+            .expect("compiled");
 
     let context = EngineContext::new(&actor, &other_map, MovementPlanningView::fog_disabled())
         .with_compiled_movement_map(&compiled);
@@ -51,7 +52,7 @@ fn single_tile_map(map_id: &str) -> MapDefinition {
         1,
         1,
         vec![
-            TileDefinition::try_new(
+            TileDefinition::try_new_for_simulation(
                 HexCoord::new(0, 0),
                 vec![TerrainType::Plains],
                 Vec::new(),

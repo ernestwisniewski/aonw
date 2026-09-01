@@ -1,38 +1,36 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, GameStateDto, MovementStepDto};
+use crate::client::WorkerAutomationOptionDto;
+use crate::{CombatExecutionDto, CoordinateDto, GameStateDto, MovementStepDto};
 
-/// Current canonical save contract version.
-pub const CURRENT_SAVE_GAME_VERSION: u16 = 2;
-/// Current deterministic replay contract version.
-pub const CURRENT_REPLAY_LOG_VERSION: u16 = 2;
+mod codec;
+mod command;
+mod event;
+mod logistics;
+
+pub use command::{ReplayCommandDto, ReplaySystemCommandDto};
+pub use event::ReplayEventDto;
+pub use logistics::{ReplayLogisticsEvidenceDto, ReplayUnitMovementExecutionDto};
+
 /// Maximum accepted encoded save document.
 pub const MAX_SAVE_GAME_JSON_BYTES: usize = 16 * 1024 * 1024;
 /// Maximum accepted encoded replay document.
 pub const MAX_REPLAY_LOG_JSON_BYTES: usize = 64 * 1024 * 1024;
 /// Maximum commands retained in one replay segment.
 pub const MAX_REPLAY_ENTRY_COUNT: usize = 512;
-
-/// Serializable deterministic random-stream position.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct RngStateDto {
-    /// Initial stream seed.
-    pub seed: u64,
-    /// Independent stream selector.
-    pub stream: u64,
-    /// Number of values consumed from the stream.
-    pub counter: u64,
-}
+/// Maximum self-contained replay segments retained in one archive.
+pub const MAX_REPLAY_SEGMENT_COUNT: usize = 8;
+/// Current durable save and replay schema version.
+pub const PERSISTENCE_FORMAT_VERSION: u16 = 2;
 
 /// Complete canonical save envelope.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SaveGameDto {
-    /// Save schema version.
-    pub schema_version: u16,
-    /// Engine behavior required to continue this state.
-    pub behavior_version: u16,
+    /// Durable envelope schema version, independent from the client API.
+    pub format_version: u16,
+    /// Engine behavior identity required to interpret this snapshot.
+    pub behavior_fingerprint: String,
     /// Logical map identifier.
     pub map_id: String,
     /// SHA-256 identity of canonical map content.
@@ -43,8 +41,6 @@ pub struct SaveGameDto {
     pub ruleset_hash: String,
     /// Local player whose recipient view is opened.
     pub actor_player_id: String,
-    /// Deterministic random-stream position.
-    pub rng_state: RngStateDto,
     /// Number of authoritative events preceding this snapshot.
     pub event_offset: u64,
     /// Digest of the complete canonical state.
@@ -53,44 +49,24 @@ pub struct SaveGameDto {
     pub state: GameStateDto,
 }
 
-/// One revision-bound command stored in a replay.
+/// Closed replay record boundary distinguishing player and trusted system input.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(
-    tag = "type",
+    tag = "recordKind",
     rename_all = "camelCase",
     rename_all_fields = "camelCase",
     deny_unknown_fields
 )]
-pub enum ReplayCommandDto {
-    /// Manual movement command.
-    MoveUnit {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Opaque canonical unit identifier.
-        unit_id: String,
-        /// Requested movement target.
-        target: CoordinateDto,
+pub enum ReplayRecordDto {
+    /// Authenticated player-authored command.
+    Player {
+        /// Closed player command payload.
+        command: ReplayCommandDto,
     },
-    /// Clears all cancellable orders owned by one unit.
-    CancelUnitAction {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Opaque canonical unit identifier.
-        unit_id: String,
-    },
-    /// Consumes one unit's movement for the current turn.
-    SkipUnitTurn {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Opaque canonical unit identifier.
-        unit_id: String,
-    },
-    /// Fortifies one idle unit.
-    FortifyUnit {
-        /// Expected canonical revision.
-        expected_revision: u64,
-        /// Opaque canonical unit identifier.
-        unit_id: String,
+    /// Host/scheduler-authored command unavailable to player endpoints.
+    System {
+        /// Closed trusted command payload.
+        command: ReplaySystemCommandDto,
     },
 }
 
@@ -98,40 +74,16 @@ pub enum ReplayCommandDto {
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReplayContextDto {
-    /// Actor issuing the command.
-    pub actor_player_id: String,
-    /// Engine behavior used for execution.
-    pub behavior_version: u16,
+    /// Authenticated actor for player records; absent for trusted system records.
+    pub actor_player_id: Option<String>,
     /// Exact canonical map identity.
     pub map_hash: String,
     /// Exact immutable ruleset identity.
     pub ruleset_hash: String,
     /// State digest before execution.
     pub state_digest: String,
-    /// Random-stream position before execution.
-    pub rng_state: RngStateDto,
     /// Event offset before execution.
     pub event_offset: u64,
-}
-
-/// Ordered authoritative event stored in a replay result.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum ReplayEventDto {
-    /// One unit changed map position.
-    UnitMoved {
-        /// Moved unit.
-        unit_id: String,
-        /// Previous coordinate.
-        from: CoordinateDto,
-        /// New coordinate.
-        to: CoordinateDto,
-    },
 }
 
 /// Exact execution evidence stored in a replay result.
@@ -143,6 +95,11 @@ pub enum ReplayEventDto {
     deny_unknown_fields
 )]
 pub enum ReplayEvidenceDto {
+    /// Exact combat evidence.
+    Combat {
+        /// Exact combat execution.
+        execution: CombatExecutionDto,
+    },
     /// Executed movement prefix.
     UnitMovement {
         /// Moved unit.
@@ -151,6 +108,37 @@ pub enum ReplayEvidenceDto {
         from: CoordinateDto,
         /// Exact executed movement steps.
         steps: Vec<MovementStepDto>,
+    },
+    /// Exact auto-exploration, merchant, or detachment execution.
+    Logistics {
+        /// Typed logistics execution.
+        execution: ReplayLogisticsEvidenceDto,
+    },
+    /// Exact partial turn pipeline that executed.
+    TurnKernel {
+        /// Processor names in execution order.
+        processors: Vec<String>,
+        /// Cities founded during the pipeline in canonical order.
+        founded_city_ids: Vec<String>,
+        /// Exact intended-attack resolutions in execution order.
+        combat_executions: Vec<CombatExecutionDto>,
+        /// Units whose movement phase began, in canonical unit order.
+        reset_unit_ids: Vec<String>,
+        /// Exact movements performed by turn processors.
+        movement_executions: Vec<ReplayUnitMovementExecutionDto>,
+        /// Units whose stored movement order became invalid.
+        invalidated_order_unit_ids: Vec<String>,
+        /// Scouts whose auto-exploration ended without another target.
+        finished_auto_explore_unit_ids: Vec<String>,
+    },
+    /// Exact worker automation execution.
+    WorkerAutomation {
+        /// Worker receiving the command.
+        unit_id: String,
+        /// Selected action and deterministic counters.
+        option: WorkerAutomationOptionDto,
+        /// Executed movement prefix, when any.
+        movement: Option<ReplayUnitMovementExecutionDto>,
     },
 }
 
@@ -170,10 +158,10 @@ pub struct ReplayResultDto {
     pub events: Vec<ReplayEventDto>,
     /// Exact execution evidence when produced.
     pub evidence: Option<ReplayEvidenceDto>,
-    /// Random-stream position after execution.
-    pub rng_state: RngStateDto,
     /// Event offset after execution.
     pub event_offset: u64,
+    /// Hash of the exact recipient-safe client command result.
+    pub recipient_result_hash: String,
 }
 
 /// One deterministic replay step.
@@ -184,20 +172,34 @@ pub struct ReplayEntryDto {
     pub index: u64,
     /// Complete trusted context before execution.
     pub context: ReplayContextDto,
-    /// Revision-bound command.
-    pub command: ReplayCommandDto,
+    /// Explicit player or trusted system record.
+    pub record: ReplayRecordDto,
     /// Exact authoritative result.
     pub result: ReplayResultDto,
 }
 
-/// Deterministic replay segment beginning at one canonical snapshot.
+/// One self-contained deterministic replay segment and its restore checkpoint.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReplaySegmentDto {
+    /// Event offset at the segment start.
+    pub initial_event_offset: u64,
+    /// Digest of the initial canonical state.
+    pub initial_state_digest: String,
+    /// Complete initial canonical state.
+    pub initial_state: GameStateDto,
+    /// Commands and exact expected outcomes.
+    pub entries: Vec<ReplayEntryDto>,
+}
+
+/// Bounded current-format replay archive ordered from oldest to newest segment.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReplayLogDto {
-    /// Replay schema version.
-    pub schema_version: u16,
-    /// Engine behavior required for verification.
-    pub behavior_version: u16,
+    /// Durable envelope schema version, independent from the client API.
+    pub format_version: u16,
+    /// Engine behavior identity required to replay this archive.
+    pub behavior_fingerprint: String,
     /// Logical map identifier.
     pub map_id: String,
     /// SHA-256 identity of canonical map content.
@@ -208,16 +210,8 @@ pub struct ReplayLogDto {
     pub ruleset_hash: String,
     /// Actor used by every recorded context.
     pub actor_player_id: String,
-    /// Random-stream position at the segment start.
-    pub initial_rng_state: RngStateDto,
-    /// Event offset at the segment start.
-    pub initial_event_offset: u64,
-    /// Digest of the initial canonical state.
-    pub initial_state_digest: String,
-    /// Complete initial canonical state.
-    pub initial_state: GameStateDto,
-    /// Commands and exact expected outcomes.
-    pub entries: Vec<ReplayEntryDto>,
+    /// Ordered self-contained replay segments with canonical checkpoints.
+    pub segments: Vec<ReplaySegmentDto>,
 }
 
 /// Strict save or replay codec failure.
@@ -230,11 +224,27 @@ pub enum PersistenceCodecError {
         /// Maximum accepted size.
         maximum: usize,
     },
+    /// The durable envelope uses another schema version.
+    UnsupportedFormatVersion {
+        /// Version found in the document.
+        found: u16,
+        /// Version supported by this build.
+        supported: u16,
+    },
     /// Replay contains too many commands.
     TooManyReplayEntries {
         /// Actual command count.
         actual: usize,
         /// Maximum accepted command count.
+        maximum: usize,
+    },
+    /// Replay archive does not contain a restore checkpoint.
+    EmptyReplayArchive,
+    /// Replay archive contains too many retained segments.
+    TooManyReplaySegments {
+        /// Actual segment count.
+        actual: usize,
+        /// Maximum accepted segment count.
         maximum: usize,
     },
     /// JSON violates the strict DTO contract.
@@ -250,9 +260,18 @@ impl core::fmt::Display for PersistenceCodecError {
                     "document is {actual} bytes; maximum is {maximum}"
                 )
             }
+            Self::UnsupportedFormatVersion { found, supported } => write!(
+                formatter,
+                "unsupported persistence format {found}; expected {supported}"
+            ),
             Self::TooManyReplayEntries { actual, maximum } => write!(
                 formatter,
                 "replay has {actual} entries; maximum is {maximum}"
+            ),
+            Self::EmptyReplayArchive => formatter.write_str("replay archive has no segments"),
+            Self::TooManyReplaySegments { actual, maximum } => write!(
+                formatter,
+                "replay archive has {actual} segments; maximum is {maximum}"
             ),
             Self::Json(source) => source.fmt(formatter),
         }
@@ -261,125 +280,5 @@ impl core::fmt::Display for PersistenceCodecError {
 
 impl std::error::Error for PersistenceCodecError {}
 
-impl SaveGameDto {
-    /// Parses a bounded strict save document.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error for oversized or structurally invalid input.
-    pub fn from_json(input: &str) -> Result<Self, PersistenceCodecError> {
-        parse_bounded(input, MAX_SAVE_GAME_JSON_BYTES)
-    }
-
-    /// Serializes compact save JSON.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if serialization fails.
-    pub fn to_json(&self) -> Result<String, PersistenceCodecError> {
-        serialize_bounded(self, MAX_SAVE_GAME_JSON_BYTES)
-    }
-}
-
-impl ReplayLogDto {
-    /// Parses a bounded strict replay document.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error for oversized, structurally invalid, or unbounded input.
-    pub fn from_json(input: &str) -> Result<Self, PersistenceCodecError> {
-        let replay: Self = parse_bounded(input, MAX_REPLAY_LOG_JSON_BYTES)?;
-        if replay.entries.len() > MAX_REPLAY_ENTRY_COUNT {
-            return Err(PersistenceCodecError::TooManyReplayEntries {
-                actual: replay.entries.len(),
-                maximum: MAX_REPLAY_ENTRY_COUNT,
-            });
-        }
-        Ok(replay)
-    }
-
-    /// Serializes compact replay JSON.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if serialization fails.
-    pub fn to_json(&self) -> Result<String, PersistenceCodecError> {
-        if self.entries.len() > MAX_REPLAY_ENTRY_COUNT {
-            return Err(PersistenceCodecError::TooManyReplayEntries {
-                actual: self.entries.len(),
-                maximum: MAX_REPLAY_ENTRY_COUNT,
-            });
-        }
-        serialize_bounded(self, MAX_REPLAY_LOG_JSON_BYTES)
-    }
-}
-
-fn parse_bounded<T>(input: &str, maximum: usize) -> Result<T, PersistenceCodecError>
-where
-    T: for<'input> Deserialize<'input>,
-{
-    if input.len() > maximum {
-        return Err(PersistenceCodecError::TooLarge {
-            actual: input.len(),
-            maximum,
-        });
-    }
-    serde_json::from_str(input).map_err(PersistenceCodecError::Json)
-}
-
-fn serialize_bounded<T>(value: &T, maximum: usize) -> Result<String, PersistenceCodecError>
-where
-    T: Serialize,
-{
-    let output = serde_json::to_string(value).map_err(PersistenceCodecError::Json)?;
-    if output.len() > maximum {
-        return Err(PersistenceCodecError::TooLarge {
-            actual: output.len(),
-            maximum,
-        });
-    }
-    Ok(output)
-}
-
 #[cfg(test)]
-mod tests {
-    use super::{MAX_SAVE_GAME_JSON_BYTES, ReplayCommandDto, ReplayLogDto, SaveGameDto};
-
-    #[test]
-    fn strict_save_codec_rejects_unknown_duplicate_and_oversized_input() {
-        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","rngState":{"seed":0,"stream":0,"counter":0},"eventOffset":0,"stateDigest":"d","state":{"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}}"#;
-        let unknown = base.replacen("\"state\":", "\"extra\":true,\"state\":", 1);
-        assert!(SaveGameDto::from_json(&unknown).is_err());
-        let duplicate = base.replacen(
-            "\"schemaVersion\":2,",
-            "\"schemaVersion\":2,\"schemaVersion\":2,",
-            1,
-        );
-        assert!(SaveGameDto::from_json(&duplicate).is_err());
-        assert!(SaveGameDto::from_json(&"x".repeat(MAX_SAVE_GAME_JSON_BYTES + 1)).is_err());
-    }
-
-    #[test]
-    fn strict_replay_codec_rejects_unknown_and_duplicate_fields() {
-        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialRngState":{"seed":0,"stream":0,"counter":0},"initialEventOffset":0,"initialStateDigest":"d","initialState":{"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]},"entries":[]}"#;
-        assert!(ReplayLogDto::from_json(base).is_ok());
-        let unknown = base.replacen("\"entries\":", "\"extra\":true,\"entries\":", 1);
-        assert!(ReplayLogDto::from_json(&unknown).is_err());
-        let duplicate = base.replacen(
-            "\"schemaVersion\":2,",
-            "\"schemaVersion\":2,\"schemaVersion\":2,",
-            1,
-        );
-        assert!(ReplayLogDto::from_json(&duplicate).is_err());
-    }
-
-    #[test]
-    fn every_current_unit_action_command_has_a_strict_wire_shape() {
-        for kind in ["cancelUnitAction", "skipUnitTurn", "fortifyUnit"] {
-            let json = format!(r#"{{"type":"{kind}","expectedRevision":7,"unitId":"unit-1"}}"#);
-            assert!(serde_json::from_str::<ReplayCommandDto>(&json).is_ok());
-            let unknown = json.replacen('}', ",\"unknown\":true}", 1);
-            assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
-        }
-    }
-}
+mod tests;

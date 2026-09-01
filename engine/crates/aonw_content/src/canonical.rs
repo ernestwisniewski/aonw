@@ -15,7 +15,7 @@ struct VersionedDocument<'a>(&'a MapDocument);
 
 struct Tiles<'a>(&'a [TileDefinition]);
 struct Objectives<'a>(&'a [MapObjective]);
-struct CanonicalTile<'a>(&'a TileDefinition);
+struct Tile<'a>(&'a TileDefinition);
 struct CanonicalObjective<'a>(&'a MapObjective);
 
 impl MapDefinition {
@@ -104,7 +104,7 @@ impl Serialize for Tiles<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut sequence = serializer.serialize_seq(Some(self.0.len()))?;
         for tile in self.0 {
-            sequence.serialize_element(&CanonicalTile(tile))?;
+            sequence.serialize_element(&Tile(tile))?;
         }
         sequence.end()
     }
@@ -120,13 +120,13 @@ impl Serialize for Objectives<'_> {
     }
 }
 
-impl Serialize for CanonicalTile<'_> {
+impl Serialize for Tile<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let tile = self.0;
-        let mut value = serializer.serialize_struct("CanonicalTile", 5)?;
+        let mut value = serializer.serialize_struct("Tile", 5)?;
         value.serialize_field("col", &tile.coordinate().col())?;
         value.serialize_field("row", &tile.coordinate().row())?;
-        value.serialize_field("terrains", tile.terrains())?;
+        value.serialize_field("terrainTags", tile.terrain_tags())?;
         value.serialize_field("resources", tile.resources())?;
         value.serialize_field("height", &tile.height())?;
         value.end()

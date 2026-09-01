@@ -1,19 +1,70 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CoordinateDto, UnitKindDto, UnitPostureDto};
+use crate::{
+    ArmyTroopDto, CoordinateDto, GameOutcomeDto, MerchantTradeRouteDto, PlayerTurnStateDto,
+    QueuedMovePathDto, UnitKindDto, UnitPostureDto,
+};
+
+use super::MapViewDto;
+
+mod artifact;
+mod city;
+mod diplomacy;
+mod economy;
+mod event;
+mod logistics;
+mod production;
+mod query;
+mod rejection;
+mod research;
+mod session;
+mod worker;
+
+pub use artifact::{PlayerArtifactLocationViewDto, PlayerArtifactViewDto};
+pub use city::{
+    CityExpansionCandidateDto, CityFoundingDraftViewDto, OwnedCityDetailsViewDto, PlayerCityViewDto,
+};
+pub use diplomacy::{
+    PlayerDiplomacyViewDto, PlayerDiplomaticMessageViewDto, PlayerDiplomaticProposalViewDto,
+    PlayerDiplomaticRelationViewDto, PlayerResourceTradeAgreementViewDto,
+};
+pub use economy::{
+    CityYieldContributionDto, CityYieldContributionKindDto, StrategicResourceAmountDto,
+    StrategicResourceSourceDto, YieldValueDto,
+};
+pub use event::ClientEventDto;
+pub use logistics::{
+    AutoExploreOptionDto, ClientLogisticsEvidenceDto, DetachmentOptionDto,
+    MerchantDestinationOptionDto, MovementSearchMetricsDto, UnitMovementExecutionDto,
+};
+pub use production::{CitySpecializationOptionDto, ProductionOptionDto, UnitProductionOptionDto};
+pub use query::{
+    ClientEvidenceDto, ClientQueryResultDto, PendingActionViewDto, ReachableTileViewDto,
+};
+pub use rejection::ClientCommandRejectionCodeDto;
+pub use research::{
+    ResearchOptionDto, ScienceYieldBreakdownDto, ScienceYieldSourceDto, ScienceYieldSourceKindDto,
+    TechnologyAvailabilityDto, TechnologyUnlockDto,
+};
+pub use session::{ClientErrorDto, ClientReplayVerificationDto};
+pub use worker::{
+    FieldImprovementViewDto, RoadViewDto, WorkerAutomationActionDto, WorkerAutomationMetricsDto,
+    WorkerAutomationOptionDto, WorkerImprovementOptionDto, WorkerJobCompletionDto,
+    WorkerJobViewDto,
+};
 
 /// One current client protocol response.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ClientResponseDto {
-    /// Client protocol version.
+    /// Client protocol version shared by independently packaged adapters.
     pub api_version: u16,
     /// Successful result or stable failure.
     pub outcome: ClientOutcomeDto,
 }
 
 /// Result envelope shared by Godot and Flutter adapters.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(
     tag = "status",
     rename_all = "camelCase",
@@ -34,7 +85,7 @@ pub enum ClientOutcomeDto {
 }
 
 /// Successful local client results.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(
     tag = "type",
     rename_all = "camelCase",
@@ -44,15 +95,34 @@ pub enum ClientOutcomeDto {
 pub enum ClientResponseBodyDto {
     /// Supported engine behavior and client operations.
     Capabilities {
-        /// Deterministic simulation behavior version.
-        behavior_version: u16,
         /// Supported current protocol features.
         features: Vec<ClientFeatureDto>,
+    },
+    /// A strict authored map was projected for presentation.
+    MapInspected {
+        /// Validated framework-neutral map view.
+        map: MapViewDto,
     },
     /// A local session was opened.
     SessionOpened {
         /// Current authoritative identity.
         stamp: ClientSessionStampDto,
+    },
+    /// Recipient ownership was transferred inside a local hot-seat match.
+    ActorHandedOff {
+        /// Current authoritative identity after rebuilding recipient state.
+        stamp: ClientSessionStampDto,
+    },
+    /// One bounded AI turn was executed through public runtime commands.
+    AiTurnAdvanced {
+        /// Current authoritative identity after AI execution.
+        stamp: ClientSessionStampDto,
+        /// Participant controlled by the AI driver.
+        actor_player_id: String,
+        /// Number of authoritative commands executed.
+        executed_commands: u32,
+        /// Whether the planner completed the participant turn.
+        completed_turn: bool,
     },
     /// The local session was closed.
     SessionClosed,
@@ -69,7 +139,7 @@ pub enum ClientResponseBodyDto {
     /// Authoritative command result.
     Command {
         /// Command-specific payload.
-        result: ClientCommandResultDto,
+        result: Box<ClientCommandResultDto>,
     },
     /// Current save document.
     SaveExported {
@@ -91,12 +161,35 @@ pub enum ClientResponseBodyDto {
         /// Verification summary.
         verification: ClientReplayVerificationDto,
     },
+    /// One recipient-safe replay frame at an authoritative entry boundary.
+    ReplayFrame {
+        /// Number of replay entries applied in this frame.
+        position: u64,
+        /// Total number of entries in the verified replay archive.
+        entry_count: u64,
+        /// Recipient-safe snapshot at this exact entry boundary.
+        snapshot: PlayerViewSnapshotDto,
+    },
 }
 
 /// Stable client-visible feature identifiers.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ClientFeatureDto {
+    /// Artifact excavation, storage, trade, and recipient-safe projection.
+    Artifacts,
+    /// City founding, worked territory, expansion, and city projections.
+    Cities,
+    /// Combat preview and authoritative visible attacks.
+    Combat,
+    /// Stateless strict map inspection.
+    InspectMap,
+    /// Atomic participant, lifecycle, and fog initialization.
+    MatchStart,
+    /// Local hot-seat recipient handoff.
+    ActorHandoff,
+    /// Bounded AI turn execution through an injected planner.
+    AiTurns,
     /// Complete player snapshot.
     Snapshot,
     /// Reachable movement overlay.
@@ -107,18 +200,30 @@ pub enum ClientFeatureDto {
     MoveUnit,
     /// Cancel, skip, and fortify commands.
     UnitActions,
+    /// Capability-gated `EndTurn` and `SubmitTurn` kernel commands.
+    TurnKernel,
     /// Save export and restore.
     SaveGame,
     /// Replay export and verification.
     ReplayVerification,
+    /// Recipient-safe replay open and random access playback.
+    ReplayPlayback,
+    /// Auto-exploration, merchant routing, and troop detachment.
+    MovementLogistics,
+    /// Worker improvements, assignments, roads, automation, and progression.
+    Workers,
+    /// City production queries and queue commands.
+    Production,
+    /// Research selection and complete technology options.
+    Research,
+    /// Bilateral friendship and truce proposal commands.
+    Diplomacy,
 }
 
 /// Identity metadata returned with state-dependent results.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ClientSessionStampDto {
-    /// Deterministic simulation behavior version.
-    pub behavior_version: u16,
     /// Current canonical revision.
     pub revision: u64,
     /// Digest of the complete canonical state.
@@ -135,8 +240,42 @@ pub struct ClientSessionStampDto {
 pub struct PlayerViewSnapshotDto {
     /// Identity of the represented state.
     pub stamp: ClientSessionStampDto,
+    /// Authoritative turn number.
+    pub turn: u32,
+    /// Persisted authoritative match result.
+    pub outcome: GameOutcomeDto,
+    /// Recipient-owned lifecycle status and aggregate submission progress.
+    pub turn_lifecycle: PlayerTurnLifecycleViewDto,
+    /// Action currently awaiting input from this recipient.
+    pub pending_action: Option<PendingActionViewDto>,
+    /// Recipient-owned city-founding workflow, when one is persisted.
+    pub city_founding_draft: Option<CityFoundingDraftViewDto>,
+    /// Bilateral diplomacy state in which this recipient participates.
+    pub diplomacy: PlayerDiplomacyViewDto,
     /// Units currently visible to the recipient.
     pub units: Vec<PlayerUnitViewDto>,
+    /// Cities currently known to the recipient.
+    pub cities: Vec<PlayerCityViewDto>,
+    /// Artifacts currently visible to the recipient.
+    pub artifacts: Vec<PlayerArtifactViewDto>,
+    /// Field improvements currently known to the recipient.
+    pub field_improvements: Vec<FieldImprovementViewDto>,
+    /// Roads currently known to the recipient.
+    pub roads: Vec<RoadViewDto>,
+}
+
+/// Recipient-safe lifecycle projection with no per-opponent readiness map.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PlayerTurnLifecycleViewDto {
+    /// Current lifecycle status of the recipient.
+    pub own_state: Option<PlayerTurnStateDto>,
+    /// Whether the recipient already submitted this turn.
+    pub own_submitted: bool,
+    /// Number of participants required to submit.
+    pub required_submission_count: u32,
+    /// Number of required submissions received, without participant identities.
+    pub submitted_count: u32,
 }
 
 /// Recipient-safe unit read model.
@@ -157,6 +296,50 @@ pub struct PlayerUnitViewDto {
     pub movement_units: u32,
     /// Persistent unit posture.
     pub posture: UnitPostureDto,
+    /// Public combat health when the unit type uses explicit health.
+    pub hit_points: Option<u32>,
+    /// Publicly visible carried artifact, when present.
+    pub carried_artifact_id: Option<String>,
+    /// Complete private command and progression state for a recipient-owned unit.
+    pub owned_details: Option<OwnedUnitDetailsViewDto>,
+}
+
+/// Complete unit state disclosed only to the owning recipient.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct OwnedUnitDetailsViewDto {
+    /// Army composition in canonical troop order.
+    pub army: Vec<ArmyTroopDto>,
+    /// Persisted manual route, when one is queued.
+    pub queued_path: Option<QueuedMovePathDto>,
+    /// Persisted merchant route, when assigned.
+    pub merchant_trade_route: Option<MerchantTradeRouteDto>,
+    /// Current worker construction.
+    pub worker_job: Option<WorkerJobViewDto>,
+    /// Current city-founding work.
+    pub city_founding_job: Option<CityFoundingJobViewDto>,
+    /// Current worker assignment.
+    pub worker_assignment: Option<CoordinateDto>,
+    /// Artifact currently being excavated.
+    pub excavating_artifact_id: Option<String>,
+    /// Remaining improvement charges for workers.
+    pub worker_build_charges: u32,
+    /// Accumulated unit experience.
+    pub experience_points: u32,
+}
+
+/// Recipient-owned city-founding activity retained by a settler.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CityFoundingJobViewDto {
+    /// Planned city center.
+    pub center: CoordinateDto,
+    /// Canonically ordered planned non-center territory.
+    pub controlled_hexes: Vec<CoordinateDto>,
+    /// Turns still required.
+    pub remaining_turns: u32,
+    /// Original activity duration.
+    pub total_turns: u32,
 }
 
 /// Recipient-safe view update produced by one command.
@@ -167,10 +350,38 @@ pub struct PlayerViewPatchDto {
     pub from_revision: u64,
     /// Revision represented after the patch.
     pub to_revision: u64,
+    /// Authoritative turn number represented after the patch.
+    pub turn: u32,
+    /// Replacement lifecycle projection when turn/readiness changed.
+    pub turn_lifecycle: Option<PlayerTurnLifecycleViewDto>,
+    /// Replacement match result when it changed.
+    pub outcome: Option<GameOutcomeDto>,
     /// New or changed visible units.
     pub upserted_units: Vec<PlayerUnitViewDto>,
     /// Units no longer visible.
     pub removed_unit_ids: Vec<String>,
+    /// New or changed recipient-safe cities.
+    pub upserted_cities: Vec<PlayerCityViewDto>,
+    /// Cities no longer known to the recipient.
+    pub removed_city_ids: Vec<String>,
+    /// New or changed visible artifacts.
+    pub upserted_artifacts: Vec<PlayerArtifactViewDto>,
+    /// Artifacts no longer visible to the recipient.
+    pub removed_artifact_ids: Vec<String>,
+    /// New or changed known field improvements.
+    pub upserted_field_improvements: Vec<FieldImprovementViewDto>,
+    /// Field-improvement coordinates no longer known.
+    pub removed_field_improvement_coordinates: Vec<CoordinateDto>,
+    /// New or changed known roads.
+    pub upserted_roads: Vec<RoadViewDto>,
+    /// Road coordinates no longer known.
+    pub removed_road_coordinates: Vec<CoordinateDto>,
+    /// Current action awaiting input from this recipient.
+    pub pending_action: Option<PendingActionViewDto>,
+    /// Current recipient-owned founding workflow; null clears it.
+    pub city_founding_draft: Option<CityFoundingDraftViewDto>,
+    /// Replacement bilateral diplomacy view when any visible record changed.
+    pub diplomacy: Option<PlayerDiplomacyViewDto>,
 }
 
 /// Result of one authoritative command.
@@ -203,47 +414,7 @@ pub enum ClientCommandOutcomeDto {
     /// The command was rejected without changing canonical state.
     Rejected {
         /// Stable language-neutral rejection code.
-        code: String,
-    },
-}
-
-/// Presentation-safe authoritative event.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum ClientEventDto {
-    /// One visible unit changed map position.
-    UnitMoved {
-        /// Moved unit.
-        unit_id: String,
-        /// Previous coordinate.
-        from: CoordinateDto,
-        /// New coordinate.
-        to: CoordinateDto,
-    },
-}
-
-/// Exact client-visible execution evidence.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum ClientEvidenceDto {
-    /// Exact executed movement prefix.
-    UnitMovement {
-        /// Moved unit.
-        unit_id: String,
-        /// Position before execution.
-        from: CoordinateDto,
-        /// Executed steps excluding the origin.
-        steps: Vec<MovementStepViewDto>,
+        code: ClientCommandRejectionCodeDto,
     },
 }
 
@@ -257,79 +428,4 @@ pub struct MovementStepViewDto {
     pub enter_cost_units: u32,
     /// Fixed-point cumulative cost.
     pub cumulative_cost_units: u32,
-}
-
-/// Recipient-safe query result.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum ClientQueryResultDto {
-    /// Current-turn reachable overlay.
-    Reachable {
-        /// Identity of the queried state.
-        stamp: ClientSessionStampDto,
-        /// Queried unit.
-        unit_id: String,
-        /// Movement available at query time.
-        available_movement_units: u32,
-        /// Stable row-major reachable tiles.
-        tiles: Vec<ReachableTileViewDto>,
-    },
-    /// Deterministic route preview.
-    RoutePlan {
-        /// Identity of the queried state.
-        stamp: ClientSessionStampDto,
-        /// Queried unit.
-        unit_id: String,
-        /// Requested target.
-        target: CoordinateDto,
-        /// Planned destination.
-        destination: CoordinateDto,
-        /// Fixed-point total route cost.
-        total_cost_units: u32,
-        /// Movement available at query time.
-        available_movement_units: u32,
-        /// Movement remaining after the executable prefix.
-        remaining_movement_units: u32,
-        /// Ordered route including the origin.
-        steps: Vec<MovementStepViewDto>,
-    },
-}
-
-/// One current-turn reachable map tile.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ReachableTileViewDto {
-    /// Tile coordinate.
-    pub coordinate: CoordinateDto,
-    /// Fixed-point route cost.
-    pub cost_units: u32,
-    /// Whether entry consumes remaining current-turn movement.
-    pub exhausts_movement: bool,
-}
-
-/// Replay verification summary returned to a client.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ClientReplayVerificationDto {
-    /// Number of verified commands.
-    pub entry_count: u64,
-    /// Final event offset.
-    pub final_event_offset: u64,
-    /// Final authoritative identity.
-    pub final_stamp: ClientSessionStampDto,
-}
-
-/// Stable client failure independent of transport details.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ClientErrorDto {
-    /// Stable machine-readable code.
-    pub code: String,
-    /// Human-readable diagnostic message.
-    pub message: String,
 }

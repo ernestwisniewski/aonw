@@ -10,12 +10,12 @@ final class MapAtlasBuilder {
   const MapAtlasBuilder({
     required this.columns,
     required this.rows,
-    required this.sourceFiles,
+    required this.source,
   });
 
   final int columns;
   final int rows;
-  final List<File> sourceFiles;
+  final MapTileImageSource source;
 
   Future<MapAtlasBuild> build() async {
     final worldWidth = mapWorldWidth(columns);
@@ -27,9 +27,9 @@ final class MapAtlasBuilder {
     final averageColors = <String, int>{};
     for (var column = 0; column < columns; column++) {
       for (var row = 0; row < rows; row++) {
-        final source = await _decode(sourceFiles[column * rows + row]);
-        averageColors['$column,$row'] = _averageHexColor(source);
-        _placeTile(atlas, source, column, row, scale);
+        final tile = await source.load(column, row);
+        averageColors['$column,$row'] = _averageHexColor(tile);
+        _placeTile(atlas, tile, column, row, scale);
       }
     }
     return MapAtlasBuild(
@@ -39,12 +39,6 @@ final class MapAtlasBuilder {
       scale: scale,
       averageColors: Map.unmodifiable(averageColors),
     );
-  }
-
-  Future<img.Image> _decode(File file) async {
-    final decoded = img.decodeImage(await file.readAsBytes());
-    if (decoded == null) throw StateError('Cannot decode ${file.path}');
-    return decoded.convert(numChannels: 4);
   }
 
   void _placeTile(
@@ -62,6 +56,25 @@ final class MapAtlasBuilder {
       interpolation: img.Interpolation.average,
     );
     atlas.compositeHex(resized, placement: placement);
+  }
+}
+
+abstract interface class MapTileImageSource {
+  Future<img.Image> load(int column, int row);
+}
+
+final class FileMapTileImageSource implements MapTileImageSource {
+  const FileMapTileImageSource({required this.files, required this.rows});
+
+  final List<File> files;
+  final int rows;
+
+  @override
+  Future<img.Image> load(int column, int row) async {
+    final file = files[column * rows + row];
+    final decoded = img.decodeImage(await file.readAsBytes());
+    if (decoded == null) throw StateError('Cannot decode ${file.path}');
+    return decoded.convert(numChannels: 4);
   }
 }
 

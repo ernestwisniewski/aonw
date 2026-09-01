@@ -15,9 +15,12 @@ aonw_contract_mapping = { path = "../aonw_contract_mapping" }
 aonw_contracts = { path = "../aonw_contracts" }
 aonw_domain = { path = "../aonw_domain" }
 aonw_engine = { path = "../aonw_engine" }
+aonw_projection = { path = "../aonw_projection" }
+serde_json.workspace = true
+sha2.workspace = true
 
 [dev-dependencies]
-serde_json.workspace = true
+stats_alloc.workspace = true
 
 [[bench]]
 name = "runtime"

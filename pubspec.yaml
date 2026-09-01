@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flame: ^1.38.0
+  flame: ^1.38.2
   flame_texturepacker: 5.1.2
 
   share_plus: ^13.3.0
@@ -85,6 +85,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - test/fixtures/legacy_map.json
     - content/maps/dravonia/map.json
     - content/maps/myranth/map.json
     - content/maps/terenos/map.json
