@@ -41,6 +41,23 @@ int readUnsigned(Object? value, String label) {
   return parsed;
 }
 
+Map<String, int> readStringIntMap(Object? value, String label) {
+  final source = readObject(value, label);
+  return Map<String, int>.unmodifiable({
+    for (final MapEntry(key: key, value: item) in source.entries)
+      key: readInt(item, '$label value'),
+  });
+}
+
+double readFinitePositiveDouble(Object? value, String label) {
+  if (value is! num) throw FormatException('Invalid AoNW $label.');
+  final parsed = value.toDouble();
+  if (!parsed.isFinite || parsed <= 0) {
+    throw FormatException('Invalid AoNW $label.');
+  }
+  return parsed;
+}
+
 bool readBool(Object? value, String label) {
   if (value is! bool) throw FormatException('Invalid AoNW $label.');
   return value;

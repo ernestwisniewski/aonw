@@ -103,8 +103,8 @@ pub(super) fn encode_unit(unit: &Unit) -> UnitDto {
             })
             .collect(),
         queued_path: unit.queued_path().map(encode_queued_path),
-        merchant_trade_route: unit.merchant_trade_route().map(encode_merchant),
-        activity: encode_activity(unit.activity()),
+        merchant_trade_route: unit.merchant_trade_route().map(encode_merchant_trade_route),
+        activity: encode_unit_activity(unit.activity()),
         worker_build_charges: unit.worker_build_charges(),
         hit_points: unit.hit_points(),
         experience_points: unit.experience_points(),
@@ -141,7 +141,9 @@ fn decode_merchant(
     ))
 }
 
-fn encode_merchant(route: &MerchantTradeRoute) -> MerchantTradeRouteDto {
+/// Converts a validated merchant route into its stable wire representation.
+#[must_use]
+pub fn encode_merchant_trade_route(route: &MerchantTradeRoute) -> MerchantTradeRouteDto {
     MerchantTradeRouteDto {
         origin_city_id: route.origin_city_id().as_str().to_owned(),
         destination_city_id: route.destination_city_id().as_str().to_owned(),
@@ -206,7 +208,9 @@ fn decode_activity(
     ))
 }
 
-fn encode_activity(activity: &UnitActivity) -> UnitActivityDto {
+/// Converts complete validated unit activity into its stable wire representation.
+#[must_use]
+pub fn encode_unit_activity(activity: &UnitActivity) -> UnitActivityDto {
     let worker_job = activity.worker_job().map(|job| match job {
         WorkerJob::FieldImprovement {
             target,

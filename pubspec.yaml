@@ -61,7 +61,7 @@ dev_dependencies:
   path_provider_platform_interface: ^2.1.3
   plugin_platform_interface: ^2.1.8
   freezed: ^3.2.5
-  json_serializable: ^6.13.0
+  json_serializable: ^6.14.1
   yaml: ^3.1.3
 
 dependency_overrides:
@@ -85,6 +85,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - test/fixtures/legacy_map.json
     - content/maps/dravonia/map.json
     - content/maps/myranth/map.json
     - content/maps/terenos/map.json

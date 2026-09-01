@@ -1,6 +1,15 @@
 {
   "schema": 2,
   "scopes": {
+    "asset_ui_tool": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "client_lib": {
       "files": {},
       "legacyFiles": {},
@@ -1009,6 +1018,33 @@
         "server/test/architecture/server_operability_config_test.dart::function:main/closure:group[Server_operability_configuration]#1/closure:test[Compose_profiles_select_immutable_Serverpod_run_modes]#1": 140,
         "server/test/integration/multiplayer_endpoint_smoke.dart::function:main/closure:withServerpod[MultiplayerEndpoint]#1/closure:test[creates__joins__starts__and_loads_a_persisted_match]#1": 144
       },
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "successor_flutter_integration_test": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "successor_flutter_lib": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "successor_flutter_test": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
       "nesting": {},
       "cyclomaticComplexity": {},
       "cognitiveComplexity": {}

@@ -1,6 +1,13 @@
 {
   "schema": 1,
   "scopes": {
+    "asset_ui_tool": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "client_lib": {
       "sourceLines": {},
       "callableCount": {},
@@ -195,6 +202,27 @@
       "callableLines": {
         "server/test/multiplayer/realtime_match_hub_test.dart": 5633
       },
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "successor_flutter_integration_test": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "successor_flutter_lib": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "successor_flutter_test": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
       "cyclomaticComplexity": {},
       "cognitiveComplexity": {}
     },
