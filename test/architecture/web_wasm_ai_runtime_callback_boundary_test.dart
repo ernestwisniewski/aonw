@@ -7,14 +7,14 @@ void main() {
     'web WASM AI runtime avoids extension tear-offs across async boundaries',
     () {
       final guardedSources = <String, List<String>>{
-        'lib/game/presentation/widgets/ai/game_ai_turn_auto_pilot_execution.dart': [
-          'prepareProcess: prepareAiTurnProcess,',
-        ],
-        'lib/game/presentation/widgets/ai/game_ai_turn_auto_pilot_runtime.dart': [
-          'executionRunner: aiTurnExecutionRunner,',
-          'precomputeRunner: aiTurnPrecomputeRunner,',
-          'now: nowUtc,',
-        ],
+        'lib/game/presentation/widgets/ai/game_ai_turn_auto_pilot_execution.dart':
+            ['prepareProcess: prepareAiTurnProcess,'],
+        'lib/game/presentation/widgets/ai/game_ai_turn_auto_pilot_runtime.dart':
+            [
+              'executionRunner: aiTurnExecutionRunner,',
+              'precomputeRunner: aiTurnPrecomputeRunner,',
+              'now: nowUtc,',
+            ],
       };
 
       for (final entry in guardedSources.entries) {

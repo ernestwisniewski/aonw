@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#090d12">
+    <meta name="theme-color" content="#07151c">
     <meta
       name="description"
       content="Age of New Worlds"
@@ -22,36 +22,20 @@
 
       @font-face {
         font-display: swap;
-        font-family: "Aonw Lato";
+        font-family: "Aonw Albert Sans";
         font-style: normal;
-        font-weight: 300;
-        src: url("/assets/fonts/Lato-Light.ttf") format("truetype");
-      }
-
-      @font-face {
-        font-display: swap;
-        font-family: "Aonw Lato";
-        font-style: normal;
-        font-weight: 400;
-        src: url("/assets/fonts/Lato-Regular.ttf") format("truetype");
-      }
-
-      @font-face {
-        font-display: swap;
-        font-family: "Aonw Lato";
-        font-style: normal;
-        font-weight: 700;
-        src: url("/assets/fonts/Lato-Bold.ttf") format("truetype");
+        font-weight: 100 900;
+        src: url("/assets/fonts/AlbertSans-VariableFont_wght.ttf") format("truetype");
       }
 
       :root {
         color-scheme: dark;
-        --bg: #090d12;
-        --font-body: "Aonw Lato", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --bg: #07151c;
+        --font-body: "Aonw Albert Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         --font-display: "Aonw Cinzel", Georgia, "Times New Roman", serif;
-        --gold: #d9b85d;
-        --gold-soft: rgba(217, 184, 93, 0.34);
-        --shade: rgba(9, 13, 18, 0.28);
+        --gold: #d8b66a;
+        --gold-soft: rgba(216, 182, 106, 0.32);
+        --shade: rgba(7, 21, 28, 0.4);
       }
 
       * {
@@ -86,21 +70,20 @@
       }
 
       body::before {
-        background: url("/assets/main_menu/background.png") center right / cover no-repeat;
-        height: 130lvh;
-        left: -15vw;
-        top: -15lvh;
-        transform: scale(1.012);
-        animation: homepage-background-drift 56s ease-in-out infinite;
+        animation: map-journey 96s ease-in-out infinite;
+        background: url("/assets/main_menu/background.jpg") center / cover no-repeat;
+        height: 150lvh;
+        left: -25vw;
+        top: -25lvh;
         will-change: transform;
-        width: 130vw;
+        width: 150vw;
         z-index: 0;
       }
 
       body::after {
         background:
-          linear-gradient(90deg, rgba(9, 13, 18, 0.58), rgba(9, 13, 18, 0.16) 48%, rgba(9, 13, 18, 0.38)),
-          linear-gradient(0deg, rgba(9, 13, 18, 0.36), rgba(9, 13, 18, 0.08) 42%, rgba(9, 13, 18, 0.42));
+          linear-gradient(90deg, rgba(7, 21, 28, 0.72), rgba(7, 21, 28, 0.32) 50%, rgba(6, 18, 25, 0.64)),
+          linear-gradient(0deg, rgba(6, 18, 25, 0.68), rgba(7, 21, 28, 0.18) 42%, rgba(5, 16, 22, 0.58));
         height: 100lvh;
         left: 0;
         top: 0;
@@ -113,17 +96,22 @@
         z-index: 2;
       }
 
-      @keyframes homepage-background-drift {
-        0% {
-          transform: translate3d(0, 1.6rem, 0) scale(1.012);
+      @keyframes map-journey {
+        0%,
+        100% {
+          transform: translate3d(-3vw, 2vh, 0) scale(1.02);
+        }
+
+        25% {
+          transform: translate3d(7vw, -6vh, 0) scale(1.07);
         }
 
         50% {
-          transform: translate3d(-2rem, -1.2rem, 0) scale(1.022);
+          transform: translate3d(-8vw, -4vh, 0) scale(1.035);
         }
 
-        100% {
-          transform: translate3d(0, 1.6rem, 0) scale(1.012);
+        75% {
+          transform: translate3d(5.5vw, 7vh, 0) scale(1.075);
         }
       }
 
@@ -259,7 +247,7 @@
 
       .screen-copy {
         background:
-          radial-gradient(ellipse at 50% 54%, rgba(9, 13, 18, 0.54), rgba(9, 13, 18, 0.24) 60%, transparent 76%),
+          radial-gradient(ellipse at 50% 54%, rgba(7, 21, 28, 0.62), rgba(7, 21, 28, 0.3) 60%, transparent 76%),
           linear-gradient(90deg, transparent, rgba(241, 223, 170, 0.05) 32%, rgba(217, 184, 93, 0.07) 70%, transparent);
         display: grid;
         gap: 0.54rem;
@@ -291,7 +279,7 @@
       }
 
       .screen-kicker {
-        color: rgba(217, 184, 93, 0.78);
+        color: rgba(216, 182, 106, 0.82);
         font: 700 0.74rem var(--font-body);
         letter-spacing: 0;
         margin: 0;
@@ -302,8 +290,8 @@
       }
 
       .screen-title {
-        color: rgba(248, 235, 198, 0.94);
-        font: 300 clamp(2rem, 4vw, 2.85rem) var(--font-body);
+        color: rgba(245, 235, 207, 0.96);
+        font: 700 clamp(2rem, 4vw, 2.85rem) var(--font-body);
         line-height: 1.12;
         margin: 0;
         text-align: center;
@@ -315,7 +303,7 @@
       }
 
       .screen-text {
-        color: rgba(248, 235, 198, 0.76);
+        color: rgba(245, 235, 207, 0.78);
         font: 300 1.04rem var(--font-body);
         line-height: 1.58;
         margin: 0;
@@ -328,7 +316,7 @@
       }
 
       .screen-text a {
-        color: #f1dfaa;
+        color: #f0deb0;
         font-weight: 500;
         text-decoration: none;
         text-underline-offset: 0.18em;
@@ -411,9 +399,9 @@
 
       .game-summary {
         background:
-          radial-gradient(ellipse at 50% 54%, rgba(9, 13, 18, 0.54), rgba(9, 13, 18, 0.24) 60%, transparent 76%),
+          radial-gradient(ellipse at 50% 54%, rgba(7, 21, 28, 0.62), rgba(7, 21, 28, 0.3) 60%, transparent 76%),
           linear-gradient(90deg, transparent, rgba(241, 223, 170, 0.05) 32%, rgba(217, 184, 93, 0.07) 70%, transparent);
-        color: rgba(248, 235, 198, 0.9);
+        color: rgba(245, 235, 207, 0.92);
         font: 300 clamp(1.02rem, 1.45vw, 1.18rem) var(--font-body);
         line-height: 1.64;
         margin: -0.05rem 0 0;
@@ -570,7 +558,7 @@
 
       .video-frame {
         aspect-ratio: 16 / 9;
-        background: rgba(3, 5, 8, 0.72);
+        background: rgba(4, 14, 19, 0.78);
         border: 1px solid rgba(217, 184, 93, 0.5);
         border-radius: 0.45rem;
         box-shadow:
@@ -637,7 +625,7 @@
       }
 
       .video-cover::before {
-        background: rgba(9, 13, 18, 0.74);
+        background: rgba(7, 21, 28, 0.78);
         border: 1px solid rgba(241, 223, 170, 0.74);
         border-radius: 999px;
         box-shadow:
@@ -767,6 +755,19 @@
         -webkit-mask: var(--platform-icon) center / contain no-repeat;
       }
 
+      .platform-engine-mark {
+        border: 1px solid currentColor;
+        clip-path: polygon(25% 7%, 75% 7%, 100% 50%, 75% 93%, 25% 93%, 0 50%);
+        display: grid;
+        flex: 0 0 auto;
+        font-size: 0.42rem;
+        font-weight: 900;
+        height: 1.18rem;
+        letter-spacing: -0.04em;
+        place-items: center;
+        width: 1.18rem;
+      }
+
       .platform-grid .platform-icon {
         height: clamp(3.1rem, 6vw, 3.8rem);
         opacity: 0.9;
@@ -868,10 +869,10 @@
       .footer-screen::after {
         background: linear-gradient(
           0deg,
-          rgba(3, 5, 8, 0.95),
-          rgba(3, 5, 8, 0.76) 34%,
-          rgba(3, 5, 8, 0.28) 74%,
-          rgba(3, 5, 8, 0)
+          rgba(4, 14, 19, 0.96),
+          rgba(4, 14, 19, 0.78) 34%,
+          rgba(4, 14, 19, 0.3) 74%,
+          rgba(4, 14, 19, 0)
         );
         bottom: 0;
         content: "";
@@ -936,7 +937,7 @@
         align-items: center;
         border: 1px solid rgba(217, 184, 93, 0.62);
         border-radius: 0.35rem;
-        color: #f1dfaa;
+        color: #f0deb0;
         display: inline-flex;
         font: 700 0.86rem var(--font-body);
         gap: 0.48rem;
@@ -946,7 +947,7 @@
         text-decoration: none;
         text-transform: uppercase;
         white-space: nowrap;
-        background: rgba(9, 13, 18, 0.68);
+        background: rgba(7, 21, 28, 0.72);
         box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.32);
         transition:
           background-color 180ms ease,
@@ -957,7 +958,7 @@
       }
 
       a.nav-link:hover {
-        background: rgba(26, 30, 31, 0.82);
+        background: rgba(16, 36, 42, 0.86);
         border-color: rgba(241, 223, 170, 0.82);
         box-shadow:
           0 0.95rem 1.9rem rgba(0, 0, 0, 0.36),
@@ -973,10 +974,10 @@
 
       .secondary-links .nav-link {
         border-color: rgba(217, 184, 93, 0.46);
-        color: #e8d28d;
+        color: #e4d09a;
         font-size: 0.72rem;
         padding: 0.58rem 0.78rem;
-        background: rgba(9, 13, 18, 0.54);
+        background: rgba(7, 21, 28, 0.6);
         box-shadow: 0 0.45rem 1rem rgba(0, 0, 0, 0.24);
         text-transform: none;
       }
@@ -989,8 +990,6 @@
 
         body::before {
           background-position: center;
-          animation: none;
-          transform: scale(1.012);
         }
 
         .homepage-screen {
@@ -1414,9 +1413,10 @@
                     Statistics
                   </span>
                 </a>
-                <a class="nav-link" href="/architecture">
+                <a class="nav-link" href="https://engine.aonw.net/">
                   <span class="platform-label">
-                    Architecture
+                    <span class="platform-engine-mark" aria-hidden="true">R24</span>
+                    AoNW Engine
                   </span>
                 </a>
                 <a class="nav-link" href="https://ernest.dev/">

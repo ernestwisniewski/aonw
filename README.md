@@ -1,5 +1,8 @@
 # Age of New Worlds
 
+> [!IMPORTANT]
+> This repository is no longer actively developed. Continued development has moved to [ernestwisniewski/aonw-successor](https://github.com/ernestwisniewski/aonw-successor).
+
 [![CI](https://github.com/ernestwisniewski/aonw/actions/workflows/ci.yml/badge.svg)](https://github.com/ernestwisniewski/aonw/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Made with Flutter](https://img.shields.io/badge/Made%20with-Flutter-02569B.svg)](https://flutter.dev)
@@ -18,7 +21,8 @@ A Rust engine is being introduced incrementally under `engine/`. It already powe
 | Destination | Link |
 | --- | --- |
 | Website | [aonw.net](https://aonw.net/) |
-| Architecture | [Interactive map](https://aonw.net/architecture) |
+| Architecture | [Interactive Rust engine map](https://engine.aonw.net/architecture) |
+| Rust engine | [4X engine and API documentation](https://engine.aonw.net/) |
 | Devlog | [ernest.dev](https://ernest.dev) |
 | GitHub | [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw) |
 | iOS | [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591) |
@@ -36,7 +40,7 @@ A Rust engine is being introduced incrementally under `engine/`. It already powe
 | `engine/` | Rust workspace for the successor deterministic engine and native adapters. |
 | `content/` | Versioned logical maps and scenarios shared with Rust and Godot. |
 | `clients/aonw_flutter/` | Reserved final location for Flutter after the Dart engine is retired. The active app remains at the repository root. |
-| `clients/aonw2_godot/` | Godot 3D presentation client and map workbench. Gameplay rules stay in Rust. |
+| `clients/aonw_godot/` | Godot 3D presentation client and map workbench. Gameplay rules stay in Rust. |
 | `docs/` | Architecture, gameplay contracts, quality policy, and runbooks. |
 
 ## Quick start
@@ -96,9 +100,13 @@ The Rust workspace and Godot client are separate from the shipping Flutter path.
 ```sh
 make rust-check
 make godot-check
+make map-stage-1-check
 make godot-editor
 make godot-run
 ```
+
+`make map-stage-1-check` compares normalized Flutter and Godot map semantics;
+client-owned visual goldens remain separate and are never rewritten by this gate.
 
 Read [the migration plan](docs/rust-engine-migration.md) before moving rules across the Dart/Rust boundary.
 

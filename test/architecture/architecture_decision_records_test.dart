@@ -96,7 +96,18 @@ void main() {
         for (final heading in _requiredHeadings) {
           expect(_hasLine(source, heading), isTrue, reason: fileName);
         }
-        expect(source, contains('Rejected alternatives:'), reason: fileName);
+        expect(
+          source
+              .split('\n')
+              .any(
+                (line) => RegExp(
+                  r'^## Rejected alternatives:?$',
+                  caseSensitive: false,
+                ).hasMatch(line.trim()),
+              ),
+          isTrue,
+          reason: fileName,
+        );
         expect(source, contains('```mermaid'), reason: fileName);
       }
 

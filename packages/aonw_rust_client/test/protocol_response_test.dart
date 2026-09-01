@@ -1,14 +1,55 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('capability parser covers the complete current Rust feature set', () {
+    const featureWires = [
+      'artifacts',
+      'cities',
+      'combat',
+      'inspectMap',
+      'matchStart',
+      'actorHandoff',
+      'aiTurns',
+      'snapshot',
+      'reachable',
+      'routePlan',
+      'moveUnit',
+      'unitActions',
+      'turnKernel',
+      'saveGame',
+      'replayVerification',
+      'replayPlayback',
+      'movementLogistics',
+      'workers',
+      'production',
+      'research',
+      'diplomacy',
+    ];
+    final capabilities = AonwClientResponse.parse(
+      _success({'type': 'capabilities', 'features': featureWires}),
+    ).require<AonwCapabilitiesResponse>();
+
+    expect(capabilities.features, AonwClientFeature.values);
+  });
+
   test('typed response parser rejects unknown nested fields', () {
     final source = _success({
       'type': 'snapshot',
       'snapshot': {
         'stamp': _stamp,
+        'turn': 7,
+        'turnLifecycle': {
+          'ownState': 'active',
+          'ownSubmitted': false,
+          'requiredSubmissionCount': 1,
+          'submittedCount': 0,
+        },
+        'pendingAction': null,
+        'cityFoundingDraft': null,
         'units': [
           {
             'id': 'unit-1',
@@ -18,24 +59,64 @@ void main() {
             'coordinate': {'col': 1, 'row': 2},
             'movementUnits': 4,
             'posture': 'active',
+            'hitPoints': null,
+            'carriedArtifactId': null,
+            'ownedDetails': null,
             'unknown': true,
           },
         ],
+        'cities': <Object?>[],
+        'fieldImprovements': <Object?>[],
+        'roads': <Object?>[],
       },
     });
 
     expect(() => AonwClientResponse.parse(source), throwsFormatException);
   });
 
+  test('map response rejects unknown nested fields and terrain values', () {
+    final fixture =
+        jsonDecode(
+              File(
+                _fixturePath('map_inspected_response.json'),
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final outcome = fixture['outcome'] as Map<String, dynamic>;
+    final response = outcome['response'] as Map<String, dynamic>;
+    final map = response['map'] as Map<String, dynamic>;
+    final tile = (map['tiles'] as List).single as Map<String, dynamic>;
+    tile['unknown'] = true;
+    expect(
+      () => AonwClientResponse.parse(jsonEncode(fixture)),
+      throwsFormatException,
+    );
+
+    tile.remove('unknown');
+    tile['displayTerrain'] = 'volcano';
+    expect(
+      () => AonwClientResponse.parse(jsonEncode(fixture)),
+      throwsFormatException,
+    );
+  });
+
   test('typed parser covers lifecycle and persistence responses', () {
     final cases = <String, Type>{
       _success({
         'type': 'capabilities',
-        'behaviorVersion': 2,
         'features': ['snapshot', 'moveUnit'],
       }): AonwCapabilitiesResponse,
       _success({'type': 'sessionOpened', 'stamp': _stamp}):
           AonwSessionOpenedResponse,
+      _success({'type': 'actorHandedOff', 'stamp': _stamp}):
+          AonwActorHandedOffResponse,
+      _success({
+        'type': 'aiTurnAdvanced',
+        'stamp': _stamp,
+        'actorPlayerId': 'player-ai',
+        'executedCommands': 4,
+        'completedTurn': true,
+      }): AonwAiTurnAdvancedResponse,
       _success({'type': 'sessionClosed'}): AonwSessionClosedResponse,
       _success({'type': 'saveExported', 'document': '{}'}):
           AonwSaveExportedResponse,
@@ -50,6 +131,12 @@ void main() {
           'finalStamp': _stamp,
         },
       }): AonwReplayVerifiedResponse,
+      _success({
+        'type': 'replayFrame',
+        'position': 2,
+        'entryCount': 3,
+        'snapshot': _snapshot,
+      }): AonwReplayFrameResponse,
     };
 
     for (final MapEntry(key: source, value: expectedType) in cases.entries) {
@@ -106,6 +193,48 @@ void main() {
     expect(route.result, isA<AonwRoutePlanResult>());
   });
 
+  test('pending actions are a strict closed recipient view', () {
+    final actions = <Map<String, Object?>>[
+      const {'type': 'researchSelection'},
+      const {'type': 'cityWorkedHexSelection', 'cityId': 'city-1'},
+      const {'type': 'cityExpansionSelection', 'cityId': 'city-1'},
+      const {
+        'type': 'workerActionSelection',
+        'unitId': 'worker-1',
+        'improvement': 'farm',
+      },
+      const {'type': 'merchantTradeRouteSelection', 'unitId': 'merchant-1'},
+      const {'type': 'merchantMoveToCitySelection', 'unitId': 'merchant-1'},
+      const {
+        'type': 'unitTurnSkip',
+        'unitId': 'unit-1',
+        'restoreMovementUnits': 4,
+      },
+      const {
+        'type': 'attackTargeting',
+        'unitId': 'unit-1',
+        'defender': {'col': 2, 'row': 3},
+      },
+      const {'type': 'commanderMergeSelection', 'unitId': 'commander-1'},
+    ];
+
+    expect(actions.map(AonwPendingActionView.fromJson), [
+      isA<AonwPendingResearchSelection>(),
+      isA<AonwPendingCityWorkedHexSelection>(),
+      isA<AonwPendingCityExpansionSelection>(),
+      isA<AonwPendingWorkerActionSelection>(),
+      isA<AonwPendingMerchantTradeRouteSelection>(),
+      isA<AonwPendingMerchantMoveToCitySelection>(),
+      isA<AonwPendingUnitTurnSkip>(),
+      isA<AonwPendingAttackTargeting>(),
+      isA<AonwPendingCommanderMergeSelection>(),
+    ]);
+    expect(
+      () => AonwPendingActionView.fromJson(const {'type': 'futureAction'}),
+      throwsFormatException,
+    );
+  });
+
   test('command result uses one tagged accepted or rejected outcome', () {
     final accepted = AonwCommandResult.fromJson(
       _commandResult(const {'status': 'accepted'}),
@@ -117,13 +246,37 @@ void main() {
     expect(accepted.accepted, isTrue);
     expect(accepted.rejection, isNull);
     expect(rejected.accepted, isFalse);
-    expect(rejected.rejection, 'stale_revision');
+    expect(rejected.rejection, AonwCommandRejectionCode.staleRevision);
     expect(
       () => AonwCommandResult.fromJson({
         ..._commandResult(const {'status': 'accepted'}),
         'accepted': true,
       }),
       throwsFormatException,
+    );
+    expect(
+      () => AonwCommandResult.fromJson(
+        _commandResult(const {
+          'status': 'rejected',
+          'code': 'future_rejection',
+        }),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('command rejection codes match the shared fixture', () {
+    final fixture =
+        jsonDecode(
+              File(
+                _fixturePath('command_rejection_codes.json'),
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+
+    expect(
+      AonwCommandRejectionCode.values.map((value) => value.wireCode),
+      fixture['codes'],
     );
   });
 
@@ -143,12 +296,51 @@ void main() {
   });
 }
 
+String _fixturePath(String name) {
+  for (final root in [
+    'test/fixtures/client_protocol',
+    '../../test/fixtures/client_protocol',
+  ]) {
+    final path = '$root/$name';
+    if (File(path).existsSync()) return path;
+  }
+  throw StateError('Shared client fixture not found: $name');
+}
+
 const _stamp = {
-  'behaviorVersion': 2,
   'revision': 7,
   'stateDigest': 'digest-7',
   'mapHash': 'map-hash',
   'rulesetHash': 'ruleset-hash',
+};
+
+const _snapshot = {
+  'stamp': _stamp,
+  'turn': 1,
+  'outcome': {
+    'condition': 'ongoing',
+    'winnerPlayerId': null,
+    'scoreByPlayerId': <String, int>{},
+  },
+  'turnLifecycle': {
+    'ownState': 'active',
+    'ownSubmitted': false,
+    'requiredSubmissionCount': 1,
+    'submittedCount': 0,
+  },
+  'pendingAction': null,
+  'cityFoundingDraft': null,
+  'diplomacy': {
+    'relations': <Object?>[],
+    'proposals': <Object?>[],
+    'messages': <Object?>[],
+    'resourceTradeAgreements': <Object?>[],
+  },
+  'units': <Object?>[],
+  'cities': <Object?>[],
+  'artifacts': <Object?>[],
+  'fieldImprovements': <Object?>[],
+  'roads': <Object?>[],
 };
 
 String _success(Map<String, Object?> response) => jsonEncode({
@@ -164,7 +356,21 @@ Map<String, Object?> _commandResult(Map<String, Object?> outcome) => {
   'viewPatch': const {
     'fromRevision': 7,
     'toRevision': 7,
+    'turn': 7,
+    'turnLifecycle': null,
+    'outcome': null,
     'upsertedUnits': <Object?>[],
     'removedUnitIds': <Object?>[],
+    'upsertedCities': <Object?>[],
+    'removedCityIds': <Object?>[],
+    'upsertedArtifacts': <Object?>[],
+    'removedArtifactIds': <Object?>[],
+    'upsertedFieldImprovements': <Object?>[],
+    'removedFieldImprovementCoordinates': <Object?>[],
+    'upsertedRoads': <Object?>[],
+    'removedRoadCoordinates': <Object?>[],
+    'pendingAction': null,
+    'cityFoundingDraft': null,
+    'diplomacy': null,
   },
 };

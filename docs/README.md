@@ -10,7 +10,7 @@ This directory documents contracts that are easy to misuse or expensive to redis
 | Understand the repository | This page |
 | Change gameplay rules | [`adr/README.md`](adr/README.md) and [`game-design/README.md`](game-design/README.md) |
 | Change multiplayer | [`multiplayer-protocol.md`](multiplayer-protocol.md) |
-| Work on Rust or Godot | [`rust-engine-migration.md`](rust-engine-migration.md) |
+| Work on Rust or Godot | [`rust-engine-migration.md`](rust-engine-migration.md) and [`rust-engine-persistence.md`](rust-engine-persistence.md) |
 | Change tests or quality gates | [`static-analysis.md`](static-analysis.md), [`test-coverage.md`](test-coverage.md), [`architecture-budgets.md`](architecture-budgets.md), [`mutation-testing.md`](mutation-testing.md), [`critical-e2e.md`](critical-e2e.md), [`multiplayer-protocol.md`](multiplayer-protocol.md) |
 | Release or operate the backend | [`build-and-deploy.md`](build-and-deploy.md) |
 
@@ -41,7 +41,7 @@ Until the cutover gates pass:
 
 - `packages/aonw_core/` is the production source of gameplay truth;
 - `engine/` is the compatibility port and future owner;
-- `clients/aonw2_godot/` is presentation code and must not implement game rules;
+- `clients/aonw_godot/` is presentation code and must not implement game rules;
 - an active save or match uses one primary engine, never a mix of command families.
 
 ## Where code belongs
@@ -57,7 +57,7 @@ Until the cutover gates pass:
 | `server/lib/src/` | Serverpod endpoints, multiplayer lifecycle, persistence, and maintenance. |
 | `engine/crates/` | Rust domain, content, contracts, engine, runtime, and thin native adapters. |
 | `content/` | Versioned logical maps and scenarios. |
-| `clients/aonw2_godot/` | Godot application, infrastructure, presentation, and editor tooling. |
+| `clients/aonw_godot/` | Godot application, infrastructure, presentation, and editor tooling. |
 
 A presentation widget may calculate layout and animation. It must not decide whether a command is legal, recalculate authoritative movement, or invent a different economy value.
 
@@ -99,6 +99,7 @@ ADRs record constraints that should survive refactors. Read the index before cha
 ### Multiplayer and operations
 
 - [`multiplayer-protocol.md`](multiplayer-protocol.md): current online contract and rollout checklist.
+- [`rust-engine-persistence.md`](rust-engine-persistence.md): current-only save, replay, atomic write, backup, and restore contract.
 - [`multiplayer-scale-out.md`](multiplayer-scale-out.md): current single-active-instance limitation.
 - [`multiplayer-chaos-alerts.md`](multiplayer-chaos-alerts.md): release smoke and manual failure drills.
 - [`multiplayer-testflight.md`](multiplayer-testflight.md): staging and two-device acceptance.

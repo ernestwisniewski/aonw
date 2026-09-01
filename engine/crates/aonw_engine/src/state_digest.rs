@@ -1,13 +1,31 @@
 use aonw_domain::{
-    FieldImprovementKind, GameState, InteractionState, PendingInteraction, TransportCondition,
-    TroopKind, Unit, UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob,
-    WorldArtifact, WorldArtifactLocation, WorldArtifactType,
+    FieldImprovementKind, GameState, InteractionState, PendingInteraction, TroopKind, Unit,
+    UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob, WorldArtifact,
+    WorldArtifactLocation, WorldArtifactType,
 };
+mod city;
+mod combat;
+mod diplomacy;
+mod economy;
+mod infrastructure;
+mod match_lifecycle;
+mod objective;
+mod outcome;
+mod research;
 mod writer;
 
+use city::hash_city;
+use combat::hash_combat;
+use diplomacy::hash_diplomacy;
+use economy::hash_economy;
+use infrastructure::hash_infrastructure;
+use match_lifecycle::hash_match_lifecycle;
+use objective::hash_objectives;
+use outcome::hash_outcome;
+use research::hash_knowledge;
 use writer::DigestWriter;
 
-/// SHA-256 identity of canonical simulation state.
+/// SHA-256 identity of the complete persisted canonical state.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct StateDigest([u8; 32]);
 
@@ -30,9 +48,15 @@ impl core::fmt::Display for StateDigest {
 
 pub(crate) fn digest_state(state: &GameState) -> StateDigest {
     let mut writer = DigestWriter::new();
-    writer.text("aonw-game-state-v3");
+    writer.text("aonw-game-state");
     writer.u64(state.revision().get());
     writer.u32(state.turn());
+    hash_match_lifecycle(&mut writer, state.match_lifecycle());
+    hash_economy(&mut writer, state.economy());
+    hash_knowledge(&mut writer, state.knowledge());
+    hash_combat(&mut writer, state.combat());
+    hash_objectives(&mut writer, state.objectives());
+    hash_outcome(&mut writer, state.outcome());
     writer.u16(state.bounds().cols());
     writer.u16(state.bounds().rows());
     writer.u8(match state.occupancy_policy() {
@@ -40,30 +64,18 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
         UnitOccupancyPolicy::FriendlyStacking => 1,
     });
 
-    let mut units = state.units().iter().collect::<Vec<_>>();
-    units.sort_unstable_by(|left, right| left.id().cmp(right.id()));
-    writer.usize(units.len());
-    for unit in units {
+    writer.usize(state.units().len());
+    for unit in state.units() {
         hash_unit(&mut writer, unit);
     }
 
-    let mut cities = state.cities().iter().collect::<Vec<_>>();
-    cities.sort_unstable_by(|left, right| left.id().cmp(right.id()));
-    writer.usize(cities.len());
-    for city in cities {
-        writer.text(city.id().as_str());
-        writer.text(city.owner_player_id().as_str());
-        writer.coordinate(city.center());
-        writer.usize(city.controlled_hexes().len());
-        for coordinate in city.controlled_hexes() {
-            writer.coordinate(*coordinate);
-        }
+    writer.usize(state.cities().len());
+    for city in state.cities() {
+        hash_city(&mut writer, city);
     }
 
-    let mut artifacts = state.artifacts().iter().collect::<Vec<_>>();
-    artifacts.sort_unstable_by(|left, right| left.id().cmp(right.id()));
-    writer.usize(artifacts.len());
-    for artifact in artifacts {
+    writer.usize(state.artifacts().len());
+    for artifact in state.artifacts() {
         hash_artifact(&mut writer, artifact);
     }
     hash_interaction(&mut writer, state.interaction());
@@ -75,22 +87,9 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
         writer.coordinates(fog.visible_hexes());
     }
 
-    writer.usize(state.diplomacy().contacts().len());
-    for pair in state.diplomacy().contacts() {
-        writer.text(pair.first().as_str());
-        writer.text(pair.second().as_str());
-    }
+    hash_diplomacy(&mut writer, state.diplomacy());
 
-    writer.usize(state.transport_network().segments().len());
-    for segment in state.transport_network().segments() {
-        writer.coordinate(segment.coordinate());
-        writer.u8(match segment.condition() {
-            TransportCondition::Operational => 0,
-            TransportCondition::Pillaged => 1,
-        });
-        writer.text(segment.built_by_player_id().as_str());
-        writer.optional_text(segment.built_by_city_id().map(aonw_domain::CityId::as_str));
-    }
+    hash_infrastructure(&mut writer, state.infrastructure());
     StateDigest(writer.finish())
 }
 
