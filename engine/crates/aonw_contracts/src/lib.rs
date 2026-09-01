@@ -1,4 +1,4 @@
-//! Domain-independent DTOs for versioned engine boundaries.
+//! Domain-independent DTOs for current engine boundaries.
 //!
 //! These values define admissible data shape, not game invariants. Conversion
 //! into canonical domain types belongs to `aonw_contract_mapping`. Current
@@ -9,27 +9,68 @@
 
 mod canonical;
 pub mod client;
+mod combat;
 mod limits;
 mod persistence;
 
 pub use canonical::{
-    ArmyTroopDto, CURRENT_GAME_STATE_VERSION, CityDto, CityFoundingDraftDto, CityFoundingJobDto,
-    CoordinateDto, FieldImprovementKindDto, GameStateCodecError, GameStateDto, InteractionStateDto,
-    MerchantTradeRouteDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
-    TransportConditionDto, TransportSegmentDto, TroopKindDto, UnitActivityDto, UnitDto,
-    UnitOccupancyPolicyDto, WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto,
-    WorldArtifactTypeDto,
+    AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, ArmyTroopDto, CityBuildingTypeDto,
+    CityConquestActionDto, CityDto, CityFoundingDraftDto, CityFoundingJobDto,
+    CityProductionQueueDto, CityProductionTargetDto, CityProjectTypeDto, CitySpecializationTypeDto,
+    CoordinateDto, CulturalVictoryHoldTurnsDto, DiplomacyStateDto, DiplomaticMessageCategoryDto,
+    DiplomaticMessageDto, DiplomaticMessageResponseDto, DiplomaticMessageTopicDto,
+    DiplomaticProposalDto, DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto,
+    DiplomaticRelationDto, DiplomaticRelationStatusDto, DiplomaticScoreChangeReasonDto,
+    DiplomaticScoreEntryDto, DominationHoldTurnsDto, EconomyStateDto, FieldImprovementDto,
+    FieldImprovementKindDto, GameLengthConfigDto, GameLengthKindDto, GameModeDto,
+    GameOutcomeConditionDto, GameOutcomeDto, GameStateCodecError, GameStateDto,
+    InitialResourceDistributionDto, InitialResourcePlacementDto, IntendedAttackDto,
+    InteractionStateDto, MapObjectiveHoldStateDto, MatchIdentityDto, MatchRulesDto,
+    MerchantTradeRouteDto, PaceProfileDto, ParticipantDto, PendingInteractionDto, PlayerCountryDto,
+    PlayerFogDto, PlayerKindDto, PlayerPairDto, PlayerResearchStateDto, PlayerTurnStateDto,
+    ResearchStateDto, ResourceTradeAgreementDto, ResourceTypeDto, RuleValueDto,
+    StrategicResourceStockpileDto, TechnologyIdDto, TransportConditionDto, TransportSegmentDto,
+    TransportSegmentKindDto, TroopKindDto, TurnLifecycleDto, UnitActivityDto, UnitDto,
+    UnitOccupancyPolicyDto, VictoryRulesDto, WonderRegistryDto, WonderTypeDto, WorkerJobDto,
+    WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 
+pub use combat::{
+    CombatExecutionDto, CombatModifierDto, CombatModifierKindDto, CombatOutcomeDto,
+    CombatPreviewDto, CombatRollDto, CombatStatTargetDto, CombatStatsDto, CombatTargetDto,
+};
 pub use limits::{
     MAX_GAME_STATE_UNIT_COUNT, MAX_MOVEMENT_BALANCE_UNITS, MAX_QUEUED_PATH_STEP_COUNT,
 };
 pub use persistence::{
-    CURRENT_REPLAY_LOG_VERSION, CURRENT_SAVE_GAME_VERSION, MAX_REPLAY_ENTRY_COUNT,
-    MAX_REPLAY_LOG_JSON_BYTES, MAX_SAVE_GAME_JSON_BYTES, PersistenceCodecError, ReplayCommandDto,
-    ReplayContextDto, ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto,
-    ReplayResultDto, RngStateDto, SaveGameDto,
+    MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_REPLAY_SEGMENT_COUNT,
+    MAX_SAVE_GAME_JSON_BYTES, PersistenceCodecError, ReplayCommandDto, ReplayContextDto,
+    ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto, ReplayLogisticsEvidenceDto,
+    ReplayRecordDto, ReplayResultDto, ReplaySegmentDto, ReplaySystemCommandDto,
+    ReplayUnitMovementExecutionDto, SaveGameDto,
 };
+
+/// Stable authored map-objective type shared by client and replay contracts.
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum MapObjectiveTypeDto {
+    Ruins,
+    StrategicPass,
+    HolySite,
+    LegendaryResource,
+}
+
+/// Stable presentation band derived from one participant's current stability net.
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum StabilityBandDto {
+    Content,
+    Stable,
+    Strained,
+    Unrest,
+}
 
 /// Stable unit type used at engine boundaries.
 #[allow(missing_docs)]

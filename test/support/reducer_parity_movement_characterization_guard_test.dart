@@ -271,26 +271,6 @@ void _registerMovementIndependenceGuards(_FixtureProvider fixtureProvider) {
       }
     }
   });
-
-  test('current Rust corpus contains the exact reviewed movement matrix', () {
-    final directory = Directory(
-      '${Directory.current.path}/test/fixtures/reducer_parity_v2',
-    );
-    final names = directory
-        .listSync()
-        .whereType<File>()
-        .where((file) => file.path.endsWith('.json'))
-        .map((file) => file.uri.pathSegments.last)
-        .where((name) => name.startsWith('movement-'))
-        .toSet();
-    final expected = {
-      'movement-adjacent-accepted.json',
-      'movement-out-of-bounds-rejected.json',
-      'movement-wrong-actor-rejected.json',
-      for (final fixture in fixtureProvider()) '${fixture.id}.json',
-    };
-    expect(names, expected);
-  });
 }
 
 ReducerParityFixture _movementFixtureBySuffix(

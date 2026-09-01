@@ -55,3 +55,16 @@ pub(super) fn validate_content_id(path: &str, value: &str) -> Result<(), MapVali
         "must be 1-64 lowercase ASCII letters, digits, underscores, or hyphens and start and end alphanumerically",
     ))
 }
+
+/// Validates a logical map identifier without constructing a complete map.
+///
+/// This is used by authoring specifications before potentially expensive map
+/// generation. [`crate::MapDefinition`] applies the same invariant again when
+/// the canonical aggregate is constructed.
+///
+/// # Errors
+///
+/// Returns [`MapValidationError`] when the identifier is not canonical.
+pub fn validate_map_id(value: &str) -> Result<(), MapValidationError> {
+    validate_content_id("$.mapName", value)
+}

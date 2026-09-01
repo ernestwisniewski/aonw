@@ -4,6 +4,8 @@ import 'package:aonw/map/persistence/map_loader.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/current_content_legacy_fixture.dart';
+
 void main() {
   group('bundled map validation', () {
     const expectedMaxPlayers = {
@@ -265,8 +267,7 @@ const _terrainFeatures = {
 };
 
 Future<WorldMap> _loadBundledMap(String mapName) async {
-  final file = File('content/maps/$mapName/map.json');
-  return MapLoader.fromJson(await file.readAsString());
+  return MapLoader.fromJson(await loadCurrentMapAsLegacyFixture(mapName));
 }
 
 Map<ResourceType, int> _resourceCounts(WorldMap mapData) {

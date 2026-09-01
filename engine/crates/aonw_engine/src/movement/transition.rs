@@ -4,7 +4,7 @@ use aonw_domain::{
 };
 
 use super::{TerrainMovementQuery, TerrainMovementQueryError};
-use crate::{EngineContext, GameEngine};
+use crate::{CommandRejectionCode, EngineContext, GameEngine};
 
 /// Revision-bound manual movement command.
 #[derive(Clone, Copy, Debug)]
@@ -41,6 +41,9 @@ pub struct UnitMovedEvent {
 }
 
 impl UnitMovedEvent {
+    pub(crate) const fn new(unit_id: UnitId, from: HexCoord, to: HexCoord) -> Self {
+        Self { unit_id, from, to }
+    }
     /// Returns the moved unit.
     #[must_use]
     pub const fn unit_id(&self) -> &UnitId {
@@ -69,6 +72,17 @@ pub struct UnitMovementExecution {
 }
 
 impl UnitMovementExecution {
+    pub(crate) fn new(
+        unit_id: UnitId,
+        from: HexCoord,
+        steps: impl Into<Box<[MovementStep]>>,
+    ) -> Self {
+        Self {
+            unit_id,
+            from,
+            steps: steps.into(),
+        }
+    }
     /// Returns the moved unit.
     #[must_use]
     pub const fn unit_id(&self) -> &UnitId {
@@ -148,13 +162,13 @@ pub enum MoveUnitError {
 impl MoveUnitError {
     /// Returns the stable language-neutral rejection code.
     #[must_use]
-    pub const fn code(&self) -> &'static str {
+    pub const fn code(&self) -> CommandRejectionCode {
         match self {
             Self::Query(error) => error.code(),
-            Self::RevisionOverflow => "state_revision_overflow",
-            Self::InvalidQueuedPath(_) => "invalid_queued_movement_path",
-            Self::InvalidUnit(_) => "invalid_unit",
-            Self::UnitUpdateFailed => "movement_unit_update_failed",
+            Self::RevisionOverflow => CommandRejectionCode::StateRevisionOverflow,
+            Self::InvalidQueuedPath(_) => CommandRejectionCode::InvalidQueuedMovementPath,
+            Self::InvalidUnit(_) => CommandRejectionCode::InvalidUnit,
+            Self::UnitUpdateFailed => CommandRejectionCode::MovementUnitUpdateFailed,
         }
     }
 }
@@ -204,17 +218,7 @@ pub(crate) fn apply_move_unit(
         .ok_or(MoveUnitError::UnitUpdateFailed)?;
     let reachable_steps = plan.reachable_steps();
 
-    if reachable_steps.iter().skip(1).any(|step| {
-        state.units().iter().any(|candidate| {
-            candidate.id() != unit.id()
-                && candidate.owner_player_id() != unit.owner_player_id()
-                && !context.observes_occupancy(unit, candidate)
-                && candidate.position() == step.coordinate()
-        })
-    }) || reachable_steps.iter().skip(1).any(|step| {
-        context.city_blocks(unit, step.coordinate())
-            && !context.city_block_is_known(unit, step.coordinate())
-    }) {
+    if reachable_path_hits_hidden_blocker(state.units(), unit, reachable_steps, context) {
         return Ok(MovementTransition {
             revision: next_revision,
             unit: unit
@@ -273,6 +277,77 @@ pub(crate) fn apply_move_unit(
             from: unit.position(),
             steps: executed_steps,
         }),
+    })
+}
+
+pub(crate) fn reachable_path_hits_hidden_blocker(
+    units: &[Unit],
+    moving_unit: &Unit,
+    reachable_steps: &[MovementStep],
+    context: EngineContext<'_>,
+) -> bool {
+    reachable_steps.iter().skip(1).any(|step| {
+        units.iter().any(|candidate| {
+            candidate.id() != moving_unit.id()
+                && candidate.owner_player_id() != moving_unit.owner_player_id()
+                && !context.observes_occupancy(moving_unit, candidate)
+                && candidate.position() == step.coordinate()
+        })
+    }) || reachable_steps.iter().skip(1).any(|step| {
+        context.city_blocks(moving_unit, step.coordinate())
+            && !context.city_block_is_known(moving_unit, step.coordinate())
+    }) || reachable_steps.iter().skip(1).any(|step| {
+        context.territory_blocks(moving_unit, step.coordinate())
+            && !context.territory_block_is_known(moving_unit, step.coordinate())
+    })
+}
+
+pub(crate) fn movement_from_plan(
+    unit: &Unit,
+    plan: &super::TerrainMovementPlan,
+    revision: StateRevision,
+    retain_incomplete_path: bool,
+    posture: aonw_domain::UnitPosture,
+) -> Result<MovementTransition, MoveUnitError> {
+    let reachable_steps = plan.reachable_steps();
+    let destination = reachable_steps
+        .last()
+        .ok_or(MoveUnitError::UnitUpdateFailed)?
+        .coordinate();
+    let queued_path = if plan.target_reachable_this_turn() || !retain_incomplete_path {
+        None
+    } else {
+        Some(rebase_queued_path(
+            plan.destination(),
+            plan.steps(),
+            reachable_steps.len().saturating_sub(1),
+        )?)
+    };
+    let updated = unit
+        .after_automated_movement(destination, plan.remaining_movement(), queued_path, posture)
+        .map_err(MoveUnitError::InvalidUnit)?;
+    if destination == unit.position() {
+        return Ok(MovementTransition {
+            revision,
+            unit: updated,
+            event: None,
+            execution: None,
+        });
+    }
+    let executed_steps = reachable_steps.iter().copied().skip(1).collect::<Vec<_>>();
+    Ok(MovementTransition {
+        revision,
+        unit: updated,
+        event: Some(UnitMovedEvent::new(
+            unit.id().clone(),
+            unit.position(),
+            destination,
+        )),
+        execution: Some(UnitMovementExecution::new(
+            unit.id().clone(),
+            unit.position(),
+            executed_steps,
+        )),
     })
 }
 

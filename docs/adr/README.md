@@ -14,6 +14,10 @@ ADRs explain why a long-lived boundary exists and what new code must preserve. R
 | [0006](0006-transport-infrastructure.md) | Transport Infrastructure Ownership And Traversal | Accepted | Implemented |
 | [0007](0007-strategic-resource-stockpiles.md) | Strategic Resource Stockpiles And Production Allocation | Accepted | Implemented |
 | [0008](0008-rust-engine-ownership-and-strangler-migration.md) | Rust Engine Ownership And Strangler Migration | Accepted | In progress |
+| [0009](0009-dart-feature-freeze-and-parallel-successor-clients.md) | Dart Feature Freeze And Parallel Successor Clients | Accepted | In progress |
+| [0010](0010-terrain-backend-for-godot-authoring.md) | Terrain Backend For Godot Authoring | Accepted | In progress |
+| [0011](0011-logical-map-workbench-and-generation.md) | Logical Map Workbench And Procedural Generation Boundary | Accepted | Implemented |
+| [0012](0012-flame-renderer-for-successor-flutter.md) | Flame Renderer For Successor Flutter | Accepted | In progress |
 
 ## Status
 

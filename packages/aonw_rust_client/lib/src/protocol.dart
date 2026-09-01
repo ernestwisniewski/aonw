@@ -1,21 +1,28 @@
 import 'dart:convert';
 
 import 'package:aonw_rust_client/src/api.dart';
+import 'package:aonw_rust_client/src/native_identity.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 import 'package:aonw_rust_client/src/protocol_response.dart';
 
+export 'protocol_city_view.dart';
+export 'protocol_coordinate.dart';
 export 'protocol_execution.dart';
+export 'protocol_map.dart';
+export 'protocol_pending_action.dart';
+export 'protocol_player_view.dart';
 export 'protocol_query.dart';
 export 'protocol_response.dart';
 export 'protocol_values.dart';
-
-const aonwClientApiVersion = 2;
 
 final class AonwClientRequest {
   AonwClientRequest._(this.request);
 
   factory AonwClientRequest.capabilities() =>
       AonwClientRequest._(const {'type': 'capabilities'});
+
+  factory AonwClientRequest.inspectMap({required String mapDocument}) =>
+      AonwClientRequest._({'type': 'inspectMap', 'mapDocument': mapDocument});
 
   factory AonwClientRequest.openSession({
     required String mapDocument,

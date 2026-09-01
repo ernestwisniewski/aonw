@@ -3,30 +3,77 @@ use serde::{Deserialize, Serialize};
 use crate::{MovementStepDto, QueuedMovePathDto, UnitKindDto, UnitPostureDto};
 
 mod artifact;
+mod city;
+mod combat;
+mod diplomacy;
+mod economy;
+mod infrastructure;
 mod interaction;
+mod match_lifecycle;
+mod objective;
+mod outcome;
+mod research;
 
 pub use artifact::{WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto};
+pub use city::{
+    CityBuildingTypeDto, CityDto, CityProductionQueueDto, CityProductionTargetDto,
+    CityProjectTypeDto, CitySpecializationTypeDto, WonderTypeDto,
+};
+pub use combat::{CityConquestActionDto, IntendedAttackDto};
+pub use diplomacy::{
+    DiplomacyStateDto, DiplomaticMessageCategoryDto, DiplomaticMessageDto,
+    DiplomaticMessageResponseDto, DiplomaticMessageTopicDto, DiplomaticProposalDto,
+    DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationDto,
+    DiplomaticRelationStatusDto, DiplomaticScoreChangeReasonDto, DiplomaticScoreEntryDto,
+    ResourceTradeAgreementDto,
+};
+pub use economy::{
+    EconomyStateDto, InitialResourceDistributionDto, InitialResourcePlacementDto, ResourceTypeDto,
+    StrategicResourceStockpileDto,
+};
+pub use infrastructure::{
+    FieldImprovementDto, TransportConditionDto, TransportSegmentDto, TransportSegmentKindDto,
+};
 pub use interaction::{CityFoundingDraftDto, InteractionStateDto, PendingInteractionDto};
-
-/// Current canonical game-state contract version.
-pub const CURRENT_GAME_STATE_VERSION: u16 = 3;
+pub use match_lifecycle::{
+    AiDifficultyDto, AiPersonaDto, AiPlayerDto, AiStrategyIdDto, GameLengthConfigDto,
+    GameLengthKindDto, GameModeDto, MatchIdentityDto, MatchRulesDto, PaceProfileDto,
+    ParticipantDto, PlayerCountryDto, PlayerKindDto, PlayerTurnStateDto, RuleValueDto,
+    TurnLifecycleDto, VictoryRulesDto,
+};
+pub use objective::{
+    CulturalVictoryHoldTurnsDto, DominationHoldTurnsDto, MapObjectiveHoldStateDto,
+};
+pub use outcome::{GameOutcomeConditionDto, GameOutcomeDto};
+pub use research::{PlayerResearchStateDto, ResearchStateDto, TechnologyIdDto, WonderRegistryDto};
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GameStateDto {
-    pub schema_version: u16,
     pub revision: u64,
     pub turn: u32,
+    pub match_identity: MatchIdentityDto,
+    pub turn_lifecycle: TurnLifecycleDto,
+    pub economy: EconomyStateDto,
+    pub research: ResearchStateDto,
+    pub wonder_registry: WonderRegistryDto,
+    pub intended_attacks: Vec<IntendedAttackDto>,
     pub cols: u16,
     pub rows: u16,
     pub occupancy_policy: UnitOccupancyPolicyDto,
     pub units: Vec<UnitDto>,
     pub cities: Vec<CityDto>,
     pub artifacts: Vec<WorldArtifactDto>,
+    pub field_improvements: Vec<FieldImprovementDto>,
     pub interaction: InteractionStateDto,
     pub fog_of_war: Vec<PlayerFogDto>,
-    pub diplomatic_contacts: Vec<PlayerPairDto>,
+    pub diplomacy: DiplomacyStateDto,
+    pub resource_trade_agreements: Vec<ResourceTradeAgreementDto>,
+    pub domination_hold_turns_by_player_id: DominationHoldTurnsDto,
+    pub cultural_victory_hold_turns_by_player_id: CulturalVictoryHoldTurnsDto,
+    pub map_objective_hold_states: Vec<MapObjectiveHoldStateDto>,
+    pub outcome: GameOutcomeDto,
     pub transport_network: Vec<TransportSegmentDto>,
 }
 
@@ -157,16 +204,6 @@ pub struct CityFoundingJobDto {
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct CityDto {
-    pub id: String,
-    pub owner_player_id: String,
-    pub center: CoordinateDto,
-    pub controlled_hexes: Vec<CoordinateDto>,
-}
-
-#[allow(missing_docs)]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PlayerFogDto {
     pub player_id: String,
     pub discovered_hexes: Vec<CoordinateDto>,
@@ -179,24 +216,6 @@ pub struct PlayerFogDto {
 pub struct PlayerPairDto {
     pub first_player_id: String,
     pub second_player_id: String,
-}
-
-#[allow(missing_docs)]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct TransportSegmentDto {
-    pub coordinate: CoordinateDto,
-    pub condition: TransportConditionDto,
-    pub built_by_player_id: String,
-    pub built_by_city_id: Option<String>,
-}
-
-#[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum TransportConditionDto {
-    Operational,
-    Pillaged,
 }
 
 #[allow(missing_docs)]
@@ -266,10 +285,18 @@ mod tests {
     use super::GameStateDto;
 
     #[test]
-    fn strict_codec_rejects_unknown_and_duplicate_fields() {
-        let unknown = r#"{"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[],"extra":true}"#;
+    fn strict_codec_rejects_missing_unknown_and_duplicate_fields() {
+        let unknown = r#"{"revision":0,"turn":0,"matchIdentity":{"matchRules":{"gameLength":{"kind":"unlimited","targetMinutes":null,"turnLimit":null,"paceProfile":"unlimited","scoreFallbackEnabled":false},"victory":{"conquestEnabled":true,"dominationEnabled":true,"dominationControlPercent":60,"dominationHoldTurns":5,"scoreFallbackEnabled":false,"turnLimit":null,"hardTimeLimitMinutes":null,"culturalEnabled":true,"culturalRequiredArtifacts":6,"culturalHoldTurns":5},"balance":{}},"participants":[],"gameMode":"hotSeat"},"turnLifecycle":{"turnStatesByPlayerId":{},"requiredSubmissionPlayerIds":[],"submittedPlayerIds":[],"timeoutStreaksByPlayerId":{},"afkPlayerIds":[],"kickedPlayerIds":[],"turnStartedAt":null},"economy":{"playerGold":{},"playerWarWeariness":{},"playerStabilityNet":{},"strategicResources":{},"initialResourceDistribution":{"seed":0,"placements":[]}},"research":{"players":{}},"wonderRegistry":{},"intendedAttacks":[],"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"fieldImprovements":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomacy":{"contacts":[],"relations":[],"pendingProposals":[],"messages":[],"scoreHistory":[]},"resourceTradeAgreements":[],"dominationHoldTurnsByPlayerId":{},"culturalVictoryHoldTurnsByPlayerId":{},"mapObjectiveHoldStates":[],"outcome":{"condition":"ongoing","winnerPlayerId":null,"scoreByPlayerId":{}},"transportNetwork":[],"extra":true}"#;
         assert!(GameStateDto::from_json(unknown, 4096).is_err());
-        let duplicate = r#"{"schemaVersion":3,"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}"#;
-        assert!(GameStateDto::from_json(duplicate, 4096).is_err());
+        let duplicate = unknown.replace(",\"extra\":true", "").replacen(
+            "\"revision\":0",
+            "\"revision\":0,\"revision\":0",
+            1,
+        );
+        assert!(GameStateDto::from_json(&duplicate, 4096).is_err());
+        let missing = unknown
+            .replace(",\"extra\":true", "")
+            .replace("\"submittedPlayerIds\":[],", "");
+        assert!(GameStateDto::from_json(&missing, 4096).is_err());
     }
 }

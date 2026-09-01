@@ -2,7 +2,12 @@ use crate::{
     ArtifactId, HexCoord, MovementUnits, PlayerId, QueuedMovePath, UnitId, UnitKind, UnitPosture,
 };
 
+use super::CityFoundingJob;
 use super::{ArmyTroop, MerchantTradeRoute, TroopKind, UnitActivity, WorkerJob};
+
+mod artifact;
+mod logistics;
+mod worker;
 
 const MAX_UNIT_NAME_BYTES: usize = 256;
 
@@ -239,6 +244,82 @@ impl Unit {
         updated.queued_path = None;
         updated.posture = UnitPosture::Fortified;
         updated
+    }
+
+    /// Resets movement at the start of a turn without running later automation.
+    #[must_use]
+    pub fn after_turn_movement_reset(&self, maximum_movement: MovementUnits) -> Self {
+        let mut updated = self.clone();
+        updated.movement_units =
+            if self.posture == UnitPosture::Fortified || self.activity.blocks_manual_movement() {
+                MovementUnits::ZERO
+            } else {
+                maximum_movement
+            };
+        if self.posture == UnitPosture::Fortified || self.activity.blocks_manual_movement() {
+            updated.queued_path = None;
+        }
+        updated
+    }
+
+    /// Applies one authoritative combat result while preserving non-combat state.
+    #[must_use]
+    pub fn after_combat(
+        &self,
+        position: HexCoord,
+        hit_points: Option<u32>,
+        experience_points: u32,
+        consume_movement: bool,
+    ) -> Self {
+        let mut updated = self.clone();
+        updated.position = position;
+        updated.hit_points = hit_points;
+        updated.experience_points = experience_points;
+        if consume_movement {
+            updated.movement_units = MovementUnits::ZERO;
+        }
+        updated
+    }
+
+    /// Schedules or advances authoritative city-founding work.
+    #[must_use]
+    pub fn with_city_founding_job(&self, job: Option<CityFoundingJob>) -> Self {
+        let mut updated = self.clone();
+        updated.activity = updated.activity.with_city_founding_job(job);
+        updated.queued_path = None;
+        if updated.activity.city_founding_job().is_some() {
+            updated.movement_units = MovementUnits::ZERO;
+            updated.posture = UnitPosture::Active;
+        }
+        updated
+    }
+
+    /// Consumes one settler troop and clears completed city-founding work.
+    ///
+    /// Standalone settler units are removed by the aggregate processor and
+    /// therefore return `None`. A non-founder or malformed commander also
+    /// returns `None`; callers validate the pending job before committing.
+    #[must_use]
+    pub fn after_city_founded(&self) -> Option<Self> {
+        if self.kind == UnitKind::Settler {
+            return None;
+        }
+        let mut updated = self.clone();
+        let index = updated
+            .army
+            .iter()
+            .position(|troop| troop.kind() == TroopKind::Settler && troop.count() > 0)?;
+        let troop = updated.army[index];
+        let mut army = updated.army.into_vec();
+        if troop.count() == 1 {
+            army.remove(index);
+        } else {
+            army[index] = ArmyTroop::new(TroopKind::Settler, troop.count() - 1);
+        }
+        updated.army = army.into_boxed_slice();
+        updated.activity = updated.activity.with_city_founding_job(None);
+        updated.queued_path = None;
+        Some(updated)
     }
 }
 

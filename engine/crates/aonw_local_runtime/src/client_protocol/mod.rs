@@ -2,8 +2,8 @@ mod decode;
 mod encode;
 
 use aonw_contracts::client::{
-    CLIENT_API_VERSION, ClientErrorDto, ClientOutcomeDto, ClientRequestBodyDto, ClientRequestDto,
-    ClientResponseBodyDto, ClientResponseDto,
+    CLIENT_API_VERSION, ClientCodecError, ClientErrorDto, ClientOutcomeDto, ClientRequestBodyDto,
+    ClientRequestDto, ClientResponseBodyDto, ClientResponseDto,
 };
 
 use crate::{LocalRuntime, RuntimeError};
@@ -19,6 +19,9 @@ impl ClientProtocol {
     pub fn dispatch_json(runtime: &mut LocalRuntime, input: &str) -> String {
         let response = match ClientRequestDto::from_json(input) {
             Ok(request) => Self::dispatch(runtime, request),
+            Err(error @ ClientCodecError::UnsupportedVersion { .. }) => {
+                failure("unsupported_client_api_version", error)
+            }
             Err(error) => failure("invalid_client_request", error),
         };
         response
@@ -41,6 +44,15 @@ impl ClientProtocol {
 
         match request.request {
             ClientRequestBodyDto::Capabilities => success(encode::capabilities()),
+            ClientRequestBodyDto::InspectMap { map_document } => {
+                match decode::map_document(&map_document) {
+                    Ok(document) => match encode::map(&document) {
+                        Ok(map) => success(ClientResponseBodyDto::MapInspected { map }),
+                        Err(error) => failure("map_hash_failed", error),
+                    },
+                    Err(error) => error.into_response(),
+                }
+            }
             ClientRequestBodyDto::OpenSession {
                 map_document,
                 scenario_document,
@@ -129,14 +141,45 @@ fn serialization_failure() -> String {
 
 fn dispatch_command(runtime: &mut LocalRuntime, command: DecodedCommand) -> ClientResponseDto {
     let result = match command {
+        DecodedCommand::SelectTechnology(command) => runtime.select_technology(command),
+        DecodedCommand::Diplomacy(command) => runtime.diplomacy(&command),
+        DecodedCommand::Artifact(command) => runtime.artifact(&command),
+        DecodedCommand::FoundCity(command) => runtime.found_city(&command),
+        DecodedCommand::ToggleWorkedHex(command) => runtime.toggle_worked_hex(&command),
+        DecodedCommand::SelectCityExpansionHex(command) => {
+            runtime.select_city_expansion_hex(&command)
+        }
+        DecodedCommand::Production(command) => runtime.production(&command),
+        DecodedCommand::SelectWorkerImprovement(command) => {
+            runtime.select_worker_improvement(&command)
+        }
+        DecodedCommand::ConfirmWorkerImprovement(command) => {
+            runtime.confirm_worker_improvement(&command)
+        }
+        DecodedCommand::CancelWorkerJob(command) => runtime.cancel_worker_job(&command),
+        DecodedCommand::AssignWorkerToHex(command) => runtime.assign_worker_to_hex(&command),
+        DecodedCommand::CancelWorkerAssignment(command) => {
+            runtime.cancel_worker_assignment(&command)
+        }
+        DecodedCommand::BuildRoad(command) => runtime.build_road(&command),
+        DecodedCommand::AutomateWorker(command) => runtime.automate_worker(&command),
+        DecodedCommand::Attack(command) => runtime.attack_hex(&command),
         DecodedCommand::Move(command) => runtime.dispatch(&command),
+        DecodedCommand::AutoExplore(command) => runtime.auto_explore_unit(&command),
+        DecodedCommand::AssignMerchantRoute(command) => {
+            runtime.assign_merchant_trade_route(&command)
+        }
+        DecodedCommand::MoveMerchantToCity(command) => runtime.move_merchant_to_city(&command),
+        DecodedCommand::DetachTroop(command) => runtime.detach_troop(&command),
         DecodedCommand::Cancel(command) => runtime.cancel_unit_action(&command),
         DecodedCommand::Skip(command) => runtime.skip_unit_turn(&command),
         DecodedCommand::Fortify(command) => runtime.fortify_unit(&command),
+        DecodedCommand::EndTurn(command) => runtime.end_turn(command),
+        DecodedCommand::SubmitTurn(command) => runtime.submit_turn(command),
     };
     match result {
         Ok(result) => success(ClientResponseBodyDto::Command {
-            result: encode::command_result(&result),
+            result: Box::new(encode::command_result(&result)),
         }),
         Err(error) => runtime_failure(error),
     }

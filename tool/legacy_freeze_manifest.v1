@@ -1,0 +1,5 @@
+# AoNW legacy freeze manifest
+# Audited commit: 5c44ed2e829d2f1bc5669bb2180a57f5ceaa2539
+version 1
+tree lib 2498bf781927dfd3ac9b5c806ec9dbb7ea74e97b
+tree packages/aonw_core b83e4a513901403ab24e9d447feb5086edbdf9b9
