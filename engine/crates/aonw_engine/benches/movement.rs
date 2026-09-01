@@ -1,17 +1,30 @@
 //! Diagnostic map and movement baseline without a timing gate.
 
+use std::alloc::System;
 use std::hint::black_box;
 
 use aonw_content::{MapDefinition, MapDocument};
 use aonw_domain::{GameState, HexCoord, PlayerId, UnitId};
 use aonw_engine::{
-    CanonicalQueryError, CompiledMovementMap, DomainCommand, EngineContext, GameEngine, GameQuery,
-    MoveUnitCommand, MovementSearchMetrics, MovementSearchWorkspace, QueryResult,
+    CanonicalQueryError, CompiledMovementMap, EngineContext, GameEngine, GameQuery,
+    MoveUnitCommand, MovementSearchMetrics, MovementSearchWorkspace, PlayerCommand, QueryResult,
     ReachableMovement, ReachableMovementQuery, TerrainMovementPlan, TerrainMovementQuery,
 };
+use stats_alloc::{INSTRUMENTED_SYSTEM, StatsAlloc};
 
+#[global_allocator]
+static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
+
+#[path = "movement/city.rs"]
+mod city;
+#[path = "movement/combat.rs"]
+mod combat;
+#[path = "movement/logistics.rs"]
+mod logistics;
 #[path = "movement/support.rs"]
 mod support;
+#[path = "movement/worker.rs"]
+mod worker;
 
 use support::{
     hidden_blocker_state, map, mix, movement_state, occupied_target_state, report, signature_bytes,
@@ -20,7 +33,7 @@ use support::{
 
 fn main() {
     println!(
-        "workload,tiles,units,iterations,median_ns,p95_ns,frontier_pops,expanded_tiles,examined_edges,heap_pushes,route_records,signature"
+        "workload,tiles,units,iterations,allocations,reallocations,allocated_bytes,payload_bytes,frontier_pops,expanded_tiles,examined_edges,heap_pushes,route_records,signature,median_ns,p95_ns"
     );
     for (cols, rows, unit_counts) in [
         (10, 10, &[1, 10][..]),
@@ -41,6 +54,7 @@ fn benchmark_map(cols: u16, rows: u16, unit_counts: &[usize]) {
         rows,
         0,
         MovementSearchMetrics::default(),
+        json.len(),
         || {
             let opened = MapDocument::from_json(black_box(json.as_bytes())).expect("open map");
             signature_bytes(
@@ -58,6 +72,7 @@ fn benchmark_map(cols: u16, rows: u16, unit_counts: &[usize]) {
         rows,
         0,
         MovementSearchMetrics::default(),
+        0,
         || {
             signature_bytes(
                 black_box(&map)
@@ -69,7 +84,11 @@ fn benchmark_map(cols: u16, rows: u16, unit_counts: &[usize]) {
     );
     for &unit_count in unit_counts {
         benchmark_movement(&map, cols, rows, unit_count);
+        logistics::benchmark(&map, cols, rows, unit_count);
+        combat::benchmark(&map, cols, rows, unit_count);
+        city::benchmark(&map, cols, rows, unit_count);
     }
+    worker::benchmark(&map, cols, rows);
 }
 
 fn benchmark_movement(map: &MapDefinition, cols: u16, rows: u16, unit_count: usize) {
@@ -78,8 +97,11 @@ fn benchmark_movement(map: &MapDefinition, cols: u16, rows: u16, unit_count: usi
     let state = movement_state(cols, rows, unit_count, &actor);
     let context =
         EngineContext::canonical(&actor, map, aonw_content::RulesetDefinition::standard());
-    let compiled = CompiledMovementMap::compile(map, aonw_content::RulesetDefinition::standard())
-        .expect("compiled movement map");
+    let compiled = CompiledMovementMap::compile_owned(
+        map.clone(),
+        aonw_content::RulesetDefinition::standard().clone(),
+    )
+    .expect("compiled movement map");
     let prepared_context = context.with_compiled_movement_map(&compiled);
     let target = HexCoord::new(i32::from(cols) - 1, i32::from(rows) - 1);
     let (reachable_metrics, route_metrics, apply_metrics) =
@@ -135,7 +157,7 @@ fn benchmark_reachable(
                 )
             })
     };
-    report("reachable", cols, rows, units, metrics, || {
+    report("reachable", cols, rows, units, metrics, 0, || {
         reachable(
             black_box(state),
             context,
@@ -147,7 +169,7 @@ fn benchmark_reachable(
         )
     });
     let mut workspace = MovementSearchWorkspace::default();
-    report("prepared_reachable", cols, rows, units, metrics, || {
+    report("prepared_reachable", cols, rows, units, metrics, 0, || {
         reachable_with_workspace(
             black_box(state),
             prepared_context,
@@ -172,7 +194,7 @@ fn benchmark_routes(
 ) {
     let (cols, rows, units) = dimensions;
     for (name, selected_context) in [("route", context), ("prepared_route", prepared_context)] {
-        report(name, cols, rows, units, metrics, || {
+        report(name, cols, rows, units, metrics, 0, || {
             route(
                 black_box(state),
                 selected_context,
@@ -198,6 +220,7 @@ fn benchmark_routes(
         rows,
         units + 1,
         occupied_metrics,
+        0,
         || {
             route(black_box(&occupied_state), prepared_context, query()).map_or_else(
                 |error| signature_bytes(error.code().as_bytes()),
@@ -221,11 +244,11 @@ fn benchmark_apply(
     metrics: MovementSearchMetrics,
 ) {
     let (cols, rows, units) = dimensions;
-    report("apply", cols, rows, units, metrics, || {
-        GameEngine::apply(
-            black_box(state),
+    report("apply", cols, rows, units, metrics, 0, || {
+        GameEngine::apply_player_owned(
+            black_box(state.clone()),
             context,
-            DomainCommand::MoveUnit(MoveUnitCommand::new(
+            PlayerCommand::MoveUnit(MoveUnitCommand::new(
                 state.revision().get(),
                 mover_id,
                 HexCoord::new(1, 0),
@@ -236,11 +259,11 @@ fn benchmark_apply(
             |result| transition_signature(&result, mover_id),
         )
     });
-    report("prepared_apply_owned", cols, rows, units, metrics, || {
-        GameEngine::apply_owned(
+    report("prepared_apply", cols, rows, units, metrics, 0, || {
+        GameEngine::apply_player_owned(
             black_box(state.clone()),
             prepared_context,
-            DomainCommand::MoveUnit(MoveUnitCommand::new(
+            PlayerCommand::MoveUnit(MoveUnitCommand::new(
                 state.revision().get(),
                 mover_id,
                 HexCoord::new(1, 0),
@@ -257,11 +280,12 @@ fn benchmark_apply(
         rows,
         units,
         MovementSearchMetrics::default(),
+        0,
         || {
-            GameEngine::apply_owned(
+            GameEngine::apply_player_owned(
                 black_box(state.clone()),
                 prepared_context,
-                DomainCommand::MoveUnit(MoveUnitCommand::new(
+                PlayerCommand::MoveUnit(MoveUnitCommand::new(
                     state.revision().get() + 1,
                     mover_id,
                     HexCoord::new(1, 0),
@@ -273,29 +297,32 @@ fn benchmark_apply(
             )
         },
     );
-    let hidden = hidden_blocker_state(cols, rows, context.actor_player_id());
-    report(
-        "prepared_apply_hidden_noop",
-        cols,
-        rows,
-        units + 1,
-        MovementSearchMetrics::default(),
-        || {
-            GameEngine::apply_owned(
-                black_box(hidden.clone()),
-                prepared_context,
-                DomainCommand::MoveUnit(MoveUnitCommand::new(
-                    hidden.revision().get(),
-                    mover_id,
-                    HexCoord::new(1, 0),
-                )),
-            )
-            .map_or_else(
-                |error| signature_bytes(error.to_string().as_bytes()),
-                |result| transition_signature(&result, mover_id),
-            )
-        },
-    );
+    if units == 1 {
+        let hidden = hidden_blocker_state(cols, rows, context.actor_player_id());
+        report(
+            "prepared_apply_hidden_noop",
+            cols,
+            rows,
+            units + 1,
+            MovementSearchMetrics::default(),
+            0,
+            || {
+                GameEngine::apply_player_owned(
+                    black_box(hidden.clone()),
+                    prepared_context,
+                    PlayerCommand::MoveUnit(MoveUnitCommand::new(
+                        hidden.revision().get(),
+                        mover_id,
+                        HexCoord::new(1, 0),
+                    )),
+                )
+                .map_or_else(
+                    |error| signature_bytes(error.to_string().as_bytes()),
+                    |result| transition_signature(&result, mover_id),
+                )
+            },
+        );
+    }
 }
 
 fn transition_signature(result: &aonw_engine::DomainTransition, mover_id: &UnitId) -> u64 {
@@ -369,7 +396,19 @@ fn reachable(
 ) -> Result<ReachableMovement, CanonicalQueryError> {
     match GameEngine::query(state, context, GameQuery::Reachable(query))? {
         QueryResult::Reachable(result) => Ok(result),
-        QueryResult::Route(_) => unreachable!("reachable query returned route"),
+        QueryResult::CityFoundingOptions(_)
+        | QueryResult::CityWorkedHexOptions(_)
+        | QueryResult::CityExpansionOptions(_)
+        | QueryResult::CityYield(_)
+        | QueryResult::StrategicResourceProjection(_)
+        | QueryResult::ProductionOptions(_)
+        | QueryResult::CombatPreview(_)
+        | QueryResult::Route(_)
+        | QueryResult::UnitLogisticsOptions(_)
+        | QueryResult::WorkerOptions(_)
+        | QueryResult::ResearchOptions(_) => {
+            unreachable!("reachable query returned another result")
+        }
     }
 }
 
@@ -382,7 +421,19 @@ fn reachable_with_workspace(
     match GameEngine::query_with_workspace(state, context, GameQuery::Reachable(query), workspace)?
     {
         QueryResult::Reachable(result) => Ok(result),
-        QueryResult::Route(_) => unreachable!("reachable query returned route"),
+        QueryResult::CityFoundingOptions(_)
+        | QueryResult::CityWorkedHexOptions(_)
+        | QueryResult::CityExpansionOptions(_)
+        | QueryResult::CityYield(_)
+        | QueryResult::StrategicResourceProjection(_)
+        | QueryResult::ProductionOptions(_)
+        | QueryResult::CombatPreview(_)
+        | QueryResult::Route(_)
+        | QueryResult::UnitLogisticsOptions(_)
+        | QueryResult::WorkerOptions(_)
+        | QueryResult::ResearchOptions(_) => {
+            unreachable!("reachable query returned another result")
+        }
     }
 }
 
@@ -393,6 +444,18 @@ fn route(
 ) -> Result<TerrainMovementPlan, CanonicalQueryError> {
     match GameEngine::query(state, context, GameQuery::PlanRoute(query))? {
         QueryResult::Route(result) => Ok(result),
-        QueryResult::Reachable(_) => unreachable!("route query returned reachable result"),
+        QueryResult::CityFoundingOptions(_)
+        | QueryResult::CityWorkedHexOptions(_)
+        | QueryResult::CityExpansionOptions(_)
+        | QueryResult::CityYield(_)
+        | QueryResult::StrategicResourceProjection(_)
+        | QueryResult::ProductionOptions(_)
+        | QueryResult::CombatPreview(_)
+        | QueryResult::Reachable(_)
+        | QueryResult::UnitLogisticsOptions(_)
+        | QueryResult::WorkerOptions(_)
+        | QueryResult::ResearchOptions(_) => {
+            unreachable!("route query returned another result")
+        }
     }
 }

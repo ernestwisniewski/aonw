@@ -371,7 +371,7 @@ end_of_record
 const _expectedRepositoryPolicy = <String, Object?>{
   'schema': 2,
   'enforcedSince': 'ee7ecf961f2d27b0ac9ea0f3ba0d1d4768fa7189',
-  'ratchetEpoch': 7,
+  'ratchetEpoch': 8,
   'diffLineMinimumBasisPoints': 9000,
   'excludeSuffixes': <String>['.freezed.dart', '.g.dart'],
   'scopes': <String, Object?>{

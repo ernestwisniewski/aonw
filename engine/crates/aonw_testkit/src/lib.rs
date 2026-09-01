@@ -1,27 +1,27 @@
-//! Independent fixture infrastructure shared by Rust engine adapters.
+//! Independent current-contract fixture infrastructure for the Rust engine.
 //!
-//! The crate loads the committed reducer-parity corpus without depending on a
-//! concrete engine implementation. JSON object order is insignificant, array
-//! order remains observable, input sizes are bounded, and expected outputs are
-//! never generated or rewritten by the runner.
+//! Canonical fixtures own strict DTOs and validated map content without
+//! depending on a concrete engine implementation. JSON object order is
+//! insignificant, array order remains observable, input sizes are bounded, and
+//! expected outputs are never generated or rewritten by the runner.
 
 #![forbid(unsafe_code)]
 
+mod canonical_fixture;
+mod canonical_fixture_parser;
+mod canonical_loader;
+mod canonical_runner;
 mod diff;
-mod fixture;
-mod fixture_parser;
-mod loader;
 mod loader_error;
-mod movement_execution;
-mod runner;
 mod unique_json;
 
-pub use diff::{DifferenceKind, JsonDifference, compare_json};
-pub use fixture::{
-    CURRENT_FIXTURE_VERSION, Fixture, FixtureInput, FixtureOutput, JsonObject,
-    ReducerExpectedOutcome,
+pub use canonical_fixture::{
+    CURRENT_CANONICAL_FIXTURE_VERSION, CanonicalFixture, CanonicalFixtureInput,
+    CanonicalFixtureOutput,
 };
-pub use loader::{FixtureLimits, FixtureLoader};
+pub use canonical_loader::{CanonicalFixtureLoader, FixtureLimits};
+pub use canonical_runner::{
+    CanonicalFixtureExecutor, FixtureRunError, verify_canonical_corpus, verify_canonical_fixture,
+};
+pub use diff::{DifferenceKind, JsonDifference, compare_json};
 pub use loader_error::FixtureLoadError;
-pub use movement_execution::{MovementExecution, MovementExecutionError, MovementStep};
-pub use runner::{FixtureExecutor, FixtureRunError, verify_corpus, verify_fixture};

@@ -8,14 +8,198 @@
 
 mod game_state_mapping;
 
-pub use game_state_mapping::{GameStateMappingError, decode_game_state, encode_game_state};
-
-use aonw_contracts::{MovementStepDto, QueuedMovePathDto, UnitKindDto, UnitPostureDto};
-use aonw_domain::{
-    HexCoord, MovementPathError, MovementStep, MovementUnits, QueuedMovePath, UnitKind, UnitPosture,
+pub use game_state_mapping::{
+    GameStateMappingError, canonicalize_game_state, decode_city_building, decode_city_project,
+    decode_city_specialization, decode_city_wonder, decode_game_state, decode_improvement,
+    decode_match_identity, decode_resource, decode_technology, decode_troop, encode_city_building,
+    encode_city_production_queue, encode_city_project, encode_city_specialization,
+    encode_city_wonder, encode_game_outcome, encode_game_state, encode_improvement,
+    encode_merchant_trade_route, encode_resource, encode_technology, encode_troop,
+    encode_unit_activity,
 };
 
-const fn decode_unit_kind(kind: UnitKindDto) -> UnitKind {
+use aonw_contracts::{
+    DiplomaticMessageCategoryDto, DiplomaticMessageResponseDto, DiplomaticMessageTopicDto,
+    DiplomaticProposalKindDto, DiplomaticRelationChangeReasonDto, DiplomaticRelationStatusDto,
+    DiplomaticScoreChangeReasonDto, MovementStepDto, QueuedMovePathDto, UnitKindDto,
+    UnitPostureDto,
+};
+use aonw_domain::{
+    DiplomaticMessageCategory, DiplomaticMessageResponse, DiplomaticMessageTopic,
+    DiplomaticProposalKind, DiplomaticRelationChangeReason, DiplomaticRelationStatus,
+    DiplomaticScoreChangeReason, HexCoord, MovementPathError, MovementStep, MovementUnits,
+    QueuedMovePath, UnitKind, UnitPosture,
+};
+
+/// Converts a proposal kind into its stable wire value.
+#[must_use]
+pub const fn encode_proposal_kind(value: DiplomaticProposalKind) -> DiplomaticProposalKindDto {
+    match value {
+        DiplomaticProposalKind::Friendship => DiplomaticProposalKindDto::Friendship,
+        DiplomaticProposalKind::Truce => DiplomaticProposalKindDto::Truce,
+    }
+}
+
+/// Converts a strict wire proposal kind into its domain value.
+#[must_use]
+pub const fn decode_proposal_kind(value: DiplomaticProposalKindDto) -> DiplomaticProposalKind {
+    match value {
+        DiplomaticProposalKindDto::Friendship => DiplomaticProposalKind::Friendship,
+        DiplomaticProposalKindDto::Truce => DiplomaticProposalKind::Truce,
+    }
+}
+
+/// Converts a message topic into its stable wire value.
+#[must_use]
+pub const fn encode_message_topic(value: DiplomaticMessageTopic) -> DiplomaticMessageTopicDto {
+    match value {
+        DiplomaticMessageTopic::TroopsNearCities => DiplomaticMessageTopicDto::TroopsNearCities,
+        DiplomaticMessageTopic::CitiesTooClose => DiplomaticMessageTopicDto::CitiesTooClose,
+        DiplomaticMessageTopic::BlockedRoutes => DiplomaticMessageTopicDto::BlockedRoutes,
+        DiplomaticMessageTopic::WithdrawScouts => DiplomaticMessageTopicDto::WithdrawScouts,
+        DiplomaticMessageTopic::AvoidEscalation => DiplomaticMessageTopicDto::AvoidEscalation,
+        DiplomaticMessageTopic::CommonEnemy => DiplomaticMessageTopicDto::CommonEnemy,
+        DiplomaticMessageTopic::ExpansionProvocation => {
+            DiplomaticMessageTopicDto::ExpansionProvocation
+        }
+        DiplomaticMessageTopic::PeacefulPraise => DiplomaticMessageTopicDto::PeacefulPraise,
+    }
+}
+
+/// Converts a strict wire message topic into its domain value.
+#[must_use]
+pub const fn decode_message_topic(value: DiplomaticMessageTopicDto) -> DiplomaticMessageTopic {
+    match value {
+        DiplomaticMessageTopicDto::TroopsNearCities => DiplomaticMessageTopic::TroopsNearCities,
+        DiplomaticMessageTopicDto::CitiesTooClose => DiplomaticMessageTopic::CitiesTooClose,
+        DiplomaticMessageTopicDto::BlockedRoutes => DiplomaticMessageTopic::BlockedRoutes,
+        DiplomaticMessageTopicDto::WithdrawScouts => DiplomaticMessageTopic::WithdrawScouts,
+        DiplomaticMessageTopicDto::AvoidEscalation => DiplomaticMessageTopic::AvoidEscalation,
+        DiplomaticMessageTopicDto::CommonEnemy => DiplomaticMessageTopic::CommonEnemy,
+        DiplomaticMessageTopicDto::ExpansionProvocation => {
+            DiplomaticMessageTopic::ExpansionProvocation
+        }
+        DiplomaticMessageTopicDto::PeacefulPraise => DiplomaticMessageTopic::PeacefulPraise,
+    }
+}
+
+/// Converts a message category into its stable wire value.
+#[must_use]
+pub const fn encode_message_category(
+    value: DiplomaticMessageCategory,
+) -> DiplomaticMessageCategoryDto {
+    match value {
+        DiplomaticMessageCategory::Warning => DiplomaticMessageCategoryDto::Warning,
+        DiplomaticMessageCategory::Complaint => DiplomaticMessageCategoryDto::Complaint,
+        DiplomaticMessageCategory::Request => DiplomaticMessageCategoryDto::Request,
+        DiplomaticMessageCategory::Praise => DiplomaticMessageCategoryDto::Praise,
+        DiplomaticMessageCategory::Threat => DiplomaticMessageCategoryDto::Threat,
+        DiplomaticMessageCategory::Cooperation => DiplomaticMessageCategoryDto::Cooperation,
+    }
+}
+
+/// Converts a message response into its stable wire value.
+#[must_use]
+pub const fn encode_message_response(
+    value: DiplomaticMessageResponse,
+) -> DiplomaticMessageResponseDto {
+    match value {
+        DiplomaticMessageResponse::Conciliatory => DiplomaticMessageResponseDto::Conciliatory,
+        DiplomaticMessageResponse::Neutral => DiplomaticMessageResponseDto::Neutral,
+        DiplomaticMessageResponse::Evasive => DiplomaticMessageResponseDto::Evasive,
+        DiplomaticMessageResponse::Aggressive => DiplomaticMessageResponseDto::Aggressive,
+    }
+}
+
+/// Converts a strict wire response into its domain value.
+#[must_use]
+pub const fn decode_message_response(
+    value: DiplomaticMessageResponseDto,
+) -> DiplomaticMessageResponse {
+    match value {
+        DiplomaticMessageResponseDto::Conciliatory => DiplomaticMessageResponse::Conciliatory,
+        DiplomaticMessageResponseDto::Neutral => DiplomaticMessageResponse::Neutral,
+        DiplomaticMessageResponseDto::Evasive => DiplomaticMessageResponse::Evasive,
+        DiplomaticMessageResponseDto::Aggressive => DiplomaticMessageResponse::Aggressive,
+    }
+}
+
+/// Converts a relation status into its stable wire value.
+#[must_use]
+pub const fn encode_relation_status(
+    value: DiplomaticRelationStatus,
+) -> DiplomaticRelationStatusDto {
+    match value {
+        DiplomaticRelationStatus::Friendly => DiplomaticRelationStatusDto::Friendly,
+        DiplomaticRelationStatus::Neutral => DiplomaticRelationStatusDto::Neutral,
+        DiplomaticRelationStatus::Hostile => DiplomaticRelationStatusDto::Hostile,
+        DiplomaticRelationStatus::Truce => DiplomaticRelationStatusDto::Truce,
+        DiplomaticRelationStatus::War => DiplomaticRelationStatusDto::War,
+    }
+}
+
+/// Converts a relation-change reason into its stable wire value.
+#[must_use]
+pub const fn encode_relation_reason(
+    value: DiplomaticRelationChangeReason,
+) -> DiplomaticRelationChangeReasonDto {
+    match value {
+        DiplomaticRelationChangeReason::Manual => DiplomaticRelationChangeReasonDto::Manual,
+        DiplomaticRelationChangeReason::UnitAttack => DiplomaticRelationChangeReasonDto::UnitAttack,
+        DiplomaticRelationChangeReason::CityAttack => DiplomaticRelationChangeReasonDto::CityAttack,
+        DiplomaticRelationChangeReason::DeclarationOfWar => {
+            DiplomaticRelationChangeReasonDto::DeclarationOfWar
+        }
+        DiplomaticRelationChangeReason::ProposalAccepted => {
+            DiplomaticRelationChangeReasonDto::ProposalAccepted
+        }
+        DiplomaticRelationChangeReason::TruceExpired => {
+            DiplomaticRelationChangeReasonDto::TruceExpired
+        }
+        DiplomaticRelationChangeReason::MessageResponse => {
+            DiplomaticRelationChangeReasonDto::MessageResponse
+        }
+        DiplomaticRelationChangeReason::PromiseBroken => {
+            DiplomaticRelationChangeReasonDto::PromiseBroken
+        }
+    }
+}
+
+/// Converts a canonical diplomacy score reason into its stable wire value.
+#[must_use]
+pub const fn encode_score_reason(
+    value: DiplomaticScoreChangeReason,
+) -> DiplomaticScoreChangeReasonDto {
+    match value {
+        DiplomaticScoreChangeReason::Manual => DiplomaticScoreChangeReasonDto::Manual,
+        DiplomaticScoreChangeReason::UnitAttack => DiplomaticScoreChangeReasonDto::UnitAttack,
+        DiplomaticScoreChangeReason::CityAttack => DiplomaticScoreChangeReasonDto::CityAttack,
+        DiplomaticScoreChangeReason::DeclarationOfWar => {
+            DiplomaticScoreChangeReasonDto::DeclarationOfWar
+        }
+        DiplomaticScoreChangeReason::WarmongerPenalty => {
+            DiplomaticScoreChangeReasonDto::WarmongerPenalty
+        }
+        DiplomaticScoreChangeReason::ProposalAccepted => {
+            DiplomaticScoreChangeReasonDto::ProposalAccepted
+        }
+        DiplomaticScoreChangeReason::ProposalRejected => {
+            DiplomaticScoreChangeReasonDto::ProposalRejected
+        }
+        DiplomaticScoreChangeReason::MessageResponse => {
+            DiplomaticScoreChangeReasonDto::MessageResponse
+        }
+        DiplomaticScoreChangeReason::CommonEnemyCooperation => {
+            DiplomaticScoreChangeReasonDto::CommonEnemyCooperation
+        }
+        DiplomaticScoreChangeReason::GoldGift => DiplomaticScoreChangeReasonDto::GoldGift,
+        DiplomaticScoreChangeReason::PromiseBroken => DiplomaticScoreChangeReasonDto::PromiseBroken,
+    }
+}
+
+/// Converts a current client unit identity into the domain identity.
+#[must_use]
+pub const fn decode_unit_kind(kind: UnitKindDto) -> UnitKind {
     match kind {
         UnitKindDto::Commander => UnitKind::Commander,
         UnitKindDto::Warrior => UnitKind::Warrior,
@@ -97,7 +281,9 @@ fn decode_queued_path(path: QueuedMovePathDto) -> Result<QueuedMovePath, Movemen
     )
 }
 
-fn encode_queued_path(path: &QueuedMovePath) -> QueuedMovePathDto {
+/// Converts a validated queued route into its stable wire representation.
+#[must_use]
+pub fn encode_queued_path(path: &QueuedMovePath) -> QueuedMovePathDto {
     QueuedMovePathDto {
         target_col: path.target().col(),
         target_row: path.target().row(),
@@ -113,3 +299,6 @@ fn encode_queued_path(path: &QueuedMovePath) -> QueuedMovePathDto {
             .collect(),
     }
 }
+
+#[cfg(test)]
+mod tests;

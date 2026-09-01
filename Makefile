@@ -2,12 +2,29 @@ SHELL := /bin/sh
 
 RUST_WORKSPACE ?= engine
 RUST_CARGO ?= $(if $(wildcard $(HOME)/.cargo/bin/cargo),$(HOME)/.cargo/bin/cargo,cargo)
-GODOT_PROJECT ?= clients/aonw2_godot
-GODOT_BIN ?= $(if $(wildcard /Applications/Godot.app/Contents/MacOS/Godot),/Applications/Godot.app/Contents/MacOS/Godot,godot)
+RUST_DEPENDENCY_REPORT_PATH ?= /tmp/aonw-rust-dependencies.json
+RUST_COVERAGE_REPORT_PATH ?= /tmp/aonw-rust-coverage.json
+RUST_COVERAGE_LCOV_PATH ?= /tmp/aonw-rust-coverage.lcov
+RUST_COVERAGE_SNAPSHOT_PATH ?= /tmp/aonw-rust-coverage-baseline.json
+RUST_PERFORMANCE_REPORT_PATH ?= /tmp/aonw-rust-performance.json
+RUST_PERFORMANCE_SNAPSHOT_PATH ?= /tmp/aonw-rust-performance-baseline.json
+GODOT_PROJECT ?= clients/aonw_godot
+GODOT_PINNED_VERSION := $(strip $(shell cat .godot-version 2>/dev/null))
+GODOT_BOOTSTRAPPED_BIN := $(CURDIR)/.toolchains/godot/$(GODOT_PINNED_VERSION)/godot
+GODOT_BIN ?= $(if $(wildcard $(GODOT_BOOTSTRAPPED_BIN)),$(GODOT_BOOTSTRAPPED_BIN),$(if $(wildcard /Applications/Godot.app/Contents/MacOS/Godot),/Applications/Godot.app/Contents/MacOS/Godot,godot))
 GODOT_TEST_LOG ?= /tmp/aonw-godot-test.log
 GODOT_CHECK_ONLY_LOG ?= /tmp/aonw-godot-check-only.log
 GODOT_RUNTIME_LOG ?= /tmp/aonw-godot-runtime.log
 GODOT_EDITOR_LOG ?= /tmp/aonw-godot-editor.log
+GODOT_PROBE_LOG ?= /tmp/aonw-godot-map-render-probe.log
+GODOT_VISUAL_EVIDENCE_LOG ?= /tmp/aonw-godot-stage-1-visual-evidence.log
+MAP_RENDER_PROBE_DIR ?= /tmp/aonw-map-render-probes
+MAP_RENDER_PROBE_SCENARIO := $(CURDIR)/aonw_tests/fixtures/render/map_render_probe_scenarios.json
+FLUTTER_MAP_RENDER_PROBE := $(abspath $(MAP_RENDER_PROBE_DIR))/flutter.json
+FLUTTER_MAP_RENDER_DIAGNOSTICS := $(abspath $(MAP_RENDER_PROBE_DIR))/flutter-diagnostics.json
+GODOT_MAP_RENDER_PROBE := $(abspath $(MAP_RENDER_PROBE_DIR))/godot.json
+GODOT_MAP_RENDER_DIAGNOSTICS := $(abspath $(MAP_RENDER_PROBE_DIR))/godot-diagnostics.json
+STAGE_1_EVIDENCE_DIR := $(CURDIR)/docs/acceptance/stage-1
 
 LOCAL_FLUTTER_BIN := $(CURDIR)/.fvm/flutter_sdk/bin
 ifneq ($(wildcard $(LOCAL_FLUTTER_BIN)/flutter),)
@@ -29,6 +46,8 @@ HOMEPAGE_HEALTH_URL ?= https://aonw.net/
 ARCHITECTURE_HEALTH_URL ?= https://aonw.net/architecture
 STATS_HEALTH_URL ?= https://aonw.net/stats
 STATS_API_HEALTH_URL ?= https://aonw.net/api/stats
+ENGINE_DOCS_HEALTH_URL ?= https://engine.aonw.net/
+ENGINE_DOCS_API_HEALTH_URL ?= https://engine.aonw.net/aonw_engine/
 HEALTH_ATTEMPTS ?= 30
 HEALTH_SLEEP ?= 2
 PRUNE ?= 1
@@ -90,6 +109,9 @@ REMOTE_DEPLOY_HOST ?= $(WEB_DEPLOY_HOST)
 REMOTE_DEPLOY_PATH ?=
 HOMEPAGE_SOURCE_DIR ?= deploy/homepage
 HOMEPAGE_BUILD_DIR ?= build/homepage
+ENGINE_DOCS_SOURCE_DIR ?= deploy/engine-docs
+ENGINE_DOCS_BUILD_DIR ?= build/engine-docs
+ENGINE_DOCS_DEPLOY_DEST ?=
 IOS_API_BASE_URL ?= https://api.aonw.net
 DEPLOY_ALL_IOS_MODE ?= best-effort
 # Removed aggregate-release option. A non-empty legacy value is rejected by
@@ -218,7 +240,10 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check rust-check rust-format-check rust-clippy rust-test rust-doc rust-benchmark rust-flutter-test rust-engine-oracle rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs
+.PHONY: help bootstrap toolchain-check p0-check legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test rust-engine-inventory-ast-check rust-determinism-inventory-check rust-determinism-inventory-test rust-determinism-check rust-fixture-disposition-check rust-fixture-disposition-test rust-corpus-parity-check rust-architecture-check rust-architecture-policy-check rust-architecture-policy-test rust-dependency-check rust-dependency-policy-check rust-dependency-policy-test rust-check rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke rust-benchmark rust-flutter-test rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check assets-compile assets-verify assets-check assets-reproduce format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage stage-engine-docs build-engine-docs deploy-engine-docs deploy-engine-docs-files download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats health-engine-docs prune status logs godot-toolchain-check terrain3d-check godot-terrain-compile successor-map-contract-test successor-flutter-dependencies successor-flutter-format-check successor-flutter-analyze successor-flutter-test successor-flutter-check successor-flutter-coverage-report successor-flutter-device-test successor-flutter-fm4-pilot successor-flutter-fm5-baseline successor-flutter-run godot-map-bundle-check map-stage-1-check stage-1-visual-evidence rust-tool-versions rust-evidence-tool-versions rust-coverage-check rust-coverage-report rust-coverage-policy-test rust-coverage-snapshot rust-performance-check rust-performance-report rust-performance-policy-test rust-performance-snapshot rust-test-release rust-native-assets-contract-test rust-foundation-check rust-turn-kernel-check rust-diplomacy-policy-check rust-tech-gate-check rust-movement-logistics-check rust-combat-check rust-city-check rust-worker-check successor-engine-check successor-engine-evidence-check successor-engine-quality-check successor-engine-deep-check
+
+.PHONY: rust-integrated-turn-check rust-ai-ledger-check rust-ai-strength-check rust-ai-check rust-persistence-check
+.PHONY: rust-security-policy-test rust-security-policy-check rust-security-tool-versions rust-mutation-check rust-fuzz-smoke rust-miri-check rust-ffi-sanitizer-check rust-engine-security-check rust-release-metadata-policy-test rust-release-metadata-policy-check rust-release-metadata-tool-versions rust-release-metadata-check rust-engine-completion-check
 
 help:
 	@echo "AONW deploy helpers"
@@ -229,18 +254,51 @@ help:
 	@echo "  make deploy steam  Build Steam macOS + Windows ZIPs into dist/"
 	@echo ""
 	@echo "Individual targets:"
-	@echo "  make bootstrap    LOCAL: verify pinned Flutter/Dart, install all lockfiles, and ensure Serverpod CLI"
+	@echo "  make bootstrap    LOCAL: install pinned toolchains and all locked dependencies"
 	@echo "  make toolchain-check LOCAL: verify .fvmrc Flutter and its bundled Dart are active"
+	@echo "  make p0-check      LOCAL: verify legacy freeze, successor boundaries and Rust migration inventory"
+	@echo "  make successor-map-contract-test LOCAL: verify shared geometry and deterministic starter bundle"
+	@echo "  make successor-flutter-check LOCAL: format, analyze, and test the Rust-backed successor client"
+	@echo "  make successor-flutter-coverage-report LOCAL: write successor client LCOV after the full test suite"
+	@echo "  make successor-flutter-device-test LOCAL: build and exercise the standalone client on macOS"
+	@echo "  make successor-flutter-fm5-baseline LOCAL: validate the production Flame cutover performance budget"
+	@echo "  make successor-flutter-run LOCAL: run the standalone Rust-backed client on macOS"
+	@echo "  make map-stage-1-check LOCAL: compare Flutter and Godot semantic map probes"
+	@echo "  make stage-1-visual-evidence LOCAL: regenerate the reviewed map screenshots"
 	@echo "  make rust-check   LOCAL: format, lint, test, and document the Rust workspace"
+	@echo "  make stage-engine-docs LOCAL: refresh the landing page around the last successful Rust API docs"
+	@echo "  make build-engine-docs LOCAL: generate current Rust API docs with the AoNW Engine landing page"
+	@echo "  make deploy-engine-docs LOCAL: build and rsync current local Rust docs to engine.aonw.net"
+	@echo "  make rust-determinism-check LOCAL: verify named inputs and debug/release replay parity"
+	@echo "  make rust-corpus-parity-check LOCAL: verify reviewed 120-case dispositions and active Rust parity"
+	@echo "  make rust-architecture-check LOCAL: verify Rust crate edges, pure boundaries, unsafe census and source ratchet"
+	@echo "  make rust-dependency-check LOCAL: verify pinned Rust licenses, sources and duplicate ratchet"
+	@echo "  make rust-coverage-check LOCAL: generate LCOV/JSON and enforce the per-crate Rust ratchet"
+	@echo "  make rust-performance-check LOCAL: enforce Rust signatures, work, payload and allocation ceilings"
+	@echo "  make rust-turn-kernel-check LOCAL: verify T1 player/system lifecycle, replay and budgets"
+	@echo "  make rust-diplomacy-policy-check LOCAL: verify DP hostility, entry, attack, automation, trade and disclosure"
+	@echo "  make rust-tech-gate-check LOCAL: verify canonical technology catalog, costs, prerequisites and unlock gates"
+	@echo "  make rust-combat-check LOCAL: verify C3 combat, deterministic rolls, replay and budgets"
+	@echo "  make rust-city-check LOCAL: verify C4 city founding, territory, replay and budgets"
+	@echo "  make rust-worker-check LOCAL: verify W5 workers, automation, infrastructure, replay and budgets"
+	@echo "  make rust-integrated-turn-check LOCAL: verify O9 outcome, integrated turn, replay and bounded soak"
+	@echo "  make rust-ai-check LOCAL: verify A10 deterministic planners through public runtime commands"
+	@echo "  make rust-ai-strength-check LOCAL: verify the pinned AI league and full multi-AI game"
+	@echo "  make successor-engine-check LOCAL: run the fast successor engine quality gate"
+	@echo "  make successor-engine-evidence-check LOCAL: generate parity, coverage and performance evidence"
+	@echo "  make successor-engine-deep-check LOCAL: run scheduled release-mode successor checks"
 	@echo "  make rust-benchmark LOCAL: report Rust map and movement baseline timings"
 	@echo "  make rust-flutter-test LOCAL: test Flutter package_ffi stub and Rust adapter"
-	@echo "  make rust-engine-oracle LOCAL: regenerate the reviewed current Rust corpus"
 	@echo "  make rust-godot-build LOCAL: build the Rust GDExtension for Godot"
-	@echo "  make godot-editor LOCAL: open AoNW2 with the Map Workbench dock"
-	@echo "  make godot-run    LOCAL: run the AoNW2 map preview"
+	@echo "  make godot-toolchain-check LOCAL: verify the exact pinned Godot build"
+	@echo "  make terrain3d-check LOCAL: verify the pinned Terrain3D addon"
+	@echo "  make godot-terrain-compile LOCAL: compile versioned terrain profiles for Terrain3D"
+	@echo "  make godot-editor LOCAL: open AoNW with the Map Workbench dock"
+	@echo "  make godot-run    LOCAL: run the AoNW map preview"
 	@echo "  make godot-check  LOCAL: run Godot map tests and an editor/plugin smoke test"
-	@echo "  make godot-map-sync LOCAL: refresh the bundled starter from shared content"
-	@echo "  make dependencies LOCAL: install all four package graphs from committed lockfiles"
+	@echo "  make godot-map-sync LOCAL: compile the self-contained starter map bundle"
+	@echo "  make godot-map-bundle-check LOCAL: verify the committed starter bundle is reproducible"
+	@echo "  make dependencies LOCAL: install all five package graphs from committed lockfiles"
 	@echo "  make local        LOCAL: start Docker API, seed users, and run Flutter Web on OAuth origin localhost:7357"
 	@echo "  make local-start  LOCAL: start Docker API and seed four reusable multiplayer users"
 	@echo "  make local-multiplayer-smoke LOCAL: verify quickplay, streams, commands, reconnect, and event history"
@@ -463,63 +521,361 @@ bootstrap:
 toolchain-check:
 	@tool/check_toolchain.sh
 
-rust-check: rust-format-check rust-clippy rust-test rust-doc
+p0-check: legacy-freeze dependency-boundaries successor-boundary-test rust-engine-inventory-check rust-engine-inventory-test rust-determinism-inventory-check rust-determinism-inventory-test rust-fixture-disposition-check rust-fixture-disposition-test
+
+legacy-freeze:
+	@tool/check_legacy_freeze.sh
+
+dependency-boundaries:
+	@tool/check_successor_dependencies.sh
+
+successor-boundary-test:
+	@tool/test_successor_boundaries.sh
+
+rust-engine-inventory-check:
+	@tool/check_rust_engine_inventory.sh
+
+rust-engine-inventory-test:
+	@tool/test_rust_engine_inventory.sh
+
+rust-engine-inventory-ast-check: root-dependencies
+	@flutter test --no-pub test/architecture/rust_engine_migration_inventory_test.dart
+
+rust-determinism-inventory-check:
+	@tool/check_rust_determinism_inventory.sh
+
+rust-determinism-inventory-test:
+	@tool/test_rust_determinism_inventory.sh
+
+rust-determinism-check: rust-determinism-inventory-check rust-determinism-inventory-test
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test local_session deterministic_replay_signature_is_stable
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --release -p aonw_local_runtime --test local_session deterministic_replay_signature_is_stable
+
+rust-fixture-disposition-check:
+	@tool/check_rust_fixture_dispositions.sh
+
+rust-fixture-disposition-test:
+	@tool/test_rust_fixture_dispositions.sh
+
+rust-corpus-parity-check: rust-fixture-disposition-check rust-fixture-disposition-test
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test canonical_fixture_engine review::reviewed_reducer_dispositions_gate_execution_by_capability -- --exact
+
+rust-architecture-policy-check:
+	@tool/check_rust_architecture.py
+
+rust-architecture-policy-test:
+	@tool/test_rust_architecture.py
+
+rust-architecture-check: rust-architecture-policy-check rust-architecture-policy-test
+
+rust-dependency-policy-check:
+	@tool/check_rust_dependencies.py --report "$(RUST_DEPENDENCY_REPORT_PATH)"
+
+rust-dependency-policy-test:
+	@tool/test_rust_dependencies.py
+
+rust-dependency-check: rust-dependency-policy-check rust-dependency-policy-test
+
+rust-coverage-policy-test:
+	@tool/test_rust_coverage.py
+
+rust-coverage-report: rust-evidence-tool-versions
+	@tool/check_rust_coverage.py report --report "$(RUST_COVERAGE_REPORT_PATH)" --lcov "$(RUST_COVERAGE_LCOV_PATH)"
+
+rust-coverage-check: rust-coverage-policy-test rust-evidence-tool-versions
+	@tool/check_rust_coverage.py check --report "$(RUST_COVERAGE_REPORT_PATH)" --lcov "$(RUST_COVERAGE_LCOV_PATH)"
+
+rust-coverage-snapshot: rust-evidence-tool-versions
+	@tool/check_rust_coverage.py snapshot --report "$(RUST_COVERAGE_REPORT_PATH)" --lcov "$(RUST_COVERAGE_LCOV_PATH)" --snapshot "$(RUST_COVERAGE_SNAPSHOT_PATH)"
+
+rust-performance-policy-test:
+	@tool/test_rust_performance.py
+
+rust-performance-report:
+	@tool/check_rust_performance.py report --report "$(RUST_PERFORMANCE_REPORT_PATH)"
+
+rust-performance-check: rust-performance-policy-test
+	@tool/check_rust_performance.py check --report "$(RUST_PERFORMANCE_REPORT_PATH)"
+
+rust-performance-snapshot:
+	@tool/check_rust_performance.py snapshot --report "$(RUST_PERFORMANCE_REPORT_PATH)" --snapshot "$(RUST_PERFORMANCE_SNAPSHOT_PATH)"
+
+rust-tool-versions:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) --version
+	@cd "$(RUST_WORKSPACE)" && rustc --version
+	@cargo-deny --version
+
+rust-evidence-tool-versions:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) --version
+	@cd "$(RUST_WORKSPACE)" && rustc --version
+	@cd "$(RUST_WORKSPACE)" && cargo llvm-cov --version
+
+rust-native-assets-contract-test: root-dependencies
+	@dart test packages/aonw_rust_client/test/build_hook_test.dart
+
+rust-foundation-check: rust-corpus-parity-check rust-performance-check
+
+rust-turn-kernel-check: rust-engine-inventory-check rust-performance-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test turn_kernel
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test turn_kernel_runtime
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts --test client_contract
+
+rust-diplomacy-policy-check: rust-engine-inventory-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test diplomacy_policy
+
+rust-tech-gate-check: rust-engine-inventory-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_content
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test technology_gate
+
+rust-movement-logistics-check: rust-engine-inventory-check rust-performance-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test movement_logistics
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test movement_logistics_runtime
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts
+
+rust-combat-check: rust-engine-inventory-check rust-determinism-check rust-diplomacy-policy-check rust-tech-gate-check rust-performance-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test combat
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test combat_runtime
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts
+
+rust-city-check: rust-engine-inventory-check rust-corpus-parity-check rust-performance-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test city
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test city_runtime
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts
+
+rust-worker-check: rust-engine-inventory-check rust-corpus-parity-check rust-tech-gate-check rust-performance-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test worker
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test worker_runtime
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts
+
+rust-integrated-turn-check: rust-engine-inventory-check rust-corpus-parity-check rust-determinism-check rust-performance-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_domain --test outcome_invariants
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test outcome
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_engine --test turn_kernel
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test turn_kernel_runtime
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contract_mapping --test game_state_contract
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts
+
+rust-ai-ledger-check:
+	@tool/check_rust_ai_ledger.py
+
+rust-ai-strength-check: rust-ai-ledger-check rust-performance-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_ai --test strength_gate
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_ai --test full_game
+
+rust-ai-check: rust-ai-ledger-check rust-engine-inventory-check rust-determinism-inventory-check rust-determinism-inventory-test rust-performance-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_ai --all-features
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --release -p aonw_ai --test deterministic_search mcts_is_identical_for_the_same_state_seed_and_budget -- --exact
+
+rust-replacement-surface-check:
+	@tool/check_rust_replacement_surface.py
+
+rust-restore-matrix-check:
+	@tool/check_rust_restore_matrix.py
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime \
+		--test artifact_runtime \
+		--test city_runtime \
+		--test combat_runtime \
+		--test diplomacy_runtime \
+		--test movement_logistics_runtime \
+		--test production_runtime \
+		--test research_runtime \
+		--test turn_kernel_runtime \
+		--test worker_runtime
+
+rust-persistence-check: rust-replacement-surface-check rust-restore-matrix-check rust-engine-inventory-check rust-determinism-inventory-check rust-determinism-inventory-test rust-performance-check
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_contracts persistence::tests
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --lib persistence_file::tests
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test persistence_hardening
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked -p aonw_local_runtime --test local_session deterministic_replay_signature_is_stable -- --exact
+
+rust-security-policy-test:
+	@tool/test_rust_security.py
+
+rust-security-policy-check: rust-security-policy-test
+	@tool/check_rust_security.py policy
+
+rust-security-tool-versions: rust-security-policy-check
+	@tool/check_rust_security.py tools
+
+rust-mutation-check: rust-security-policy-check
+	@tool/check_rust_security.py mutation
+
+rust-fuzz-smoke: rust-security-policy-check
+	@cargo fmt --manifest-path engine/fuzz/Cargo.toml -- --check
+	@cargo metadata --manifest-path engine/fuzz/Cargo.toml --locked --no-deps --format-version 1 >/dev/null
+	@tool/check_rust_security.py fuzz
+
+rust-miri-check: rust-security-policy-check
+	@tool/check_rust_security.py miri
+
+rust-ffi-sanitizer-check: rust-security-policy-check
+	@tool/check_rust_security.py sanitizers
+
+rust-engine-security-check: rust-mutation-check rust-fuzz-smoke rust-miri-check rust-ffi-sanitizer-check
+
+rust-release-metadata-policy-test:
+	@tool/test_rust_release_metadata.py
+
+rust-release-metadata-policy-check: rust-release-metadata-policy-test
+	@tool/check_rust_release_metadata.py policy
+
+rust-release-metadata-tool-versions: rust-release-metadata-policy-check
+	@tool/check_rust_release_metadata.py tools
+
+rust-release-metadata-check: rust-release-metadata-policy-check
+	@tool/check_rust_release_metadata.py check
+
+successor-engine-check: rust-tool-versions p0-check rust-check rust-architecture-check rust-dependency-check rust-determinism-check rust-security-policy-check rust-release-metadata-policy-check
+
+successor-engine-evidence-check: rust-evidence-tool-versions rust-engine-inventory-ast-check rust-corpus-parity-check rust-coverage-check rust-performance-check
+
+successor-engine-quality-check: successor-engine-check successor-engine-evidence-check rust-native-assets-contract-test
+
+successor-engine-deep-check: successor-engine-check rust-test-release rust-foundation-check rust-release-metadata-check
+
+rust-engine-completion-check: successor-engine-quality-check rust-test-release rust-foundation-check rust-integrated-turn-check rust-ai-strength-check rust-persistence-check rust-engine-security-check rust-release-metadata-check
+
+successor-map-contract-test: root-dependencies successor-flutter-dependencies
+	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/presentation/geometry/odd_q_flat_top_geometry_test.dart
+	@flutter test --no-pub test/tool/map_asset_bundle_compiler_test.dart
+	@dart run tool/assets/compile/starter_map_bundle.dart check
+
+successor-flutter-dependencies: toolchain-check
+	@cd clients/aonw_flutter && flutter pub get --enforce-lockfile
+
+successor-flutter-format-check:
+	@cd clients/aonw_flutter && dart format --output=none --set-exit-if-changed lib test integration_test
+
+successor-flutter-analyze: successor-flutter-dependencies
+	@cd clients/aonw_flutter && flutter analyze --no-pub --fatal-infos --fatal-warnings
+
+successor-flutter-test: successor-flutter-analyze
+	@cd clients/aonw_flutter && flutter test --no-pub
+
+successor-flutter-check: successor-flutter-format-check successor-flutter-test successor-map-contract-test dependency-boundaries
+
+successor-flutter-coverage-report: successor-flutter-dependencies
+	@cd clients/aonw_flutter && flutter test --coverage --no-pub
+
+map-stage-1-check: successor-flutter-dependencies godot-editor-check
+	@mkdir -p "$(abspath $(MAP_RENDER_PROBE_DIR))"
+	@tool/test_compare_map_render_probes.sh
+	@cd clients/aonw_flutter && dart run test/tool/export_map_render_probe.dart \
+		"$(MAP_RENDER_PROBE_SCENARIO)" \
+		"$(FLUTTER_MAP_RENDER_PROBE)" \
+		"$(FLUTTER_MAP_RENDER_DIAGNOSTICS)"
+	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_PROBE_LOG)" \
+		--path "$(GODOT_PROJECT)" \
+		--script res://tests/export_map_render_probe.gd -- \
+		"$(MAP_RENDER_PROBE_SCENARIO)" \
+		"$(GODOT_MAP_RENDER_PROBE)" \
+		"$(GODOT_MAP_RENDER_DIAGNOSTICS)"
+	@tool/check_godot_log.sh "$(GODOT_PROBE_LOG)" "Godot map render probe: OK"
+	@dart tool/compare_map_render_probes.dart \
+		"$(FLUTTER_MAP_RENDER_PROBE)" \
+		"$(GODOT_MAP_RENDER_PROBE)" \
+		"$(MAP_RENDER_PROBE_SCENARIO)" \
+		"$(FLUTTER_MAP_RENDER_DIAGNOSTICS)" \
+		"$(GODOT_MAP_RENDER_DIAGNOSTICS)"
+
+stage-1-visual-evidence: successor-flutter-dependencies godot-editor-check
+	@mkdir -p "$(STAGE_1_EVIDENCE_DIR)"
+	@cd clients/aonw_flutter && flutter test --no-pub \
+		--update-goldens \
+		test/visual/stage_1_visual_evidence.dart \
+		--dart-define=AONW_STAGE_1_EVIDENCE_DIR="$(STAGE_1_EVIDENCE_DIR)"
+	@"$(GODOT_BIN)" --log-file "$(GODOT_VISUAL_EVIDENCE_LOG)" \
+		--path "$(GODOT_PROJECT)" \
+		--resolution 1280x720 \
+		--script res://tests/export_stage_1_visual_evidence.gd -- \
+		"$(STAGE_1_EVIDENCE_DIR)"
+	@tool/check_godot_log.sh \
+		"$(GODOT_VISUAL_EVIDENCE_LOG)" \
+		"Godot stage 1 visual evidence: OK"
+
+successor-flutter-device-test: successor-flutter-dependencies
+	@cd clients/aonw_flutter && flutter test --no-pub integration_test/inspect_map_native_test.dart
+
+successor-flutter-fm4-pilot: successor-flutter-dependencies
+	@cd clients/aonw_flutter && flutter test --no-dds --no-pub integration_test/fm4_flame_gameplay_pilot_test.dart
+
+successor-flutter-fm5-baseline: successor-flutter-dependencies
+	@cd clients/aonw_flutter && flutter test --no-dds --no-pub integration_test/fm4_flame_gameplay_pilot_test.dart
+
+successor-flutter-run: successor-flutter-dependencies
+	@cd clients/aonw_flutter && flutter run --no-pub -d macos
+
+rust-check: rust-format-check rust-clippy rust-test rust-doc rust-release-compile-smoke
 
 rust-format-check:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) fmt --all -- --check
 
 rust-clippy:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) clippy --workspace --all-targets -- -D warnings
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) clippy --locked --workspace --all-targets --all-features -- -D warnings
 
 rust-test:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --workspace
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --workspace --all-features
+
+rust-test-release:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --release --workspace --all-features
 
 rust-doc:
-	@cd "$(RUST_WORKSPACE)" && RUSTDOCFLAGS="-D warnings" $(RUST_CARGO) doc --workspace --no-deps
+	@cd "$(RUST_WORKSPACE)" && RUSTDOCFLAGS="-D warnings" $(RUST_CARGO) doc --locked --workspace --all-features --no-deps
+
+rust-release-compile-smoke:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked --release --all-features -p aonw_flutter -p aonw_godot
 
 rust-benchmark:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench -p aonw_engine --bench movement
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench -p aonw_local_runtime --bench runtime
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_engine --bench movement
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_local_runtime --bench runtime
 
-rust-flutter-test: root-dependencies
+rust-flutter-test: root-dependencies successor-flutter-dependencies
 	@dart test packages/aonw_rust_client/test
-	@AONW_ENABLE_RUST_FLUTTER=1 dart test packages/aonw_rust_client/test
-
-rust-engine-oracle:
-	@dart run tool/generate_rust_engine_oracle.dart
+	@cd clients/aonw_flutter && flutter test --no-pub test/features/map/infrastructure/native_large_map_smoke_test.dart
 
 rust-godot-build:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build -p aonw_godot
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked -p aonw_godot
 
-godot-native-config:
+godot-terrain-compile:
+	@tool/compile_godot_terrain.sh
+
+godot-toolchain-check:
+	@GODOT_BIN="$(GODOT_BIN)" tool/check_godot_toolchain.sh
+
+terrain3d-check:
+	@tool/check_terrain3d.sh
+
+godot-native-config: terrain3d-check
 	@mkdir -p "$(GODOT_PROJECT)/.godot"
-	@printf '%s\n' 'res://aonw_engine.gdextension' > "$(GODOT_PROJECT)/.godot/extension_list.cfg"
+	@printf '%s\n' 'res://aonw_engine.gdextension' 'res://addons/terrain_3d/terrain.gdextension' > "$(GODOT_PROJECT)/.godot/extension_list.cfg"
 
 godot-check: godot-test
 
-godot-editor-check: rust-godot-build godot-native-config
-	@$(GODOT_BIN) --headless --log-file "$(GODOT_EDITOR_LOG)" --editor --path "$(GODOT_PROJECT)" --quit
+godot-editor-check: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
+	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_EDITOR_LOG)" --editor --path "$(GODOT_PROJECT)" --quit
 	@tool/check_godot_log.sh "$(GODOT_EDITOR_LOG)"
 
-godot-editor: rust-godot-build godot-native-config
-	@$(GODOT_BIN) --editor --path "$(GODOT_PROJECT)"
+godot-editor: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
+	@"$(GODOT_BIN)" --editor --path "$(GODOT_PROJECT)"
 
-godot-run: rust-godot-build godot-native-config
-	@$(GODOT_BIN) --path "$(GODOT_PROJECT)"
+godot-run: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
+	@"$(GODOT_BIN)" --path "$(GODOT_PROJECT)"
 
 godot-test: godot-editor-check
-	@$(GODOT_BIN) --headless --log-file "$(GODOT_CHECK_ONLY_LOG)" --path "$(GODOT_PROJECT)" --check-only --script res://tests/test_map_pipeline.gd
+	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_CHECK_ONLY_LOG)" --path "$(GODOT_PROJECT)" --check-only --script res://tests/test_map_pipeline.gd
 	@tool/check_godot_log.sh "$(GODOT_CHECK_ONLY_LOG)"
-	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --path "$(GODOT_PROJECT)" --script res://tests/test_map_pipeline.gd
+	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_TEST_LOG)" --path "$(GODOT_PROJECT)" --script res://tests/test_map_pipeline.gd
 	@tool/check_godot_log.sh "$(GODOT_TEST_LOG)" "map pipeline: OK"
-	@$(GODOT_BIN) --headless --log-file "$(GODOT_RUNTIME_LOG)" --path "$(GODOT_PROJECT)" --quit-after 5
+	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_RUNTIME_LOG)" --path "$(GODOT_PROJECT)" --quit-after 5
 	@tool/check_godot_log.sh "$(GODOT_RUNTIME_LOG)"
 
 godot-map-sync:
-	@mkdir -p "$(GODOT_PROJECT)/assets/maps/aonw2_starter"
-	@cp content/maps/aonw2_starter/map.json "$(GODOT_PROJECT)/assets/maps/aonw2_starter/map.json"
+	@dart run tool/assets/compile/starter_map_bundle.dart compile
 
-dependencies: root-dependencies core-dependencies client-dependencies server-dependencies
+godot-map-bundle-check:
+	@dart run tool/assets/compile/starter_map_bundle.dart check
+
+dependencies: root-dependencies successor-flutter-dependencies core-dependencies client-dependencies server-dependencies
 
 root-dependencies: toolchain-check
 	@flutter pub get --enforce-lockfile
@@ -533,7 +889,7 @@ client-dependencies: toolchain-check
 server-dependencies: toolchain-check
 	@cd server && dart pub get --enforce-lockfile
 
-ci: generated-code-check format-check analyze architecture-check mutation-check performance-check coverage-check client-test
+ci: successor-engine-quality-check generated-code-check format-check analyze architecture-check mutation-check performance-check coverage-check client-test
 
 format-check: dependencies
 	@files=$$(git ls-files -- '*.dart' \
@@ -564,7 +920,7 @@ server-analyze: server-dependencies
 
 architecture: architecture-check
 
-architecture-check: root-dependencies
+architecture-check: root-dependencies rust-engine-inventory-ast-check
 	@dart run tool/check_architecture.dart check --ratchet-ref "$(ARCHITECTURE_RATCHET_REF)"
 	@dart run tool/check_architecture_aggregates.dart check --ratchet-ref "$(ARCHITECTURE_RATCHET_REF)"
 
@@ -652,7 +1008,7 @@ coverage-snapshot: coverage-reports
 
 flutter-coverage-report: root-dependencies coverage-directory
 	@rm -rf "$(CURDIR)/build/test_cache"
-	@flutter test --no-pub --concurrency=1 --coverage --coverage-package='^aonw$$' --coverage-path="$(CURDIR)/coverage/root.lcov.info" --reporter=failures-only
+	@flutter test --no-pub --concurrency=2 --coverage --coverage-package='^aonw$$' --coverage-path="$(CURDIR)/coverage/root.lcov.info" --reporter=failures-only
 
 core-coverage-report: core-dependencies coverage-directory
 	@cd packages/aonw_core && dart test --concurrency=1 --coverage-package='^aonw_core$$' --coverage-path="$(CURDIR)/coverage/core.lcov.info" --reporter=failures-only
@@ -786,6 +1142,7 @@ infra-config-check: docker-context-check
 	@docker run --rm --entrypoint /usr/bin/caddy \
 		-e AONW_API_HOST=api.example.test \
 		-e AONW_HOMEPAGE_HOST=example.test \
+		-e AONW_ENGINE_DOCS_HOST=engine.example.test \
 		-e AONW_DEMO_HOST=demo.example.test \
 		-e AONW_UPSTREAM=server:8080 \
 		-e AONW_WEB_UPSTREAM=server:8082 \
@@ -852,11 +1209,14 @@ build-homepage:
 	@test -f "$(HOMEPAGE_SOURCE_DIR)/stats/index.html" || { echo "$(HOMEPAGE_SOURCE_DIR)/stats/index.html not found"; exit 1; }
 	@test -f assets/logo.png || { echo "assets/logo.png not found"; exit 1; }
 	@test -f assets/aonw-mobile.png || { echo "assets/aonw-mobile.png not found"; exit 1; }
+	@test -f assets/fonts/AlbertSans-VariableFont_wght.ttf || { echo "assets/fonts/AlbertSans-VariableFont_wght.ttf not found"; exit 1; }
+	@test -f assets/fonts/AlbertSans-OFL.txt || { echo "assets/fonts/AlbertSans-OFL.txt not found"; exit 1; }
 	@test -f assets/fonts/Cinzel-VariableFont_wght.ttf || { echo "assets/fonts/Cinzel-VariableFont_wght.ttf not found"; exit 1; }
 	@test -f assets/fonts/Lato-Light.ttf || { echo "assets/fonts/Lato-Light.ttf not found"; exit 1; }
 	@test -f assets/fonts/Lato-Regular.ttf || { echo "assets/fonts/Lato-Regular.ttf not found"; exit 1; }
 	@test -f assets/fonts/Lato-Bold.ttf || { echo "assets/fonts/Lato-Bold.ttf not found"; exit 1; }
 	@test -f assets/main_menu/background.png || { echo "assets/main_menu/background.png not found"; exit 1; }
+	@test -f assets/main_menu/background.jpg || { echo "assets/main_menu/background.jpg not found"; exit 1; }
 	@test -f assets/homepage/platform-icons/android.svg || { echo "assets/homepage/platform-icons/android.svg not found"; exit 1; }
 	@test -f assets/homepage/platform-icons/apple.svg || { echo "assets/homepage/platform-icons/apple.svg not found"; exit 1; }
 	@test -f assets/homepage/platform-icons/contact.svg || { echo "assets/homepage/platform-icons/contact.svg not found"; exit 1; }
@@ -878,11 +1238,14 @@ build-homepage:
 	@cp web/icons/Icon-192.png "$(HOMEPAGE_BUILD_DIR)/apple-touch-icon.png"
 	@cp assets/logo.png "$(HOMEPAGE_BUILD_DIR)/assets/logo.png"
 	@cp assets/aonw-mobile.png "$(HOMEPAGE_BUILD_DIR)/assets/aonw-mobile.png"
+	@cp assets/fonts/AlbertSans-VariableFont_wght.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/AlbertSans-VariableFont_wght.ttf"
+	@cp assets/fonts/AlbertSans-OFL.txt "$(HOMEPAGE_BUILD_DIR)/assets/fonts/AlbertSans-OFL.txt"
 	@cp assets/fonts/Cinzel-VariableFont_wght.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Cinzel-VariableFont_wght.ttf"
 	@cp assets/fonts/Lato-Light.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Light.ttf"
 	@cp assets/fonts/Lato-Regular.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Regular.ttf"
 	@cp assets/fonts/Lato-Bold.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Bold.ttf"
 	@cp assets/main_menu/background.png "$(HOMEPAGE_BUILD_DIR)/assets/main_menu/background.png"
+	@cp assets/main_menu/background.jpg "$(HOMEPAGE_BUILD_DIR)/assets/main_menu/background.jpg"
 	@cp assets/homepage/platform-icons/*.svg "$(HOMEPAGE_BUILD_DIR)/assets/platform-icons/"
 	@rg -F 'data-page="architecture"' "$(HOMEPAGE_BUILD_DIR)/architecture" >/dev/null || { echo "Architecture page marker missing from $(HOMEPAGE_BUILD_DIR)/architecture"; exit 1; }
 	@rg -F 'data-page="multiplayer-stats"' "$(HOMEPAGE_BUILD_DIR)/stats" >/dev/null || { echo "Stats page marker missing from $(HOMEPAGE_BUILD_DIR)/stats"; exit 1; }
@@ -912,6 +1275,64 @@ deploy-homepage-files:
 	@$(MAKE) --no-print-directory health-homepage
 	@$(MAKE) --no-print-directory health-architecture
 	@$(MAKE) --no-print-directory health-stats
+
+# Generates rustdoc from the current local workspace, including uncommitted
+# engine changes, then replaces rustdoc's root with the public presentation page.
+build-engine-docs: rust-doc
+	@$(MAKE) --no-print-directory stage-engine-docs
+
+stage-engine-docs:
+	@command -v perl >/dev/null || { echo "perl is required for build-engine-docs."; exit 1; }
+	@test -f "$(ENGINE_DOCS_SOURCE_DIR)/index.html" || { echo "$(ENGINE_DOCS_SOURCE_DIR)/index.html not found"; exit 1; }
+	@test -f "$(ENGINE_DOCS_SOURCE_DIR)/architecture/index.html" || { echo "$(ENGINE_DOCS_SOURCE_DIR)/architecture/index.html not found"; exit 1; }
+	@test -f "$(RUST_WORKSPACE)/target/doc/aonw_engine/index.html" || { echo "aonw_engine rustdoc output not found"; exit 1; }
+	@test -f assets/logo.png || { echo "assets/logo.png not found"; exit 1; }
+	@test -f assets/main_menu/background.jpg || { echo "assets/main_menu/background.jpg not found"; exit 1; }
+	@test -f assets/fonts/AlbertSans-VariableFont_wght.ttf || { echo "AoNW body font not found"; exit 1; }
+	@test -f assets/fonts/AlbertSans-OFL.txt || { echo "AoNW body font license not found"; exit 1; }
+	@test -f assets/fonts/Cinzel-VariableFont_wght.ttf || { echo "AoNW display font not found"; exit 1; }
+	@test -f web/favicon.png || { echo "web/favicon.png not found"; exit 1; }
+	@rm -rf "$(ENGINE_DOCS_BUILD_DIR)"
+	@mkdir -p "$(ENGINE_DOCS_BUILD_DIR)/architecture" "$(ENGINE_DOCS_BUILD_DIR)/assets/fonts" "$(ENGINE_DOCS_BUILD_DIR)/assets/main_menu"
+	@cp -R "$(RUST_WORKSPACE)/target/doc/." "$(ENGINE_DOCS_BUILD_DIR)/"
+	@cp "$(ENGINE_DOCS_SOURCE_DIR)/index.html" "$(ENGINE_DOCS_BUILD_DIR)/index.html"
+	@cp "$(ENGINE_DOCS_SOURCE_DIR)/architecture/index.html" "$(ENGINE_DOCS_BUILD_DIR)/architecture/index.html"
+	@cp web/favicon.png "$(ENGINE_DOCS_BUILD_DIR)/favicon.png"
+	@cp assets/logo.png "$(ENGINE_DOCS_BUILD_DIR)/assets/logo.png"
+	@cp assets/main_menu/background.jpg "$(ENGINE_DOCS_BUILD_DIR)/assets/main_menu/background.jpg"
+	@cp assets/fonts/AlbertSans-VariableFont_wght.ttf "$(ENGINE_DOCS_BUILD_DIR)/assets/fonts/AlbertSans-VariableFont_wght.ttf"
+	@cp assets/fonts/AlbertSans-OFL.txt "$(ENGINE_DOCS_BUILD_DIR)/assets/fonts/AlbertSans-OFL.txt"
+	@cp assets/fonts/Cinzel-VariableFont_wght.ttf "$(ENGINE_DOCS_BUILD_DIR)/assets/fonts/Cinzel-VariableFont_wght.ttf"
+	@perl -0pi -e 's#\.\./\.\./assets/#assets/#g; s#\.\./\.\./web/favicon\.png#favicon.png#g' \
+	  "$(ENGINE_DOCS_BUILD_DIR)/index.html"
+	@rg -F 'data-page="engine-docs-home"' "$(ENGINE_DOCS_BUILD_DIR)/index.html" >/dev/null || { echo "Engine presentation page marker missing"; exit 1; }
+	@rg -F 'data-page="engine-architecture"' "$(ENGINE_DOCS_BUILD_DIR)/architecture/index.html" >/dev/null || { echo "Engine architecture atlas marker missing"; exit 1; }
+	@rg -F 'assets/main_menu/background.jpg' "$(ENGINE_DOCS_BUILD_DIR)/index.html" >/dev/null || { echo "Engine presentation background missing"; exit 1; }
+	@rg -F 'data-current-crate="aonw_engine"' "$(ENGINE_DOCS_BUILD_DIR)/aonw_engine/index.html" >/dev/null || { echo "aonw_engine rustdoc output is invalid"; exit 1; }
+	@echo "Current local Rust documentation staged in $(ENGINE_DOCS_BUILD_DIR)/"
+
+deploy-engine-docs:
+	@$(MAKE) --no-print-directory build-engine-docs
+	@$(MAKE) --no-print-directory deploy-engine-docs-files
+
+# Upload-only target for a previously staged engine documentation tree.
+deploy-engine-docs-files:
+	@command -v rsync >/dev/null || { echo "rsync is required for deploy-engine-docs."; exit 1; }
+	@test -n "$(WEB_DEPLOY_SSH_KEY)" || { echo "WEB_DEPLOY_SSH_KEY is required."; exit 1; }
+	@test -n "$(WEB_DEPLOY_USER)" || { echo "WEB_DEPLOY_USER is required."; exit 1; }
+	@test -n "$(WEB_DEPLOY_HOST)" || { echo "WEB_DEPLOY_HOST is required."; exit 1; }
+	@test -n "$(ENGINE_DOCS_DEPLOY_DEST)" || { echo "ENGINE_DOCS_DEPLOY_DEST is required."; exit 1; }
+	@test -f "$(WEB_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(WEB_DEPLOY_SSH_KEY)"; exit 1; }
+	@test -f "$(ENGINE_DOCS_BUILD_DIR)/index.html" || { echo "Run make build-engine-docs first."; exit 1; }
+	@test -f "$(ENGINE_DOCS_BUILD_DIR)/architecture/index.html" || { echo "Staged engine architecture atlas not found."; exit 1; }
+	@test -f "$(ENGINE_DOCS_BUILD_DIR)/aonw_engine/index.html" || { echo "Staged aonw_engine rustdoc output not found."; exit 1; }
+	@echo "Uploading $(ENGINE_DOCS_BUILD_DIR)/ -> $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(ENGINE_DOCS_DEPLOY_DEST)/..."
+	@ssh -i "$(WEB_DEPLOY_SSH_KEY)" "$(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST)" 'mkdir -p "$(ENGINE_DOCS_DEPLOY_DEST)"'
+	@rsync -avz --delete-delay --delay-updates \
+	  -e "ssh -i $(WEB_DEPLOY_SSH_KEY)" \
+	  "$(ENGINE_DOCS_BUILD_DIR)/" "$(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(ENGINE_DOCS_DEPLOY_DEST)/"
+	@echo "deploy-engine-docs finished. Checking $(ENGINE_DOCS_HEALTH_URL) ..."
+	@$(MAKE) --no-print-directory health-engine-docs
 
 download-artifacts: itch-prepare download-package
 	@echo "download artifacts ready."
@@ -2142,6 +2563,17 @@ health-stats:
 	  && printf '%s' "$$body" | rg -F '"outcomes":[' >/dev/null \
 	  && printf '%s' "$$body" | rg -F '"turns":{' >/dev/null \
 	  || { echo "Multiplayer statistics API payload is invalid"; exit 1; }
+
+health-engine-docs:
+	@command -v rg >/dev/null || { echo "rg is required for health-engine-docs."; exit 1; }
+	@echo "Checking $(ENGINE_DOCS_HEALTH_URL)"
+	@curl -fsS --max-time 5 "$(ENGINE_DOCS_HEALTH_URL)" \
+	  | rg -F 'data-page="engine-docs-home"' >/dev/null \
+	  || { echo "AoNW Engine presentation page missing or invalid"; exit 1; }
+	@echo "Checking $(ENGINE_DOCS_API_HEALTH_URL)"
+	@curl -fsS --max-time 5 "$(ENGINE_DOCS_API_HEALTH_URL)" \
+	  | rg -F 'data-current-crate="aonw_engine"' >/dev/null \
+	  || { echo "AoNW Engine Rust API documentation missing or invalid"; exit 1; }
 
 health-downloads:
 	@set -e; \

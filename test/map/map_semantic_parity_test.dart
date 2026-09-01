@@ -13,6 +13,8 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/current_content_legacy_fixture.dart';
+
 void main() {
   test(
     'canonical maps preserve all effective pre-cutover tile semantics',
@@ -30,7 +32,7 @@ void main() {
 
       for (final entry in expectedMaps.entries) {
         final map = MapLoader.fromJson(
-          await File('content/maps/${entry.key}/map.json').readAsString(),
+          await loadCurrentMapAsLegacyFixture(entry.key),
         );
         totalTiles += map.tiles.length;
         expect(

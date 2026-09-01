@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
+  "crates/aonw_ai",
   "crates/aonw_content",
   "crates/aonw_contract_mapping",
   "crates/aonw_contracts",
@@ -9,6 +10,12 @@ members = [
   "crates/aonw_flutter",
   "crates/aonw_godot",
   "crates/aonw_local_runtime",
+  "crates/aonw_map_authoring",
+  "crates/aonw_map_compiler",
+  "crates/aonw_map_compiler_cli",
+  "crates/aonw_map_workbench",
+  "crates/aonw_projection",
+  "crates/aonw_server_runtime",
   "crates/aonw_testkit",
 ]
 
@@ -23,13 +30,15 @@ publish = false
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde_json = { version = "1.0", features = ["arbitrary_precision"] }
 sha2 = "0.10"
 godot = "0.5.5"
+exr = { version = "1.74.2", default-features = false }
+stats_alloc = "=0.1.10"
 
 [workspace.lints.rust]
 missing_docs = "warn"
-unsafe_code = "forbid"
+unsafe_code = "deny"
 unreachable_pub = "warn"
 
 [workspace.lints.clippy]

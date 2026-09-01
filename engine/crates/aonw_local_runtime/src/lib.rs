@@ -6,22 +6,43 @@ mod client_protocol;
 mod command_dispatch;
 mod persistence;
 mod persistence_error;
+mod persistence_file;
 mod persistence_validation;
-mod player_view;
 mod prepared_world;
 mod query_cache;
 mod query_dispatch;
 mod session;
+mod turn_dispatch;
 
+pub use aonw_projection::{
+    CityFoundingDraftView, OwnedCityDetailsView, OwnedUnitDetailsView, PendingActionView,
+    PlayerArtifactLocationView, PlayerArtifactView, PlayerCityView, PlayerDiplomacyView,
+    PlayerDiplomaticMessageView, PlayerDiplomaticProposalView, PlayerDiplomaticRelationView,
+    PlayerFieldImprovementView, PlayerResourceTradeAgreementView, PlayerRoadView,
+    PlayerTurnLifecycleView, PlayerUnitView, PlayerViewSnapshot,
+};
 pub use client_protocol::ClientProtocol;
-pub use command_dispatch::{CommandResult, MoveUnitRequest, PlayerViewPatch, UnitActionRequest};
-pub use persistence::{PersistenceError, ReplayVerification, RngState};
-pub use player_view::{PlayerUnitView, PlayerViewSnapshot};
+pub use command_dispatch::{
+    ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CommandResult,
+    DetachTroopRequest, DiplomacyRequest, FoundCityRequest, MerchantCityRequest, MoveUnitRequest,
+    PlayerViewPatch, ProductionCommandRequest, SelectCityExpansionHexRequest,
+    SelectTechnologyRequest, ToggleWorkedHexRequest, UnitActionRequest, WorkerImprovementRequest,
+    WorkerUnitRequest,
+};
+pub use persistence::{PersistenceError, ReplayVerification};
+pub use persistence_file::{PersistenceFileError, PersistenceFileStore, PersistenceRestoreSource};
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{
-    MovementStepView, ReachableRequest, ReachableResult, ReachableTileView, RoutePlanRequest,
-    RoutePlanResult, RuntimeQuery, RuntimeQueryResult,
+    AutoExploreOptionView, CityExpansionOptionsRequest, CityFoundingOptionsRequest,
+    CityWorkedHexOptionsRequest, CityYieldRequest, CombatPreviewRequest, DetachmentOptionView,
+    MerchantDestinationView, MovementStepView, ProductionOptionsRequest, ReachableRequest,
+    ReachableResult, ReachableTileView, ResearchOptionsRequest, RoutePlanRequest, RoutePlanResult,
+    RuntimeQuery, RuntimeQueryResult, StrategicResourceProjectionRequest,
+    UnitLogisticsOptionsRequest, UnitLogisticsOptionsResult, WorkerOptionsRequest,
 };
 pub use session::{
-    LocalRuntime, OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, SessionStamp,
+    ActorHandoffError, AiTurnDriver, AiTurnError, AiTurnExecution, LocalRuntime,
+    MAX_AI_TURN_COMMAND_BUDGET, OpenSession, OpenSessionError, ReplayFrame, RuntimeCapabilities,
+    RuntimeError, SessionStamp,
 };
+pub use turn_dispatch::{FinalizeTimedOutTurnRequest, KickParticipantRequest, TurnCommandRequest};
