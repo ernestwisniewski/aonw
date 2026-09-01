@@ -1,20 +1,54 @@
-use core::cmp::Ordering;
-
-use aonw_contracts::ReplayCommandDto;
-use aonw_domain::{HexCoord, UnitId};
+use aonw_contracts::{ReplayCommandDto, ReplayRecordDto};
+use aonw_domain::{CityConquestAction, CityId, HexCoord, TroopKind, UnitId};
 use aonw_engine::{
-    DomainCommand, DomainEvent, ExecutionEvidence, GameEngine, MoveUnitCommand, UnitActionCommand,
+    AssignMerchantTradeRouteCommand, AttackHexCommand, AutoExploreUnitCommand,
+    CommandRejectionCode, DetachTroopCommand, DomainEvent, ExecutionEvidence, FoundCityCommand,
+    GameEngine, MoveMerchantToCityCommand, MoveUnitCommand, PlayerCommand,
+    SelectCityExpansionHexCommand, ToggleWorkedHexCommand, UnitActionCommand,
 };
 
+mod artifact;
+mod diplomacy;
+mod disclosure;
+mod production;
+mod research;
+mod view_diff;
+mod worker;
+
+pub(crate) use diplomacy::dispatch_diplomacy;
+pub(crate) use disclosure::RecipientDisclosure;
+pub use production::ProductionCommandRequest;
+pub(crate) use production::dispatch_production;
+pub use research::SelectTechnologyRequest;
+pub(crate) use research::dispatch_select_technology;
+pub use view_diff::PlayerViewPatch;
+pub(crate) use view_diff::{ProjectedView, diff_view, unchanged_view};
+pub(crate) use worker::{
+    RuntimeWorkerCommandKind, dispatch_confirm_worker_improvement,
+    dispatch_select_worker_improvement, dispatch_worker_unit,
+};
+pub use worker::{WorkerImprovementRequest, WorkerUnitRequest};
+pub use {artifact::ArtifactCommandRequest, diplomacy::DiplomacyRequest};
+
+/// Current revision-bound visible attack.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct AttackHexRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled attacking unit.
+    pub attacker_unit_id: UnitId,
+    /// Target coordinate.
+    pub defender: HexCoord,
+    /// Requested defeated-city disposition.
+    pub city_conquest_action: CityConquestAction,
+}
+
 use crate::persistence::{replay_context, replay_entry};
-use crate::player_view::{PlayerUnitView, visible_units};
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
 
-const MAX_EVENTS_PER_DISPATCH: usize = 1;
-
 /// Current revision-bound manual-movement command.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct MoveUnitRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
@@ -24,13 +58,77 @@ pub struct MoveUnitRequest {
     pub target: HexCoord,
 }
 
+/// Current revision-bound city-founding command.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct FoundCityRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled founder.
+    pub founder_unit_id: UnitId,
+    /// Complete initial non-center territory.
+    pub controlled_hexes: Box<[HexCoord]>,
+}
+
+/// Current revision-bound manual worked-hex command.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct ToggleWorkedHexRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled city.
+    pub city_id: CityId,
+    /// Non-center controlled coordinate.
+    pub target: HexCoord,
+}
+
+/// Current revision-bound preferred-expansion command.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct SelectCityExpansionHexRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Controlled city.
+    pub city_id: CityId,
+    /// Current engine-owned candidate.
+    pub target: HexCoord,
+}
+
 /// Current revision-bound map-independent unit action.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct UnitActionRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
     /// Unit receiving the action.
     pub unit_id: UnitId,
+}
+
+/// Current revision-bound scout auto-exploration command.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct AutoExploreUnitRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Scout receiving the command.
+    pub unit_id: UnitId,
+}
+
+/// Current revision-bound merchant destination command.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct MerchantCityRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Merchant receiving the command.
+    pub unit_id: UnitId,
+    /// Owned destination city.
+    pub destination_city_id: CityId,
+}
+
+/// Current revision-bound troop-detachment command.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct DetachTroopRequest {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Source army unit.
+    pub unit_id: UnitId,
+    /// Troop kind to detach.
+    pub troop_kind: TroopKind,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -40,32 +138,20 @@ pub(crate) enum RuntimeUnitActionKind {
     Fortify,
 }
 
-/// Recipient-safe view delta produced by one dispatch.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PlayerViewPatch {
-    /// Revision the patch applies to.
-    pub from_revision: u64,
-    /// Revision after the patch.
-    pub to_revision: u64,
-    /// New or changed visible units.
-    pub upserted_units: Box<[PlayerUnitView]>,
-    /// Units no longer visible.
-    pub removed_unit_ids: Box<[UnitId]>,
-}
-
 /// Complete local result of one authoritative command dispatch.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommandResult {
     /// Version and authoritative identity metadata.
     pub stamp: SessionStamp,
     /// Stable rejection code, absent when accepted.
-    pub rejection: Option<&'static str>,
+    pub rejection: Option<CommandRejectionCode>,
     /// Ordered authoritative events.
     pub events: Box<[DomainEvent]>,
     /// Exact execution evidence.
     pub evidence: Option<ExecutionEvidence>,
     /// Recipient-safe presentation delta.
     pub view_patch: PlayerViewPatch,
+    pub(crate) recipient_disclosure: RecipientDisclosure,
 }
 
 impl CommandResult {
@@ -74,6 +160,82 @@ impl CommandResult {
     pub const fn is_accepted(&self) -> bool {
         self.rejection.is_none()
     }
+}
+
+pub(crate) fn dispatch_found_city(
+    session: &mut Session,
+    command: &FoundCityRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::FoundCity(FoundCityCommand::new(
+            command.expected_revision,
+            &command.founder_unit_id,
+            &command.controlled_hexes,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::FoundCity {
+                expected_revision: command.expected_revision,
+                founder_unit_id: command.founder_unit_id.as_str().to_owned(),
+                controlled_hexes: command
+                    .controlled_hexes
+                    .iter()
+                    .map(|coordinate| aonw_contracts::CoordinateDto {
+                        col: coordinate.col(),
+                        row: coordinate.row(),
+                    })
+                    .collect(),
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_toggle_worked_hex(
+    session: &mut Session,
+    command: &ToggleWorkedHexRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::ToggleWorkedHex(ToggleWorkedHexCommand::new(
+            command.expected_revision,
+            &command.city_id,
+            command.target,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::ToggleWorkedHex {
+                expected_revision: command.expected_revision,
+                city_id: command.city_id.as_str().to_owned(),
+                target: aonw_contracts::CoordinateDto {
+                    col: command.target.col(),
+                    row: command.target.row(),
+                },
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_select_city_expansion_hex(
+    session: &mut Session,
+    command: &SelectCityExpansionHexRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::SelectCityExpansionHex(SelectCityExpansionHexCommand::new(
+            command.expected_revision,
+            &command.city_id,
+            command.target,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::SelectCityExpansionHex {
+                expected_revision: command.expected_revision,
+                city_id: command.city_id.as_str().to_owned(),
+                target: aonw_contracts::CoordinateDto {
+                    col: command.target.col(),
+                    row: command.target.row(),
+                },
+            },
+        },
+    )
 }
 
 pub(crate) fn dispatch_move(
@@ -88,14 +250,129 @@ pub(crate) fn dispatch_move(
             row: command.target.row(),
         },
     };
-    dispatch_domain(
+    dispatch_player(
         session,
-        DomainCommand::MoveUnit(MoveUnitCommand::new(
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(
             command.expected_revision,
             &command.unit_id,
             command.target,
         )),
-        replay_command,
+        ReplayRecordDto::Player {
+            command: replay_command,
+        },
+    )
+}
+
+pub(crate) fn dispatch_attack(
+    session: &mut Session,
+    command: &AttackHexRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::AttackHex(
+            AttackHexCommand::new(
+                command.expected_revision,
+                &command.attacker_unit_id,
+                command.defender,
+            )
+            .with_city_conquest_action(command.city_conquest_action),
+        ),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::AttackHex {
+                expected_revision: command.expected_revision,
+                attacker_unit_id: command.attacker_unit_id.as_str().to_owned(),
+                defender: aonw_contracts::CoordinateDto {
+                    col: command.defender.col(),
+                    row: command.defender.row(),
+                },
+                city_conquest_action: match command.city_conquest_action {
+                    CityConquestAction::Capture => aonw_contracts::CityConquestActionDto::Capture,
+                    CityConquestAction::Destroy => aonw_contracts::CityConquestActionDto::Destroy,
+                },
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_auto_explore(
+    session: &mut Session,
+    command: &AutoExploreUnitRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::AutoExploreUnit(AutoExploreUnitCommand::new(
+            command.expected_revision,
+            &command.unit_id,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::AutoExploreUnit {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_assign_merchant_route(
+    session: &mut Session,
+    command: &MerchantCityRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::AssignMerchantTradeRoute(AssignMerchantTradeRouteCommand::new(
+            command.expected_revision,
+            &command.unit_id,
+            &command.destination_city_id,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::AssignMerchantTradeRoute {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+                destination_city_id: command.destination_city_id.as_str().to_owned(),
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_move_merchant_to_city(
+    session: &mut Session,
+    command: &MerchantCityRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::MoveMerchantToCity(MoveMerchantToCityCommand::new(
+            command.expected_revision,
+            &command.unit_id,
+            &command.destination_city_id,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::MoveMerchantToCity {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+                destination_city_id: command.destination_city_id.as_str().to_owned(),
+            },
+        },
+    )
+}
+
+pub(crate) fn dispatch_detach_troop(
+    session: &mut Session,
+    command: &DetachTroopRequest,
+) -> Result<CommandResult, RuntimeError> {
+    dispatch_player(
+        session,
+        PlayerCommand::DetachTroop(DetachTroopCommand::new(
+            command.expected_revision,
+            &command.unit_id,
+            command.troop_kind,
+        )),
+        ReplayRecordDto::Player {
+            command: ReplayCommandDto::DetachTroop {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+                troop_kind: aonw_contract_mapping::encode_troop(command.troop_kind),
+            },
+        },
     )
 }
 
@@ -105,159 +382,96 @@ pub(crate) fn dispatch_unit_action(
     kind: RuntimeUnitActionKind,
 ) -> Result<CommandResult, RuntimeError> {
     let engine_command = UnitActionCommand::new(command.expected_revision, &command.unit_id);
-    let (domain_command, replay_command) = match kind {
+    let (player_command, replay_command) = match kind {
         RuntimeUnitActionKind::Cancel => (
-            DomainCommand::CancelUnitAction(engine_command),
+            PlayerCommand::CancelUnitAction(engine_command),
             ReplayCommandDto::CancelUnitAction {
                 expected_revision: command.expected_revision,
                 unit_id: command.unit_id.as_str().to_owned(),
             },
         ),
         RuntimeUnitActionKind::Skip => (
-            DomainCommand::SkipUnitTurn(engine_command),
+            PlayerCommand::SkipUnitTurn(engine_command),
             ReplayCommandDto::SkipUnitTurn {
                 expected_revision: command.expected_revision,
                 unit_id: command.unit_id.as_str().to_owned(),
             },
         ),
         RuntimeUnitActionKind::Fortify => (
-            DomainCommand::FortifyUnit(engine_command),
+            PlayerCommand::FortifyUnit(engine_command),
             ReplayCommandDto::FortifyUnit {
                 expected_revision: command.expected_revision,
                 unit_id: command.unit_id.as_str().to_owned(),
             },
         ),
     };
-    dispatch_domain(session, domain_command, replay_command)
+    dispatch_player(
+        session,
+        player_command,
+        ReplayRecordDto::Player {
+            command: replay_command,
+        },
+    )
 }
 
-fn dispatch_domain(
+pub(crate) fn dispatch_player(
     session: &mut Session,
-    command: DomainCommand<'_>,
-    replay_command: ReplayCommandDto,
+    command: PlayerCommand<'_>,
+    replay_record: ReplayRecordDto,
 ) -> Result<CommandResult, RuntimeError> {
-    session.ensure_event_capacity(MAX_EVENTS_PER_DISPATCH)?;
+    let event_reservation =
+        session.reserve_event_capacity(command.event_budget(session.state()))?;
     session.prepare_replay_segment();
-    let before_context = replay_context(session);
+    let before_context = replay_context(session, Some(session.actor()));
     let before_revision = session.state().revision().get();
-    let before_view = visible_units(session.state(), session.actor());
+    let before_digest = session.stamp().state_digest;
     let state = session.take_state();
-    let transition =
-        GameEngine::apply_owned(state, session.context(), command).map_err(RuntimeError::Engine)?;
+    let transition = GameEngine::apply_player_owned(state, session.context(), command)
+        .map_err(RuntimeError::Engine)?;
     let parts = transition.into_parts();
     let rejection = parts.rejection.map(aonw_engine::DomainRejection::code);
     let events = parts.events;
-    debug_assert!(events.len() <= MAX_EVENTS_PER_DISPATCH);
     let evidence = parts.evidence;
-    session.advance_event_offset(events.len())?;
-    session.replace_state(parts.state, parts.digest);
-    let after_view = visible_units(session.state(), session.actor());
-    let view_patch = diff_view(
-        before_revision,
-        session.state().revision().get(),
-        before_view,
-        after_view,
+    session.commit_event_reservation(event_reservation, events.len())?;
+    let rejected = rejection.is_some();
+    let recipient_disclosure = if rejected {
+        RecipientDisclosure::empty(session.actor().clone())
+    } else {
+        RecipientDisclosure::new(
+            session.actor().clone(),
+            session.projection().units(),
+            session.projection().cities(),
+            evidence.as_ref(),
+        )
+    };
+    let next_revision = parts.state.revision().get();
+    let next_projection =
+        (!rejected).then(|| ProjectedView::for_recipient(&parts.state, session.shared_actor()));
+    let view_patch = next_projection.as_ref().map_or_else(
+        || unchanged_view(before_revision, session.projection()),
+        |after| diff_view(before_revision, next_revision, session.projection(), after),
     );
+    if let Some(projection) = next_projection {
+        session.replace_state(
+            parts.state,
+            parts.digest.expect("accepted transition has a digest"),
+            projection,
+        );
+    } else {
+        debug_assert!(parts.digest.is_none());
+        session.restore_rejected_state(parts.state);
+        debug_assert_eq!(session.stamp().state_digest, before_digest);
+    }
     let result = CommandResult {
         stamp: session.stamp(),
         rejection,
         events,
         evidence,
         view_patch,
+        recipient_disclosure,
     };
-    let replay = replay_entry(session, replay_command, before_context, &result);
+    let replay = replay_entry(session, replay_record, before_context, &result);
     session.push_replay(replay);
     Ok(result)
 }
-
-fn diff_view(
-    from_revision: u64,
-    to_revision: u64,
-    before: Vec<PlayerUnitView>,
-    after: Vec<PlayerUnitView>,
-) -> PlayerViewPatch {
-    debug_assert!(before.windows(2).all(|pair| pair[0].id() < pair[1].id()));
-    debug_assert!(after.windows(2).all(|pair| pair[0].id() < pair[1].id()));
-    let mut before = before.into_iter().peekable();
-    let mut after = after.into_iter().peekable();
-    let mut upserted_units = Vec::new();
-    let mut removed_unit_ids = Vec::new();
-    while let (Some(previous), Some(current)) = (before.peek(), after.peek()) {
-        match previous.id().cmp(current.id()) {
-            Ordering::Less => {
-                if let Some(previous) = before.next() {
-                    removed_unit_ids.push(previous.id().clone());
-                }
-            }
-            Ordering::Equal => {
-                if let (Some(previous), Some(current)) = (before.next(), after.next())
-                    && previous != current
-                {
-                    upserted_units.push(current);
-                }
-            }
-            Ordering::Greater => {
-                if let Some(current) = after.next() {
-                    upserted_units.push(current);
-                }
-            }
-        }
-    }
-    removed_unit_ids.extend(before.map(|unit| unit.id().clone()));
-    upserted_units.extend(after);
-    PlayerViewPatch {
-        from_revision,
-        to_revision,
-        upserted_units: upserted_units.into_boxed_slice(),
-        removed_unit_ids: removed_unit_ids.into_boxed_slice(),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use aonw_domain::{HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind};
-
-    use super::diff_view;
-    use crate::player_view::PlayerUnitView;
-
-    #[test]
-    fn sorted_view_diff_reports_updates_insertions_and_removals() {
-        let before = vec![view("unit-a", 0), view("unit-b", 1)];
-        let after = vec![view("unit-b", 2), view("unit-c", 3)];
-
-        let patch = diff_view(4, 5, before, after);
-
-        assert_eq!(patch.from_revision, 4);
-        assert_eq!(patch.to_revision, 5);
-        assert_eq!(
-            patch
-                .upserted_units
-                .iter()
-                .map(|unit| unit.id().as_str())
-                .collect::<Vec<_>>(),
-            ["unit-b", "unit-c"]
-        );
-        assert_eq!(
-            patch
-                .removed_unit_ids
-                .iter()
-                .map(UnitId::as_str)
-                .collect::<Vec<_>>(),
-            ["unit-a"]
-        );
-    }
-
-    fn view(id: &str, col: i32) -> PlayerUnitView {
-        let unit = Unit::builder(
-            UnitId::new(id).expect("unit id"),
-            PlayerId::new("player-1").expect("player id"),
-            UnitKind::Commander,
-            "Commander",
-            HexCoord::new(col, 0),
-            MovementUnits::new(10),
-        )
-        .build()
-        .expect("unit");
-        PlayerUnitView::from_unit(&unit)
-    }
-}
+pub(crate) use artifact::dispatch_artifact;

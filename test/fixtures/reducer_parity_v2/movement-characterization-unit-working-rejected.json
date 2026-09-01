@@ -220,6 +220,17 @@
             "col": 42,
             "row": 42
           }
+        },
+        {
+          "id": "artifact_in_progress",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "excavation",
+            "unitId": "movement_mover",
+            "col": 0,
+            "row": 0,
+            "remainingTurns": 1
+          }
         }
       ],
       "fieldImprovements": [
@@ -489,6 +500,17 @@
             "kind": "map",
             "col": 42,
             "row": 42
+          }
+        },
+        {
+          "id": "artifact_in_progress",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "excavation",
+            "unitId": "movement_mover",
+            "col": 0,
+            "row": 0,
+            "remainingTurns": 1
           }
         }
       ],

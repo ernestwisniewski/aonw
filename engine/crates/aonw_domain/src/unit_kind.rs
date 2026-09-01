@@ -9,7 +9,7 @@ pub enum UnitMovementDomain {
 
 /// Stable canonical unit type.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum UnitKind {
     Commander,
     Warrior,

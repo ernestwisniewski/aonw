@@ -1,5 +1,7 @@
 import 'package:aonw_rust_client/src/protocol_execution.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
+import 'package:aonw_rust_client/src/protocol_map.dart';
+import 'package:aonw_rust_client/src/protocol_player_view.dart';
 import 'package:aonw_rust_client/src/protocol_query.dart';
 import 'package:aonw_rust_client/src/protocol_values.dart';
 
@@ -22,6 +24,7 @@ typedef _ResponseParser =
 
 final Map<String, _ResponseParser> _responseParsers = {
   'capabilities': AonwCapabilitiesResponse.fromJson,
+  'mapInspected': AonwMapInspectedResponse.fromJson,
   'sessionOpened': AonwSessionOpenedResponse.fromJson,
   'sessionClosed': AonwSessionClosedResponse.fromJson,
   'snapshot': AonwSnapshotResponse.fromJson,
@@ -33,23 +36,23 @@ final Map<String, _ResponseParser> _responseParsers = {
   'replayVerified': AonwReplayVerifiedResponse.fromJson,
 };
 
+final class AonwMapInspectedResponse extends AonwClientResponseBody {
+  const AonwMapInspectedResponse(this.map);
+
+  factory AonwMapInspectedResponse.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {'type', 'map'}, 'map inspected response');
+    return AonwMapInspectedResponse(AonwMapView.fromJson(value['map']));
+  }
+
+  final AonwMapView map;
+}
+
 final class AonwCapabilitiesResponse extends AonwClientResponseBody {
-  const AonwCapabilitiesResponse({
-    required this.behaviorVersion,
-    required this.features,
-  });
+  const AonwCapabilitiesResponse({required this.features});
 
   factory AonwCapabilitiesResponse.fromJson(Map<String, Object?> value) {
-    requireKeys(value, const {
-      'type',
-      'behaviorVersion',
-      'features',
-    }, 'capabilities response');
+    requireKeys(value, const {'type', 'features'}, 'capabilities response');
     return AonwCapabilitiesResponse(
-      behaviorVersion: readUnsigned(
-        value['behaviorVersion'],
-        'behavior version',
-      ),
       features: readList(
         value['features'],
         'client features',
@@ -58,7 +61,6 @@ final class AonwCapabilitiesResponse extends AonwClientResponseBody {
     );
   }
 
-  final int behaviorVersion;
   final List<AonwClientFeature> features;
 }
 

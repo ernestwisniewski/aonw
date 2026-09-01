@@ -1,4 +1,6 @@
+import 'package:aonw_rust_client/src/protocol_coordinate.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
+import 'package:aonw_rust_client/src/protocol_player_view.dart';
 import 'package:aonw_rust_client/src/protocol_values.dart';
 
 sealed class AonwClientEvent {
@@ -85,6 +87,105 @@ final class AonwUnitMovementEvidence extends AonwClientEvidence {
   final List<AonwMovementStep> steps;
 }
 
+enum AonwCommandRejectionCode {
+  staleRevision('stale_revision'),
+  unitNotFound('unit_not_found'),
+  unitNotControlled('unit_not_controlled'),
+  unitUnavailable('unit_unavailable'),
+  unitUsesTradeRoutes('unit_uses_trade_routes'),
+  unitOutOfBounds('unit_out_of_bounds'),
+  moveTargetOutOfBounds('move_target_out_of_bounds'),
+  moveTargetIsCurrentTile('move_target_is_current_tile'),
+  moveTargetIsForeignCityCenter('move_target_is_foreign_city_center'),
+  moveTargetOccupied('move_target_occupied'),
+  unitMovementCapacityInsufficient('unit_movement_capacity_insufficient'),
+  movePathNotFound('move_path_not_found'),
+  unitNotScout('unit_not_scout'),
+  unitExhausted('unit_exhausted'),
+  unitHasPath('unit_has_path'),
+  autoExploreNoTarget('auto_explore_no_target'),
+  unitNotMerchant('unit_not_merchant'),
+  merchantNotInCity('merchant_not_in_city'),
+  destinationCityNotFound('destination_city_not_found'),
+  destinationCityNotControlled('destination_city_not_controlled'),
+  destinationCityIsOrigin('destination_city_is_origin'),
+  destinationCityIsCurrent('destination_city_is_current'),
+  merchantRouteNotFound('merchant_route_not_found'),
+  merchantCityPathNotFound('merchant_city_path_not_found'),
+  troopNotAvailable('troop_not_available'),
+  detachmentSourceOutOfBounds('detachment_source_out_of_bounds'),
+  detachmentDestinationUnavailable('detachment_destination_unavailable'),
+  detachedUnitIdUnavailable('detached_unit_id_unavailable'),
+  unitBusy('unit_busy'),
+  unitDefinitionMissing('unit_definition_missing'),
+  stateRevisionOverflow('state_revision_overflow'),
+  invalidQueuedMovementPath('invalid_queued_movement_path'),
+  invalidUnit('invalid_unit'),
+  movementUnitUpdateFailed('movement_unit_update_failed'),
+  turnPlayerNotControlled('turn_player_not_controlled'),
+  turnPlayerNotActive('turn_player_not_active'),
+  turnScopeInvalid('turn_scope_invalid'),
+  turnProcessorUnsupported('turn_processor_unsupported'),
+  turnNumberOverflow('turn_number_overflow'),
+  attackerNotFound('attacker_not_found'),
+  attackerNotControlled('attacker_not_controlled'),
+  attackerUnavailable('attacker_unavailable'),
+  attackerExhausted('attacker_exhausted'),
+  attackerOutOfBounds('attacker_out_of_bounds'),
+  attackerCannotAttack('attacker_cannot_attack'),
+  attackTargetNotVisible('attack_target_not_visible'),
+  attackTargetOutOfBounds('attack_target_out_of_bounds'),
+  attackTargetNotFound('attack_target_not_found'),
+  attackTargetNotEnemy('attack_target_not_enemy'),
+  attackTargetProtectedByTreaty('attack_target_protected_by_treaty'),
+  attackTargetOutOfRange('attack_target_out_of_range'),
+  attackCityHasNoHealth('attack_city_has_no_health'),
+  cityFounderNotFound('city_founder_not_found'),
+  cityFounderNotControlled('city_founder_not_controlled'),
+  cityFounderBusy('city_founder_busy'),
+  cityFounderInvalid('city_founder_invalid'),
+  cityFounderNoSettlers('city_founder_no_settlers'),
+  citySiteInvalid('city_site_invalid'),
+  cityCenterOccupied('city_center_occupied'),
+  cityCenterClaimed('city_center_claimed'),
+  cityCenterTooClose('city_center_too_close'),
+  cityControlledHexesInvalid('city_controlled_hexes_invalid'),
+  cityNotFound('city_not_found'),
+  cityNotControlled('city_not_controlled'),
+  workedHexUnavailable('worked_hex_unavailable'),
+  workedHexLimitReached('worked_hex_limit_reached'),
+  cityExpansionHexUnavailable('city_expansion_hex_unavailable'),
+  workerNotFound('worker_not_found'),
+  workerNotControlled('worker_not_controlled'),
+  workerUnavailable('worker_unavailable'),
+  workerNoMovementPoints('worker_no_movement_points'),
+  workerQueuedPathActive('worker_queued_path_active'),
+  workerImprovementNotSelected('worker_improvement_not_selected'),
+  workerActionNotControlled('worker_action_not_controlled'),
+  workerImprovementUnavailable('worker_improvement_unavailable'),
+  workerJobNotActive('worker_job_not_active'),
+  workerAssignmentUnavailable('worker_assignment_unavailable'),
+  workerAssignmentNotActive('worker_assignment_not_active'),
+  workerRoadUnavailable('worker_road_unavailable'),
+  roadConstructionExistingRoad('road_construction_existingRoad'),
+  roadConstructionCity('road_construction_city'),
+  roadConstructionEnemyTerritory('road_construction_enemyTerritory'),
+  roadConstructionImpassableTerrain('road_construction_impassableTerrain'),
+  workerAutomationNotActive('worker_automation_not_active'),
+  workerAutomationNoTarget('worker_automation_no_target');
+
+  const AonwCommandRejectionCode(this.wireCode);
+
+  final String wireCode;
+
+  static AonwCommandRejectionCode fromWire(String source) {
+    for (final value in values) {
+      if (value.wireCode == source) return value;
+    }
+    throw FormatException('Unknown AoNW command rejection code $source.');
+  }
+}
+
 sealed class AonwCommandOutcome {
   const AonwCommandOutcome();
 
@@ -107,7 +208,9 @@ sealed class AonwCommandOutcome {
   static AonwCommandOutcome _rejected(Map<String, Object?> value) {
     requireKeys(value, const {'status', 'code'}, 'rejected command outcome');
     return AonwCommandRejected(
-      readString(value['code'], 'command rejection code'),
+      AonwCommandRejectionCode.fromWire(
+        readString(value['code'], 'command rejection code'),
+      ),
     );
   }
 }
@@ -119,7 +222,7 @@ final class AonwCommandAccepted extends AonwCommandOutcome {
 final class AonwCommandRejected extends AonwCommandOutcome {
   const AonwCommandRejected(this.code);
 
-  final String code;
+  final AonwCommandRejectionCode code;
 }
 
 final class AonwCommandResult {
@@ -163,7 +266,7 @@ final class AonwCommandResult {
 
   bool get accepted => outcome is AonwCommandAccepted;
 
-  String? get rejection => switch (outcome) {
+  AonwCommandRejectionCode? get rejection => switch (outcome) {
     AonwCommandRejected(:final code) => code,
     AonwCommandAccepted() => null,
   };

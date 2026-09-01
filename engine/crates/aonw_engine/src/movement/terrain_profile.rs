@@ -14,10 +14,10 @@ impl TerrainProfile {
 
     pub(super) fn from_tile(tile: &TileDefinition) -> Self {
         let mut profile = Self {
-            base: Some(tile.primary_terrain()),
+            base: Some(tile.primary_movement_terrain()),
             features: 0,
         };
-        for terrain in &tile.terrains()[1..] {
+        for terrain in &tile.movement_terrains()[1..] {
             match terrain {
                 TerrainType::Forest => profile.features |= Self::FOREST,
                 TerrainType::Jungle => profile.features |= Self::JUNGLE,

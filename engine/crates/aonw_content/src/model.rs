@@ -3,19 +3,100 @@ use aonw_domain::{HexCoord, HexGridBounds, HexTileIndex};
 use crate::catalog::{GridLayout, MapObjectiveType, ResourceType, TerrainType};
 use crate::validation::{MapValidationError, validate_content_id};
 
-const MIN_COLS: u16 = 1;
-const MAX_COLS: u16 = 40;
-const MIN_ROWS: u16 = 1;
-const MAX_ROWS: u16 = 30;
+/// Minimum logical map width accepted by the content domain.
+pub const MIN_MAP_COLS: u16 = 1;
+/// Maximum logical map width accepted by the content domain.
+pub const MAX_MAP_COLS: u16 = 40;
+/// Minimum logical map height accepted by the content domain.
+pub const MIN_MAP_ROWS: u16 = 1;
+/// Maximum logical map height accepted by the content domain.
+pub const MAX_MAP_ROWS: u16 = 30;
 const MAX_HEIGHT: u8 = 5;
-const MAX_TILE_COUNT: usize = MAX_COLS as usize * MAX_ROWS as usize;
+const MAX_TILE_COUNT: usize = MAX_MAP_COLS as usize * MAX_MAP_ROWS as usize;
 const OBJECTIVE_OCCUPANCY_WORDS: usize = MAX_TILE_COUNT.div_ceil(u64::BITS as usize);
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TerrainProfile {
+    terrain_tags: Box<[TerrainType]>,
+    movement_terrains: Box<[TerrainType]>,
+    yield_terrain: TerrainType,
+}
+
+#[allow(missing_docs)]
+impl TerrainProfile {
+    /// Constructs one validated terrain source of truth.
+    ///
+    /// Tag order expresses authored precedence: the first tag is used for
+    /// display and the first non-river tag owns the base economic yield.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapValidationError`] when tags are empty, duplicated, or do
+    /// not resolve to a movement primary and an economic yield terrain.
+    pub fn try_new(terrain_tags: Vec<TerrainType>) -> Result<Self, MapValidationError> {
+        Self::try_new_at("$", terrain_tags)
+    }
+
+    pub(crate) fn try_new_at(
+        path: &str,
+        terrain_tags: Vec<TerrainType>,
+    ) -> Result<Self, MapValidationError> {
+        if terrain_tags.is_empty() {
+            return Err(MapValidationError::new(
+                format!("{path}.terrainTags"),
+                "must contain at least one terrain tag",
+            ));
+        }
+        validate_unique_values(
+            &format!("{path}.terrainTags"),
+            &terrain_tags,
+            TerrainType::canonical_rank,
+        )?;
+        let yield_terrain = terrain_tags
+            .iter()
+            .copied()
+            .find(|terrain| terrain.is_yield_terrain())
+            .ok_or_else(|| {
+                MapValidationError::new(
+                    format!("{path}.terrainTags"),
+                    "must contain a non-river yield terrain",
+                )
+            })?;
+        let movement_terrains = derive_movement_terrains(path, &terrain_tags)?;
+        Ok(Self {
+            terrain_tags: terrain_tags.into_boxed_slice(),
+            movement_terrains: movement_terrains.into_boxed_slice(),
+            yield_terrain,
+        })
+    }
+
+    #[must_use]
+    pub fn terrain_tags(&self) -> &[TerrainType] {
+        &self.terrain_tags
+    }
+
+    #[must_use]
+    pub const fn display_terrain(&self) -> TerrainType {
+        self.terrain_tags[0]
+    }
+
+    #[must_use]
+    pub const fn yield_terrain(&self) -> TerrainType {
+        self.yield_terrain
+    }
+
+    #[must_use]
+    pub fn movement_terrains(&self) -> &[TerrainType] {
+        &self.movement_terrains
+    }
+}
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TileDefinition {
     coordinate: HexCoord,
-    terrains: Box<[TerrainType]>,
+    terrain: TerrainProfile,
     resources: Box<[ResourceType]>,
     height: u8,
 }
@@ -26,52 +107,43 @@ impl TileDefinition {
     ///
     /// # Errors
     ///
-    /// Returns [`MapValidationError`] for empty or duplicate terrain data,
-    /// duplicate resources, or unsupported height.
+    /// Returns [`MapValidationError`] for duplicate resources or unsupported height.
     pub fn try_new(
         coordinate: HexCoord,
-        terrains: Vec<TerrainType>,
+        terrain: TerrainProfile,
         resources: Vec<ResourceType>,
         height: u8,
     ) -> Result<Self, MapValidationError> {
-        Self::try_new_at("$", coordinate, terrains, resources, height)
+        Self::try_new_at("$", coordinate, terrain, resources, height)
+    }
+
+    /// Constructs a rules-only fixture tile with neutral presentation semantics.
+    ///
+    /// The primary movement terrain is used for display and yields, while all
+    /// movement terrains become tags. Authored map content must use [`Self::try_new`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapValidationError`] for invalid terrain data, duplicate resources,
+    /// or unsupported height.
+    pub fn try_new_for_simulation(
+        coordinate: HexCoord,
+        mut movement_terrains: Vec<TerrainType>,
+        resources: Vec<ResourceType>,
+        height: u8,
+    ) -> Result<Self, MapValidationError> {
+        normalize_movement_terrains("$", &mut movement_terrains)?;
+        let terrain = TerrainProfile::try_new(movement_terrains)?;
+        Self::try_new(coordinate, terrain, resources, height)
     }
 
     pub(crate) fn try_new_at(
         path: &str,
         coordinate: HexCoord,
-        terrains: Vec<TerrainType>,
+        terrain: TerrainProfile,
         mut resources: Vec<ResourceType>,
         height: u8,
     ) -> Result<Self, MapValidationError> {
-        if terrains.is_empty() {
-            return Err(MapValidationError::new(
-                format!("{path}.terrains"),
-                "must contain at least one terrain",
-            ));
-        }
-        validate_unique_values(
-            &format!("{path}.terrains"),
-            &terrains,
-            TerrainType::canonical_rank,
-        )?;
-        if !terrains[0].is_primary() {
-            return Err(MapValidationError::new(
-                format!("{path}.terrains[0]"),
-                "must be a primary terrain",
-            ));
-        }
-        if let Some((index, _)) = terrains
-            .iter()
-            .enumerate()
-            .skip(1)
-            .find(|(_, terrain)| !terrain.is_feature())
-        {
-            return Err(MapValidationError::new(
-                format!("{path}.terrains[{index}]"),
-                "must be a terrain feature",
-            ));
-        }
         validate_unique_values(
             &format!("{path}.resources"),
             &resources,
@@ -86,7 +158,7 @@ impl TileDefinition {
         resources.sort_unstable_by_key(|resource| resource.canonical_rank());
         Ok(Self {
             coordinate,
-            terrains: terrains.into_boxed_slice(),
+            terrain,
             resources: resources.into_boxed_slice(),
             height,
         })
@@ -98,18 +170,38 @@ impl TileDefinition {
     }
 
     #[must_use]
-    pub fn terrains(&self) -> &[TerrainType] {
-        &self.terrains
+    pub fn movement_terrains(&self) -> &[TerrainType] {
+        self.terrain.movement_terrains()
     }
 
     #[must_use]
-    pub const fn primary_terrain(&self) -> TerrainType {
-        self.terrains[0]
+    pub const fn primary_movement_terrain(&self) -> TerrainType {
+        self.terrain.movement_terrains[0]
     }
 
     #[must_use]
-    pub fn has_terrain(&self, terrain: TerrainType) -> bool {
-        self.terrains.contains(&terrain)
+    pub fn has_movement_terrain(&self, terrain: TerrainType) -> bool {
+        self.terrain.movement_terrains.contains(&terrain)
+    }
+
+    #[must_use]
+    pub const fn display_terrain(&self) -> TerrainType {
+        self.terrain.display_terrain()
+    }
+
+    #[must_use]
+    pub const fn yield_terrain(&self) -> TerrainType {
+        self.terrain.yield_terrain()
+    }
+
+    #[must_use]
+    pub fn terrain_tags(&self) -> &[TerrainType] {
+        self.terrain.terrain_tags()
+    }
+
+    #[must_use]
+    pub const fn terrain(&self) -> &TerrainProfile {
+        &self.terrain
     }
 
     #[must_use]
@@ -121,6 +213,105 @@ impl TileDefinition {
     pub const fn height(&self) -> u8 {
         self.height
     }
+}
+
+fn derive_movement_terrains(
+    path: &str,
+    terrain_tags: &[TerrainType],
+) -> Result<Vec<TerrainType>, MapValidationError> {
+    let primary = if terrain_tags.contains(&TerrainType::Mountain) {
+        Some(TerrainType::Mountain)
+    } else {
+        terrain_tags
+            .iter()
+            .copied()
+            .filter(|terrain| terrain.is_primary())
+            .fold(None, |selected, candidate| match selected {
+                None => Some(candidate),
+                Some(current) if is_open_water(current) && !is_open_water(candidate) => {
+                    Some(candidate)
+                }
+                Some(current) => Some(current),
+            })
+            .or_else(|| {
+                terrain_tags
+                    .iter()
+                    .any(|terrain| is_vegetated_feature(*terrain))
+                    .then_some(TerrainType::Grassland)
+            })
+            .or_else(|| {
+                terrain_tags
+                    .contains(&TerrainType::Hills)
+                    .then_some(TerrainType::Plains)
+            })
+    }
+    .ok_or_else(|| {
+        MapValidationError::new(
+            format!("{path}.terrainTags"),
+            "must resolve to a primary movement terrain",
+        )
+    })?;
+
+    let mut movement = vec![primary];
+    for feature in [
+        TerrainType::Hills,
+        TerrainType::Wetlands,
+        TerrainType::Jungle,
+        TerrainType::Forest,
+        TerrainType::River,
+    ] {
+        if terrain_tags.contains(&feature) {
+            movement.push(feature);
+        }
+    }
+    Ok(movement)
+}
+
+pub(crate) fn normalize_movement_terrains(
+    path: &str,
+    movement_terrains: &mut [TerrainType],
+) -> Result<(), MapValidationError> {
+    if movement_terrains.is_empty() {
+        return Err(MapValidationError::new(
+            format!("{path}.terrains"),
+            "must contain at least one terrain",
+        ));
+    }
+    validate_unique_values(
+        &format!("{path}.terrains"),
+        movement_terrains,
+        TerrainType::canonical_rank,
+    )?;
+    if !movement_terrains[0].is_primary() {
+        return Err(MapValidationError::new(
+            format!("{path}.terrains[0]"),
+            "must be a primary terrain",
+        ));
+    }
+    if let Some((index, _)) = movement_terrains
+        .iter()
+        .enumerate()
+        .skip(1)
+        .find(|(_, terrain)| !terrain.is_feature())
+    {
+        return Err(MapValidationError::new(
+            format!("{path}.terrains[{index}]"),
+            "must be a terrain feature",
+        ));
+    }
+    movement_terrains[1..].sort_unstable_by_key(|terrain| terrain.canonical_rank());
+    Ok(())
+}
+
+const fn is_open_water(terrain: TerrainType) -> bool {
+    matches!(terrain, TerrainType::Ocean | TerrainType::Lake)
+}
+
+const fn is_vegetated_feature(terrain: TerrainType) -> bool {
+    matches!(
+        terrain,
+        TerrainType::Wetlands | TerrainType::Jungle | TerrainType::Forest
+    )
 }
 
 #[allow(missing_docs)]
@@ -249,8 +440,8 @@ impl MapDefinition {
     ) -> Result<Self, MapValidationError> {
         let map_id = map_id.into();
         validate_content_id("$.mapName", &map_id)?;
-        validate_dimension("$.cols", cols, MIN_COLS, MAX_COLS)?;
-        validate_dimension("$.rows", rows, MIN_ROWS, MAX_ROWS)?;
+        validate_dimension("$.cols", cols, MIN_MAP_COLS, MAX_MAP_COLS)?;
+        validate_dimension("$.rows", rows, MIN_MAP_ROWS, MAX_MAP_ROWS)?;
         let bounds = HexGridBounds::new(cols, rows).ok_or_else(|| {
             MapValidationError::new("$", "validated map dimensions must be non-zero")
         })?;
@@ -326,6 +517,36 @@ impl MapDefinition {
         self.tiles
             .get(index.get())
             .filter(|tile| tile.coordinate == coordinate)
+    }
+
+    /// Returns a new validated aggregate with exactly one tile replaced.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapValidationError`] when the replacement coordinate is
+    /// outside this map or the rebuilt aggregate violates an invariant.
+    pub fn replacing_tile(&self, replacement: TileDefinition) -> Result<Self, MapValidationError> {
+        let coordinate = replacement.coordinate();
+        let index = self.tile_index(coordinate).ok_or_else(|| {
+            MapValidationError::new(
+                "$.tile",
+                format!(
+                    "coordinate ({}, {}) is outside map bounds",
+                    coordinate.col(),
+                    coordinate.row()
+                ),
+            )
+        })?;
+        let mut tiles = self.tiles.to_vec();
+        tiles[index.get()] = replacement;
+        Self::try_new(
+            self.map_id.clone(),
+            self.grid_layout,
+            self.cols,
+            self.rows,
+            tiles,
+            self.objectives.to_vec(),
+        )
     }
 }
 

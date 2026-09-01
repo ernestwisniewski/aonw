@@ -8,11 +8,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
+import '../support/current_content_legacy_fixture.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('loads the compiled map manifest and pages', () async {
-    final repository = FlutterMapTextureRepository();
+    final repository = FlutterMapTextureRepository(
+      bundle: _LegacyRuntimeAssetBundle(),
+    );
     addTearDown(repository.dispose);
 
     final set = await repository.loadSet(
@@ -98,6 +102,20 @@ final class _MissingAssetBundle extends CachingAssetBundle {
   @override
   Future<ByteData> load(String key) =>
       Future.error(FlutterError('Missing bundled asset: $key'));
+}
+
+final class _LegacyRuntimeAssetBundle extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async {
+    final data = await rootBundle.load(key);
+    if (!key.endsWith('/map_texture_manifest.json')) return data;
+    final bytes = data.buffer.asUint8List(
+      data.offsetInBytes,
+      data.lengthInBytes,
+    );
+    final fixture = currentTextureManifestAsLegacyFixture(utf8.decode(bytes));
+    return ByteData.sublistView(Uint8List.fromList(utf8.encode(fixture)));
+  }
 }
 
 final class _DelayedBinaryBundle extends CachingAssetBundle {

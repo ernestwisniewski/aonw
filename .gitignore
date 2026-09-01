@@ -19,18 +19,19 @@
 # Local workspace state
 migrate_working_dir/
 .worktrees/
+.toolchains/
 backups/
 .claude/
 .codex/
 **/.godot/
 
-# Generated Godot runtime artifacts
-clients/aonw2_godot/scenes/
-clients/aonw2_godot/scenes/**
-clients/aonw2_godot/addons/
-clients/aonw2_godot/addons/**
-clients/aonw2_godot/assets/generated_maps/
-clients/aonw2_godot/assets/generated_maps/**
+# Generated Godot runtime artifacts and bootstrapped dependencies
+clients/aonw_godot/scenes/generated/
+clients/aonw_godot/addons/terrain_3d/
+clients/aonw_godot/assets/generated_maps/*
+!clients/aonw_godot/assets/generated_maps/README.md
+!clients/aonw_godot/assets/generated_maps/.gdignore
+clients/aonw_godot/assets/maps/**/*.import
 
 # Local environment files
 .env

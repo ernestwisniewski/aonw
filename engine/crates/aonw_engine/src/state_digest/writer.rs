@@ -28,6 +28,10 @@ impl DigestWriter {
         self.0.update(value.to_le_bytes());
     }
 
+    pub(super) fn i64(&mut self, value: i64) {
+        self.0.update(value.to_le_bytes());
+    }
+
     pub(super) fn usize(&mut self, value: usize) {
         self.u64(u64::try_from(value).expect("bounded length"));
     }
@@ -65,6 +69,16 @@ impl DigestWriter {
             Some(value) => {
                 self.u8(1);
                 self.u32(value);
+            }
+        }
+    }
+
+    pub(super) fn optional_i64(&mut self, value: Option<i64>) {
+        match value {
+            None => self.u8(0),
+            Some(value) => {
+                self.u8(1);
+                self.i64(value);
             }
         }
     }
