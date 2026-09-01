@@ -4,6 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Made with Flutter](https://img.shields.io/badge/Made%20with-Flutter-02569B.svg)](https://flutter.dev)
 
+
+> [!IMPORTANT]
+> This repository is no longer actively developed. Continued development has moved to [ernestwisniewski/age-of-new-worlds](https://github.com/ernestwisniewski/age-of-new-worlds).
+
+
 Age of New Worlds is an open-source, turn-based 4X game built around a hex map. The shipping client uses Flutter and Flame, shared gameplay rules live in Dart, and online matches are hosted by Serverpod.
 
 A Rust engine is being introduced incrementally under `engine/`. It already powers the experimental Godot client, but `packages/aonw_core/` remains the production rules implementation until the migration gates are complete.
