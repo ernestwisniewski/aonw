@@ -1,71 +1,36 @@
 use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
-    CURRENT_REPLAY_LOG_VERSION, CURRENT_SAVE_GAME_VERSION, CoordinateDto, MAX_REPLAY_ENTRY_COUNT,
-    MovementStepDto, ReplayCommandDto, ReplayContextDto, ReplayEntryDto, ReplayEventDto,
-    ReplayEvidenceDto, ReplayLogDto, ReplayResultDto, RngStateDto, SaveGameDto,
+    CoordinateDto, MAX_REPLAY_ENTRY_COUNT, MAX_REPLAY_LOG_JSON_BYTES, MAX_REPLAY_SEGMENT_COUNT,
+    PERSISTENCE_FORMAT_VERSION, ReplayContextDto, ReplayEntryDto, ReplayLogDto, ReplayRecordDto,
+    ReplayResultDto, ReplaySegmentDto, ReplaySystemCommandDto, SaveGameDto,
 };
-use aonw_domain::{PlayerId, UnitId};
-use aonw_engine::{DomainEvent, ENGINE_BEHAVIOR_VERSION, ExecutionEvidence, GameEngine};
+use aonw_domain::{CityId, PlayerId, UnitId, UtcTimestamp};
+use aonw_engine::GameEngine;
 
 pub use crate::persistence_error::PersistenceError;
-use crate::persistence_validation::{validate_replay_header, validate_save_header};
+use crate::persistence_validation::validate_save_header;
 use crate::session::Session;
 use crate::{
-    CommandResult, LocalRuntime, MoveUnitRequest, OpenSession, SessionStamp, UnitActionRequest,
+    ArtifactCommandRequest, AttackHexRequest, AutoExploreUnitRequest, CommandResult,
+    DetachTroopRequest, DiplomacyRequest, FinalizeTimedOutTurnRequest, FoundCityRequest,
+    KickParticipantRequest, LocalRuntime, MerchantCityRequest, MoveUnitRequest, OpenSession,
+    ProductionCommandRequest, SelectCityExpansionHexRequest, SelectTechnologyRequest, SessionStamp,
+    ToggleWorkedHexRequest, TurnCommandRequest, UnitActionRequest, WorkerImprovementRequest,
+    WorkerUnitRequest,
 };
 
-/// Deterministic random-stream position owned by a local session.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct RngState {
-    seed: u64,
-    stream: u64,
-    counter: u64,
-}
+mod evidence;
+mod player_decode;
+mod verification;
 
-impl RngState {
-    /// Creates an explicit deterministic random-stream position.
-    #[must_use]
-    pub const fn new(seed: u64, stream: u64, counter: u64) -> Self {
-        Self {
-            seed,
-            stream,
-            counter,
-        }
-    }
+use evidence::{encode_event, encode_evidence};
+use player_decode::decode_command;
+pub(crate) use verification::{verify_entry, verify_replay};
 
-    /// Returns the initial seed.
-    #[must_use]
-    pub const fn seed(self) -> u64 {
-        self.seed
-    }
-
-    /// Returns the independent stream selector.
-    #[must_use]
-    pub const fn stream(self) -> u64 {
-        self.stream
-    }
-
-    /// Returns the consumed-value counter.
-    #[must_use]
-    pub const fn counter(self) -> u64 {
-        self.counter
-    }
-
-    const fn to_dto(self) -> RngStateDto {
-        RngStateDto {
-            seed: self.seed,
-            stream: self.stream,
-            counter: self.counter,
-        }
-    }
-}
-
-impl From<RngStateDto> for RngState {
-    fn from(value: RngStateDto) -> Self {
-        Self::new(value.seed, value.stream, value.counter)
-    }
-}
+pub(crate) const ENGINE_BEHAVIOR_FINGERPRINT: &str =
+    concat!("aonw-engine/", env!("CARGO_PKG_VERSION"), "/behavior-1");
+const REPLAY_RECORDER_PAYLOAD_BYTES: usize = MAX_REPLAY_LOG_JSON_BYTES - 4 * 1024 * 1024;
 
 /// Result of deterministic replay verification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -80,53 +45,140 @@ pub struct ReplayVerification {
 
 #[derive(Clone, Debug)]
 pub(crate) struct ReplayRecorder {
-    initial_state: aonw_contracts::GameStateDto,
-    initial_state_digest: String,
-    initial_rng_state: RngState,
-    initial_event_offset: u64,
-    entries: Vec<ReplayEntryDto>,
+    completed_segments: Vec<ReplaySegmentDto>,
+    completed_segment_bytes: Vec<usize>,
+    current_segment: ReplaySegmentDto,
+    current_segment_bytes: usize,
 }
 
 impl ReplayRecorder {
     pub(crate) fn new(
         state: &aonw_domain::GameState,
         digest: aonw_engine::StateDigest,
-        rng_state: RngState,
         event_offset: u64,
     ) -> Self {
+        let current_segment = Self::checkpoint(state, digest, event_offset);
+        let current_segment_bytes = segment_json_bytes(&current_segment);
         Self {
+            completed_segments: Vec::new(),
+            completed_segment_bytes: Vec::new(),
+            current_segment,
+            current_segment_bytes,
+        }
+    }
+
+    pub(crate) fn is_full(&self) -> bool {
+        self.current().entries.len() >= MAX_REPLAY_ENTRY_COUNT
+    }
+
+    pub(crate) fn checkpoint(
+        state: &aonw_domain::GameState,
+        digest: aonw_engine::StateDigest,
+        event_offset: u64,
+    ) -> ReplaySegmentDto {
+        ReplaySegmentDto {
             initial_state: encode_game_state(state),
             initial_state_digest: digest.to_string(),
-            initial_rng_state: rng_state,
             initial_event_offset: event_offset,
             entries: Vec::new(),
         }
     }
 
-    pub(crate) fn is_full(&self) -> bool {
-        self.entries.len() >= MAX_REPLAY_ENTRY_COUNT
+    pub(crate) fn rollover(&mut self, checkpoint: ReplaySegmentDto) {
+        let checkpoint_bytes = segment_json_bytes(&checkpoint);
+        let completed = core::mem::replace(&mut self.current_segment, checkpoint);
+        let completed_bytes = core::mem::replace(&mut self.current_segment_bytes, checkpoint_bytes);
+        self.completed_segments.push(completed);
+        self.completed_segment_bytes.push(completed_bytes);
+        self.trim_completed();
     }
 
-    pub(crate) fn push(&mut self, entry: ReplayEntryDto) {
-        self.entries.push(entry);
+    pub(crate) fn requires_checkpoint_for(&self, entry: &ReplayEntryDto) -> bool {
+        self.current_segment_bytes
+            .saturating_add(entry_json_bytes(entry))
+            > REPLAY_RECORDER_PAYLOAD_BYTES
+    }
+
+    pub(crate) fn push_bounded(
+        &mut self,
+        entry: ReplayEntryDto,
+        replacement_checkpoint: Option<ReplaySegmentDto>,
+    ) {
+        let entry_bytes = entry_json_bytes(&entry);
+        while self.archive_bytes().saturating_add(entry_bytes) > REPLAY_RECORDER_PAYLOAD_BYTES
+            && !self.completed_segments.is_empty()
+        {
+            self.completed_segments.remove(0);
+            self.completed_segment_bytes.remove(0);
+        }
+        if self.current_segment_bytes.saturating_add(entry_bytes) > REPLAY_RECORDER_PAYLOAD_BYTES {
+            let Some(checkpoint) = replacement_checkpoint else {
+                return;
+            };
+            self.completed_segments.clear();
+            self.completed_segment_bytes.clear();
+            self.current_segment_bytes = segment_json_bytes(&checkpoint);
+            self.current_segment = checkpoint;
+            return;
+        }
+        self.current_mut().entries.push(entry);
+        self.current_segment_bytes = self.current_segment_bytes.saturating_add(entry_bytes);
+    }
+
+    pub(crate) fn current_entry_count(&self) -> usize {
+        self.current().entries.len()
+    }
+
+    fn current(&self) -> &ReplaySegmentDto {
+        &self.current_segment
+    }
+
+    fn current_mut(&mut self) -> &mut ReplaySegmentDto {
+        &mut self.current_segment
+    }
+
+    fn archive_bytes(&self) -> usize {
+        self.completed_segment_bytes
+            .iter()
+            .copied()
+            .fold(self.current_segment_bytes, usize::saturating_add)
+    }
+
+    fn trim_completed(&mut self) {
+        while (self.completed_segments.len() + 1 > MAX_REPLAY_SEGMENT_COUNT
+            || self.archive_bytes() > REPLAY_RECORDER_PAYLOAD_BYTES)
+            && !self.completed_segments.is_empty()
+        {
+            self.completed_segments.remove(0);
+            self.completed_segment_bytes.remove(0);
+        }
     }
 
     fn to_dto(&self, session: &Session) -> ReplayLogDto {
+        let mut segments = Vec::with_capacity(self.completed_segments.len() + 1);
+        segments.extend(self.completed_segments.iter().cloned());
+        segments.push(self.current_segment.clone());
         ReplayLogDto {
-            schema_version: CURRENT_REPLAY_LOG_VERSION,
-            behavior_version: ENGINE_BEHAVIOR_VERSION,
+            format_version: PERSISTENCE_FORMAT_VERSION,
+            behavior_fingerprint: ENGINE_BEHAVIOR_FINGERPRINT.to_owned(),
             map_id: session.map().map_id().to_owned(),
             map_hash: session.stamp().map_hash.to_string(),
             ruleset_id: session.ruleset().ruleset_id().to_owned(),
             ruleset_hash: session.stamp().ruleset_hash.to_string(),
             actor_player_id: session.actor().as_str().to_owned(),
-            initial_rng_state: self.initial_rng_state.to_dto(),
-            initial_event_offset: self.initial_event_offset,
-            initial_state_digest: self.initial_state_digest.clone(),
-            initial_state: self.initial_state.clone(),
-            entries: self.entries.clone(),
+            segments,
         }
     }
+}
+
+fn segment_json_bytes(segment: &ReplaySegmentDto) -> usize {
+    serde_json::to_vec(segment).map_or(REPLAY_RECORDER_PAYLOAD_BYTES, |bytes| bytes.len())
+}
+
+fn entry_json_bytes(entry: &ReplayEntryDto) -> usize {
+    serde_json::to_vec(entry)
+        .map_or(REPLAY_RECORDER_PAYLOAD_BYTES, |bytes| bytes.len())
+        .saturating_add(1)
 }
 
 impl LocalRuntime {
@@ -138,14 +190,13 @@ impl LocalRuntime {
     pub fn export_save_json(&self) -> Result<String, PersistenceError> {
         let session = self.session_ref().map_err(PersistenceError::Runtime)?;
         let dto = SaveGameDto {
-            schema_version: CURRENT_SAVE_GAME_VERSION,
-            behavior_version: ENGINE_BEHAVIOR_VERSION,
+            format_version: PERSISTENCE_FORMAT_VERSION,
+            behavior_fingerprint: ENGINE_BEHAVIOR_FINGERPRINT.to_owned(),
             map_id: session.map().map_id().to_owned(),
             map_hash: session.stamp().map_hash.to_string(),
             ruleset_id: session.ruleset().ruleset_id().to_owned(),
             ruleset_hash: session.stamp().ruleset_hash.to_string(),
             actor_player_id: session.actor().as_str().to_owned(),
-            rng_state: session.rng_state().to_dto(),
             event_offset: session.event_offset(),
             state_digest: session.stamp().state_digest.to_string(),
             state: encode_game_state(session.state()),
@@ -173,7 +224,7 @@ impl LocalRuntime {
         }
         let actor = PlayerId::new(save.actor_player_id).map_err(PersistenceError::InvalidActor)?;
         let request = OpenSession::from_state(map, ruleset, state, actor)
-            .with_runtime_state(save.rng_state.into(), save.event_offset);
+            .with_event_offset(save.event_offset);
         self.open(request).map_err(PersistenceError::Open)
     }
 
@@ -201,81 +252,32 @@ impl LocalRuntime {
         ruleset: RulesetDefinition,
         input: &str,
     ) -> Result<ReplayVerification, PersistenceError> {
-        let replay = ReplayLogDto::from_json(input).map_err(PersistenceError::Codec)?;
-        validate_replay_header(&replay, &map, &ruleset)?;
-        let state =
-            decode_game_state(replay.initial_state.clone()).map_err(PersistenceError::State)?;
-        if GameEngine::state_digest(&state).to_string() != replay.initial_state_digest {
-            return Err(PersistenceError::StateDigestMismatch);
-        }
-        let actor = PlayerId::new(replay.actor_player_id.clone())
-            .map_err(PersistenceError::InvalidActor)?;
-        let mut runtime = Self::default();
-        runtime
-            .open(
-                OpenSession::from_state(map, ruleset, state, actor).with_runtime_state(
-                    replay.initial_rng_state.into(),
-                    replay.initial_event_offset,
-                ),
-            )
-            .map_err(PersistenceError::Open)?;
-
-        for (entry_index, entry) in replay.entries.iter().enumerate() {
-            let expected_index = u64::try_from(entry_index).unwrap_or(u64::MAX);
-            if entry.index != expected_index {
-                return Err(PersistenceError::ReplayIndexMismatch {
-                    expected: expected_index,
-                    found: entry.index,
-                });
-            }
-            let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-            if entry.context != replay_context(session) {
-                return Err(PersistenceError::ReplayContextMismatch { entry: entry_index });
-            }
-            let result = match decode_command(&entry.command)? {
-                ReplayRuntimeCommand::Move(command) => runtime.dispatch(&command),
-                ReplayRuntimeCommand::Cancel(command) => runtime.cancel_unit_action(&command),
-                ReplayRuntimeCommand::Skip(command) => runtime.skip_unit_turn(&command),
-                ReplayRuntimeCommand::Fortify(command) => runtime.fortify_unit(&command),
-            }
-            .map_err(PersistenceError::Runtime)?;
-            let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-            if entry.result != replay_result(&result, session) {
-                return Err(PersistenceError::ReplayResultMismatch { entry: entry_index });
-            }
-        }
-        let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-        Ok(ReplayVerification {
-            entry_count: replay.entries.len(),
-            final_stamp: session.stamp(),
-            final_event_offset: session.event_offset(),
-        })
+        verify_replay(map, ruleset, input)
     }
 }
 
 pub(crate) fn replay_entry(
     session: &Session,
-    command: ReplayCommandDto,
+    record: ReplayRecordDto,
     before: ReplayContextDto,
     result: &CommandResult,
 ) -> ReplayEntryDto {
     ReplayEntryDto {
-        index: u64::try_from(session.replay().entries.len()).unwrap_or(u64::MAX),
+        index: u64::try_from(session.replay().current_entry_count())
+            .expect("bounded replay entry count fits u64"),
         context: before,
-        command,
+        record,
         result: replay_result(result, session),
     }
 }
 
-pub(crate) fn replay_context(session: &Session) -> ReplayContextDto {
+pub(crate) fn replay_context(session: &Session, actor: Option<&PlayerId>) -> ReplayContextDto {
     let stamp = session.stamp();
     ReplayContextDto {
-        actor_player_id: session.actor().as_str().to_owned(),
-        behavior_version: stamp.behavior_version,
+        actor_player_id: actor.map(|player| player.as_str().to_owned()),
         map_hash: stamp.map_hash.to_string(),
         ruleset_hash: stamp.ruleset_hash.to_string(),
         state_digest: stamp.state_digest.to_string(),
-        rng_state: session.rng_state().to_dto(),
         event_offset: session.event_offset(),
     }
 }
@@ -283,83 +285,138 @@ pub(crate) fn replay_context(session: &Session) -> ReplayContextDto {
 fn replay_result(result: &CommandResult, session: &Session) -> ReplayResultDto {
     ReplayResultDto {
         accepted: result.is_accepted(),
-        rejection: result.rejection.map(str::to_owned),
+        rejection: result.rejection.map(|code| code.as_str().to_owned()),
         revision: result.stamp.revision.get(),
         state_digest: result.stamp.state_digest.to_string(),
         events: result.events.iter().map(encode_event).collect(),
         evidence: result.evidence.as_ref().map(encode_evidence),
-        rng_state: session.rng_state().to_dto(),
         event_offset: session.event_offset(),
-    }
-}
-
-fn encode_event(event: &DomainEvent) -> ReplayEventDto {
-    match event {
-        DomainEvent::UnitMoved(event) => ReplayEventDto::UnitMoved {
-            unit_id: event.unit_id().as_str().to_owned(),
-            from: coordinate(event.from()),
-            to: coordinate(event.to()),
-        },
-    }
-}
-
-fn encode_evidence(evidence: &ExecutionEvidence) -> ReplayEvidenceDto {
-    match evidence {
-        ExecutionEvidence::UnitMovement(execution) => ReplayEvidenceDto::UnitMovement {
-            unit_id: execution.unit_id().as_str().to_owned(),
-            from: coordinate(execution.from()),
-            steps: execution
-                .steps()
-                .iter()
-                .map(|step| MovementStepDto {
-                    col: step.coordinate().col(),
-                    row: step.coordinate().row(),
-                    enter_cost_units: step.enter_cost().get(),
-                    cumulative_cost_units: step.cumulative_cost().get(),
-                })
-                .collect(),
-        },
-    }
-}
-
-const fn coordinate(value: aonw_domain::HexCoord) -> CoordinateDto {
-    CoordinateDto {
-        col: value.col(),
-        row: value.row(),
+        recipient_result_hash: crate::client_protocol::recipient_result_hash(result),
     }
 }
 
 enum ReplayRuntimeCommand {
+    SelectTechnology(SelectTechnologyRequest),
+    Diplomacy(DiplomacyRequest),
+    Artifact(ArtifactCommandRequest),
+    FoundCity(FoundCityRequest),
+    ToggleWorkedHex(ToggleWorkedHexRequest),
+    SelectCityExpansionHex(SelectCityExpansionHexRequest),
+    Production(ProductionCommandRequest),
+    SelectWorkerImprovement(WorkerImprovementRequest),
+    ConfirmWorkerImprovement(WorkerImprovementRequest),
+    CancelWorkerJob(WorkerUnitRequest),
+    AssignWorkerToHex(WorkerUnitRequest),
+    CancelWorkerAssignment(WorkerUnitRequest),
+    BuildRoad(WorkerUnitRequest),
+    AutomateWorker(WorkerUnitRequest),
+    Attack(AttackHexRequest),
     Move(MoveUnitRequest),
+    AutoExplore(AutoExploreUnitRequest),
+    AssignMerchantRoute(MerchantCityRequest),
+    MoveMerchantToCity(MerchantCityRequest),
+    DetachTroop(DetachTroopRequest),
     Cancel(UnitActionRequest),
     Skip(UnitActionRequest),
     Fortify(UnitActionRequest),
+    EndTurn(TurnCommandRequest),
+    SubmitTurn(TurnCommandRequest),
+    FinalizeTimedOutTurn(FinalizeTimedOutTurnRequest),
+    KickParticipant(KickParticipantRequest),
 }
 
-fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, PersistenceError> {
-    match command {
-        ReplayCommandDto::MoveUnit {
-            expected_revision,
-            unit_id,
-            target,
-        } => Ok(ReplayRuntimeCommand::Move(MoveUnitRequest {
-            expected_revision: *expected_revision,
-            unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
-            target: aonw_domain::HexCoord::new(target.col, target.row),
-        })),
-        ReplayCommandDto::CancelUnitAction {
-            expected_revision,
-            unit_id,
-        } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Cancel),
-        ReplayCommandDto::SkipUnitTurn {
-            expected_revision,
-            unit_id,
-        } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Skip),
-        ReplayCommandDto::FortifyUnit {
-            expected_revision,
-            unit_id,
-        } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Fortify),
+fn decode_record(record: &ReplayRecordDto) -> Result<ReplayRuntimeCommand, PersistenceError> {
+    match record {
+        ReplayRecordDto::Player { command } => decode_command(command),
+        ReplayRecordDto::System { command } => decode_system_command(command),
     }
+}
+
+fn decode_found_city(
+    expected_revision: u64,
+    founder_unit_id: &str,
+    controlled_hexes: &[CoordinateDto],
+) -> Result<FoundCityRequest, PersistenceError> {
+    Ok(FoundCityRequest {
+        expected_revision,
+        founder_unit_id: UnitId::new(founder_unit_id.to_owned())
+            .map_err(PersistenceError::InvalidUnit)?,
+        controlled_hexes: controlled_hexes
+            .iter()
+            .map(|coordinate| aonw_domain::HexCoord::new(coordinate.col, coordinate.row))
+            .collect(),
+    })
+}
+
+fn decode_toggle_worked_hex(
+    expected_revision: u64,
+    city_id: &str,
+    target: CoordinateDto,
+) -> Result<ToggleWorkedHexRequest, PersistenceError> {
+    Ok(ToggleWorkedHexRequest {
+        expected_revision,
+        city_id: CityId::new(city_id.to_owned()).map_err(PersistenceError::InvalidCity)?,
+        target: aonw_domain::HexCoord::new(target.col, target.row),
+    })
+}
+
+fn decode_select_city_expansion_hex(
+    expected_revision: u64,
+    city_id: &str,
+    target: CoordinateDto,
+) -> Result<SelectCityExpansionHexRequest, PersistenceError> {
+    Ok(SelectCityExpansionHexRequest {
+        expected_revision,
+        city_id: CityId::new(city_id.to_owned()).map_err(PersistenceError::InvalidCity)?,
+        target: aonw_domain::HexCoord::new(target.col, target.row),
+    })
+}
+
+fn decode_system_command(
+    command: &ReplaySystemCommandDto,
+) -> Result<ReplayRuntimeCommand, PersistenceError> {
+    match command {
+        ReplaySystemCommandDto::FinalizeTimedOutTurn {
+            expected_revision,
+            player_ids,
+            skipped_player_ids,
+            next_turn_started_at,
+        } => Ok(ReplayRuntimeCommand::FinalizeTimedOutTurn(
+            FinalizeTimedOutTurnRequest {
+                expected_revision: *expected_revision,
+                player_ids: decode_player_ids(player_ids)?.into_boxed_slice(),
+                skipped_player_ids: decode_player_ids(skipped_player_ids)?.into_boxed_slice(),
+                next_turn_started_at: next_turn_started_at
+                    .as_ref()
+                    .map(|value| UtcTimestamp::new(value.clone()))
+                    .transpose()
+                    .map_err(|error| PersistenceError::InvalidTurnTime(error.into()))?,
+            },
+        )),
+        ReplaySystemCommandDto::KickParticipant {
+            expected_revision,
+            player_id,
+            reason,
+            timeout_streak,
+        } => Ok(ReplayRuntimeCommand::KickParticipant(
+            KickParticipantRequest {
+                expected_revision: *expected_revision,
+                player_id: PlayerId::new(player_id.clone())
+                    .map_err(PersistenceError::InvalidActor)?,
+                reason: reason.clone().into_boxed_str(),
+                timeout_streak: *timeout_streak,
+            },
+        )),
+    }
+}
+
+fn decode_player_ids(values: &[String]) -> Result<Vec<PlayerId>, PersistenceError> {
+    values
+        .iter()
+        .cloned()
+        .map(PlayerId::new)
+        .map(|result| result.map_err(PersistenceError::InvalidActor))
+        .collect()
 }
 
 fn decode_unit_action(
@@ -369,5 +426,28 @@ fn decode_unit_action(
     Ok(UnitActionRequest {
         expected_revision,
         unit_id: UnitId::new(unit_id.to_owned()).map_err(PersistenceError::InvalidUnit)?,
+    })
+}
+
+fn decode_worker_unit(
+    expected_revision: u64,
+    unit_id: &str,
+) -> Result<WorkerUnitRequest, PersistenceError> {
+    Ok(WorkerUnitRequest {
+        expected_revision,
+        unit_id: UnitId::new(unit_id.to_owned()).map_err(PersistenceError::InvalidUnit)?,
+    })
+}
+
+fn decode_merchant_city(
+    expected_revision: u64,
+    unit_id: &str,
+    destination_city_id: &str,
+) -> Result<MerchantCityRequest, PersistenceError> {
+    Ok(MerchantCityRequest {
+        expected_revision,
+        unit_id: UnitId::new(unit_id.to_owned()).map_err(PersistenceError::InvalidUnit)?,
+        destination_city_id: CityId::new(destination_city_id.to_owned())
+            .map_err(PersistenceError::InvalidCity)?,
     })
 }

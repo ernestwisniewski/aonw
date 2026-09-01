@@ -1,19 +1,74 @@
+import 'package:aonw_rust_client/src/protocol_coordinate.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
 
 enum AonwClientFeature {
+  artifacts,
+  cities,
+  combat,
+  inspectMap,
+  matchStart,
+  actorHandoff,
+  aiTurns,
   snapshot,
   reachable,
   routePlan,
   moveUnit,
   unitActions,
+  turnKernel,
   saveGame,
-  replayVerification;
+  replayVerification,
+  replayPlayback,
+  movementLogistics,
+  workers,
+  production,
+  research,
+  diplomacy;
 
   factory AonwClientFeature.fromJson(Object? value) {
     final wire = readString(value, 'client feature');
     return values.firstWhere(
       (feature) => feature.name == wire,
       orElse: () => throw FormatException('Unknown AoNW client feature $wire.'),
+    );
+  }
+}
+
+enum AonwResourceType {
+  wheat,
+  fish,
+  deer,
+  sheep,
+  rice,
+  cow,
+  apple,
+  banana,
+  citrus,
+  gold,
+  silver,
+  gems,
+  silk,
+  spices,
+  cotton,
+  grapes,
+  ivory,
+  pearls,
+  coffee,
+  cocoa,
+  tobacco,
+  sugar,
+  iron,
+  coal,
+  oil,
+  aluminium,
+  uranium,
+  horses,
+  marble;
+
+  factory AonwResourceType.fromJson(Object? source) {
+    final wire = readString(source, 'resource type');
+    return values.firstWhere(
+      (resource) => resource.name == wire,
+      orElse: () => throw FormatException('Unknown AoNW resource type $wire.'),
     );
   }
 }
@@ -61,25 +116,10 @@ enum AonwUnitPosture {
   }
 }
 
-final class AonwCoordinate {
-  const AonwCoordinate({required this.col, required this.row});
-
-  factory AonwCoordinate.fromJson(Object? source) {
-    final value = readObject(source, 'coordinate');
-    requireKeys(value, const {'col', 'row'}, 'coordinate');
-    return AonwCoordinate(
-      col: readInt(value['col'], 'coordinate column'),
-      row: readInt(value['row'], 'coordinate row'),
-    );
-  }
-
-  final int col;
-  final int row;
-}
+enum AonwCityConquestAction { capture, destroy }
 
 final class AonwSessionStamp {
   const AonwSessionStamp({
-    required this.behaviorVersion,
     required this.revision,
     required this.stateDigest,
     required this.mapHash,
@@ -89,17 +129,12 @@ final class AonwSessionStamp {
   factory AonwSessionStamp.fromJson(Object? source) {
     final value = readObject(source, 'session stamp');
     requireKeys(value, const {
-      'behaviorVersion',
       'revision',
       'stateDigest',
       'mapHash',
       'rulesetHash',
     }, 'session stamp');
     return AonwSessionStamp(
-      behaviorVersion: readUnsigned(
-        value['behaviorVersion'],
-        'behavior version',
-      ),
       revision: readUnsigned(value['revision'], 'state revision'),
       stateDigest: readString(value['stateDigest'], 'state digest'),
       mapHash: readString(value['mapHash'], 'map hash'),
@@ -107,114 +142,10 @@ final class AonwSessionStamp {
     );
   }
 
-  final int behaviorVersion;
   final int revision;
   final String stateDigest;
   final String mapHash;
   final String rulesetHash;
-}
-
-final class AonwPlayerUnitView {
-  const AonwPlayerUnitView({
-    required this.id,
-    required this.ownerPlayerId,
-    required this.kind,
-    required this.name,
-    required this.coordinate,
-    required this.movementUnits,
-    required this.posture,
-  });
-
-  factory AonwPlayerUnitView.fromJson(Object? source) {
-    final value = readObject(source, 'player unit view');
-    requireKeys(value, const {
-      'id',
-      'ownerPlayerId',
-      'kind',
-      'name',
-      'coordinate',
-      'movementUnits',
-      'posture',
-    }, 'player unit view');
-    return AonwPlayerUnitView(
-      id: readString(value['id'], 'unit id'),
-      ownerPlayerId: readString(value['ownerPlayerId'], 'unit owner'),
-      kind: AonwUnitKind.fromJson(value['kind']),
-      name: readString(value['name'], 'unit name'),
-      coordinate: AonwCoordinate.fromJson(value['coordinate']),
-      movementUnits: readUnsigned(value['movementUnits'], 'unit movement'),
-      posture: AonwUnitPosture.fromJson(value['posture']),
-    );
-  }
-
-  final String id;
-  final String ownerPlayerId;
-  final AonwUnitKind kind;
-  final String name;
-  final AonwCoordinate coordinate;
-  final int movementUnits;
-  final AonwUnitPosture posture;
-}
-
-final class AonwPlayerViewSnapshot {
-  const AonwPlayerViewSnapshot({required this.stamp, required this.units});
-
-  factory AonwPlayerViewSnapshot.fromJson(Object? source) {
-    final value = readObject(source, 'player snapshot');
-    requireKeys(value, const {'stamp', 'units'}, 'player snapshot');
-    return AonwPlayerViewSnapshot(
-      stamp: AonwSessionStamp.fromJson(value['stamp']),
-      units: readList(
-        value['units'],
-        'snapshot units',
-        (item, _) => AonwPlayerUnitView.fromJson(item),
-      ),
-    );
-  }
-
-  final AonwSessionStamp stamp;
-  final List<AonwPlayerUnitView> units;
-}
-
-final class AonwPlayerViewPatch {
-  const AonwPlayerViewPatch({
-    required this.fromRevision,
-    required this.toRevision,
-    required this.upsertedUnits,
-    required this.removedUnitIds,
-  });
-
-  factory AonwPlayerViewPatch.fromJson(Object? source) {
-    final value = readObject(source, 'player view patch');
-    requireKeys(value, const {
-      'fromRevision',
-      'toRevision',
-      'upsertedUnits',
-      'removedUnitIds',
-    }, 'player view patch');
-    return AonwPlayerViewPatch(
-      fromRevision: readUnsigned(
-        value['fromRevision'],
-        'patch source revision',
-      ),
-      toRevision: readUnsigned(value['toRevision'], 'patch target revision'),
-      upsertedUnits: readList(
-        value['upsertedUnits'],
-        'upserted units',
-        (item, _) => AonwPlayerUnitView.fromJson(item),
-      ),
-      removedUnitIds: readList(
-        value['removedUnitIds'],
-        'removed unit ids',
-        (item, _) => readString(item, 'removed unit id'),
-      ),
-    );
-  }
-
-  final int fromRevision;
-  final int toRevision;
-  final List<AonwPlayerUnitView> upsertedUnits;
-  final List<String> removedUnitIds;
 }
 
 final class AonwMovementStep {

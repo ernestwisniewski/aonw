@@ -221,6 +221,20 @@ impl InteractionState {
         self
     }
 
+    /// Replaces the canonical city-founding draft.
+    #[must_use]
+    pub fn with_city_founding_draft(mut self, draft: Option<CityFoundingDraft>) -> Self {
+        self.city_founding_draft = draft;
+        self
+    }
+
+    /// Replaces the current pending interaction.
+    #[must_use]
+    pub fn with_pending(mut self, pending: Option<PendingInteraction>) -> Self {
+        self.pending = pending;
+        self
+    }
+
     /// Replaces the pending interaction with a reversible unit skip.
     #[must_use]
     pub fn after_skip(mut self, unit: &Unit) -> Self {
@@ -236,6 +250,21 @@ impl InteractionState {
             unit_id: unit.id().clone(),
             restore_movement: unit.movement_units(),
         });
+        self
+    }
+
+    /// Expires a reversible skip when its owner begins a new turn.
+    #[must_use]
+    pub fn expire_turn_skip_for(
+        mut self,
+        player_ids: &std::collections::BTreeSet<PlayerId>,
+    ) -> Self {
+        if self.pending.as_ref().is_some_and(|pending| {
+            matches!(pending, PendingInteraction::UnitTurnSkip { .. })
+                && player_ids.contains(pending.owner_player_id())
+        }) {
+            self.pending = None;
+        }
         self
     }
 }

@@ -1,0 +1,292 @@
+//! Stateless authoritative host operations for the current multiplayer protocol.
+
+#![forbid(unsafe_code)]
+
+use std::sync::Arc;
+
+use aonw_content::{MapDefinition, RulesetDefinition};
+use aonw_domain::{GameState, PlayerId};
+use aonw_engine::{
+    CanonicalEngineError, CommandRejectionCode, CompiledMovementMap, CompiledMovementMapError,
+    DomainEvent, EngineContext, ExecutionEvidence, GameEngine, MovementVisibility, PlayerCommand,
+    TurnCommand,
+};
+use aonw_projection::{
+    PlayerViewPatch, PlayerViewSnapshot, ProjectedView, RecipientDisclosure, SessionStamp,
+    diff_view, unchanged_view,
+};
+
+/// Complete trusted input for one authenticated simultaneous-turn submission.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SubmitTurnRequest {
+    /// Canonical state locked by the server transaction.
+    pub state: GameState,
+    /// Immutable map selected by the match.
+    pub map: MapDefinition,
+    /// Immutable rules selected by the match.
+    pub ruleset: RulesetDefinition,
+    /// Player identity derived from the authenticated server session.
+    pub authenticated_actor: PlayerId,
+    /// Revision supplied by the remote command.
+    pub expected_revision: u64,
+    /// Durable offset immediately before this command.
+    pub initial_event_offset: u64,
+}
+
+/// Recipient-safe output ready for persistence and delivery by the server.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RecipientOutcome {
+    /// Recipient derived from canonical match participants.
+    pub recipient_player_id: PlayerId,
+    /// Complete post-command view used by reconnect and resynchronization.
+    pub snapshot: PlayerViewSnapshot,
+    /// Delta from the request state to the returned state.
+    pub patch: PlayerViewPatch,
+    /// Ordered events safe to disclose to this recipient.
+    pub events: Box<[DomainEvent]>,
+}
+
+/// All-or-nothing result returned to the transactional Serverpod boundary.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ServerCommandOutcome {
+    /// Unchanged rejected state or accepted next canonical state.
+    pub state: GameState,
+    /// Stable player-facing rejection, absent for an accepted command.
+    pub rejection: Option<CommandRejectionCode>,
+    /// Full authoritative events for server-side persistence.
+    pub events: Box<[DomainEvent]>,
+    /// Full execution evidence for server-side persistence and diagnostics.
+    pub evidence: Option<ExecutionEvidence>,
+    /// Canonical identity and immutable-content hashes.
+    pub stamp: SessionStamp,
+    /// Durable offset immediately before the command.
+    pub initial_event_offset: u64,
+    /// Durable offset immediately after the command.
+    pub final_event_offset: u64,
+    /// Projection, patch, and filtered events for every canonical participant.
+    pub recipients: Box<[RecipientOutcome]>,
+}
+
+/// Failure before an outcome can be safely persisted.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ServerHostError {
+    /// Canonical multiplayer state has no participants.
+    EmptyParticipants,
+    /// The authenticated account does not own a participant in this match.
+    UnknownAuthenticatedActor(PlayerId),
+    /// Canonical state bounds do not match immutable map content.
+    MapBoundsMismatch,
+    /// Canonical occupancy policy does not match immutable rules.
+    OccupancyPolicyMismatch,
+    /// The maximum possible event range cannot fit in the durable offset.
+    EventOffsetOverflow,
+    /// The engine emitted more events than the reviewed command budget permits.
+    EventBudgetExceeded {
+        /// Reviewed maximum for this command and state.
+        maximum: u64,
+        /// Actual event count returned by the engine.
+        actual: u64,
+    },
+    /// Immutable movement content could not be prepared.
+    CompiledMovementMap(CompiledMovementMapError),
+    /// The engine encountered corrupt canonical state or content.
+    Engine(CanonicalEngineError),
+}
+
+impl core::fmt::Display for ServerHostError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::EmptyParticipants => formatter.write_str("match has no participants"),
+            Self::UnknownAuthenticatedActor(actor) => {
+                write!(
+                    formatter,
+                    "authenticated actor `{actor}` is not a participant"
+                )
+            }
+            Self::MapBoundsMismatch => {
+                formatter.write_str("canonical state and map bounds do not match")
+            }
+            Self::OccupancyPolicyMismatch => {
+                formatter.write_str("canonical state and rules occupancy do not match")
+            }
+            Self::EventOffsetOverflow => formatter.write_str("event offset overflow"),
+            Self::EventBudgetExceeded { maximum, actual } => write!(
+                formatter,
+                "event budget exceeded: maximum {maximum}, actual {actual}"
+            ),
+            Self::CompiledMovementMap(source) => source.fmt(formatter),
+            Self::Engine(source) => source.fmt(formatter),
+        }
+    }
+}
+
+impl std::error::Error for ServerHostError {}
+
+/// Applies one authenticated `SubmitTurn` without retaining process-local session state.
+///
+/// The caller must hold the match transaction and persist the returned state, offsets,
+/// and recipient outputs atomically. An error means that nothing may be persisted.
+///
+/// # Errors
+///
+/// Returns an error for inconsistent trusted inputs, offset overflow, invalid immutable
+/// content, or an internal engine failure.
+pub fn apply_submit_turn(
+    request: SubmitTurnRequest,
+) -> Result<ServerCommandOutcome, ServerHostError> {
+    validate_request(&request)?;
+    let command = PlayerCommand::SubmitTurn(TurnCommand::new(
+        request.expected_revision,
+        &request.authenticated_actor,
+    ));
+    let budget = command.event_budget(&request.state);
+    request
+        .initial_event_offset
+        .checked_add(budget.maximum())
+        .ok_or(ServerHostError::EventOffsetOverflow)?;
+
+    let compiled = CompiledMovementMap::compile_owned(request.map, request.ruleset)
+        .map_err(ServerHostError::CompiledMovementMap)?;
+    let visibility = MovementVisibility::for_player(
+        &request.state,
+        compiled.map(),
+        &request.authenticated_actor,
+    );
+    let before_digest = GameEngine::state_digest(&request.state);
+    let before_revision = request.state.revision().get();
+    let before_views = request
+        .state
+        .match_lifecycle()
+        .identity()
+        .participants()
+        .iter()
+        .map(|participant| {
+            let recipient = Arc::new(participant.id().clone());
+            let view = ProjectedView::for_recipient(&request.state, recipient);
+            (participant.id().clone(), view)
+        })
+        .collect::<Vec<_>>();
+
+    let context = EngineContext::canonical(
+        &request.authenticated_actor,
+        compiled.map(),
+        compiled.ruleset(),
+    )
+    .with_compiled_movement_map(&compiled)
+    .with_movement_visibility(&visibility);
+    let parts = GameEngine::apply_player_owned(request.state, context, command)
+        .map_err(ServerHostError::Engine)?
+        .into_parts();
+    let final_event_offset =
+        checked_final_event_offset(request.initial_event_offset, budget, parts.events.len())?;
+    let rejection = parts.rejection.map(aonw_engine::DomainRejection::code);
+    let accepted = rejection.is_none();
+    let state_digest = parts.digest.unwrap_or(before_digest);
+    let stamp = SessionStamp {
+        revision: parts.state.revision(),
+        state_digest,
+        map_hash: parts.map_hash,
+        ruleset_hash: parts.ruleset_hash,
+    };
+    let recipients = before_views
+        .into_iter()
+        .map(|(recipient, before)| {
+            recipient_outcome(
+                recipient,
+                &before,
+                &parts.state,
+                &parts.events,
+                parts.evidence.as_ref(),
+                accepted,
+                before_revision,
+                stamp,
+            )
+        })
+        .collect::<Vec<_>>()
+        .into_boxed_slice();
+
+    Ok(ServerCommandOutcome {
+        state: parts.state,
+        rejection,
+        events: parts.events,
+        evidence: parts.evidence,
+        stamp,
+        initial_event_offset: request.initial_event_offset,
+        final_event_offset,
+        recipients,
+    })
+}
+
+fn validate_request(request: &SubmitTurnRequest) -> Result<(), ServerHostError> {
+    let identity = request.state.match_lifecycle().identity();
+    if identity.participants().is_empty() {
+        return Err(ServerHostError::EmptyParticipants);
+    }
+    if !identity.contains(&request.authenticated_actor) {
+        return Err(ServerHostError::UnknownAuthenticatedActor(
+            request.authenticated_actor.clone(),
+        ));
+    }
+    if request.state.bounds() != request.map.bounds() {
+        return Err(ServerHostError::MapBoundsMismatch);
+    }
+    if request.state.occupancy_policy() != request.ruleset.occupancy_policy() {
+        return Err(ServerHostError::OccupancyPolicyMismatch);
+    }
+    Ok(())
+}
+
+fn checked_final_event_offset(
+    initial: u64,
+    budget: aonw_engine::EventBudget,
+    actual: usize,
+) -> Result<u64, ServerHostError> {
+    let actual = u64::try_from(actual).map_err(|_| ServerHostError::EventBudgetExceeded {
+        maximum: budget.maximum(),
+        actual: u64::MAX,
+    })?;
+    if !budget.accepts(actual) {
+        return Err(ServerHostError::EventBudgetExceeded {
+            maximum: budget.maximum(),
+            actual,
+        });
+    }
+    initial
+        .checked_add(actual)
+        .ok_or(ServerHostError::EventOffsetOverflow)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn recipient_outcome(
+    recipient: PlayerId,
+    before: &ProjectedView,
+    state: &GameState,
+    events: &[DomainEvent],
+    evidence: Option<&ExecutionEvidence>,
+    accepted: bool,
+    before_revision: u64,
+    stamp: SessionStamp,
+) -> RecipientOutcome {
+    let disclosure = if accepted {
+        RecipientDisclosure::new(recipient.clone(), before.units(), before.cities(), evidence)
+    } else {
+        RecipientDisclosure::empty(recipient.clone())
+    };
+    let after = accepted.then(|| ProjectedView::for_recipient(state, Arc::new(recipient.clone())));
+    let patch = after.as_ref().map_or_else(
+        || unchanged_view(before_revision, before),
+        |after| diff_view(before_revision, state.revision().get(), before, after),
+    );
+    let snapshot = after.as_ref().unwrap_or(before).snapshot(stamp);
+    let events = events
+        .iter()
+        .filter(|event| disclosure.allows_event(event))
+        .cloned()
+        .collect();
+    RecipientOutcome {
+        recipient_player_id: recipient,
+        snapshot,
+        patch,
+        events,
+    }
+}

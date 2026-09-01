@@ -85,6 +85,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - test/fixtures/legacy_map.json
     - content/maps/dravonia/map.json
     - content/maps/myranth/map.json
     - content/maps/terenos/map.json

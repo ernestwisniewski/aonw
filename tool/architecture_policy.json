@@ -102,6 +102,12 @@
     }
   },
   "scopes": {
+    "asset_ui_tool": {
+      "sourceRoot": "assets/ui",
+      "generatedPrefixes": [],
+      "defaultRole": "tool",
+      "roleAssignments": {}
+    },
     "client_lib": {
       "sourceRoot": "packages/aonw_server_client/lib",
       "generatedPrefixes": [
@@ -199,6 +205,24 @@
       "generatedPrefixes": [
         "server/test/integration/test_tools/"
       ],
+      "defaultRole": "test",
+      "roleAssignments": {}
+    },
+    "successor_flutter_integration_test": {
+      "sourceRoot": "clients/aonw_flutter/integration_test",
+      "generatedPrefixes": [],
+      "defaultRole": "test",
+      "roleAssignments": {}
+    },
+    "successor_flutter_lib": {
+      "sourceRoot": "clients/aonw_flutter/lib",
+      "generatedPrefixes": [],
+      "defaultRole": "production",
+      "roleAssignments": {}
+    },
+    "successor_flutter_test": {
+      "sourceRoot": "clients/aonw_flutter/test",
+      "generatedPrefixes": [],
       "defaultRole": "test",
       "roleAssignments": {}
     },

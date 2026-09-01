@@ -84,9 +84,9 @@
     }
   },
   "maps": [
-    {"id":"verdantia","cols":30,"rows":20,"aggregateSha256":"4cc0b5f0cfd73f241f2e01a2be196bd8f7eeddb0e748bee8d7c933e5cc569f5d"},
-    {"id":"dravonia","cols":40,"rows":30,"aggregateSha256":"92f18fb477df0f8d07fd98a8f456a4f4e60db230b927c63a5a726fb4f6b71f8a"},
-    {"id":"myranth","cols":25,"rows":19,"aggregateSha256":"481db41d381c0b9d90551d02ae22b16b4f198d09ab16a1c18743af86a84859a9"},
-    {"id":"terenos","cols":20,"rows":15,"aggregateSha256":"3b722d62685388c0338013020df59ab89f91d78351ed80c0f35c9f8e322eac6f"}
+    {"id":"verdantia","cols":30,"rows":20,"mapContentHash":"8765fc5eb23e7d715a97a743a533c6381988b7afbad57f208868223c6d46fbb5","aggregateSha256":"4cc0b5f0cfd73f241f2e01a2be196bd8f7eeddb0e748bee8d7c933e5cc569f5d"},
+    {"id":"dravonia","cols":40,"rows":30,"mapContentHash":"64d8d98659a05cf6ba19fe7e0ae0d5e83b70f8b9da753cde9bf1459199519c82","aggregateSha256":"92f18fb477df0f8d07fd98a8f456a4f4e60db230b927c63a5a726fb4f6b71f8a"},
+    {"id":"myranth","cols":25,"rows":19,"mapContentHash":"1743616d03d54d04f53fc699c2a6ec2e1ba30f59665ddaa8776419fe06626571","aggregateSha256":"481db41d381c0b9d90551d02ae22b16b4f198d09ab16a1c18743af86a84859a9"},
+    {"id":"terenos","cols":20,"rows":15,"mapContentHash":"c580c081e39a677e0d6f5e51f1654fe12b0274bfe9672c03994b9c61d1c88fec","aggregateSha256":"3b722d62685388c0338013020df59ab89f91d78351ed80c0f35c9f8e322eac6f"}
   ]
 }
