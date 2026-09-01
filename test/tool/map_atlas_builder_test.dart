@@ -10,6 +10,53 @@ import '../../tool/assets/compile/map_page_writer.dart';
 import '../../tool/assets/compile/map_texture_geometry.dart';
 
 void main() {
+  test('map bounds include the odd-q column shift for every map width', () {
+    const rows = 3;
+    for (final columns in [1, 2, 3, 4, 7]) {
+      final placements = [
+        for (var column = 0; column < columns; column++)
+          for (var row = 0; row < rows; row++) mapTilePlacement(column, row, 1),
+      ];
+      final right = placements
+          .map((placement) => placement.exactLeft + placement.exactWidth)
+          .reduce(math.max);
+      final bottom = placements
+          .map((placement) => placement.exactTop + placement.exactHeight)
+          .reduce(math.max);
+
+      expect(mapWorldWidth(columns), closeTo(right, 1e-9));
+      expect(
+        mapWorldHeight(columns, rows),
+        closeTo(bottom, 1e-9),
+        reason: '$columns odd-q columns',
+      );
+    }
+  });
+
+  test('atlas retains the bottom of the last tile in an odd column', () async {
+    const columns = 3;
+    const rows = 2;
+    final source = img.Image(width: 120, height: 104, numChannels: 3)
+      ..clear(img.ColorRgb8(210, 70, 40));
+    final build = await MapAtlasBuilder(
+      columns: columns,
+      rows: rows,
+      source: _MemoryTileSource(source),
+    ).build();
+    final placement = mapTilePlacement(1, rows - 1, build.scale);
+
+    expect(
+      placement.rasterTop + placement.rasterHeight,
+      lessThanOrEqualTo(build.image.height),
+    );
+    final x = (placement.exactLeft + placement.exactWidth * 0.5).floor();
+    final y = (placement.exactTop + placement.exactHeight - 1).floor();
+    final pixel = build.image.getPixel(x, y);
+    expect(pixel.r.toInt(), greaterThan(180));
+    expect(pixel.g.toInt(), lessThan(100));
+    expect(pixel.b.toInt(), lessThan(80));
+  });
+
   test('fractional-scale hex coverage has no rasterization pinholes', () {
     const columns = 4;
     const rows = 4;
@@ -69,7 +116,10 @@ void main() {
       final build = await MapAtlasBuilder(
         columns: columns,
         rows: rows,
-        sourceFiles: List.filled(columns * rows, sourceFile),
+        source: FileMapTileImageSource(
+          files: List.filled(columns * rows, sourceFile),
+          rows: rows,
+        ),
       ).build();
       final output = Directory('${temporary.path}/runtime/map');
       await MapPageWriter(mapId: 'seam-test', output: output).write(build);
@@ -113,4 +163,13 @@ void main() {
       );
     },
   );
+}
+
+final class _MemoryTileSource implements MapTileImageSource {
+  const _MemoryTileSource(this.image);
+
+  final img.Image image;
+
+  @override
+  Future<img.Image> load(int column, int row) async => image.clone();
 }

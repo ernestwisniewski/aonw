@@ -6,8 +6,8 @@ use aonw_domain::{
     UnitOccupancyPolicy,
 };
 use aonw_engine::{
-    CompiledMovementMap, DomainCommand, EngineContext, GameEngine, GameQuery, MoveUnitCommand,
-    MovementSearchMetrics, MovementSearchWorkspace, QueryResult, ReachableMovement,
+    CompiledMovementMap, EngineContext, GameEngine, GameQuery, MoveUnitCommand,
+    MovementSearchMetrics, MovementSearchWorkspace, PlayerCommand, QueryResult, ReachableMovement,
     ReachableMovementQuery, TerrainMovementPlan, TerrainMovementQuery,
 };
 
@@ -48,10 +48,10 @@ fn reference_workload_outputs_are_deterministic() {
             )
         });
 
-    let transition = GameEngine::apply(
-        &state,
+    let transition = GameEngine::apply_player_owned(
+        state.clone(),
         context,
-        DomainCommand::MoveUnit(MoveUnitCommand::new(
+        PlayerCommand::MoveUnit(MoveUnitCommand::new(
             state.revision().get(),
             &mover_id,
             HexCoord::new(1, 0),
@@ -137,7 +137,8 @@ fn prepared_and_reused_searches_preserve_reference_results() {
     let state = state(&actor);
     let context = EngineContext::canonical(&actor, &map, RulesetDefinition::standard());
     let compiled =
-        CompiledMovementMap::compile(&map, RulesetDefinition::standard()).expect("compiled map");
+        CompiledMovementMap::compile_owned(map.clone(), RulesetDefinition::standard().clone())
+            .expect("compiled map");
     let prepared = context.with_compiled_movement_map(&compiled);
     let query = ReachableMovementQuery::new(state.revision().get(), &mover_id);
     let expected =
@@ -167,7 +168,7 @@ fn map() -> MapDefinition {
     let tiles = (0..30)
         .flat_map(|row| {
             (0..40).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(col, row),
                     vec![TerrainType::Grassland],
                     Vec::new(),

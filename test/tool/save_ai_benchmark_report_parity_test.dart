@@ -15,6 +15,8 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/current_content_legacy_fixture.dart';
+
 part 'save_ai_benchmark_report_parity_goldens.dart';
 
 const _replayEventsWithoutFinalization = <String, int>{
@@ -70,6 +72,7 @@ void main() {
       final saveFile = File('${directory.path}/snapshot.json');
       final jsonFile = File('${directory.path}/report.json');
       final markdownFile = File('${directory.path}/report.md');
+      final mapFile = await _writeLegacyMapFixture(directory, 'verdantia');
       await saveFile.writeAsString(
         jsonEncode({'state': SaveSnapshotCodec.toJson(snapshot)}),
       );
@@ -79,6 +82,8 @@ void main() {
         'tool/run_save_ai_benchmark.dart',
         '--save',
         saveFile.path,
+        '--map',
+        mapFile.path,
         '--strategy',
         'random',
         '--json-out',
@@ -115,6 +120,7 @@ void main() {
       final snapshot = _pendingCityAttackSnapshot();
       final saveFile = File('${directory.path}/snapshot.json');
       final jsonFile = File('${directory.path}/report.json');
+      final mapFile = await _writeLegacyMapFixture(directory, 'verdantia');
       await saveFile.writeAsString(
         jsonEncode({'state': SaveSnapshotCodec.toJson(snapshot)}),
       );
@@ -124,6 +130,8 @@ void main() {
         'tool/run_save_ai_benchmark.dart',
         '--save',
         saveFile.path,
+        '--map',
+        mapFile.path,
         '--strategy',
         'random',
         '--json-out',
@@ -158,6 +166,7 @@ void main() {
       addTearDown(() => directory.delete(recursive: true));
       final saveFile = File('${directory.path}/snapshot.json');
       final jsonFile = File('${directory.path}/report.json');
+      final mapFile = await _writeLegacyMapFixture(directory, 'verdantia');
       await saveFile.writeAsString(
         jsonEncode({
           'state': SaveSnapshotCodec.toJson(_pendingCityAttackSnapshot()),
@@ -169,6 +178,8 @@ void main() {
         'tool/run_save_ai_benchmark.dart',
         '--save',
         saveFile.path,
+        '--map',
+        mapFile.path,
         '--strategy',
         'mcts',
         '--profiles',
@@ -258,6 +269,7 @@ Future<void> _verifyReplayFixture(_ReplayFixture fixture) async {
   final saveFile = File('${directory.path}/snapshot.json');
   final jsonFile = File('${directory.path}/report.json');
   final markdownFile = File('${directory.path}/report.md');
+  final mapFile = await _writeLegacyMapFixture(directory, 'verdantia');
   await saveFile.writeAsString(
     jsonEncode({
       'state': SaveSnapshotCodec.toJson(
@@ -268,6 +280,7 @@ Future<void> _verifyReplayFixture(_ReplayFixture fixture) async {
 
   final result = await _runReplayReport(
     saveFile: saveFile,
+    mapFile: mapFile,
     jsonFile: jsonFile,
     markdownFile: markdownFile,
   );
@@ -324,6 +337,7 @@ void _expectReplayCycles(Map<String, dynamic> report, _ReplayFixture fixture) {
 
 Future<ProcessResult> _runReplayReport({
   required File saveFile,
+  required File mapFile,
   required File jsonFile,
   required File markdownFile,
 }) {
@@ -332,6 +346,8 @@ Future<ProcessResult> _runReplayReport({
     'tool/run_save_ai_benchmark.dart',
     '--save',
     saveFile.path,
+    '--map',
+    mapFile.path,
     '--strategy',
     'random',
     '--multi-turns',
@@ -341,6 +357,12 @@ Future<ProcessResult> _runReplayReport({
     '--markdown-out',
     markdownFile.path,
   ]);
+}
+
+Future<File> _writeLegacyMapFixture(Directory directory, String mapName) async {
+  final file = File('${directory.path}/$mapName-map.json');
+  await file.writeAsString(await loadCurrentMapAsLegacyFixture(mapName));
+  return file;
 }
 
 GameSave _benchmarkSave() {
