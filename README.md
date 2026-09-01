@@ -1,5 +1,8 @@
 # Age of New Worlds
 
+> [!IMPORTANT]
+> This repository is no longer actively developed. Continued development has moved to [ernestwisniewski/aonw-successor](https://github.com/ernestwisniewski/aonw-successor).
+
 [![CI](https://github.com/ernestwisniewski/aonw/actions/workflows/ci.yml/badge.svg)](https://github.com/ernestwisniewski/aonw/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Made with Flutter](https://img.shields.io/badge/Made%20with-Flutter-02569B.svg)](https://flutter.dev)
