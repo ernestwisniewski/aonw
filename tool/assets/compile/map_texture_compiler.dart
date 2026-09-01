@@ -3,9 +3,8 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 
+import 'map_asset_bundle_compiler.dart';
 import 'map_atlas_builder.dart';
-import 'map_page_writer.dart';
-import 'map_texture_geometry.dart';
 import 'source_manifest.dart';
 
 final class MapTextureCompiler {
@@ -30,34 +29,16 @@ final class MapTextureCompiler {
   Future<void> _compileMap(MapSourceSpec spec) async {
     final files = _sourceFiles(spec);
     await _verifySources(spec, files);
-    final build = await MapAtlasBuilder(
-      columns: spec.columns,
-      rows: spec.rows,
-      sourceFiles: files,
-    ).build();
-    final mapOutput = Directory('${outputRoot.path}/${spec.id}');
-    final pages = await MapPageWriter(
-      mapId: spec.id,
-      output: mapOutput,
-    ).write(build);
-    final manifest = <String, Object>{
-      'version': 1,
-      'mapId': spec.id,
-      'cols': spec.columns,
-      'rows': spec.rows,
-      'worldWidth': build.worldWidth,
-      'worldHeight': build.worldHeight,
-      'compiledScale': build.scale,
-      'filterQuality': 'medium',
-      'pageSizeLimit': mapPageSize,
-      'gutter': mapPageGutter,
-      'pages': pages,
-      'averageColors': build.averageColors,
-    };
-    await File('${mapOutput.path}/map_texture_manifest.json').writeAsString(
-      '${const JsonEncoder.withIndent('  ').convert(manifest)}\n',
-      flush: true,
-    );
+    await MapAssetBundleCompiler(
+      spec: MapAssetBundleSpec(
+        mapId: spec.id,
+        mapContentHash: spec.mapContentHash,
+        cols: spec.columns,
+        rows: spec.rows,
+      ),
+      source: FileMapTileImageSource(files: files, rows: spec.rows),
+      output: Directory('${outputRoot.path}/${spec.id}'),
+    ).compile();
   }
 
   List<File> _sourceFiles(MapSourceSpec spec) => [
@@ -104,6 +85,7 @@ final class MapSourceSpec {
     required this.columns,
     required this.rows,
     required this.aggregateSha256,
+    required this.mapContentHash,
   });
 
   factory MapSourceSpec.fromJson(Map<String, dynamic> json) {
@@ -118,6 +100,7 @@ final class MapSourceSpec {
       columns: columns,
       rows: rows,
       aggregateSha256: json['aggregateSha256'] as String,
+      mapContentHash: _contentHash(json['mapContentHash'], id),
     );
   }
 
@@ -125,4 +108,12 @@ final class MapSourceSpec {
   final int columns;
   final int rows;
   final String aggregateSha256;
+  final String mapContentHash;
+
+  static String _contentHash(Object? value, String id) {
+    if (value is! String || !RegExp(r'^[0-9a-f]{64}$').hasMatch(value)) {
+      throw FormatException('$id mapContentHash must be a SHA-256 digest');
+    }
+    return value;
+  }
 }

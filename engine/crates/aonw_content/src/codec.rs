@@ -1,10 +1,10 @@
 use aonw_domain::HexCoord;
 
 use crate::error::MapLoadError;
-use crate::raw::{RawMap, RawMapDocument, RawObjective, RawTile};
+use crate::raw::{RawCanonicalMap, RawMap, RawMapDocument, RawObjective, RawTile};
 use crate::{
     GridLayout, MapDefinition, MapDocument, MapObjective, MapObjectiveType, ResourceType,
-    TerrainType, TileDefinition,
+    TerrainProfile, TerrainType, TileDefinition,
 };
 
 const MAX_MAP_DOCUMENT_BYTES: usize = 8 * 1024 * 1024;
@@ -18,6 +18,22 @@ impl MapDocument {
     pub fn from_json(source: &[u8]) -> Result<Self, MapLoadError> {
         check_size(source)?;
         build_document(serde_json::from_slice::<RawMapDocument>(source)?.try_into()?)
+    }
+}
+
+impl MapDefinition {
+    /// Decodes the strict canonical logical map used for content identity.
+    ///
+    /// Unlike an authored [`MapDocument`], a logical map has no presentation
+    /// zoom and may use simulation-sized bounds.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapLoadError`] for malformed, incomplete, unsupported, or
+    /// invalid input.
+    pub fn from_canonical_json(source: &[u8]) -> Result<Self, MapLoadError> {
+        check_size(source)?;
+        build_map(serde_json::from_slice::<RawCanonicalMap>(source)?.try_into()?)
     }
 }
 
@@ -71,9 +87,14 @@ fn build_tile(raw: RawTile, index: usize) -> Result<TileDefinition, MapLoadError
     let height = u8::try_from(raw.height).map_err(|_| {
         MapLoadError::invalid(format!("{path}.height"), "must be a non-negative u8")
     })?;
-    let terrains = parse_values(raw.terrains, &format!("{path}.terrains"), parse_terrain)?;
+    let terrain_tags = parse_values(
+        raw.terrain_tags,
+        &format!("{path}.terrainTags"),
+        parse_terrain,
+    )?;
+    let terrain = TerrainProfile::try_new_at(&path, terrain_tags)?;
     let resources = parse_values(raw.resources, &format!("{path}.resources"), parse_resource)?;
-    TileDefinition::try_new_at(&path, coordinate, terrains, resources, height).map_err(Into::into)
+    TileDefinition::try_new_at(&path, coordinate, terrain, resources, height).map_err(Into::into)
 }
 
 fn build_objective(raw: RawObjective, index: usize) -> Result<MapObjective, MapLoadError> {

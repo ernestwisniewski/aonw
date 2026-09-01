@@ -78,6 +78,38 @@
 	}
 }
 
+{$AONW_ENGINE_DOCS_HOST} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+	}
+
+	@engineDocsHtml path / /index.html /architecture /architecture/ /architecture/index.html /*.html
+	header @engineDocsHtml {
+		Cache-Control "no-cache, must-revalidate"
+	}
+
+	redir /architecture/ /architecture 308
+	redir /architecture/index.html /architecture 308
+
+	@engineDocsStatic path /static.files/*
+	header @engineDocsStatic {
+		Cache-Control "public, max-age=31536000, immutable"
+	}
+
+	handle {
+		header {
+			?Cache-Control "public, max-age=300, must-revalidate"
+		}
+		root * /srv/engine-docs
+		try_files {path} {path}/index.html
+		file_server
+	}
+}
+
 {$AONW_DEMO_HOST} {
 	encode zstd gzip
 

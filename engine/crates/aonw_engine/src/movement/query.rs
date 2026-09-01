@@ -4,7 +4,7 @@ use aonw_domain::{GameState, HexCoord, MovementStep, MovementUnits, Unit, UnitId
 use super::MovementSearchMetrics;
 use super::reachable::movement_available_for_query;
 use super::route_search::{find_route, find_route_ignoring_capacity, find_route_to_any};
-use crate::EngineContext;
+use crate::{CommandRejectionCode, EngineContext};
 
 /// Input for deterministic terrain-only movement planning.
 #[derive(Clone, Copy, Debug)]
@@ -132,20 +132,22 @@ pub enum TerrainMovementQueryError {
 impl TerrainMovementQueryError {
     /// Returns the stable language-neutral rejection code.
     #[must_use]
-    pub const fn code(&self) -> &'static str {
+    pub const fn code(&self) -> CommandRejectionCode {
         match self {
-            Self::StaleRevision { .. } => "stale_revision",
-            Self::UnitNotFound => "unit_not_found",
-            Self::UnitNotControlled => "unit_not_controlled",
-            Self::UnitUnavailable => "unit_unavailable",
-            Self::UnitUsesTradeRoutes => "unit_uses_trade_routes",
-            Self::UnitOutOfBounds => "unit_out_of_bounds",
-            Self::TargetOutOfBounds => "move_target_out_of_bounds",
-            Self::TargetIsCurrentTile => "move_target_is_current_tile",
-            Self::TargetIsForeignCityCenter => "move_target_is_foreign_city_center",
-            Self::TargetOccupied => "move_target_occupied",
-            Self::MovementCapacityInsufficient => "unit_movement_capacity_insufficient",
-            Self::PathNotFound => "move_path_not_found",
+            Self::StaleRevision { .. } => CommandRejectionCode::StaleRevision,
+            Self::UnitNotFound => CommandRejectionCode::UnitNotFound,
+            Self::UnitNotControlled => CommandRejectionCode::UnitNotControlled,
+            Self::UnitUnavailable => CommandRejectionCode::UnitUnavailable,
+            Self::UnitUsesTradeRoutes => CommandRejectionCode::UnitUsesTradeRoutes,
+            Self::UnitOutOfBounds => CommandRejectionCode::UnitOutOfBounds,
+            Self::TargetOutOfBounds => CommandRejectionCode::MoveTargetOutOfBounds,
+            Self::TargetIsCurrentTile => CommandRejectionCode::MoveTargetIsCurrentTile,
+            Self::TargetIsForeignCityCenter => CommandRejectionCode::MoveTargetIsForeignCityCenter,
+            Self::TargetOccupied => CommandRejectionCode::MoveTargetOccupied,
+            Self::MovementCapacityInsufficient => {
+                CommandRejectionCode::UnitMovementCapacityInsufficient
+            }
+            Self::PathNotFound => CommandRejectionCode::MovePathNotFound,
         }
     }
 }
@@ -187,19 +189,42 @@ pub(crate) fn plan_terrain_route(
 ) -> Result<TerrainMovementPlan, TerrainMovementQueryError> {
     validate_revision(state, query.expected_revision)?;
     let unit = validate_unit(state, context, query.unit_id)?;
-    validate_target(context.map(), unit, query.target)?;
-    if context.city_block_is_known(unit, query.target) {
+    plan_route_for_unit(
+        state.revision().get(),
+        state.units(),
+        context,
+        unit,
+        query.target,
+        movement_available_for_query(unit, context.ruleset()),
+        true,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn plan_route_for_unit(
+    revision: u64,
+    units: &[Unit],
+    context: EngineContext<'_>,
+    unit: &Unit,
+    target: HexCoord,
+    available_movement: MovementUnits,
+    allow_occupied_approach: bool,
+) -> Result<TerrainMovementPlan, TerrainMovementQueryError> {
+    validate_target(context.map(), unit, target)?;
+    if context.city_block_is_known(unit, target) {
         return Err(TerrainMovementQueryError::TargetIsForeignCityCenter);
     }
 
-    let available_movement = movement_available_for_query(unit, context.ruleset());
-    let known_blocker = known_target_blocker(state, unit, query.target, context);
+    let known_blocker = known_target_blocker(units, unit, target, context);
     let (steps, search_metrics) = if let Some(blocker) = known_blocker {
+        if !allow_occupied_approach {
+            return Err(TerrainMovementQueryError::TargetOccupied);
+        }
         let approach = find_approach_route(
-            state,
+            units,
             context.map(),
             unit,
-            query.target,
+            target,
             available_movement,
             context,
         );
@@ -220,19 +245,19 @@ pub(crate) fn plan_terrain_route(
         (steps, approach.metrics)
     } else {
         let search = find_route(
-            state,
+            units,
             context.map(),
             unit,
-            query.target,
+            target,
             available_movement,
             context,
         );
         let Some(steps) = search.steps else {
             let diagnostic = find_route_ignoring_capacity(
-                state,
+                units,
                 context.map(),
                 unit,
-                query.target,
+                target,
                 available_movement,
                 context,
             );
@@ -257,9 +282,9 @@ pub(crate) fn plan_terrain_route(
         .unwrap_or(MovementUnits::ZERO);
 
     Ok(TerrainMovementPlan {
-        revision: state.revision().get(),
+        revision,
         unit_id: unit.id().clone(),
-        target: query.target,
+        target,
         destination: steps
             .last()
             .map_or(unit.position(), |step| step.coordinate()),
@@ -326,15 +351,16 @@ fn validate_target(
 }
 
 fn known_target_blocker<'state>(
-    state: &'state GameState,
+    units: &'state [Unit],
     unit: &Unit,
     target: HexCoord,
     context: EngineContext<'_>,
 ) -> Option<&'state Unit> {
-    state.units().iter().find(|candidate| {
+    units.iter().find(|candidate| {
         candidate.id() != unit.id()
             && candidate.position() == target
             && context.observes_occupancy(unit, candidate)
+            && !context.can_share_occupied_city(unit, candidate.position())
     })
 }
 
@@ -344,7 +370,7 @@ struct ApproachSearchResult {
 }
 
 fn find_approach_route(
-    state: &GameState,
+    units: &[Unit],
     map: &MapDefinition,
     unit: &Unit,
     target: HexCoord,
@@ -352,7 +378,7 @@ fn find_approach_route(
     context: EngineContext<'_>,
 ) -> ApproachSearchResult {
     let destinations = map.neighbors(target).collect::<Vec<_>>();
-    let search = find_route_to_any(state, map, unit, &destinations, available_movement, context);
+    let search = find_route_to_any(units, map, unit, &destinations, available_movement, context);
     ApproachSearchResult {
         steps: search.steps,
         metrics: search.metrics,

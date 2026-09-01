@@ -1,0 +1,13 @@
+diff --git a/src/double_slider.gd b/src/double_slider.gd
+--- a/src/double_slider.gd
++++ b/src/double_slider.gd
+@@ -25 +25,3 @@
+-	var ds: int = es.get_setting("interface/editor/display_scale")
++	var ds: int = 0
++	if es.has_setting("interface/editor/display_scale"):
++		ds = int(es.get_setting("interface/editor/display_scale"))
+@@ -28,2 +30,2 @@
+-	elif ds == 7:
+-		display_scale = es.get_setting("interface/editor/custom_display_scale")
++	elif ds == 7 and es.has_setting("interface/editor/custom_display_scale"):
++		display_scale = float(es.get_setting("interface/editor/custom_display_scale"))

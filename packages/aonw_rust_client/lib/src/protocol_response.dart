@@ -1,5 +1,7 @@
 import 'package:aonw_rust_client/src/protocol_execution.dart';
 import 'package:aonw_rust_client/src/protocol_json.dart';
+import 'package:aonw_rust_client/src/protocol_map.dart';
+import 'package:aonw_rust_client/src/protocol_player_view.dart';
 import 'package:aonw_rust_client/src/protocol_query.dart';
 import 'package:aonw_rust_client/src/protocol_values.dart';
 
@@ -22,7 +24,10 @@ typedef _ResponseParser =
 
 final Map<String, _ResponseParser> _responseParsers = {
   'capabilities': AonwCapabilitiesResponse.fromJson,
+  'mapInspected': AonwMapInspectedResponse.fromJson,
   'sessionOpened': AonwSessionOpenedResponse.fromJson,
+  'actorHandedOff': AonwActorHandedOffResponse.fromJson,
+  'aiTurnAdvanced': AonwAiTurnAdvancedResponse.fromJson,
   'sessionClosed': AonwSessionClosedResponse.fromJson,
   'snapshot': AonwSnapshotResponse.fromJson,
   'query': AonwQueryResponse.fromJson,
@@ -31,25 +36,26 @@ final Map<String, _ResponseParser> _responseParsers = {
   'saveOpened': AonwSaveOpenedResponse.fromJson,
   'replayExported': AonwReplayExportedResponse.fromJson,
   'replayVerified': AonwReplayVerifiedResponse.fromJson,
+  'replayFrame': AonwReplayFrameResponse.fromJson,
 };
 
+final class AonwMapInspectedResponse extends AonwClientResponseBody {
+  const AonwMapInspectedResponse(this.map);
+
+  factory AonwMapInspectedResponse.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {'type', 'map'}, 'map inspected response');
+    return AonwMapInspectedResponse(AonwMapView.fromJson(value['map']));
+  }
+
+  final AonwMapView map;
+}
+
 final class AonwCapabilitiesResponse extends AonwClientResponseBody {
-  const AonwCapabilitiesResponse({
-    required this.behaviorVersion,
-    required this.features,
-  });
+  const AonwCapabilitiesResponse({required this.features});
 
   factory AonwCapabilitiesResponse.fromJson(Map<String, Object?> value) {
-    requireKeys(value, const {
-      'type',
-      'behaviorVersion',
-      'features',
-    }, 'capabilities response');
+    requireKeys(value, const {'type', 'features'}, 'capabilities response');
     return AonwCapabilitiesResponse(
-      behaviorVersion: readUnsigned(
-        value['behaviorVersion'],
-        'behavior version',
-      ),
       features: readList(
         value['features'],
         'client features',
@@ -58,7 +64,6 @@ final class AonwCapabilitiesResponse extends AonwClientResponseBody {
     );
   }
 
-  final int behaviorVersion;
   final List<AonwClientFeature> features;
 }
 
@@ -71,6 +76,56 @@ final class AonwSessionOpenedResponse extends AonwClientResponseBody {
   }
 
   final AonwSessionStamp stamp;
+}
+
+final class AonwActorHandedOffResponse extends AonwClientResponseBody {
+  const AonwActorHandedOffResponse(this.stamp);
+
+  factory AonwActorHandedOffResponse.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {'type', 'stamp'}, 'actor handed off response');
+    return AonwActorHandedOffResponse(
+      AonwSessionStamp.fromJson(value['stamp']),
+    );
+  }
+
+  final AonwSessionStamp stamp;
+}
+
+final class AonwAiTurnAdvancedResponse extends AonwClientResponseBody {
+  const AonwAiTurnAdvancedResponse({
+    required this.stamp,
+    required this.actorPlayerId,
+    required this.executedCommands,
+    required this.completedTurn,
+  });
+
+  factory AonwAiTurnAdvancedResponse.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {
+      'type',
+      'stamp',
+      'actorPlayerId',
+      'executedCommands',
+      'completedTurn',
+    }, 'AI turn advanced response');
+    final completedTurn = value['completedTurn'];
+    if (completedTurn is! bool) {
+      throw const FormatException('Invalid AI turn completion flag.');
+    }
+    return AonwAiTurnAdvancedResponse(
+      stamp: AonwSessionStamp.fromJson(value['stamp']),
+      actorPlayerId: readString(value['actorPlayerId'], 'AI actor player id'),
+      executedCommands: readUnsigned(
+        value['executedCommands'],
+        'AI executed command count',
+      ),
+      completedTurn: completedTurn,
+    );
+  }
+
+  final AonwSessionStamp stamp;
+  final String actorPlayerId;
+  final int executedCommands;
+  final bool completedTurn;
 }
 
 final class AonwSessionClosedResponse extends AonwClientResponseBody {
@@ -168,6 +223,32 @@ final class AonwReplayVerifiedResponse extends AonwClientResponseBody {
   }
 
   final AonwReplayVerification verification;
+}
+
+final class AonwReplayFrameResponse extends AonwClientResponseBody {
+  const AonwReplayFrameResponse({
+    required this.position,
+    required this.entryCount,
+    required this.snapshot,
+  });
+
+  factory AonwReplayFrameResponse.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {
+      'type',
+      'position',
+      'entryCount',
+      'snapshot',
+    }, 'replay frame response');
+    return AonwReplayFrameResponse(
+      position: readUnsigned(value['position'], 'replay position'),
+      entryCount: readUnsigned(value['entryCount'], 'replay entry count'),
+      snapshot: AonwPlayerViewSnapshot.fromJson(value['snapshot']),
+    );
+  }
+
+  final int position;
+  final int entryCount;
+  final AonwPlayerViewSnapshot snapshot;
 }
 
 final class AonwReplayVerification {

@@ -6,7 +6,15 @@ use aonw_contracts::client::{
 use aonw_local_runtime::LocalRuntime;
 use serde_json::json;
 
-use super::dispatch_json;
+use super::{adapter_build_identity, dispatch_json};
+
+#[test]
+fn native_adapter_exposes_its_build_identity() {
+    assert_eq!(
+        adapter_build_identity(),
+        concat!("aonw_godot/", env!("CARGO_PKG_VERSION"))
+    );
+}
 
 fn map_json(cols: u16, rows: u16, map_id: &str) -> String {
     let tiles = (0..rows)
@@ -15,7 +23,7 @@ fn map_json(cols: u16, rows: u16, map_id: &str) -> String {
                 json!({
                     "col": col,
                     "row": row,
-                    "terrains": ["grassland"],
+                    "terrainTags": ["grassland"],
                     "resources": [],
                     "height": 0,
                 })
@@ -82,6 +90,28 @@ fn native_adapter_uses_the_shared_client_protocol_end_to_end() {
     let scenario = scenario_json(1, "session-test", "session-test");
     let mut runtime = LocalRuntime::default();
 
+    let inspected = response(
+        &mut runtime,
+        ClientRequestBodyDto::InspectMap {
+            map_document: map.clone(),
+        },
+    );
+    let ClientResponseBodyDto::MapInspected { map: map_view } = inspected else {
+        panic!("map inspection response")
+    };
+    assert_eq!(map_view.map_id, "session-test");
+    assert_eq!(map_view.tiles.len(), 25);
+    assert_eq!(
+        map_view.tiles[0].coordinate,
+        CoordinateDto { col: 0, row: 0 }
+    );
+    assert_eq!(
+        map_view.tiles[24].coordinate,
+        CoordinateDto { col: 4, row: 4 }
+    );
+    assert_eq!(map_view.tiles[0].movement_terrains.len(), 1);
+    assert_eq!(map_view.content_hash.len(), 64);
+
     assert!(matches!(
         response(
             &mut runtime,
@@ -115,13 +145,19 @@ fn native_adapter_uses_the_shared_client_protocol_end_to_end() {
 #[test]
 fn native_adapter_rejects_non_protocol_and_foreign_version_documents() {
     let mut runtime = LocalRuntime::default();
-    for input in [
-        "{}".to_owned(),
-        json!({"apiVersion": CLIENT_API_VERSION + 1, "request": {"type": "capabilities"}})
-            .to_string(),
+    for (input, expected_code) in [
+        ("{}".to_owned(), "invalid_client_request"),
+        (
+            json!({"apiVersion": CLIENT_API_VERSION + 1, "request": {"type": "capabilities"}})
+                .to_string(),
+            "unsupported_client_api_version",
+        ),
     ] {
         let response = ClientResponseDto::from_json(&dispatch_json(&mut runtime, &input))
             .expect("failure response");
-        assert!(matches!(response.outcome, ClientOutcomeDto::Failure { .. }));
+        let ClientOutcomeDto::Failure { error } = response.outcome else {
+            panic!("failure response")
+        };
+        assert_eq!(error.code, expected_code);
     }
 }
