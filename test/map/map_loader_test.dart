@@ -9,11 +9,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('MapLoader.fromJson', () {
-    test('loads a bundled map asset', () async {
-      final data = await MapLoader.load('content/maps/verdantia/map.json');
+    test('loads a frozen legacy map asset', () async {
+      final data = await MapLoader.load('test/fixtures/legacy_map.json');
 
       expect(data.tiles, isNotEmpty);
-      expect(data.mapName, 'verdantia');
+      expect(data.mapName, 'legacy_fixture');
     });
 
     test('parses valid new-format JSON into WorldMap', () {

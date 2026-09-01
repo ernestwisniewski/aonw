@@ -37,3 +37,41 @@ impl MovementPlanningView<'_> {
         candidate.owner_player_id() == moving_unit.owner_player_id() || self.knows(candidate.id())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use aonw_domain::{HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind};
+
+    use super::MovementPlanningView;
+
+    #[test]
+    fn planning_view_always_observes_friendly_and_only_known_enemy_occupancy() {
+        let actor = PlayerId::new("actor").expect("actor");
+        let enemy = PlayerId::new("enemy").expect("enemy");
+        let moving = unit("moving", actor.clone());
+        let friendly = unit("friendly", actor);
+        let hidden_enemy = unit("enemy", enemy);
+        let no_known_units = [];
+        let hidden = MovementPlanningView::known_units(&no_known_units);
+
+        assert!(hidden.observes_occupancy(&moving, &friendly));
+        assert!(!hidden.observes_occupancy(&moving, &hidden_enemy));
+        assert!(
+            MovementPlanningView::known_units(&[hidden_enemy.id().clone()])
+                .observes_occupancy(&moving, &hidden_enemy)
+        );
+    }
+
+    fn unit(id: &str, owner: PlayerId) -> Unit {
+        Unit::builder(
+            UnitId::new(id).expect("unit id"),
+            owner,
+            UnitKind::Warrior,
+            id,
+            HexCoord::new(0, 0),
+            MovementUnits::ZERO,
+        )
+        .build()
+        .expect("unit")
+    }
+}

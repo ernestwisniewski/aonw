@@ -6,32 +6,106 @@
 #![forbid(unsafe_code)]
 
 mod application;
+mod artifact;
+mod city;
+mod combat;
 mod context;
+mod diplomacy;
+mod diplomacy_policy;
+mod economy;
+mod match_start;
 mod movement;
+mod outcome;
+mod production;
+mod research;
 mod state_digest;
+mod technology_unlock;
+mod turn_kernel;
 mod unit_action;
+mod worker;
 
 use aonw_domain::GameState;
 
 pub use application::{
-    CanonicalEngineError, CanonicalQueryError, DomainCommand, DomainEvent, DomainRejection,
-    DomainTransition, DomainTransitionParts, ExecutionEvidence, GameQuery, QueryResult,
+    AllPlayersSubmittedEvent, ArtifactCarriedEvent, ArtifactExcavationStartedEvent,
+    ArtifactStoredEvent, AutoExplorePlannedEvent, CanonicalEngineError, CanonicalQueryError,
+    CityBuiltBuildingEvent, CityBuiltWonderEvent, CityClaimedHexEvent, CityFoundedEvent,
+    CityProducedUnitEvent, CombatEvent, CommandRejectionCode, DiplomaticMessageRespondedEvent,
+    DiplomaticMessageSentEvent, DiplomaticPromiseBrokenEvent, DiplomaticProposalExpiredEvent,
+    DiplomaticProposalRespondedEvent, DiplomaticProposalSentEvent, DiplomaticRelationChangedEvent,
+    DiplomaticScoreChangedEvent, DomainEvent, DomainRejection, DomainTransition,
+    DomainTransitionParts, DominationThresholdReachedEvent, EventBudget, ExecutionEvidence,
+    FinalizeTimedOutTurnCommand, GameQuery, KickParticipantCommand, LogisticsExecution,
+    MapObjectiveSecuredEvent, MatchEndedEvent, MerchantRouteAssignedEvent,
+    MerchantTravelQueuedEvent, PlayerCommand, PlayerKickedEvent, PlayerTimedOutEvent,
+    ProcessorRequirement, QueryResult, ResearchPointsGainedEvent, StabilityBand,
+    StabilityBandChangedEvent, SystemCommand, TechnologyResearchedEvent, TroopDetachedEvent,
+    TurnCommand, TurnEndedEvent, TurnKernelCapabilities, TurnKernelExecution, TurnProcessor,
+    WonderProductionRefundedEvent, WorkerCompletedJobEvent, WorkerJobCompletion,
 };
-pub use context::EngineContext;
+pub use artifact::{
+    ArtifactError, StartArtifactExcavationCommand, StoreArtifactInCityCommand, TradeArtifactCommand,
+};
+pub use city::{
+    CityExpansionCandidate, CityExpansionOptions, CityExpansionOptionsQuery, CityFoundingOptions,
+    CityFoundingOptionsQuery, CityWorkedHexOptions, CityWorkedHexOptionsQuery, FoundCityCommand,
+    SelectCityExpansionHexCommand, ToggleWorkedHexCommand,
+};
+pub use combat::{
+    AttackHexCommand, CombatExecution, CombatModifier, CombatModifierKind, CombatOutcome,
+    CombatPreview, CombatPreviewQuery, CombatRng, CombatRoll, CombatStatTarget, CombatTarget,
+    EffectiveCombatStats,
+};
+pub use context::{EngineContext, SystemContext};
+pub use diplomacy::{
+    DeclareWarCommand, DiplomacyError, OpenResourceExchangeCommand, OpenResourceTradeCommand,
+    RespondDiplomaticMessageCommand, RespondDiplomaticProposalCommand,
+    SendDiplomaticMessageCommand, SendDiplomaticProposalCommand, SendGoldGiftCommand,
+};
+pub use diplomacy_policy::{
+    DiplomacyDisclosure, DiplomacyPolicy, DiplomacyPolicyError, DiplomacyPolicyPlayerRole,
+    DiplomacyPolicyQuery,
+};
+pub use economy::{
+    CityYieldBreakdown, CityYieldContribution, CityYieldContributionKind, CityYieldQuery,
+    EconomyQueryError, StrategicResourceProjection, StrategicResourceProjectionQuery,
+    StrategicResourceSource, YieldValue,
+};
+pub use match_start::{MatchStartError, start_match};
 pub use movement::{
-    CompiledMovementMap, CompiledMovementMapError, MoveUnitCommand, MoveUnitError, MovementCost,
-    MovementSearchMetrics, MovementSearchWorkspace, MovementVisibility, ReachableMovement,
-    ReachableMovementQuery, ReachableMovementTile, TerrainMovementPlan, TerrainMovementQuery,
-    TerrainMovementQueryError, UnitMovedEvent, UnitMovementExecution, maximum_movement_units,
+    AssignMerchantTradeRouteCommand, AutoExploreOption, AutoExploreUnitCommand,
+    CompiledMovementMap, CompiledMovementMapError, DetachTroopCommand, DetachmentOption,
+    MerchantDestinationOption, MoveMerchantToCityCommand, MoveUnitCommand, MoveUnitError,
+    MovementCost, MovementLogisticsError, MovementSearchMetrics, MovementSearchWorkspace,
+    MovementVisibility, ReachableMovement, ReachableMovementQuery, ReachableMovementTile,
+    TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitLogisticsOptions,
+    UnitLogisticsOptionsQuery, UnitMovedEvent, UnitMovementExecution, maximum_movement_units,
     terrain_entry_cost,
 };
+pub use outcome::{OutcomeResolutionError, calculate_empire_scores, resolve_game_outcome};
+pub use production::{
+    CitySpecializationOption, ProductionError, ProductionOption, ProductionOptions,
+    ProductionOptionsQuery, RushProductionCommand, SetCitySpecializationCommand,
+    StartBuildingCommand, StartCityProjectCommand, StartUnitProductionCommand, StartWonderCommand,
+    UnitProductionOption,
+};
+pub use research::{
+    ResearchError, ResearchOption, ResearchOptions, ResearchOptionsQuery, ScienceYieldBreakdown,
+    ScienceYieldSource, ScienceYieldSourceKind, SelectTechnologyCommand,
+};
 pub use state_digest::StateDigest;
+pub use technology_unlock::{
+    TechnologyAvailability, TechnologyCombatModifier, TechnologyCombatStat,
+    TechnologyEffectSummary, TechnologyQueryError, TechnologyUnlockQuery,
+};
 pub use unit_action::{UnitActionCommand, UnitActionError};
-
-/// Engine behavior version implemented by this workspace.
-///
-/// This axis is independent of save, wire, and native ABI versions.
-pub const ENGINE_BEHAVIOR_VERSION: u16 = 2;
+pub use worker::{
+    AssignWorkerToHexCommand, AutomateWorkerCommand, BuildRoadCommand,
+    CancelWorkerAssignmentCommand, CancelWorkerJobCommand, ConfirmWorkerImprovementCommand,
+    SelectWorkerImprovementCommand, WorkerAutomationAction, WorkerAutomationExecution,
+    WorkerAutomationMetrics, WorkerAutomationOption, WorkerImprovementOption, WorkerOptions,
+    WorkerOptionsQuery,
+};
 
 /// Stateless deterministic engine facade.
 #[derive(Clone, Copy, Debug, Default)]

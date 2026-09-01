@@ -1,5 +1,5 @@
 use aonw_content::MapDefinition;
-use aonw_domain::{GameState, Unit};
+use aonw_domain::Unit;
 
 use crate::EngineContext;
 
@@ -11,14 +11,17 @@ pub(crate) struct MovementOccupancy {
 
 impl MovementOccupancy {
     pub(crate) fn for_unit(
-        state: &GameState,
+        units: &[Unit],
         map: &MapDefinition,
         unit: &Unit,
         context: EngineContext<'_>,
     ) -> Self {
         let mut words = vec![0_u64; map.bounds().tile_count().div_ceil(u64::BITS as usize)];
-        for candidate in state.units() {
+        for candidate in units {
             if candidate.id() == unit.id() || !context.observes_occupancy(unit, candidate) {
+                continue;
+            }
+            if context.can_share_occupied_city(unit, candidate.position()) {
                 continue;
             }
             if let Some(index) = map.tile_index(candidate.position()) {

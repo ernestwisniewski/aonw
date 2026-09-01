@@ -1,6 +1,7 @@
 use aonw_content::{MapDefinition, TerrainType, TileDefinition};
 use aonw_domain::{HexCoord, MovementUnits, UnitMovementDomain};
 
+use super::MovementAccess;
 use super::terrain_profile::TerrainProfile;
 use crate::EngineContext;
 
@@ -52,31 +53,31 @@ pub fn terrain_entry_cost(tile: &TileDefinition, domain: UnitMovementDomain) -> 
     MovementCost::Passable(MovementUnits::new(cost))
 }
 
-pub(super) fn movement_cost_for_edge(
-    from: HexCoord,
-    to: HexCoord,
+fn movement_cost_for_edge(
+    from_index: usize,
+    to_index: usize,
     tile: &TileDefinition,
     domain: UnitMovementDomain,
-    context: EngineContext<'_>,
+    access: &MovementAccess,
 ) -> MovementCost {
     let base = terrain_entry_cost(tile, domain);
-    movement_cost_for_base_edge(from, to, base, domain, context)
+    movement_cost_for_base_edge(from_index, to_index, base, domain, access)
 }
 
-pub(super) fn movement_cost_for_base_edge(
-    from: HexCoord,
-    to: HexCoord,
+fn movement_cost_for_base_edge(
+    from_index: usize,
+    to_index: usize,
     base: MovementCost,
     domain: UnitMovementDomain,
-    context: EngineContext<'_>,
+    access: &MovementAccess,
 ) -> MovementCost {
     if domain != UnitMovementDomain::Land || matches!(base, MovementCost::Blocked) {
         return base;
     }
-    let from_road = context.has_known_operational_road(from);
-    let to_road = context.has_known_operational_road(to);
-    if (from_road || context.is_known_city_center(from)) && to_road
-        || (from_road && context.is_known_city_center(to))
+    let from_road = access.has_known_operational_road(from_index);
+    let to_road = access.has_known_operational_road(to_index);
+    if (from_road || access.has_known_city_center(from_index)) && to_road
+        || (from_road && access.has_known_city_center(to_index))
     {
         MovementCost::Passable(MovementUnits::new(1))
     } else {
@@ -85,24 +86,25 @@ pub(super) fn movement_cost_for_base_edge(
 }
 
 pub(super) fn movement_cost_for_index(
-    from: HexCoord,
+    from_index: usize,
     to: HexCoord,
     to_index: usize,
     map: &MapDefinition,
     domain: UnitMovementDomain,
     context: EngineContext<'_>,
+    access: &MovementAccess,
 ) -> MovementCost {
     if let Some(compiled) = context.compiled_movement_map() {
         return movement_cost_for_base_edge(
-            from,
-            to,
+            from_index,
+            to_index,
             compiled.entry_cost(to_index, domain),
             domain,
-            context,
+            access,
         );
     }
     map.tile_at(to).map_or(MovementCost::Blocked, |tile| {
-        movement_cost_for_edge(from, to, tile, domain, context)
+        movement_cost_for_edge(from_index, to_index, tile, domain, access)
     })
 }
 
@@ -132,7 +134,7 @@ mod tests {
     use super::{MovementCost, terrain_entry_cost};
 
     fn tile(terrains: Vec<TerrainType>) -> TileDefinition {
-        TileDefinition::try_new(HexCoord::new(0, 0), terrains, Vec::new(), 0)
+        TileDefinition::try_new_for_simulation(HexCoord::new(0, 0), terrains, Vec::new(), 0)
             .expect("valid terrain fixture")
     }
 
@@ -165,7 +167,7 @@ mod tests {
     #[test]
     fn primary_terrain_is_explicit() {
         assert!(
-            TileDefinition::try_new(
+            TileDefinition::try_new_for_simulation(
                 HexCoord::new(0, 0),
                 vec![TerrainType::Forest],
                 Vec::new(),

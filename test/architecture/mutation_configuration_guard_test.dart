@@ -149,6 +149,7 @@ void main() {
       ),
     );
     expect(_makeTarget(makefile, 'ci').prerequisites, [
+      'successor-engine-quality-check',
       'generated-code-check',
       'format-check',
       'analyze',
@@ -186,14 +187,17 @@ void main() {
     expect(environment.keys.toSet(), {'MUTATION_RATCHET_REF'});
     expect(
       environment['MUTATION_RATCHET_REF'],
-      r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}",
+      r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}",
     );
 
     final steps = (job['steps'] as YamlList).cast<YamlMap>();
-    expect(steps, hasLength(6));
+    expect(steps, hasLength(7));
     final checkout = _step(steps, 'Checkout repository');
     expect(checkout.keys.toSet(), {'name', 'uses', 'with'});
     expect((checkout['with'] as YamlMap)['fetch-depth'], 0);
+    final linuxTools = _step(steps, 'Set up Linux CI tools');
+    expect(linuxTools.keys.toSet(), {'name', 'uses'});
+    expect(linuxTools['uses'], './.github/actions/setup-linux-ci');
     final fetchRatchet = _step(steps, 'Fetch mutation ratchet commit');
     expect(fetchRatchet.keys.toSet(), {'name', 'run'});
     expect(

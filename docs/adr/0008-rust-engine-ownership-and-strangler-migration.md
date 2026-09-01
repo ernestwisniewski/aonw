@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-08-13
 - Implementation: In progress
+- Client topology superseded by: [ADR 0009](0009-dart-feature-freeze-and-parallel-successor-clients.md)
 
 ## Context
 
@@ -35,7 +36,7 @@ The binding migration rules are:
 
 - the shipping Flutter app remains at the repository root and stays releasable;
 - `packages/aonw_core` remains the production implementation and compatibility reference until cutover gates pass;
-- Godot lives under `clients/aonw2_godot/` and contains presentation, not gameplay rules;
+- Godot lives under `clients/aonw_godot/` and contains presentation, not gameplay rules;
 - Rust domain and engine crates perform no filesystem, database, network, wall-clock, localization, Flutter, Godot, or Serverpod work;
 - production domain and engine crates forbid unsafe code; unavoidable unsafe code is isolated and audited in adapters;
 - compatibility is ported before gameplay redesign;
@@ -69,6 +70,7 @@ The living milestone plan is [rust-engine-migration.md](../rust-engine-migration
 
 ## Related Decisions And Documentation
 
+- [ADR 0009: Dart feature freeze and parallel successor clients](0009-dart-feature-freeze-and-parallel-successor-clients.md)
 - [ADR 0001: Map and state ownership](0001-map-and-state-ownership.md)
 - [ADR 0002: Deterministic game engine](0002-deterministic-game-engine.md)
 - [ADR 0003: Command boundaries](0003-command-boundaries.md)

@@ -1,5 +1,6 @@
 //! Diagnostic local-runtime and JSON-adapter baseline without a timing gate.
 
+use std::alloc::System;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -12,21 +13,132 @@ use aonw_contracts::client::{
     CLIENT_API_VERSION, ClientCommandDto, ClientRequestBodyDto, ClientRequestDto,
 };
 use aonw_domain::{
-    Diplomacy, FogOfWar, GameState, HexCoord, InteractionState, PlayerFog, PlayerId, StateRevision,
-    TransportNetwork, Unit, UnitId, UnitKind,
+    FogOfWar, GameState, HexCoord, PlayerFog, PlayerId, StateRevision, Unit, UnitId, UnitKind,
 };
-use aonw_local_runtime::{ClientProtocol, LocalRuntime, MoveUnitRequest, OpenSession};
+use aonw_local_runtime::{
+    ClientProtocol, FinalizeTimedOutTurnRequest, KickParticipantRequest, LocalRuntime,
+    MoveUnitRequest, OpenSession, TurnCommandRequest,
+};
 use serde_json::json;
+use stats_alloc::{INSTRUMENTED_SYSTEM, Region, Stats, StatsAlloc};
+
+#[global_allocator]
+static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
+
+#[path = "runtime/combat_support.rs"]
+mod combat_support;
+#[path = "runtime/turn_support.rs"]
+mod turn_support;
 
 const COLS: u16 = 40;
 const ROWS: u16 = 30;
 const ITERATIONS: usize = 20;
 
 fn main() {
-    println!("workload,tiles,units,iterations,median_ns,p95_ns,signature");
+    println!(
+        "workload,tiles,units,iterations,allocations,reallocations,allocated_bytes,payload_bytes,signature,median_ns,p95_ns"
+    );
     for unit_count in [1, 64, 512] {
         benchmark_runtime(unit_count);
+        benchmark_turn_kernel(unit_count);
+        combat_support::benchmark(unit_count);
     }
+}
+
+fn benchmark_turn_kernel(unit_count: usize) {
+    let map = map();
+    let ruleset = RulesetDefinition::standard().clone();
+    let (base, first, second) =
+        turn_support::opened_turn_runtime(map.clone(), ruleset.clone(), unit_count);
+    let submit = TurnCommandRequest {
+        expected_revision: 0,
+    };
+    report_with_setup(
+        "runtime_turn_submit_partial",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let result = runtime.submit_turn(submit).expect("submit turn");
+            (command_signature(&result), 0)
+        },
+    );
+
+    let timeout = FinalizeTimedOutTurnRequest {
+        expected_revision: 1,
+        player_ids: vec![first.clone(), second.clone()].into_boxed_slice(),
+        skipped_player_ids: vec![second.clone()].into_boxed_slice(),
+        next_turn_started_at: None,
+    };
+    report_with_setup(
+        "runtime_turn_timeout_finalization",
+        unit_count,
+        || {
+            let mut runtime = base.clone();
+            runtime.submit_turn(submit).expect("prepare partial turn");
+            runtime
+        },
+        |mut runtime| {
+            let result = runtime
+                .finalize_timed_out_turn(&timeout)
+                .expect("finalize timeout");
+            (command_signature(&result), 0)
+        },
+    );
+
+    let kick = KickParticipantRequest {
+        expected_revision: 0,
+        player_id: second,
+        reason: "benchmark_timeout".into(),
+        timeout_streak: 3,
+    };
+    report_with_setup(
+        "runtime_turn_kick_participant",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let result = runtime.kick_participant(&kick).expect("kick participant");
+            (command_signature(&result), 0)
+        },
+    );
+
+    let request = client_request(ClientRequestBodyDto::Dispatch {
+        command: ClientCommandDto::SubmitTurn {
+            expected_revision: 0,
+        },
+    });
+    report_with_setup(
+        "client_json_turn_submit_partial",
+        unit_count,
+        || base.clone(),
+        |mut runtime| {
+            let response = ClientProtocol::dispatch_json(&mut runtime, &request);
+            (signature_bytes(&response), response.len())
+        },
+    );
+
+    report_with_setup(
+        "turn_replay_verify",
+        unit_count,
+        || {
+            let mut runtime = base.clone();
+            runtime.submit_turn(submit).expect("prepare replay submit");
+            runtime
+                .finalize_timed_out_turn(&timeout)
+                .expect("prepare replay timeout");
+            runtime.export_replay_json().expect("replay JSON")
+        },
+        |replay| {
+            let verified = LocalRuntime::verify_replay_json(map.clone(), ruleset.clone(), &replay)
+                .expect("verify replay");
+            (
+                mix(
+                    u64::try_from(verified.entry_count).unwrap_or(u64::MAX),
+                    verified.final_event_offset,
+                ),
+                replay.len(),
+            )
+        },
+    );
 }
 
 fn benchmark_runtime(unit_count: usize) {
@@ -43,11 +155,12 @@ fn benchmark_runtime(unit_count: usize) {
         |request| {
             let mut runtime = LocalRuntime::default();
             let stamp = runtime.open(request).expect("open runtime");
-            stamp_signature(&stamp)
+            (stamp_signature(&stamp), 0)
         },
     );
 
     let base = opened(open);
+    benchmark_snapshot(&base, unit_count);
     let accepted = MoveUnitRequest {
         expected_revision: 0,
         unit_id: UnitId::new("unit-0").expect("unit id"),
@@ -59,7 +172,7 @@ fn benchmark_runtime(unit_count: usize) {
         || base.clone(),
         |mut runtime| {
             let result = runtime.dispatch(&accepted).expect("dispatch");
-            command_signature(&result)
+            (command_signature(&result), 0)
         },
     );
     let rejected = MoveUnitRequest {
@@ -72,20 +185,22 @@ fn benchmark_runtime(unit_count: usize) {
         || base.clone(),
         |mut runtime| {
             let result = runtime.dispatch(&rejected).expect("dispatch");
-            command_signature(&result)
+            (command_signature(&result), 0)
         },
     );
 
-    let hidden_base = opened(hidden_open(map.clone(), ruleset.clone(), actor));
-    report_with_setup(
-        "runtime_dispatch_hidden_noop",
-        2,
-        || hidden_base.clone(),
-        |mut runtime| {
-            let result = runtime.dispatch(&accepted).expect("dispatch");
-            command_signature(&result)
-        },
-    );
+    if unit_count == 1 {
+        let hidden_base = opened(hidden_open(map.clone(), ruleset.clone(), actor));
+        report_with_setup(
+            "runtime_dispatch_hidden_noop",
+            2,
+            || hidden_base.clone(),
+            |mut runtime| {
+                let result = runtime.dispatch(&accepted).expect("dispatch");
+                (command_signature(&result), 0)
+            },
+        );
+    }
 
     let accepted_json = client_request(ClientRequestBodyDto::Dispatch {
         command: ClientCommandDto::MoveUnit {
@@ -98,7 +213,10 @@ fn benchmark_runtime(unit_count: usize) {
         "client_json_dispatch_accepted",
         unit_count,
         || base.clone(),
-        |mut runtime| signature_bytes(&ClientProtocol::dispatch_json(&mut runtime, &accepted_json)),
+        |mut runtime| {
+            let response = ClientProtocol::dispatch_json(&mut runtime, &accepted_json);
+            (signature_bytes(&response), response.len())
+        },
     );
     let open_json = client_request(ClientRequestBodyDto::OpenSession {
         map_document: MapDocument::try_new(map, 1.0)
@@ -112,7 +230,28 @@ fn benchmark_runtime(unit_count: usize) {
         "client_json_open",
         unit_count,
         LocalRuntime::default,
-        |mut runtime| signature_bytes(&ClientProtocol::dispatch_json(&mut runtime, &open_json)),
+        |mut runtime| {
+            let response = ClientProtocol::dispatch_json(&mut runtime, &open_json);
+            (signature_bytes(&response), response.len())
+        },
+    );
+}
+
+fn benchmark_snapshot(base: &LocalRuntime, unit_count: usize) {
+    report_with_setup(
+        "runtime_snapshot",
+        unit_count,
+        || base.clone(),
+        |runtime| {
+            let snapshot = runtime.snapshot().expect("snapshot");
+            (
+                mix(
+                    stamp_signature(snapshot.stamp()),
+                    u64::try_from(snapshot.units().len()).unwrap_or(u64::MAX),
+                ),
+                0,
+            )
+        },
     );
 }
 
@@ -120,25 +259,43 @@ fn report_with_setup<T>(
     workload: &str,
     units: usize,
     mut setup: impl FnMut() -> T,
-    mut operation: impl FnMut(T) -> u64,
+    mut operation: impl FnMut(T) -> (u64, usize),
 ) {
     for _ in 0..3 {
         black_box(operation(setup()));
     }
     let mut samples = Vec::with_capacity(ITERATIONS);
     let mut signature = 0;
+    let mut payload_bytes = 0;
+    let mut allocation_stats: Option<Stats> = None;
     for _ in 0..ITERATIONS {
         let input = setup();
+        let region = Region::new(GLOBAL);
         let started = Instant::now();
-        signature = black_box(operation(input));
+        let output = black_box(operation(input));
         samples.push(started.elapsed().as_nanos());
+        let observed = region.change();
+        if let Some(expected) = allocation_stats {
+            assert_eq!(
+                observed, expected,
+                "allocation sample drifted for {workload}"
+            );
+        } else {
+            allocation_stats = Some(observed);
+        }
+        signature = output.0;
+        payload_bytes = output.1;
     }
+    let allocations = allocation_stats.expect("at least one allocation sample");
     samples.sort_unstable();
     let median = samples[samples.len() / 2];
     let p95 = samples[(samples.len() * 95 / 100).min(samples.len() - 1)];
     println!(
-        "{workload},{},{units},{ITERATIONS},{median},{p95},{signature:016x}",
+        "{workload},{},{units},{ITERATIONS},{},{},{},{payload_bytes},{signature:016x},{median},{p95}",
         usize::from(COLS) * usize::from(ROWS),
+        allocations.allocations,
+        allocations.reallocations,
+        allocations.bytes_allocated,
     );
 }
 
@@ -146,7 +303,7 @@ fn map() -> MapDefinition {
     let tiles = (0..ROWS)
         .flat_map(|row| {
             (0..COLS).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(i32::from(col), i32::from(row)),
                     vec![TerrainType::Grassland],
                     Vec::new(),
@@ -244,7 +401,7 @@ fn hidden_open(map: MapDefinition, ruleset: RulesetDefinition, actor: PlayerId) 
         .expect("unit")
     };
     let fog = FogOfWar::try_new([PlayerFog::new(actor.clone(), [], [])]).expect("fog");
-    let state = GameState::try_new_with_world(
+    let state = GameState::builder(
         StateRevision::INITIAL,
         0,
         map.bounds(),
@@ -257,13 +414,9 @@ fn hidden_open(map: MapDefinition, ruleset: RulesetDefinition, actor: PlayerId) 
                 HexCoord::new(1, 0),
             ),
         ],
-        [],
-        [],
-        InteractionState::default(),
-        fog,
-        Diplomacy::default(),
-        TransportNetwork::default(),
     )
+    .with_fog_of_war(fog)
+    .try_build()
     .expect("state");
     OpenSession::from_state(map, ruleset, state, actor)
 }
