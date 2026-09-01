@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:crypto/crypto.dart';
 import 'package:image/image.dart' as img;
 
+import 'map_asset_bundle_manifest.dart';
 import 'map_atlas_builder.dart';
 import 'map_texture_geometry.dart';
 
@@ -14,9 +16,9 @@ final class MapPageWriter {
   final String mapId;
   final Directory output;
 
-  Future<List<Map<String, Object>>> write(MapAtlasBuild build) async {
+  Future<List<MapAssetBundlePage>> write(MapAtlasBuild build) async {
     await output.create(recursive: true);
-    final pages = <Map<String, Object>>[];
+    final pages = <MapAssetBundlePage>[];
     var pageIndex = 0;
     for (
       var coreTop = 0;
@@ -30,10 +32,18 @@ final class MapPageWriter {
       ) {
         final page = _createPage(build.image, coreLeft, coreTop);
         final name = 'page_${pageIndex.toString().padLeft(2, '0')}.jpg';
-        await File(
-          '${output.path}/$name',
-        ).writeAsBytes(img.encodeJpg(page.image, quality: 92), flush: true);
-        pages.add(_pageRecord(name, page, coreLeft, coreTop, build.scale));
+        final bytes = img.encodeJpg(page.image, quality: 92);
+        await File('${output.path}/$name').writeAsBytes(bytes, flush: true);
+        pages.add(
+          _pageRecord(
+            name,
+            page,
+            coreLeft,
+            coreTop,
+            build.scale,
+            sha256.convert(bytes).toString(),
+          ),
+        );
         pageIndex++;
       }
     }
@@ -61,23 +71,27 @@ final class MapPageWriter {
     return _MapPage(image: page);
   }
 
-  Map<String, Object> _pageRecord(
+  MapAssetBundlePage _pageRecord(
     String name,
     _MapPage page,
     int coreLeft,
     int coreTop,
     double scale,
-  ) => {
-    'asset': '$mapRuntimeRoot/$mapId/$name',
-    'pixelWidth': page.image.width,
-    'pixelHeight': page.image.height,
-    'destination': [
+    String sha256Digest,
+  ) => MapAssetBundlePage(
+    file: name,
+    asset: '$mapRuntimeRoot/$mapId/$name',
+    format: 'jpeg',
+    sha256: sha256Digest,
+    pixelWidth: page.image.width,
+    pixelHeight: page.image.height,
+    destination: [
       (coreLeft - mapPageGutter) / scale,
       (coreTop - mapPageGutter) / scale,
       page.image.width / scale,
       page.image.height / scale,
     ],
-  };
+  );
 }
 
 final class _MapPage {

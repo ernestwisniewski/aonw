@@ -2,6 +2,10 @@ name: CI
 
 on:
   pull_request:
+  merge_group:
+    branches:
+      - main
+      - dev
   push:
     branches:
       - main
@@ -11,17 +15,176 @@ permissions:
   contents: read
 
 jobs:
+  successor-boundaries:
+    name: successor boundaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
+      - name: Check legacy freeze and successor dependencies
+        run: make --no-print-directory p0-check
+
+  successor-rust:
+    name: successor Rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal --component clippy --component llvm-tools-preview --component rustfmt
+
+      - name: Install pinned dependency policy tool
+        run: cargo +1.97.1 install --locked --force --version 0.20.2 cargo-deny
+
+      - name: Run fast successor engine gate
+        run: make --no-print-directory successor-engine-check
+
+      - name: Upload Rust dependency policy report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rust-dependency-policy-${{ github.sha }}
+          path: /tmp/aonw-rust-dependencies.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  successor-engine-evidence:
+    name: successor engine evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal --component clippy --component llvm-tools-preview --component rustfmt
+
+      - name: Install pinned coverage tool
+        run: cargo +1.97.1 install --locked --force --version 0.9.0 cargo-llvm-cov
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version-file: .fvmrc
+          channel: stable
+          cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-successor-evidence-${{ hashFiles('pubspec.lock', 'engine/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-successor-evidence-
+            ${{ runner.os }}-pub-
+
+      - name: Generate successor engine evidence
+        run: make --no-print-directory successor-engine-evidence-check
+
+      - name: Upload successor engine evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: successor-engine-evidence-${{ github.sha }}
+          path: |
+            engine/migration/reducer_fixture_dispositions
+            /tmp/aonw-rust-coverage.json
+            /tmp/aonw-rust-coverage.lcov
+            /tmp/aonw-rust-performance.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  successor-engine-native-contract:
+    name: successor engine native contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version-file: .fvmrc
+          channel: stable
+          cache: true
+
+      - name: Reject unsupported Rust Native Assets substitutions
+        run: make --no-print-directory rust-native-assets-contract-test
+
+  successor-flutter:
+    name: successor Flutter
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version-file: .fvmrc
+          channel: stable
+          cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-successor-flutter-${{ hashFiles('pubspec.lock', 'clients/aonw_flutter/pubspec.lock', 'packages/aonw_rust_client/pubspec.lock', 'engine/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-successor-flutter-
+            ${{ runner.os }}-pub-
+
+      - name: Check standalone Rust-backed client
+        run: make --no-print-directory successor-flutter-check
+
+      - name: Check Rust-Flutter bridge
+        run: make --no-print-directory rust-flutter-test
+
+      - name: Check successor architecture budgets
+        run: make --no-print-directory architecture-check
+
   quality-gate:
     name: ${{ matrix.package }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       COVERAGE_BASE_REF: >-
-        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.ref_name == 'dev' && 'origin/main' || github.event.before }}
+        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.ref_name == 'dev' && 'origin/main' || github.event.before }}
       COVERAGE_RATCHET_REF: >-
-        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}
       ARCHITECTURE_RATCHET_REF: >-
-        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}
 
     strategy:
       fail-fast: false
@@ -49,6 +212,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
 
       - name: Fetch CI ratchet commits
         run: |
@@ -163,19 +329,44 @@ jobs:
       - name: Run native End turn save reload smoke
         run: make --no-print-directory native-local-game-smoke
 
+  successor-flutter-device-smoke:
+    name: successor Flutter device smoke
+    runs-on: macos-latest
+    timeout-minutes: 20
+    env:
+      FLUTTER_XCODE_CODE_SIGNING_ALLOWED: 'NO'
+      FLUTTER_XCODE_CODE_SIGNING_REQUIRED: 'NO'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version-file: .fvmrc
+          channel: stable
+          cache: true
+
+      - name: Run standalone client device smoke
+        run: make --no-print-directory successor-flutter-device-test
+
   mutation-gate:
     name: mutation gate
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       MUTATION_RATCHET_REF: >-
-        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
 
       - name: Fetch mutation ratchet commit
         run: |
@@ -228,11 +419,14 @@ jobs:
   generated-code-drift:
     name: generated code and migration drift
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -250,11 +444,97 @@ jobs:
             ${{ runner.os }}-generated-
             ${{ runner.os }}-pub-
 
+      - name: Cache pinned Godot
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .toolchains/godot
+          key: ${{ runner.os }}-godot-${{ hashFiles('.godot-version', 'tool/godot_checksums.txt') }}
+
+      - name: Cache pinned Terrain3D
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: clients/aonw_godot/addons/terrain_3d
+          key: ${{ runner.os }}-terrain3d-${{ hashFiles('.terrain3d-version', 'tool/terrain3d_checksums.txt') }}
+
       - name: Bootstrap pinned workspace
         run: make bootstrap
 
       - name: Check all generated code and migration drift
         run: make generated-code-check
+
+      - name: Check successor map geometry and bundle reproducibility
+        run: make --no-print-directory successor-map-contract-test
+
+  godot-terrain:
+    name: Godot Terrain3D
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
+      - name: Cache pinned Godot
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .toolchains/godot
+          key: ${{ runner.os }}-godot-${{ hashFiles('.godot-version', 'tool/godot_checksums.txt') }}
+
+      - name: Cache pinned Terrain3D
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: clients/aonw_godot/addons/terrain_3d
+          key: ${{ runner.os }}-terrain3d-${{ hashFiles('.terrain3d-version', 'tool/terrain3d_checksums.txt') }}
+
+      - name: Bootstrap pinned Godot and Terrain3D
+        run: |
+          tool/bootstrap_godot.sh
+          tool/bootstrap_terrain3d.sh
+
+      - name: Run Godot Terrain3D gate
+        run: make --no-print-directory godot-check
+
+  successor-cross-client:
+    name: successor cross-client map parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version-file: .fvmrc
+          channel: stable
+          cache: true
+
+      - name: Cache pinned Godot
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .toolchains/godot
+          key: ${{ runner.os }}-godot-${{ hashFiles('.godot-version', 'tool/godot_checksums.txt') }}
+
+      - name: Cache pinned Terrain3D
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: clients/aonw_godot/addons/terrain_3d
+          key: ${{ runner.os }}-terrain3d-${{ hashFiles('.terrain3d-version', 'tool/terrain3d_checksums.txt') }}
+
+      - name: Bootstrap pinned Godot and Terrain3D
+        run: |
+          tool/bootstrap_godot.sh
+          tool/bootstrap_terrain3d.sh
+
+      - name: Compare Flutter and Godot map projections
+        run: make --no-print-directory map-stage-1-check
 
   server-integration:
     name: server integration and critical E2E
@@ -279,6 +559,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Linux CI tools
+        uses: ./.github/actions/setup-linux-ci
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2

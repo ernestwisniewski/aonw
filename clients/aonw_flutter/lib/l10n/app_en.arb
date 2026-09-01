@@ -1,0 +1,91 @@
+{
+  "@@locale": "en",
+  "appTitle": "Age of New Worlds",
+  "unknownRouteLabel": "Unknown route",
+  "pageUnavailable": "Page unavailable",
+  "unknownRouteMessage": "Unknown route: {location}",
+  "@unknownRouteMessage": {
+    "placeholders": {
+      "location": {"type": "String"}
+    }
+  },
+  "missingRouteLocation": "(missing)",
+  "mapSemanticsLabel": "Map {mapId}, {cols} by {rows} hexes",
+  "@mapSemanticsLabel": {
+    "placeholders": {
+      "mapId": {"type": "String"},
+      "cols": {"type": "int"},
+      "rows": {"type": "int"}
+    }
+  },
+  "mapInputHint": "Use the arrow keys or D-pad to move the map cursor and Enter or A to select.",
+  "noHexSelected": "No hex selected",
+  "selectedHex": "Selected hex {col}, {row}",
+  "@selectedHex": {
+    "placeholders": {
+      "col": {"type": "int"},
+      "row": {"type": "int"}
+    }
+  },
+  "hideReferenceLayer": "Hide reference layer",
+  "showReferenceLayer": "Show reference layer",
+  "hexLabel": "Hex {col}, {row}",
+  "@hexLabel": {
+    "placeholders": {
+      "col": {"type": "int"},
+      "row": {"type": "int"}
+    }
+  },
+  "unitLabel": "Unit {unitId}",
+  "@unitLabel": {
+    "placeholders": {
+      "unitId": {"type": "String"}
+    }
+  },
+  "routeSummary": "Route: {totalCost} movement units · {remaining} remaining",
+  "@routeSummary": {
+    "placeholders": {
+      "totalCost": {"type": "int"},
+      "remaining": {"type": "int"}
+    }
+  },
+  "confirmMove": "Confirm move",
+  "chooseHighlightedDestination": "Choose a highlighted destination.",
+  "movingUnit": "Moving unit",
+  "turnLabel": "TURN {turn}",
+  "@turnLabel": {
+    "placeholders": {
+      "turn": {"type": "int"}
+    }
+  },
+  "loadingMap": "Loading map",
+  "mapLoadingFailed": "Map loading failed",
+  "mapUnavailable": "Map unavailable",
+  "mapAdapterUnavailable": "The native game adapter is unavailable on this platform.",
+  "mapClientIncompatible": "The native game adapter is incompatible with this client.",
+  "mapLoadSuperseded": "A newer map request replaced this one.",
+  "mapLoadFailure": "The map could not be loaded.",
+  "movementRequestFailed": "The movement request could not be completed.",
+  "movementResponseIncompatible": "The movement response is incompatible with this client.",
+  "movementSessionUnavailable": "The local game session is unavailable.",
+  "moveRejectedStale": "The game state changed. Review the latest position and try again.",
+  "moveRejectedUnitUnavailable": "That unit is no longer available to move.",
+  "moveRejectedUnitBusy": "That unit is busy and cannot move now.",
+  "moveRejectedTargetUnavailable": "That destination is not available.",
+  "moveRejectedMovementInsufficient": "The unit does not have enough movement remaining.",
+  "moveRejectedPathUnavailable": "No valid route to that destination is available.",
+  "moveRejectedInternal": "The move could not be applied. Try again.",
+  "retry": "Retry",
+  "openSettings": "Open settings",
+  "settingsTitle": "Settings",
+  "audioSettings": "Audio",
+  "masterVolume": "Master volume",
+  "cameraSettings": "Camera",
+  "cameraSensitivity": "Zoom sensitivity",
+  "accessibilitySettings": "Accessibility",
+  "reducedMotion": "Reduce motion",
+  "reducedMotionDescription": "Avoid nonessential animations and transitions.",
+  "highContrast": "High contrast",
+  "highContrastDescription": "Increase contrast in the application interface.",
+  "resetSettings": "Restore defaults"
+}

@@ -49,7 +49,7 @@ impl ScenarioDefinition {
             .collect::<Result<Vec<_>, _>>()?;
         GameState::try_new(
             StateRevision::INITIAL,
-            0,
+            1,
             map.bounds(),
             ruleset.occupancy_policy(),
             units,

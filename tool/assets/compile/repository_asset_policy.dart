@@ -12,6 +12,8 @@ const Set<String> _staticAssetFiles = {
   'aonw-mobile.png',
   'aonw2-logo.png',
   'logo.png',
+  'fonts/AlbertSans-OFL.txt',
+  'fonts/AlbertSans-VariableFont_wght.ttf',
   'fonts/Cinzel-VariableFont_wght.ttf',
   'fonts/Lato-Bold.ttf',
   'fonts/Lato-Light.ttf',
@@ -25,6 +27,7 @@ const Set<String> _staticAssetFiles = {
   'homepage/platform-icons/stats.svg',
   'homepage/platform-icons/steam.svg',
   'homepage/platform-icons/web.svg',
+  'main_menu/background.jpg',
   'main_menu/background.png',
   'sounds/attack.wav',
   'sounds/city.wav',
@@ -45,6 +48,21 @@ const Set<String> _staticAssetFiles = {
   'sounds/technology.wav',
   'sounds/ui_panel_open.wav',
   'sounds/walk.wav',
+  'ui/.gitignore',
+  'ui/1.json',
+  'ui/1.webp',
+  'ui/3.json',
+  'ui/3.webp',
+  'ui/4.json',
+  'ui/4.webp',
+  'ui/5.json',
+  'ui/5.webp',
+  'ui/6.json',
+  'ui/6.webp',
+  'ui/README.md',
+  'ui/auto_trim_coordinates.dart',
+  'ui/build_preview.sh',
+  'ui/sync_readme_from_atlas_json.dart',
 };
 
 const Set<String> _legacyPlatformAssetDirectories = {
@@ -54,6 +72,8 @@ const Set<String> _legacyPlatformAssetDirectories = {
   'android/mipmap-xxhdpi',
   'android/mipmap-xxxhdpi',
 };
+
+const Set<String> _ignoredAssetDirectories = {'ui/preview'};
 
 final class RepositoryAssetPolicy {
   const RepositoryAssetPolicy(this.workspace);
@@ -114,6 +134,7 @@ final class RepositoryAssetPolicy {
       final relative = entity.path
           .substring(assets.path.length + 1)
           .replaceAll('\\', '/');
+      if (_isIgnoredAssetPath(relative)) continue;
       if (entity is Link) {
         errors.add('asset symlink is forbidden: $relative');
       } else if (entity is File) {
@@ -123,6 +144,12 @@ final class RepositoryAssetPolicy {
       }
     }
     return _AssetInventory(files, directories);
+  }
+
+  bool _isIgnoredAssetPath(String path) {
+    return _ignoredAssetDirectories.any(
+      (directory) => path == directory || path.startsWith('$directory/'),
+    );
   }
 
   void _compareAllowlist(

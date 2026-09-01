@@ -210,6 +210,14 @@
             "col": 42,
             "row": 42
           }
+        },
+        {
+          "id": "movement_carried_artifact",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "carried",
+            "unitId": "movement_mover"
+          }
         }
       ],
       "fieldImprovements": [
@@ -471,6 +479,14 @@
             "kind": "map",
             "col": 42,
             "row": 42
+          }
+        },
+        {
+          "id": "movement_carried_artifact",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "carried",
+            "unitId": "movement_mover"
           }
         }
       ],

@@ -3,8 +3,10 @@ use aonw_local_runtime::{ClientProtocol, LocalRuntime};
 use godot::classes::{IRefCounted, RefCounted};
 use godot::prelude::*;
 
+const BUILD_IDENTITY: &str = concat!("aonw_godot/", env!("CARGO_PKG_VERSION"));
+
 #[derive(GodotClass)]
-#[class(base=RefCounted)]
+#[class(tool, base=RefCounted)]
 struct AonwLocalSession {
     runtime: LocalRuntime,
     base: Base<RefCounted>,
@@ -29,6 +31,11 @@ impl AonwLocalSession {
     }
 
     #[func]
+    fn build_identity(&self) -> GString {
+        GString::from(adapter_build_identity())
+    }
+
+    #[func]
     fn request_json(&mut self, request_json: GString) -> GString {
         let response = dispatch_json(&mut self.runtime, &request_json.to_string());
         GString::from(response.as_str())
@@ -37,6 +44,10 @@ impl AonwLocalSession {
 
 fn dispatch_json(runtime: &mut LocalRuntime, input: &str) -> String {
     ClientProtocol::dispatch_json(runtime, input)
+}
+
+fn adapter_build_identity() -> &'static str {
+    BUILD_IDENTITY
 }
 
 #[cfg(test)]

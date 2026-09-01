@@ -5,20 +5,30 @@ import 'dart:isolate';
 
 import 'package:aonw_rust_client/aonw_rust_client_bindings.dart' as bindings;
 import 'package:aonw_rust_client/src/api.dart';
-import 'package:aonw_rust_client/src/protocol.dart';
+import 'package:aonw_rust_client/src/native_identity.dart';
 import 'package:ffi/ffi.dart';
 
-bool get aonwRustClientAvailable {
+AonwNativeIdentity get aonwRustClientIdentity {
   try {
-    return bindings.aonwFlutterIsAvailable() == 1 &&
-        bindings.aonwFlutterClientApiVersion() == aonwClientApiVersion;
+    final length = bindings.aonwFlutterBuildIdentityLen();
+    final data = bindings.aonwFlutterBuildIdentityData();
+    if (length != 0 && data == ffi.nullptr) {
+      return const AonwNativeIdentity.unreadable();
+    }
+    return AonwNativeIdentity.evaluate(
+      runtimeAvailable: bindings.aonwFlutterIsAvailable() == 1,
+      clientApiVersion: bindings.aonwFlutterClientApiVersion(),
+      buildIdentity: length == 0 ? '' : utf8.decode(data.asTypedList(length)),
+    );
   } on Object {
-    return false;
+    return const AonwNativeIdentity.unreadable();
   }
 }
 
+bool get aonwRustClientAvailable => aonwRustClientIdentity.isCompatible;
+
 Future<AonwRustSession?> createAonwRustSession() async {
-  if (!aonwRustClientAvailable) return null;
+  if (!aonwRustClientIdentity.isCompatible) return null;
   return _NativeAonwRustSession.start();
 }
 

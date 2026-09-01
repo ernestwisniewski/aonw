@@ -23,10 +23,27 @@ void main(List<String> args) async {
   });
 }
 
-bool _rustBuildEnabled(BuildInput input) =>
-    Platform.environment['AONW_ENABLE_RUST_FLUTTER'] == '1' &&
-    input.config.code.targetOS == OS.current &&
-    input.config.code.targetArchitecture == Architecture.current;
+bool _rustBuildEnabled(BuildInput input) {
+  final enabled = input.userDefines['rust_backend'];
+  if (enabled is! bool?) {
+    throw const FormatException(
+      'hooks.user_defines.aonw_rust_client.rust_backend must be a boolean.',
+    );
+  }
+  if (enabled != true) return false;
+
+  final targetOS = input.config.code.targetOS;
+  final targetArchitecture = input.config.code.targetArchitecture;
+  if (targetOS != OS.current || targetArchitecture != Architecture.current) {
+    throw UnsupportedError(
+      'aonw_rust_client rust_backend:true requires a qualified native Rust '
+      'build for $targetOS/$targetArchitecture, but this hook currently '
+      'builds only the host $OS.current/$Architecture.current. Refusing to '
+      'substitute the unavailable C stub.',
+    );
+  }
+  return true;
+}
 
 Future<void> _buildRust(BuildInput input, BuildOutputBuilder output) async {
   final engineRoot = input.packageRoot.resolve('../../engine/');

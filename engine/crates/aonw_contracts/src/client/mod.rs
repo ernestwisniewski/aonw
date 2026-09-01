@@ -1,18 +1,37 @@
 //! Current-only recipient-safe client protocol shared by native adapters.
 
 mod codec;
+mod map;
 mod request;
 mod response;
 
+pub use crate::MapObjectiveTypeDto;
 pub use codec::{ClientCodecError, MAX_CLIENT_REQUEST_JSON_BYTES, MAX_CLIENT_RESPONSE_JSON_BYTES};
+pub use map::{
+    MapGridLayoutDto, MapObjectiveViewDto, MapResourceDto, MapTerrainDto, MapTileViewDto,
+    MapViewDto,
+};
 pub use request::{ClientCommandDto, ClientQueryDto, ClientRequestBodyDto, ClientRequestDto};
 pub use response::{
-    ClientCommandOutcomeDto, ClientCommandResultDto, ClientErrorDto, ClientEventDto,
-    ClientEvidenceDto, ClientFeatureDto, ClientOutcomeDto, ClientQueryResultDto,
-    ClientReplayVerificationDto, ClientResponseBodyDto, ClientResponseDto, ClientSessionStampDto,
-    MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
-    ReachableTileViewDto,
+    AutoExploreOptionDto, CityExpansionCandidateDto, CityFoundingDraftViewDto,
+    CitySpecializationOptionDto, CityYieldContributionDto, CityYieldContributionKindDto,
+    ClientCommandOutcomeDto, ClientCommandRejectionCodeDto, ClientCommandResultDto, ClientErrorDto,
+    ClientEventDto, ClientEvidenceDto, ClientFeatureDto, ClientLogisticsEvidenceDto,
+    ClientOutcomeDto, ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto,
+    ClientResponseDto, ClientSessionStampDto, DetachmentOptionDto, FieldImprovementViewDto,
+    MerchantDestinationOptionDto, MovementSearchMetricsDto, MovementStepViewDto,
+    OwnedCityPlanningViewDto, PendingActionViewDto, PlayerArtifactLocationViewDto,
+    PlayerArtifactViewDto, PlayerCityViewDto, PlayerDiplomacyViewDto,
+    PlayerDiplomaticMessageViewDto, PlayerDiplomaticProposalViewDto,
+    PlayerDiplomaticRelationViewDto, PlayerResourceTradeAgreementViewDto,
+    PlayerTurnLifecycleViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
+    ProductionOptionDto, ReachableTileViewDto, ResearchOptionDto, RoadViewDto,
+    ScienceYieldBreakdownDto, ScienceYieldSourceDto, ScienceYieldSourceKindDto,
+    StrategicResourceAmountDto, StrategicResourceSourceDto, TechnologyAvailabilityDto,
+    TechnologyUnlockDto, UnitMovementExecutionDto, UnitProductionOptionDto,
+    WorkerAutomationActionDto, WorkerAutomationMetricsDto, WorkerAutomationOptionDto,
+    WorkerImprovementOptionDto, WorkerJobCompletionDto, WorkerJobViewDto, YieldValueDto,
 };
 
 /// The only client protocol version accepted by this build.
-pub const CLIENT_API_VERSION: u16 = 2;
+pub const CLIENT_API_VERSION: u16 = 5;

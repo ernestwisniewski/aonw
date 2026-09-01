@@ -9,6 +9,8 @@
 
 AONW_EXPORT uint8_t aonw_flutter_is_available(void) { return 0; }
 AONW_EXPORT uint16_t aonw_flutter_client_api_version(void) { return 0; }
+AONW_EXPORT size_t aonw_flutter_build_identity_len(void) { return 0; }
+AONW_EXPORT const uint8_t *aonw_flutter_build_identity_data(void) { return NULL; }
 AONW_EXPORT void *aonw_flutter_session_new(void) { return NULL; }
 AONW_EXPORT void aonw_flutter_session_free(void *session) { (void)session; }
 AONW_EXPORT void *aonw_flutter_session_request(

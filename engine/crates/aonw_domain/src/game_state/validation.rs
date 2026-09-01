@@ -1,11 +1,73 @@
 use crate::{
-    City, FogOfWar, HexGridBounds, InteractionState, PendingInteraction, TransportNetwork, Unit,
-    UnitPosture, WorldArtifact, WorldArtifactLocation,
+    City, CityFoundingDraft, Diplomacy, FogOfWar, HexGridBounds, InfrastructureState,
+    InteractionState, MatchIdentity, PendingInteraction, Unit, UnitPosture, WorldArtifact,
+    WorldArtifactLocation,
 };
 
 use super::{GameStateBuildError, UnitOccupancyPolicy};
 
-pub(super) fn unit_indices(
+pub(super) fn validate_player_references(
+    identity: &MatchIdentity,
+    units: &[Unit],
+    cities: &[City],
+    interaction: &InteractionState,
+    fog_of_war: &FogOfWar,
+    diplomacy: &Diplomacy,
+) -> Result<(), GameStateBuildError> {
+    // Scenario content is assembled before a runtime binds its match identity.
+    // Once any participants are bound, every aggregate reference is strict.
+    if identity.participants().is_empty() {
+        return Ok(());
+    }
+    for unit in units {
+        if !identity.contains(unit.owner_player_id()) {
+            return Err(GameStateBuildError::UnitPlayerNotFound {
+                unit_id: unit.id().clone(),
+                player_id: unit.owner_player_id().clone(),
+            });
+        }
+    }
+    for city in cities {
+        for player_id in
+            core::iter::once(city.owner_player_id()).chain(city.founding_owner_player_id())
+        {
+            if !identity.contains(player_id) {
+                return Err(GameStateBuildError::CityPlayerNotFound {
+                    city_id: city.id().clone(),
+                    player_id: player_id.clone(),
+                });
+            }
+        }
+    }
+    for player in fog_of_war.players() {
+        if !identity.contains(player.player_id()) {
+            return Err(GameStateBuildError::FogPlayerNotFound(
+                player.player_id().clone(),
+            ));
+        }
+    }
+    for player_id in interaction
+        .city_founding_draft()
+        .map(CityFoundingDraft::owner_player_id)
+        .into_iter()
+        .chain(
+            interaction
+                .pending()
+                .map(PendingInteraction::owner_player_id),
+        )
+    {
+        if !identity.contains(player_id) {
+            return Err(GameStateBuildError::InteractionPlayerNotFound(
+                player_id.clone(),
+            ));
+        }
+    }
+    diplomacy
+        .validate_for(identity)
+        .map_err(GameStateBuildError::InvalidDiplomacy)
+}
+
+pub(super) fn unit_position_indices(
     bounds: HexGridBounds,
     occupancy_policy: UnitOccupancyPolicy,
     units: &[Unit],
@@ -18,36 +80,44 @@ pub(super) fn unit_indices(
             });
         }
     }
-    let mut indices = (0..units.len()).collect::<Vec<_>>();
-    indices.sort_unstable_by(|left, right| units[*left].id().cmp(units[*right].id()));
-    if let Some(pair) = indices
-        .windows(2)
-        .find(|pair| units[pair[0]].id() == units[pair[1]].id())
-    {
-        return Err(GameStateBuildError::DuplicateUnitId(
-            units[pair[0]].id().clone(),
-        ));
+    if let Some(pair) = units.windows(2).find(|pair| pair[0].id() == pair[1].id()) {
+        return Err(GameStateBuildError::DuplicateUnitId(pair[0].id().clone()));
     }
-    let mut by_position = units.iter().collect::<Vec<_>>();
-    by_position.sort_unstable_by_key(|unit| unit.position());
-    if let Some(pair) = by_position.windows(2).find(|pair| {
-        pair[0].position() == pair[1].position()
-            && !occupancy_policy.permits(pair[0].owner_player_id(), pair[1].owner_player_id())
+    let mut indices = (0..units.len()).collect::<Vec<_>>();
+    indices.sort_unstable_by(|left, right| {
+        units[*left]
+            .position()
+            .cmp(&units[*right].position())
+            .then_with(|| units[*left].id().cmp(units[*right].id()))
+    });
+    if let Some(pair) = indices.windows(2).find(|pair| {
+        units[pair[0]].position() == units[pair[1]].position()
+            && !occupancy_policy.permits(
+                units[pair[0]].owner_player_id(),
+                units[pair[1]].owner_player_id(),
+            )
     }) {
         return Err(GameStateBuildError::OccupiedCoordinate {
-            position: pair[0].position(),
+            position: units[pair[0]].position(),
         });
     }
     Ok(indices)
 }
 
-pub(super) fn city_indices(
+pub(super) fn city_territory_indices(
     bounds: HexGridBounds,
     cities: &[City],
-) -> Result<Vec<usize>, GameStateBuildError> {
+) -> Result<Vec<(crate::HexCoord, usize)>, GameStateBuildError> {
     for city in cities {
-        for position in
-            core::iter::once(city.center()).chain(city.controlled_hexes().iter().copied())
+        city.validate()
+            .map_err(|error| GameStateBuildError::InvalidCity {
+                city_id: city.id().clone(),
+                error,
+            })?;
+        for position in core::iter::once(city.center())
+            .chain(city.controlled_hexes().iter().copied())
+            .chain(city.worked_hexes().iter().copied())
+            .chain(city.preferred_expansion_hex())
         {
             if !bounds.contains(position) {
                 return Err(GameStateBuildError::CityOutOfBounds {
@@ -57,33 +127,49 @@ pub(super) fn city_indices(
             }
         }
     }
-    let mut indices = (0..cities.len()).collect::<Vec<_>>();
-    indices.sort_unstable_by(|left, right| cities[*left].id().cmp(cities[*right].id()));
-    if let Some(pair) = indices
-        .windows(2)
-        .find(|pair| cities[pair[0]].id() == cities[pair[1]].id())
-    {
-        return Err(GameStateBuildError::DuplicateCityId(
-            cities[pair[0]].id().clone(),
-        ));
+    if let Some(pair) = cities.windows(2).find(|pair| pair[0].id() == pair[1].id()) {
+        return Err(GameStateBuildError::DuplicateCityId(pair[0].id().clone()));
     }
-    Ok(indices)
+    let mut territory = cities
+        .iter()
+        .enumerate()
+        .flat_map(|(index, city)| {
+            core::iter::once(city.center())
+                .chain(city.controlled_hexes().iter().copied())
+                .map(move |coordinate| (coordinate, index))
+        })
+        .collect::<Vec<_>>();
+    territory.sort_unstable_by(|left, right| {
+        left.0
+            .cmp(&right.0)
+            .then_with(|| cities[left.1].id().cmp(cities[right.1].id()))
+    });
+    territory.dedup();
+    if let Some(pair) = territory
+        .windows(2)
+        .find(|pair| pair[0].0 == pair[1].0 && pair[0].1 != pair[1].1)
+    {
+        return Err(GameStateBuildError::CityTerritoryOverlap {
+            position: pair[0].0,
+            first_city_id: cities[pair[0].1].id().clone(),
+            second_city_id: cities[pair[1].1].id().clone(),
+        });
+    }
+    Ok(territory)
 }
 
-pub(super) fn artifact_indices(
+pub(super) fn validate_artifact_ids(
     artifacts: &[WorldArtifact],
-) -> Result<Vec<usize>, GameStateBuildError> {
-    let mut indices = (0..artifacts.len()).collect::<Vec<_>>();
-    indices.sort_unstable_by(|left, right| artifacts[*left].id().cmp(artifacts[*right].id()));
-    if let Some(pair) = indices
+) -> Result<(), GameStateBuildError> {
+    if let Some(pair) = artifacts
         .windows(2)
-        .find(|pair| artifacts[pair[0]].id() == artifacts[pair[1]].id())
+        .find(|pair| pair[0].id() == pair[1].id())
     {
         return Err(GameStateBuildError::DuplicateArtifactId(
-            artifacts[pair[0]].id().clone(),
+            pair[0].id().clone(),
         ));
     }
-    Ok(indices)
+    Ok(())
 }
 
 pub(super) fn validate_artifacts(
@@ -125,7 +211,11 @@ pub(super) fn validate_artifacts(
                     });
                 }
             }
-            WorldArtifactLocation::Excavation { unit_id, .. } => {
+            WorldArtifactLocation::Excavation {
+                unit_id,
+                coordinate,
+                remaining_turns,
+            } => {
                 let unit = find_unit(units, unit_id).ok_or_else(|| {
                     GameStateBuildError::ArtifactUnitNotFound {
                         artifact_id: artifact.id().clone(),
@@ -138,8 +228,29 @@ pub(super) fn validate_artifacts(
                         unit_id: unit_id.clone(),
                     });
                 }
+                if *remaining_turns == 0 || unit.position() != *coordinate {
+                    return Err(GameStateBuildError::InvalidArtifactExcavation {
+                        artifact_id: artifact.id().clone(),
+                        unit_id: unit_id.clone(),
+                    });
+                }
             }
         }
+    }
+    let mut stored = artifacts
+        .iter()
+        .filter_map(|artifact| match artifact.location() {
+            WorldArtifactLocation::Stored(city_id) => Some((city_id, artifact.id())),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    stored.sort_unstable();
+    if let Some(pair) = stored.windows(2).find(|pair| pair[0].0 == pair[1].0) {
+        return Err(GameStateBuildError::CityArtifactSlotOccupied {
+            city_id: pair[0].0.clone(),
+            first_artifact_id: pair[0].1.clone(),
+            second_artifact_id: pair[1].1.clone(),
+        });
     }
     for unit in units {
         validate_unit_artifacts(unit, artifacts)?;
@@ -253,8 +364,10 @@ pub(super) fn validate_interaction(
 
 pub(super) fn validate_environment(
     bounds: HexGridBounds,
+    identity: &MatchIdentity,
+    cities: &[City],
     fog_of_war: &FogOfWar,
-    transport_network: &TransportNetwork,
+    infrastructure: &InfrastructureState,
 ) -> Result<(), GameStateBuildError> {
     for player_fog in fog_of_war.players() {
         if let Some(position) = player_fog
@@ -268,15 +381,9 @@ pub(super) fn validate_environment(
             });
         }
     }
-    if let Some(segment) = transport_network
-        .segments()
-        .iter()
-        .find(|segment| !bounds.contains(segment.coordinate()))
-    {
-        return Err(GameStateBuildError::TransportOutOfBounds(
-            segment.coordinate(),
-        ));
-    }
+    infrastructure
+        .validate_for(bounds, identity, cities)
+        .map_err(GameStateBuildError::InvalidInfrastructure)?;
     Ok(())
 }
 

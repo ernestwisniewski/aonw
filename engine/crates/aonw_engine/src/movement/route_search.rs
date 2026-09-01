@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
 use aonw_content::MapDefinition;
-use aonw_domain::{GameState, HexCoord, HexTileIndex, MovementStep, MovementUnits, Unit};
+use aonw_domain::{HexCoord, HexTileIndex, MovementStep, MovementUnits, Unit};
 
 use super::compiled_map::neighbor_indices;
 use super::cost::{movement_cost_for_index, terrain_entry_cost};
@@ -75,7 +75,7 @@ struct PreparedRouteSearch {
 }
 
 pub(super) fn find_route(
-    state: &GameState,
+    units: &[Unit],
     map: &MapDefinition,
     unit: &Unit,
     target: HexCoord,
@@ -83,7 +83,7 @@ pub(super) fn find_route(
     context: EngineContext<'_>,
 ) -> RouteSearchResult {
     find_route_with_maximum(
-        state,
+        units,
         map,
         unit,
         &[target],
@@ -94,18 +94,18 @@ pub(super) fn find_route(
 }
 
 pub(super) fn find_route_to_any(
-    state: &GameState,
+    units: &[Unit],
     map: &MapDefinition,
     unit: &Unit,
     targets: &[HexCoord],
     available_movement: MovementUnits,
     context: EngineContext<'_>,
 ) -> RouteSearchResult {
-    find_route_with_maximum(state, map, unit, targets, available_movement, context, None)
+    find_route_with_maximum(units, map, unit, targets, available_movement, context, None)
 }
 
 pub(super) fn find_route_ignoring_capacity(
-    state: &GameState,
+    units: &[Unit],
     map: &MapDefinition,
     unit: &Unit,
     target: HexCoord,
@@ -129,7 +129,7 @@ pub(super) fn find_route_ignoring_capacity(
         .max()
         .unwrap_or(available_movement);
     find_route_with_maximum(
-        state,
+        units,
         map,
         unit,
         &[target],
@@ -140,7 +140,7 @@ pub(super) fn find_route_ignoring_capacity(
 }
 
 fn find_route_with_maximum(
-    state: &GameState,
+    units: &[Unit],
     map: &MapDefinition,
     unit: &Unit,
     targets: &[HexCoord],
@@ -149,7 +149,7 @@ fn find_route_with_maximum(
     maximum_override: Option<MovementUnits>,
 ) -> RouteSearchResult {
     let Some(prepared) = prepare_route_search(
-        state,
+        units,
         map,
         unit,
         targets,
@@ -166,7 +166,7 @@ fn find_route_with_maximum(
 }
 
 fn prepare_route_search(
-    state: &GameState,
+    units: &[Unit],
     map: &MapDefinition,
     unit: &Unit,
     targets: &[HexCoord],
@@ -183,7 +183,7 @@ fn prepare_route_search(
     if target_indices.is_empty() {
         return None;
     }
-    let occupied = MovementOccupancy::for_unit(state, map, unit, context);
+    let occupied = MovementOccupancy::for_unit(units, map, unit, context);
 
     let start_state = RouteState {
         tile_index: start_index,
@@ -266,6 +266,7 @@ fn run_route_search(
             }
             if !context.can_plan_through_tile(unit, next_coordinate)
                 || context.city_block_is_known(unit, next_coordinate)
+                || context.territory_block_is_known(unit, next_coordinate)
             {
                 continue;
             }

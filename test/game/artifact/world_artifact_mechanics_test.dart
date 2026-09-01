@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../support/current_content_legacy_fixture.dart';
+
 part 'world_artifact_generation_route_cases.dart';
 
 void main() {
@@ -351,8 +353,8 @@ void main() {
 }
 
 WorldMap _loadMapData(String path) {
-  final json =
-      jsonDecode(File(path).readAsStringSync()) as Map<String, Object?>;
+  final source = currentMapAsLegacyFixture(File(path).readAsStringSync());
+  final json = jsonDecode(source) as Map<String, Object?>;
   final tilesJson = json['tiles']! as List<Object?>;
   return WorldMap(
     cols: json['cols']! as int,
